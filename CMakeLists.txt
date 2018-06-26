@@ -1,0 +1,142 @@
+cmake_minimum_required(VERSION 3.9)
+project("csecore" VERSION "0.1.0")
+
+# ==============================================================================
+# Build settings
+# ==============================================================================
+
+option(CSECORE_BUILD_STATIC "Build static libraries" ON)
+option(CSECORE_BUILD_SHARED "Build shared libraries" ON)
+option(CSECORE_BUILD_TESTS "Build test suite" ON)
+option(CSECORE_BUILD_APIDOC "Build API documentation" ON)
+
+# ==============================================================================
+# Global internal configuration
+# ==============================================================================
+
+# Our custom CMake scripts go in the cmake/ subdirectory.
+list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_SOURCE_DIR}/cmake")
+
+# Use a common output directory for all targets.
+# The main purpose of this is to ensure that the DLLs and test executables
+# end up in the same directory on Windows, so that the OS finds the former
+# when running the latter.
+get_property(isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+if(isMultiConfig)
+    foreach(c ${CMAKE_CONFIGURATION_TYPES})
+        set(outputDir "${CMAKE_BINARY_DIR}/output/${c}")
+        string(TOUPPER "${c}" config)
+        set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${config} "${outputDir}/lib")
+        set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_${config} "${outputDir}/lib")
+        set(CMAKE_PDB_OUTPUT_DIRECTORY_${config}     "${outputDir}/lib")
+        set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${config} "${outputDir}/bin")
+    endforeach()
+else()
+    set(outputDir "${CMAKE_BINARY_DIR}/output")
+    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${outputDir}/lib")
+    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${outputDir}/lib")
+    set(CMAKE_PDB_OUTPUT_DIRECTORY     "${outputDir}/lib")
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${outputDir}/bin")
+endif()
+
+# Use the highest warning levels, and treat all warnings as errors.
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    add_compile_options("-Wall" "-Wextra" "-Wpedantic" "-Werror")
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    add_compile_options("/W4" "/WX" "/wd4996")
+    add_definitions("-D_SCL_SECURE_NO_WARNINGS")
+endif()
+
+# Prepare for export and installation.
+set(CSECORE_HEADER_INSTALL_DIR "include")
+if(WIN32)
+    set(CSECORE_CMAKE_INSTALL_DIR "cmake")
+    set(CSECORE_DOC_INSTALL_DIR   "doc")
+else()
+    set(CSECORE_CMAKE_INSTALL_DIR "share/${PROJECT_NAME}/cmake")
+    set(CSECORE_DOC_INSTALL_DIR   "share/doc/${PROJECT_NAME}")
+endif()
+set(CSECORE_INSTALL_DESTINATIONS
+    ARCHIVE DESTINATION "lib"
+    LIBRARY DESTINATION "lib"
+    RUNTIME DESTINATION "bin"
+    INCLUDES DESTINATION "${CSECORE_HEADER_INSTALL_DIR}")
+set(CSECORE_EXPORT_TARGET "${PROJECT_NAME}-targets")
+
+# ==============================================================================
+# Dependencies
+# ==============================================================================
+
+find_package(GSL REQUIRED)
+
+# ==============================================================================
+# Targets
+# ==============================================================================
+
+add_subdirectory("src/cpp")
+add_subdirectory("src/c")
+if(CSECORE_BUILD_TESTS)
+    enable_testing()
+    add_subdirectory("test/cpp")
+    add_subdirectory("test/c")
+endif()
+
+# ==============================================================================
+# API documentation
+# ==============================================================================
+
+if(CSECORE_BUILD_APIDOC)
+    find_package(Doxygen REQUIRED)
+    set(DOXYGEN_PROJECT_NAME "CSE core")
+    set(DOXYGEN_PROJECT_BRIEF "C/C++ library for distributed co-simulation")
+    set(DOXYGEN_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/output/doc")
+    set(DOXYGEN_GENERATE_LATEX "NO")
+    set(DOXYGEN_RECURSIVE "YES")
+    set(DOXYGEN_SORT_BY_SCOPE_NAME "YES")
+    set(DOXYGEN_STRIP_FROM_INC_PATH "${CMAKE_SOURCE_DIR}/include")
+    set(DOXYGEN_STRIP_FROM_PATH "${CMAKE_SOURCE_DIR}/include")
+    set(DOXYGEN_TAGFILES "${CMAKE_SOURCE_DIR}/cmake/cppreference-doxygen-web.tag.xml=http://en.cppreference.com/w/")
+    doxygen_add_docs(doc "${CMAKE_SOURCE_DIR}/include")
+    add_custom_target(
+        install-doc
+        "${CMAKE_COMMAND}" "-E" "copy_directory"
+            "${DOXYGEN_OUTPUT_DIRECTORY}"
+            "${CMAKE_INSTALL_PREFIX}/${CSECORE_DOC_INSTALL_DIR}/"
+        DEPENDS doc
+    )
+endif()
+
+# ==============================================================================
+# Exports and remaining installation
+# ==============================================================================
+
+install(
+    FILES "README.md" "LICENCE.txt"
+    DESTINATION "${CSECORE_DOC_INSTALL_DIR}"
+)
+install(
+    EXPORT "${CSECORE_EXPORT_TARGET}"
+    DESTINATION "${CSECORE_CMAKE_INSTALL_DIR}"
+    NAMESPACE "${PROJECT_NAME}::"
+)
+
+include(CMakePackageConfigHelpers)
+
+# Generate and install package-config file.
+set(configFile "${CMAKE_BINARY_DIR}/${PROJECT_NAME}-config.cmake")
+set(targetsFile "${CSECORE_CMAKE_INSTALL_DIR}/${CSECORE_EXPORT_TARGET}.cmake")
+configure_package_config_file(
+    "${CMAKE_SOURCE_DIR}/cmake/project-config.cmake.in"
+    "${configFile}"
+    INSTALL_DESTINATION "${CSECORE_CMAKE_INSTALL_DIR}"
+    PATH_VARS targetsFile
+)
+install(FILES "${configFile}" DESTINATION "${CSECORE_CMAKE_INSTALL_DIR}")
+
+# Generate and install package-version file
+set(versionFile "${CMAKE_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake")
+write_basic_package_version_file(
+    "${versionFile}"
+    VERSION "${PROJECT_VERSION}"
+    COMPATIBILITY "SameMajorVersion")
+install(FILES "${versionFile}" DESTINATION "${CSECORE_CMAKE_INSTALL_DIR}")
