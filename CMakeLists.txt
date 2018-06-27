@@ -10,6 +10,14 @@ option(CSECORE_BUILD_SHARED "Build shared libraries" ON)
 option(CSECORE_BUILD_TESTS "Build test suite" ON)
 option(CSECORE_BUILD_APIDOC "Build API documentation" ON)
 
+option(CSECORE_USING_CONAN "Whether Conan is used for package management" OFF)
+if(CSECORE_USING_CONAN)
+    set(CSECORE_CONANBUILDINFO_FILE "${CMAKE_BINARY_DIR}/conanbuildinfo.cmake"
+        CACHE FILEPATH
+        "The path to the conanbuildinfo.cmake file"
+    )
+endif()
+
 # ==============================================================================
 # Global internal configuration
 # ==============================================================================
@@ -66,6 +74,11 @@ set(CSECORE_EXPORT_TARGET "${PROJECT_NAME}-targets")
 # ==============================================================================
 # Dependencies
 # ==============================================================================
+
+if(CSECORE_USING_CONAN)
+    include("${CSECORE_CONANBUILDINFO_FILE}")
+    conan_basic_setup()
+endif()
 
 find_package(GSL REQUIRED)
 
