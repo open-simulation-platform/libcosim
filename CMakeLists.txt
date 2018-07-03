@@ -77,7 +77,7 @@ set(CSECORE_EXPORT_TARGET "${PROJECT_NAME}-targets")
 
 if(CSECORE_USING_CONAN)
     include("${CSECORE_CONANBUILDINFO_FILE}")
-    conan_basic_setup()
+    conan_basic_setup(NO_OUTPUT_DIRS)
 endif()
 
 find_package(GSL REQUIRED)
