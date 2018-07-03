@@ -5,8 +5,7 @@ project("csecore" VERSION "0.1.0")
 # Build settings
 # ==============================================================================
 
-option(CSECORE_BUILD_STATIC "Build static libraries" ON)
-option(CSECORE_BUILD_SHARED "Build shared libraries" ON)
+option(BUILD_SHARED_LIBS "Build shared libraries instead of static libraries" ON)
 option(CSECORE_BUILD_TESTS "Build test suite" ON)
 option(CSECORE_BUILD_APIDOC "Build API documentation" ON)
 
