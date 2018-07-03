@@ -17,6 +17,7 @@ Toolchain
   * Compilers: MSVC 14.1 (i.e., Visual Studio 2017), GCC 6.3
   * Build tool: CMake >= 3.9
   * API doc generator: Doxygen >= 1.8
+  * Package manager: Conan (optional)
 
 
 Directory structure
