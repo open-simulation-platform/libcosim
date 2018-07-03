@@ -7,7 +7,6 @@
 
 #include <cstddef>
 #include <gsl/span>
-#include <cse/config.hpp>
 
 
 namespace cse
@@ -26,14 +25,14 @@ namespace cse
  *  \returns
  *      The number of bytes written.
  */
-CSE_EXPORT std::size_t hello_world(gsl::span<char> buffer) noexcept;
+std::size_t hello_world(gsl::span<char> buffer) noexcept;
 
 
 /**
  *  \brief  Returns the answer to the ultimate question about life,
  *          the universe and everything.
  */
-CSE_EXPORT constexpr int get_ultimate_answer() noexcept
+constexpr int get_ultimate_answer() noexcept
 {
     return 42;
 }

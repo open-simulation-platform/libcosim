@@ -6,18 +6,6 @@
 #define CSE_CONFIG_HPP
 
 
-// Handle DLL symbol visibility
-#if defined(_WIN32) && !defined(CSECORE_STATIC)
-#    if defined(CSECORE_DLL_EXPORT)
-#        define CSE_EXPORT __declspec(dllexport)
-#    else
-#        define CSE_EXPORT __declspec(dllimport)
-#    endif
-#else
-#    define CSE_EXPORT
-#endif
-
-
 /// \defgroup csecore CSE core C++ library
 
 /**
