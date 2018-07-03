@@ -14,7 +14,7 @@ Toolchain
 ---------
 
   * Language: C++17
-  * Compilers: MSVC 14.1 (i.e., Visual Studio 2017), GCC 6.3
+  * Compilers: MSVC 14.1 (i.e., Visual Studio 2017), GCC 8
   * Build tool: CMake >= 3.9
   * API doc generator: Doxygen >= 1.8
 
