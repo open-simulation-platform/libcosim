@@ -4,7 +4,6 @@
 #   - `GSL_FOUND` and `GSL_INCLUDE_DIRS` variables.
 #   - `gsl` target
 
-message(STATUS "CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}")
 find_path(GSL_INCLUDE_DIR "gsl/gsl")
 if(GSL_INCLUDE_DIR)
     set(GSL_INCLUDE_DIRS "${GSL_INCLUDE_DIR}")
