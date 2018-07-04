@@ -11,17 +11,6 @@
 
 /// \defgroup csecorec C library
 
-// Handle DLL symbol visibility
-#if defined(_WIN32) && !defined(CSECOREC_STATIC)
-#    if defined(CSECOREC_DLL_EXPORT)
-#        define CSE_C_EXPORT __declspec(dllexport)
-#    else
-#        define CSE_C_EXPORT __declspec(dllimport)
-#    endif
-#else
-#    define CSE_C_EXPORT
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -44,7 +33,7 @@ extern "C" {
  *      The answer to the ultimate question about life, the universe and
  *      everything, for no apparent reason.
  */
-CSE_C_EXPORT int cse_hello_world(char* buffer, size_t size);
+int cse_hello_world(char* buffer, size_t size);
 
 
 

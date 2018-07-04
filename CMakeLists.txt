@@ -5,8 +5,7 @@ project("csecore" VERSION "0.1.0")
 # Build settings
 # ==============================================================================
 
-option(CSECORE_BUILD_STATIC "Build static libraries" ON)
-option(CSECORE_BUILD_SHARED "Build shared libraries" ON)
+option(BUILD_SHARED_LIBS "Build shared libraries instead of static libraries" ON)
 option(CSECORE_BUILD_TESTS "Build test suite" ON)
 option(CSECORE_BUILD_APIDOC "Build API documentation" ON)
 
@@ -55,6 +54,9 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     add_definitions("-D_SCL_SECURE_NO_WARNINGS")
 endif()
 
+# Automatically export all symbols in Windows DLLs.
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+
 # Prepare for export and installation.
 set(CSECORE_HEADER_INSTALL_DIR "include")
 if(WIN32)
@@ -77,7 +79,7 @@ set(CSECORE_EXPORT_TARGET "${PROJECT_NAME}-targets")
 
 if(CSECORE_USING_CONAN)
     include("${CSECORE_CONANBUILDINFO_FILE}")
-    conan_basic_setup()
+    conan_basic_setup(NO_OUTPUT_DIRS)
 endif()
 
 find_package(GSL REQUIRED)
