@@ -5,6 +5,10 @@
 #   - `gsl` target
 
 message(STATUS "CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}")
+foreach(p IN LISTS CMAKE_PREFIX_PATH)
+    file(GLOB f "${p}/*")
+    message(STATUS "Contents of ${p}: ${f}")
+endforeach()
 find_path(GSL_INCLUDE_DIR "gsl/gsl")
 if(GSL_INCLUDE_DIR)
     set(GSL_INCLUDE_DIRS "${GSL_INCLUDE_DIR}")
