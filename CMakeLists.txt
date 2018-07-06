@@ -8,14 +8,7 @@ project("csecore" VERSION "0.1.0")
 option(BUILD_SHARED_LIBS "Build shared libraries instead of static libraries" ON)
 option(CSECORE_BUILD_TESTS "Build test suite" ON)
 option(CSECORE_BUILD_APIDOC "Build API documentation" ON)
-
 option(CSECORE_USING_CONAN "Whether Conan is used for package management" OFF)
-if(CSECORE_USING_CONAN)
-    set(CSECORE_CONANBUILDINFO_FILE "${CMAKE_BINARY_DIR}/conanbuildinfo.cmake"
-        CACHE FILEPATH
-        "The path to the conanbuildinfo.cmake file"
-    )
-endif()
 
 # ==============================================================================
 # Global internal configuration
@@ -28,29 +21,32 @@ list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_SOURCE_DIR}/cmake")
 # The main purpose of this is to ensure that the DLLs and test executables
 # end up in the same directory on Windows, so that the OS finds the former
 # when running the latter.
-get_property(isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
-if(isMultiConfig)
-    foreach(c ${CMAKE_CONFIGURATION_TYPES})
-        set(outputDir "${CMAKE_BINARY_DIR}/output/${c}")
-        string(TOUPPER "${c}" config)
-        set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${config} "${outputDir}/lib")
-        set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_${config} "${outputDir}/lib")
-        set(CMAKE_PDB_OUTPUT_DIRECTORY_${config}     "${outputDir}/lib")
-        set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${config} "${outputDir}/bin")
-    endforeach()
+if(CMAKE_CONFIGURATION_TYPES)
+    set(configTypes ${CMAKE_CONFIGURATION_TYPES})
 else()
-    set(outputDir "${CMAKE_BINARY_DIR}/output")
-    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${outputDir}/lib")
-    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${outputDir}/lib")
-    set(CMAKE_PDB_OUTPUT_DIRECTORY     "${outputDir}/lib")
-    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${outputDir}/bin")
+    set(configTypes Debug Release RelWithDebInfo MinSizeRel)
+    if(NOT CMAKE_BUILD_TYPE)
+        set(CMAKE_BUILD_TYPE "Release")
+    endif()
 endif()
+foreach(c IN LISTS configTypes)
+    string(TOLOWER "${c}" configL)
+    string(TOUPPER "${c}" configU)
+    set(outputDir "${CMAKE_BINARY_DIR}/output/${configL}")
+    set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${configU} "${outputDir}/lib")
+    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_${configU} "${outputDir}/lib")
+    set(CMAKE_PDB_OUTPUT_DIRECTORY_${configU}     "${outputDir}/lib")
+    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${configU} "${outputDir}/bin")
+endforeach()
 
-# Use the highest warning levels, and treat all warnings as errors.
+# Use the highest warning levels and treat all warnings as errors,
+# but ignore a few selected warnings.
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     add_compile_options("-Wall" "-Wextra" "-Wpedantic" "-Werror")
+    add_compile_options("-Wno-parentheses")
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    add_compile_options("/W4" "/WX" "/wd4996")
+    add_compile_options("/W4" "/WX")
+    add_compile_options("/wd4996")
     add_definitions("-D_SCL_SECURE_NO_WARNINGS")
 endif()
 
@@ -78,11 +74,15 @@ set(CSECORE_EXPORT_TARGET "${PROJECT_NAME}-targets")
 # ==============================================================================
 
 if(CSECORE_USING_CONAN)
-    include("${CSECORE_CONANBUILDINFO_FILE}")
+    include("${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")
     conan_basic_setup(NO_OUTPUT_DIRS)
 endif()
 
+find_package(Threads REQUIRED) # OS thread library
 find_package(GSL REQUIRED)
+find_package(Boost REQUIRED COMPONENTS log system test thread uuid)
+find_package(FMILibrary REQUIRED)
+find_package(LIBZIP REQUIRED)
 
 # ==============================================================================
 # Targets
