@@ -53,6 +53,9 @@ endif()
 # Automatically export all symbols in Windows DLLs.
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
+# Organise projects in folders in IDEs that support it
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+
 # Prepare for export and installation.
 set(CSECORE_HEADER_INSTALL_DIR "include")
 if(WIN32)
