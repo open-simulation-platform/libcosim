@@ -128,7 +128,7 @@ std::shared_ptr<v2::slave_instance> fmu::instantiate_v2_slave()
         fmi2_cs_canBeInstantiatedOnlyOncePerProcess);
     if (isSingleton && !instances_.empty()) {
         throw error(
-            make_error_code(errc::unsupported_feature),
+            errc::unsupported_feature,
             "FMU can only be instantiated once");
     }
     auto instance =

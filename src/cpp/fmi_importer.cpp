@@ -143,7 +143,7 @@ namespace
         boost::trim(fmiVersion);
         if (fmiVersion.empty()) {
             throw error(
-                make_error_code(errc::bad_file),
+                errc::bad_file,
                 "Invalid modelDescription.xml; fmiVersion attribute missing or empty");
         }
         if (fmiVersion.size() >= 3 && fmiVersion.substr(0, 3) == "1.0") {
@@ -161,7 +161,7 @@ namespace
             boost::trim(md.guid);
             if (md.guid.empty()) {
                 throw error(
-                    make_error_code(errc::bad_file),
+                    errc::bad_file,
                     "Invalid modelDescription.xml; guid attribute missing or empty");
             }
         }
@@ -216,7 +216,7 @@ std::shared_ptr<fmu> importer::import(const std::filesystem::path& fmuPath)
     const auto modelDescriptionIndex = zip.find_entry("modelDescription.xml");
     if (modelDescriptionIndex == cse::utility::zip::invalid_entry_index) {
         throw error(
-            make_error_code(errc::bad_file),
+            errc::bad_file,
             fmuPath.string() + " does not contain modelDescription.xml");
     }
     zip.extract_file_to(modelDescriptionIndex, tempMdDir);
@@ -224,7 +224,7 @@ std::shared_ptr<fmu> importer::import(const std::filesystem::path& fmuPath)
     const auto minModelDesc = peek_model_description(tempMdDir);
     if (minModelDesc.fmiVersion == fmi_version::unknown) {
         throw error(
-            make_error_code(errc::unsupported_feature),
+            errc::unsupported_feature,
             "Unsupported FMI version for FMU '" + fmuPath.string() + "'");
     }
     auto git = guidCache_.find(minModelDesc.guid);
@@ -261,7 +261,7 @@ std::shared_ptr<fmu> importer::import_unpacked(
     const auto minModelDesc = peek_model_description(unpackedFMUPath);
     if (minModelDesc.fmiVersion == fmi_version::unknown) {
         throw error(
-            make_error_code(errc::unsupported_feature),
+            errc::unsupported_feature,
             "Unsupported FMI version for FMU at '" + unpackedFMUPath.string() + "'");
     }
     auto git = guidCache_.find(minModelDesc.guid);

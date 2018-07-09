@@ -20,7 +20,7 @@ variable_type to_variable_type(fmi1_base_type_enu_t t)
         case fmi1_base_type_str:  return variable_type::string;
         case fmi1_base_type_enum:
             throw cse::error(
-                make_error_code(errc::unsupported_feature),
+                errc::unsupported_feature,
                 "FMI 1.0 enumeration variable types not supported yet");
         default:
             CSE_PANIC();
@@ -37,7 +37,7 @@ variable_type to_variable_type(fmi2_base_type_enu_t t)
         case fmi2_base_type_str:  return variable_type::string;
         case fmi2_base_type_enum:
             throw cse::error(
-                make_error_code(errc::unsupported_feature),
+                errc::unsupported_feature,
                 "FMI 2.0 enumeration variable types not supported yet");
         default:
             CSE_PANIC();

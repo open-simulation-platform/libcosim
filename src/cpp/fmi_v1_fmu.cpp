@@ -128,7 +128,7 @@ std::shared_ptr<v1::slave_instance> fmu::instantiate_v1_slave()
         fmi1_import_get_capabilities(handle_));
     if (isSingleton && !instances_.empty()) {
         throw error(
-            make_error_code(errc::unsupported_feature),
+            errc::unsupported_feature,
             "FMU can only be instantiated once");
     }
     auto instance =
