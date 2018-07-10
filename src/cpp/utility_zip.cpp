@@ -277,17 +277,17 @@ std::filesystem::path archive::extract_file_to(
 // =============================================================================
 
 error::error(const std::string& msg) noexcept
-    : cse::error(errc::zip_error, msg)
+    : cse::error(make_error_code(errc::zip_error), msg)
 {
 }
 
 error::error(::zip* archive) noexcept
-    : cse::error(errc::zip_error, zip_strerror(archive))
+    : cse::error(make_error_code(errc::zip_error), zip_strerror(archive))
 {
 }
 
 error::error(zip_file* file) noexcept
-    : cse::error(errc::zip_error, zip_file_strerror(file))
+    : cse::error(make_error_code(errc::zip_error), zip_file_strerror(file))
 {
 }
 

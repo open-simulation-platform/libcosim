@@ -46,15 +46,15 @@ const std::error_category& error_category() noexcept
 }
 
 
-std::error_code make_error_code(errc e) noexcept
-{
-    return std::error_code(static_cast<int>(e), error_category());
-}
-
-
 std::error_condition make_error_condition(errc e) noexcept
 {
     return std::error_condition(static_cast<int>(e), error_category());
+}
+
+
+std::error_code make_error_code(errc e) noexcept
+{
+    return std::error_code(static_cast<int>(e), error_category());
 }
 
 

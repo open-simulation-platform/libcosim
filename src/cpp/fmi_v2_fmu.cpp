@@ -51,11 +51,15 @@ fmu::fmu(
     , handle_{fmi2_import_parse_xml(importer->fmilib_handle(), fmuDir.string().c_str(), nullptr)}
 {
     if (handle_ == nullptr) {
-        throw error(errc::bad_file, importer->last_error_message());
+        throw error(
+            make_error_code(errc::bad_file),
+            importer->last_error_message());
     }
     const auto fmuKind = fmi2_import_get_fmu_kind(handle_);
     if (!(fmuKind & fmi2_fmu_kind_cs)) {
-        throw error(errc::unsupported_feature, "Not a co-simulation FMU");
+        throw error(
+            make_error_code(errc::unsupported_feature),
+            "Not a co-simulation FMU");
     }
 
     modelDescription_.name          = fmi2_import_get_model_name(handle_);
@@ -128,7 +132,7 @@ std::shared_ptr<v2::slave_instance> fmu::instantiate_v2_slave()
         fmi2_cs_canBeInstantiatedOnlyOncePerProcess);
     if (isSingleton && !instances_.empty()) {
         throw error(
-            errc::unsupported_feature,
+            make_error_code(errc::unsupported_feature),
             "FMU can only be instantiated once");
     }
     auto instance =
@@ -258,7 +262,9 @@ slave_instance::slave_instance(std::shared_ptr<v2::fmu> fmu)
     , handle_{fmi2_import_parse_xml(fmu->importer()->fmilib_handle(), fmu->directory().string().c_str(), nullptr)}
 {
     if (handle_ == nullptr) {
-        throw error(errc::bad_file, fmu->importer()->last_error_message());
+        throw error(
+            make_error_code(errc::bad_file),
+            fmu->importer()->last_error_message());
     }
 
     fmi2_callback_functions_t callbacks;
@@ -272,7 +278,7 @@ slave_instance::slave_instance(std::shared_ptr<v2::fmu> fmu)
         const auto msg = fmu->importer()->last_error_message();
         fmi2_import_free(handle_);
         throw error(
-            errc::dl_load_error,
+            make_error_code(errc::dl_load_error),
             fmu->importer()->last_error_message());
     }
 }
@@ -309,7 +315,7 @@ void slave_instance::setup(
         fmi2_false);
     if (rci != jm_status_success) {
         throw error(
-            errc::model_error,
+            make_error_code(errc::model_error),
             last_log_record(instanceName).message);
     }
 
@@ -322,14 +328,14 @@ void slave_instance::setup(
         stopTime);
     if (rcs != fmi2_status_ok && rcs != fmi2_status_warning) {
         throw error(
-            errc::model_error,
+            make_error_code(errc::model_error),
             last_log_record(instanceName).message);
     }
 
     const auto rce = fmi2_import_enter_initialization_mode(handle_);
     if (rce != fmi2_status_ok && rce != fmi2_status_warning) {
         throw error(
-            errc::model_error,
+            make_error_code(errc::model_error),
             last_log_record(instanceName).message);
     }
 
@@ -345,7 +351,7 @@ void slave_instance::start_simulation()
     const auto rc = fmi2_import_exit_initialization_mode(handle_);
     if (rc != fmi2_status_ok && rc != fmi2_status_warning) {
         throw error(
-            errc::model_error,
+            make_error_code(errc::model_error),
             last_log_record(instanceName_).message);
     }
     simStarted_ = true;
@@ -359,7 +365,7 @@ void slave_instance::end_simulation()
     simStarted_ = false;
     if (rc != fmi2_status_ok && rc != fmi2_status_warning) {
         throw error(
-            errc::model_error,
+            make_error_code(errc::model_error),
             last_log_record(instanceName_).message);
     }
 }
@@ -375,11 +381,11 @@ bool slave_instance::do_step(time_point currentT, time_duration deltaT)
         return false;
     } else if (rc == fmi2_status_pending) {
         throw error(
-            errc::unsupported_feature,
+            make_error_code(errc::unsupported_feature),
             "Slave performs time step asynchronously");
     } else {
         throw error(
-            errc::model_error,
+            make_error_code(errc::model_error),
             last_log_record(instanceName_).message);
     }
 }
@@ -394,7 +400,7 @@ void slave_instance::get_real_variables(
         handle_, variables.data(), variables.size(), values.data());
     if (status != fmi2_status_ok && status != fmi2_status_warning) {
         throw error(
-            errc::model_error,
+            make_error_code(errc::model_error),
             last_log_record(instanceName_).message);
     }
 }
@@ -409,7 +415,7 @@ void slave_instance::get_integer_variables(
         handle_, variables.data(), variables.size(), values.data());
     if (status != fmi2_status_ok && status != fmi2_status_warning) {
         throw error(
-            errc::model_error,
+            make_error_code(errc::model_error),
             last_log_record(instanceName_).message);
     }
 }
@@ -425,7 +431,7 @@ void slave_instance::get_boolean_variables(
         handle_, variables.data(), variables.size(), fmiValues.data());
     if (status != fmi2_status_ok && status != fmi2_status_warning) {
         throw error(
-            errc::model_error,
+            make_error_code(errc::model_error),
             last_log_record(instanceName_).message);
     }
     for (int i = 0; i < values.size(); ++i) {
@@ -444,7 +450,7 @@ void slave_instance::get_string_variables(
         handle_, variables.data(), variables.size(), fmiValues.data());
     if (status != fmi2_status_ok && status != fmi2_status_warning) {
         throw error(
-            errc::model_error,
+            make_error_code(errc::model_error),
             last_log_record(instanceName_).message);
     }
     for (int i = 0; i < values.size(); ++i) {
@@ -467,7 +473,7 @@ bool slave_instance::set_real_variables(
         return false;
     } else {
         throw error(
-            errc::model_error,
+            make_error_code(errc::model_error),
             last_log_record(instanceName_).message);
     }
 }
@@ -486,7 +492,7 @@ bool slave_instance::set_integer_variables(
         return false;
     } else {
         throw error(
-            errc::model_error,
+            make_error_code(errc::model_error),
             last_log_record(instanceName_).message);
     }
 }
@@ -510,7 +516,7 @@ bool slave_instance::set_boolean_variables(
         return false;
     } else {
         throw error(
-            errc::model_error,
+            make_error_code(errc::model_error),
             last_log_record(instanceName_).message);
     }
 }
@@ -533,7 +539,7 @@ bool slave_instance::set_string_variables(
         return false;
     } else {
         throw error(
-            errc::model_error,
+            make_error_code(errc::model_error),
             last_log_record(instanceName_).message);
     }
 }
