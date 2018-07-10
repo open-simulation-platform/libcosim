@@ -1,22 +1,71 @@
 set(publicHeaderDir "${CMAKE_SOURCE_DIR}/include/cse")
+set(privateHeaderDir "${CMAKE_CURRENT_SOURCE_DIR}/cse")
+
 set(publicHeaders
-    "config.hpp"
     "hello_world.hpp"
+    "config.hpp"
+    "exception.hpp"
+    "fmi/fmu.hpp"
+    "fmi/importer.hpp"
+    "fmi/v1/fmu.hpp"
+    "fmi/v2/fmu.hpp"
+    "lib_info.hpp"
+    "log.hpp"
+    "model.hpp"
+    "slave.hpp"
+)
+set(privateHeaders
+    "error.hpp"
+    "fmi/glue.hpp"
+    "fmi/windows.hpp"
+    "log/logger.hpp"
+    "utility/filesystem.hpp"
+    "utility/uuid.hpp"
+    "utility/zip.hpp"
 )
 set(sources
     "hello_world.cpp"
+
+    "exception.cpp"
+    "fmi_importer.cpp"
+    "fmi_v1_fmu.cpp"
+    "fmi_v2_fmu.cpp"
+
+    "error.cpp"
+    "fmi_glue.cpp"
+    "fmi_windows.cpp"
+    "utility_filesystem.cpp"
+    "utility_uuid.cpp"
+    "utility_zip.cpp"
 )
 
 set(publicHeadersFull)
 foreach(h IN LISTS publicHeaders)
     list(APPEND publicHeadersFull "${publicHeaderDir}/${h}")
 endforeach()
-set(allSources ${publicHeadersFull} ${sources})
+set(privateHeadersFull)
+foreach(h IN LISTS privateHeaders)
+    list(APPEND privateHeadersFull "${privateHeaderDir}/${h}")
+endforeach()
+set(allSources ${publicHeadersFull} ${privateHeadersFull} ${sources})
 
 add_library(csecorecpp ${allSources})
 target_compile_features(csecorecpp PUBLIC "cxx_std_17")
 target_include_directories(csecorecpp PUBLIC "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>")
-target_link_libraries(csecorecpp PUBLIC gsl)
+target_link_libraries(csecorecpp
+    PUBLIC
+        ${FMILibrary_LIBRARIES}
+        libzip::libzip
+        Boost::boost
+        Boost::log
+        Boost::system
+        Boost::thread
+        gsl
+        Threads::Threads
+    )
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    target_link_libraries(csecorecpp INTERFACE "stdc++fs")
+endif()
 if(WIN32 AND NOT BUILD_SHARED_LIBS)
     set_target_properties(csecorecpp PROPERTIES OUTPUT_NAME "libcsecorecpp")
 endif()

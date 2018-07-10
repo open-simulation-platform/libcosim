@@ -1,5 +1,0 @@
-[requires]
-gsl_microsoft/1.0.0@bincrafters/stable
-
-[generators]
-cmake
