@@ -32,7 +32,7 @@ variable_type to_variable_type(fmi2_base_type_enu_t t);
 
 /**
  *  Converts an FMI 1.0 variable causality to "our" corresponding causality.
- *  
+ *
  *  The causality mapping is not unique, so the variable's variability is also
  *  needed.
  */

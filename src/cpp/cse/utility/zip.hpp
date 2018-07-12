@@ -43,22 +43,22 @@ constexpr entry_index invalid_entry_index = 0xFFFFFFFFFFFFFFFFull;
 
 /**
  *  A class for reading ZIP archives.
- *  
+ *
  *  Currently, only a limited set of reading operations are supported, and no
  *  writing/modification operations.
- *  
+ *
  *  A ZIP archive is organised as a number of *entries*, where each entry is a
  *  file or a directory.  Each entry has a unique integer index, and the indices
  *  run consecutively from 0 through `entry_count()-1`.  For example, a file with
  *  2 file entries and 1 directory entry, i.e. `entry_count() == 3`, could look
  *  like this:
- *  
+ *
  *      Index  Name
  *      -----  ----------------
  *          0  readme.txt
  *          1  images/
  *          2  images/photo.jpg
- *  
+ *
  */
 class archive
 {

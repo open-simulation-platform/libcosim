@@ -35,7 +35,7 @@ class slave_instance;
 
 /**
  *  A class which represents an imported FMI 2.0 FMU.
- *  
+ *
  *  This class is an implementation of fmi::fmu specialised for FMUs that
  *  implement FMI v2.0.
  */

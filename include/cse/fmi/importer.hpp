@@ -31,11 +31,11 @@ class fmu;
 
 /**
  *  Imports and caches FMUs.
- *  
+ *
  *  The main purpose of this class is to read FMU files and create
  *  `cse::fmi::fmu` objects to represent them.  This is done with the
  *  `import()` function.
- *  
+ *
  *  An `importer` object uses an on-disk cache that holds the unpacked
  *  contents of previously imported FMUs, so that they don't need to be
  *  unpacked anew every time they are imported.  This is a huge time-saver
@@ -44,7 +44,7 @@ class fmu;
  *  destruction.  Thus, if the same path is supplied each time, the cache
  *  becomes persistent between program runs.  It may be cleared manually
  *  by calling `clean_cache()`.
- *  
+ *
  *  \warning
  *      Currently, there are no synchronisation mechanisms to protect the
  *      cache from concurrent use, so accessing the same cache from
@@ -56,9 +56,9 @@ public:
     /**
      *  Creates a new FMU importer that uses a specific cache
      *  directory.
-     *  
+     *
      *  The cache directory will not be removed or emptied on destruction.
-     *  
+     *
      *  \param [in] cachePath
      *      The path to the directory which will hold the FMU cache.
      *      If it does not exist already, it will be created.

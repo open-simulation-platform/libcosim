@@ -92,7 +92,7 @@
  */
 #define CSE_PANIC_M(message) \
     do { ::cse::detail::panic(__FILE__, __LINE__, message); } while(false)
-        
+
 
 namespace cse
 {
