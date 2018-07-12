@@ -1,6 +1,6 @@
 /**
  *  \file
- *  \brief FMU import functionality.
+ *  FMU import functionality.
  */
 #ifndef CSE_FMI_IMPORTER_HPP
 #define CSE_FMI_IMPORTER_HPP
@@ -30,7 +30,7 @@ class fmu;
 
 
 /**
- *  \brief  Imports and caches FMUs.
+ *  Imports and caches FMUs.
  *  
  *  The main purpose of this class is to read FMU files and create
  *  `cse::fmi::fmu` objects to represent them.  This is done with the
@@ -54,8 +54,8 @@ class importer : public std::enable_shared_from_this<importer>
 {
 public:
     /**
-     *  \brief  Creates a new FMU importer that uses a specific cache
-     *          directory.
+     *  Creates a new FMU importer that uses a specific cache
+     *  directory.
      *  
      *  The cache directory will not be removed or emptied on destruction.
      *  
@@ -67,7 +67,7 @@ public:
         const std::filesystem::path& cachePath);
 
     /**
-     *  \brief  Creates a new FMU importer that uses a temporary cache
+     *  Creates a new FMU importer that uses a temporary cache
      *          directory.
      *
      *  A new cache directory will be created in a location suitable for
@@ -83,7 +83,7 @@ private:
 
 public:
     /**
-     *  \brief  Imports and loads an FMU.
+     *  Imports and loads an FMU.
      *
      *  Loaded FMUs are managed using reference counting.  If an FMU is loaded,
      *  and then the same FMU is loaded again before the first one has been
@@ -99,7 +99,7 @@ public:
     std::shared_ptr<fmu> import(const std::filesystem::path& fmuPath);
 
     /**
-     *  \brief  Imports and loads an FMU that has already been unpacked.
+     *  Imports and loads an FMU that has already been unpacked.
      *
      *  This is more or less equivalent to `import()`, but since the FMU is
      *  already unpacked its contents will be read from the specified directory
@@ -114,7 +114,7 @@ public:
         const std::filesystem::path& unpackedFMUPath);
 
     /**
-     *  \brief  Removes unused files and directories from the FMU cache.
+     *  Removes unused files and directories from the FMU cache.
      *
      *  This will remove all FMU contents from the cache, except the ones for
      *  which there currently exist FMU objects.

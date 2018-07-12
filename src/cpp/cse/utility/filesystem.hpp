@@ -1,6 +1,6 @@
 /**
  *  \file
- *  \brief File system utilities.
+ *  File system utilities.
  */
 #ifndef CSE_UTILITY_FILESYSTEM_HPP
 #define CSE_UTILITY_FILESYSTEM_HPP
@@ -16,7 +16,6 @@ namespace utility
 
 
 /**
- *  \brief
  *  An RAII object that creates a unique directory on construction and
  *  recursively deletes it again on destruction.
 */
@@ -24,7 +23,6 @@ class temp_dir
 {
 public:
     /**
-     *  \brief
      *  Creates a new temporary directory.
      *
      *  The name of the new directory will be randomly generated, and there are
@@ -45,7 +43,7 @@ public:
     temp_dir& operator=(const temp_dir&) = delete;
 
     /**
-     *  \brief  Move constructor.
+     *  Move constructor.
      *
      *  Ownership of the directory is transferred from `other` to `this`.
      *  Afterwards, `other` no longer refers to any directory, meaning that

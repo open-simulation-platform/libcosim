@@ -1,6 +1,6 @@
 /**
  *  \file
- *  \brief Conversions between FMI variable attributes and "our" attributes.
+ *  Conversions between FMI variable attributes and "our" attributes.
  */
 #ifndef CSE_FMI_GLUE_HPP
 #define CSE_FMI_GLUE_HPP
@@ -31,8 +31,7 @@ variable_type to_variable_type(fmi2_base_type_enu_t t);
 
 
 /**
- *  \brief  Converts an FMI 1.0 variable causality to "our" corresponding
- *          causality.
+ *  Converts an FMI 1.0 variable causality to "our" corresponding causality.
  *  
  *  The causality mapping is not unique, so the variable's variability is also
  *  needed.
@@ -42,10 +41,7 @@ variable_causality to_variable_causality(
     fmi1_variability_enu_t v);
 
 
-/**
- *  \brief  Converts an FMI 2.0 variable causality to "our" corresponding
- *          causality.
- */
+/// Converts an FMI 2.0 variable causality to "our" corresponding causality.
 variable_causality to_variable_causality(fmi2_causality_enu_t c);
 
 

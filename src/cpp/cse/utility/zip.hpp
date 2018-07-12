@@ -1,6 +1,6 @@
 /**
  * \file
- * \brief ZIP file manipulation
+ * ZIP file manipulation
  */
 #ifndef CSE_UTILITY_ZIP_HPP
 #define CSE_UTILITY_ZIP_HPP
@@ -27,7 +27,7 @@ namespace zip
 {
 
 /**
- *  \brief  A type for numeric zip entry indices.
+ *  A type for numeric zip entry indices.
  *  \see archive
  *  \see invalid_entry_index
  */
@@ -35,14 +35,14 @@ using entry_index = std::uint64_t;
 
 
 /**
- *  \brief  An index value that represents an invalid/unknown zip entry.
+ *  An index value that represents an invalid/unknown zip entry.
  *  \see archive
  */
 constexpr entry_index invalid_entry_index = 0xFFFFFFFFFFFFFFFFull;
 
 
 /**
- *  \brief  A class for reading ZIP archives.
+ *  A class for reading ZIP archives.
  *  
  *  Currently, only a limited set of reading operations are supported, and no
  *  writing/modification operations.
@@ -67,7 +67,7 @@ public:
     archive() noexcept;
 
     /**
-     *  \brief  Constructor which opens a ZIP archive.
+     *  Constructor which opens a ZIP archive.
      *
      *  This is equivalent to default construction followed by a call to `open()`.
      *
@@ -92,7 +92,7 @@ public:
     ~archive() noexcept;
 
     /**
-     *  \brief  Opens a ZIP archive.
+     *  Opens a ZIP archive.
      *
      *  \param [in] path
      *      The path to a ZIP archive file.
@@ -104,7 +104,7 @@ public:
     void open(const std::filesystem::path& path);
 
     /**
-     *  \brief  Closes the archive.
+     *  Closes the archive.
      *
      *  If no archive is open, this function has no effect.
      */
@@ -114,7 +114,7 @@ public:
     bool is_open() const noexcept;
 
     /**
-     *  \brief  Returns the number of entries in the archive.
+     *  Returns the number of entries in the archive.
      *
      *  This includes both files and directories.
      *
@@ -123,7 +123,7 @@ public:
     std::uint64_t entry_count() const;
 
     /**
-     *  \brief  Finds an entry by name.
+     *  Finds an entry by name.
      *
      *  \param [in] name
      *      The full name of a file or directory in the archive.  The search is
@@ -139,7 +139,7 @@ public:
     entry_index find_entry(const std::string& name) const;
 
     /**
-     *  \brief  Returns the name of an archive entry.
+     *  Returns the name of an archive entry.
      *
      *  \param [in] index
      *      An archive entry index in the range `[0,entry_count())`.
@@ -153,7 +153,7 @@ public:
     std::string entry_name(entry_index index) const;
 
     /**
-     *  \brief  Returns whether an archive entry is a directory.
+     *  Returns whether an archive entry is a directory.
      *
      *  This returns `true` if and only if the entry has zero size, has a CRC of
      *  zero, and a name which ends with a forward slash (/).
@@ -170,7 +170,7 @@ public:
     bool is_dir_entry(entry_index index) const;
 
     /**
-     *  \brief  Extracts the entire contents of the archive.
+     *  Extracts the entire contents of the archive.
      *
      *  This will extract all entries in the archive to the given target directory,
      *  recreating the subdirectory structure in the archive.
@@ -187,8 +187,8 @@ public:
     void extract_all(const std::filesystem::path& targetDir) const;
 
     /**
-     *  \brief  Extracts a single file from the archive, placing it in a specific
-     *          target directory.
+     *  Extracts a single file from the archive, placing it in a specific
+     *  target directory.
      *
      *  This ignores the directory structure *inside* the archive, i.e. the file
      *  will always be created directly under the given target directory.
@@ -223,19 +223,19 @@ class error : public cse::error
 public:
     /**
      *  \internal
-     *  \brief Creates an exception with the given message.
+     *  Creates an exception with the given message.
      */
     explicit error(const std::string& msg) noexcept;
 
     /**
      *  \internal
-     *  \brief Creates an exception for the last error for the given archive.
+     *  Creates an exception for the last error for the given archive.
      */
     explicit error(::zip* archive) noexcept;
 
     /**
      *  \internal
-     *  \brief Creates an exception for the last error for the given file.
+     *  Creates an exception for the last error for the given file.
      */
     explicit error(::zip_file* file) noexcept;
 };

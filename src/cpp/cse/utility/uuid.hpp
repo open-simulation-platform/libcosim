@@ -1,6 +1,6 @@
 /**
  *  \file
- *  \brief Utility functions for dealing with UUIDs.
+ *  Utility functions for dealing with UUIDs.
  */
 #ifndef CSE_UTILITY_UUID_HPP
 #define CSE_UTILITY_UUID_HPP

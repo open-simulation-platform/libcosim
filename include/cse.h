@@ -1,6 +1,6 @@
 /**
  *  \file
- *  \brief C library header.
+ *  C library header.
  *  \ingroup csecorec
  */
 #ifndef CSE_H
@@ -18,7 +18,7 @@ extern "C" {
 
 
 /**
- *  \brief  Writes the string "Hello World!" to a character buffer.
+ *  Writes the string "Hello World!" to a character buffer.
  *
  *  The size of `buffer` must be at least `size`. If it is less than 13 bytes,
  *  the string will be truncated.  The string will always be terminated by a

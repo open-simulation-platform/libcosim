@@ -114,6 +114,9 @@ if(CSECORE_BUILD_APIDOC)
     set(DOXYGEN_STRIP_FROM_INC_PATH "${CMAKE_SOURCE_DIR}/include")
     set(DOXYGEN_STRIP_FROM_PATH "${CMAKE_SOURCE_DIR}/include")
     set(DOXYGEN_TAGFILES "${CMAKE_SOURCE_DIR}/cmake/cppreference-doxygen-web.tag.xml=http://en.cppreference.com/w/")
+    set(DOXYGEN_JAVADOC_AUTOBRIEF "YES")
+    set(DOXYGEN_QT_AUTOBRIEF "YES")
+    set(DOXYGEN_MULTILINE_CPP_IS_BRIEF "YES")
     doxygen_add_docs(doc "${CMAKE_SOURCE_DIR}/include")
     add_custom_target(
         install-doc

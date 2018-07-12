@@ -1,6 +1,6 @@
 /**
  *  \file
- *  \brief Classes for dealing with FMI 2.0 FMUs.
+ *  Classes for dealing with FMI 2.0 FMUs.
  */
 #ifndef CSE_FMI_V2_FMU_HPP
 #define CSE_FMI_V2_FMU_HPP
@@ -34,7 +34,7 @@ class slave_instance;
 
 
 /**
- *  \brief  A class which represents an imported FMI 2.0 FMU.
+ *  A class which represents an imported FMI 2.0 FMU.
  *  
  *  This class is an implementation of fmi::fmu specialised for FMUs that
  *  implement FMI v2.0.
@@ -72,7 +72,7 @@ public:
     std::shared_ptr<fmi::importer> importer() const override;
 
     /**
-     *  \brief  Creates a new co-simulation slave instance.
+     *  Creates a new co-simulation slave instance.
      *
      *  This is equivalent to `instantiate_slave()`, except that the returned
      *  object is statically typed as an FMI 2.0 slave.

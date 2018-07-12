@@ -1,6 +1,6 @@
 /**
  *  \file
- *  \brief Facilities for logging control.
+ *  Facilities for logging control.
  */
 #ifndef CSE_LOG_HPP
 #define CSE_LOG_HPP

@@ -1,6 +1,6 @@
 /**
  *  \file
- *  \brief Slave interface.
+ *  Slave interface.
  */
 #ifndef CSE_SLAVE_HPP
 #define CSE_SLAVE_HPP
@@ -14,7 +14,7 @@ namespace cse
 
 
 /**
- *  \brief  An interface for classes that represent slave instances.
+ *  An interface for classes that represent slave instances.
  *
  *  The function call sequence is as follows:
  *
@@ -43,8 +43,8 @@ public:
     virtual cse::model_description model_description() const = 0;
 
     /**
-     *  \brief  Instructs the slave to perform pre-simulation setup and enter
-     *          initialisation mode.
+     *  Instructs the slave to perform pre-simulation setup and enter
+     *  initialisation mode.
      *
      *  This function is called when the slave has been added to an execution.
      *  The arguments `startTime` and `stopTime` represent the time interval
@@ -77,7 +77,7 @@ public:
         double relativeTolerance) = 0;
 
     /**
-     *  \brief  Informs the slave that the initialisation stage ends and the
+     *  Informs the slave that the initialisation stage ends and the
      *          simulation begins.
      */
     virtual void start_simulation() = 0;
@@ -86,8 +86,8 @@ public:
     virtual void end_simulation() = 0;
 
     /**
-     *  \brief  Performs model calculations for the time step which starts at
-     *          the time point `currentT` and has a duration of `deltaT`.
+     *  Performs model calculations for the time step which starts at
+     *  the time point `currentT` and has a duration of `deltaT`.
      *
      *  If this is not the first time step, it can be assumed that the previous
      *  time step ended at `currentT`.  It can also be assumed that `currentT`
@@ -107,7 +107,7 @@ public:
     virtual bool do_step(time_point currentT, time_duration deltaT) = 0;
 
     /**
-     *  \brief  Retrieves the values of real variables.
+     *  Retrieves the values of real variables.
      *
      *  On return, the `values` array will be filled with the values of the
      *  variables specified in `variables`, in the same order.
@@ -119,7 +119,7 @@ public:
         gsl::span<double> values) const = 0;
 
     /**
-     *  \brief  Retrieves the values of integer variables.
+     *  Retrieves the values of integer variables.
      *
      *  On return, the `values` array will be filled with the values of the
      *  variables specified in `variables`, in the same order.
@@ -131,7 +131,7 @@ public:
         gsl::span<int> values) const = 0;
 
     /**
-     *  \brief  Retrieves the values of boolean variables.
+     *  Retrieves the values of boolean variables.
      *
      *  On return, the `values` array will be filled with the values of the
      *  variables specified in `variables`, in the same order.
@@ -143,7 +143,7 @@ public:
         gsl::span<bool> values) const = 0;
 
     /**
-     *  \brief  Retrieves the values of string variables.
+     *  Retrieves the values of string variables.
      *
      *  On return, the `values` array will be filled with the values of the
      *  variables specified in `variables`, in the same order.
@@ -155,7 +155,7 @@ public:
         gsl::span<std::string> values) const = 0;
 
     /**
-     *  \brief  Sets the values of real variables.
+     *  Sets the values of real variables.
      *
      *  This will set the value of each variable specified in the `variables`
      *  array to the value given in the corresponding element of `values`.
@@ -172,7 +172,7 @@ public:
         gsl::span<const double> values) = 0;
 
     /**
-     *  \brief  Sets the values of integer variables.
+     *  Sets the values of integer variables.
      *
      *  This will set the value of each variable specified in the `variables`
      *  array to the value given in the corresponding element of `values`.
@@ -189,7 +189,7 @@ public:
         gsl::span<const int> values) = 0;
 
     /**
-     *  \brief  Sets the values of boolean variables.
+     *  Sets the values of boolean variables.
      *
      *  This will set the value of each variable specified in the `variables`
      *  array to the value given in the corresponding element of `values`.
@@ -206,7 +206,7 @@ public:
         gsl::span<const bool> values) = 0;
 
     /**
-     *  \brief  Sets the values of string variables.
+     *  Sets the values of string variables.
      *
      *  This will set the value of each variable specified in the `variables`
      *  array to the value given in the corresponding element of `values`.

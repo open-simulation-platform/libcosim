@@ -1,6 +1,6 @@
 /**
  *  \file
- *  \brief  Hello World!
+ *  Hello World!
  */
 #ifndef CSE_HELLO_WORLD_HPP
 #define CSE_HELLO_WORLD_HPP
@@ -14,7 +14,7 @@ namespace cse
 
 
 /**
- *  \brief  Writes the string "Hello World!" to a character buffer.
+ *  Writes the string "Hello World!" to a character buffer.
  *
  *  If the buffer is not large enough, the string will be truncated.
  *  No terminating zero byte will be written.
@@ -29,8 +29,8 @@ std::size_t hello_world(gsl::span<char> buffer) noexcept;
 
 
 /**
- *  \brief  Returns the answer to the ultimate question about life,
- *          the universe and everything.
+ *  Returns the answer to the ultimate question about life, the universe
+ *  and everything.
  */
 constexpr int get_ultimate_answer() noexcept
 {
