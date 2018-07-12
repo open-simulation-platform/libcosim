@@ -8,6 +8,7 @@ project("csecore" VERSION "0.1.0")
 option(BUILD_SHARED_LIBS "Build shared libraries instead of static libraries" ON)
 option(CSECORE_BUILD_TESTS "Build test suite" ON)
 option(CSECORE_BUILD_APIDOC "Build API documentation" ON)
+option(CSECORE_BUILD_PRIVATE_APIDOC "Build private API documentation" OFF)
 option(CSECORE_USING_CONAN "Whether Conan is used for package management" OFF)
 
 # ==============================================================================
@@ -117,7 +118,20 @@ if(CSECORE_BUILD_APIDOC)
     set(DOXYGEN_JAVADOC_AUTOBRIEF "YES")
     set(DOXYGEN_QT_AUTOBRIEF "YES")
     set(DOXYGEN_MULTILINE_CPP_IS_BRIEF "YES")
-    doxygen_add_docs(doc "${CMAKE_SOURCE_DIR}/include")
+    set(DOXYGEN_EXCLUDE_PATTERNS "*.cpp" "*.c")
+    set(doxygenInputs "${CMAKE_SOURCE_DIR}/include")
+    if(CSECORE_BUILD_PRIVATE_APIDOC)
+        list(APPEND doxygenInputs
+            "${CMAKE_SOURCE_DIR}/src/cpp"
+            "${CMAKE_SOURCE_DIR}/src/c"
+        )
+        list(APPEND DOXYGEN_STRIP_FROM_INC_PATH
+            "${CMAKE_SOURCE_DIR}/src/cpp"
+            "${CMAKE_SOURCE_DIR}/src/c"
+        )
+        list(APPEND DOXYGEN_STRIP_FROM_PATH "${CMAKE_SOURCE_DIR}")
+    endif()
+    doxygen_add_docs(doc ${doxygenInputs})
     add_custom_target(
         install-doc
         "${CMAKE_COMMAND}" "-E" "copy_directory"
