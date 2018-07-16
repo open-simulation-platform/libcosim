@@ -87,6 +87,7 @@ find_package(GSL REQUIRED)
 find_package(Boost REQUIRED COMPONENTS log system test thread uuid)
 find_package(FMILibrary REQUIRED)
 find_package(LIBZIP REQUIRED)
+find_package(Libevent2 REQUIRED)
 
 # ==============================================================================
 # Targets

@@ -15,9 +15,13 @@ class CSECoreConan(ConanFile):
         "cmake_findboost_modular/1.66.0@bincrafters/stable",
         "FMILibrary/2.0.3@kyllingstad/testing",
         "gsl_microsoft/1.0.0@bincrafters/stable",
+        "libevent/2.0.22@bincrafters/stable",
         "libzip/1.5.1@bincrafters/stable"
         )
-    default_options = "libzip:shared=True"
+    default_options = (
+        "libevent:with_openssl=False",
+        "libzip:shared=True"
+        )
 
     def imports(self):
         binDir = os.path.join("output", str(self.settings.build_type).lower(), "bin")

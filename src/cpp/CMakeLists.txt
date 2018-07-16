@@ -10,6 +10,7 @@ set(publicHeaders
     "fmi/v1/fmu.hpp"
     "fmi/v2/fmu.hpp"
     "lib_info.hpp"
+    "libevent.hpp"
     "log.hpp"
     "model.hpp"
     "slave.hpp"
@@ -34,6 +35,7 @@ set(sources
     "error.cpp"
     "fmi_glue.cpp"
     "fmi_windows.cpp"
+    "libevent.cpp"
     "utility_filesystem.cpp"
     "utility_uuid.cpp"
     "utility_zip.cpp"
@@ -56,6 +58,7 @@ target_link_libraries(csecorecpp
     PUBLIC
         ${FMILibrary_LIBRARIES}
         libzip::libzip
+        libevent2::core
         Boost::boost
         Boost::log
         Boost::system
