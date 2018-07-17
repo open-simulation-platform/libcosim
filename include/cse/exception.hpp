@@ -29,6 +29,16 @@ enum class errc
     /// The model reported an error
     model_error,
 
+    /**
+     *  One or more variable values are out of range or otherwise invalid,
+     *  but the simulation can proceed anyway.
+     *
+     *  Since this error condition is usually acceptable, and therefore needs
+     *  to be handled separately from other simulation errors, it has its own
+     *  exception class: `cse::nonfatal_bad_value`
+     */
+    nonfatal_bad_value,
+
     /// ZIP file error
     zip_error
 };
@@ -62,7 +72,7 @@ class error : public std::runtime_error
 {
 public:
     /// Constructs an exception with the given error code.
-    error(std::error_code ec)
+    explicit error(std::error_code ec)
         : std::runtime_error(ec.message())
         , code_(ec)
     { }
@@ -85,6 +95,30 @@ public:
 
 private:
     std::error_code code_;
+};
+
+
+/**
+ *  An exception which indicates that one or more variable values are out
+ *  of range or otherwise invalid, but the simulation can proceed anyway.
+ *
+ *  This is merely a `cse::error` with code `errc::nonfatal_bad_value`.
+ *  Since this error condition is usually acceptable, and therefore needs
+ *  to be handled separately from other simulation errors, it has its own
+ *  exception class.
+ */
+class nonfatal_bad_value : public error
+{
+public:
+    /// Constructs an exception with a default error message.
+    nonfatal_bad_value()
+        : error(make_error_code(errc::nonfatal_bad_value))
+    { }
+
+    /// Constructs an exception with a custom error message.
+    explicit nonfatal_bad_value(const std::string& msg)
+        : error(make_error_code(errc::nonfatal_bad_value), msg)
+    { }
 };
 
 

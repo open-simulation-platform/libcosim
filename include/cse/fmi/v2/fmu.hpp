@@ -142,16 +142,16 @@ public:
         gsl::span<const variable_index> variables,
         gsl::span<std::string> values) const override;
 
-    bool set_real_variables(
+    void set_real_variables(
         gsl::span<const variable_index> variables,
         gsl::span<const double> values) override;
-    bool set_integer_variables(
+    void set_integer_variables(
         gsl::span<const variable_index> variables,
         gsl::span<const int> values) override;
-    bool set_boolean_variables(
+    void set_boolean_variables(
         gsl::span<const variable_index> variables,
         gsl::span<const bool> values) override;
-    bool set_string_variables(
+    void set_string_variables(
         gsl::span<const variable_index> variables,
         gsl::span<const std::string> values) override;
 

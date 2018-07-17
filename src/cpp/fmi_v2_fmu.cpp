@@ -460,7 +460,7 @@ void slave_instance::get_string_variables(
 }
 
 
-bool slave_instance::set_real_variables(
+void slave_instance::set_real_variables(
     gsl::span<const variable_index> variables,
     gsl::span<const double> values)
 {
@@ -468,9 +468,9 @@ bool slave_instance::set_real_variables(
     const auto status = fmi2_import_set_real(
         handle_, variables.data(), variables.size(), values.data());
     if (status == fmi2_status_ok || status == fmi2_status_warning) {
-        return true;
+        return;
     } else if (status == fmi2_status_discard) {
-        return false;
+        throw nonfatal_bad_value(last_log_record(instanceName_).message);
     } else {
         throw error(
             make_error_code(errc::model_error),
@@ -479,7 +479,7 @@ bool slave_instance::set_real_variables(
 }
 
 
-bool slave_instance::set_integer_variables(
+void slave_instance::set_integer_variables(
     gsl::span<const variable_index> variables,
     gsl::span<const int> values)
 {
@@ -487,9 +487,9 @@ bool slave_instance::set_integer_variables(
     const auto status = fmi2_import_set_integer(
         handle_, variables.data(), variables.size(), values.data());
     if (status == fmi2_status_ok || status == fmi2_status_warning) {
-        return true;
+        return;
     } else if (status == fmi2_status_discard) {
-        return false;
+        throw nonfatal_bad_value(last_log_record(instanceName_).message);
     } else {
         throw error(
             make_error_code(errc::model_error),
@@ -498,7 +498,7 @@ bool slave_instance::set_integer_variables(
 }
 
 
-bool slave_instance::set_boolean_variables(
+void slave_instance::set_boolean_variables(
     gsl::span<const variable_index> variables,
     gsl::span<const bool> values)
 {
@@ -511,9 +511,9 @@ bool slave_instance::set_boolean_variables(
     const auto status = fmi2_import_set_boolean(
         handle_, variables.data(), variables.size(), fmiValues.data());
     if (status == fmi2_status_ok || status == fmi2_status_warning) {
-        return true;
+        return;
     } else if (status == fmi2_status_discard) {
-        return false;
+        throw nonfatal_bad_value(last_log_record(instanceName_).message);
     } else {
         throw error(
             make_error_code(errc::model_error),
@@ -522,7 +522,7 @@ bool slave_instance::set_boolean_variables(
 }
 
 
-bool slave_instance::set_string_variables(
+void slave_instance::set_string_variables(
     gsl::span<const variable_index> variables,
     gsl::span<const std::string> values)
 {
@@ -534,9 +534,9 @@ bool slave_instance::set_string_variables(
     const auto status = fmi2_import_set_string(
         handle_, variables.data(), variables.size(), fmiValues.data());
     if (status == fmi2_status_ok || status == fmi2_status_warning) {
-        return true;
+        return;
     } else if (status == fmi2_status_discard) {
-        return false;
+        throw nonfatal_bad_value(last_log_record(instanceName_).message);
     } else {
         throw error(
             make_error_code(errc::model_error),
