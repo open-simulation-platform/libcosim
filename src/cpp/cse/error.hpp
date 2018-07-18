@@ -1,6 +1,6 @@
 /**
  *  \file
- *  \brief Error handling facilities.
+ *  Error handling facilities.
  */
 #ifndef CSE_ERROR_HPP
 #define CSE_ERROR_HPP
@@ -11,9 +11,9 @@
 
 /**
  *  \def    CSE_INPUT_CHECK(test)
- *  \brief  Checks the value of one or more function input parameters, and
- *          throws an `std::invalid_argument` if they do not fulfill the
- *          given requirements.
+ *  Checks the value of one or more function input parameters, and
+ *  throws an `std::invalid_argument` if they do not fulfill the
+ *  given requirements.
  *
  *  Example:
  *
@@ -71,8 +71,8 @@
 
 /**
  *  \def    CSE_PANIC()
- *  \brief  Prints an error message to the standard error stream and terminates
- *          the program.
+ *  Prints an error message to the standard error stream and terminates
+ *  the program.
  *
  *  The printed message will contain the file name and line number at which
  *  the macro is invoked.  The program is terminated by calling
@@ -83,8 +83,8 @@
 
 /**
  *  \def    CSE_PANIC_M(message)
- *  \brief  Prints a custom error message to the standard error stream and
- *          terminates the program.
+ *  Prints a custom error message to the standard error stream and
+ *  terminates the program.
  *
  *  The printed message will contain the file name and line number at which
  *  the macro is invoked, in addition to the text provided in `message`.
@@ -92,7 +92,7 @@
  */
 #define CSE_PANIC_M(message) \
     do { ::cse::detail::panic(__FILE__, __LINE__, message); } while(false)
-        
+
 
 namespace cse
 {

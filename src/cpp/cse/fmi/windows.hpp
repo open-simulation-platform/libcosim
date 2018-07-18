@@ -1,6 +1,6 @@
 /**
  *  \file
- *  \brief Windows-specific things.
+ *  Windows-specific things.
  */
 #ifndef CSE_FMI_WINDOWS_HPP
 #define CSE_FMI_WINDOWS_HPP
@@ -20,7 +20,6 @@ namespace detail
 
 
 /**
- *  \brief
  *  Temporarily adds a path to the `PATH` environment variable for the current
  *  process.
  *

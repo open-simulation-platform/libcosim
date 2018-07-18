@@ -1,6 +1,6 @@
 /**
  *  \file
- *  \brief Model-descriptive types and constants.
+ *  Model-descriptive types and constants.
  */
 #ifndef CSE_MODEL_HPP
 #define CSE_MODEL_HPP
@@ -27,7 +27,7 @@ const time_point eternity = std::numeric_limits<time_point>::infinity();
 
 
 /**
- *  \brief  The type used to specify (simulation) time durations.
+ *  The type used to specify (simulation) time durations.
  *
  *  If `t1` and `t2` have type TimePoint, then `t2-t1` has type TimeDuration.
  *  If `t` has type TimePoint and `dt` has type TimeDuration, then `t+dt` has type
@@ -132,14 +132,14 @@ inline std::ostream& operator<<(std::ostream& stream, variable_variability v)
 struct variable_description
 {
     /**
-     *  \brief  A textual identifier for the variable.
+     *  A textual identifier for the variable.
      *
      *  The name must be unique within the model.
      */
     std::string name;
 
     /**
-     *  \brief  A numerical identifier for the value the variable refers to.
+     *  A numerical identifier for the value the variable refers to.
      *
      *  The variable reference must be unique within the model and data type.
      *  That is, a real variable and an integer variable may have the same

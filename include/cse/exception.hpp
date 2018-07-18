@@ -1,6 +1,6 @@
 /**
  *  \file
- *  \brief Exceptions and error codes.
+ *  Exceptions and error codes.
  */
 #ifndef CSE_EXCEPTION_HPP
 #define CSE_EXCEPTION_HPP
@@ -47,7 +47,6 @@ std::error_code make_error_code(errc e) noexcept;
 
 
 /**
- *  \brief
  *  The base class for exceptions specific to this library.
  *
  *  Most exceptions thrown by functions in this library will be of this type,
@@ -69,8 +68,8 @@ public:
     { }
 
     /**
-     *  \brief  Constructs an exception with the given error code and an
-     *          additional error message.
+     *  Constructs an exception with the given error code and an additional
+     *  error message.
      *
      *  The `what()` function is guaranteed to return a string which contains
      *  the text in `msg` in addition to the standard message associated with

@@ -1,6 +1,6 @@
 /**
  *  \file
- *  \brief Defines a version-independent FMU interface.
+ *  Defines a version-independent FMU interface.
  */
 #ifndef CSE_FMI_FMU_HPP
 #define CSE_FMI_FMU_HPP
@@ -35,7 +35,7 @@ class slave_instance;
 
 
 /**
- *  \brief  An interface for classes that represent imported FMUs.
+ *  An interface for classes that represent imported FMUs.
  *
  *  This is an abstract class which only defines the functions that are common
  *  between different FMI versions.  Use `fmi::importer::import()` to  import
