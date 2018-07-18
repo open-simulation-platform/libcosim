@@ -62,7 +62,7 @@ public:
 
 
 /// An FMI co-simulation slave instance.
-class slave_instance : public cse::slave_instance
+class slave_instance : public cse::slave
 {
 public:
     /// Returns a reference to the FMU of which this is an instance.

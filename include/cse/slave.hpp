@@ -14,7 +14,7 @@ namespace cse
 
 
 /**
- *  An interface for classes that represent slave instances.
+ *  An interface for classes that represent co-simulation slaves.
  *
  *  The function call sequence is as follows:
  *
@@ -39,10 +39,10 @@ namespace cse
  *  that the slave has either ignored or accepted these values and is able
  *  to proceed.
  */
-class slave_instance
+class slave
 {
 public:
-    virtual ~slave_instance() { }
+    virtual ~slave() { }
 
     /// Returns a model description.
     virtual cse::model_description model_description() const = 0;
@@ -83,7 +83,7 @@ public:
 
     /**
      *  Informs the slave that the initialisation stage ends and the
-     *          simulation begins.
+     *  simulation begins.
      */
     virtual void start_simulation() = 0;
 

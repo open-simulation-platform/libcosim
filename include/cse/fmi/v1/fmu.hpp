@@ -117,7 +117,7 @@ public:
 
     ~slave_instance() noexcept;
 
-    // cse::slave_instance methods
+    // cse::slave methods
     void setup(
         std::string_view slaveName,
         std::string_view executionName,
