@@ -8,6 +8,7 @@ class CSECoreConan(ConanFile):
     generators = "cmake"
     requires = (
         "boost_algorithm/1.66.0@bincrafters/stable",
+        "boost_fiber/1.66.0@bincrafters/stable",
         "boost_log/1.66.0@bincrafters/stable",
         "boost_property_tree/1.66.0@bincrafters/stable",
         "boost_test/1.66.0@bincrafters/stable",
@@ -26,3 +27,4 @@ class CSECoreConan(ConanFile):
     def imports(self):
         binDir = os.path.join("output", str(self.settings.build_type).lower(), "bin")
         self.copy("*.dll", dst=binDir, keep_path=False)
+        self.copy("*.pdb", dst=binDir, keep_path=False)

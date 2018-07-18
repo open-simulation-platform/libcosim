@@ -3,6 +3,7 @@ set(privateHeaderDir "${CMAKE_CURRENT_SOURCE_DIR}/cse")
 
 set(publicHeaders
     "hello_world.hpp"
+    "async_slave.hpp"
     "config.hpp"
     "exception.hpp"
     "fmi/fmu.hpp"
@@ -60,6 +61,8 @@ target_link_libraries(csecorecpp
         libzip::libzip
         libevent2::core
         Boost::boost
+        Boost::context
+        Boost::fiber
         Boost::log
         Boost::system
         Boost::thread
