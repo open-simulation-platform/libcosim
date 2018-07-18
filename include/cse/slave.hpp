@@ -14,32 +14,37 @@ namespace cse
 
 
 /**
- *  An interface for classes that represent slave instances.
+ *  An interface for classes that represent co-simulation slaves.
  *
  *  The function call sequence is as follows:
  *
  *    1. `setup()`:
  *          Configure the slave and enter initialisation mode.
- *    2. `set_<type>()`, `get_<type>()`:
+ *    2. `set_<type>_variables()`, `get_<type>_variables()`:
  *          Variable initialisation.  The functions may be called multiple times
  *          in any order.
  *    3. `start_simulation()`:
  *          End initialisation mode, start simulation.
- *    4. `do_step()`, `get_<type>()`, `set_<type>()`:
+ *    4. `do_step()`, `get_<type>_variables()`, `set_<type>_variables()`:
  *          Simulation.  The functions may be called multiple times, in this
  *          order.
  *    5. `end_simulation()`:
  *          End simulation.
  *
- *  Any method may throw an exception, after which the slave instance is considered
- *  to be "broken" and no further method calls will be made.
+ *  Any method may throw an exception.  In almost all cases, the slave will
+ *  be considered "broken" after this happens, and no further method calls
+ *  will be made.  The sole exception to this rule is that the
+ *  `set_<type>_variables()` methods may throw `nonfatal_bad_value` to
+ *  indicate that one or more variables were out of the allowed range, but
+ *  that the slave has either ignored or accepted these values and is able
+ *  to proceed.
  */
-class slave_instance
+class slave
 {
 public:
-    virtual ~slave_instance() { }
+    virtual ~slave() { }
 
-    /// Returns an object that describes the slave type.
+    /// Returns a model description.
     virtual cse::model_description model_description() const = 0;
 
     /**
@@ -78,7 +83,7 @@ public:
 
     /**
      *  Informs the slave that the initialisation stage ends and the
-     *          simulation begins.
+     *  simulation begins.
      */
     virtual void start_simulation() = 0;
 
@@ -103,7 +108,7 @@ public:
      *  \note
      *      Currently, retrying a failed time step is not supported, but this is
      *      planned for a future version.
-    */
+     */
     virtual bool do_step(time_point currentT, time_duration deltaT) = 0;
 
     /**
@@ -160,14 +165,13 @@ public:
      *  This will set the value of each variable specified in the `variables`
      *  array to the value given in the corresponding element of `values`.
      *
-     *  \returns
-     *      `true` if successful and `false` in the case of non-fatal problems
-     *      (e.g. if one or more values were invalid and have simply been
-     *      ignored).
+     *  The function may throw `nonfatal_bad_value` to indicate that one or
+     *  more values were out of range or invalid, but that these values have
+     *  been accepted or ignored so the simulation can proceed.
      *
      *  \pre `variables.size() == values.size()`
      */
-    virtual bool set_real_variables(
+    virtual void set_real_variables(
         gsl::span<const variable_index> variables,
         gsl::span<const double> values) = 0;
 
@@ -177,14 +181,13 @@ public:
      *  This will set the value of each variable specified in the `variables`
      *  array to the value given in the corresponding element of `values`.
      *
-     *  \returns
-     *      `true` if successful and `false` in the case of non-fatal problems
-     *      (e.g. if one or more values were invalid and have simply been
-     *      ignored).
+     *  The function may throw `nonfatal_bad_value` to indicate that one or
+     *  more values were out of range or invalid, but that these values have
+     *  been accepted or ignored so the simulation can proceed.
      *
      *  \pre `variables.size() == values.size()`
      */
-    virtual bool set_integer_variables(
+    virtual void set_integer_variables(
         gsl::span<const variable_index> variables,
         gsl::span<const int> values) = 0;
 
@@ -194,14 +197,13 @@ public:
      *  This will set the value of each variable specified in the `variables`
      *  array to the value given in the corresponding element of `values`.
      *
-     *  \returns
-     *      `true` if successful and `false` in the case of non-fatal problems
-     *      (e.g. if one or more values were invalid and have simply been
-     *      ignored).
+     *  The function may throw `nonfatal_bad_value` to indicate that one or
+     *  more values were out of range or invalid, but that these values have
+     *  been accepted or ignored so the simulation can proceed.
      *
      *  \pre `variables.size() == values.size()`
      */
-    virtual bool set_boolean_variables(
+    virtual void set_boolean_variables(
         gsl::span<const variable_index> variables,
         gsl::span<const bool> values) = 0;
 
@@ -211,14 +213,13 @@ public:
      *  This will set the value of each variable specified in the `variables`
      *  array to the value given in the corresponding element of `values`.
      *
-     *  \returns
-     *      `true` if successful and `false` in the case of non-fatal problems
-     *      (e.g. if one or more values were invalid and have simply been
-     *      ignored).
+     *  The function may throw `nonfatal_bad_value` to indicate that one or
+     *  more values were out of range or invalid, but that these values have
+     *  been accepted or ignored so the simulation can proceed.
      *
      *  \pre `variables.size() == values.size()`
      */
-    virtual bool set_string_variables(
+    virtual void set_string_variables(
         gsl::span<const variable_index> variables,
         gsl::span<const std::string> values) = 0;
 };
