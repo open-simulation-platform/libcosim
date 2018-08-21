@@ -49,6 +49,24 @@ int main()
             return 1;
         }
 
+        cse_variable_index realInVar = 0;
+        const double realInVal = 5.0;
+        rc = cse_execution_slave_set_real(execution, slave, &realInVar, 1, &realInVal);
+        if (rc < 0) {
+            print_last_error();
+            cse_execution_destroy(execution);
+            return 1;
+        }
+
+        cse_variable_index intInVar = 0;
+        const int intInVal = 42;
+        rc = cse_execution_slave_set_integer(execution, slave, &intInVar, 1, &intInVal);
+        if (rc < 0) {
+            print_last_error();
+            cse_execution_destroy(execution);
+            return 1;
+        }
+
         cse_variable_index realOutVar = 0;
         double realOutVal = -1.0;
         rc = cse_execution_slave_get_real(
@@ -60,8 +78,22 @@ int main()
             return 1;
         }
 
-        if (realOutVal != 0.0) {
-            fprintf(stderr, "Expected value 0, got %f\n", realOutVal);
+        cse_variable_index intOutVar = 0;
+        int intOutVal = 10;
+        rc = cse_execution_slave_get_integer(execution, slave, &intOutVar, 1, &intOutVal);
+        if (rc < 0) {
+            print_last_error();
+            cse_execution_destroy(execution);
+            return 1;
+        }
+
+        if (realOutVal != 5.0) {
+            fprintf(stderr, "Expected value 5.0, got %f\n", realOutVal);
+            cse_execution_destroy(execution);
+            return 1;
+        }
+        if (intOutVal != 42) {
+            fprintf(stderr, "Expected value 42, got %i\n", intOutVal);
             cse_execution_destroy(execution);
             return 1;
         }

@@ -175,6 +175,32 @@ cse_slave_index cse_execution_add_slave_from_fmu(
  */
 int cse_execution_step(cse_execution* execution, cse_time_duration stepSize);
 
+/**
+ *  \brief
+ *  Sets the values of real variables for one slave.
+ *
+ *  \param [in] execution
+ *      The execution.
+ *  \param [in] slave
+ *      The slave.
+ *  \param [in] variables
+ *      A pointer to an array of length `nv` that contains the (slave-specific)
+ *      indices of variables to retrieve.
+ *  \param [in] nv
+ *      The length of the `variables` and `values` arrays.
+ *  \param [out] values
+ *      A pointer to an array of length `nv` which will be filled with the
+ *      values of the variables specified in `variables`, in the same order.
+ *
+ *  \returns
+ *      0 on success and -1 on error.
+ */
+int cse_execution_slave_set_real(
+        cse_execution* execution,
+        cse_slave_index slave,
+        const cse_variable_index variables[],
+        size_t nv,
+        const double values[]);
 
 /**
  *  \brief
@@ -202,6 +228,60 @@ int cse_execution_slave_get_real(
     const cse_variable_index variables[],
     size_t nv,
     double values[]);
+
+/**
+ *  \brief
+ *  Sets the values of integer variables for one slave.
+ *
+ *  \param [in] execution
+ *      The execution.
+ *  \param [in] slave
+ *      The slave.
+ *  \param [in] variables
+ *      A pointer to an array of length `nv` that contains the (slave-specific)
+ *      indices of variables to set.
+ *  \param [in] nv
+ *      The length of the `variables` and `values` arrays.
+ *  \param [out] values
+ *      A pointer to an array of length `nv` which will be filled with the
+ *      values of the variables specified in `variables`, in the same order.
+ *
+ *  \returns
+ *      0 on success and -1 on error.
+ */
+int cse_execution_slave_set_integer(
+        cse_execution* execution,
+        cse_slave_index slave,
+        const cse_variable_index variables[],
+        size_t nv,
+        const int values[]);
+
+/**
+ *  \brief
+ *  Retrieves the values of integer variables for one slave.
+ *
+ *  \param [in] execution
+ *      The execution.
+ *  \param [in] slave
+ *      The slave.
+ *  \param [in] variables
+ *      A pointer to an array of length `nv` that contains the (slave-specific)
+ *      indices of variables to retrieve.
+ *  \param [in] nv
+ *      The length of the `variables` and `values` arrays.
+ *  \param [out] values
+ *      A pointer to an array of length `nv` which will be filled with the
+ *      values of the variables specified in `variables`, in the same order.
+ *
+ *  \returns
+ *      0 on success and -1 on error.
+ */
+int cse_execution_slave_get_integer(
+        cse_execution* execution,
+        cse_slave_index slave,
+        const cse_variable_index variables[],
+        size_t nv,
+        int values[]);
 
 
 /**
