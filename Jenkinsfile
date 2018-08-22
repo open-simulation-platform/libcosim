@@ -1,5 +1,10 @@
 pipeline {
-    agent { label 'windows' }
+    agent { 
+        dockerfile {
+            dir 'cse-core'
+            label 'windows'
+        }
+    }
 
     options { checkoutToSubdirectory('cse-core') }
 
