@@ -5,8 +5,10 @@
 #ifndef CSE_ERROR_HPP
 #define CSE_ERROR_HPP
 
+#include <cerrno>
 #include <stdexcept>
 #include <string>
+#include <system_error>
 
 
 /**
@@ -100,5 +102,35 @@ namespace detail
 {
     [[noreturn]] void panic(const char* file, int line, const char* msg) noexcept;
 }
+
+
+/**
+ *  Makes a `std::system_error` based on the error code currently stored
+ *  in `errno`.
+ *
+ *  \param [in] msg
+ *      A custom error message which will be forwarded to the
+ *      `std::system_error` constructor.
+ */
+inline std::system_error make_system_error(const std::string& msg) noexcept
+{
+    return std::system_error(errno, std::generic_category(), msg);
+}
+
+
+/**
+ *  Throws a `std::system_error` based on the error code currently stored
+ *  in `errno`.
+ *
+ *  \param [in] msg
+ *      A custom error message which will be forwarded to the
+ *      `std::system_error` constructor.
+ */
+[[noreturn]] inline void throw_system_error(const std::string& msg)
+{
+    throw make_system_error(msg);
+}
+
+
 } // namespace
 #endif // header guard

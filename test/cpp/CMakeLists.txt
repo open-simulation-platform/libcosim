@@ -1,9 +1,11 @@
 set(tests
+    "async_slave_mockup_test"
     "hello_world_test"
 )
 set(unittests
     "fmi_v1_fmu_unittest"
     "fmi_v2_fmu_unittest"
+    "libevent_unittest"
     "utility_filesystem_unittest"
     "utility_uuid_unittest"
     "utility_zip_unittest"

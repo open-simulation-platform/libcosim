@@ -3,6 +3,7 @@ set(privateHeaderDir "${CMAKE_CURRENT_SOURCE_DIR}/cse")
 
 set(publicHeaders
     "hello_world.hpp"
+    "async_slave.hpp"
     "config.hpp"
     "exception.hpp"
     "fmi/fmu.hpp"
@@ -10,6 +11,7 @@ set(publicHeaders
     "fmi/v1/fmu.hpp"
     "fmi/v2/fmu.hpp"
     "lib_info.hpp"
+    "libevent.hpp"
     "log.hpp"
     "model.hpp"
     "slave.hpp"
@@ -34,6 +36,7 @@ set(sources
     "error.cpp"
     "fmi_glue.cpp"
     "fmi_windows.cpp"
+    "libevent.cpp"
     "utility_filesystem.cpp"
     "utility_uuid.cpp"
     "utility_zip.cpp"
@@ -56,7 +59,10 @@ target_link_libraries(csecorecpp
     PUBLIC
         ${FMILibrary_LIBRARIES}
         libzip::libzip
+        libevent2::core
         Boost::boost
+        Boost::context
+        Boost::fiber
         Boost::log
         Boost::system
         Boost::thread
