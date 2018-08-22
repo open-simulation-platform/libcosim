@@ -7,8 +7,8 @@
 void print_last_error()
 {
     fprintf(stderr,
-        "Error code %d: %s\n",
-        cse_last_error_code(), cse_last_error_message());
+            "Error code %d: %s\n",
+            cse_last_error_code(), cse_last_error_message());
 }
 
 

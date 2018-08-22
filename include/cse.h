@@ -196,11 +196,11 @@ int cse_execution_step(cse_execution* execution, cse_time_duration stepSize);
  *      0 on success and -1 on error.
  */
 int cse_execution_slave_set_real(
-        cse_execution* execution,
-        cse_slave_index slave,
-        const cse_variable_index variables[],
-        size_t nv,
-        const double values[]);
+    cse_execution* execution,
+    cse_slave_index slave,
+    const cse_variable_index variables[],
+    size_t nv,
+    const double values[]);
 
 /**
  *  \brief
@@ -250,11 +250,11 @@ int cse_execution_slave_get_real(
  *      0 on success and -1 on error.
  */
 int cse_execution_slave_set_integer(
-        cse_execution* execution,
-        cse_slave_index slave,
-        const cse_variable_index variables[],
-        size_t nv,
-        const int values[]);
+    cse_execution* execution,
+    cse_slave_index slave,
+    const cse_variable_index variables[],
+    size_t nv,
+    const int values[]);
 
 /**
  *  \brief
@@ -277,11 +277,11 @@ int cse_execution_slave_set_integer(
  *      0 on success and -1 on error.
  */
 int cse_execution_slave_get_integer(
-        cse_execution* execution,
-        cse_slave_index slave,
-        const cse_variable_index variables[],
-        size_t nv,
-        int values[]);
+    cse_execution* execution,
+    cse_slave_index slave,
+    const cse_variable_index variables[],
+    size_t nv,
+    int values[]);
 
 
 /**
@@ -301,7 +301,6 @@ int cse_execution_slave_get_integer(
  *      everything, for no apparent reason.
  */
 int cse_hello_world(char* buffer, size_t size);
-
 
 
 #ifdef __cplusplus

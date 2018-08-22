@@ -94,8 +94,7 @@ const char* cse_last_error_message()
 }
 
 
-struct cse_execution_s
-{
+struct cse_execution_s {
     cse::time_duration currentTime;
     std::shared_ptr<cse::slave> slave;
 };
@@ -182,18 +181,19 @@ int cse_execution_step(cse_execution* execution, cse_time_duration stepSize)
 }
 
 int cse_execution_slave_set_real(
-        cse_execution *execution,
-        cse_slave_index slave,
-        const cse_variable_index variables[],
-        size_t nv,
-        const double values[]) {
+    cse_execution* execution,
+    cse_slave_index slave,
+    const cse_variable_index variables[],
+    size_t nv,
+    const double values[])
+{
     try {
         if (slave != 0) {
             throw std::out_of_range("Invalid slave index");
         }
         execution->slave->set_real_variables(
-                gsl::make_span(variables, nv),
-                gsl::make_span(values, nv));
+            gsl::make_span(variables, nv),
+            gsl::make_span(values, nv));
         return success;
     } catch (...) {
         handle_current_exception();
@@ -223,18 +223,19 @@ int cse_execution_slave_get_real(
 }
 
 int cse_execution_slave_set_integer(
-        cse_execution *execution,
-        cse_slave_index slave,
-        const cse_variable_index variables[],
-        size_t nv,
-        const int values[]) {
+    cse_execution* execution,
+    cse_slave_index slave,
+    const cse_variable_index variables[],
+    size_t nv,
+    const int values[])
+{
     try {
         if (slave != 0) {
             throw std::out_of_range("Invalid slave index");
         }
         execution->slave->set_integer_variables(
-                gsl::make_span(variables, nv),
-                gsl::make_span(values, nv));
+            gsl::make_span(variables, nv),
+            gsl::make_span(values, nv));
         return success;
     } catch (...) {
         handle_current_exception();
@@ -243,18 +244,19 @@ int cse_execution_slave_set_integer(
 }
 
 int cse_execution_slave_get_integer(
-        cse_execution *execution,
-        cse_slave_index slave,
-        const cse_variable_index variables[],
-        size_t nv,
-        int values[]) {
+    cse_execution* execution,
+    cse_slave_index slave,
+    const cse_variable_index variables[],
+    size_t nv,
+    int values[])
+{
     try {
         if (slave != 0) {
             throw std::out_of_range("Invalid slave index");
         }
         execution->slave->get_integer_variables(
-                gsl::make_span(variables, nv),
-                gsl::make_span(values, nv));
+            gsl::make_span(variables, nv),
+            gsl::make_span(values, nv));
         return success;
     } catch (...) {
         handle_current_exception();
@@ -264,7 +266,7 @@ int cse_execution_slave_get_integer(
 
 int cse_hello_world(char* buffer, size_t size)
 {
-    const auto n = cse::hello_world(gsl::make_span(buffer, size-1));
+    const auto n = cse::hello_world(gsl::make_span(buffer, size - 1));
     buffer[n] = '\0';
     return cse::get_ultimate_answer();
 }
