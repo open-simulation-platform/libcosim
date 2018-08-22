@@ -10,6 +10,7 @@
 #include <cassert>
 #include <list>
 #include <memory>
+#include <system_error>
 #include <utility>
 
 #include <boost/numeric/conversion/cast.hpp>
@@ -23,6 +24,30 @@ namespace cse
 
 namespace
 {
+
+#ifdef _WIN32
+// Helper class that handles startup and termination of the Winsock DLL.
+class winsock_dll
+{
+public:
+    winsock_dll()
+    {
+        WSADATA wsaData;
+        if (auto wsaError = WSAStartup(MAKEWORD(2, 2), &wsaData)) {
+            throw std::system_error(
+                wsaError,
+                std::system_category(),
+                "Failed to initialize Winsock");
+        }
+    }
+
+    ~winsock_dll()
+    {
+        WSACleanup();
+    }
+};
+#endif
+
 
 class libevent_event_loop : public event_loop
 {
@@ -260,6 +285,11 @@ public:
     }
 
 private:
+#ifdef _WIN32
+    // libevent uses Winsock functionality, so it is important that this
+    // is declared before eventBase_.
+    winsock_dll winsockDLL_;
+#endif
     unique_event_base_ptr eventBase_;
     std::list<socket> socketEvents_;
     std::list<timer> timerEvents_;
