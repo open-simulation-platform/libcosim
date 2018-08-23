@@ -94,7 +94,8 @@ const char* cse_last_error_message()
 }
 
 
-struct cse_execution_s {
+struct cse_execution_s
+{
     cse::time_duration currentTime;
     std::shared_ptr<cse::slave> slave;
 };
