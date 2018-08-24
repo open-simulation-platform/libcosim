@@ -24,8 +24,9 @@ pipeline {
                             steps {
                                 dir('debug-build') {
                                     bat 'conan install ../cse-core -s build_type=Debug -b missing'
-                                    bat 'cmake -DCMAKE_INSTALL_PREFIX=../install -DCSECORE_USING_CONAN=TRUE -DCSECORE_BUILD_PRIVATE_APIDOC=ON -G "Visual Studio 15 2017 Win64" ../cse-core'
+                                    bat 'cmake -DCMAKE_INSTALL_PREFIX=../install/debug -DCSECORE_USING_CONAN=TRUE -DCSECORE_BUILD_PRIVATE_APIDOC=ON -G "Visual Studio 15 2017 Win64" ../cse-core'
                                     bat 'cmake --build . --config Debug'
+                                    bat 'cmake --build . --target install'
                                 }
                             }
                         }
@@ -33,8 +34,9 @@ pipeline {
                             steps {
                                 dir('release-build') {
                                     bat 'conan install ../cse-core -s build_type=Release -b missing'
-                                    bat 'cmake -DCMAKE_INSTALL_PREFIX=../install -DCSECORE_USING_CONAN=TRUE -DCSECORE_BUILD_PRIVATE_APIDOC=ON -G "Visual Studio 15 2017 Win64" ../cse-core'
+                                    bat 'cmake -DCMAKE_INSTALL_PREFIX=../install/release -DCSECORE_USING_CONAN=TRUE -DCSECORE_BUILD_PRIVATE_APIDOC=ON -G "Visual Studio 15 2017 Win64" ../cse-core'
                                     bat 'cmake --build . --config Release'
+                                    bat 'cmake --build . --config Release --target install'
                                 }
                             }
                         }
@@ -53,6 +55,9 @@ pipeline {
                                         tools: [ CTest(pattern: 'debug-build/Testing/**/Test.xml') ]
                                     )
                                 }
+                                success {
+                                    archiveArtifacts artifacts: 'install/debug/**/*',  fingerprint: true
+                                }
                             }
                         }
                         stage ('Test Release') {
@@ -69,6 +74,9 @@ pipeline {
                                         thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
                                         tools: [ CTest(pattern: 'release-build/Testing/**/Test.xml') ]
                                     )
+                                }
+                                success {
+                                    archiveArtifacts artifacts: 'install/release/**/*',  fingerprint: true
                                 }
                             }
                         }
