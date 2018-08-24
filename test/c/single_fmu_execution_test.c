@@ -42,13 +42,6 @@ int main()
 
     double dt = 0.1;
     for (double t = 0.0; t <= 1.0; t += dt) {
-        rc = cse_execution_step(execution, dt);
-        if (rc < 0) {
-            print_last_error();
-            cse_execution_destroy(execution);
-            return 1;
-        }
-
         cse_variable_index realInVar = 0;
         const double realInVal = 5.0;
         rc = cse_execution_slave_set_real(execution, slave, &realInVar, 1, &realInVal);
@@ -61,6 +54,13 @@ int main()
         cse_variable_index intInVar = 0;
         const int intInVal = 42;
         rc = cse_execution_slave_set_integer(execution, slave, &intInVar, 1, &intInVal);
+        if (rc < 0) {
+            print_last_error();
+            cse_execution_destroy(execution);
+            return 1;
+        }
+
+        rc = cse_execution_step(execution, dt);
         if (rc < 0) {
             print_last_error();
             cse_execution_destroy(execution);
