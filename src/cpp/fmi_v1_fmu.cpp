@@ -13,16 +13,9 @@
 
 #include <gsl/gsl_util>
 
-#ifdef _MSC_VER
-#   pragma warning(push, 0)
-#endif
-#include <fmilib.h>
-#ifdef _MSC_VER
-#   pragma warning(pop)
-#endif
-
 #include "cse/error.hpp"
 #include <cse/exception.hpp>
+#include "cse/fmi/fmilib.h"
 #include "cse/fmi/glue.hpp"
 #include <cse/fmi/importer.hpp>
 #include "cse/log/logger.hpp"
