@@ -83,7 +83,7 @@ pipeline {
                     }
 
                     stages {
-                        stage('Conan config') {
+                        stage('Conan add remote') {
                             steps {
                                 sh 'conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan --force'
                             }
