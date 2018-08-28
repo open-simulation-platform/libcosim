@@ -18,6 +18,7 @@ set(publicHeaders
 )
 set(privateHeaders
     "error.hpp"
+    "fmi/fmilib.h"
     "fmi/glue.hpp"
     "fmi/windows.hpp"
     "log/logger.hpp"
@@ -54,7 +55,12 @@ set(allSources ${publicHeadersFull} ${privateHeadersFull} ${sources})
 
 add_library(csecorecpp ${allSources})
 target_compile_features(csecorecpp PUBLIC "cxx_std_17")
-target_include_directories(csecorecpp PUBLIC "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>")
+target_include_directories(csecorecpp
+    PUBLIC
+        "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>"
+    PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}"
+)
 target_link_libraries(csecorecpp
     PUBLIC
         ${FMILibrary_LIBRARIES}

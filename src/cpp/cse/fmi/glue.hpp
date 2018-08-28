@@ -5,14 +5,7 @@
 #ifndef CSE_FMI_GLUE_HPP
 #define CSE_FMI_GLUE_HPP
 
-#ifdef _MSC_VER
-#   pragma warning(push, 0)
-#endif
-#include <fmilib.h>
-#ifdef _MSC_VER
-#   pragma warning(pop)
-#endif
-
+#include "cse/fmi/fmilib.h"
 #include <cse/model.hpp>
 
 

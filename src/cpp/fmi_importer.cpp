@@ -12,15 +12,8 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 
-#ifdef _MSC_VER
-#   pragma warning(push, 0)
-#endif
-#include <fmilib.h>
-#ifdef _MSC_VER
-#   pragma warning(pop)
-#endif
-
 #include "cse/error.hpp"
+#include "cse/fmi/fmilib.h"
 #include <cse/fmi/v1/fmu.hpp>
 #include <cse/fmi/v2/fmu.hpp>
 #include "cse/log/logger.hpp"
