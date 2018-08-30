@@ -301,6 +301,77 @@ int cse_execution_slave_get_integer(
  */
 int cse_hello_world(char* buffer, size_t size);
 
+struct cse_address_s;
+typedef struct cse_address_s cse_address;
+
+int cse_address_destroy(cse_address* address);
+
+// Observer
+struct cse_observer_s;
+typedef struct cse_observer_s cse_observer;
+
+cse_observer* cse_membuffer_observer_create();
+
+int cse_observer_destroy(cse_observer* observer);
+
+cse_address* cse_observer_get_address(cse_observer* observer);
+
+
+// Slave
+struct cse_slave_s;
+typedef struct cse_slave_s cse_slave;
+
+cse_slave* cse_local_slave_create(const char* fmuPath);
+
+int cse_slave_destroy(cse_slave* slave);
+
+cse_address* cse_slave_get_address(cse_slave* s);
+
+
+// Master algorithm
+struct cse_algorithm_s;
+typedef struct cse_algorithm_s cse_algorithm;
+
+cse_algorithm* cse_fixed_step_algorithm_create(double stepSize);
+
+int cse_algorithm_destroy(cse_algorithm* algorithm);
+
+
+// Execution
+cse_execution* cse_execution_create2(cse_algorithm* algorithm);
+
+int cse_execution_add_slave(
+    cse_execution* execution,
+    cse_address* address,
+    const char* name);
+
+int cse_execution_add_observer(
+    cse_execution* execution,
+    cse_address* address,
+    const char* name);
+
+int cse_execution_start(cse_execution* execution);
+
+int cse_execution_stop(cse_execution* execution);
+
+typedef enum
+{
+    CSE_EXECUTION_STOPPED,
+    CSE_EXECUTION_RUNNING,
+    CSE_EXECUTION_ERROR
+} cse_execution_state;
+
+typedef struct
+{
+    double current_time;
+    cse_execution_state state;
+    int error_code;
+} cse_execution_status;
+
+double execution_get_status(
+    cse_execution* execution,
+    cse_execution_status* status);
+
 
 #ifdef __cplusplus
 } // extern(C)
