@@ -328,17 +328,10 @@ int cse_slave_destroy(cse_slave* slave);
 cse_address* cse_slave_get_address(cse_slave* s);
 
 
-// Master algorithm
-struct cse_algorithm_s;
-typedef struct cse_algorithm_s cse_algorithm;
-
-cse_algorithm* cse_fixed_step_algorithm_create(double stepSize);
-
-int cse_algorithm_destroy(cse_algorithm* algorithm);
-
-
 // Execution
-cse_execution* cse_execution_create2(cse_algorithm* algorithm);
+cse_execution* cse_execution_create2(
+    cse_time_point startTime,
+    cse_time_duration stepSize);
 
 int cse_execution_add_slave(
     cse_execution* execution,
