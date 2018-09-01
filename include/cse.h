@@ -329,11 +329,11 @@ cse_address* cse_slave_get_address(cse_slave* s);
 
 
 // Execution
-cse_execution* cse_execution_create2(
+cse_execution* cse_execution_create2( // replaces cse_execution_create()
     cse_time_point startTime,
     cse_time_duration stepSize);
 
-int cse_execution_add_slave(
+int cse_execution_add_slave( // replaces cse_execution_add_slave_from_fmu()
     cse_execution* execution,
     cse_address* address,
     const char* name);
@@ -343,7 +343,7 @@ int cse_execution_add_observer(
     cse_address* address,
     const char* name);
 
-int cse_execution_start(cse_execution* execution);
+int cse_execution_start(cse_execution* execution); // replaces cse_execution_step()
 
 int cse_execution_stop(cse_execution* execution);
 
@@ -361,7 +361,7 @@ typedef struct
     int error_code;
 } cse_execution_status;
 
-double execution_get_status(
+double cse_execution_get_status(
     cse_execution* execution,
     cse_execution_status* status);
 
