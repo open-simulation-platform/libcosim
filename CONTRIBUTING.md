@@ -93,6 +93,19 @@ source directory contains a `.editorconfig` file with the appropriate settings.
 [EditorConfig]: http://editorconfig.org
 
 
+Directory structure
+-------------------
+The source directories are organised as follows:
+
+  * `cmake/`:       CMake scripts and other build system files.
+  * `include/`:     Header files that define the public API.
+  * `src/cpp/`:     Source code for the C++ library.
+  * `src/c/`:       Source code for the C library.
+  * `test/cpp/`:    Test suite for the C++ library.
+  * `test/c/`:      Test suite for the C library.
+  * `test/data`:    Resources used by the test suites.
+
+
 File names
 ----------
 Use the following file extensions:
