@@ -43,19 +43,20 @@ Naming and formatting
 ---------------------
 The following are *strict rules*:
 
+  * **Use [clang-format] to format code**.
+    Use the `-style=file` option to read the formatting rules from the
+    `.clang-format` file.
+    (Rationale: This is a low-effort, low-friction way of enforcing a uniform
+                code style.)
   * **API symbols use the C++ standard library naming conventions.**
     This means `snake_case` for namespaces, functions, classes, class members,
     and constants, and `SCREAMING_SNAKE_CASE` for macros.
     (Rationale: This style is familiar to 100% of C++ programmers, and it
                 looks and feels consistent when used together with standard
                 C++ and Boost symbols.)
-  * **Use spaces for indentation and alignment, never tabs.**
-    Use 4 spaces for indentation.
-    (Rationale: Spaces are usable for both indentation and alignment while
-                tabs are only usable for indentation, and mixing them is a
-                bad idea.)
   * **Use a single line feed character to terminate lines, never carriage
     return.**
+    This is configurable in most editors, as well as in Git.
     (Rationale: We need to standardise on one thing, and CRLF is just a
                 pointless Microsoft-specific historic artifact.)
   * **Never use the `using` directive (e.g. `using namespace foo;`) in
@@ -76,21 +77,8 @@ The following are *recommendations*:
     (`m_likeThis`).
   * Avoid the `using` directive in source files too.  Prefer to use namespace
     aliases (e.g. `namespace sn = some_verbosely_named_namespace;`) instead.
-  * Use "[the one true bracing style]".
-  * Lines should be broken at 80 columns, except in special cases when this
-    makes code particularly ugly/unreadable.
-  * Do not indent from the top-level namespace declaration (i.e., the one that
-    surrounds all symbols in the file).
 
-However, when it comes to purely aesthetic issues, the most important thing
-is to stay consistent with surrounding code and not mix coding styles.
-
-With regards to indentation and end-of-line markers, it is recommended that
-contributors install the [EditorConfig] plugin for their editor/IDE.  The root
-source directory contains a `.editorconfig` file with the appropriate settings.
-
-[the one true bracing style]: https://en.wikipedia.org/wiki/Indent_style#Variant:_1TBS
-[EditorConfig]: http://editorconfig.org
+[clang-format]: https://clang.llvm.org
 
 
 File names
