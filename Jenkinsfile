@@ -26,7 +26,7 @@ pipeline {
                                     bat 'conan install ../cse-core -s build_type=Debug -b missing'
                                     bat 'cmake -DCMAKE_INSTALL_PREFIX=../install/debug -DCSECORE_USING_CONAN=TRUE -DCSECORE_BUILD_PRIVATE_APIDOC=ON -G "Visual Studio 15 2017 Win64" ../cse-core'
                                     bat 'cmake --build . --config Debug'
-                                    bat 'cmake --build . --target install'
+                                    bat 'cmake --build . --config Debug --target install'
                                 }
                             }
                         }
