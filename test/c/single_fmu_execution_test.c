@@ -2,7 +2,7 @@
 #include <stdlib.h>
 
 #include <cse.h>
-
+#include <math.h>
 
 void print_last_error()
 {
@@ -25,6 +25,108 @@ int main()
     int rc = snprintf(fmuPath, sizeof fmuPath, "%s/fmi1/identity.fmu", dataDir);
     if (rc < 0) {
         perror(NULL);
+        return 1;
+    }
+
+    // ===== Can step n times and get status
+    cse_execution* execution2 = cse_execution_create2(0.0, 0.1);
+    if (!execution2) {
+        print_last_error();
+        return 1;
+    }
+
+    cse_slave_index slave2 = cse_execution_add_slave(execution2, 0, fmuPath);
+    if (slave2 < 0) {
+        print_last_error();
+        cse_execution_destroy(execution2);
+        return 1;
+    }
+
+    int status = cse_execution_step2(execution2, 10);
+    if (status < 0) {
+        print_last_error();
+        cse_execution_destroy(execution2);
+        return 1;
+    }
+
+    cse_execution_status execution_status;
+    status = cse_execution_get_status(execution2, &execution_status);
+    if (status < 0) {
+        print_last_error();
+        cse_execution_destroy(execution2);
+        return 1;
+    }
+
+    double precision = 1e-9;
+    if (fabs(execution_status.current_time - 1.0) > precision) {
+        fprintf(stderr, "Expected current time == 1.0, got %f\n", execution_status.current_time);
+        cse_execution_destroy(execution2);
+        return 1;
+    }
+
+    if (execution_status.state != CSE_EXECUTION_RUNNING) {
+        fprintf(stderr, "Expected state == %i, got %i\n",CSE_EXECUTION_RUNNING, execution_status.state);
+        cse_execution_destroy(execution2);
+        return 1;
+    }
+
+    if (execution_status.error_code != CSE_ERRC_SUCCESS) {
+        fprintf(stderr, "Expected error code == %i, got %i\n",CSE_ERRC_SUCCESS, execution_status.error_code);
+        cse_execution_destroy(execution2);
+        return 1;
+    }
+
+    // ===== Can start/stop execution and get status
+    status = cse_execution_start(execution2);
+    if (status < 0) {
+        print_last_error();
+        cse_execution_destroy(execution2);
+        return 1;
+    }
+
+    status = cse_execution_get_status(execution2, &execution_status);
+    if (status < 0) {
+        print_last_error();
+        cse_execution_destroy(execution2);
+        return 1;
+    }
+
+    if (execution_status.state != CSE_EXECUTION_RUNNING) {
+        fprintf(stderr, "Expected state == %i, got %i\n",CSE_EXECUTION_RUNNING, execution_status.state);
+        cse_execution_destroy(execution2);
+        return 1;
+    }
+
+    if (execution_status.error_code != CSE_ERRC_SUCCESS) {
+        fprintf(stderr, "Expected error code == %i, got %i\n",CSE_ERRC_SUCCESS, execution_status.error_code);
+        cse_execution_destroy(execution2);
+        return 1;
+    }
+
+    _sleep(100);
+    status = cse_execution_stop(execution2);
+    if (status < 0) {
+        print_last_error();
+        cse_execution_destroy(execution2);
+        return 1;
+    }
+
+    status = cse_execution_get_status(execution2, &execution_status);
+    if (status < 0) {
+        print_last_error();
+        cse_execution_destroy(execution2);
+        return 1;
+    }
+
+    if (execution_status.state != CSE_EXECUTION_STOPPED) {
+        fprintf(stderr, "Expected state == %i, got %i\n",CSE_EXECUTION_STOPPED, execution_status.state);
+        cse_execution_destroy(execution2);
+        return 1;
+    }
+
+    if (execution_status.error_code != CSE_ERRC_SUCCESS) {
+        fprintf(stderr, "Expected error code == %i, got %i\n",CSE_ERRC_SUCCESS, execution_status.error_code);
+        cse_execution_destroy(execution2);
         return 1;
     }
 

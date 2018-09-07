@@ -343,6 +343,8 @@ int cse_execution_add_observer(
     cse_address* address,
     const char* name);
 
+int cse_execution_step2(cse_execution* execution, size_t numSteps);
+
 int cse_execution_start(cse_execution* execution); // replaces cse_execution_step()
 
 int cse_execution_stop(cse_execution* execution);
@@ -361,7 +363,7 @@ typedef struct
     int error_code;
 } cse_execution_status;
 
-double cse_execution_get_status(
+int cse_execution_get_status(
     cse_execution* execution,
     cse_execution_status* status);
 

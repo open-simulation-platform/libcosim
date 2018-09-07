@@ -6,13 +6,14 @@
 #include <stdexcept>
 #include <string>
 #include <system_error>
+#include <thread>
 
 #include <cse/exception.hpp>
 #include <cse/fmi/fmu.hpp>
 #include <cse/fmi/importer.hpp>
 
 #include <cse/hello_world.hpp>
-
+#include <iostream>
 
 namespace
 {
@@ -103,6 +104,12 @@ struct cse_execution_s
 {
     cse::time_duration currentTime;
     std::shared_ptr<cse::slave> slave;
+    long currentSteps;
+    cse::time_duration stepSize;
+    std::thread t;
+    bool shouldRun = false;
+    cse_execution_state state;
+    int error_code;
 };
 
 
@@ -120,6 +127,23 @@ cse_execution* cse_execution_create(cse_time_point startTime)
     }
 }
 
+cse_execution* cse_execution_create2(cse_time_point startTime, cse_time_duration stepSize)
+{
+    try {
+        // No exceptions are possible right now, so try...catch and unique_ptr
+        // are strictly unnecessary, but this will change soon enough.
+        auto execution = std::make_unique<cse_execution>();
+        execution->currentTime = startTime;
+        execution->stepSize = stepSize;
+        execution->error_code = CSE_ERRC_SUCCESS;
+        execution->state = CSE_EXECUTION_STOPPED;
+        return execution.release();
+    } catch (...) {
+        handle_current_exception();
+        return nullptr;
+    }
+}
+
 
 int cse_execution_destroy(cse_execution* execution)
 {
@@ -130,6 +154,41 @@ int cse_execution_destroy(cse_execution* execution)
             owned->slave->end_simulation();
         }
         return success;
+    } catch (...) {
+        execution->state = CSE_EXECUTION_ERROR;
+        execution->error_code = CSE_ERRC_UNSPECIFIED;
+        handle_current_exception();
+        return failure;
+    }
+}
+
+int cse_execution_add_slave( // replaces cse_execution_add_slave_from_fmu()
+    cse_execution* execution,
+    cse_address* address,
+    const char* name)
+{
+    try {
+        if (execution->slave) {
+            throw cse::error(
+                make_error_code(cse::errc::unsupported_feature),
+                "Only one slave may be added to an execution for the time being");
+        }
+        const auto importer = cse::fmi::importer::create();
+        const auto fmu = importer->import(name);
+
+        //address must be given to slave instance.
+        assert(!address);
+        auto instance = fmu->instantiate_slave();
+        instance->setup(
+            "unnamed slave",
+            "unnamed execution",
+            execution->currentTime,
+            cse::eternity,
+            false,
+            0.0);
+        instance->start_simulation();
+        execution->slave = instance;
+        return /*slave index*/ 0;
     } catch (...) {
         handle_current_exception();
         return failure;
@@ -179,6 +238,70 @@ int cse_execution_step(cse_execution* execution, cse_time_duration stepSize)
             return failure;
         }
         execution->currentTime += stepSize;
+        execution->currentSteps++;
+        return success;
+    } catch (...) {
+        handle_current_exception();
+        return failure;
+    }
+}
+
+//TODO clean up: try catch only in step2
+int cse_execution_step2(cse_execution* execution, size_t numSteps)
+{
+    try {
+        execution->state = CSE_EXECUTION_RUNNING;
+        for (size_t i = 0 ; i < numSteps; i++)
+        {
+            cse_execution_step(execution, execution->stepSize);
+        }
+        return success;
+    } catch (...) {
+        handle_current_exception();
+        return failure;
+    }
+}
+
+int cse_execution_start(cse_execution* execution)
+{
+    try {
+        execution->shouldRun = true;
+        execution->t = std::thread([execution]() {
+            execution->state = CSE_EXECUTION_RUNNING;
+            while (execution->shouldRun) {
+                using namespace std::chrono_literals;
+                cse_execution_step2(execution, 1);
+                std::this_thread::sleep_for(5ms);
+                std::cout << "Stepping!" << std::endl;
+            }
+        });
+
+        return success;
+    } catch (...) {
+        handle_current_exception();
+        return failure;
+    }
+}
+
+int cse_execution_stop(cse_execution* execution)
+{
+    try {
+        execution->shouldRun = false;
+        execution->t.join();
+        execution->state = CSE_EXECUTION_STOPPED;
+        return success;
+    } catch (...) {
+        handle_current_exception();
+        return failure;
+    }
+}
+
+int cse_execution_get_status(cse_execution* execution, cse_execution_status* status)
+{
+    try {
+        status->error_code = execution->error_code;
+        status->state = execution->state;
+        status->current_time = execution->currentSteps*execution->stepSize;
         return success;
     } catch (...) {
         handle_current_exception();
