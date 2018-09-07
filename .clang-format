@@ -1,0 +1,25 @@
+Language: Cpp
+Standard: Cpp11
+BasedOnStyle: WebKit
+NamespaceIndentation: None
+IndentCaseLabels: true
+IndentPPDirectives: AfterHash
+FixNamespaceComments: true
+MaxEmptyLinesToKeep: 2
+SpaceAfterTemplateKeyword: false
+AllowShortCaseLabelsOnASingleLine: true
+AllowAllParametersOfDeclarationOnNextLine: true
+AllowShortIfStatementsOnASingleLine: true
+AllowShortBlocksOnASingleLine: true
+AllowShortLoopsOnASingleLine: true
+BreakBeforeBinaryOperators: None
+Cpp11BracedListStyle: true
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterEnum: true
+  AfterStruct: true
+  AfterClass: true
+  SplitEmptyFunction: false
+  AfterFunction: true
+  AfterNamespace : true
+  AfterControlStatement: false
