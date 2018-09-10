@@ -178,7 +178,8 @@ int cse_execution_add_slave( // replaces cse_execution_add_slave_from_fmu()
         const auto fmu = importer->import(name);
 
         //address must be given to slave instance.
-        assert(!address);
+        //ignore unused variable for now
+        (void)address;
         auto instance = fmu->instantiate_slave();
         instance->setup(
             "unnamed slave",
