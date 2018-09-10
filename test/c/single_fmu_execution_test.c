@@ -4,6 +4,13 @@
 #include <cse.h>
 #include <math.h>
 
+#ifdef _WINDOWS
+#include <windows.h>
+#else
+#include <unistd.h>
+#define Sleep(x) usleep((x)*1000)
+#endif
+
 void print_last_error()
 {
     fprintf(
@@ -103,7 +110,8 @@ int main()
         return 1;
     }
 
-    _sleep(100);
+    Sleep(100);
+
     status = cse_execution_stop(execution2);
     if (status < 0) {
         print_last_error();
