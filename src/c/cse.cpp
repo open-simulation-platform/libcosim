@@ -1,5 +1,6 @@
 #include <cse.h>
 
+#include <atomic>
 #include <cassert>
 #include <cerrno>
 #include <optional>
@@ -107,7 +108,7 @@ struct cse_execution_s
     long currentSteps;
     cse::time_duration stepSize;
     std::thread t;
-    bool shouldRun = false;
+    std::atomic<bool> shouldRun = false;
     cse_execution_state state;
     int error_code;
 };
