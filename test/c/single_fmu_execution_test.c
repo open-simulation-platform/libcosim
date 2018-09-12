@@ -42,8 +42,14 @@ int main()
         return 1;
     }
 
-    cse_slave_index slave = cse_execution_add_slave(execution, 0, fmuPath);
-    if (slave < 0) {
+    cse_slave* slave = cse_local_slave_create(fmuPath);
+    if (!slave) {
+        print_last_error();
+        return 1;
+    }
+
+    cse_slave_index slave_index = cse_execution_add_slave(execution, slave);
+    if (slave_index < 0) {
         print_last_error();
         cse_execution_destroy(execution);
         return 1;
@@ -86,7 +92,7 @@ int main()
     // ===== Can start/stop execution and get status
     cse_variable_index realInVar = 0;
     const double realInVal = 5.0;
-    rc = cse_execution_slave_set_real(execution, slave, &realInVar, 1, &realInVal);
+    rc = cse_execution_slave_set_real(execution, slave_index, &realInVar, 1, &realInVal);
     if (rc < 0) {
         print_last_error();
         cse_execution_destroy(execution);
@@ -95,7 +101,7 @@ int main()
 
     cse_variable_index intInVar = 0;
     const int intInVal = 42;
-    rc = cse_execution_slave_set_integer(execution, slave, &intInVar, 1, &intInVal);
+    rc = cse_execution_slave_set_integer(execution, slave_index, &intInVar, 1, &intInVal);
     if (rc < 0) {
         print_last_error();
         cse_execution_destroy(execution);
@@ -159,7 +165,7 @@ int main()
     cse_variable_index realOutVar = 0;
     double realOutVal = -1.0;
     rc = cse_execution_slave_get_real(
-        execution, slave,
+        execution, slave_index,
         &realOutVar, 1, &realOutVal);
     if (rc < 0) {
         print_last_error();
@@ -169,7 +175,7 @@ int main()
 
     cse_variable_index intOutVar = 0;
     int intOutVal = 10;
-    rc = cse_execution_slave_get_integer(execution, slave, &intOutVar, 1, &intOutVal);
+    rc = cse_execution_slave_get_integer(execution, slave_index, &intOutVar, 1, &intOutVal);
     if (rc < 0) {
         print_last_error();
         cse_execution_destroy(execution);

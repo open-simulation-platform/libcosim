@@ -149,44 +149,32 @@ int cse_execution_destroy(cse_execution* execution)
     }
 }
 
-int cse_execution_add_slave( // replaces cse_execution_add_slave_from_fmu()
-    cse_execution* execution,
-    cse_address* address,
-    const char* name)
+
+struct cse_slave_s
+{
+    std::string address;
+    std::shared_ptr<cse::slave> instance;
+};
+
+cse_slave* cse_local_slave_create(const char* fmuPath)
 {
     try {
-        if (execution->slave) {
-            throw cse::error(
-                make_error_code(cse::errc::unsupported_feature),
-                "Only one slave may be added to an execution for the time being");
-        }
         const auto importer = cse::fmi::importer::create();
-        const auto fmu = importer->import(name);
-
-        //address must be given to slave instance.
-        //ignore unused variable for now
-        (void)address;
-        auto instance = fmu->instantiate_slave();
-        instance->setup(
-            "unnamed slave",
-            "unnamed execution",
-            execution->currentTime,
-            cse::eternity,
-            false,
-            0.0);
-        instance->start_simulation();
-        execution->slave = instance;
-        return /*slave index*/ 0;
+        const auto fmu = importer->import(fmuPath);
+        auto slave = std::make_unique<cse_slave>();
+        slave->instance = fmu->instantiate_slave();
+        // slave address not in use yet. Should be something else than a string.
+        slave->address = "local";
+        return slave.release();
     } catch (...) {
         handle_current_exception();
-        return failure;
+        return nullptr;
     }
 }
 
-
-cse_slave_index cse_execution_add_slave_from_fmu(
+int cse_execution_add_slave(
     cse_execution* execution,
-    const char* fmuPath)
+    cse_slave* slave)
 {
     try {
         if (execution->slave) {
@@ -194,9 +182,7 @@ cse_slave_index cse_execution_add_slave_from_fmu(
                 make_error_code(cse::errc::unsupported_feature),
                 "Only one slave may be added to an execution for the time being");
         }
-        const auto importer = cse::fmi::importer::create();
-        const auto fmu = importer->import(fmuPath);
-        auto instance = fmu->instantiate_slave();
+        auto instance = slave->instance;
         instance->setup(
             "unnamed slave",
             "unnamed execution",
@@ -205,7 +191,6 @@ cse_slave_index cse_execution_add_slave_from_fmu(
             false,
             0.0);
         instance->start_simulation();
-
         execution->slave = instance;
         return /*slave index*/ 0;
     } catch (...) {

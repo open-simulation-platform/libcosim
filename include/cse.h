@@ -152,6 +152,24 @@ typedef struct cse_address_s cse_address;
 int cse_address_destroy(cse_address* address);
 
 
+struct cse_slave_s;
+typedef struct cse_slave_s cse_slave;
+
+
+/**
+ *  \brief
+ *  Creates a new local slave.
+ *
+ *  \param [in] fmuPath
+ *      Path to FMU.
+ *
+ *  \returns
+ *      A pointer to an object which holds the local slave object,
+ *      or NULL on error.
+ */
+cse_slave* cse_local_slave_create(const char* fmuPath);
+
+
 /**
  *  \brief
  *  Loads a co-simulation FMU, instantiates a slave based on it, and adds it
@@ -165,18 +183,15 @@ int cse_address_destroy(cse_address* address);
  *
  *  \param [in] execution
  *      The execution to which the slave should be added.
- *  \param [in] address
- *      The address to the slave.
- *  \param [in] fmuPath
- *      The path to the FMU.
+ *  \param [in] slave
+ *      The slave.
  *
  *  \returns
  *      The slave's unique index in the execution, or -1 on error.
  */
 int cse_execution_add_slave(
     cse_execution* execution,
-    cse_address* address,
-    const char* fmuPath);
+    cse_slave* slave);
 
 
 /**
@@ -391,13 +406,6 @@ cse_observer* cse_membuffer_observer_create();
 int cse_observer_destroy(cse_observer* observer);
 
 cse_address* cse_observer_get_address(cse_observer* observer);
-
-
-// Slave
-struct cse_slave_s;
-typedef struct cse_slave_s cse_slave;
-
-cse_slave* cse_local_slave_create(const char* fmuPath);
 
 int cse_slave_destroy(cse_slave* slave);
 
