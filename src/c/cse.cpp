@@ -105,30 +105,16 @@ struct cse_execution_s
 {
     cse::time_duration currentTime;
     std::shared_ptr<cse::slave> slave;
-    long currentSteps;
+    std::atomic<long> currentSteps;
     cse::time_duration stepSize;
     std::thread t;
     std::atomic<bool> shouldRun = false;
-    cse_execution_state state;
+    std::atomic<cse_execution_state> state;
     int error_code;
 };
 
 
-cse_execution* cse_execution_create(cse_time_point startTime)
-{
-    try {
-        // No exceptions are possible right now, so try...catch and unique_ptr
-        // are strictly unnecessary, but this will change soon enough.
-        auto execution = std::make_unique<cse_execution>();
-        execution->currentTime = startTime;
-        return execution.release();
-    } catch (...) {
-        handle_current_exception();
-        return nullptr;
-    }
-}
-
-cse_execution* cse_execution_create2(cse_time_point startTime, cse_time_duration stepSize)
+cse_execution* cse_execution_create(cse_time_point startTime, cse_time_duration stepSize)
 {
     try {
         // No exceptions are possible right now, so try...catch and unique_ptr
@@ -229,17 +215,17 @@ cse_slave_index cse_execution_add_slave_from_fmu(
 }
 
 
-int cse_execution_step(cse_execution* execution, cse_time_duration stepSize)
+int cse_execution_step(cse_execution* execution)
 {
     try {
         const auto stepOK =
             !execution->slave ||
-            execution->slave->do_step(execution->currentTime, stepSize);
+            execution->slave->do_step(execution->currentTime, execution->stepSize);
         if (!stepOK) {
             set_last_error(CSE_ERRC_STEP_TOO_LONG, "Time step too long");
             return failure;
         }
-        execution->currentTime += stepSize;
+        execution->currentTime += execution->stepSize;
         execution->currentSteps++;
         return success;
     } catch (...) {
@@ -248,20 +234,17 @@ int cse_execution_step(cse_execution* execution, cse_time_duration stepSize)
     }
 }
 
-//TODO clean up: try catch only in step2
-int cse_execution_step2(cse_execution* execution, size_t numSteps)
+
+int cse_execution_step(cse_execution* execution, size_t numSteps)
 {
-    try {
-        execution->state = CSE_EXECUTION_RUNNING;
-        for (size_t i = 0 ; i < numSteps; i++)
-        {
-            cse_execution_step(execution, execution->stepSize);
+    execution->state = CSE_EXECUTION_RUNNING;
+    for (size_t i = 0 ; i < numSteps; i++)
+    {
+        if(cse_execution_step(execution) != success) {
+            return failure;
         }
-        return success;
-    } catch (...) {
-        handle_current_exception();
-        return failure;
     }
+    return success;
 }
 
 int cse_execution_start(cse_execution* execution)
@@ -271,9 +254,11 @@ int cse_execution_start(cse_execution* execution)
         execution->t = std::thread([execution]() {
             execution->state = CSE_EXECUTION_RUNNING;
             while (execution->shouldRun) {
-                using namespace std::chrono_literals;
-                cse_execution_step2(execution, 1);
-                std::this_thread::sleep_for(5ms);
+                // TODO: Should be wrapped with some lock to prevent race conditions!
+                cse_execution_step(execution, 1);
+
+                // TODO: Add better time synchronization
+                std::this_thread::sleep_for(std::chrono::duration<cse_time_duration>(execution->stepSize));
                 std::cout << "Stepping!" << std::endl;
             }
         });

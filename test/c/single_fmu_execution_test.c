@@ -36,178 +36,155 @@ int main()
     }
 
     // ===== Can step n times and get status
-    cse_execution* execution2 = cse_execution_create2(0.0, 0.1);
-    if (!execution2) {
-        print_last_error();
-        return 1;
-    }
-
-    cse_slave_index slave2 = cse_execution_add_slave(execution2, 0, fmuPath);
-    if (slave2 < 0) {
-        print_last_error();
-        cse_execution_destroy(execution2);
-        return 1;
-    }
-
-    int status = cse_execution_step2(execution2, 10);
-    if (status < 0) {
-        print_last_error();
-        cse_execution_destroy(execution2);
-        return 1;
-    }
-
-    cse_execution_status execution_status;
-    status = cse_execution_get_status(execution2, &execution_status);
-    if (status < 0) {
-        print_last_error();
-        cse_execution_destroy(execution2);
-        return 1;
-    }
-
-    double precision = 1e-9;
-    if (fabs(execution_status.current_time - 1.0) > precision) {
-        fprintf(stderr, "Expected current time == 1.0, got %f\n", execution_status.current_time);
-        cse_execution_destroy(execution2);
-        return 1;
-    }
-
-    if (execution_status.state != CSE_EXECUTION_RUNNING) {
-        fprintf(stderr, "Expected state == %i, got %i\n",CSE_EXECUTION_RUNNING, execution_status.state);
-        cse_execution_destroy(execution2);
-        return 1;
-    }
-
-    if (execution_status.error_code != CSE_ERRC_SUCCESS) {
-        fprintf(stderr, "Expected error code == %i, got %i\n",CSE_ERRC_SUCCESS, execution_status.error_code);
-        cse_execution_destroy(execution2);
-        return 1;
-    }
-
-    // ===== Can start/stop execution and get status
-    status = cse_execution_start(execution2);
-    if (status < 0) {
-        print_last_error();
-        cse_execution_destroy(execution2);
-        return 1;
-    }
-
-    status = cse_execution_get_status(execution2, &execution_status);
-    if (status < 0) {
-        print_last_error();
-        cse_execution_destroy(execution2);
-        return 1;
-    }
-
-    if (execution_status.state != CSE_EXECUTION_RUNNING) {
-        fprintf(stderr, "Expected state == %i, got %i\n",CSE_EXECUTION_RUNNING, execution_status.state);
-        cse_execution_destroy(execution2);
-        return 1;
-    }
-
-    if (execution_status.error_code != CSE_ERRC_SUCCESS) {
-        fprintf(stderr, "Expected error code == %i, got %i\n",CSE_ERRC_SUCCESS, execution_status.error_code);
-        cse_execution_destroy(execution2);
-        return 1;
-    }
-
-    Sleep(100);
-
-    status = cse_execution_stop(execution2);
-    if (status < 0) {
-        print_last_error();
-        cse_execution_destroy(execution2);
-        return 1;
-    }
-
-    status = cse_execution_get_status(execution2, &execution_status);
-    if (status < 0) {
-        print_last_error();
-        cse_execution_destroy(execution2);
-        return 1;
-    }
-
-    if (execution_status.state != CSE_EXECUTION_STOPPED) {
-        fprintf(stderr, "Expected state == %i, got %i\n",CSE_EXECUTION_STOPPED, execution_status.state);
-        cse_execution_destroy(execution2);
-        return 1;
-    }
-
-    if (execution_status.error_code != CSE_ERRC_SUCCESS) {
-        fprintf(stderr, "Expected error code == %i, got %i\n",CSE_ERRC_SUCCESS, execution_status.error_code);
-        cse_execution_destroy(execution2);
-        return 1;
-    }
-
-    cse_execution* execution = cse_execution_create(0.0);
+    cse_execution* execution = cse_execution_create(0.0, 0.1);
     if (!execution) {
         print_last_error();
         return 1;
     }
 
-    cse_slave_index slave = cse_execution_add_slave_from_fmu(execution, fmuPath);
+    cse_slave_index slave = cse_execution_add_slave(execution, 0, fmuPath);
     if (slave < 0) {
         print_last_error();
         cse_execution_destroy(execution);
         return 1;
     }
 
-    double dt = 0.1;
-    for (double t = 0.0; t <= 1.0; t += dt) {
-        cse_variable_index realInVar = 0;
-        const double realInVal = 5.0;
-        rc = cse_execution_slave_set_real(execution, slave, &realInVar, 1, &realInVal);
-        if (rc < 0) {
-            print_last_error();
-            cse_execution_destroy(execution);
-            return 1;
-        }
+    rc = cse_execution_step(execution, 10);
+    if (rc < 0) {
+        print_last_error();
+        cse_execution_destroy(execution);
+        return 1;
+    }
 
-        cse_variable_index intInVar = 0;
-        const int intInVal = 42;
-        rc = cse_execution_slave_set_integer(execution, slave, &intInVar, 1, &intInVal);
-        if (rc < 0) {
-            print_last_error();
-            cse_execution_destroy(execution);
-            return 1;
-        }
+    cse_execution_status execution_status;
+    rc = cse_execution_get_status(execution, &execution_status);
+    if (rc < 0) {
+        print_last_error();
+        cse_execution_destroy(execution);
+        return 1;
+    }
 
-        rc = cse_execution_step(execution, dt);
-        if (rc < 0) {
-            print_last_error();
-            cse_execution_destroy(execution);
-            return 1;
-        }
+    double precision = 1e-9;
+    if (fabs(execution_status.current_time - 1.0) > precision) {
+        fprintf(stderr, "Expected current time == 1.0, got %f\n", execution_status.current_time);
+        cse_execution_destroy(execution);
+        return 1;
+    }
 
-        cse_variable_index realOutVar = 0;
-        double realOutVal = -1.0;
-        rc = cse_execution_slave_get_real(
-            execution, slave,
-            &realOutVar, 1, &realOutVal);
-        if (rc < 0) {
-            print_last_error();
-            cse_execution_destroy(execution);
-            return 1;
-        }
+    if (execution_status.state != CSE_EXECUTION_RUNNING) {
+        fprintf(stderr, "Expected state == %i, got %i\n",CSE_EXECUTION_RUNNING, execution_status.state);
+        cse_execution_destroy(execution);
+        return 1;
+    }
 
-        cse_variable_index intOutVar = 0;
-        int intOutVal = 10;
-        rc = cse_execution_slave_get_integer(execution, slave, &intOutVar, 1, &intOutVal);
-        if (rc < 0) {
-            print_last_error();
-            cse_execution_destroy(execution);
-            return 1;
-        }
+    if (execution_status.error_code != CSE_ERRC_SUCCESS) {
+        fprintf(stderr, "Expected error code == %i, got %i\n",CSE_ERRC_SUCCESS, execution_status.error_code);
+        cse_execution_destroy(execution);
+        return 1;
+    }
 
-        if (realOutVal != 5.0) {
-            fprintf(stderr, "Expected value 5.0, got %f\n", realOutVal);
-            cse_execution_destroy(execution);
-            return 1;
-        }
-        if (intOutVal != 42) {
-            fprintf(stderr, "Expected value 42, got %i\n", intOutVal);
-            cse_execution_destroy(execution);
-            return 1;
-        }
+    // ===== Can start/stop execution and get status
+    cse_variable_index realInVar = 0;
+    const double realInVal = 5.0;
+    rc = cse_execution_slave_set_real(execution, slave, &realInVar, 1, &realInVal);
+    if (rc < 0) {
+        print_last_error();
+        cse_execution_destroy(execution);
+        return 1;
+    }
+
+    cse_variable_index intInVar = 0;
+    const int intInVal = 42;
+    rc = cse_execution_slave_set_integer(execution, slave, &intInVar, 1, &intInVal);
+    if (rc < 0) {
+        print_last_error();
+        cse_execution_destroy(execution);
+        return 1;
+    }
+
+    rc = cse_execution_start(execution);
+    if (rc < 0) {
+        print_last_error();
+        cse_execution_destroy(execution);
+        return 1;
+    }
+
+    rc = cse_execution_get_status(execution, &execution_status);
+    if (rc < 0) {
+        print_last_error();
+        cse_execution_destroy(execution);
+        return 1;
+    }
+
+    if (execution_status.state != CSE_EXECUTION_RUNNING) {
+        fprintf(stderr, "Expected state == %i, got %i\n",CSE_EXECUTION_RUNNING, execution_status.state);
+        cse_execution_destroy(execution);
+        return 1;
+    }
+
+    if (execution_status.error_code != CSE_ERRC_SUCCESS) {
+        fprintf(stderr, "Expected error code == %i, got %i\n",CSE_ERRC_SUCCESS, execution_status.error_code);
+        cse_execution_destroy(execution);
+        return 1;
+    }
+
+    Sleep(100);
+
+    rc = cse_execution_stop(execution);
+    if (rc < 0) {
+        print_last_error();
+        cse_execution_destroy(execution);
+        return 1;
+    }
+
+    rc = cse_execution_get_status(execution, &execution_status);
+    if (rc < 0) {
+        print_last_error();
+        cse_execution_destroy(execution);
+        return 1;
+    }
+
+    if (execution_status.state != CSE_EXECUTION_STOPPED) {
+        fprintf(stderr, "Expected state == %i, got %i\n",CSE_EXECUTION_STOPPED, execution_status.state);
+        cse_execution_destroy(execution);
+        return 1;
+    }
+
+    if (execution_status.error_code != CSE_ERRC_SUCCESS) {
+        fprintf(stderr, "Expected error code == %i, got %i\n",CSE_ERRC_SUCCESS, execution_status.error_code);
+        cse_execution_destroy(execution);
+        return 1;
+    }
+
+    cse_variable_index realOutVar = 0;
+    double realOutVal = -1.0;
+    rc = cse_execution_slave_get_real(
+        execution, slave,
+        &realOutVar, 1, &realOutVal);
+    if (rc < 0) {
+        print_last_error();
+        cse_execution_destroy(execution);
+        return 1;
+    }
+
+    cse_variable_index intOutVar = 0;
+    int intOutVal = 10;
+    rc = cse_execution_slave_get_integer(execution, slave, &intOutVar, 1, &intOutVal);
+    if (rc < 0) {
+        print_last_error();
+        cse_execution_destroy(execution);
+        return 1;
+    }
+
+    if (realOutVal != 5.0) {
+        fprintf(stderr, "Expected value 5.0, got %f\n", realOutVal);
+        cse_execution_destroy(execution);
+        return 1;
+    }
+    if (intOutVal != 42) {
+        fprintf(stderr, "Expected value 42, got %i\n", intOutVal);
+        cse_execution_destroy(execution);
+        return 1;
     }
 
     rc = cse_execution_destroy(execution);

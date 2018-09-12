@@ -124,11 +124,15 @@ typedef struct cse_execution_s cse_execution;
  * 
  *  \param [in] startTime
  *      The (logical) time point at which the simulation should start.
+ *  \param [in] stepSize
+ *      The execution step size.
  *  \returns
  *      A pointer to an object which holds the execution state,
  *      or NULL on error.
  */
-cse_execution* cse_execution_create(cse_time_point startTime);
+cse_execution* cse_execution_create(
+    cse_time_point startTime,
+    cse_time_duration stepSize);
 
 
 /**
@@ -139,6 +143,13 @@ cse_execution* cse_execution_create(cse_time_point startTime);
  *      0 on success and -1 on error.
  */
 int cse_execution_destroy(cse_execution* execution);
+
+
+struct cse_address_s;
+typedef struct cse_address_s cse_address;
+
+
+int cse_address_destroy(cse_address* address);
 
 
 /**
@@ -154,14 +165,17 @@ int cse_execution_destroy(cse_execution* execution);
  *
  *  \param [in] execution
  *      The execution to which the slave should be added.
+ *  \param [in] address
+ *      The address to the slave.
  *  \param [in] fmuPath
  *      The path to the FMU.
  *
  *  \returns
  *      The slave's unique index in the execution, or -1 on error.
  */
-cse_slave_index cse_execution_add_slave_from_fmu(
+int cse_execution_add_slave(
     cse_execution* execution,
+    cse_address* address,
     const char* fmuPath);
 
 
@@ -169,10 +183,75 @@ cse_slave_index cse_execution_add_slave_from_fmu(
  *  \brief
  *  Advances an execution one time step.
  *
+ *  \param [in] execution
+ *      The execution to be stepped.
+ *  \param [in] numSteps
+ *      The number of steps to advance the execution to which the slave should be added.
+ *
  *  \returns
  *      0 on success and -1 on error.
  */
-int cse_execution_step(cse_execution* execution, cse_time_duration stepSize);
+int cse_execution_step(cse_execution* execution, size_t numSteps);
+
+
+/**
+ *  \brief
+ *  Starts an execution.
+ *
+ *  \param [in] execution
+ *      The execution to be started.
+ *
+ *  \returns
+ *      0 on success and -1 on error.
+ */
+int cse_execution_start(cse_execution* execution);
+
+
+/**
+ *  \brief
+ *  Stops an execution.
+ *
+ *  \param [in] execution
+ *      The execution to be stopped.
+ *
+ *  \returns
+ *      0 on success and -1 on error.
+ */
+int cse_execution_stop(cse_execution* execution);
+
+
+typedef enum
+{
+  CSE_EXECUTION_STOPPED,
+  CSE_EXECUTION_RUNNING,
+  CSE_EXECUTION_ERROR
+} cse_execution_state;
+
+typedef struct
+{
+  double current_time;
+  cse_execution_state state;
+  int error_code;
+} cse_execution_status;
+
+
+/**
+ *  \brief
+ *  Returns execution status.
+ *
+ *  \param [in] execution
+ *      The execution to get status from.
+ *  \param [out] status
+ *      A pointer to a cse_execution_status that will be filled with actual
+ *      execution status.
+ *
+ *  \returns
+ *      0 on success and -1 on error.
+ */
+int cse_execution_get_status(
+    cse_execution* execution,
+    cse_execution_status* status);
+
 
 /**
  *  \brief
@@ -301,10 +380,7 @@ int cse_execution_slave_get_integer(
  */
 int cse_hello_world(char* buffer, size_t size);
 
-struct cse_address_s;
-typedef struct cse_address_s cse_address;
 
-int cse_address_destroy(cse_address* address);
 
 // Observer
 struct cse_observer_s;
@@ -328,44 +404,10 @@ int cse_slave_destroy(cse_slave* slave);
 cse_address* cse_slave_get_address(cse_slave* s);
 
 
-// Execution
-cse_execution* cse_execution_create2( // replaces cse_execution_create()
-    cse_time_point startTime,
-    cse_time_duration stepSize);
-
-int cse_execution_add_slave( // replaces cse_execution_add_slave_from_fmu()
-    cse_execution* execution,
-    cse_address* address,
-    const char* name);
-
 int cse_execution_add_observer(
     cse_execution* execution,
     cse_address* address,
     const char* name);
-
-int cse_execution_step2(cse_execution* execution, size_t numSteps);
-
-int cse_execution_start(cse_execution* execution); // replaces cse_execution_step()
-
-int cse_execution_stop(cse_execution* execution);
-
-typedef enum
-{
-    CSE_EXECUTION_STOPPED,
-    CSE_EXECUTION_RUNNING,
-    CSE_EXECUTION_ERROR
-} cse_execution_state;
-
-typedef struct
-{
-    double current_time;
-    cse_execution_state state;
-    int error_code;
-} cse_execution_status;
-
-int cse_execution_get_status(
-    cse_execution* execution,
-    cse_execution_status* status);
 
 
 #ifdef __cplusplus
