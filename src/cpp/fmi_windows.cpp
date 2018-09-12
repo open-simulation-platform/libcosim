@@ -1,11 +1,11 @@
 #include "cse/fmi/windows.hpp"
 #ifdef _WIN32
 
-#include <Windows.h>
+#    include <Windows.h>
 
-#include <cassert>
-#include <cstddef>
-#include <mutex>
+#    include <cassert>
+#    include <cstddef>
+#    include <mutex>
 
 
 namespace cse
@@ -15,12 +15,12 @@ namespace fmi
 
 namespace
 {
-    // Maximum size of environment variables
-    constexpr std::size_t max_env_var_size = 32767;
+// Maximum size of environment variables
+constexpr std::size_t max_env_var_size = 32767;
 
-    // Mutex to protect against concurrent access to PATH
-    std::mutex path_env_var_mutex;
-}
+// Mutex to protect against concurrent access to PATH
+std::mutex path_env_var_mutex;
+} // namespace
 
 
 detail::additional_path::additional_path(const std::filesystem::path& p)
@@ -55,8 +55,7 @@ detail::additional_path::~additional_path()
 
     const auto pos = currentPath.find(addedPath_);
     if (pos < std::wstring::npos) {
-        auto newPath = currentPath.substr(0, pos)
-            + currentPath.substr(pos + addedPath_.size());
+        auto newPath = currentPath.substr(0, pos) + currentPath.substr(pos + addedPath_.size());
         if (!SetEnvironmentVariableW(L"PATH", newPath.c_str())) {
             assert(!"Failed to reset PATH environment variable");
         }
@@ -66,14 +65,15 @@ detail::additional_path::~additional_path()
 
 std::filesystem::path fmu_binaries_dir(const std::filesystem::path& baseDir)
 {
-#ifdef _WIN64
+#    ifdef _WIN64
     const auto platformSubdir = L"win64";
-#else
+#    else
     const auto platformSubdir = L"win32";
-#endif // _WIN64
+#    endif // _WIN64
     return baseDir / L"binaries" / platformSubdir;
 }
 
 
-}} // namespace
+} // namespace fmi
+} // namespace cse
 #endif // _WIN32

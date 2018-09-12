@@ -21,7 +21,6 @@ namespace log
 BOOST_LOG_INLINE_GLOBAL_LOGGER_DEFAULT(
     logger,
     boost::log::sources::severity_logger_mt<level>)
-
-
-}} // namespace
+}
+} // namespace cse
 #endif // header guard

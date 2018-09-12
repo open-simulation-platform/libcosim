@@ -1,5 +1,5 @@
-#include <string.h>
 #include <cse.h>
+#include <string.h>
 
 #define FAILURE 1;
 

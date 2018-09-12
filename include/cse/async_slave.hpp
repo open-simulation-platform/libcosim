@@ -6,9 +6,12 @@
 #define CSE_ASYNC_SLAVE_HPP
 
 #include <string>
-#include <gsl/span>
+
 #include <boost/fiber/future/future.hpp>
+#include <gsl/span>
+
 #include <cse/model.hpp>
+
 
 namespace cse
 {
@@ -64,8 +67,7 @@ public:
         time_point startTime,
         time_point stopTime,
         bool adaptiveStepSize,
-        double relativeTolerance)
-        = 0;
+        double relativeTolerance) = 0;
 
     /**
      *  Informs the slave that the initialisation stage ends and the
@@ -90,8 +92,7 @@ public:
      */
     virtual boost::fibers::future<bool> do_step(
         time_point currentT,
-        time_duration deltaT)
-        = 0;
+        time_duration deltaT) = 0;
 
     /// Result type for `get_variables()`.
     struct variable_values
@@ -133,8 +134,7 @@ public:
         gsl::span<const variable_index> realVariables,
         gsl::span<const variable_index> integerVariables,
         gsl::span<const variable_index> booleanVariables,
-        gsl::span<const variable_index> stringVariables)
-        = 0;
+        gsl::span<const variable_index> stringVariables) = 0;
 
     /**
      *  Sets variable values.
@@ -162,10 +162,9 @@ public:
         gsl::span<const variable_index> booleanVariables,
         gsl::span<const bool> booleanValues,
         gsl::span<const variable_index> stringVariables,
-        gsl::span<const std::string> stringValues)
-        = 0;
+        gsl::span<const std::string> stringValues) = 0;
 };
 
 
-} // namespace
+} // namespace cse
 #endif // header guard

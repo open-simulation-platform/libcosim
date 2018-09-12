@@ -58,7 +58,7 @@ int main()
     eventLoop->add_timer()->enable(1ms, true, yieldHandler);
 
     // Spin off the event loop in a separate fiber.
-    auto eventLoopFiber = fiber([&] () { eventLoop->loop(); });
+    auto eventLoopFiber = fiber([&]() { eventLoop->loop(); });
 
     try {
         constexpr int numSlaves = 10;
@@ -119,7 +119,7 @@ int main()
             for (const auto& slave : asyncSlaves) {
                 const cse::variable_index realOutIndex = 0;
                 getResults.push_back(
-                    slave->get_variables({&realOutIndex, 1}, { }, { }, { }));
+                    slave->get_variables({&realOutIndex, 1}, {}, {}, {}));
             }
             std::vector<double> values; // To be filled with one value per slave
             for (auto& r : getResults) {
@@ -137,9 +137,9 @@ int main()
                 setResults.push_back(
                     asyncSlaves[i]->set_variables(
                         {&realOutIndex, 1}, {&values[i], 1},
-                        { }, { },
-                        { }, { },
-                        { }, { }));
+                        {}, {},
+                        {}, {},
+                        {}, {}));
             }
             for (auto& r : setResults) {
                 r.get();
@@ -170,10 +170,14 @@ class mock_slave : public cse::slave
 {
 public:
     mock_slave()
-        : realIn_(0.0), realOut_(1.0)
-        , intIn_(0), intOut_(1)
-        , boolIn_(true), boolOut_(false)
-        , stringIn_(), stringOut_()
+        : realIn_(0.0)
+        , realOut_(1.0)
+        , intIn_(0)
+        , intOut_(1)
+        , boolIn_(true)
+        , boolOut_(false)
+        , stringIn_()
+        , stringOut_()
     {
     }
 
@@ -217,8 +221,11 @@ public:
         gsl::span<double> values) const override
     {
         for (int i = 0; i < variables.size(); ++i) {
-            if (variables[i] == 0) values[i] = realOut_;
-            else throw std::out_of_range("bad index");
+            if (variables[i] == 0) {
+                values[i] = realOut_;
+            } else {
+                throw std::out_of_range("bad index");
+            }
         }
     }
 
@@ -227,8 +234,11 @@ public:
         gsl::span<int> values) const override
     {
         for (int i = 0; i < variables.size(); ++i) {
-            if (variables[i] == 0) values[i] = intOut_;
-            else throw std::out_of_range("bad index");
+            if (variables[i] == 0) {
+                values[i] = intOut_;
+            } else {
+                throw std::out_of_range("bad index");
+            }
         }
     }
 
@@ -237,8 +247,11 @@ public:
         gsl::span<bool> values) const override
     {
         for (int i = 0; i < variables.size(); ++i) {
-            if (variables[i] == 0) values[i] = boolOut_;
-            else throw std::out_of_range("bad index");
+            if (variables[i] == 0) {
+                values[i] = boolOut_;
+            } else {
+                throw std::out_of_range("bad index");
+            }
         }
     }
 
@@ -247,8 +260,11 @@ public:
         gsl::span<std::string> values) const override
     {
         for (int i = 0; i < variables.size(); ++i) {
-            if (variables[i] == 0) values[i] = stringOut_;
-            else throw std::out_of_range("bad index");
+            if (variables[i] == 0) {
+                values[i] = stringOut_;
+            } else {
+                throw std::out_of_range("bad index");
+            }
         }
     }
 
@@ -257,8 +273,11 @@ public:
         gsl::span<const double> values) override
     {
         for (int i = 0; i < variables.size(); ++i) {
-            if (variables[i] == 0) realIn_ = values[i];
-            else throw std::out_of_range("bad index");
+            if (variables[i] == 0) {
+                realIn_ = values[i];
+            } else {
+                throw std::out_of_range("bad index");
+            }
         }
     }
 
@@ -267,8 +286,11 @@ public:
         gsl::span<const int> values) override
     {
         for (int i = 0; i < variables.size(); ++i) {
-            if (variables[i] == 0) intIn_ = values[i];
-            else throw std::out_of_range("bad index");
+            if (variables[i] == 0) {
+                intIn_ = values[i];
+            } else {
+                throw std::out_of_range("bad index");
+            }
         }
     }
 
@@ -277,8 +299,11 @@ public:
         gsl::span<const bool> values) override
     {
         for (int i = 0; i < variables.size(); ++i) {
-            if (variables[i] == 0) boolIn_ = values[i];
-            else throw std::out_of_range("bad index");
+            if (variables[i] == 0) {
+                boolIn_ = values[i];
+            } else {
+                throw std::out_of_range("bad index");
+            }
         }
     }
 
@@ -287,8 +312,11 @@ public:
         gsl::span<const std::string> values) override
     {
         for (int i = 0; i < variables.size(); ++i) {
-            if (variables[i] == 0) stringIn_ = values[i];
-            else throw std::out_of_range("bad index");
+            if (variables[i] == 0) {
+                stringIn_ = values[i];
+            } else {
+                throw std::out_of_range("bad index");
+            }
         }
     }
 
@@ -327,7 +355,7 @@ public:
     mock_async_slave(cse::event_loop& eventLoop, cse::slave& slave)
         : eventLoop_(eventLoop)
         , slave_(slave)
-    { }
+    {}
 
     ~mock_async_slave() = default;
 
@@ -340,7 +368,7 @@ public:
     // cse::async_slave function implementations
     boost::fibers::future<cse::model_description> model_description() override
     {
-        return boost::fibers::async([=] () {
+        return boost::fibers::async([=]() {
             loop_wait(eventLoop_, 1ms);
             return slave_.model_description();
         });
@@ -355,7 +383,7 @@ public:
         double relativeTolerance)
         override
     {
-        return boost::fibers::async([=, sn = std::string(slaveName), en = std::string(executionName)] () {
+        return boost::fibers::async([=, sn = std::string(slaveName), en = std::string(executionName)]() {
             loop_wait(eventLoop_, 1ms);
             slave_.setup(sn, en, startTime, stopTime, adaptiveStepSize, relativeTolerance);
         });
@@ -363,7 +391,7 @@ public:
 
     boost::fibers::future<void> start_simulation() override
     {
-        return boost::fibers::async([=] () {
+        return boost::fibers::async([=]() {
             loop_wait(eventLoop_, 1ms);
             slave_.start_simulation();
         });
@@ -371,7 +399,7 @@ public:
 
     boost::fibers::future<void> end_simulation() override
     {
-        return boost::fibers::async([=] () {
+        return boost::fibers::async([=]() {
             loop_wait(eventLoop_, 1ms);
             slave_.end_simulation();
         });
@@ -382,11 +410,13 @@ public:
         cse::time_duration deltaT)
         override
     {
-        return boost::fibers::async([=] () {
+        return boost::fibers::async([=]() {
             loop_wait(eventLoop_, 10ms);
             return slave_.do_step(currentT, deltaT);
         });
     }
+
+    // clang-format off
 
     boost::fibers::future<variable_values> get_variables(
         gsl::span<const cse::variable_index> realVariables,
@@ -407,7 +437,7 @@ public:
                 ivi = to_vector(integerVariables),
                 bvi = to_vector(booleanVariables),
                 svi = to_vector(stringVariables)
-            ] () {
+            ]() {
                 loop_wait(eventLoop_, 1ms);
                 auto rva = gsl::make_span(realBuffer_);
                 auto iva = gsl::make_span(integerBuffer_);
@@ -443,7 +473,7 @@ public:
                 bva = to_vector(booleanValues),
                 svi = to_vector(stringVariables),
                 sva = to_vector(stringValues)
-            ] () {
+            ]() {
                 loop_wait(eventLoop_, 1ms);
                 // NOTE: We don't handle nonfatal_bad_value correctly here.
                 // All functions should get called, and the exceptions should get merged.
@@ -453,6 +483,8 @@ public:
                 slave_.set_string_variables(gsl::make_span(svi), gsl::make_span(sva));
             });
     }
+
+    // clang-format on
 
 private:
     cse::event_loop& eventLoop_;
@@ -480,7 +512,9 @@ class loop_waiter
     : private cse::timer_event_handler
 {
 public:
-    loop_waiter(cse::event_loop& eventLoop) : eventLoop_(eventLoop) { }
+    loop_waiter(cse::event_loop& eventLoop)
+        : eventLoop_(eventLoop)
+    {}
 
     ~loop_waiter() noexcept { assert(event_ == nullptr); }
 

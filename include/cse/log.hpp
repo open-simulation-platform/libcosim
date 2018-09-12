@@ -23,5 +23,6 @@ enum class level
 };
 
 
-}} // namespace
+} // namespace log
+} // namespace cse
 #endif // header guard

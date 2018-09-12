@@ -16,70 +16,75 @@
 
 namespace
 {
-    constexpr int success = 0;
-    constexpr int failure = -1;
+constexpr int success = 0;
+constexpr int failure = -1;
 
-    cse_errc cpp_to_c_error_code(std::error_code ec)
-    {
-        if      (ec == cse::errc::bad_file)             return CSE_ERRC_BAD_FILE;
-        else if (ec == cse::errc::unsupported_feature)  return CSE_ERRC_UNSUPPORTED_FEATURE;
-        else if (ec == cse::errc::dl_load_error)        return CSE_ERRC_DL_LOAD_ERROR;
-        else if (ec == cse::errc::model_error)          return CSE_ERRC_MODEL_ERROR;
-        else if (ec == cse::errc::zip_error)            return CSE_ERRC_ZIP_ERROR;
-        else if (ec.category() == std::generic_category()) {
-            errno = ec.value();
-            return CSE_ERRC_ERRNO;
-        } else {
-            return CSE_ERRC_UNSPECIFIED;
-        }
-    }
-
-    // These hold information about the last reported error.
-    // They should only be set through `set_last_error()` and
-    // `handle_current_exception()`.
-    thread_local cse_errc g_lastErrorCode;
-    thread_local std::string g_lastErrorMessage;
-
-    // Sets the last error code and message directly.
-    void set_last_error(cse_errc ec, std::string message)
-    {
-        g_lastErrorCode = ec;
-        g_lastErrorMessage = std::move(message);
-    }
-
-    // Sets the last error code based on an `std::error_code`.
-    // If a message is specified it is used, otherwise the default
-    // message from `ec` is used.
-    void set_last_error(std::error_code ec, std::optional<std::string> message)
-    {
-        set_last_error(
-            cpp_to_c_error_code(ec),
-            std::move(message).value_or(ec.message()));
-    }
-
-    // To be called from an exception handler (`catch` block).  Stores
-    // information about the current exception as an error code and message.
-    void handle_current_exception()
-    {
-        try {
-            throw;
-        } catch (const cse::error& e) {
-            set_last_error(e.code(), e.what());
-        } catch (const std::system_error& e) {
-            set_last_error(e.code(), e.what());
-        } catch (const std::invalid_argument& e) {
-            set_last_error(CSE_ERRC_INVALID_ARGUMENT, e.what());
-        } catch (const std::out_of_range& e) {
-            set_last_error(CSE_ERRC_OUT_OF_RANGE, e.what());
-        } catch (const std::exception& e) {
-            set_last_error(CSE_ERRC_UNSPECIFIED, e.what());
-        } catch (...) {
-            set_last_error(
-                CSE_ERRC_UNSPECIFIED,
-                "An exception of unknown type was thrown");
-        }
+cse_errc cpp_to_c_error_code(std::error_code ec)
+{
+    if (ec == cse::errc::bad_file)
+        return CSE_ERRC_BAD_FILE;
+    else if (ec == cse::errc::unsupported_feature)
+        return CSE_ERRC_UNSUPPORTED_FEATURE;
+    else if (ec == cse::errc::dl_load_error)
+        return CSE_ERRC_DL_LOAD_ERROR;
+    else if (ec == cse::errc::model_error)
+        return CSE_ERRC_MODEL_ERROR;
+    else if (ec == cse::errc::zip_error)
+        return CSE_ERRC_ZIP_ERROR;
+    else if (ec.category() == std::generic_category()) {
+        errno = ec.value();
+        return CSE_ERRC_ERRNO;
+    } else {
+        return CSE_ERRC_UNSPECIFIED;
     }
 }
+
+// These hold information about the last reported error.
+// They should only be set through `set_last_error()` and
+// `handle_current_exception()`.
+thread_local cse_errc g_lastErrorCode;
+thread_local std::string g_lastErrorMessage;
+
+// Sets the last error code and message directly.
+void set_last_error(cse_errc ec, std::string message)
+{
+    g_lastErrorCode = ec;
+    g_lastErrorMessage = std::move(message);
+}
+
+// Sets the last error code based on an `std::error_code`.
+// If a message is specified it is used, otherwise the default
+// message from `ec` is used.
+void set_last_error(std::error_code ec, std::optional<std::string> message)
+{
+    set_last_error(
+        cpp_to_c_error_code(ec),
+        std::move(message).value_or(ec.message()));
+}
+
+// To be called from an exception handler (`catch` block).  Stores
+// information about the current exception as an error code and message.
+void handle_current_exception()
+{
+    try {
+        throw;
+    } catch (const cse::error& e) {
+        set_last_error(e.code(), e.what());
+    } catch (const std::system_error& e) {
+        set_last_error(e.code(), e.what());
+    } catch (const std::invalid_argument& e) {
+        set_last_error(CSE_ERRC_INVALID_ARGUMENT, e.what());
+    } catch (const std::out_of_range& e) {
+        set_last_error(CSE_ERRC_OUT_OF_RANGE, e.what());
+    } catch (const std::exception& e) {
+        set_last_error(CSE_ERRC_UNSPECIFIED, e.what());
+    } catch (...) {
+        set_last_error(
+            CSE_ERRC_UNSPECIFIED,
+            "An exception of unknown type was thrown");
+    }
+}
+} // namespace
 
 
 cse_errc cse_last_error_code()

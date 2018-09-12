@@ -20,7 +20,10 @@ struct jm_callbacks;
 namespace cse
 {
 
-namespace utility { class temp_dir; }
+namespace utility
+{
+class temp_dir;
+}
 
 
 namespace fmi
@@ -143,5 +146,6 @@ private:
 };
 
 
-}} // namespace
+} // namespace fmi
+} // namespace cse
 #endif // header guard

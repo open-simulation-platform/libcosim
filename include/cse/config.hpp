@@ -13,7 +13,9 @@
  *
  *  \ingroup csecore
  */
-namespace cse { }
+namespace cse
+{
+}
 
 
 #endif // header guard

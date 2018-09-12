@@ -11,7 +11,6 @@
 #include <cse/detail/macros.hpp>
 
 
-
 namespace cse
 {
 
@@ -25,11 +24,12 @@ class oneshot_event_handler;
 
 
 /// Socket I/O event type bitmask.
-enum class socket_event_type {
+enum class socket_event_type
+{
     none = 0,
 
     /// A socket becomes ready for reading.
-    read  = 1,
+    read = 1,
 
     /// A socket becomes ready for writing.
     write = 2
@@ -233,5 +233,5 @@ public:
 };
 
 
-} // namespace
+} // namespace cse
 #endif // header guard

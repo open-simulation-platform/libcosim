@@ -20,45 +20,45 @@ namespace zip
 
 namespace
 {
-    // A simple RAII class that manages a zip_file*.
-    class auto_zip_file
+// A simple RAII class that manages a zip_file*.
+class auto_zip_file
+{
+public:
+    auto_zip_file(::zip* archive, zip_uint64_t index, zip_flags_t flags = 0)
+        : m_file{zip_fopen_index(archive, index, flags)}
     {
-    public:
-        auto_zip_file(::zip* archive, zip_uint64_t index, zip_flags_t flags = 0)
-            : m_file{zip_fopen_index(archive, index, flags)}
-        {
-            if (m_file == nullptr) {
-                throw error(archive);
-            }
+        if (m_file == nullptr) {
+            throw error(archive);
         }
+    }
 
-        // Disabled because we don't need them (for now):
-        auto_zip_file(const auto_zip_file&) = delete;
-        auto_zip_file& operator=(const auto_zip_file&) = delete;
-        auto_zip_file(auto_zip_file&&) = delete;
-        auto_zip_file& operator=(auto_zip_file&&) = delete;
+    // Disabled because we don't need them (for now):
+    auto_zip_file(const auto_zip_file&) = delete;
+    auto_zip_file& operator=(const auto_zip_file&) = delete;
+    auto_zip_file(auto_zip_file&&) = delete;
+    auto_zip_file& operator=(auto_zip_file&&) = delete;
 
-        ~auto_zip_file() noexcept
-        {
-            if (m_file) zip_fclose(m_file);
+    ~auto_zip_file() noexcept
+    {
+        if (m_file) zip_fclose(m_file);
+    }
+
+    std::size_t read(void* buffer, std::size_t maxBytes)
+    {
+        assert(m_file != nullptr);
+        assert(buffer != nullptr);
+        assert(maxBytes > 0);
+        const auto bytesRead = zip_fread(m_file, buffer, maxBytes);
+        if (bytesRead < 0) {
+            throw error(m_file);
         }
+        return static_cast<std::size_t>(bytesRead);
+    }
 
-        std::size_t read(void* buffer, std::size_t maxBytes)
-        {
-            assert(m_file != nullptr);
-            assert(buffer != nullptr);
-            assert(maxBytes > 0);
-            const auto bytesRead = zip_fread(m_file, buffer, maxBytes);
-            if (bytesRead < 0) {
-                throw error(m_file);
-            }
-            return static_cast<std::size_t>(bytesRead);
-        }
-
-    private:
-        zip_file* m_file;
-    };
-}
+private:
+    zip_file* m_file;
+};
+} // namespace
 
 
 archive::archive() noexcept
@@ -148,8 +148,10 @@ entry_index archive::find_entry(const std::string& name) const
     if (n < 0) {
         int code = 0;
         zip_error_get(m_archive, &code, nullptr);
-        if (code == ZIP_ER_NOENT) return invalid_entry_index;
-        else throw error(m_archive);
+        if (code == ZIP_ER_NOENT)
+            return invalid_entry_index;
+        else
+            throw error(m_archive);
     }
     return static_cast<entry_index>(n);
 }
@@ -175,7 +177,7 @@ bool archive::is_dir_entry(entry_index index) const
     }
     if ((zs.valid & ZIP_STAT_NAME) && (zs.valid & ZIP_STAT_SIZE) && (zs.valid & ZIP_STAT_CRC)) {
         const auto nameLen = std::strlen(zs.name);
-        return zs.name[nameLen-1] == '/' && zs.size == 0 && zs.crc == 0;
+        return zs.name[nameLen - 1] == '/' && zs.size == 0 && zs.crc == 0;
     } else {
         throw error("Cannot determine entry type");
     }
@@ -184,48 +186,48 @@ bool archive::is_dir_entry(entry_index index) const
 
 namespace
 {
-    void copy_to_stream(
-        auto_zip_file& source,
-        std::ostream& target,
-        std::vector<char>& buffer)
-    {
-        assert(target.good());
-        assert(!buffer.empty());
-        for (;;) {
-            const auto n = source.read(buffer.data(), buffer.size());
-            if (n == 0) break;
-            target.write(buffer.data(), n);
-        }
-    }
-
-    void extract_file_as(
-        ::zip* archive,
-        entry_index index,
-        const std::filesystem::path& targetPath,
-        std::vector<char>& buffer)
-    {
-        assert(archive != nullptr);
-        assert(!targetPath.empty());
-        assert(!buffer.empty());
-
-        auto_zip_file srcFile(archive, index, 0);
-        std::ofstream tgtFile(
-            targetPath.string(),
-            std::ios_base::binary | std::ios_base::trunc);
-        if (!tgtFile.is_open()) {
-            throw std::system_error(
-                errno,
-                std::generic_category(),
-                targetPath.string());
-        }
-        copy_to_stream(srcFile, tgtFile, buffer);
-        if (tgtFile.fail()) {
-            throw std::system_error(
-                make_error_code(std::errc::io_error),
-                targetPath.string());
-        }
+void copy_to_stream(
+    auto_zip_file& source,
+    std::ostream& target,
+    std::vector<char>& buffer)
+{
+    assert(target.good());
+    assert(!buffer.empty());
+    for (;;) {
+        const auto n = source.read(buffer.data(), buffer.size());
+        if (n == 0) break;
+        target.write(buffer.data(), n);
     }
 }
+
+void extract_file_as(
+    ::zip* archive,
+    entry_index index,
+    const std::filesystem::path& targetPath,
+    std::vector<char>& buffer)
+{
+    assert(archive != nullptr);
+    assert(!targetPath.empty());
+    assert(!buffer.empty());
+
+    auto_zip_file srcFile(archive, index, 0);
+    std::ofstream tgtFile(
+        targetPath.string(),
+        std::ios_base::binary | std::ios_base::trunc);
+    if (!tgtFile.is_open()) {
+        throw std::system_error(
+            errno,
+            std::generic_category(),
+            targetPath.string());
+    }
+    copy_to_stream(srcFile, tgtFile, buffer);
+    if (tgtFile.fail()) {
+        throw std::system_error(
+            make_error_code(std::errc::io_error),
+            targetPath.string());
+    }
+}
+} // namespace
 
 
 void archive::extract_all(
@@ -233,14 +235,13 @@ void archive::extract_all(
 {
     assert(is_open());
     if (!std::filesystem::exists(targetDir) ||
-        !std::filesystem::is_directory(targetDir))
-    {
+        !std::filesystem::is_directory(targetDir)) {
         throw std::system_error(
             make_error_code(std::errc::not_a_directory),
             targetDir.string());
     }
 
-    auto buffer = std::vector<char>(4096*16);
+    auto buffer = std::vector<char>(4096 * 16);
     const auto entryCount = entry_count();
     for (entry_index index = 0; index < entryCount; ++index) {
         const auto entryName = entry_name(index);
@@ -248,8 +249,7 @@ void archive::extract_all(
             const auto entryPath = std::filesystem::path(entryName);
             if (entryPath.has_root_path()) {
                 throw error(
-                    "Archive contains an entry with an absolute path: "
-                    + entryName);
+                    "Archive contains an entry with an absolute path: " + entryName);
             }
             const auto targetPath = targetDir / entryPath;
             std::filesystem::create_directories(targetPath.parent_path());
@@ -266,7 +266,7 @@ std::filesystem::path archive::extract_file_to(
     assert(is_open());
     const auto entryPath = std::filesystem::path(entry_name(index));
     const auto targetPath = targetDir / entryPath.filename();
-    auto buffer = std::vector<char>(4096*16);
+    auto buffer = std::vector<char>(4096 * 16);
     extract_file_as(m_archive, index, targetPath, buffer);
     return targetPath;
 }
@@ -292,4 +292,6 @@ error::error(zip_file* file) noexcept
 }
 
 
-}}} // namespace
+} // namespace zip
+} // namespace utility
+} // namespace cse

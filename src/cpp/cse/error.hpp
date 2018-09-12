@@ -62,14 +62,13 @@
  *
  *  \param[in] test An expression which can be implicitly converted to `bool`.
  */
-#define CSE_INPUT_CHECK(test)                                                  \
-    do {                                                                       \
-        if (!(test)) {                                                         \
-            throw std::invalid_argument(                                       \
-                std::string(__FUNCTION__)                                      \
-                + ": Input requirement not satisfied: " #test);                \
-        }                                                                      \
-    } while(false)
+#define CSE_INPUT_CHECK(test)                                                             \
+    do {                                                                                  \
+        if (!(test)) {                                                                    \
+            throw std::invalid_argument(                                                  \
+                std::string(__FUNCTION__) + ": Input requirement not satisfied: " #test); \
+        }                                                                                 \
+    } while (false)
 
 /**
  *  \def    CSE_PANIC()
@@ -80,8 +79,10 @@
  *  the macro is invoked.  The program is terminated by calling
  *  `std::terminate()`.
  */
-#define CSE_PANIC() \
-    do { ::cse::detail::panic(__FILE__, __LINE__, nullptr); } while(false)
+#define CSE_PANIC()                                        \
+    do {                                                   \
+        ::cse::detail::panic(__FILE__, __LINE__, nullptr); \
+    } while (false)
 
 /**
  *  \def    CSE_PANIC_M(message)
@@ -92,15 +93,17 @@
  *  the macro is invoked, in addition to the text provided in `message`.
  *  The program is terminated by calling `std::terminate()`.
  */
-#define CSE_PANIC_M(message) \
-    do { ::cse::detail::panic(__FILE__, __LINE__, message); } while(false)
+#define CSE_PANIC_M(message)                               \
+    do {                                                   \
+        ::cse::detail::panic(__FILE__, __LINE__, message); \
+    } while (false)
 
 
 namespace cse
 {
 namespace detail
 {
-    [[noreturn]] void panic(const char* file, int line, const char* msg) noexcept;
+[[noreturn]] void panic(const char* file, int line, const char* msg) noexcept;
 }
 
 
@@ -132,5 +135,5 @@ inline std::system_error make_system_error(const std::string& msg) noexcept
 }
 
 
-} // namespace
+} // namespace cse
 #endif // header guard

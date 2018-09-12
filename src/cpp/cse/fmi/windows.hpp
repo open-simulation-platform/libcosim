@@ -6,9 +6,8 @@
 #define CSE_FMI_WINDOWS_HPP
 
 #ifdef _WIN32
-
-#include <filesystem>
-#include <string>
+#    include <filesystem>
+#    include <string>
 
 
 namespace cse
@@ -62,6 +61,7 @@ private:
 std::filesystem::path fmu_binaries_dir(const std::filesystem::path& baseDir);
 
 
-}} // namespace
+} // namespace fmi
+} // namespace cse
 #endif // _WIN32
 #endif // header guard

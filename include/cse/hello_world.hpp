@@ -38,5 +38,5 @@ constexpr int get_ultimate_answer() noexcept
 }
 
 
-} // namespace
+} // namespace cse
 #endif // header guard

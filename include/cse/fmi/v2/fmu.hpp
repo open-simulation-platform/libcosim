@@ -24,7 +24,10 @@ namespace fmi
 {
 
 #ifdef _WIN32
-namespace detail { class additional_path; }
+namespace detail
+{
+class additional_path;
+}
 #endif
 
 namespace v2
@@ -61,7 +64,7 @@ public:
     fmi::fmi_version fmi_version() const override;
 
     std::shared_ptr<const cse::model_description>
-        model_description() const override;
+    model_description() const override;
 
     std::shared_ptr<fmi::slave_instance> instantiate_slave() override
     {
@@ -178,5 +181,7 @@ private:
 };
 
 
-}}} // namespace
+} // namespace v2
+} // namespace fmi
+} // namespace cse
 #endif // header guard
