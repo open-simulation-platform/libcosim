@@ -72,7 +72,7 @@ BOOST_AUTO_TEST_CASE(zip_archive)
         BOOST_TEST(fs::is_regular_file(txtExtracted));
         BOOST_TEST(fs::file_size(binExtracted) == binSize);
         BOOST_TEST(fs::file_size(txtExtracted) == txtSize);
-        BOOST_CHECK_THROW(archive.extract_file_to(binIndex, tempDir.path()/"nonexistent"), std::system_error);
+        BOOST_CHECK_THROW(archive.extract_file_to(binIndex, tempDir.path() / "nonexistent"), std::system_error);
     }
 
     // Extract individual entries
@@ -85,7 +85,7 @@ BOOST_AUTO_TEST_CASE(zip_archive)
         BOOST_TEST(fs::file_size(binExtracted) == binSize);
         BOOST_TEST(fs::file_size(txtExtracted) == txtSize);
         BOOST_CHECK_THROW(archive.extract_file_to(invIndex, tempDir.path()), uz::error);
-        BOOST_CHECK_THROW(archive.extract_file_to(binIndex, tempDir.path()/"nonexistent"), std::system_error);
+        BOOST_CHECK_THROW(archive.extract_file_to(binIndex, tempDir.path() / "nonexistent"), std::system_error);
     }
 
     archive.discard();

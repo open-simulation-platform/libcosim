@@ -6,6 +6,7 @@
 #define CSE_LIBEVENT_HPP
 
 #include <memory>
+
 #include <cse/event_loop.hpp>
 
 
@@ -23,5 +24,5 @@ namespace cse
 std::unique_ptr<event_loop> make_libevent_event_loop();
 
 
-} // namespace
+} // namespace cse
 #endif // header guard

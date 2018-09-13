@@ -6,6 +6,7 @@
 #define CSE_FMI_FMU_HPP
 
 #include <memory>
+
 #include <cse/model.hpp>
 #include <cse/slave.hpp>
 
@@ -49,7 +50,7 @@ public:
 
     /// A description of this FMU.
     virtual std::shared_ptr<const cse::model_description>
-        model_description() const = 0;
+    model_description() const = 0;
 
     /// Creates a co-simulation slave instance of this FMU.
     virtual std::shared_ptr<slave_instance> instantiate_slave() = 0;
@@ -57,7 +58,7 @@ public:
     /// The `fmi::importer` which was used to import this FMU.
     virtual std::shared_ptr<fmi::importer> importer() const = 0;
 
-    virtual ~fmu() { }
+    virtual ~fmu() {}
 };
 
 
@@ -73,9 +74,10 @@ public:
         return *(fmu()->model_description());
     }
 
-    virtual ~slave_instance() { }
+    virtual ~slave_instance() {}
 };
 
 
-}} // namespace
+} // namespace fmi
+} // namespace cse
 #endif // header guard

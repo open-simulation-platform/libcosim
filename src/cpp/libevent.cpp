@@ -1,9 +1,9 @@
 #include <cse/libevent.hpp>
 
 #ifdef _WIN32
-#   include <winsock2.h>
+#    include <winsock2.h>
 #else
-#   include <sys/time.h>
+#    include <sys/time.h>
 #endif
 
 #include <algorithm>
@@ -52,7 +52,7 @@ public:
 class libevent_event_loop : public event_loop
 {
     // Helpers for automatic management of libevent resources
-    using unique_event_ptr = std::unique_ptr<::event, void(*)(::event*)>;
+    using unique_event_ptr = std::unique_ptr<::event, void (*)(::event*)>;
 
     static unique_event_ptr make_event(
         ::event_base* base,
@@ -69,7 +69,7 @@ class libevent_event_loop : public event_loop
     }
 
     using unique_event_base_ptr =
-        std::unique_ptr<::event_base, void(*)(::event_base*)>;
+        std::unique_ptr<::event_base, void (*)(::event_base*)>;
 
     static unique_event_base_ptr make_event_base()
     {
@@ -105,7 +105,7 @@ class libevent_event_loop : public event_loop
                 eventLoop_.eventBase_.get(),
                 socket_,
                 (persist ? EV_PERSIST : 0) |
-                    ((type & socket_event_type::read ) == socket_event_type::none ? 0 : EV_READ ) |
+                    ((type & socket_event_type::read) == socket_event_type::none ? 0 : EV_READ) |
                     ((type & socket_event_type::write) == socket_event_type::none ? 0 : EV_WRITE),
                 &call_handler,
                 this);
@@ -137,8 +137,8 @@ class libevent_event_loop : public event_loop
             const auto e = reinterpret_cast<socket*>(arg);
             e->handler_->handle_socket_event(
                 e,
-                ((what & EV_READ ) ? socket_event_type::read  : socket_event_type::none) |
-                ((what & EV_WRITE) ? socket_event_type::write : socket_event_type::none));
+                ((what & EV_READ) ? socket_event_type::read : socket_event_type::none) |
+                    ((what & EV_WRITE) ? socket_event_type::write : socket_event_type::none));
         }
 
         libevent_event_loop& eventLoop_;
@@ -177,7 +177,7 @@ class libevent_event_loop : public event_loop
                 this);
 
             timeval tv;
-            tv.tv_sec  = boost::numeric_cast<decltype(tv.tv_sec)> (interval.count() / 1'000'000);
+            tv.tv_sec = boost::numeric_cast<decltype(tv.tv_sec)>(interval.count() / 1'000'000);
             tv.tv_usec = boost::numeric_cast<decltype(tv.tv_usec)>(interval.count() % 1'000'000);
             const auto rc = event_add(ev.get(), &tv);
             if (rc != 0) throw_system_error("libevent: event_add() failed");
@@ -234,7 +234,7 @@ public:
         auto it = std::find_if(
             socketEvents_.begin(),
             socketEvents_.end(),
-            [event] (const socket& item) { return event == &item; });
+            [event](const socket& item) { return event == &item; });
         if (it == socketEvents_.end()) {
             throw std::invalid_argument("Invalid I/O event handle");
         }
@@ -252,7 +252,7 @@ public:
         auto it = std::find_if(
             timerEvents_.begin(),
             timerEvents_.end(),
-            [event] (const timer& item) { return event == &item; });
+            [event](const timer& item) { return event == &item; });
         if (it == timerEvents_.end()) {
             throw std::invalid_argument("Invalid timer event handle");
         }
@@ -304,5 +304,4 @@ std::unique_ptr<event_loop> make_libevent_event_loop()
 }
 
 
-
-} // namespace
+} // namespace cse

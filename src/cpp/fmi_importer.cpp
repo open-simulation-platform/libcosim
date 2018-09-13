@@ -14,12 +14,12 @@
 
 #include "cse/error.hpp"
 #include "cse/fmi/fmilib.h"
-#include <cse/fmi/v1/fmu.hpp>
-#include <cse/fmi/v2/fmu.hpp>
 #include "cse/log/logger.hpp"
-#include "cse/utility/zip.hpp"
 #include "cse/utility/filesystem.hpp"
 #include "cse/utility/uuid.hpp"
+#include "cse/utility/zip.hpp"
+#include <cse/fmi/v1/fmu.hpp>
+#include <cse/fmi/v2/fmu.hpp>
 
 
 namespace cse
@@ -43,10 +43,9 @@ std::shared_ptr<importer> importer::create()
 
 namespace
 {
-    log::level convert_log_level(jm_log_level_enu_t jmLogLevel)
-    {
-        switch (jmLogLevel)
-        {
+log::level convert_log_level(jm_log_level_enu_t jmLogLevel)
+{
+    switch (jmLogLevel) {
         case jm_log_level_fatal:
         case jm_log_level_error:
             return log::level::error;
@@ -63,36 +62,36 @@ namespace
             // they do, we at least make sure a message is printed in
             // debug mode.
             return log::level::debug;
-        }
-    }
-
-    void logger_callback(
-        jm_callbacks* /*callbacks*/,
-        jm_string module,
-        jm_log_level_enu_t logLevel,
-        jm_string message)
-    {
-        const auto myLevel = convert_log_level(logLevel);
-        // Errors are dealt with with exceptions
-        BOOST_LOG_SEV(log::logger::get(), myLevel)
-            << "FMI Library: "<< module << "] " << message;
-    }
-
-    std::unique_ptr<jm_callbacks> make_callbacks()
-    {
-        auto c = std::make_unique<jm_callbacks>();
-        std::memset(c.get(), 0, sizeof(jm_callbacks));
-        c->malloc = std::malloc;
-        c->calloc = std::calloc;
-        c->realloc = std::realloc;
-        c->free = std::free;
-        c->logger = &logger_callback;
-        c->log_level = jm_log_level_all;
-        c->context = nullptr;
-        std::memset(c->errMessageBuffer, 0, JM_MAX_ERROR_MESSAGE_SIZE);
-        return c;
     }
 }
+
+void logger_callback(
+    jm_callbacks* /*callbacks*/,
+    jm_string module,
+    jm_log_level_enu_t logLevel,
+    jm_string message)
+{
+    const auto myLevel = convert_log_level(logLevel);
+    // Errors are dealt with with exceptions
+    BOOST_LOG_SEV(log::logger::get(), myLevel)
+        << "FMI Library: " << module << "] " << message;
+}
+
+std::unique_ptr<jm_callbacks> make_callbacks()
+{
+    auto c = std::make_unique<jm_callbacks>();
+    std::memset(c.get(), 0, sizeof(jm_callbacks));
+    c->malloc = std::malloc;
+    c->calloc = std::calloc;
+    c->realloc = std::realloc;
+    c->free = std::free;
+    c->logger = &logger_callback;
+    c->log_level = jm_log_level_all;
+    c->context = nullptr;
+    std::memset(c->errMessageBuffer, 0, JM_MAX_ERROR_MESSAGE_SIZE);
+    return c;
+}
+} // namespace
 
 
 importer::importer(const std::filesystem::path& cachePath)
@@ -114,82 +113,81 @@ importer::importer(utility::temp_dir&& tempDir)
 
 namespace
 {
-    struct minimal_model_description
-    {
-        fmi_version fmiVersion;
-        std::string guid;
-    };
+struct minimal_model_description
+{
+    fmi_version fmiVersion;
+    std::string guid;
+};
 
-    // Reads the 'fmiVersion' and 'guid' attributes from the XML file.
-    minimal_model_description peek_model_description(
-        const std::filesystem::path& fmuUnpackDir)
-    {
-        const auto xmlFile = fmuUnpackDir / "modelDescription.xml";
-        boost::property_tree::ptree xml;
-        boost::property_tree::read_xml(xmlFile.string(), xml);
+// Reads the 'fmiVersion' and 'guid' attributes from the XML file.
+minimal_model_description peek_model_description(
+    const std::filesystem::path& fmuUnpackDir)
+{
+    const auto xmlFile = fmuUnpackDir / "modelDescription.xml";
+    boost::property_tree::ptree xml;
+    boost::property_tree::read_xml(xmlFile.string(), xml);
 
-        minimal_model_description md;
+    minimal_model_description md;
 
-        auto fmiVersion = xml.get(
-            "fmiModelDescription.<xmlattr>.fmiVersion",
+    auto fmiVersion = xml.get(
+        "fmiModelDescription.<xmlattr>.fmiVersion",
+        std::string());
+    boost::trim(fmiVersion);
+    if (fmiVersion.empty()) {
+        throw error(
+            make_error_code(errc::bad_file),
+            "Invalid modelDescription.xml; fmiVersion attribute missing or empty");
+    }
+    if (fmiVersion.size() >= 3 && fmiVersion.substr(0, 3) == "1.0") {
+        md.fmiVersion = fmi_version::v1_0;
+    } else if (fmiVersion.size() >= 3 && fmiVersion.substr(0, 3) == "2.0") {
+        md.fmiVersion = fmi_version::v2_0;
+    } else {
+        md.fmiVersion = fmi_version::unknown;
+    }
+
+    if (md.fmiVersion != fmi_version::unknown) {
+        md.guid = xml.get(
+            "fmiModelDescription.<xmlattr>.guid",
             std::string());
-        boost::trim(fmiVersion);
-        if (fmiVersion.empty()) {
+        boost::trim(md.guid);
+        if (md.guid.empty()) {
             throw error(
                 make_error_code(errc::bad_file),
-                "Invalid modelDescription.xml; fmiVersion attribute missing or empty");
+                "Invalid modelDescription.xml; guid attribute missing or empty");
         }
-        if (fmiVersion.size() >= 3 && fmiVersion.substr(0, 3) == "1.0") {
-            md.fmiVersion = fmi_version::v1_0;
-        } else if (fmiVersion.size() >= 3 && fmiVersion.substr(0, 3) == "2.0") {
-            md.fmiVersion = fmi_version::v2_0;
-        } else {
-            md.fmiVersion = fmi_version::unknown;
-        }
-
-        if (md.fmiVersion != fmi_version::unknown) {
-            md.guid = xml.get(
-                "fmiModelDescription.<xmlattr>.guid",
-                std::string());
-            boost::trim(md.guid);
-            if (md.guid.empty()) {
-                throw error(
-                    make_error_code(errc::bad_file),
-                    "Invalid modelDescription.xml; guid attribute missing or empty");
-            }
-        }
-        return md;
     }
-
-    // Replaces all characters which are not printable ASCII characters or
-    // not valid for use in a path with their percent-encoded equivalents.
-    // References:
-    //     https://en.wikipedia.org/wiki/Percent-encoding
-    //     https://msdn.microsoft.com/en-us/library/aa365247.aspx
-    std::string sanitise_path(const std::string& str)
-    {
-        CSE_INPUT_CHECK(!str.empty());
-        std::ostringstream sanitised;
-        sanitised.fill('0');
-        sanitised << std::hex;
-        for (const char c : str) {
-            if (c < 0x20 || c > 0x7E
-#ifdef _WIN32
-                || c == '<'  || c == '>' || c == ':' || c == '"' || c == '/'
-                || c == '\\' || c == '|' || c == '?' || c == '*'
-#endif
-            ) {
-                sanitised
-                    << '%'
-                    << std::setw(2)
-                    << static_cast<int>(static_cast<unsigned char>(c));
-            } else {
-                sanitised << c;
-            }
-        }
-        return sanitised.str();
-    }
+    return md;
 }
+
+// Replaces all characters which are not printable ASCII characters or
+// not valid for use in a path with their percent-encoded equivalents.
+// References:
+//     https://en.wikipedia.org/wiki/Percent-encoding
+//     https://msdn.microsoft.com/en-us/library/aa365247.aspx
+std::string sanitise_path(const std::string& str)
+{
+    CSE_INPUT_CHECK(!str.empty());
+    std::ostringstream sanitised;
+    sanitised.fill('0');
+    sanitised << std::hex;
+    for (const char c : str) {
+        if (c < 0x20 || c > 0x7E
+#ifdef _WIN32
+            || c == '<' || c == '>' || c == ':' || c == '"' || c == '/' || c == '\\' || c == '|' || c == '?' || c == '*'
+#endif
+        ) {
+            sanitised
+                << '%'
+                << std::setw(2)
+                << static_cast<int>(static_cast<unsigned char>(c));
+        } else {
+            sanitised << c;
+        }
+    }
+    return sanitised.str();
+}
+} // namespace
 
 
 std::shared_ptr<fmu> importer::import(const std::filesystem::path& fmuPath)
@@ -201,7 +199,7 @@ std::shared_ptr<fmu> importer::import(const std::filesystem::path& fmuPath)
     const auto zip = cse::utility::zip::archive(fmuPath);
     const auto tempMdDir = workDir_ / cse::utility::random_uuid();
     std::filesystem::create_directories(tempMdDir);
-    const auto removeTempMdDir = gsl::finally([tempMdDir](){
+    const auto removeTempMdDir = gsl::finally([tempMdDir]() {
         std::error_code ignored;
         std::filesystem::remove_all(tempMdDir, ignored);
     });
@@ -226,8 +224,7 @@ std::shared_ptr<fmu> importer::import(const std::filesystem::path& fmuPath)
     const auto fmuUnpackDir = fmuDir_ / sanitise_path(minModelDesc.guid);
     if (!std::filesystem::exists(fmuUnpackDir) ||
         !std::filesystem::exists(fmuUnpackDir / "modelDescription.xml") ||
-        std::filesystem::last_write_time(fmuPath) > std::filesystem::last_write_time(fmuUnpackDir / "modelDescription.xml"))
-    {
+        std::filesystem::last_write_time(fmuPath) > std::filesystem::last_write_time(fmuUnpackDir / "modelDescription.xml")) {
         std::filesystem::create_directories(fmuUnpackDir);
         try {
             zip.extract_all(fmuUnpackDir);
@@ -275,8 +272,7 @@ void importer::clean_cache()
         std::error_code ignoredError;
         for (auto it = std::filesystem::directory_iterator(fmuDir_);
              it != std::filesystem::directory_iterator();
-             ++it)
-        {
+             ++it) {
             if (guidCache_.count(it->path().filename().string()) == 0) {
                 std::filesystem::remove_all(*it, ignoredError);
             }
@@ -307,14 +303,19 @@ fmi_import_context_t* importer::fmilib_handle() const
 void importer::prune_ptr_caches()
 {
     for (auto it = begin(pathCache_); it != end(pathCache_);) {
-        if (it->second.expired()) pathCache_.erase(it++);
-        else ++it;
+        if (it->second.expired())
+            pathCache_.erase(it++);
+        else
+            ++it;
     }
     for (auto it = begin(guidCache_); it != end(guidCache_);) {
-        if (it->second.expired()) guidCache_.erase(it++);
-        else ++it;
+        if (it->second.expired())
+            guidCache_.erase(it++);
+        else
+            ++it;
     }
 }
 
 
-}} // namespace
+} // namespace fmi
+} // namespace cse

@@ -6,8 +6,11 @@
 #define CSE_SLAVE_HPP
 
 #include <string>
+
 #include <gsl/span>
+
 #include <cse/model.hpp>
+
 
 namespace cse
 {
@@ -42,7 +45,7 @@ namespace cse
 class slave
 {
 public:
-    virtual ~slave() { }
+    virtual ~slave() {}
 
     /// Returns a model description.
     virtual cse::model_description model_description() const = 0;
@@ -225,5 +228,5 @@ public:
 };
 
 
-}
+} // namespace cse
 #endif // header guard

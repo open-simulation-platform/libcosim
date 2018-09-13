@@ -75,7 +75,7 @@ public:
     explicit error(std::error_code ec)
         : std::runtime_error(ec.message())
         , code_(ec)
-    { }
+    {}
 
     /**
      *  Constructs an exception with the given error code and an additional
@@ -88,7 +88,7 @@ public:
     error(std::error_code ec, const std::string& msg)
         : std::runtime_error(ec.message() + ": " + msg)
         , code_(ec)
-    { }
+    {}
 
     /// Returns an error code.
     const std::error_code& code() const noexcept { return code_; }
@@ -113,21 +113,24 @@ public:
     /// Constructs an exception with a default error message.
     nonfatal_bad_value()
         : error(make_error_code(errc::nonfatal_bad_value))
-    { }
+    {}
 
     /// Constructs an exception with a custom error message.
     explicit nonfatal_bad_value(const std::string& msg)
         : error(make_error_code(errc::nonfatal_bad_value), msg)
-    { }
+    {}
 };
 
 
-} // namespace
+} // namespace cse
 
 
 namespace std
 {
-    // Enable implicit conversions from errc to std::error_condition.
-    template<> struct is_error_condition_enum<cse::errc> : public true_type { };
-}
+// Enable implicit conversions from errc to std::error_condition.
+template<>
+struct is_error_condition_enum<cse::errc> : public true_type
+{
+};
+} // namespace std
 #endif // header guard

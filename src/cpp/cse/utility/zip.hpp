@@ -241,5 +241,7 @@ public:
 };
 
 
-}}} // namespace
+} // namespace zip
+} // namespace utility
+} // namespace cse
 #endif // header guard

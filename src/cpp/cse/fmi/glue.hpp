@@ -54,5 +54,6 @@ variable_description to_variable_description(fmi1_import_variable_t* fmiVariable
 variable_description to_variable_description(fmi2_import_variable_t* fmiVariable);
 
 
-}} // namespace
+} // namespace fmi
+} // namespace cse
 #endif // header guard

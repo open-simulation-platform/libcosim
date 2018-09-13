@@ -14,14 +14,14 @@
 #include <gsl/gsl_util>
 
 #include "cse/error.hpp"
-#include <cse/exception.hpp>
 #include "cse/fmi/fmilib.h"
 #include "cse/fmi/glue.hpp"
-#include <cse/fmi/importer.hpp>
 #include "cse/log/logger.hpp"
+#include <cse/exception.hpp>
+#include <cse/fmi/importer.hpp>
 
 #ifdef _WIN32
-#include "cse/fmi/windows.hpp"
+#    include "cse/fmi/windows.hpp"
 #endif
 
 
@@ -55,11 +55,11 @@ fmu::fmu(
             "Not a co-simulation FMU");
     }
 
-    modelDescription_.name          = fmi2_import_get_model_name(handle_);
-    modelDescription_.uuid          = fmi2_import_get_GUID(handle_);
-    modelDescription_.description   = fmi2_import_get_description(handle_);
-    modelDescription_.author        = fmi2_import_get_author(handle_);
-    modelDescription_.version       = fmi2_import_get_model_version(handle_);
+    modelDescription_.name = fmi2_import_get_model_name(handle_);
+    modelDescription_.uuid = fmi2_import_get_GUID(handle_);
+    modelDescription_.description = fmi2_import_get_description(handle_);
+    modelDescription_.author = fmi2_import_get_author(handle_);
+    modelDescription_.version = fmi2_import_get_model_version(handle_);
     const auto varList = fmi2_import_get_variable_list(handle_, 0);
     const auto _ = gsl::finally([&]() {
         fmi2_import_free_variable_list(varList);
@@ -100,15 +100,15 @@ std::shared_ptr<fmi::importer> fmu::importer() const
 
 namespace
 {
-    void prune(std::vector<std::weak_ptr<slave_instance>>& instances)
-    {
-        auto newEnd = std::remove_if(
-            begin(instances),
-            end(instances),
-            [] (const std::weak_ptr<slave_instance>& wp) { return wp.expired(); });
-        instances.erase(newEnd, end(instances));
-    }
+void prune(std::vector<std::weak_ptr<slave_instance>>& instances)
+{
+    auto newEnd = std::remove_if(
+        begin(instances),
+        end(instances),
+        [](const std::weak_ptr<slave_instance>& wp) { return wp.expired(); });
+    instances.erase(newEnd, end(instances));
 }
+} // namespace
 
 
 std::shared_ptr<v2::slave_instance> fmu::instantiate_v2_slave()
@@ -153,101 +153,103 @@ fmi2_import_t* fmu::fmilib_handle() const
 
 namespace
 {
-    void step_finished_placeholder(fmi2_component_environment_t, fmi2_status_t)
-    {
-        BOOST_LOG_SEV(log::logger::get(), log::level::debug)
-            << "FMU instance completed asynchronous step, "
-               "but this feature is currently not supported";
+void step_finished_placeholder(fmi2_component_environment_t, fmi2_status_t)
+{
+    BOOST_LOG_SEV(log::logger::get(), log::level::debug)
+        << "FMU instance completed asynchronous step, "
+           "but this feature is currently not supported";
+}
+
+struct log_record
+{
+    log_record() {}
+    log_record(fmi2_status_t s, const std::string& m)
+        : status{s}
+        , message(m)
+    {}
+    fmi2_status_t status = fmi2_status_ok;
+    std::string message;
+};
+std::unordered_map<std::string, log_record> g_logRecords;
+std::mutex g_logMutex;
+
+void log_message(
+    fmi2_component_environment_t,
+    fmi2_string_t instanceName,
+    fmi2_status_t status,
+    fmi2_string_t category,
+    fmi2_string_t message,
+    ...)
+{
+    std::va_list args;
+    va_start(args, message);
+    const auto msgLength = std::vsnprintf(nullptr, 0, message, args);
+    va_end(args);
+    auto msgBuffer = std::vector<char>(msgLength + 1);
+    va_start(args, message);
+    std::vsnprintf(msgBuffer.data(), msgBuffer.size(), message, args);
+    va_end(args);
+    assert(msgBuffer.back() == '\0');
+
+    std::string statusName = "unknown";
+    log::level logLevel = log::level::error;
+    switch (status) {
+        case fmi2_status_ok:
+            statusName = "ok";
+            logLevel = log::level::info;
+            break;
+        case fmi2_status_warning:
+            statusName = "warning";
+            logLevel = log::level::warning;
+            break;
+        case fmi2_status_discard:
+            // Don't know if this ever happens, but we should at least
+            // print a debug message if it does.
+            statusName = "discard";
+            logLevel = log::level::debug;
+            break;
+        case fmi2_status_error:
+            statusName = "error";
+            logLevel = log::level::error;
+            break;
+        case fmi2_status_fatal:
+            statusName = "fatal";
+            logLevel = log::level::error;
+            break;
+        case fmi2_status_pending:
+            // Don't know if this ever happens, but we should at least
+            // print a debug message if it does.
+            statusName = "pending";
+            logLevel = log::level::debug;
+            break;
     }
+    BOOST_LOG_SEV(log::logger::get(), logLevel)
+        << "[FMI status=" << statusName << ", category=" << category << "] "
+        << msgBuffer.data();
 
-    struct log_record
-    {
-        log_record() { }
-        log_record(fmi2_status_t s, const std::string& m) : status{s}, message(m) { }
-        fmi2_status_t status = fmi2_status_ok;
-        std::string message;
-    };
-    std::unordered_map<std::string, log_record> g_logRecords;
-    std::mutex g_logMutex;
+    g_logMutex.lock();
+    g_logRecords[instanceName] =
+        log_record{status, std::string(msgBuffer.data())};
+    g_logMutex.unlock();
+}
 
-    void log_message(
-        fmi2_component_environment_t,
-        fmi2_string_t instanceName,
-        fmi2_status_t status,
-        fmi2_string_t category,
-        fmi2_string_t message,
-        ...)
-    {
-        std::va_list args;
-        va_start(args, message);
-        const auto msgLength = std::vsnprintf(nullptr, 0, message, args);
-        va_end(args);
-        auto msgBuffer = std::vector<char>(msgLength+1);
-        va_start(args, message);
-        std::vsnprintf(msgBuffer.data(), msgBuffer.size(), message, args);
-        va_end(args);
-        assert(msgBuffer.back() == '\0');
-
-        std::string statusName = "unknown";
-        log::level logLevel = log::level::error;
-        switch (status) {
-            case fmi2_status_ok:
-                statusName = "ok";
-                logLevel = log::level::info;
-                break;
-            case fmi2_status_warning:
-                statusName = "warning";
-                logLevel = log::level::warning;
-                break;
-            case fmi2_status_discard:
-                // Don't know if this ever happens, but we should at least
-                // print a debug message if it does.
-                statusName = "discard";
-                logLevel = log::level::debug;
-                break;
-            case fmi2_status_error:
-                statusName = "error";
-                logLevel = log::level::error;
-                break;
-            case fmi2_status_fatal:
-                statusName = "fatal";
-                logLevel = log::level::error;
-                break;
-            case fmi2_status_pending:
-                // Don't know if this ever happens, but we should at least
-                // print a debug message if it does.
-                statusName = "pending";
-                logLevel = log::level::debug;
-                break;
-        }
-        BOOST_LOG_SEV(log::logger::get(), logLevel)
-            << "[FMI status=" << statusName << ", category=" << category << "] "
-            << msgBuffer.data();
-
-        g_logMutex.lock();
-        g_logRecords[instanceName] =
-            log_record{status, std::string(msgBuffer.data())};
-        g_logMutex.unlock();
-    }
-
-    log_record last_log_record(const std::string& instanceName)
-    {
-        std::lock_guard<std::mutex> lock(g_logMutex);
-        const auto it = g_logRecords.find(instanceName);
-        if (it == g_logRecords.end()) {
-            return log_record{};
-        } else {
-            // Note the use of c_str() here, to force the string to be copied.
-            // The C++ standard now disallows copy-on-write, but some compilers
-            // still use it, which could lead to problems in multithreaded
-            // programs.
-            return log_record{
-                it->second.status,
-                std::string(it->second.message.c_str())
-            };
-        }
+log_record last_log_record(const std::string& instanceName)
+{
+    std::lock_guard<std::mutex> lock(g_logMutex);
+    const auto it = g_logRecords.find(instanceName);
+    if (it == g_logRecords.end()) {
+        return log_record{};
+    } else {
+        // Note the use of c_str() here, to force the string to be copied.
+        // The C++ standard now disallows copy-on-write, but some compilers
+        // still use it, which could lead to problems in multithreaded
+        // programs.
+        return log_record{
+            it->second.status,
+            std::string(it->second.message.c_str())};
     }
 }
+} // namespace
 
 
 slave_instance::slave_instance(std::shared_ptr<v2::fmu> fmu)
@@ -261,10 +263,10 @@ slave_instance::slave_instance(std::shared_ptr<v2::fmu> fmu)
     }
 
     fmi2_callback_functions_t callbacks;
-    callbacks.allocateMemory       = std::calloc;
-    callbacks.freeMemory           = std::free;
-    callbacks.logger               = log_message;
-    callbacks.stepFinished         = step_finished_placeholder;
+    callbacks.allocateMemory = std::calloc;
+    callbacks.freeMemory = std::free;
+    callbacks.logger = log_message;
+    callbacks.stepFinished = step_finished_placeholder;
     callbacks.componentEnvironment = nullptr;
 
     if (fmi2_import_create_dllfmu(handle_, fmi2_fmu_kind_cs, &callbacks) != jm_status_success) {
@@ -550,4 +552,6 @@ fmi2_import_t* slave_instance::fmilib_handle() const
 }
 
 
-}}} //namespace
+} // namespace v2
+} // namespace fmi
+} // namespace cse

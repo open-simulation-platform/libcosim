@@ -18,5 +18,6 @@ namespace utility
 std::string random_uuid() noexcept;
 
 
-}} // namespace
+} // namespace utility
+} // namespace cse
 #endif // header guard

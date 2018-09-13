@@ -17,5 +17,5 @@ namespace cse
 constexpr const char* library_short_name = "cse-core";
 
 
-} // namespace
+} // namespace cse
 #endif // header guard

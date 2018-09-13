@@ -71,8 +71,7 @@ typedef enum
 
     /// ZIP file error.
     CSE_ERRC_ZIP_ERROR,
-}
-cse_errc;
+} cse_errc;
 
 
 /**

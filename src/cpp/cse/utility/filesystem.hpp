@@ -6,6 +6,7 @@
 #define CSE_UTILITY_FILESYSTEM_HPP
 
 #include <filesystem>
+
 #include <cse/config.hpp>
 
 
@@ -68,5 +69,6 @@ private:
 };
 
 
-}} // namespace
+} // namespace utility
+} // namespace cse
 #endif // header guard

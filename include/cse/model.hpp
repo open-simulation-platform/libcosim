@@ -41,7 +41,13 @@ using variable_index = std::uint32_t;
 
 
 /// Variable data types.
-enum class variable_type { real, integer, boolean, string };
+enum class variable_type
+{
+    real,
+    integer,
+    boolean,
+    string
+};
 
 
 /// Variable causalities.  These correspond to FMI causality definitions.
@@ -70,11 +76,11 @@ enum variable_variability
 constexpr const char* to_text(variable_type v)
 {
     switch (v) {
-        case variable_type::real:    return "real";
+        case variable_type::real: return "real";
         case variable_type::integer: return "integer";
         case variable_type::boolean: return "boolean";
-        case variable_type::string:  return "string";
-        default:                     return nullptr;
+        case variable_type::string: return "string";
+        default: return nullptr;
     }
 }
 
@@ -83,12 +89,12 @@ constexpr const char* to_text(variable_type v)
 constexpr const char* to_text(variable_causality v)
 {
     switch (v) {
-        case variable_causality::parameter:            return "parameter";
+        case variable_causality::parameter: return "parameter";
         case variable_causality::calculated_parameter: return "calculated_parameter";
-        case variable_causality::input:                return "input";
-        case variable_causality::output:               return "output";
-        case variable_causality::local:                return "local";
-        default:                                       return nullptr;
+        case variable_causality::input: return "input";
+        case variable_causality::output: return "output";
+        case variable_causality::local: return "local";
+        default: return nullptr;
     }
 }
 
@@ -97,12 +103,12 @@ constexpr const char* to_text(variable_causality v)
 constexpr const char* to_text(variable_variability v)
 {
     switch (v) {
-        case variable_variability::constant:   return "constant";
-        case variable_variability::fixed:      return "fixed";
-        case variable_variability::tunable:    return "tunable";
-        case variable_variability::discrete:   return "discrete";
+        case variable_variability::constant: return "constant";
+        case variable_variability::fixed: return "fixed";
+        case variable_variability::tunable: return "tunable";
+        case variable_variability::discrete: return "discrete";
         case variable_variability::continuous: return "continuous";
-        default:                               return nullptr;
+        default: return nullptr;
     }
 }
 
@@ -183,5 +189,5 @@ struct model_description
 };
 
 
-} // namespace
+} // namespace cse
 #endif // header guard

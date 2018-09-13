@@ -10,33 +10,33 @@ namespace cse
 
 namespace
 {
-    class my_error_category : public std::error_category
+class my_error_category : public std::error_category
+{
+public:
+    const char* name() const noexcept final override
     {
-    public:
-        const char* name() const noexcept final override
-        {
-            return library_short_name;
-        }
+        return library_short_name;
+    }
 
-        std::string message(int ev) const final override
-        {
-            switch (static_cast<errc>(ev)) {
-                case errc::bad_file:
-                    return "Bad file";
-                case errc::unsupported_feature:
-                    return "Unsupported feature";
-                case errc::dl_load_error:
-                    return "Error loading dynamic library";
-                case errc::model_error:
-                    return "Model error";
-                case errc::zip_error:
-                    return "ZIP file error";
-                default:
-                    CSE_PANIC();
-            }
+    std::string message(int ev) const final override
+    {
+        switch (static_cast<errc>(ev)) {
+            case errc::bad_file:
+                return "Bad file";
+            case errc::unsupported_feature:
+                return "Unsupported feature";
+            case errc::dl_load_error:
+                return "Error loading dynamic library";
+            case errc::model_error:
+                return "Model error";
+            case errc::zip_error:
+                return "ZIP file error";
+            default:
+                CSE_PANIC();
         }
-    };
-}
+    }
+};
+} // namespace
 
 
 const std::error_category& error_category() noexcept
@@ -58,4 +58,4 @@ std::error_code make_error_code(errc e) noexcept
 }
 
 
-} // namespace
+} // namespace cse
