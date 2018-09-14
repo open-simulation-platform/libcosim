@@ -104,7 +104,7 @@ const char* cse_last_error_message()
 
 struct cse_execution_s
 {
-    std::atomic<cse::time_duration> currentTime;
+    std::atomic<cse::time_duration> startTime;
     std::shared_ptr<cse::slave> slave;
     std::shared_ptr<cse_observer> observer;
     std::atomic<long> currentSteps;
@@ -115,6 +115,10 @@ struct cse_execution_s
     int error_code;
 };
 
+cse::time_duration calculate_current_time(cse_execution* execution) {
+    return execution->startTime + execution->currentSteps * execution->stepSize;
+}
+
 
 cse_execution* cse_execution_create(cse_time_point startTime, cse_time_duration stepSize)
 {
@@ -122,7 +126,7 @@ cse_execution* cse_execution_create(cse_time_point startTime, cse_time_duration 
         // No exceptions are possible right now, so try...catch and unique_ptr
         // are strictly unnecessary, but this will change soon enough.
         auto execution = std::make_unique<cse_execution>();
-        execution->currentTime = startTime;
+        execution->startTime = startTime;
         execution->stepSize = stepSize;
         execution->error_code = CSE_ERRC_SUCCESS;
         execution->state = CSE_EXECUTION_STOPPED;
@@ -188,7 +192,7 @@ int cse_execution_add_slave(
         instance->setup(
             "unnamed slave",
             "unnamed execution",
-            execution->currentTime,
+            execution->startTime + execution->currentSteps * execution->stepSize,
             cse::eternity,
             false,
             0.0);
@@ -203,12 +207,13 @@ int cse_execution_add_slave(
 
 bool cse_observer_observe(std::shared_ptr<cse_observer> observer);
 
+cse::time_duration calculate_current_time(cse_execution execution);
 int cse_execution_step(cse_execution* execution)
 {
     try {
         const auto stepOK =
             !execution->slave ||
-            execution->slave->do_step(execution->currentTime, execution->stepSize);
+            execution->slave->do_step(calculate_current_time(execution), execution->stepSize);
         if (!stepOK) {
             set_last_error(CSE_ERRC_STEP_TOO_LONG, "Time step too long");
             return failure;
@@ -221,7 +226,6 @@ int cse_execution_step(cse_execution* execution)
             return failure;
         }
 
-        execution->currentTime += execution->stepSize;
         execution->currentSteps++;
         return success;
     } catch (...) {
@@ -281,7 +285,7 @@ int cse_execution_get_status(cse_execution* execution, cse_execution_status* sta
     try {
         status->error_code = execution->error_code;
         status->state = execution->state;
-        status->current_time = execution->currentSteps * execution->stepSize;
+        status->current_time = calculate_current_time(execution);
         return success;
     } catch (...) {
         handle_current_exception();
