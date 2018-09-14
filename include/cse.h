@@ -237,16 +237,16 @@ int cse_execution_stop(cse_execution* execution);
 
 typedef enum
 {
-  CSE_EXECUTION_STOPPED,
-  CSE_EXECUTION_RUNNING,
-  CSE_EXECUTION_ERROR
+    CSE_EXECUTION_STOPPED,
+    CSE_EXECUTION_RUNNING,
+    CSE_EXECUTION_ERROR
 } cse_execution_state;
 
 typedef struct
 {
-  double current_time;
-  cse_execution_state state;
-  int error_code;
+    double current_time;
+    cse_execution_state state;
+    int error_code;
 } cse_execution_status;
 
 
@@ -266,6 +266,11 @@ typedef struct
 int cse_execution_get_status(
     cse_execution* execution,
     cse_execution_status* status);
+
+
+// Observer
+struct cse_observer_s;
+typedef struct cse_observer_s cse_observer;
 
 
 /**
@@ -299,8 +304,8 @@ int cse_execution_slave_set_real(
  *  \brief
  *  Retrieves the values of real variables for one slave.
  *
- *  \param [in] execution
- *      The execution.
+ *  \param [in] observer
+ *      The observer.
  *  \param [in] slave
  *      The slave.
  *  \param [in] variables
@@ -315,8 +320,8 @@ int cse_execution_slave_set_real(
  *  \returns
  *      0 on success and -1 on error.
  */
-int cse_execution_slave_get_real(
-    cse_execution* execution,
+int cse_observer_slave_get_real(
+    cse_observer* observer,
     cse_slave_index slave,
     const cse_variable_index variables[],
     size_t nv,
@@ -353,8 +358,8 @@ int cse_execution_slave_set_integer(
  *  \brief
  *  Retrieves the values of integer variables for one slave.
  *
- *  \param [in] execution
- *      The execution.
+ *  \param [in] observer
+ *      The observer.
  *  \param [in] slave
  *      The slave.
  *  \param [in] variables
@@ -369,8 +374,8 @@ int cse_execution_slave_set_integer(
  *  \returns
  *      0 on success and -1 on error.
  */
-int cse_execution_slave_get_integer(
-    cse_execution* execution,
+int cse_observer_slave_get_integer(
+    cse_observer* observer,
     cse_slave_index slave,
     const cse_variable_index variables[],
     size_t nv,
@@ -396,11 +401,6 @@ int cse_execution_slave_get_integer(
 int cse_hello_world(char* buffer, size_t size);
 
 
-
-// Observer
-struct cse_observer_s;
-typedef struct cse_observer_s cse_observer;
-
 cse_observer* cse_membuffer_observer_create();
 
 int cse_observer_destroy(cse_observer* observer);
@@ -411,11 +411,13 @@ int cse_slave_destroy(cse_slave* slave);
 
 cse_address* cse_slave_get_address(cse_slave* s);
 
-
 int cse_execution_add_observer(
     cse_execution* execution,
-    cse_address* address,
-    const char* name);
+    cse_observer* observer);
+
+int cse_observer_add_slave(
+    cse_observer* obsersver,
+    cse_slave* slave);
 
 
 #ifdef __cplusplus
