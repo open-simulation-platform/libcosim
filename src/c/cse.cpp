@@ -207,7 +207,6 @@ int cse_execution_add_slave(
 
 bool cse_observer_observe(std::shared_ptr<cse_observer> observer);
 
-cse::time_duration calculate_current_time(cse_execution execution);
 int cse_execution_step(cse_execution* execution)
 {
     try {
