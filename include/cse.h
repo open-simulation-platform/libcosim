@@ -416,7 +416,7 @@ int cse_execution_add_observer(
     cse_observer* observer);
 
 int cse_observer_add_slave(
-    cse_observer* obsersver,
+    cse_observer* observer,
     cse_slave* slave);
 
 

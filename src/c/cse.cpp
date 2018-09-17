@@ -104,7 +104,7 @@ const char* cse_last_error_message()
 
 struct cse_execution_s
 {
-    std::atomic<cse::time_duration> startTime;
+    std::atomic<cse::time_point> startTime;
     std::shared_ptr<cse::slave> slave;
     std::shared_ptr<cse_observer> observer;
     std::atomic<long> currentSteps;
