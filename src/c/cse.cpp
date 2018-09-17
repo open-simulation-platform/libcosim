@@ -352,6 +352,44 @@ int cse_observer_slave_get_real(
     }
 }
 
+size_t cse_observer_slave_get_real_samples(
+    cse_observer* observer,
+    cse_slave_index slave,
+    cse_variable_index variableIndex,
+    cse_time_point fromTime,
+    size_t nSamples,
+    double values[],
+    cse_time_point timeStamps[])
+{
+    try {
+        if (slave != 0) {
+            throw std::out_of_range("Invalid slave index");
+        }
+        std::lock_guard<std::mutex> lock(observer->lock);
+        size_t samplesRead = 0;
+        size_t valueIndex;
+        auto variableIndexIt = std::find(observer->realIndexes.begin(), observer->realIndexes.end(), variableIndex);
+        if (variableIndexIt != observer->realIndexes.end()) {
+            valueIndex = variableIndexIt - observer->realIndexes.begin();
+            auto sampleIt = observer->realSamples.find(fromTime);
+            for (samplesRead = 0; samplesRead < nSamples; samplesRead++) {
+                if (sampleIt != observer->realSamples.end()) {
+                    timeStamps[samplesRead] = (cse_time_point)sampleIt->first;
+                    values[samplesRead] = sampleIt->second[valueIndex];
+                    sampleIt++;
+                } else {
+                    break;
+                }
+            }
+        }
+        return samplesRead;
+
+    } catch (...) {
+        handle_current_exception();
+        return 0;
+    }
+}
+
 int cse_execution_slave_set_integer(
     cse_execution* execution,
     cse_slave_index slave,

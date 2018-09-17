@@ -188,6 +188,18 @@ int main() {
         return 1;
     }
 
+    cse_time_point fromTime = 0.0;
+    const size_t nSamples = 10;
+    double realSamples[10];
+    double timeStamps[10];
+    size_t readSamples = cse_observer_slave_get_real_samples(observer, slave_index, realOutVar, fromTime, nSamples, realSamples, timeStamps);
+    if (readSamples != nSamples) {
+        print_last_error();
+        fprintf(stderr, "Expected to read 10 samples, got %zu\n", readSamples);
+        cse_execution_destroy(execution);
+        return 1;
+    }
+
     cse_variable_index intOutVar = 0;
     int intOutVal = 10;
     rc = cse_observer_slave_get_integer(observer, slave_index, &intOutVar, 1, &intOutVal);

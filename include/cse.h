@@ -327,6 +327,16 @@ int cse_observer_slave_get_real(
     size_t nv,
     double values[]);
 
+
+size_t cse_observer_slave_get_real_samples(
+    cse_observer* observer,
+    cse_slave_index slave,
+    cse_variable_index variableIndex,
+    cse_time_point fromTime,
+    size_t nSamples,
+    double values[],
+    cse_time_point timeStamps[]);
+
 /**
  *  \brief
  *  Sets the values of integer variables for one slave.
