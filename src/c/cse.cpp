@@ -205,21 +205,22 @@ int cse_execution_add_slave(
     }
 }
 
-bool cse_observer_observe(std::shared_ptr<cse_observer> observer);
+bool cse_observer_observe(const std::shared_ptr<cse_observer> &observer, cse::time_point currentTime);
 
 int cse_execution_step(cse_execution* execution)
 {
     try {
+        cse::time_point currentTime = calculate_current_time(execution);
         const auto stepOK =
             !execution->slave ||
-            execution->slave->do_step(calculate_current_time(execution), execution->stepSize);
+            execution->slave->do_step(currentTime, execution->stepSize);
         if (!stepOK) {
             set_last_error(CSE_ERRC_STEP_TOO_LONG, "Time step too long");
             return failure;
         }
         const auto observeOK =
             !execution->observer ||
-            cse_observer_observe(execution->observer);
+            cse_observer_observe(execution->observer, currentTime);
         if (!observeOK) {
             set_last_error(CSE_ERRC_UNSPECIFIED, "Observer failed to observe");
             return failure;
@@ -294,7 +295,7 @@ int cse_execution_get_status(cse_execution* execution, cse_execution_status* sta
 
 struct cse_observer_s
 {
-    std::vector<double> realValues;
+    std::map<cse::time_point, std::vector<double>> realSamples;
     std::vector<int> intValues;
     std::vector<cse::variable_index> realIndexes;
     std::vector<cse::variable_index> intIndexes;
@@ -336,11 +337,12 @@ int cse_observer_slave_get_real(
             throw std::out_of_range("Invalid slave index");
         }
         std::lock_guard<std::mutex> lock(observer->lock);
+        auto lastEntry = observer->realSamples.rbegin();
         for (size_t i = 0; i < nv; i++) {
             auto it = std::find(observer->realIndexes.begin(), observer->realIndexes.end(), variables[i]);
             if (it != observer->realIndexes.end()) {
                 size_t valueIndex = it - observer->realIndexes.begin();
-                values[i] = observer->realValues[valueIndex];
+                values[i] = lastEntry->second[valueIndex];
             }
         }
         return success;
@@ -444,7 +446,7 @@ int cse_observer_add_slave(
             if (vd.type == cse::variable_type::integer && vd.causality == cse::variable_causality::output) {
                 observer->intIndexes.push_back(vd.index);
             }
-            observer->realValues.resize(observer->realIndexes.size());
+//            observer->realSamples.resize(observer->realIndexes.size());
             observer->intValues.resize(observer->intIndexes.size());
         }
         observer->slave = slave->instance;
@@ -456,14 +458,15 @@ int cse_observer_add_slave(
     }
 }
 
-bool cse_observer_observe(std::shared_ptr<cse_observer> observer)
+bool cse_observer_observe(const std::shared_ptr<cse_observer> &observer, cse::time_point currentTime)
 {
     try {
         if (observer->slave) {
             std::lock_guard<std::mutex> lock(observer->lock);
+            observer->realSamples[currentTime].resize(observer->realIndexes.size());
             observer->slave->get_real_variables(
                 gsl::make_span(observer->realIndexes),
-                gsl::make_span(observer->realValues));
+                gsl::make_span(observer->realSamples[currentTime]));
 
             observer->slave->get_integer_variables(
                 gsl::make_span(observer->intIndexes),
