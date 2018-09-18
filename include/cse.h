@@ -332,10 +332,10 @@ size_t cse_observer_slave_get_real_samples(
     cse_observer* observer,
     cse_slave_index slave,
     cse_variable_index variableIndex,
-    cse_time_point fromTime,
+    long fromStep,
     size_t nSamples,
     double values[],
-    cse_time_point timeStamps[]);
+    long steps[]);
 
 /**
  *  \brief

@@ -206,28 +206,29 @@ int cse_execution_add_slave(
     }
 }
 
-bool cse_observer_observe(cse_observer *observer, cse::time_point currentTime);
+bool cse_observer_observe(cse_observer* observer, long currentStep);
 
 int cse_execution_step(cse_execution* execution)
 {
     try {
-        cse::time_point currentTime = calculate_current_time(execution);
         const auto stepOK =
             !execution->slave ||
-            execution->slave->do_step(currentTime, execution->stepSize);
+            execution->slave->do_step(calculate_current_time(execution), execution->stepSize);
         if (!stepOK) {
             set_last_error(CSE_ERRC_STEP_TOO_LONG, "Time step too long");
             return failure;
         }
+
+        execution->currentSteps++;
+
         const auto observeOK =
             !execution->observer ||
-            cse_observer_observe(execution->observer.get(), currentTime);
+            cse_observer_observe(execution->observer.get(), execution->currentSteps);
         if (!observeOK) {
             set_last_error(CSE_ERRC_UNSPECIFIED, "Observer failed to observe");
             return failure;
         }
 
-        execution->currentSteps++;
         return success;
     } catch (...) {
         handle_current_exception();
@@ -296,7 +297,7 @@ int cse_execution_get_status(cse_execution* execution, cse_execution_status* sta
 
 struct cse_observer_s
 {
-    std::map<cse::time_point, std::vector<double>> realSamples;
+    std::map<long, std::vector<double>> realSamples;
     std::vector<int> intValues;
     std::vector<cse::variable_index> realIndexes;
     std::vector<cse::variable_index> intIndexes;
@@ -360,10 +361,10 @@ size_t cse_observer_slave_get_real_samples(
     cse_observer* observer,
     cse_slave_index slave,
     cse_variable_index variableIndex,
-    cse_time_point fromTime,
+    long fromStep,
     size_t nSamples,
     double values[],
-    cse_time_point timeStamps[])
+    long steps[])
 {
     try {
         if (slave != 0) {
@@ -375,10 +376,10 @@ size_t cse_observer_slave_get_real_samples(
         auto variableIndexIt = std::find(observer->realIndexes.begin(), observer->realIndexes.end(), variableIndex);
         if (variableIndexIt != observer->realIndexes.end()) {
             valueIndex = variableIndexIt - observer->realIndexes.begin();
-            auto sampleIt = observer->realSamples.find(fromTime);
+            auto sampleIt = observer->realSamples.find(fromStep);
             for (samplesRead = 0; samplesRead < nSamples; samplesRead++) {
                 if (sampleIt != observer->realSamples.end()) {
-                    timeStamps[samplesRead] = (cse_time_point)sampleIt->first;
+                    steps[samplesRead] = sampleIt->first;
                     values[samplesRead] = sampleIt->second[valueIndex];
                     sampleIt++;
                 } else {
@@ -491,7 +492,7 @@ int cse_observer_add_slave(
         }
         observer->slave = slave->instance;
         observer->intValues.resize(observer->intIndexes.size());
-        cse_observer_observe(observer,0.0);
+        cse_observer_observe(observer, 0);
 
         return /*slave index*/ 0;
     } catch (...) {
@@ -500,15 +501,15 @@ int cse_observer_add_slave(
     }
 }
 
-bool cse_observer_observe(cse_observer *observer, cse::time_point currentTime)
+bool cse_observer_observe(cse_observer* observer, long currentStep)
 {
     try {
         if (observer->slave) {
             std::lock_guard<std::mutex> lock(observer->lock);
-            observer->realSamples[currentTime].resize(observer->realIndexes.size());
+            observer->realSamples[currentStep].resize(observer->realIndexes.size());
             observer->slave->get_real_variables(
                 gsl::make_span(observer->realIndexes),
-                gsl::make_span(observer->realSamples[currentTime]));
+                gsl::make_span(observer->realSamples[currentStep]));
 
             observer->slave->get_integer_variables(
                 gsl::make_span(observer->intIndexes),
