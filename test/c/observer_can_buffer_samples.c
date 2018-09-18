@@ -19,6 +19,11 @@ void print_last_error()
         cse_last_error_code(), cse_last_error_message());
 }
 
+BOOL double_equals(double a, double b)
+{
+    return (fabs(a - b) < 0.000001);
+}
+
 int main()
 {
     const char* dataDir = getenv("TEST_DATA_DIR");
@@ -87,15 +92,19 @@ int main()
     long steps[10];
     size_t readSamples = cse_observer_slave_get_real_samples(observer, slave_index, realOutVar, fromStep, nSamples, realSamples, steps);
 
-    double expectedSamples[10] = {0.0 , 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9};
-    long expectedSteps[10] = {1, 2, 5, 5, 5, 5, 5, 5, 5, 5};
+    double expectedSamples[10] = {0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9};
+    long expectedSteps[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
 
     for (int i = 0; i < 10; i++) {
-        if (expectedSamples[i] != realSamples[i]) {
+        if (!double_equals(expectedSamples[i], realSamples[i])) {
             fprintf(stderr, "Sample nr %d expected sample %lf, got %lf\n", i, expectedSamples[i], realSamples[i]);
+            cse_execution_destroy(execution);
+            return 1;
         }
         if (expectedSteps[i] != steps[i]) {
             fprintf(stderr, "Sample nr %d expected step %li, got %li\n", i, expectedSteps[i], steps[i]);
+            cse_execution_destroy(execution);
+            return 1;
         }
     }
 
@@ -107,5 +116,6 @@ int main()
         return 1;
     }
 
+    cse_execution_destroy(execution);
     return 0;
 }
