@@ -298,7 +298,7 @@ int cse_execution_get_status(cse_execution* execution, cse_execution_status* sta
 struct cse_observer_s
 {
     std::map<long, std::vector<double>> realSamples;
-    std::vector<int> intValues;
+    std::map<long, std::vector<int>> intSamples;
     std::vector<cse::variable_index> realIndexes;
     std::vector<cse::variable_index> intIndexes;
     std::mutex lock;
@@ -428,17 +428,59 @@ int cse_observer_slave_get_integer(
             throw std::out_of_range("Invalid slave index");
         }
         std::lock_guard<std::mutex> lock(observer->lock);
+        if (observer->intSamples.empty()) {
+            throw std::out_of_range("no samples available");
+        }
+        auto lastEntry = observer->intSamples.rbegin();
         for (size_t i = 0; i < nv; i++) {
             auto it = std::find(observer->intIndexes.begin(), observer->intIndexes.end(), variables[i]);
             if (it != observer->intIndexes.end()) {
                 size_t valueIndex = it - observer->intIndexes.begin();
-                values[i] = observer->intValues[valueIndex];
+                values[i] = lastEntry->second[valueIndex];
             }
         }
         return success;
     } catch (...) {
         handle_current_exception();
         return failure;
+    }
+}
+
+size_t cse_observer_slave_get_integer_samples(
+    cse_observer* observer,
+    cse_slave_index slave,
+    cse_variable_index variableIndex,
+    long fromStep,
+    size_t nSamples,
+    int values[],
+    long steps[])
+{
+    try {
+        if (slave != 0) {
+            throw std::out_of_range("Invalid slave index");
+        }
+        std::lock_guard<std::mutex> lock(observer->lock);
+        size_t samplesRead = 0;
+        size_t valueIndex;
+        auto variableIndexIt = std::find(observer->intIndexes.begin(), observer->intIndexes.end(), variableIndex);
+        if (variableIndexIt != observer->intIndexes.end()) {
+            valueIndex = variableIndexIt - observer->intIndexes.begin();
+            auto sampleIt = observer->intSamples.find(fromStep);
+            for (samplesRead = 0; samplesRead < nSamples; samplesRead++) {
+                if (sampleIt != observer->intSamples.end()) {
+                    steps[samplesRead] = sampleIt->first;
+                    values[samplesRead] = sampleIt->second[valueIndex];
+                    sampleIt++;
+                } else {
+                    break;
+                }
+            }
+        }
+        return samplesRead;
+
+    } catch (...) {
+        handle_current_exception();
+        return 0;
     }
 }
 
@@ -491,7 +533,6 @@ int cse_observer_add_slave(
             }
         }
         observer->slave = slave->instance;
-        observer->intValues.resize(observer->intIndexes.size());
         cse_observer_observe(observer, 0);
 
         return /*slave index*/ 0;
@@ -507,13 +548,14 @@ bool cse_observer_observe(cse_observer* observer, long currentStep)
         if (observer->slave) {
             std::lock_guard<std::mutex> lock(observer->lock);
             observer->realSamples[currentStep].resize(observer->realIndexes.size());
+            observer->intSamples[currentStep].resize(observer->intIndexes.size());
             observer->slave->get_real_variables(
                 gsl::make_span(observer->realIndexes),
                 gsl::make_span(observer->realSamples[currentStep]));
 
             observer->slave->get_integer_variables(
                 gsl::make_span(observer->intIndexes),
-                gsl::make_span(observer->intValues));
+                gsl::make_span(observer->intSamples[currentStep]));
         }
         return true;
     } catch (...) {

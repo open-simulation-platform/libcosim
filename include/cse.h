@@ -391,6 +391,15 @@ int cse_observer_slave_get_integer(
     size_t nv,
     int values[]);
 
+size_t cse_observer_slave_get_integer_samples(
+    cse_observer* observer,
+    cse_slave_index slave,
+    cse_variable_index variableIndex,
+    long fromStep,
+    size_t nSamples,
+    int values[],
+    long steps[]);
+
 
 /**
  *  Writes the string "Hello World!" to a character buffer.

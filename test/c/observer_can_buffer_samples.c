@@ -33,7 +33,7 @@ int main()
     }
 
     char fmuPath[1024];
-    int rc = snprintf(fmuPath, sizeof fmuPath, "%s/fmi2/Clock.fmu", dataDir);
+    int rc = snprintf(fmuPath, sizeof fmuPath, "%s/fmi1/identity.fmu", dataDir);
     if (rc < 0) {
         perror(NULL);
         return 1;
@@ -78,26 +78,52 @@ int main()
         return 1;
     }
 
-    rc = cse_execution_step(execution, 10);
-    if (rc < 0) {
+    double inputRealSamples[10] = {0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
+    int inputIntSamples[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+
+    cse_variable_index index = 0;
+
+    for (int i = 0; i < 10; i++) {
+        cse_execution_slave_set_real(execution, 0, &index, 1, &inputRealSamples[i]);
+        cse_execution_slave_set_integer(execution, 0, &index, 1, &inputIntSamples[i]);
+        cse_execution_step(execution, 1);
+    }
+
+    long fromStep = 0;
+    const size_t nSamples = 10;
+    double realSamples[10];
+    int intSamples[10];
+    long steps[10];
+
+    size_t readRealSamples = cse_observer_slave_get_real_samples(observer, slave_index, index, fromStep, nSamples, realSamples, steps);
+    if (readRealSamples != nSamples) {
         print_last_error();
+        fprintf(stderr, "Expected to read 10 real samples, got %zu\n", readRealSamples);
         cse_execution_destroy(execution);
         return 1;
     }
 
-    cse_variable_index realOutVar = 0;
-    long fromStep = 0;
-    const size_t nSamples = 10;
-    double realSamples[10];
-    long steps[10];
-    size_t readSamples = cse_observer_slave_get_real_samples(observer, slave_index, realOutVar, fromStep, nSamples, realSamples, steps);
+    size_t readIntSamples = cse_observer_slave_get_integer_samples(observer, slave_index, index, fromStep, nSamples, intSamples, steps);
+    if (readIntSamples != nSamples) {
+        print_last_error();
+        fprintf(stderr, "Expected to read 10 int samples, got %zu\n", readIntSamples);
+        cse_execution_destroy(execution);
+        return 1;
+    }
 
-    double expectedSamples[10] = {0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9};
     long expectedSteps[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+    double expectedRealSamples[10] = {0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9};
+    int expectedIntSamples[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+
 
     for (int i = 0; i < 10; i++) {
-        if (!double_equals(expectedSamples[i], realSamples[i])) {
-            fprintf(stderr, "Sample nr %d expected sample %lf, got %lf\n", i, expectedSamples[i], realSamples[i]);
+        if (!double_equals(expectedRealSamples[i], realSamples[i])) {
+            fprintf(stderr, "Sample nr %d expected real sample %lf, got %lf\n", i, expectedRealSamples[i], realSamples[i]);
+            cse_execution_destroy(execution);
+            return 1;
+        }
+        if (expectedIntSamples[i] != intSamples[i]) {
+            fprintf(stderr, "Sample nr %d expected int sample %d, got %d\n", i, expectedIntSamples[i], intSamples[i]);
             cse_execution_destroy(execution);
             return 1;
         }
@@ -106,14 +132,6 @@ int main()
             cse_execution_destroy(execution);
             return 1;
         }
-    }
-
-    (void)expectedSteps;
-    if (readSamples != nSamples) {
-        print_last_error();
-        fprintf(stderr, "Expected to read 10 samples, got %zu\n", readSamples);
-        cse_execution_destroy(execution);
-        return 1;
     }
 
     cse_execution_destroy(execution);
