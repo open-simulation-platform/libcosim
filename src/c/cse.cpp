@@ -326,75 +326,6 @@ int cse_execution_slave_set_real(
     }
 }
 
-
-int cse_observer_slave_get_real(
-    cse_observer* observer,
-    cse_slave_index slave,
-    const cse_variable_index variables[],
-    size_t nv,
-    double values[])
-{
-    try {
-        if (slave != 0) {
-            throw std::out_of_range("Invalid slave index");
-        }
-        std::lock_guard<std::mutex> lock(observer->lock);
-        if (observer->realSamples.empty()) {
-            throw std::out_of_range("no samples available");
-        }
-        auto lastEntry = observer->realSamples.rbegin();
-        for (size_t i = 0; i < nv; i++) {
-            auto it = std::find(observer->realIndexes.begin(), observer->realIndexes.end(), variables[i]);
-            if (it != observer->realIndexes.end()) {
-                size_t valueIndex = it - observer->realIndexes.begin();
-                values[i] = lastEntry->second[valueIndex];
-            }
-        }
-        return success;
-    } catch (...) {
-        handle_current_exception();
-        return failure;
-    }
-}
-
-size_t cse_observer_slave_get_real_samples(
-    cse_observer* observer,
-    cse_slave_index slave,
-    cse_variable_index variableIndex,
-    long fromStep,
-    size_t nSamples,
-    double values[],
-    long steps[])
-{
-    try {
-        if (slave != 0) {
-            throw std::out_of_range("Invalid slave index");
-        }
-        std::lock_guard<std::mutex> lock(observer->lock);
-        size_t samplesRead = 0;
-        size_t valueIndex;
-        auto variableIndexIt = std::find(observer->realIndexes.begin(), observer->realIndexes.end(), variableIndex);
-        if (variableIndexIt != observer->realIndexes.end()) {
-            valueIndex = variableIndexIt - observer->realIndexes.begin();
-            auto sampleIt = observer->realSamples.find(fromStep);
-            for (samplesRead = 0; samplesRead < nSamples; samplesRead++) {
-                if (sampleIt != observer->realSamples.end()) {
-                    steps[samplesRead] = sampleIt->first;
-                    values[samplesRead] = sampleIt->second[valueIndex];
-                    sampleIt++;
-                } else {
-                    break;
-                }
-            }
-        }
-        return samplesRead;
-
-    } catch (...) {
-        handle_current_exception();
-        return 0;
-    }
-}
-
 int cse_execution_slave_set_integer(
     cse_execution* execution,
     cse_slave_index slave,
@@ -416,26 +347,30 @@ int cse_execution_slave_set_integer(
     }
 }
 
-int cse_observer_slave_get_integer(
+
+template<typename T>
+int cse_observer_slave_get(
     cse_observer* observer,
     cse_slave_index slave,
     const cse_variable_index variables[],
+    std::vector<cse::variable_index> indices,
+    std::map<long, std::vector<T>> samples,
     size_t nv,
-    int values[])
+    T values[])
 {
     try {
         if (slave != 0) {
             throw std::out_of_range("Invalid slave index");
         }
         std::lock_guard<std::mutex> lock(observer->lock);
-        if (observer->intSamples.empty()) {
+        if (samples.empty()) {
             throw std::out_of_range("no samples available");
         }
-        auto lastEntry = observer->intSamples.rbegin();
+        auto lastEntry = samples.rbegin();
         for (size_t i = 0; i < nv; i++) {
-            auto it = std::find(observer->intIndexes.begin(), observer->intIndexes.end(), variables[i]);
-            if (it != observer->intIndexes.end()) {
-                size_t valueIndex = it - observer->intIndexes.begin();
+            auto it = std::find(indices.begin(), indices.end(), variables[i]);
+            if (it != indices.end()) {
+                size_t valueIndex = it - indices.begin();
                 values[i] = lastEntry->second[valueIndex];
             }
         }
@@ -446,13 +381,37 @@ int cse_observer_slave_get_integer(
     }
 }
 
-size_t cse_observer_slave_get_integer_samples(
+int cse_observer_slave_get_real(
+    cse_observer* observer,
+    cse_slave_index slave,
+    const cse_variable_index variables[],
+    size_t nv,
+    double values[])
+{
+    return cse_observer_slave_get<double>(observer, slave, variables, observer->realIndexes, observer->realSamples, nv, values);
+}
+
+int cse_observer_slave_get_integer(
+    cse_observer* observer,
+    cse_slave_index slave,
+    const cse_variable_index variables[],
+    size_t nv,
+    int values[])
+{
+    return cse_observer_slave_get<int>(observer, slave, variables, observer->intIndexes, observer->intSamples, nv, values);
+}
+
+
+template<typename T>
+size_t cse_observer_slave_get_samples(
     cse_observer* observer,
     cse_slave_index slave,
     cse_variable_index variableIndex,
+    std::vector<cse::variable_index> indices,
+    std::map<long, std::vector<T>> samples,
     long fromStep,
     size_t nSamples,
-    int values[],
+    T values[],
     long steps[])
 {
     try {
@@ -462,12 +421,12 @@ size_t cse_observer_slave_get_integer_samples(
         std::lock_guard<std::mutex> lock(observer->lock);
         size_t samplesRead = 0;
         size_t valueIndex;
-        auto variableIndexIt = std::find(observer->intIndexes.begin(), observer->intIndexes.end(), variableIndex);
-        if (variableIndexIt != observer->intIndexes.end()) {
-            valueIndex = variableIndexIt - observer->intIndexes.begin();
-            auto sampleIt = observer->intSamples.find(fromStep);
+        auto variableIndexIt = std::find(indices.begin(), indices.end(), variableIndex);
+        if (variableIndexIt != indices.end()) {
+            valueIndex = variableIndexIt - indices.begin();
+            auto sampleIt = samples.find(fromStep);
             for (samplesRead = 0; samplesRead < nSamples; samplesRead++) {
-                if (sampleIt != observer->intSamples.end()) {
+                if (sampleIt != samples.end()) {
                     steps[samplesRead] = sampleIt->first;
                     values[samplesRead] = sampleIt->second[valueIndex];
                     sampleIt++;
@@ -482,6 +441,30 @@ size_t cse_observer_slave_get_integer_samples(
         handle_current_exception();
         return 0;
     }
+}
+
+size_t cse_observer_slave_get_real_samples(
+    cse_observer* observer,
+    cse_slave_index slave,
+    cse_variable_index variableIndex,
+    long fromStep,
+    size_t nSamples,
+    double values[],
+    long steps[])
+{
+    return cse_observer_slave_get_samples<double>(observer, slave, variableIndex, observer->realIndexes, observer->realSamples, fromStep, nSamples, values, steps);
+}
+
+size_t cse_observer_slave_get_integer_samples(
+    cse_observer* observer,
+    cse_slave_index slave,
+    cse_variable_index variableIndex,
+    long fromStep,
+    size_t nSamples,
+    int values[],
+    long steps[])
+{
+    return cse_observer_slave_get_samples<int>(observer, slave, variableIndex, observer->intIndexes, observer->intSamples, fromStep, nSamples, values, steps);
 }
 
 
