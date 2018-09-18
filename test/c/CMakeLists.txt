@@ -1,6 +1,7 @@
 set(tests
     "hello_world_test"
     "single_fmu_execution_test"
+    "observer_should_contain_initial_samples"
 )
 
 include("AddTestExecutable")

@@ -115,7 +115,8 @@ struct cse_execution_s
     int error_code;
 };
 
-cse::time_duration calculate_current_time(cse_execution* execution) {
+cse::time_duration calculate_current_time(cse_execution* execution)
+{
     return execution->startTime + execution->currentSteps * execution->stepSize;
 }
 
@@ -205,7 +206,7 @@ int cse_execution_add_slave(
     }
 }
 
-bool cse_observer_observe(const std::shared_ptr<cse_observer> &observer, cse::time_point currentTime);
+bool cse_observer_observe(cse_observer *observer, cse::time_point currentTime);
 
 int cse_execution_step(cse_execution* execution)
 {
@@ -220,7 +221,7 @@ int cse_execution_step(cse_execution* execution)
         }
         const auto observeOK =
             !execution->observer ||
-            cse_observer_observe(execution->observer, currentTime);
+            cse_observer_observe(execution->observer.get(), currentTime);
         if (!observeOK) {
             set_last_error(CSE_ERRC_UNSPECIFIED, "Observer failed to observe");
             return failure;
@@ -337,6 +338,9 @@ int cse_observer_slave_get_real(
             throw std::out_of_range("Invalid slave index");
         }
         std::lock_guard<std::mutex> lock(observer->lock);
+        if (observer->realSamples.empty()) {
+            throw std::out_of_range("no samples available");
+        }
         auto lastEntry = observer->realSamples.rbegin();
         for (size_t i = 0; i < nv; i++) {
             auto it = std::find(observer->realIndexes.begin(), observer->realIndexes.end(), variables[i]);
@@ -484,10 +488,10 @@ int cse_observer_add_slave(
             if (vd.type == cse::variable_type::integer && vd.causality == cse::variable_causality::output) {
                 observer->intIndexes.push_back(vd.index);
             }
-//            observer->realSamples.resize(observer->realIndexes.size());
-            observer->intValues.resize(observer->intIndexes.size());
         }
         observer->slave = slave->instance;
+        observer->intValues.resize(observer->intIndexes.size());
+        cse_observer_observe(observer,0.0);
 
         return /*slave index*/ 0;
     } catch (...) {
@@ -496,7 +500,7 @@ int cse_observer_add_slave(
     }
 }
 
-bool cse_observer_observe(const std::shared_ptr<cse_observer> &observer, cse::time_point currentTime)
+bool cse_observer_observe(cse_observer *observer, cse::time_point currentTime)
 {
     try {
         if (observer->slave) {
