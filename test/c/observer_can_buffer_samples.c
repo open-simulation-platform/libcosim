@@ -19,11 +19,6 @@ void print_last_error()
         cse_last_error_code(), cse_last_error_message());
 }
 
-BOOL double_equals(double a, double b)
-{
-    return (fabs(a - b) < 0.000001);
-}
-
 int main()
 {
     const char* dataDir = getenv("TEST_DATA_DIR");
@@ -117,7 +112,7 @@ int main()
 
 
     for (int i = 0; i < 10; i++) {
-        if (!double_equals(expectedRealSamples[i], realSamples[i])) {
+        if (fabs(expectedRealSamples[i] - realSamples[i]) > 0.000001) {
             fprintf(stderr, "Sample nr %d expected real sample %lf, got %lf\n", i, expectedRealSamples[i], realSamples[i]);
             cse_execution_destroy(execution);
             return 1;
