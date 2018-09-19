@@ -28,7 +28,7 @@ int main()
     }
 
     char fmuPath[1024];
-    int rc = snprintf(fmuPath, sizeof fmuPath, "%s/fmi2/Clock.fmu", dataDir);
+    int rc = snprintf(fmuPath, sizeof fmuPath, "%s/fmi1/identity.fmu", dataDir);
     if (rc < 0) {
         perror(NULL);
         return 1;
@@ -78,6 +78,14 @@ int main()
     cse_variable_index realOutVar = 0;
     double realOutVal = -1.0;
     rc = cse_observer_slave_get_real(observer, slave_index, &realOutVar, 1, &realOutVal);
+    if (rc < 0) {
+        print_last_error();
+        cse_execution_destroy(execution);
+        return 1;
+    }
+
+    double realVal = 1.2;
+    rc = cse_execution_slave_set_real(execution, 0, &realOutVar, 1, &realVal);
     if (rc < 0) {
         print_last_error();
         cse_execution_destroy(execution);
