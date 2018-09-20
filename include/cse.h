@@ -124,11 +124,15 @@ typedef struct cse_execution_s cse_execution;
  * 
  *  \param [in] startTime
  *      The (logical) time point at which the simulation should start.
+ *  \param [in] stepSize
+ *      The execution step size.
  *  \returns
  *      A pointer to an object which holds the execution state,
  *      or NULL on error.
  */
-cse_execution* cse_execution_create(cse_time_point startTime);
+cse_execution* cse_execution_create(
+    cse_time_point startTime,
+    cse_time_duration stepSize);
 
 
 /**
@@ -139,6 +143,31 @@ cse_execution* cse_execution_create(cse_time_point startTime);
  *      0 on success and -1 on error.
  */
 int cse_execution_destroy(cse_execution* execution);
+
+
+struct cse_address_s;
+typedef struct cse_address_s cse_address;
+
+
+int cse_address_destroy(cse_address* address);
+
+
+struct cse_slave_s;
+typedef struct cse_slave_s cse_slave;
+
+
+/**
+ *  \brief
+ *  Creates a new local slave.
+ *
+ *  \param [in] fmuPath
+ *      Path to FMU.
+ *
+ *  \returns
+ *      A pointer to an object which holds the local slave object,
+ *      or NULL on error.
+ */
+cse_slave* cse_local_slave_create(const char* fmuPath);
 
 
 /**
@@ -154,25 +183,95 @@ int cse_execution_destroy(cse_execution* execution);
  *
  *  \param [in] execution
  *      The execution to which the slave should be added.
- *  \param [in] fmuPath
- *      The path to the FMU.
+ *  \param [in] slave
+ *      The slave.
  *
  *  \returns
  *      The slave's unique index in the execution, or -1 on error.
  */
-cse_slave_index cse_execution_add_slave_from_fmu(
+int cse_execution_add_slave(
     cse_execution* execution,
-    const char* fmuPath);
+    cse_slave* slave);
 
 
 /**
  *  \brief
  *  Advances an execution one time step.
  *
+ *  \param [in] execution
+ *      The execution to be stepped.
+ *  \param [in] numSteps
+ *      The number of steps to advance the execution to which the slave should be added.
+ *
  *  \returns
  *      0 on success and -1 on error.
  */
-int cse_execution_step(cse_execution* execution, cse_time_duration stepSize);
+int cse_execution_step(cse_execution* execution, size_t numSteps);
+
+
+/**
+ *  \brief
+ *  Starts an execution.
+ *
+ *  \param [in] execution
+ *      The execution to be started.
+ *
+ *  \returns
+ *      0 on success and -1 on error.
+ */
+int cse_execution_start(cse_execution* execution);
+
+
+/**
+ *  \brief
+ *  Stops an execution.
+ *
+ *  \param [in] execution
+ *      The execution to be stopped.
+ *
+ *  \returns
+ *      0 on success and -1 on error.
+ */
+int cse_execution_stop(cse_execution* execution);
+
+
+typedef enum
+{
+    CSE_EXECUTION_STOPPED,
+    CSE_EXECUTION_RUNNING,
+    CSE_EXECUTION_ERROR
+} cse_execution_state;
+
+typedef struct
+{
+    double current_time;
+    cse_execution_state state;
+    int error_code;
+} cse_execution_status;
+
+
+/**
+ *  \brief
+ *  Returns execution status.
+ *
+ *  \param [in] execution
+ *      The execution to get status from.
+ *  \param [out] status
+ *      A pointer to a cse_execution_status that will be filled with actual
+ *      execution status.
+ *
+ *  \returns
+ *      0 on success and -1 on error.
+ */
+int cse_execution_get_status(
+    cse_execution* execution,
+    cse_execution_status* status);
+
+
+// Observer
+struct cse_observer_s;
+typedef struct cse_observer_s cse_observer;
+
 
 /**
  *  \brief
@@ -205,8 +304,8 @@ int cse_execution_slave_set_real(
  *  \brief
  *  Retrieves the values of real variables for one slave.
  *
- *  \param [in] execution
- *      The execution.
+ *  \param [in] observer
+ *      The observer.
  *  \param [in] slave
  *      The slave.
  *  \param [in] variables
@@ -221,12 +320,22 @@ int cse_execution_slave_set_real(
  *  \returns
  *      0 on success and -1 on error.
  */
-int cse_execution_slave_get_real(
-    cse_execution* execution,
+int cse_observer_slave_get_real(
+    cse_observer* observer,
     cse_slave_index slave,
     const cse_variable_index variables[],
     size_t nv,
     double values[]);
+
+
+size_t cse_observer_slave_get_real_samples(
+    cse_observer* observer,
+    cse_slave_index slave,
+    cse_variable_index variableIndex,
+    long fromStep,
+    size_t nSamples,
+    double values[],
+    long steps[]);
 
 /**
  *  \brief
@@ -259,8 +368,8 @@ int cse_execution_slave_set_integer(
  *  \brief
  *  Retrieves the values of integer variables for one slave.
  *
- *  \param [in] execution
- *      The execution.
+ *  \param [in] observer
+ *      The observer.
  *  \param [in] slave
  *      The slave.
  *  \param [in] variables
@@ -275,12 +384,21 @@ int cse_execution_slave_set_integer(
  *  \returns
  *      0 on success and -1 on error.
  */
-int cse_execution_slave_get_integer(
-    cse_execution* execution,
+int cse_observer_slave_get_integer(
+    cse_observer* observer,
     cse_slave_index slave,
     const cse_variable_index variables[],
     size_t nv,
     int values[]);
+
+size_t cse_observer_slave_get_integer_samples(
+    cse_observer* observer,
+    cse_slave_index slave,
+    cse_variable_index variableIndex,
+    long fromStep,
+    size_t nSamples,
+    int values[],
+    long steps[]);
 
 
 /**
@@ -300,6 +418,25 @@ int cse_execution_slave_get_integer(
  *      everything, for no apparent reason.
  */
 int cse_hello_world(char* buffer, size_t size);
+
+
+cse_observer* cse_membuffer_observer_create();
+
+int cse_observer_destroy(cse_observer* observer);
+
+cse_address* cse_observer_get_address(cse_observer* observer);
+
+int cse_slave_destroy(cse_slave* slave);
+
+cse_address* cse_slave_get_address(cse_slave* s);
+
+int cse_execution_add_observer(
+    cse_execution* execution,
+    cse_observer* observer);
+
+int cse_observer_add_slave(
+    cse_observer* observer,
+    cse_slave* slave);
 
 
 #ifdef __cplusplus

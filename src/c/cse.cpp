@@ -1,18 +1,21 @@
 #include <cse.h>
 
+#include <atomic>
 #include <cassert>
 #include <cerrno>
 #include <optional>
 #include <stdexcept>
 #include <string>
 #include <system_error>
+#include <thread>
 
 #include <cse/exception.hpp>
 #include <cse/fmi/fmu.hpp>
 #include <cse/fmi/importer.hpp>
 
 #include <cse/hello_world.hpp>
-
+#include <iostream>
+#include <mutex>
 
 namespace
 {
@@ -101,18 +104,33 @@ const char* cse_last_error_message()
 
 struct cse_execution_s
 {
-    cse::time_duration currentTime;
+    std::atomic<cse::time_point> startTime;
     std::shared_ptr<cse::slave> slave;
+    std::shared_ptr<cse_observer> observer;
+    std::atomic<long> currentSteps;
+    cse::time_duration stepSize;
+    std::thread t;
+    std::atomic<bool> shouldRun = false;
+    std::atomic<cse_execution_state> state;
+    int error_code;
 };
 
+cse::time_duration calculate_current_time(cse_execution* execution)
+{
+    return execution->startTime + execution->currentSteps * execution->stepSize;
+}
 
-cse_execution* cse_execution_create(cse_time_point startTime)
+
+cse_execution* cse_execution_create(cse_time_point startTime, cse_time_duration stepSize)
 {
     try {
         // No exceptions are possible right now, so try...catch and unique_ptr
         // are strictly unnecessary, but this will change soon enough.
         auto execution = std::make_unique<cse_execution>();
-        execution->currentTime = startTime;
+        execution->startTime = startTime;
+        execution->stepSize = stepSize;
+        execution->error_code = CSE_ERRC_SUCCESS;
+        execution->state = CSE_EXECUTION_STOPPED;
         return execution.release();
     } catch (...) {
         handle_current_exception();
@@ -131,15 +149,39 @@ int cse_execution_destroy(cse_execution* execution)
         }
         return success;
     } catch (...) {
+        execution->state = CSE_EXECUTION_ERROR;
+        execution->error_code = CSE_ERRC_UNSPECIFIED;
         handle_current_exception();
         return failure;
     }
 }
 
 
-cse_slave_index cse_execution_add_slave_from_fmu(
+struct cse_slave_s
+{
+    std::string address;
+    std::shared_ptr<cse::slave> instance;
+};
+
+cse_slave* cse_local_slave_create(const char* fmuPath)
+{
+    try {
+        const auto importer = cse::fmi::importer::create();
+        const auto fmu = importer->import(fmuPath);
+        auto slave = std::make_unique<cse_slave>();
+        slave->instance = fmu->instantiate_slave();
+        // slave address not in use yet. Should be something else than a string.
+        slave->address = "local";
+        return slave.release();
+    } catch (...) {
+        handle_current_exception();
+        return nullptr;
+    }
+}
+
+int cse_execution_add_slave(
     cse_execution* execution,
-    const char* fmuPath)
+    cse_slave* slave)
 {
     try {
         if (execution->slave) {
@@ -147,18 +189,15 @@ cse_slave_index cse_execution_add_slave_from_fmu(
                 make_error_code(cse::errc::unsupported_feature),
                 "Only one slave may be added to an execution for the time being");
         }
-        const auto importer = cse::fmi::importer::create();
-        const auto fmu = importer->import(fmuPath);
-        auto instance = fmu->instantiate_slave();
+        auto instance = slave->instance;
         instance->setup(
             "unnamed slave",
             "unnamed execution",
-            execution->currentTime,
+            execution->startTime + execution->currentSteps * execution->stepSize,
             cse::eternity,
             false,
             0.0);
         instance->start_simulation();
-
         execution->slave = instance;
         return /*slave index*/ 0;
     } catch (...) {
@@ -167,24 +206,104 @@ cse_slave_index cse_execution_add_slave_from_fmu(
     }
 }
 
+bool cse_observer_observe(cse_observer* observer, long currentStep);
 
-int cse_execution_step(cse_execution* execution, cse_time_duration stepSize)
+int cse_execution_step(cse_execution* execution)
 {
     try {
         const auto stepOK =
             !execution->slave ||
-            execution->slave->do_step(execution->currentTime, stepSize);
+            execution->slave->do_step(calculate_current_time(execution), execution->stepSize);
         if (!stepOK) {
             set_last_error(CSE_ERRC_STEP_TOO_LONG, "Time step too long");
             return failure;
         }
-        execution->currentTime += stepSize;
+
+        execution->currentSteps++;
+
+        const auto observeOK =
+            !execution->observer ||
+            cse_observer_observe(execution->observer.get(), execution->currentSteps);
+        if (!observeOK) {
+            set_last_error(CSE_ERRC_UNSPECIFIED, "Observer failed to observe");
+            return failure;
+        }
+
         return success;
     } catch (...) {
         handle_current_exception();
         return failure;
     }
 }
+
+
+int cse_execution_step(cse_execution* execution, size_t numSteps)
+{
+    execution->state = CSE_EXECUTION_RUNNING;
+    for (size_t i = 0; i < numSteps; i++) {
+        if (cse_execution_step(execution) != success) {
+            return failure;
+        }
+    }
+    return success;
+}
+
+int cse_execution_start(cse_execution* execution)
+{
+    try {
+        execution->shouldRun = true;
+        execution->t = std::thread([execution]() {
+            execution->state = CSE_EXECUTION_RUNNING;
+            while (execution->shouldRun) {
+                cse_execution_step(execution, 1);
+
+                // TODO: Add better time synchronization
+                std::this_thread::sleep_for(std::chrono::duration<cse_time_duration>(execution->stepSize));
+            }
+        });
+
+        return success;
+    } catch (...) {
+        handle_current_exception();
+        return failure;
+    }
+}
+
+int cse_execution_stop(cse_execution* execution)
+{
+    try {
+        execution->shouldRun = false;
+        execution->t.join();
+        execution->state = CSE_EXECUTION_STOPPED;
+        return success;
+    } catch (...) {
+        handle_current_exception();
+        return failure;
+    }
+}
+
+int cse_execution_get_status(cse_execution* execution, cse_execution_status* status)
+{
+    try {
+        status->error_code = execution->error_code;
+        status->state = execution->state;
+        status->current_time = calculate_current_time(execution);
+        return success;
+    } catch (...) {
+        handle_current_exception();
+        return failure;
+    }
+}
+
+struct cse_observer_s
+{
+    std::map<long, std::vector<double>> realSamples;
+    std::map<long, std::vector<int>> intSamples;
+    std::vector<cse::variable_index> realIndexes;
+    std::vector<cse::variable_index> intIndexes;
+    std::mutex lock;
+    std::shared_ptr<cse::slave> slave;
+};
 
 int cse_execution_slave_set_real(
     cse_execution* execution,
@@ -198,27 +317,6 @@ int cse_execution_slave_set_real(
             throw std::out_of_range("Invalid slave index");
         }
         execution->slave->set_real_variables(
-            gsl::make_span(variables, nv),
-            gsl::make_span(values, nv));
-        return success;
-    } catch (...) {
-        handle_current_exception();
-        return failure;
-    }
-}
-
-int cse_execution_slave_get_real(
-    cse_execution* execution,
-    cse_slave_index slave,
-    const cse_variable_index variables[],
-    size_t nv,
-    double values[])
-{
-    try {
-        if (slave != 0) {
-            throw std::out_of_range("Invalid slave index");
-        }
-        execution->slave->get_real_variables(
             gsl::make_span(variables, nv),
             gsl::make_span(values, nv));
         return success;
@@ -249,24 +347,203 @@ int cse_execution_slave_set_integer(
     }
 }
 
-int cse_execution_slave_get_integer(
-    cse_execution* execution,
+
+template<typename T>
+int cse_observer_slave_get(
+    cse_observer* observer,
     cse_slave_index slave,
     const cse_variable_index variables[],
+    std::vector<cse::variable_index> indices,
+    std::map<long, std::vector<T>> samples,
     size_t nv,
-    int values[])
+    T values[])
 {
     try {
         if (slave != 0) {
             throw std::out_of_range("Invalid slave index");
         }
-        execution->slave->get_integer_variables(
-            gsl::make_span(variables, nv),
-            gsl::make_span(values, nv));
+        std::lock_guard<std::mutex> lock(observer->lock);
+        if (samples.empty()) {
+            throw std::out_of_range("no samples available");
+        }
+        auto lastEntry = samples.rbegin();
+        for (size_t i = 0; i < nv; i++) {
+            auto it = std::find(indices.begin(), indices.end(), variables[i]);
+            if (it != indices.end()) {
+                size_t valueIndex = it - indices.begin();
+                values[i] = lastEntry->second[valueIndex];
+            }
+        }
         return success;
     } catch (...) {
         handle_current_exception();
         return failure;
+    }
+}
+
+int cse_observer_slave_get_real(
+    cse_observer* observer,
+    cse_slave_index slave,
+    const cse_variable_index variables[],
+    size_t nv,
+    double values[])
+{
+    return cse_observer_slave_get<double>(observer, slave, variables, observer->realIndexes, observer->realSamples, nv, values);
+}
+
+int cse_observer_slave_get_integer(
+    cse_observer* observer,
+    cse_slave_index slave,
+    const cse_variable_index variables[],
+    size_t nv,
+    int values[])
+{
+    return cse_observer_slave_get<int>(observer, slave, variables, observer->intIndexes, observer->intSamples, nv, values);
+}
+
+
+template<typename T>
+size_t cse_observer_slave_get_samples(
+    cse_observer* observer,
+    cse_slave_index slave,
+    cse_variable_index variableIndex,
+    std::vector<cse::variable_index> indices,
+    std::map<long, std::vector<T>> samples,
+    long fromStep,
+    size_t nSamples,
+    T values[],
+    long steps[])
+{
+    try {
+        if (slave != 0) {
+            throw std::out_of_range("Invalid slave index");
+        }
+        std::lock_guard<std::mutex> lock(observer->lock);
+        size_t samplesRead = 0;
+        size_t valueIndex;
+        auto variableIndexIt = std::find(indices.begin(), indices.end(), variableIndex);
+        if (variableIndexIt != indices.end()) {
+            valueIndex = variableIndexIt - indices.begin();
+            auto sampleIt = samples.find(fromStep);
+            for (samplesRead = 0; samplesRead < nSamples; samplesRead++) {
+                if (sampleIt != samples.end()) {
+                    steps[samplesRead] = sampleIt->first;
+                    values[samplesRead] = sampleIt->second[valueIndex];
+                    sampleIt++;
+                } else {
+                    break;
+                }
+            }
+        }
+        return samplesRead;
+
+    } catch (...) {
+        handle_current_exception();
+        return 0;
+    }
+}
+
+size_t cse_observer_slave_get_real_samples(
+    cse_observer* observer,
+    cse_slave_index slave,
+    cse_variable_index variableIndex,
+    long fromStep,
+    size_t nSamples,
+    double values[],
+    long steps[])
+{
+    return cse_observer_slave_get_samples<double>(observer, slave, variableIndex, observer->realIndexes, observer->realSamples, fromStep, nSamples, values, steps);
+}
+
+size_t cse_observer_slave_get_integer_samples(
+    cse_observer* observer,
+    cse_slave_index slave,
+    cse_variable_index variableIndex,
+    long fromStep,
+    size_t nSamples,
+    int values[],
+    long steps[])
+{
+    return cse_observer_slave_get_samples<int>(observer, slave, variableIndex, observer->intIndexes, observer->intSamples, fromStep, nSamples, values, steps);
+}
+
+
+cse_observer* cse_membuffer_observer_create()
+{
+    auto observer = std::make_unique<cse_observer>();
+
+    return observer.release();
+}
+
+
+int cse_execution_add_observer(
+    cse_execution* execution,
+    cse_observer* observer)
+{
+    try {
+        if (execution->observer) {
+            throw cse::error(
+                make_error_code(cse::errc::unsupported_feature),
+                "Only one observer may be added to an execution for the time being");
+        }
+
+        execution->observer = std::shared_ptr<cse_observer>(observer);
+
+        return /*observer index*/ 0;
+    } catch (...) {
+        handle_current_exception();
+        return failure;
+    }
+}
+
+
+int cse_observer_add_slave(
+    cse_observer* observer,
+    cse_slave* slave)
+{
+    try {
+        if (observer->slave) {
+            throw cse::error(
+                make_error_code(cse::errc::unsupported_feature),
+                "Only one slave may be added to an observer for the time being");
+        }
+        for (cse::variable_description& vd : slave->instance->model_description().variables) {
+            if (vd.type == cse::variable_type::real && vd.causality == cse::variable_causality::output) {
+                observer->realIndexes.push_back(vd.index);
+            }
+            if (vd.type == cse::variable_type::integer && vd.causality == cse::variable_causality::output) {
+                observer->intIndexes.push_back(vd.index);
+            }
+        }
+        observer->slave = slave->instance;
+        cse_observer_observe(observer, 0);
+
+        return /*slave index*/ 0;
+    } catch (...) {
+        handle_current_exception();
+        return failure;
+    }
+}
+
+bool cse_observer_observe(cse_observer* observer, long currentStep)
+{
+    try {
+        if (observer->slave) {
+            std::lock_guard<std::mutex> lock(observer->lock);
+            observer->realSamples[currentStep].resize(observer->realIndexes.size());
+            observer->intSamples[currentStep].resize(observer->intIndexes.size());
+            observer->slave->get_real_variables(
+                gsl::make_span(observer->realIndexes),
+                gsl::make_span(observer->realSamples[currentStep]));
+
+            observer->slave->get_integer_variables(
+                gsl::make_span(observer->intIndexes),
+                gsl::make_span(observer->intSamples[currentStep]));
+        }
+        return true;
+    } catch (...) {
+        handle_current_exception();
+        return false;
     }
 }
 
