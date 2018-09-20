@@ -2,15 +2,20 @@ set(publicHeaderDir "${CMAKE_SOURCE_DIR}/include")
 set(publicHeaders
     "cse.h"
 )
+set(privateHeaders
+    "slave_observer.hpp"
+)
+
 set(sources
     "cse.cpp"
+    "slave_observer.cpp"
 )
 
 set(publicHeadersFull)
 foreach(h IN LISTS publicHeaders)
     list(APPEND publicHeadersFull "${publicHeaderDir}/${h}")
 endforeach()
-set(allSources ${publicHeadersFull} ${sources})
+set(allSources ${publicHeadersFull} ${privateHeaders} ${sources})
 
 add_library(csecorec ${allSources})
 target_compile_features(csecorec PRIVATE "cxx_std_17")
