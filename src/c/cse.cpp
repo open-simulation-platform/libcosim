@@ -105,7 +105,7 @@ const char* cse_last_error_message()
 struct cse_execution_s
 {
     std::atomic<cse::time_point> startTime;
-    std::shared_ptr<cse::slave> slave;
+    std::vector<std::shared_ptr<cse::slave>> slaves;
     std::shared_ptr<cse_observer> observer;
     std::atomic<long> currentSteps;
     cse::time_duration stepSize;
@@ -144,8 +144,8 @@ int cse_execution_destroy(cse_execution* execution)
     try {
         if (!execution) return success;
         const auto owned = std::unique_ptr<cse_execution>(execution);
-        if (owned->slave) {
-            owned->slave->end_simulation();
+        for (auto& slave : owned->slaves) {
+            slave->end_simulation();
         }
         return success;
     } catch (...) {
@@ -179,16 +179,11 @@ cse_slave* cse_local_slave_create(const char* fmuPath)
     }
 }
 
-int cse_execution_add_slave(
+cse_slave_index cse_execution_add_slave(
     cse_execution* execution,
     cse_slave* slave)
 {
     try {
-        if (execution->slave) {
-            throw cse::error(
-                make_error_code(cse::errc::unsupported_feature),
-                "Only one slave may be added to an execution for the time being");
-        }
         auto instance = slave->instance;
         instance->setup(
             "unnamed slave",
@@ -198,8 +193,8 @@ int cse_execution_add_slave(
             false,
             0.0);
         instance->start_simulation();
-        execution->slave = instance;
-        return /*slave index*/ 0;
+        execution->slaves.push_back(instance);
+        return static_cast<cse_slave_index>(execution->slaves.size() - 1);
     } catch (...) {
         handle_current_exception();
         return failure;
@@ -211,12 +206,12 @@ bool cse_observer_observe(cse_observer* observer, long currentStep);
 int cse_execution_step(cse_execution* execution)
 {
     try {
-        const auto stepOK =
-            !execution->slave ||
-            execution->slave->do_step(calculate_current_time(execution), execution->stepSize);
-        if (!stepOK) {
-            set_last_error(CSE_ERRC_STEP_TOO_LONG, "Time step too long");
-            return failure;
+        for (auto& slave : execution->slaves) {
+            const auto stepOK = slave->do_step(calculate_current_time(execution), execution->stepSize);
+            if (!stepOK) {
+                set_last_error(CSE_ERRC_STEP_TOO_LONG, "Time step too long");
+                return failure;
+            }
         }
 
         execution->currentSteps++;
@@ -307,18 +302,13 @@ struct cse_observer_s
 
 int cse_execution_slave_set_real(
     cse_execution* execution,
-    cse_slave_index slave,
+    cse_slave_index slaveIndex,
     const cse_variable_index variables[],
     size_t nv,
     const double values[])
 {
     try {
-        if (slave != 0) {
-            throw std::out_of_range("Invalid slave index");
-        }
-        execution->slave->set_real_variables(
-            gsl::make_span(variables, nv),
-            gsl::make_span(values, nv));
+        execution->slaves.at(slaveIndex)->set_real_variables(gsl::make_span(variables, nv), gsl::make_span(values, nv));
         return success;
     } catch (...) {
         handle_current_exception();
@@ -328,18 +318,13 @@ int cse_execution_slave_set_real(
 
 int cse_execution_slave_set_integer(
     cse_execution* execution,
-    cse_slave_index slave,
+    cse_slave_index slaveIndex,
     const cse_variable_index variables[],
     size_t nv,
     const int values[])
 {
     try {
-        if (slave != 0) {
-            throw std::out_of_range("Invalid slave index");
-        }
-        execution->slave->set_integer_variables(
-            gsl::make_span(variables, nv),
-            gsl::make_span(values, nv));
+        execution->slaves.at(slaveIndex)->set_integer_variables(gsl::make_span(variables, nv), gsl::make_span(values, nv));
         return success;
     } catch (...) {
         handle_current_exception();

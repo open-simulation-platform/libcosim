@@ -189,7 +189,7 @@ cse_slave* cse_local_slave_create(const char* fmuPath);
  *  \returns
  *      The slave's unique index in the execution, or -1 on error.
  */
-int cse_execution_add_slave(
+cse_slave_index cse_execution_add_slave(
     cse_execution* execution,
     cse_slave* slave);
 
@@ -279,7 +279,7 @@ typedef struct cse_observer_s cse_observer;
  *
  *  \param [in] execution
  *      The execution.
- *  \param [in] slave
+ *  \param [in] slaveIndex
  *      The slave.
  *  \param [in] variables
  *      A pointer to an array of length `nv` that contains the (slave-specific)
@@ -295,7 +295,7 @@ typedef struct cse_observer_s cse_observer;
  */
 int cse_execution_slave_set_real(
     cse_execution* execution,
-    cse_slave_index slave,
+    cse_slave_index slaveIndex,
     const cse_variable_index variables[],
     size_t nv,
     const double values[]);
@@ -343,7 +343,7 @@ size_t cse_observer_slave_get_real_samples(
  *
  *  \param [in] execution
  *      The execution.
- *  \param [in] slave
+ *  \param [in] slaveIndex
  *      The slave.
  *  \param [in] variables
  *      A pointer to an array of length `nv` that contains the (slave-specific)
@@ -359,7 +359,7 @@ size_t cse_observer_slave_get_real_samples(
  */
 int cse_execution_slave_set_integer(
     cse_execution* execution,
-    cse_slave_index slave,
+    cse_slave_index slaveIndex,
     const cse_variable_index variables[],
     size_t nv,
     const int values[]);
