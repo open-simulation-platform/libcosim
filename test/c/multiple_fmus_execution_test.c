@@ -49,8 +49,14 @@ int main() {
         return 1;
     }
 
-    cse_observer *observer = cse_membuffer_observer_create();
-    if (!observer) {
+    cse_observer *observer1 = cse_membuffer_observer_create();
+    if (!observer1) {
+        print_last_error();
+        return 1;
+    }
+
+    cse_observer *observer2 = cse_membuffer_observer_create();
+    if (!observer2) {
         print_last_error();
         return 1;
     }
@@ -68,19 +74,34 @@ int main() {
         return 1;
     }
 
-    cse_slave_index observer_slave_index = cse_observer_add_slave(observer, slave2);
-    if (observer_slave_index < 0) {
+    cse_slave_index observer_slave_index1 = cse_observer_add_slave(observer1, slave1);
+    if (observer_slave_index1 < 0) {
         print_last_error();
         cse_execution_destroy(execution);
         return 1;
     }
 
-    int observer_index = cse_execution_add_observer(execution, observer);
-    if (observer_index < 0) {
+    cse_slave_index observer_slave_index2 = cse_observer_add_slave(observer2, slave2);
+    if (observer_slave_index2 < 0) {
         print_last_error();
         cse_execution_destroy(execution);
         return 1;
     }
+
+    cse_observer_index observer_index1 = cse_execution_add_observer(execution, observer1);
+    if (observer_index1 < 0) {
+        print_last_error();
+        cse_execution_destroy(execution);
+        return 1;
+    }
+
+    cse_observer_index observer_index2 = cse_execution_add_observer(execution, observer2);
+    if (observer_index2 < 0) {
+        print_last_error();
+        cse_execution_destroy(execution);
+        return 1;
+    }
+
 
     cse_variable_index realInVar = 0;
     const double realInVal = 5.0;
@@ -136,7 +157,7 @@ int main() {
 
     cse_variable_index realOutVar = 0;
     double realOutVal = -1.0;
-    rc = cse_observer_slave_get_real(observer, slave_index1, &realOutVar, 1, &realOutVal);
+    rc = cse_observer_slave_get_real(observer1, observer_slave_index1, &realOutVar, 1, &realOutVal);
     if (rc < 0) {
         print_last_error();
         cse_execution_destroy(execution);
@@ -145,7 +166,32 @@ int main() {
 
     cse_variable_index intOutVar = 0;
     int intOutVal = 10;
-    rc = cse_observer_slave_get_integer(observer, slave_index1, &intOutVar, 1, &intOutVal);
+    rc = cse_observer_slave_get_integer(observer1, observer_slave_index1, &intOutVar, 1, &intOutVal);
+    if (rc < 0) {
+        print_last_error();
+        cse_execution_destroy(execution);
+        return 1;
+    }
+
+    if (realOutVal != 5.0) {
+        fprintf(stderr, "Expected value 0.0, got %f\n", realOutVal);
+        cse_execution_destroy(execution);
+        return 1;
+    }
+    if (intOutVal != 42) {
+        fprintf(stderr, "Expected value 0, got %i\n", intOutVal);
+        cse_execution_destroy(execution);
+        return 1;
+    }
+
+    rc = cse_observer_slave_get_real(observer2, observer_slave_index2, &realOutVar, 1, &realOutVal);
+    if (rc < 0) {
+        print_last_error();
+        cse_execution_destroy(execution);
+        return 1;
+    }
+
+    rc = cse_observer_slave_get_integer(observer2, observer_slave_index2, &intOutVar, 1, &intOutVal);
     if (rc < 0) {
         print_last_error();
         cse_execution_destroy(execution);

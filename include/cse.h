@@ -29,6 +29,13 @@ typedef uint32_t cse_variable_index;
 /// Slave index.
 typedef int cse_slave_index;
 
+/// Observer index.
+typedef int cse_observer_index;
+
+/// Observer slave index.
+typedef int cse_observer_slave_index;
+
+
 /// Error codes.
 typedef enum
 {
@@ -322,7 +329,7 @@ int cse_execution_slave_set_real(
  */
 int cse_observer_slave_get_real(
     cse_observer* observer,
-    cse_slave_index slave,
+    cse_observer_slave_index slave,
     const cse_variable_index variables[],
     size_t nv,
     double values[]);
@@ -330,7 +337,7 @@ int cse_observer_slave_get_real(
 
 size_t cse_observer_slave_get_real_samples(
     cse_observer* observer,
-    cse_slave_index slave,
+    cse_observer_slave_index slave,
     cse_variable_index variableIndex,
     long fromStep,
     size_t nSamples,
@@ -386,14 +393,14 @@ int cse_execution_slave_set_integer(
  */
 int cse_observer_slave_get_integer(
     cse_observer* observer,
-    cse_slave_index slave,
+    cse_observer_slave_index slave,
     const cse_variable_index variables[],
     size_t nv,
     int values[]);
 
 size_t cse_observer_slave_get_integer_samples(
     cse_observer* observer,
-    cse_slave_index slave,
+    cse_observer_slave_index slave,
     cse_variable_index variableIndex,
     long fromStep,
     size_t nSamples,
@@ -430,11 +437,11 @@ int cse_slave_destroy(cse_slave* slave);
 
 cse_address* cse_slave_get_address(cse_slave* s);
 
-int cse_execution_add_observer(
+cse_observer_index cse_execution_add_observer(
     cse_execution* execution,
     cse_observer* observer);
 
-int cse_observer_add_slave(
+cse_slave_index cse_observer_add_slave(
     cse_observer* observer,
     cse_slave* slave);
 
