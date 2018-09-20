@@ -43,7 +43,7 @@ pipeline {
                         stage ('Test Debug') {
                             steps {
                                 dir('debug-build') {
-                                    bat 'ctest -C Debug -T Test'
+                                    bat 'ctest -C Debug -T Test --no-compress-output --test-output-size-passed 307200 || true'
                                 }
                             }
                             post {
@@ -52,7 +52,7 @@ pipeline {
                                         testTimeMargin: '30000',
                                         thresholdMode: 1,
                                         thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
-                                        tools: [ CTest(pattern: 'debug-build/Testing/**/Test.xml') ]
+                                        tools: [ CTest(pattern: 'debug-build/Testing/**/Test.xml', deleteOutputFiles: true) ]
                                     )
                                 }
                                 success {
@@ -63,16 +63,16 @@ pipeline {
                         stage ('Test Release') {
                             steps {
                                 dir('release-build') {
-                                    bat 'ctest -C Release -T Test'
+                                    bat 'ctest -C Release -T Test --no-compress-output --test-output-size-passed 307200 || true'
                                 }
                             }
                             post {
                                 always{
-                                    xunit (
+                                xunit (
                                         testTimeMargin: '30000',
                                         thresholdMode: 1,
                                         thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
-                                        tools: [ CTest(pattern: 'release-build/Testing/**/Test.xml') ]
+                                        tools: [ CTest(pattern: 'release-build/Testing/**/Test.xml', deleteOutputFiles: true) ]
                                     )
                                 }
                                 success {
@@ -117,36 +117,26 @@ pipeline {
                         stage ('Test Debug') {
                             steps {
                                 dir('debug-build') {
-                                    sh 'ctest -C Debug -T Test'
-                                }
-                            }
-                            post {
-                                always{
-                                    xunit (
-                                        testTimeMargin: '30000',
-                                        thresholdMode: 1,
-                                        thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
-                                        tools: [ CTest(pattern: 'debug-build/Testing/**/Test.xml') ]
-                                    )
+                                    sh 'ctest -C Debug -T Test --no-compress-output --test-output-size-passed 307200 || true'
                                 }
                             }
                         }
                         stage ('Test Release') {
                             steps {
                                 dir('release-build') {
-                                    sh 'ctest -C Release -T Test'
+                                    sh 'ctest -C Release -T Test --no-compress-output --test-output-size-passed 307200 || true'
                                 }
                             }
-                            post {
-                                always{
-                                    xunit (
-                                        testTimeMargin: '30000',
-                                        thresholdMode: 1,
-                                        thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
-                                        tools: [ CTest(pattern: 'release-build/Testing/**/Test.xml') ]
-                                    )
-                                }
-                            }
+                        }
+                    }
+                    post {
+                        always{
+                            xunit (
+                                testTimeMargin: '30000',
+                                thresholdMode: 1,
+                                thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
+                                tools: [ CTest(pattern: '*-build/Testing/**/Test.xml', deleteOutputFiles: true) ]
+                            )
                         }
                     }
                 }
