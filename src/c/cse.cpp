@@ -12,6 +12,7 @@
 #include <cse/exception.hpp>
 #include <cse/fmi/fmu.hpp>
 #include <cse/fmi/importer.hpp>
+#include "slave_observer.hpp"
 
 #include <cse/hello_world.hpp>
 #include <iostream>
@@ -287,38 +288,9 @@ int cse_execution_get_status(cse_execution* execution, cse_execution_status* sta
     }
 }
 
-struct cse_single_slave_observer
-{
-    cse_single_slave_observer(std::shared_ptr<cse::slave> slave);
-
-    void observe(long timeStep);
-
-    void get_real(const cse_variable_index variables[], size_t nv, double values[]);
-
-    void get_int(const cse_variable_index variables[], size_t nv, int values[]);
-
-    size_t get_real_samples(cse_variable_index variableIndex, long fromStep, size_t nSamples, double values[], long steps[]);
-
-    size_t get_int_samples(cse_variable_index variableIndex, long fromStep, size_t nSamples, int values[], long steps[]);
-
-private:
-    std::map<long, std::vector<double>> realSamples_;
-    std::map<long, std::vector<int>> intSamples_;
-    std::vector<cse::variable_index> realIndexes_;
-    std::vector<cse::variable_index> intIndexes_;
-    std::shared_ptr<cse::slave> slave_;
-    std::mutex lock_;
-
-    template<typename T>
-    int get(const cse_variable_index variables[], std::vector<cse::variable_index> indices, std::map<long, std::vector<T>> samples, size_t nv, T values[]);
-
-    template<typename T>
-    size_t get_samples(cse_variable_index variableIndex, std::vector<cse::variable_index> indices, std::map<long, std::vector<T>> samples, long fromStep, size_t nSamples, T values[], long steps[]);
-};
-
 struct cse_observer_s
 {
-    std::vector<std::shared_ptr<cse_single_slave_observer>> slaveObservers;
+    std::vector<std::shared_ptr<cse::single_slave_observer>> slaveObservers;
 };
 
 int cse_execution_slave_set_real(
@@ -433,143 +405,12 @@ cse_observer_index cse_execution_add_observer(
     }
 }
 
-cse_single_slave_observer::cse_single_slave_observer(std::shared_ptr<cse::slave> slave)
-    : slave_(slave)
-{
-    for (cse::variable_description& vd : slave->model_description().variables) {
-        if (vd.type == cse::variable_type::real && vd.causality == cse::variable_causality::output) {
-            realIndexes_.push_back(vd.index);
-        }
-        if (vd.type == cse::variable_type::integer && vd.causality == cse::variable_causality::output) {
-            intIndexes_.push_back(vd.index);
-        }
-    }
-
-    observe(0);
-}
-
-void cse_single_slave_observer::observe(long currentStep)
-{
-    realSamples_[currentStep].resize(realIndexes_.size());
-    intSamples_[currentStep].resize(intIndexes_.size());
-
-    std::lock_guard<std::mutex> lock(lock_);
-    slave_->get_real_variables(
-        gsl::make_span(realIndexes_),
-        gsl::make_span(realSamples_[currentStep]));
-
-    slave_->get_integer_variables(
-        gsl::make_span(intIndexes_),
-        gsl::make_span(intSamples_[currentStep]));
-}
-
-template<typename T>
-int cse_single_slave_observer::get(
-    const cse_variable_index variables[],
-    std::vector<cse::variable_index> indices,
-    std::map<long, std::vector<T>> samples,
-    size_t nv,
-    T values[])
-{
-    try {
-        if (samples.empty()) {
-            throw std::out_of_range("no samples available");
-        }
-        auto lastEntry = samples.rbegin();
-        for (size_t i = 0; i < nv; i++) {
-            auto it = std::find(indices.begin(), indices.end(), variables[i]);
-            if (it != indices.end()) {
-                size_t valueIndex = it - indices.begin();
-                values[i] = lastEntry->second[valueIndex];
-            }
-        }
-        return success;
-    } catch (...) {
-        handle_current_exception();
-        return failure;
-    }
-}
-
-void cse_single_slave_observer::get_real(
-    const cse_variable_index variables[],
-    size_t nv,
-    double values[])
-{
-    std::lock_guard<std::mutex> lock(lock_);
-    get<double>(variables, realIndexes_, realSamples_, nv, values);
-}
-
-void cse_single_slave_observer::get_int(
-    const cse_variable_index variables[],
-    size_t nv,
-    int values[])
-{
-    std::lock_guard<std::mutex> lock(lock_);
-    get<int>(variables, intIndexes_, intSamples_, nv, values);
-}
-
-template<typename T>
-size_t cse_single_slave_observer::get_samples(
-    cse_variable_index variableIndex,
-    std::vector<cse::variable_index> indices,
-    std::map<long, std::vector<T>> samples,
-    long fromStep,
-    size_t nSamples,
-    T values[],
-    long steps[])
-{
-    try {
-        size_t samplesRead = 0;
-        size_t valueIndex;
-        auto variableIndexIt = std::find(indices.begin(), indices.end(), variableIndex);
-        if (variableIndexIt != indices.end()) {
-            valueIndex = variableIndexIt - indices.begin();
-            auto sampleIt = samples.find(fromStep);
-            for (samplesRead = 0; samplesRead < nSamples; samplesRead++) {
-                if (sampleIt != samples.end()) {
-                    steps[samplesRead] = sampleIt->first;
-                    values[samplesRead] = sampleIt->second[valueIndex];
-                    sampleIt++;
-                } else {
-                    break;
-                }
-            }
-        }
-        return samplesRead;
-
-    } catch (...) {
-        handle_current_exception();
-        return 0;
-    }
-}
-
-size_t cse_single_slave_observer::get_real_samples(
-    cse_variable_index variableIndex,
-    long fromStep,
-    size_t nSamples,
-    double values[],
-    long steps[])
-{
-    std::lock_guard<std::mutex> lock(lock_);
-    return get_samples<double>(variableIndex, realIndexes_, realSamples_, fromStep, nSamples, values, steps);
-}
-size_t cse_single_slave_observer::get_int_samples(
-    cse_variable_index variableIndex,
-    long fromStep,
-    size_t nSamples,
-    int values[],
-    long steps[])
-{
-    std::lock_guard<std::mutex> lock(lock_);
-    return get_samples<int>(variableIndex, intIndexes_, intSamples_, fromStep, nSamples, values, steps);
-}
-
 cse_observer_slave_index cse_observer_add_slave(
     cse_observer* observer,
     cse_slave* slave)
 {
     try {
-        auto slaveObserver = std::make_shared<cse_single_slave_observer>(slave->instance);
+        auto slaveObserver = std::make_shared<cse::single_slave_observer>(slave->instance);
         observer->slaveObservers.push_back(slaveObserver);
 
         return static_cast<cse_observer_slave_index>(observer->slaveObservers.size() - 1);
