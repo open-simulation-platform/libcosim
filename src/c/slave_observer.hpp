@@ -1,14 +1,11 @@
-//
-// Created by LEKJA on 20/09/2018.
-//
 
 #ifndef CSECORE_SLAVE_OBSERVER_H
 #define CSECORE_SLAVE_OBSERVER_H
 
 #include <map>
+#include <memory>
 #include <mutex>
 #include <vector>
-#include <memory>
 
 #include <cse.h>
 #include <cse/slave.hpp>
@@ -38,12 +35,6 @@ private:
     std::vector<cse::variable_index> intIndexes_;
     std::shared_ptr<cse::slave> slave_;
     std::mutex lock_;
-
-    template<typename T>
-    void get(const cse_variable_index variables[], std::vector<cse::variable_index> indices, std::map<long, std::vector<T>> samples, size_t nv, T values[]);
-
-    template<typename T>
-    size_t get_samples(cse_variable_index variableIndex, std::vector<cse::variable_index> indices, std::map<long, std::vector<T>> samples, long fromStep, size_t nSamples, T values[], long steps[]);
 };
 } // namespace cse
 

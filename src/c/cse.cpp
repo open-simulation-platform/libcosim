@@ -141,7 +141,7 @@ int cse_execution_destroy(cse_execution* execution)
     try {
         if (!execution) return success;
         const auto owned = std::unique_ptr<cse_execution>(execution);
-        for (auto& slave : owned->slaves) {
+        for (const auto& slave : owned->slaves) {
             slave->end_simulation();
         }
         return success;
@@ -199,12 +199,10 @@ cse_slave_index cse_execution_add_slave(
 
 bool cse_observer_observe(cse_observer* observer, long currentStep);
 
-struct cse_single_slave_observer;
-
 int cse_execution_step(cse_execution* execution)
 {
     try {
-        for (auto& slave : execution->slaves) {
+        for (const auto& slave : execution->slaves) {
             const auto stepOK = slave->do_step(calculate_current_time(execution), execution->stepSize);
             if (!stepOK) {
                 set_last_error(CSE_ERRC_STEP_TOO_LONG, "Time step too long");
@@ -214,7 +212,7 @@ int cse_execution_step(cse_execution* execution)
 
         execution->currentSteps++;
 
-        for (auto& observer : execution->observers) {
+        for (const auto& observer : execution->observers) {
             const auto observeOK =
                 cse_observer_observe(observer.get(), execution->currentSteps);
             if (!observeOK) {
@@ -423,7 +421,7 @@ cse_observer_slave_index cse_observer_add_slave(
 bool cse_observer_observe(cse_observer* observer, long currentStep)
 {
     try {
-        for (auto& slaveObserver : observer->slaveObservers) {
+        for (const auto& slaveObserver : observer->slaveObservers) {
             slaveObserver->observe(currentStep);
         }
         return true;
