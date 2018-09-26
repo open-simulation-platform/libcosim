@@ -90,7 +90,7 @@ public:
      *
      *  \see slave::start_simulation()
      */
-    virtual boost::fibers::future<bool> do_step(
+    virtual boost::fibers::future<step_result> do_step(
         time_point currentT,
         time_duration deltaT) = 0;
 

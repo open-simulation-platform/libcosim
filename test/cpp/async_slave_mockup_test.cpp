@@ -105,12 +105,12 @@ int main()
         // Simulation
         for (double t = startTime; t <= endTime; t += stepSize) {
             // Perform time steps
-            std::vector<future<bool>> stepResults;
+            std::vector<future<cse::step_result>> stepResults;
             for (const auto& slave : asyncSlaves) {
                 stepResults.push_back(slave->do_step(t, stepSize));
             }
             for (auto& r : stepResults) {
-                REQUIRE(r.get());
+                REQUIRE(r.get() == cse::step_result::complete);
             }
 
             // Get variable values. For now, we simply get the value of each
@@ -207,13 +207,13 @@ public:
     {
     }
 
-    bool do_step(cse::time_point /*currentT*/, cse::time_duration /*deltaT*/) override
+    cse::step_result do_step(cse::time_point /*currentT*/, cse::time_duration /*deltaT*/) override
     {
         realOut_ = realIn_ + 1.0;
         intOut_ = intIn_ + 1;
         boolOut_ = !boolIn_;
         stringOut_ = stringIn_ + stringIn_;
-        return true;
+        return cse::step_result::complete;
     }
 
     void get_real_variables(
@@ -405,7 +405,7 @@ public:
         });
     }
 
-    boost::fibers::future<bool> do_step(
+    boost::fibers::future<cse::step_result> do_step(
         cse::time_point currentT,
         cse::time_duration deltaT)
         override

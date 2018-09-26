@@ -208,8 +208,8 @@ bool cse_observer_observe(cse_observer* observer, long currentStep);
 void cse_execution_step(cse_execution* execution)
 {
     for (const auto& slave : execution->slaves) {
-        const auto stepOK = slave->do_step(calculate_current_time(execution), execution->stepSize);
-        if (!stepOK) {
+        const auto stepResult = slave->do_step(calculate_current_time(execution), execution->stepSize);
+        if (stepResult != cse::step_result::complete) {
             set_last_error(CSE_ERRC_STEP_TOO_LONG, "Time step too long");
         }
     }
