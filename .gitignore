@@ -1,1 +1,6 @@
 *.swp
+build/
+
+# JetBrains CLion:
+.idea/
+cmake-build-*/
