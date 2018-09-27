@@ -52,7 +52,10 @@ pipeline {
                                         testTimeMargin: '30000',
                                         thresholdMode: 1,
                                         thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
-                                        tools: [ CTest(pattern: 'debug-build/Testing/**/Test.xml', deleteOutputFiles: true) ]
+                                        tools: [ CTest(
+                                            pattern: 'debug-build/Testing/**/Test.xml',
+                                            deleteOutputFiles: true,
+                                            stopProcessingIfError: false) ]
                                     )
                                 }
                                 success {
@@ -72,7 +75,10 @@ pipeline {
                                         testTimeMargin: '30000',
                                         thresholdMode: 1,
                                         thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
-                                        tools: [ CTest(pattern: 'release-build/Testing/**/Test.xml', deleteOutputFiles: true) ]
+                                        tools: [ CTest(
+                                            pattern: 'release-build/Testing/**/Test.xml',
+                                            deleteOutputFiles: true,
+                                            stopProcessingIfError: false) ]
                                     )
                                 }
                                 success {
@@ -135,7 +141,10 @@ pipeline {
                                 testTimeMargin: '30000',
                                 thresholdMode: 1,
                                 thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
-                                tools: [ CTest(pattern: '*-build/Testing/**/Test.xml', deleteOutputFiles: true) ]
+                                tools: [ CTest(
+                                    pattern: '*-build/Testing/**/Test.xml',
+                                    deleteOutputFiles: true,
+                                    stopProcessingIfError: false) ]
                             )
                         }
                     }
