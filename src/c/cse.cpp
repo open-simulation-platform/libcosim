@@ -245,11 +245,17 @@ int cse_execution_start(cse_execution* execution)
         execution->shouldRun = true;
         execution->t = std::thread([execution]() {
             execution->state = CSE_EXECUTION_RUNNING;
+            const auto stepSize = std::chrono::duration<cse_time_duration>(execution->stepSize);
             while (execution->shouldRun) {
+                auto beforeStep = std::chrono::system_clock::now();
                 cse_execution_step(execution, 1);
+                auto afterStep = std::chrono::system_clock::now();
+                auto stepDuration = afterStep - beforeStep;
+                auto sleepTime = stepSize - stepDuration;
 
                 // TODO: Add better time synchronization
-                std::this_thread::sleep_for(std::chrono::duration<cse_time_duration>(execution->stepSize));
+                std::cout << "Sleeping for " << std::chrono::duration_cast<std::chrono::milliseconds>(sleepTime).count() << " ms\n";
+                std::this_thread::sleep_for(sleepTime);
             }
         });
 
