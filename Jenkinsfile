@@ -52,14 +52,16 @@ pipeline {
                                         testTimeMargin: '30000',
                                         thresholdMode: 1,
                                         thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
-                                        tools: [ CTest(
-                                            pattern: 'debug-build/Testing/**/Test.xml',
-                                            deleteOutputFiles: true,
-                                            stopProcessingIfError: false) ]
+                                        tools: [ CTest(pattern: 'debug-build/Testing/**/Test.xml') ]
                                     )
                                 }
                                 success {
                                     archiveArtifacts artifacts: 'install/debug/**/*',  fingerprint: true
+                                }
+                                cleanup {
+                                    dir('debug-build/Testing') {
+                                        deleteDir();
+                                    }
                                 }
                             }
                         }
@@ -71,18 +73,20 @@ pipeline {
                             }
                             post {
                                 always{
-                                xunit (
+                                    xunit (
                                         testTimeMargin: '30000',
                                         thresholdMode: 1,
                                         thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
-                                        tools: [ CTest(
-                                            pattern: 'release-build/Testing/**/Test.xml',
-                                            deleteOutputFiles: true,
-                                            stopProcessingIfError: false) ]
+                                        tools: [ CTest(pattern: 'release-build/Testing/**/Test.xml') ]
                                     )
                                 }
                                 success {
                                     archiveArtifacts artifacts: 'install/release/**/*',  fingerprint: true
+                                }
+                                cleanup {
+                                    dir('release-build/Testing') {
+                                        deleteDir();
+                                    }
                                 }
                             }
                         }
@@ -108,6 +112,7 @@ pipeline {
                                     sh 'conan install ../cse-core -s compiler.libcxx=libstdc++11 -s build_type=Debug -b missing'
                                     sh 'cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=../install -DCSECORE_USING_CONAN=TRUE -DCSECORE_BUILD_PRIVATE_APIDOC=ON ../cse-core'
                                     sh 'cmake --build .'
+                                    sh 'cmake --build . --target install'
                                 }
                             }
                         }
@@ -117,6 +122,7 @@ pipeline {
                                     sh 'conan install ../cse-core -s compiler.libcxx=libstdc++11 -s build_type=Release -b missing'
                                     sh 'cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../install -DCSECORE_USING_CONAN=TRUE -DCSECORE_BUILD_PRIVATE_APIDOC=ON ../cse-core'
                                     sh 'cmake --build .'
+                                    sh 'cmake --build . --target install'
                                 }
                             }
                         }
@@ -141,11 +147,19 @@ pipeline {
                                 testTimeMargin: '30000',
                                 thresholdMode: 1,
                                 thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
-                                tools: [ CTest(
-                                    pattern: '*-build/Testing/**/Test.xml',
-                                    deleteOutputFiles: true,
-                                    stopProcessingIfError: false) ]
+                                tools: [ CTest(pattern: '*-build/Testing/**/Test.xml') ]
                             )
+                        }
+                        success {
+                            archiveArtifacts artifacts: 'install/**/*',  fingerprint: true
+                        }
+                        cleanup {
+                            dir('debug-build/Testing') {
+                                deleteDir();
+                            }
+                            dir('release-build/Testing') {
+                                deleteDir();
+                            }
                         }
                     }
                 }
