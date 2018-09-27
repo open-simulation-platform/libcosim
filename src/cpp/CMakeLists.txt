@@ -38,6 +38,7 @@ set(sources
     "fmi_glue.cpp"
     "fmi_windows.cpp"
     "libevent.cpp"
+    "log.cpp"
     "utility_filesystem.cpp"
     "utility_uuid.cpp"
     "utility_zip.cpp"
