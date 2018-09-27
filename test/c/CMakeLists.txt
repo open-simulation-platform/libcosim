@@ -5,6 +5,7 @@ set(tests
     "observer_initial_samples_test"
     "observer_can_buffer_samples"
     "observer_multiple_slaves_test"
+    "real_time_test"
 )
 
 include("AddTestExecutable")
