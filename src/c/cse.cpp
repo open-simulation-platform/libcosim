@@ -13,6 +13,7 @@
 #include <cse/fmi/fmu.hpp>
 #include <cse/fmi/importer.hpp>
 #include "slave_observer.hpp"
+#include "timer.hpp"
 
 #include <cse/hello_world.hpp>
 #include <iostream>
@@ -104,6 +105,7 @@ const char* cse_last_error_message()
 struct cse_execution_s
 {
     std::atomic<cse::time_point> startTime;
+    std::shared_ptr<cse::real_time_timer> realTimeTimer;
     std::vector<std::shared_ptr<cse::slave>> slaves;
     std::vector<std::shared_ptr<cse_observer>> observers;
     std::atomic<long> currentSteps;
@@ -129,6 +131,7 @@ cse_execution* cse_execution_create(cse_time_point startTime, cse_time_duration 
         execution->stepSize = stepSize;
         execution->error_code = CSE_ERRC_SUCCESS;
         execution->state = CSE_EXECUTION_STOPPED;
+        execution->realTimeTimer = std::make_unique<cse::real_time_timer>(stepSize);
         return execution.release();
     } catch (...) {
         handle_current_exception();
@@ -245,17 +248,10 @@ int cse_execution_start(cse_execution* execution)
         execution->shouldRun = true;
         execution->t = std::thread([execution]() {
             execution->state = CSE_EXECUTION_RUNNING;
-            const auto stepSize = std::chrono::duration<cse_time_duration>(execution->stepSize);
+            execution->realTimeTimer.get()->start();
             while (execution->shouldRun) {
-                auto beforeStep = std::chrono::system_clock::now();
                 cse_execution_step(execution, 1);
-                auto afterStep = std::chrono::system_clock::now();
-                auto stepDuration = afterStep - beforeStep;
-                auto sleepTime = stepSize - stepDuration;
-
-                // TODO: Add better time synchronization
-                std::cout << "Sleeping for " << std::chrono::duration_cast<std::chrono::milliseconds>(sleepTime).count() << " ms\n";
-                std::this_thread::sleep_for(sleepTime);
+                execution->realTimeTimer.get()->sleep();
             }
         });
 
