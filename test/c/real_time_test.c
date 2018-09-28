@@ -55,21 +55,28 @@ int main() {
     cse_execution_add_slave(execution, slave2);
 
     cse_execution_start(execution);
-
-    Sleep(10000);
-
+    Sleep(5000);
     cse_execution_stop(execution);
 
-    cse_execution_status execution_status;
-    rc = cse_execution_get_status(execution, &execution_status);
+    Sleep(1000);
+
+    cse_execution_start(execution);
+    Sleep(5000);
+    cse_execution_stop(execution);
+
+    cse_execution_status executionStatus;
+    rc = cse_execution_get_status(execution, &executionStatus);
     if (rc < 0) {
         print_last_error();
         cse_execution_destroy(execution);
         return 1;
     }
 
-    printf("Ran for what we think is 10 seconds, actual simulation time elapsed: %f\n", execution_status.current_time);
-
+    if (fabs(executionStatus.current_time - 10.0) > 1.0e-3) {
+        fprintf(stderr, "Expected final simulation time == 10.0, got %f\n", executionStatus.current_time);
+        cse_execution_destroy(execution);
+        return 1;
+    }
 
     rc = cse_execution_destroy(execution);
     if (rc < 0) {

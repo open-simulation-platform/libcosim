@@ -30,7 +30,7 @@ void real_time_timer::sleep()
     const std::chrono::duration<long, std::nano> totalSleep = expected - elapsed;
 
     if (totalSleep > MIN_SLEEP) {
-        BOOST_LOG_SEV(log::logger::get(), log::level::debug)
+        BOOST_LOG_SEV(log::logger::get(), log::level::trace)
                 << "Real time timer sleeping for "
                 << (std::chrono::duration_cast<std::chrono::milliseconds>(totalSleep)).count()
                 << " ms";
@@ -38,7 +38,7 @@ void real_time_timer::sleep()
         std::this_thread::sleep_for(totalSleep);
     } else {
         BOOST_LOG_SEV(log::logger::get(), log::level::debug)
-            << "Real time timer NOT sleeping for "
+            << "Real time timer NOT sleeping, calculated sleep time "
             << (std::chrono::duration_cast<std::chrono::nanoseconds>(totalSleep)).count() <<
             " ns";
 
