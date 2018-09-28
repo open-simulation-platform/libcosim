@@ -1,5 +1,7 @@
 #include <cse/timer.hpp>
 #include <iostream>
+#include <cse/log.hpp>
+#include <cse/log/logger.hpp>
 
 typedef std::chrono::steady_clock Time;
 constexpr std::chrono::duration<long, std::nano> MIN_SLEEP(100000L);
@@ -28,10 +30,18 @@ void real_time_timer::sleep()
     const std::chrono::duration<long, std::nano> totalSleep = expected - elapsed;
 
     if (totalSleep > MIN_SLEEP) {
-        std::cout << "Sleeping for " << (std::chrono::duration_cast<std::chrono::milliseconds>(totalSleep)).count() << " ms\n";
+        BOOST_LOG_SEV(log::logger::get(), log::level::debug)
+                << "Real time timer sleeping for "
+                << (std::chrono::duration_cast<std::chrono::milliseconds>(totalSleep)).count()
+                << " ms";
+
         std::this_thread::sleep_for(totalSleep);
     } else {
-        std::cout << "Did NOT sleep, total sleep nanos: " << (std::chrono::duration_cast<std::chrono::nanoseconds>(totalSleep)).count() << " \n";
+        BOOST_LOG_SEV(log::logger::get(), log::level::debug)
+            << "Real time timer NOT sleeping for "
+            << (std::chrono::duration_cast<std::chrono::nanoseconds>(totalSleep)).count() <<
+            " ns";
+
     }
 
     counter++;

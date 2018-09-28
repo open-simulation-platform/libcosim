@@ -196,7 +196,7 @@ void log_message(
     switch (status) {
         case fmi1_status_ok:
             statusName = "ok";
-            logLevel = log::level::info;
+            logLevel = log::level::trace;
             break;
         case fmi1_status_warning:
             statusName = "warning";
