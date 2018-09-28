@@ -9,11 +9,12 @@
 #include <system_error>
 #include <thread>
 
+#include "slave_observer.hpp"
+#include <cse/timer.hpp>
 #include <cse/exception.hpp>
 #include <cse/fmi/fmu.hpp>
 #include <cse/fmi/importer.hpp>
-#include "slave_observer.hpp"
-#include "timer.hpp"
+#include <cse/log.hpp>
 
 #include <cse/hello_world.hpp>
 #include <iostream>

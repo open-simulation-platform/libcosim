@@ -4,13 +4,11 @@ set(publicHeaders
 )
 set(privateHeaders
     "slave_observer.hpp"
-    "timer.hpp"
 )
 
 set(sources
     "cse.cpp"
     "slave_observer.cpp"
-    "timer.cpp"
 )
 
 set(publicHeadersFull)
