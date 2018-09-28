@@ -1,5 +1,4 @@
 #include <cse/timer.hpp>
-#include <iostream>
 #include <cse/log.hpp>
 #include <cse/log/logger.hpp>
 
