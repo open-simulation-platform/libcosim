@@ -155,7 +155,7 @@ namespace
 {
 void step_finished_placeholder(fmi2_component_environment_t, fmi2_status_t)
 {
-    BOOST_LOG_SEV(log::logger::get(), log::level::debug)
+    BOOST_LOG_SEV(log::logger(), log::level::debug)
         << "FMU instance completed asynchronous step, "
            "but this feature is currently not supported";
 }
@@ -223,7 +223,7 @@ void log_message(
             logLevel = log::level::debug;
             break;
     }
-    BOOST_LOG_SEV(log::logger::get(), logLevel)
+    BOOST_LOG_SEV(log::logger(), logLevel)
         << "[FMI status=" << statusName << ", category=" << category << "] "
         << msgBuffer.data();
 
