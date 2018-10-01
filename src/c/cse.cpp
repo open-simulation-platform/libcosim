@@ -251,10 +251,10 @@ int cse_execution_start(cse_execution* execution)
         execution->shouldRun = true;
         execution->t = std::thread([execution]() {
             execution->state = CSE_EXECUTION_RUNNING;
-            execution->realTimeTimer.get()->start();
+            execution->realTimeTimer->start();
             while (execution->shouldRun) {
                 cse_execution_step(execution, 1);
-                execution->realTimeTimer.get()->sleep();
+                execution->realTimeTimer->sleep();
             }
         });
 
