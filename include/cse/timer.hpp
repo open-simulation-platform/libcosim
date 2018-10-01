@@ -38,9 +38,9 @@ public:
     void sleep();
 
 private:
-    std::atomic<long> counter = 1L;
-    std::chrono::duration<long> stepDuration;
-    std::chrono::steady_clock::time_point startTime;
+    std::atomic<long> counter_ = 1L;
+    std::chrono::duration<long> stepDuration_;
+    std::chrono::steady_clock::time_point startTime_;
 };
 
 } // namespace cse
