@@ -15,6 +15,7 @@ set(publicHeaders
     "log.hpp"
     "model.hpp"
     "slave.hpp"
+    "timer.hpp"
 )
 set(privateHeaders
     "error.hpp"
@@ -39,6 +40,7 @@ set(sources
     "fmi_windows.cpp"
     "libevent.cpp"
     "log.cpp"
+    "timer.cpp"
     "utility_filesystem.cpp"
     "utility_uuid.cpp"
     "utility_zip.cpp"

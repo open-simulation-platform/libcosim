@@ -9,10 +9,12 @@
 #include <system_error>
 #include <thread>
 
+#include "slave_observer.hpp"
+#include <cse/timer.hpp>
 #include <cse/exception.hpp>
 #include <cse/fmi/fmu.hpp>
 #include <cse/fmi/importer.hpp>
-#include "slave_observer.hpp"
+#include <cse/log.hpp>
 
 #include <cse/hello_world.hpp>
 #include <iostream>
@@ -104,6 +106,7 @@ const char* cse_last_error_message()
 struct cse_execution_s
 {
     std::atomic<cse::time_point> startTime;
+    std::shared_ptr<cse::real_time_timer> realTimeTimer;
     std::vector<std::shared_ptr<cse::slave>> slaves;
     std::vector<std::shared_ptr<cse_observer>> observers;
     std::atomic<long> currentSteps;
@@ -124,11 +127,14 @@ cse_execution* cse_execution_create(cse_time_point startTime, cse_time_duration 
     try {
         // No exceptions are possible right now, so try...catch and unique_ptr
         // are strictly unnecessary, but this will change soon enough.
+        cse::log::set_global_output_level(cse::log::level::info);
+
         auto execution = std::make_unique<cse_execution>();
         execution->startTime = startTime;
         execution->stepSize = stepSize;
         execution->error_code = CSE_ERRC_SUCCESS;
         execution->state = CSE_EXECUTION_STOPPED;
+        execution->realTimeTimer = std::make_unique<cse::real_time_timer>(stepSize);
         return execution.release();
     } catch (...) {
         handle_current_exception();
@@ -245,11 +251,10 @@ int cse_execution_start(cse_execution* execution)
         execution->shouldRun = true;
         execution->t = std::thread([execution]() {
             execution->state = CSE_EXECUTION_RUNNING;
+            execution->realTimeTimer->start();
             while (execution->shouldRun) {
                 cse_execution_step(execution, 1);
-
-                // TODO: Add better time synchronization
-                std::this_thread::sleep_for(std::chrono::duration<cse_time_duration>(execution->stepSize));
+                execution->realTimeTimer->sleep();
             }
         });
 
