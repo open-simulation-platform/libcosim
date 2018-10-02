@@ -39,7 +39,7 @@ public:
 
 private:
     std::atomic<long> counter_ = 1L;
-    std::chrono::duration<long> stepDuration_;
+    std::chrono::nanoseconds stepDuration_;
     std::chrono::steady_clock::time_point startTime_;
 };
 
