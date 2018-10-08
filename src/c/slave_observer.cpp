@@ -61,10 +61,10 @@ single_slave_observer::single_slave_observer(std::shared_ptr<cse::slave> slave)
     : slave_(slave)
 {
     for (const auto& vd : slave->model_description().variables) {
-        if (vd.type == cse::variable_type::real && vd.causality == cse::variable_causality::output) {
+        if (vd.type == cse::variable_type::real) {
             realIndexes_.push_back(vd.index);
         }
-        if (vd.type == cse::variable_type::integer && vd.causality == cse::variable_causality::output) {
+        if (vd.type == cse::variable_type::integer) {
             intIndexes_.push_back(vd.index);
         }
     }
