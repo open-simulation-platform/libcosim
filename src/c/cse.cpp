@@ -10,11 +10,11 @@
 #include <thread>
 
 #include "slave_observer.hpp"
-#include <cse/timer.hpp>
 #include <cse/exception.hpp>
 #include <cse/fmi/fmu.hpp>
 #include <cse/fmi/importer.hpp>
 #include <cse/log.hpp>
+#include <cse/timer.hpp>
 
 #include <cse/hello_world.hpp>
 #include <iostream>
@@ -247,21 +247,26 @@ int cse_execution_step(cse_execution* execution, size_t numSteps)
 
 int cse_execution_start(cse_execution* execution)
 {
-    try {
-        execution->shouldRun = true;
-        execution->t = std::thread([execution]() {
-            execution->state = CSE_EXECUTION_RUNNING;
-            execution->realTimeTimer->start();
-            while (execution->shouldRun) {
-                cse_execution_step(execution, 1);
-                execution->realTimeTimer->sleep();
-            }
-        });
-
+    if (execution->t.joinable()) {
+        // Already started
         return success;
-    } catch (...) {
-        handle_current_exception();
-        return failure;
+    } else {
+        try {
+            execution->shouldRun = true;
+            execution->t = std::thread([execution]() {
+                execution->state = CSE_EXECUTION_RUNNING;
+                execution->realTimeTimer->start();
+                while (execution->shouldRun) {
+                    cse_execution_step(execution, 1);
+                    execution->realTimeTimer->sleep();
+                }
+            });
+
+            return success;
+        } catch (...) {
+            handle_current_exception();
+            return failure;
+        }
     }
 }
 
