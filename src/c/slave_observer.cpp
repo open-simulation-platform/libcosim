@@ -74,10 +74,10 @@ single_slave_observer::single_slave_observer(std::shared_ptr<cse::slave> slave)
 
 void single_slave_observer::observe(long currentStep)
 {
+    std::lock_guard<std::mutex> lock(lock_);
     realSamples_[currentStep].resize(realIndexes_.size());
     intSamples_[currentStep].resize(intIndexes_.size());
 
-    std::lock_guard<std::mutex> lock(lock_);
     slave_->get_real_variables(
         gsl::make_span(realIndexes_),
         gsl::make_span(realSamples_[currentStep]));
