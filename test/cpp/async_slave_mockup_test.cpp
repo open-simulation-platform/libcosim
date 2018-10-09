@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <chrono>
 #include <exception>
 #include <memory>
 #include <stdexcept>
@@ -8,8 +7,6 @@
 #include <boost/fiber/future.hpp>
 
 #include <cse/async_slave.hpp>
-#include <cse/event_loop.hpp>
-#include <cse/libevent.hpp>
 
 #include "mock_slave.hpp"
 
@@ -23,10 +20,6 @@ int main()
 {
     using boost::fibers::future;
 
-    // Create an event loop and make it fiber friendly.
-    std::shared_ptr<cse::event_loop> eventLoop = cse::make_libevent_event_loop();
-    cse::event_loop_fiber eventLoopFiber(eventLoop);
-
     try {
         constexpr int numSlaves = 10;
         constexpr double startTime = 0.0;
@@ -36,7 +29,8 @@ int main()
         // Create the slaves
         std::vector<std::unique_ptr<cse::async_slave>> asyncSlaves;
         for (int i = 0; i < numSlaves; ++i) {
-            asyncSlaves.push_back(make_async_slave<mock_slave>(eventLoop));
+            asyncSlaves.push_back(
+                cse::make_pseudo_async(std::make_unique<mock_slave>()));
         }
 
         // Get model descriptions from all slaves

@@ -36,6 +36,7 @@ set(sources
     "hello_world.cpp"
 
     "algorithm.cpp"
+    "async_slave.cpp"
     "event_loop.cpp"
     "exception.cpp"
     "execution.cpp"

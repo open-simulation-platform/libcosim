@@ -3,9 +3,8 @@
 #include <stdexcept>
 
 #include <cse/algorithm.hpp>
+#include <cse/async_slave.hpp>
 #include <cse/execution.hpp>
-#include <cse/event_loop.hpp>
-#include <cse/libevent.hpp>
 
 #include "mock_slave.hpp"
 
@@ -17,10 +16,6 @@
 
 int main()
 {
-    // Create an event loop and make it fiber friendly.
-    std::shared_ptr<cse::event_loop> eventLoop = cse::make_libevent_event_loop();
-    cse::event_loop_fiber eventLoopFiber(eventLoop);
-
     try {
         constexpr int numSlaves = 10;
         constexpr cse::time_point startTime = 0.0;
@@ -36,7 +31,7 @@ int main()
         // Add slaves to it
         for (int i = 0; i < numSlaves; ++i) {
             execution.add_slave(
-                make_async_slave<mock_slave>(eventLoop),
+                cse::make_pseudo_async(std::make_unique<mock_slave>()),
                 "slave" + std::to_string(i));
         }
 
