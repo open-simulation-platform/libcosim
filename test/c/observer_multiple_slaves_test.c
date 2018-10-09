@@ -129,8 +129,8 @@ int main() {
         return 1;
     }
 
-    if (executionStatus.state != CSE_EXECUTION_RUNNING) {
-        fprintf(stderr, "Expected state == %i, got %i\n", CSE_EXECUTION_RUNNING, executionStatus.state);
+    if (executionStatus.state != CSE_EXECUTION_STOPPED) {
+        fprintf(stderr, "Expected state == %i, got %i\n", CSE_EXECUTION_STOPPED, executionStatus.state);
         cse_execution_destroy(execution);
         return 1;
     }

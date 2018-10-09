@@ -10,11 +10,11 @@
 #include <thread>
 
 #include "slave_observer.hpp"
-#include <cse/timer.hpp>
 #include <cse/exception.hpp>
 #include <cse/fmi/fmu.hpp>
 #include <cse/fmi/importer.hpp>
 #include <cse/log.hpp>
+#include <cse/timer.hpp>
 
 #include <cse/hello_world.hpp>
 #include <iostream>
@@ -205,32 +205,23 @@ cse_slave_index cse_execution_add_slave(
 
 bool cse_observer_observe(cse_observer* observer, long currentStep);
 
-int cse_execution_step(cse_execution* execution)
+void cse_execution_step(cse_execution* execution)
 {
-    try {
-        for (const auto& slave : execution->slaves) {
-            const auto stepOK = slave->do_step(calculate_current_time(execution), execution->stepSize);
-            if (!stepOK) {
-                set_last_error(CSE_ERRC_STEP_TOO_LONG, "Time step too long");
-                return failure;
-            }
+    for (const auto& slave : execution->slaves) {
+        const auto stepOK = slave->do_step(calculate_current_time(execution), execution->stepSize);
+        if (!stepOK) {
+            set_last_error(CSE_ERRC_STEP_TOO_LONG, "Time step too long");
         }
+    }
 
-        execution->currentSteps++;
+    execution->currentSteps++;
 
-        for (const auto& observer : execution->observers) {
-            const auto observeOK =
-                cse_observer_observe(observer.get(), execution->currentSteps);
-            if (!observeOK) {
-                set_last_error(CSE_ERRC_UNSPECIFIED, "Observer failed to observe");
-                return failure;
-            }
+    for (const auto& observer : execution->observers) {
+        const auto observeOK =
+            cse_observer_observe(observer.get(), execution->currentSteps);
+        if (!observeOK) {
+            set_last_error(CSE_ERRC_UNSPECIFIED, "Observer failed to observe");
         }
-
-        return success;
-    } catch (...) {
-        handle_current_exception();
-        return failure;
     }
 }
 
@@ -238,30 +229,41 @@ int cse_execution_step(cse_execution* execution, size_t numSteps)
 {
     execution->state = CSE_EXECUTION_RUNNING;
     for (size_t i = 0; i < numSteps; i++) {
-        if (cse_execution_step(execution) != success) {
+        try {
+            cse_execution_step(execution);
+        } catch (...) {
+            handle_current_exception();
+            execution->state = CSE_EXECUTION_ERROR;
             return failure;
         }
     }
+    execution->state = CSE_EXECUTION_STOPPED;
     return success;
 }
 
 int cse_execution_start(cse_execution* execution)
 {
-    try {
-        execution->shouldRun = true;
-        execution->t = std::thread([execution]() {
-            execution->state = CSE_EXECUTION_RUNNING;
-            execution->realTimeTimer->start();
-            while (execution->shouldRun) {
-                cse_execution_step(execution, 1);
-                execution->realTimeTimer->sleep();
-            }
-        });
-
+    if (execution->t.joinable()) {
+        // Already started
         return success;
-    } catch (...) {
-        handle_current_exception();
-        return failure;
+    } else {
+        try {
+            execution->shouldRun = true;
+            execution->t = std::thread([execution]() {
+                execution->state = CSE_EXECUTION_RUNNING;
+                execution->realTimeTimer->start();
+                while (execution->shouldRun) {
+                    cse_execution_step(execution);
+                    execution->realTimeTimer->sleep();
+                }
+            });
+
+            return success;
+        } catch (...) {
+            handle_current_exception();
+            execution->state = CSE_EXECUTION_ERROR;
+            return failure;
+        }
     }
 }
 
@@ -274,6 +276,7 @@ int cse_execution_stop(cse_execution* execution)
         return success;
     } catch (...) {
         handle_current_exception();
+        execution->state = CSE_EXECUTION_ERROR;
         return failure;
     }
 }
