@@ -20,6 +20,8 @@ class CSECoreConan(ConanFile):
         "libzip/1.5.1@bincrafters/stable"
         )
     default_options = (
+        "boost_*:shared=True",
+        "boost_test:shared=False",
         "libevent:with_openssl=False",
         "libzip:shared=True"
         )
