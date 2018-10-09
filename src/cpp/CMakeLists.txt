@@ -6,6 +6,7 @@ set(publicHeaders
     "hello_world.hpp"
     "async_slave.hpp"
     "config.hpp"
+    "event_loop.hpp"
     "exception.hpp"
     "execution.hpp"
     "fmi/fmu.hpp"
@@ -35,6 +36,7 @@ set(sources
     "hello_world.cpp"
 
     "algorithm.cpp"
+    "event_loop.cpp"
     "exception.cpp"
     "execution.cpp"
     "fmi_importer.cpp"

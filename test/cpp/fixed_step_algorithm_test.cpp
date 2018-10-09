@@ -1,14 +1,6 @@
-#include <algorithm>
-#include <chrono>
 #include <exception>
-#include <iostream>
 #include <memory>
 #include <stdexcept>
-#include <type_traits>
-#include <vector>
-
-#include <boost/fiber/all.hpp>
-#include <gsl/gsl_util>
 
 #include <cse/algorithm.hpp>
 #include <cse/execution.hpp>
@@ -18,18 +10,6 @@
 #include "mock_slave.hpp"
 
 
-// This class is to make the event loop pass control to Boost's fiber scheduler
-// every now and then.
-class yield_handler : public cse::timer_event_handler
-{
-    void handle_timer_event(cse::timer_event*) override
-    {
-        boost::this_fiber::yield();
-        int i = 1; ++i;
-    }
-};
-
-
 // A helper macro to test various assertions
 #define REQUIRE(test) \
     if (!(test)) throw std::runtime_error("Requirement not satisfied: " #test)
@@ -37,23 +17,9 @@ class yield_handler : public cse::timer_event_handler
 
 int main()
 {
-    using boost::fibers::fiber;
-    using boost::fibers::future;
-
     // Create an event loop and make it fiber friendly.
     std::shared_ptr<cse::event_loop> eventLoop = cse::make_libevent_event_loop();
-    yield_handler yieldHandler;
-    eventLoop->add_timer()->enable(std::chrono::milliseconds(1), true, yieldHandler);
-
-    // Spin off the event loop in a separate fiber.
-    auto eventLoopFiber = fiber([eventLoop]() {
-        eventLoop->loop();
-        int i = 1; ++i;
-    });
-    auto finalizeEventLoop = gsl::finally([&] () {
-        eventLoop->stop_soon();
-        eventLoopFiber.join();
-    });
+    cse::event_loop_fiber eventLoopFiber(eventLoop);
 
     try {
         constexpr int numSlaves = 10;
