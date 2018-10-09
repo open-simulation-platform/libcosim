@@ -9,6 +9,7 @@ class CSECoreConan(ConanFile):
     requires = (
         "boost_algorithm/1.66.0@bincrafters/stable",
         "boost_fiber/1.66.0@bincrafters/stable",
+        "boost_functional/1.66.0@bincrafters/stable",
         "boost_log/1.66.0@bincrafters/stable",
         "boost_property_tree/1.66.0@bincrafters/stable",
         "boost_test/1.66.0@bincrafters/stable",

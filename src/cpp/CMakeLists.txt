@@ -2,10 +2,12 @@ set(publicHeaderDir "${CMAKE_SOURCE_DIR}/include/cse")
 set(privateHeaderDir "${CMAKE_CURRENT_SOURCE_DIR}/cse")
 
 set(publicHeaders
+    "algorithm.hpp"
     "hello_world.hpp"
     "async_slave.hpp"
     "config.hpp"
     "exception.hpp"
+    "execution.hpp"
     "fmi/fmu.hpp"
     "fmi/importer.hpp"
     "fmi/v1/fmu.hpp"
@@ -14,6 +16,7 @@ set(publicHeaders
     "libevent.hpp"
     "log.hpp"
     "model.hpp"
+    "observer.hpp"
     "slave.hpp"
     "timer.hpp"
 )
@@ -23,6 +26,7 @@ set(privateHeaders
     "fmi/glue.hpp"
     "fmi/windows.hpp"
     "log/logger.hpp"
+    "slave_simulator.hpp"
     "utility/filesystem.hpp"
     "utility/uuid.hpp"
     "utility/zip.hpp"
@@ -30,10 +34,13 @@ set(privateHeaders
 set(sources
     "hello_world.cpp"
 
+    "algorithm.cpp"
     "exception.cpp"
+    "execution.cpp"
     "fmi_importer.cpp"
     "fmi_v1_fmu.cpp"
     "fmi_v2_fmu.cpp"
+    "slave_simulator.cpp"
 
     "error.cpp"
     "fmi_glue.cpp"

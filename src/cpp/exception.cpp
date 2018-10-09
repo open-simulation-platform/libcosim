@@ -29,6 +29,8 @@ public:
                 return "Error loading dynamic library";
             case errc::model_error:
                 return "Model error";
+            case errc::simulation_error:
+                return "Simulation error";
             case errc::zip_error:
                 return "ZIP file error";
             default:

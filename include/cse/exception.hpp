@@ -39,6 +39,9 @@ enum class errc
      */
     nonfatal_bad_value,
 
+    /// Simulation error
+    simulation_error,
+
     /// ZIP file error
     zip_error
 };
