@@ -107,6 +107,7 @@ class single_slave_membuffer_observer;
 
 class membuffer_observer : public observer
 {
+public:
     membuffer_observer();
 
     /// A simulator was added to the execution.
@@ -126,6 +127,30 @@ class membuffer_observer : public observer
         step_number lastStep,
         time_duration lastStepSize,
         time_point currentTime) override;
+
+    void get_real(
+            simulator_index sim,
+            gsl::span<const variable_index> variables,
+            gsl::span<double> values);
+
+    void get_integer(
+            simulator_index sim,
+            gsl::span<const variable_index> variables,
+            gsl::span<int> values);
+
+    std::size_t get_real_samples(
+        simulator_index sim,
+        variable_index variableIndex,
+        step_number fromStep,
+        gsl::span<double> values,
+        gsl::span<step_number> steps);
+
+    std::size_t get_integer_samples(
+            simulator_index sim,
+            variable_index variableIndex,
+            step_number fromStep,
+            gsl::span<int> values,
+            gsl::span<step_number> steps);
 
     ~membuffer_observer() noexcept;
 

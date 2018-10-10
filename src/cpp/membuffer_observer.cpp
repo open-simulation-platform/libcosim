@@ -3,6 +3,9 @@
 #include <map>
 #include <mutex>
 
+#include <cse/error.hpp>
+
+
 namespace cse
 {
 
@@ -11,17 +14,17 @@ namespace
 
 template<typename T>
 void get(
-    const variable_index variables[],
+    gsl::span<const variable_index> variables,
     const std::vector<cse::variable_index>& indices,
-    const std::map<long, std::vector<T>>& samples,
-    size_t nv,
-    T values[])
+    const std::map<step_number, std::vector<T>>& samples,
+    gsl::span<T> values)
 {
+    assert(values.size() == variables.size());
     if (samples.empty()) {
         throw std::out_of_range("no samples available");
     }
     const auto lastEntry = samples.rbegin();
-    for (size_t i = 0; i < nv; i++) {
+    for (int i = 0; i < values.size(); i++) {
         const auto it = std::find(indices.begin(), indices.end(), variables[i]);
         if (it != indices.end()) {
             size_t valueIndex = it - indices.begin();
@@ -34,18 +37,18 @@ template<typename T>
 size_t get_samples(
     variable_index variableIndex,
     const std::vector<cse::variable_index>& indices,
-    const std::map<long, std::vector<T>>& samples,
-    long fromStep,
-    size_t nSamples,
-    T values[],
-    long steps[])
+    const std::map<step_number, std::vector<T>>& samples,
+    step_number fromStep,
+    gsl::span<T> values,
+    gsl::span<step_number> steps)
 {
+    assert(values.size() == steps.size());
     size_t samplesRead = 0;
     const auto variableIndexIt = std::find(indices.begin(), indices.end(), variableIndex);
     if (variableIndexIt != indices.end()) {
         const size_t valueIndex = variableIndexIt - indices.begin();
         auto sampleIt = samples.find(fromStep);
-        for (samplesRead = 0; samplesRead < nSamples; samplesRead++) {
+        for (samplesRead = 0; samplesRead < static_cast<std::size_t>(values.size()); samplesRead++) {
             if (sampleIt != samples.end()) {
                 steps[samplesRead] = sampleIt->first;
                 values[samplesRead] = sampleIt->second[valueIndex];
@@ -77,7 +80,7 @@ public:
         observe(0);
     }
 
-    void observe(long timeStep)
+    void observe(step_number timeStep)
     {
         std::lock_guard<std::mutex> lock(lock_);
         realSamples_[timeStep].reserve(realIndexes_.size());
@@ -92,33 +95,33 @@ public:
         }
     }
 
-    void get_real(const variable_index variables[], size_t nv, double values[])
+    void get_real(gsl::span<const variable_index> variables, gsl::span<double> values)
     {
         std::lock_guard<std::mutex> lock(lock_);
-        get<double>(variables, realIndexes_, realSamples_, nv, values);
+        get<double>(variables, realIndexes_, realSamples_, values);
     }
 
-    void get_int(const variable_index variables[], size_t nv, int values[])
+    void get_int(gsl::span<const variable_index> variables, gsl::span<int> values)
     {
         std::lock_guard<std::mutex> lock(lock_);
-        get<int>(variables, intIndexes_, intSamples_, nv, values);
+        get<int>(variables, intIndexes_, intSamples_, values);
     }
 
-    size_t get_real_samples(variable_index variableIndex, long fromStep, size_t nSamples, double values[], long steps[])
+    size_t get_real_samples(variable_index variableIndex, step_number fromStep, gsl::span<double> values, gsl::span<step_number> steps)
     {
         std::lock_guard<std::mutex> lock(lock_);
-        return get_samples<double>(variableIndex, realIndexes_, realSamples_, fromStep, nSamples, values, steps);
+        return get_samples<double>(variableIndex, realIndexes_, realSamples_, fromStep, values, steps);
     }
 
-    size_t get_int_samples(variable_index variableIndex, long fromStep, size_t nSamples, int values[], long steps[])
+    size_t get_int_samples(variable_index variableIndex, step_number fromStep, gsl::span<int> values, gsl::span<step_number> steps)
     {
         std::lock_guard<std::mutex> lock(lock_);
-        return get_samples<int>(variableIndex, intIndexes_, intSamples_, fromStep, nSamples, values, steps);
+        return get_samples<int>(variableIndex, intIndexes_, intSamples_, fromStep, values, steps);
     }
 
 private:
-    std::map<long, std::vector<double>> realSamples_;
-    std::map<long, std::vector<int>> intSamples_;
+    std::map<step_number, std::vector<double>> realSamples_;
+    std::map<step_number, std::vector<int>> intSamples_;
     std::vector<variable_index> realIndexes_;
     std::vector<variable_index> intIndexes_;
     observable* observable_;
@@ -150,12 +153,50 @@ void membuffer_observer::variable_disconnected(variable_id /*input*/)
 
 void membuffer_observer::step_complete(
     step_number lastStep,
-    time_duration lastStepSize,
-    time_point currentTime)
+    time_duration /*lastStepSize*/,
+    time_point /*currentTime*/)
 {
     for (const auto& slaveObserver : slaveObservers) {
         slaveObserver.second->observe(lastStep);
     }
+}
+
+void membuffer_observer::get_real(
+    simulator_index sim,
+    gsl::span<const variable_index> variables,
+    gsl::span<double> values)
+{
+    slaveObservers.at(sim)->get_real(variables, values);
+}
+
+void membuffer_observer::get_integer(
+    simulator_index sim,
+    gsl::span<const variable_index> variables,
+    gsl::span<int> values)
+{
+    slaveObservers.at(sim)->get_int(variables, values);
+}
+
+std::size_t membuffer_observer::get_real_samples(
+    simulator_index sim,
+    variable_index variableIndex,
+    step_number fromStep,
+    gsl::span<double> values,
+    gsl::span<step_number> steps)
+{
+    CSE_INPUT_CHECK(values.size() == steps.size());
+    return slaveObservers.at(sim)->get_real_samples(variableIndex, fromStep, values, steps);
+}
+
+std::size_t membuffer_observer::get_integer_samples(
+    simulator_index sim,
+    variable_index variableIndex,
+    step_number fromStep,
+    gsl::span<int> values,
+    gsl::span<step_number> steps)
+{
+    CSE_INPUT_CHECK(values.size() == steps.size());
+    return slaveObservers.at(sim)->get_int_samples(variableIndex, fromStep, values, steps);
 }
 
 membuffer_observer::~membuffer_observer() noexcept = default;
