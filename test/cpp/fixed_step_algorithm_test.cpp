@@ -28,11 +28,17 @@ int main()
             startTime,
             std::make_unique<cse::fixed_step_algorithm>(stepSize));
 
+        auto observer = std::make_shared<cse::membuffer_observer>();
+        execution.add_observer(observer);
+
         // Add slaves to it
         for (int i = 0; i < numSlaves; ++i) {
             execution.add_slave(
-                cse::make_pseudo_async(std::make_unique<mock_slave>()),
+                cse::make_pseudo_async(std::make_unique<mock_slave>([](double x) { return x + 1; })),
                 "slave" + std::to_string(i));
+            if (i > 0) {
+                execution.connect_variables(cse::variable_id{i - 1, cse::variable_type::real, 0}, cse::variable_id{i, cse::variable_type::real, 1});
+            }
         }
 
         // Run simulation
@@ -41,6 +47,13 @@ int main()
         REQUIRE(execution.current_time() == midTime);
         simResult = execution.simulate_until(endTime);
         REQUIRE(simResult.get());
+
+        const cse::variable_index i = 0;
+        double value = -1;
+        observer->get_real(0, gsl::make_span(&i, 1), gsl::make_span(&value, 1));
+        REQUIRE(value == 1.0);
+
+        // TODO: Check values of connected signal chain!
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;

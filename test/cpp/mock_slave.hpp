@@ -49,6 +49,14 @@ public:
         cse::model_description md;
         md.name = "mock_slave";
         md.uuid = "09b7ee06-fc07-4ad0-86f1-cd183fbae519";
+        md.variables.push_back(cse::variable_description{"realOut", 0, cse::variable_type::real, cse::variable_causality::output, cse::variable_variability::discrete});
+        md.variables.push_back(cse::variable_description{"realIn", 1, cse::variable_type::real, cse::variable_causality::input, cse::variable_variability::discrete});
+        md.variables.push_back(cse::variable_description{"intOut", 0, cse::variable_type::integer, cse::variable_causality::output, cse::variable_variability::discrete});
+        md.variables.push_back(cse::variable_description{"intIn", 1, cse::variable_type::integer, cse::variable_causality::input, cse::variable_variability::discrete});
+        md.variables.push_back(cse::variable_description{"stringOut", 0, cse::variable_type::string, cse::variable_causality::output, cse::variable_variability::discrete});
+        md.variables.push_back(cse::variable_description{"stringIn", 1, cse::variable_type::string, cse::variable_causality::input, cse::variable_variability::discrete});
+        md.variables.push_back(cse::variable_description{"booleanOut", 0, cse::variable_type::boolean, cse::variable_causality::output, cse::variable_variability::discrete});
+        md.variables.push_back(cse::variable_description{"booleanIn", 1, cse::variable_type::boolean, cse::variable_causality::input, cse::variable_variability::discrete});
         return md;
     }
 
@@ -86,6 +94,8 @@ public:
         for (int i = 0; i < variables.size(); ++i) {
             if (variables[i] == 0) {
                 values[i] = realOut_;
+            } else if (variables[i] == 1) {
+                values[i] = realIn_;
             } else {
                 throw std::out_of_range("bad index");
             }
@@ -99,6 +109,8 @@ public:
         for (int i = 0; i < variables.size(); ++i) {
             if (variables[i] == 0) {
                 values[i] = intOut_;
+            } else if (variables[i] == 1) {
+                values[i] = intIn_;
             } else {
                 throw std::out_of_range("bad index");
             }
@@ -112,6 +124,8 @@ public:
         for (int i = 0; i < variables.size(); ++i) {
             if (variables[i] == 0) {
                 values[i] = boolOut_;
+            } else if (variables[i] == 1) {
+                values[i] = boolIn_;
             } else {
                 throw std::out_of_range("bad index");
             }
@@ -125,6 +139,8 @@ public:
         for (int i = 0; i < variables.size(); ++i) {
             if (variables[i] == 0) {
                 values[i] = stringOut_;
+            } else if (variables[i] == 1) {
+                values[i] = stringIn_;
             } else {
                 throw std::out_of_range("bad index");
             }
@@ -136,7 +152,7 @@ public:
         gsl::span<const double> values) override
     {
         for (int i = 0; i < variables.size(); ++i) {
-            if (variables[i] == 0) {
+            if (variables[i] == 1) {
                 realIn_ = values[i];
             } else {
                 throw std::out_of_range("bad index");
@@ -149,7 +165,7 @@ public:
         gsl::span<const int> values) override
     {
         for (int i = 0; i < variables.size(); ++i) {
-            if (variables[i] == 0) {
+            if (variables[i] == 1) {
                 intIn_ = values[i];
             } else {
                 throw std::out_of_range("bad index");
@@ -162,7 +178,7 @@ public:
         gsl::span<const bool> values) override
     {
         for (int i = 0; i < variables.size(); ++i) {
-            if (variables[i] == 0) {
+            if (variables[i] == 1) {
                 boolIn_ = values[i];
             } else {
                 throw std::out_of_range("bad index");
@@ -175,7 +191,7 @@ public:
         gsl::span<const std::string> values) override
     {
         for (int i = 0; i < variables.size(); ++i) {
-            if (variables[i] == 0) {
+            if (variables[i] == 1) {
                 stringIn_ = values[i];
             } else {
                 throw std::out_of_range("bad index");

@@ -67,8 +67,11 @@ class single_slave_membuffer_observer
 {
 public:
     single_slave_membuffer_observer(observable* observable)
+        : observable_(observable)
     {
         for (const auto& vd : observable->model_description().variables) {
+            observable->expose_output(vd.type, vd.index);
+            // TODO: Expose all variable types?
             if (vd.type == cse::variable_type::real) {
                 realIndexes_.push_back(vd.index);
             }
