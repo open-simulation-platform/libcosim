@@ -5,8 +5,10 @@
 #ifndef CSE_OBSERVER_HPP
 #define CSE_OBSERVER_HPP
 
+#include <memory>
 #include <string>
 #include <string_view>
+#include <vector>
 
 #include <cse/execution.hpp>
 #include <cse/model.hpp>
@@ -66,7 +68,7 @@ public:
      */
     virtual std::string_view get_string(variable_index) const = 0;
 
-    virtual ~observable() noexcept { }
+    virtual ~observable() noexcept {}
 };
 
 
@@ -98,9 +100,37 @@ public:
         time_duration lastStepSize,
         time_point currentTime) = 0;
 
-    virtual ~observer() noexcept { }
+    virtual ~observer() noexcept {}
 };
 
+class single_slave_membuffer_observer;
+
+class membuffer_observer : public observer
+{
+    membuffer_observer();
+
+    /// A simulator was added to the execution.
+    void simulator_added(simulator_index, observable*) override;
+
+    /// A simulator was removed from the execution.
+    void simulator_removed(simulator_index) override;
+
+    /// A variable connection was established.
+    void variables_connected(variable_id output, variable_id input) override;
+
+    /// A variable connection was broken.
+    void variable_disconnected(variable_id input) override;
+
+    /// A time step is complete, and a communication point was reached.
+    void step_complete(
+        step_number lastStep,
+        time_duration lastStepSize,
+        time_point currentTime) override;
+
+    ~membuffer_observer() noexcept;
+
+    std::unordered_map<simulator_index, std::unique_ptr<cse::single_slave_membuffer_observer>> slaveObservers;
+};
 
 } // namespace cse
 #endif // header guard
