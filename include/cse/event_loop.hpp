@@ -7,6 +7,9 @@
 
 #include <chrono>
 #include <cstdint>
+#include <memory>
+
+#include <boost/fiber/fiber.hpp>
 
 #include <cse/detail/macros.hpp>
 
@@ -228,8 +231,86 @@ public:
      *
      *  It is unspecified whether handlers for pending events will be called
      *  after this; that depends on the underlying event loop implementation.
+     *
+     *  Calling this function has no effect if the loop is not currently
+     *  running.
      */
     virtual void stop_soon() = 0;
+};
+
+
+/**
+ *  An event loop fiber.
+ *
+ *  This class manages a separate fiber whose sole purpose is to run an
+ *  event loop.  It registers a timer in the event loop that causes it to
+ *  periodically yield to the fiber scheduler.
+ *
+ *  The `event_loop::loop()` function will be called as soon as the fiber
+ *  starts executing, and it will keep running until one of the following
+ *  happens:
+ *
+ *    - `event_loop::stop_soon()` is called
+ *    - `event_loop_fiber::stop()` is called
+ *    - The `event_loop_fiber` is destroyed.
+ *
+ *  Any exceptions that escape the `event_loop::loop()` function will cause
+ *  `std::terminate()` to be called.
+ *
+ *  The yield period can and should be tuned to the needs of the program.
+ *  If all I/O is pending and all fibers are blocked in the current thread,
+ *  the event loop and the fiber scheduler will simply spin the CPU, passing
+ *  control back and forth to each other.  Increasing the yield period can
+ *  then give CPU time to other threads, at the cost of reducing the
+ *  responsiveness of the current thread.
+ */
+class event_loop_fiber
+{
+public:
+    /**
+     *  Constructor.
+     *
+     *  \param eventLoop
+     *      An event loop which is not currently running.
+     *  \param yieldPeriod
+     *      The yield period.
+     *  \param launchPolicy
+     *      Whether the fiber should start immediately (`dispatch`), or
+     *      whether it should simply be put into the fiber scheduler's
+     *      ready queue `post`.  In the latter case, one must ensure that
+     *      control is passed to fiber scheduler at some later point,
+     *      for example by an explicit call to `boost::this_fiber::yield()`.
+     */
+    explicit event_loop_fiber(
+        std::shared_ptr<event_loop> eventLoop,
+        std::chrono::microseconds yieldPeriod = std::chrono::milliseconds(1),
+        boost::fibers::launch launchPolicy = boost::fibers::launch::dispatch);
+
+    /**
+     *  Destructor which stops the event loop.
+     *
+     *  This will effectively call `stop()` on destruction.
+     */
+    ~event_loop_fiber() noexcept;
+
+    event_loop_fiber(const event_loop_fiber&) = delete;
+    event_loop_fiber& operator=(const event_loop_fiber&) = delete;
+
+    event_loop_fiber(event_loop_fiber&&) noexcept;
+    event_loop_fiber& operator=(event_loop_fiber&&) noexcept;
+
+    /**
+     *  Stops the event loop.
+     *
+     *  This calls `event_loop::stop_soon()` and then waits for the fiber
+     *  to finish executing. If the loop has already stopped and the fiber
+     *  already terminated, this has no effect.
+     */
+    void stop();
+
+private:
+    std::shared_ptr<event_loop> eventLoop_;
+    boost::fibers::fiber fiber_;
 };
 
 

@@ -5,12 +5,15 @@
 #ifndef CSE_ASYNC_SLAVE_HPP
 #define CSE_ASYNC_SLAVE_HPP
 
+#include <memory>
 #include <string>
+#include <string_view>
 
 #include <boost/fiber/future/future.hpp>
 #include <gsl/span>
 
 #include <cse/model.hpp>
+#include <cse/slave.hpp>
 
 
 namespace cse
@@ -90,7 +93,7 @@ public:
      *
      *  \see slave::start_simulation()
      */
-    virtual boost::fibers::future<bool> do_step(
+    virtual boost::fibers::future<step_result> do_step(
         time_point currentT,
         time_duration deltaT) = 0;
 
@@ -164,6 +167,16 @@ public:
         gsl::span<const variable_index> stringVariables,
         gsl::span<const std::string> stringValues) = 0;
 };
+
+
+/**
+ *  Wraps a synchronous slave in an asynchronous interface.
+ *
+ *  The resulting `async_slave` is not actually asynchronous, as all function
+ *  calls will be executed in fibers in the current thread (hence the "pseudo"
+ *  modifier).
+ */
+std::unique_ptr<async_slave> make_pseudo_async(std::unique_ptr<slave> s);
 
 
 } // namespace cse

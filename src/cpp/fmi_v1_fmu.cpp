@@ -353,14 +353,14 @@ void slave_instance::end_simulation()
 }
 
 
-bool slave_instance::do_step(time_point currentT, time_duration deltaT)
+step_result slave_instance::do_step(time_point currentT, time_duration deltaT)
 {
     assert(simStarted_);
     const auto rc = fmi1_import_do_step(handle_, currentT, deltaT, true);
     if (rc == fmi1_status_ok || rc == fmi1_status_warning) {
-        return true;
+        return step_result::complete;
     } else if (rc == fmi1_status_discard) {
-        return false;
+        return step_result::failed;
     } else {
         throw error(
             make_error_code(errc::model_error),

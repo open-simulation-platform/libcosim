@@ -13,6 +13,7 @@
 using namespace cse;
 
 BOOST_TEST_DONT_PRINT_LOG_VALUE(fmi::fmi_version)
+BOOST_TEST_DONT_PRINT_LOG_VALUE(step_result)
 
 namespace
 {
@@ -99,7 +100,7 @@ void run_tests(std::shared_ptr<fmi::fmu> fmu)
         instance->set_boolean_variables(gsl::make_span(&booleanIn, 1), gsl::make_span(&booleanVal, 1));
         instance->set_string_variables(gsl::make_span(&stringIn, 1), gsl::make_span(&stringVal, 1));
 
-        BOOST_TEST(instance->do_step(t, dt));
+        BOOST_TEST(instance->do_step(t, dt) == step_result::complete);
     }
 
     instance->end_simulation();

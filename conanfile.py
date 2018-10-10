@@ -9,6 +9,7 @@ class CSECoreConan(ConanFile):
     requires = (
         "boost_algorithm/1.66.0@bincrafters/stable",
         "boost_fiber/1.66.0@bincrafters/stable",
+        "boost_functional/1.66.0@bincrafters/stable",
         "boost_log/1.66.0@bincrafters/stable",
         "boost_property_tree/1.66.0@bincrafters/stable",
         "boost_test/1.66.0@bincrafters/stable",
@@ -20,6 +21,8 @@ class CSECoreConan(ConanFile):
         "libzip/1.5.1@bincrafters/stable"
         )
     default_options = (
+        "boost_*:shared=True",
+        "boost_test:shared=False",
         "libevent:with_openssl=False",
         "libzip:shared=True"
         )

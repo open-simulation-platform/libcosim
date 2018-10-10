@@ -103,16 +103,14 @@ public:
      *  less than or equal to the stop time, specified in the setup() call.
      *
      *  \returns
-     *      `true` if the model calculations for the given time step were
-     *      successfully carried out, or `false` if they were not and the
-     *      operation may be retried with a shorter time step.
+     *      Whether the step completed successfully or not.
      *      (Non-recoverable problems must be signaled with an exception.)
      *
      *  \note
      *      Currently, retrying a failed time step is not supported, but this is
      *      planned for a future version.
      */
-    virtual bool do_step(time_point currentT, time_duration deltaT) = 0;
+    virtual step_result do_step(time_point currentT, time_duration deltaT) = 0;
 
     /**
      *  Retrieves the values of real variables.

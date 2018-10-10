@@ -366,14 +366,14 @@ void slave_instance::end_simulation()
 }
 
 
-bool slave_instance::do_step(time_point currentT, time_duration deltaT)
+step_result slave_instance::do_step(time_point currentT, time_duration deltaT)
 {
     assert(simStarted_);
     const auto rc = fmi2_import_do_step(handle_, currentT, deltaT, fmi2_true);
     if (rc == fmi2_status_ok || rc == fmi2_status_warning) {
-        return true;
+        return step_result::complete;
     } else if (rc == fmi2_status_discard) {
-        return false;
+        return step_result::failed;
     } else if (rc == fmi2_status_pending) {
         throw error(
             make_error_code(errc::unsupported_feature),

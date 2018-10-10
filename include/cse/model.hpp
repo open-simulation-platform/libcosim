@@ -189,5 +189,19 @@ struct model_description
 };
 
 
+/// Possible outcomes of a subsimulator time step
+enum class step_result
+{
+    /// Step completed
+    complete,
+
+    /// Step failed, but can be retried with a shorter step size
+    failed,
+
+    /// Step canceled
+    canceled
+};
+
+
 } // namespace cse
 #endif // header guard
