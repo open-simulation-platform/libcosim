@@ -1,0 +1,8 @@
+//
+// Created by STENBRO on 9/25/2018.
+//
+
+#ifndef CSECORE_SLAVE_LOGGER_HPP
+#define CSECORE_SLAVE_LOGGER_HPP
+
+#endif //CSECORE_SLAVE_LOGGER_HPP
