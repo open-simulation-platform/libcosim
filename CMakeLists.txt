@@ -78,7 +78,7 @@ set(CSECORE_EXPORT_TARGET "${PROJECT_NAME}-targets")
 # ==============================================================================
 
 set(boostHeaderLibs test uuid)
-set(boostBinaryLibs context fiber log system thread)
+set(boostBinaryLibs context fiber filesystem log system thread)
 
 if(CSECORE_USING_CONAN)
     include("${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")

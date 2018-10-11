@@ -5,7 +5,7 @@
 #ifndef CSE_FMI_IMPORTER_HPP
 #define CSE_FMI_IMPORTER_HPP
 
-#include <filesystem>
+#include <boost/filesystem.hpp>
 #include <map>
 #include <memory>
 #include <string>
@@ -67,7 +67,7 @@ public:
      *      If it does not exist already, it will be created.
      */
     static std::shared_ptr<importer> create(
-        const std::filesystem::path& cachePath);
+        const boost::filesystem::path& cachePath);
 
     /**
      *  Creates a new FMU importer that uses a temporary cache
@@ -81,7 +81,7 @@ public:
 
 private:
     // Private constructors, to force use of factory functions.
-    importer(const std::filesystem::path& cachePath);
+    importer(const boost::filesystem::path& cachePath);
     importer(utility::temp_dir&& tempDir);
 
 public:
@@ -99,7 +99,7 @@ public:
      *  \returns
      *      An object which represents the imported FMU.
      */
-    std::shared_ptr<fmu> import(const std::filesystem::path& fmuPath);
+    std::shared_ptr<fmu> import(const boost::filesystem::path& fmuPath);
 
     /**
      *  Imports and loads an FMU that has already been unpacked.
@@ -114,7 +114,7 @@ public:
      *      An object which represents the imported FMU.
      */
     std::shared_ptr<fmu> import_unpacked(
-        const std::filesystem::path& unpackedFMUPath);
+        const boost::filesystem::path& unpackedFMUPath);
 
     /**
      *  Removes unused files and directories from the FMU cache.
@@ -138,10 +138,10 @@ private:
     std::unique_ptr<jm_callbacks> callbacks_;
     std::unique_ptr<fmi_import_context_t, void (*)(fmi_import_context_t*)> handle_;
 
-    std::filesystem::path fmuDir_;
-    std::filesystem::path workDir_;
+    boost::filesystem::path fmuDir_;
+    boost::filesystem::path workDir_;
 
-    std::map<std::filesystem::path, std::weak_ptr<fmu>> pathCache_;
+    std::map<boost::filesystem::path, std::weak_ptr<fmu>> pathCache_;
     std::map<std::string, std::weak_ptr<fmu>> guidCache_;
 };
 

@@ -38,7 +38,7 @@ namespace v2
 
 fmu::fmu(
     std::shared_ptr<fmi::importer> importer,
-    const std::filesystem::path& fmuDir)
+    const boost::filesystem::path& fmuDir)
     : importer_{importer}
     , dir_(fmuDir)
     , handle_{fmi2_import_parse_xml(importer->fmilib_handle(), fmuDir.string().c_str(), nullptr)}
@@ -135,7 +135,7 @@ std::shared_ptr<v2::slave_instance> fmu::instantiate_v2_slave()
 }
 
 
-std::filesystem::path fmu::directory() const
+boost::filesystem::path fmu::directory() const
 {
     return dir_;
 }

@@ -5,7 +5,7 @@
 #ifndef CSE_UTILITY_FILESYSTEM_HPP
 #define CSE_UTILITY_FILESYSTEM_HPP
 
-#include <filesystem>
+#include <boost/filesystem.hpp>
 
 #include <cse/config.hpp>
 
@@ -38,7 +38,7 @@ public:
      *    - If `parent` is absolute: `parent/name`
     */
     explicit temp_dir(
-        const std::filesystem::path& parent = std::filesystem::path());
+        const boost::filesystem::path& parent = boost::filesystem::path());
 
     temp_dir(const temp_dir&) = delete;
     temp_dir& operator=(const temp_dir&) = delete;
@@ -60,12 +60,12 @@ public:
     ~temp_dir() noexcept;
 
     /// Returns the path to the directory.
-    const std::filesystem::path& path() const;
+    const boost::filesystem::path& path() const;
 
 private:
     void delete_noexcept() noexcept;
 
-    std::filesystem::path path_;
+    boost::filesystem::path path_;
 };
 
 
