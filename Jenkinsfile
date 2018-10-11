@@ -129,14 +129,14 @@ pipeline {
                         stage ('Test Debug') {
                             steps {
                                 dir('debug-build') {
-                                    sh 'ctest -C Debug -T Test --no-compress-output --test-output-size-passed 307200 || true'
+                                    sh 'LD_LIBRARY_PATH="$(pwd)/output/debug/lib" ctest -C Debug -T Test --no-compress-output --test-output-size-passed 307200 || true'
                                 }
                             }
                         }
                         stage ('Test Release') {
                             steps {
                                 dir('release-build') {
-                                    sh 'ctest -C Release -T Test --no-compress-output --test-output-size-passed 307200 || true'
+                                    sh 'LD_LIBRARY_PATH="$(pwd)/output/release/lib" ctest -C Release -T Test --no-compress-output --test-output-size-passed 307200 || true'
                                 }
                             }
                         }
