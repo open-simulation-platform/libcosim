@@ -21,6 +21,8 @@ public:
     std::string message(int ev) const final override
     {
         switch (static_cast<errc>(ev)) {
+            case errc::success:
+                return "Success";
             case errc::bad_file:
                 return "Bad file";
             case errc::unsupported_feature:
@@ -29,6 +31,8 @@ public:
                 return "Error loading dynamic library";
             case errc::model_error:
                 return "Model error";
+            case errc::nonfatal_bad_value:
+                return "Variable value is invalid or out of range";
             case errc::simulation_error:
                 return "Simulation error";
             case errc::zip_error:
