@@ -31,13 +31,16 @@ int main()
         auto observer = std::make_shared<cse::membuffer_observer>();
         execution.add_observer(observer);
 
+        const cse::variable_index realOutIndex = 0;
+        const cse::variable_index realInIndex = 1;
+
         // Add slaves to it
         for (int i = 0; i < numSlaves; ++i) {
             execution.add_slave(
-                cse::make_pseudo_async(std::make_unique<mock_slave>([](double x) { return x + 1; })),
+                cse::make_pseudo_async(std::make_unique<mock_slave>([](double x) { return x + 1.234; })),
                 "slave" + std::to_string(i));
             if (i > 0) {
-                execution.connect_variables(cse::variable_id{i - 1, cse::variable_type::real, 0}, cse::variable_id{i, cse::variable_type::real, 1});
+                execution.connect_variables(cse::variable_id{i - 1, cse::variable_type::real, realOutIndex}, cse::variable_id{i, cse::variable_type::real, realInIndex});
             }
         }
 
@@ -48,10 +51,18 @@ int main()
         simResult = execution.simulate_until(endTime);
         REQUIRE(simResult.get());
 
-        const cse::variable_index i = 0;
-        double value = -1;
-        observer->get_real(0, gsl::make_span(&i, 1), gsl::make_span(&value, 1));
-        REQUIRE(value == 1.0);
+        double realOutValue = -1.0;
+        double realInValue = -1.0;
+
+        for (int j = 0; j < numSlaves; j++) {
+            double lastRealOutValue = realOutValue;
+            observer->get_real(j, gsl::make_span(&realOutIndex, 1), gsl::make_span(&realOutValue, 1));
+            observer->get_real(j, gsl::make_span(&realInIndex, 1), gsl::make_span(&realInValue, 1));
+            if (j > 0) {
+                // Check that real input of slave j has same value as real output of slave j - 1
+                REQUIRE(realInValue == lastRealOutValue);
+            }
+        }
 
         // TODO: Check values of connected signal chain!
 
