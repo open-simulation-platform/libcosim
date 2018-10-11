@@ -92,10 +92,10 @@ int main()
 
             std::vector<future<void>> setResults;
             for (int i = 0; i < numSlaves; ++i) {
-                const cse::variable_index realOutIndex = 0;
+                const cse::variable_index realInIndex = 1;
                 setResults.push_back(
                     asyncSlaves[i]->set_variables(
-                        {&realOutIndex, 1}, {&values[i], 1},
+                        {&realInIndex, 1}, {&values[i], 1},
                         {}, {},
                         {}, {},
                         {}, {}));
