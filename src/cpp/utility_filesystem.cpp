@@ -51,7 +51,8 @@ const boost::filesystem::path& temp_dir::path() const
 void temp_dir::delete_noexcept() noexcept
 {
     if (!path_.empty()) {
-        boost::filesystem::remove_all(path_);
+        boost::system::error_code errorCode;
+        boost::filesystem::remove_all(path_, errorCode);
         path_.clear();
     }
 }

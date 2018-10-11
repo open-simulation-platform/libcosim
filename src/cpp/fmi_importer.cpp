@@ -200,7 +200,8 @@ std::shared_ptr<fmu> importer::import(const boost::filesystem::path& fmuPath)
     const auto tempMdDir = workDir_ / cse::utility::random_uuid();
     boost::filesystem::create_directories(tempMdDir);
     const auto removeTempMdDir = gsl::finally([tempMdDir]() {
-        boost::filesystem::remove_all(tempMdDir);
+        boost::system::error_code errorCode;
+        boost::filesystem::remove_all(tempMdDir, errorCode);
     });
 
     const auto modelDescriptionIndex = zip.find_entry("modelDescription.xml");
@@ -228,7 +229,8 @@ std::shared_ptr<fmu> importer::import(const boost::filesystem::path& fmuPath)
         try {
             zip.extract_all(fmuUnpackDir);
         } catch (...) {
-            boost::filesystem::remove_all(fmuUnpackDir);
+            boost::system::error_code errorCode;
+            boost::filesystem::remove_all(fmuUnpackDir, errorCode);
             throw;
         }
     }
@@ -267,20 +269,22 @@ void importer::clean_cache()
 {
     // Remove unused FMUs
     if (boost::filesystem::exists(fmuDir_)) {
+        boost::system::error_code errorCode;
         for (auto it = boost::filesystem::directory_iterator(fmuDir_);
              it != boost::filesystem::directory_iterator();
              ++it) {
             if (guidCache_.count(it->path().filename().string()) == 0) {
-                boost::filesystem::remove_all(*it);
+                boost::filesystem::remove_all(*it, errorCode);
             }
         }
         if (boost::filesystem::is_empty(fmuDir_)) {
-            boost::filesystem::remove(fmuDir_);
+            boost::filesystem::remove(fmuDir_, errorCode);
         }
     }
 
     // Delete the temp-files directory
-    boost::filesystem::remove_all(workDir_);
+    boost::system::error_code errorCode;
+    boost::filesystem::remove_all(workDir_, errorCode);
 }
 
 
