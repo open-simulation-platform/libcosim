@@ -6,8 +6,9 @@
 #define CSE_UTILITY_ZIP_HPP
 
 #include <cstdint>
-#include <boost/filesystem.hpp>
 #include <string>
+
+#include <boost/filesystem.hpp>
 
 #include <cse/exception.hpp>
 

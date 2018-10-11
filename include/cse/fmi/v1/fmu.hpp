@@ -5,10 +5,11 @@
 #ifndef CSE_FMI_V1_FMU_HPP
 #define CSE_FMI_V1_FMU_HPP
 
-#include <boost/filesystem.hpp>
 #include <memory>
 #include <string>
 #include <vector>
+
+#include <boost/filesystem.hpp>
 
 #include <cse/fmi/fmu.hpp>
 #include <cse/fmi/importer.hpp>
