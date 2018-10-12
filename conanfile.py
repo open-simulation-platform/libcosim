@@ -29,5 +29,7 @@ class CSECoreConan(ConanFile):
 
     def imports(self):
         binDir = os.path.join("output", str(self.settings.build_type).lower(), "bin")
+        libDir = os.path.join("output", str(self.settings.build_type).lower(), "lib")
         self.copy("*.dll", dst=binDir, keep_path=False)
         self.copy("*.pdb", dst=binDir, keep_path=False)
+        self.copy("*.so*", dst=libDir, keep_path=False)
