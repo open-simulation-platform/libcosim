@@ -4,6 +4,7 @@ pipeline {
     options { checkoutToSubdirectory('cse-core') }
 
     stages {
+
         stage('Build') {
             parallel {
                 stage('Build on Windows') {
@@ -137,6 +138,71 @@ pipeline {
                             steps {
                                 dir('release-build') {
                                     sh '. ./activate_run.sh && ctest -C Release -T Test --no-compress-output --test-output-size-passed 307200 || true'
+                                }
+                            }
+                        }
+                    }
+                    post {
+                        always{
+                            xunit (
+                                testTimeMargin: '30000',
+                                thresholdMode: 1,
+                                thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
+                                tools: [ CTest(pattern: '*-build/Testing/**/Test.xml') ]
+                            )
+                        }
+                        success {
+                            archiveArtifacts artifacts: 'install/**/*',  fingerprint: true
+                        }
+                        cleanup {
+                            dir('debug-build/Testing') {
+                                deleteDir();
+                            }
+                            dir('release-build/Testing') {
+                                deleteDir();
+                            }
+                        }
+                    }
+                }
+                stage ( 'Build with Ubuntu 18.04 Dockerfile' ) {
+                    agent { 
+                        dockerfile { 
+                            filename 'cse-core/Dockerfile.build'
+                            label 'linux && docker'
+                        }
+                    }
+
+                    stages {
+                        stage('Build Debug') {
+                            steps {
+                                dir('debug-build') {
+                                    sh 'uname -a'
+                                    sh 'cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=../install -DCSECORE_USING_CONAN=FALSE -DCSECORE_BUILD_PRIVATE_APIDOC=ON ../cse-core'
+                                    sh 'cmake --build .'
+                                    sh 'cmake --build . --target install'
+                                }
+                            }
+                        }
+                        stage('Build Release') {
+                            steps {
+                                dir('release-build') {
+                                    sh 'cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../install -DCSECORE_USING_CONAN=FALSE -DCSECORE_BUILD_PRIVATE_APIDOC=ON ../cse-core'
+                                    sh 'cmake --build .'
+                                    sh 'cmake --build . --target install'
+                                }
+                            }
+                        }
+                        stage ('Test Debug') {
+                            steps {
+                                dir('debug-build') {
+                                    sh 'ctest -C Debug -T Test --no-compress-output --test-output-size-passed 307200 || true'
+                                }
+                            }
+                        }
+                        stage ('Test Release') {
+                            steps {
+                                dir('release-build') {
+                                    sh 'ctest -C Release -T Test --no-compress-output --test-output-size-passed 307200 || true'
                                 }
                             }
                         }

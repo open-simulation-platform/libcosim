@@ -2,6 +2,7 @@
 #ifndef CSECORE_SLAVE_OBSERVER_H
 #define CSECORE_SLAVE_OBSERVER_H
 
+#include <algorithm>
 #include <map>
 #include <memory>
 #include <mutex>
