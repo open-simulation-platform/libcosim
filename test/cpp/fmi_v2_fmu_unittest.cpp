@@ -4,7 +4,7 @@
 #include <cse/fmi/importer.hpp>
 #include <cse/fmi/v2/fmu.hpp>
 
-#include <filesystem>
+#include <boost/filesystem.hpp>
 
 
 using namespace cse;
