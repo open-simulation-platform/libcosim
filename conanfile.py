@@ -5,7 +5,7 @@ from conans import ConanFile, CMake, tools
 
 class CSECoreConan(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
-    generators = "cmake"
+    generators = "cmake", "virtualrunenv"
     requires = (
         "boost_algorithm/1.66.0@bincrafters/stable",
         "boost_fiber/1.66.0@bincrafters/stable",
