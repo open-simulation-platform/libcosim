@@ -63,15 +63,14 @@ size_t get_samples(
 
 } // namespace
 
-class single_slave_membuffer_observer
+class membuffer_observer::single_slave_observer
 {
 public:
-    single_slave_membuffer_observer(observable* observable)
+    single_slave_observer(observable* observable)
         : observable_(observable)
     {
         for (const auto& vd : observable->model_description().variables) {
             observable->expose_output(vd.type, vd.index);
-            // TODO: Expose all variable types?
             if (vd.type == cse::variable_type::real) {
                 realIndexes_.push_back(vd.index);
             }
@@ -138,12 +137,12 @@ membuffer_observer::membuffer_observer()
 
 void membuffer_observer::simulator_added(simulator_index index, observable* simulator)
 {
-    slaveObservers[index] = std::make_unique<single_slave_membuffer_observer>(simulator);
+    slaveObservers_[index] = std::make_unique<single_slave_observer>(simulator);
 }
 
 void membuffer_observer::simulator_removed(simulator_index index)
 {
-    slaveObservers.erase(index);
+    slaveObservers_.erase(index);
 }
 
 void membuffer_observer::variables_connected(variable_id /*output*/, variable_id /*input*/)
@@ -159,7 +158,7 @@ void membuffer_observer::step_complete(
     time_duration /*lastStepSize*/,
     time_point /*currentTime*/)
 {
-    for (const auto& slaveObserver : slaveObservers) {
+    for (const auto& slaveObserver : slaveObservers_) {
         slaveObserver.second->observe(lastStep);
     }
 }
@@ -169,7 +168,8 @@ void membuffer_observer::get_real(
     gsl::span<const variable_index> variables,
     gsl::span<double> values)
 {
-    slaveObservers.at(sim)->get_real(variables, values);
+    CSE_INPUT_CHECK(variables.size() == values.size());
+    slaveObservers_.at(sim)->get_real(variables, values);
 }
 
 void membuffer_observer::get_integer(
@@ -177,7 +177,8 @@ void membuffer_observer::get_integer(
     gsl::span<const variable_index> variables,
     gsl::span<int> values)
 {
-    slaveObservers.at(sim)->get_int(variables, values);
+    CSE_INPUT_CHECK(variables.size() == values.size());
+    slaveObservers_.at(sim)->get_int(variables, values);
 }
 
 std::size_t membuffer_observer::get_real_samples(
@@ -188,7 +189,7 @@ std::size_t membuffer_observer::get_real_samples(
     gsl::span<step_number> steps)
 {
     CSE_INPUT_CHECK(values.size() == steps.size());
-    return slaveObservers.at(sim)->get_real_samples(variableIndex, fromStep, values, steps);
+    return slaveObservers_.at(sim)->get_real_samples(variableIndex, fromStep, values, steps);
 }
 
 std::size_t membuffer_observer::get_integer_samples(
@@ -199,7 +200,7 @@ std::size_t membuffer_observer::get_integer_samples(
     gsl::span<step_number> steps)
 {
     CSE_INPUT_CHECK(values.size() == steps.size());
-    return slaveObservers.at(sim)->get_int_samples(variableIndex, fromStep, values, steps);
+    return slaveObservers_.at(sim)->get_int_samples(variableIndex, fromStep, values, steps);
 }
 
 membuffer_observer::~membuffer_observer() noexcept = default;
