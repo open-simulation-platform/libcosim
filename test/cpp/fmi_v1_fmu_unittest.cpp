@@ -2,12 +2,13 @@
 #include <boost/test/unit_test.hpp>
 
 #include <cstdlib>
-#include <filesystem>
 
 #include <cse/fmi/importer.hpp>
 #include <cse/fmi/v1/fmu.hpp>
 #include <cse/utility/filesystem.hpp>
 #include <cse/utility/zip.hpp>
+
+#include <boost/filesystem.hpp>
 
 
 using namespace cse;
@@ -114,7 +115,7 @@ BOOST_AUTO_TEST_CASE(v1_fmu)
     BOOST_TEST_REQUIRE(!!testDataDir);
     auto importer = fmi::importer::create();
     auto fmu = importer->import(
-        std::filesystem::path(testDataDir) / "fmi1" / "identity.fmu");
+        boost::filesystem::path(testDataDir) / "fmi1" / "identity.fmu");
     run_tests(fmu);
 }
 
@@ -125,7 +126,7 @@ BOOST_AUTO_TEST_CASE(v1_fmu_unpacked)
     BOOST_TEST_REQUIRE(!!testDataDir);
     utility::temp_dir unpackDir;
     utility::zip::archive(
-        std::filesystem::path(testDataDir) / "fmi1" / "identity.fmu")
+        boost::filesystem::path(testDataDir) / "fmi1" / "identity.fmu")
         .extract_all(unpackDir.path());
 
     auto importer = fmi::importer::create();
@@ -133,5 +134,5 @@ BOOST_AUTO_TEST_CASE(v1_fmu_unpacked)
     run_tests(fmu);
 
     importer->clean_cache();
-    BOOST_TEST(std::filesystem::exists(unpackDir.path()));
+    BOOST_TEST(boost::filesystem::exists(unpackDir.path()));
 }

@@ -2,13 +2,14 @@
 #include <boost/test/unit_test.hpp>
 #include <cse/utility/filesystem.hpp>
 
-#include <filesystem>
+#include <boost/filesystem.hpp>
+
 #include <utility>
 
 
 BOOST_AUTO_TEST_CASE(temp_dir)
 {
-    namespace fs = std::filesystem;
+    namespace fs = boost::filesystem;
     fs::path d;
     {
         auto tmp = cse::utility::temp_dir();

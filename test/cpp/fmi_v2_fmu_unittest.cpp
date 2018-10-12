@@ -1,10 +1,10 @@
 #define BOOST_TEST_MODULE cse::fmi::v2::fmu unittest
 #include <boost/test/unit_test.hpp>
 
-#include <filesystem>
-
 #include <cse/fmi/importer.hpp>
 #include <cse/fmi/v2/fmu.hpp>
+
+#include <filesystem>
 
 
 using namespace cse;
@@ -18,7 +18,7 @@ BOOST_AUTO_TEST_CASE(v2_fmu)
     auto importer = fmi::importer::create();
     const std::string modelName = "WaterTank_Control";
     auto fmu = importer->import(
-        std::filesystem::path(testDataDir) / "fmi2" / (modelName + ".fmu"));
+        boost::filesystem::path(testDataDir) / "fmi2" / (modelName + ".fmu"));
 
     BOOST_TEST(fmu->fmi_version() == fmi::fmi_version::v2_0);
     const auto d = fmu->model_description();
