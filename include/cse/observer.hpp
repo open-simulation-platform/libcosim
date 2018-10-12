@@ -125,12 +125,11 @@ public:
         time_point currentTime) override;
 
     /**
-     * Retrieves the latest observed real values for:
-     * \param sim a given simulator index
-     * \param variables the variable indices to retrieve values for
+     * Retrieves the latest observed values for a range of real variables.
      *
-     * The retrieved values will be stored in:
-     * \param values a collection of observed values
+     * \param sim index of the simulator
+     * \param variables the variable indices to retrieve values for
+     * \param values [out] a collection where the observed values will be stored
      */
     void get_real(
         simulator_index sim,
@@ -138,12 +137,11 @@ public:
         gsl::span<double> values);
 
     /**
-     * Retrieves the latest observed integer values for:
-     * \param sim a given simulator index
-     * \param variables the variable indices to retrieve values for
+     * Retrieves the latest observed values for a range of integer variables.
      *
-     * The retrieved values will be stored in:
-     * \param values a collection of observed values
+     * \param sim index of the simulator
+     * \param variables the variable indices to retrieve values for
+     * \param values [out] a collection where the observed values will be stored
      */
     void get_integer(
         simulator_index sim,
@@ -151,17 +149,16 @@ public:
         gsl::span<int> values);
 
     /**
-     * Retrieves a series of observed real values and step numbers for:
-     * \param sim a given simulator index
-     * \param variableIndex a given variable index
-     * \param fromStep the step number to start from
+     * Retrieves a series of observed values and step numbers for a real variable.
      *
-     * The retrieved values will be stored in:
-     * \param values a series of observed values
-     * \param steps the corresponding step numbers
+     * \param sim index of the simulator
+     * \param variableIndex the variable index
+     * \param fromStep the step number to start from
+     * \param values [out] the series of observed values
+     * \param steps [out] the corresponding step numbers
      *
      * Returns the number of samples actually read, which may be smaller
-     * than the sizes of \param values and \param steps.
+     * than the sizes of `values` and `steps`.
      */
     std::size_t get_real_samples(
         simulator_index sim,
@@ -171,17 +168,16 @@ public:
         gsl::span<step_number> steps);
 
     /**
-     * Retrieves a series of observed integer values and step numbers for:
-     * \param sim a given simulator index
-     * \param variableIndex a given variable index
-     * \param fromStep the step number to start from
+     * Retrieves a series of observed values and step numbers for an integer variable.
      *
-     * The retrieved values will be stored in:
-     * \param values a series of observed values
-     * \param steps the corresponding step numbers
+     * \param sim index of the simulator
+     * \param variableIndex the variable index
+     * \param fromStep the step number to start from
+     * \param values [out] the series of observed values
+     * \param steps [out] the corresponding step numbers
      *
      * Returns the number of samples actually read, which may be smaller
-     * than the sizes of \param values and \param steps.
+     * than the sizes of `values` and `steps`.
      */
     std::size_t get_integer_samples(
         simulator_index sim,
