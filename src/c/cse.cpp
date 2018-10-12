@@ -249,8 +249,8 @@ int cse_execution_start(cse_execution* execution)
 {
     try {
         execution->shouldRun = true;
-        execution->state = CSE_EXECUTION_RUNNING;
         execution->t = std::thread([execution]() {
+            execution->state = CSE_EXECUTION_RUNNING;
             execution->realTimeTimer->start();
             while (execution->shouldRun) {
                 cse_execution_step(execution, 1);
