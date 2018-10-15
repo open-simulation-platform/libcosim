@@ -23,7 +23,7 @@ std::mutex path_env_var_mutex;
 } // namespace
 
 
-detail::additional_path::additional_path(const std::filesystem::path& p)
+detail::additional_path::additional_path(const boost::filesystem::path& p)
 {
     std::lock_guard<std::mutex> lock(path_env_var_mutex);
 
@@ -63,7 +63,7 @@ detail::additional_path::~additional_path()
 }
 
 
-std::filesystem::path fmu_binaries_dir(const std::filesystem::path& baseDir)
+boost::filesystem::path fmu_binaries_dir(const boost::filesystem::path& baseDir)
 {
 #    ifdef _WIN64
     const auto platformSubdir = L"win64";
