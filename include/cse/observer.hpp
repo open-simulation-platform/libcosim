@@ -127,9 +127,9 @@ public:
     /**
      * Retrieves the latest observed values for a range of real variables.
      *
-     * \param sim index of the simulator
-     * \param variables the variable indices to retrieve values for
-     * \param values [out] a collection where the observed values will be stored
+     * \param [in] sim index of the simulator
+     * \param [in] variables the variable indices to retrieve values for
+     * \param [out] values a collection where the observed values will be stored
      */
     void get_real(
         simulator_index sim,
@@ -139,9 +139,9 @@ public:
     /**
      * Retrieves the latest observed values for a range of integer variables.
      *
-     * \param sim index of the simulator
-     * \param variables the variable indices to retrieve values for
-     * \param values [out] a collection where the observed values will be stored
+     * \param [in] sim index of the simulator
+     * \param [in] variables the variable indices to retrieve values for
+     * \param [out] values a collection where the observed values will be stored
      */
     void get_integer(
         simulator_index sim,
@@ -151,11 +151,11 @@ public:
     /**
      * Retrieves a series of observed values and step numbers for a real variable.
      *
-     * \param sim index of the simulator
-     * \param variableIndex the variable index
-     * \param fromStep the step number to start from
-     * \param values [out] the series of observed values
-     * \param steps [out] the corresponding step numbers
+     * \param [in] sim index of the simulator
+     * \param [in] variableIndex the variable index
+     * \param [in] fromStep the step number to start from
+     * \param [out] values the series of observed values
+     * \param [out] steps the corresponding step numbers
      *
      * Returns the number of samples actually read, which may be smaller
      * than the sizes of `values` and `steps`.
@@ -170,11 +170,11 @@ public:
     /**
      * Retrieves a series of observed values and step numbers for an integer variable.
      *
-     * \param sim index of the simulator
-     * \param variableIndex the variable index
-     * \param fromStep the step number to start from
-     * \param values [out] the series of observed values
-     * \param steps [out] the corresponding step numbers
+     * \param [in] sim index of the simulator
+     * \param [in] variableIndex the variable index
+     * \param [in] fromStep the step number to start from
+     * \param [out] values the series of observed values
+     * \param [out] steps the corresponding step numbers
      *
      * Returns the number of samples actually read, which may be smaller
      * than the sizes of `values` and `steps`.
