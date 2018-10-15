@@ -28,11 +28,20 @@ int main()
             startTime,
             std::make_unique<cse::fixed_step_algorithm>(stepSize));
 
+        auto observer = std::make_shared<cse::membuffer_observer>();
+        execution.add_observer(observer);
+
+        const cse::variable_index realOutIndex = 0;
+        const cse::variable_index realInIndex = 1;
+
         // Add slaves to it
         for (int i = 0; i < numSlaves; ++i) {
             execution.add_slave(
-                cse::make_pseudo_async(std::make_unique<mock_slave>()),
+                cse::make_pseudo_async(std::make_unique<mock_slave>([](double x) { return x + 1.234; })),
                 "slave" + std::to_string(i));
+            if (i > 0) {
+                execution.connect_variables(cse::variable_id{i - 1, cse::variable_type::real, realOutIndex}, cse::variable_id{i, cse::variable_type::real, realInIndex});
+            }
         }
 
         // Run simulation
@@ -41,6 +50,33 @@ int main()
         REQUIRE(execution.current_time() == midTime);
         simResult = execution.simulate_until(endTime);
         REQUIRE(simResult.get());
+
+        double realOutValue = -1.0;
+        double realInValue = -1.0;
+
+        for (int j = 0; j < numSlaves; j++) {
+            double lastRealOutValue = realOutValue;
+            observer->get_real(j, gsl::make_span(&realOutIndex, 1), gsl::make_span(&realOutValue, 1));
+            observer->get_real(j, gsl::make_span(&realInIndex, 1), gsl::make_span(&realInValue, 1));
+            if (j > 0) {
+                // Check that real input of slave j has same value as real output of slave j - 1
+                REQUIRE(realInValue == lastRealOutValue);
+            }
+        }
+
+        const int numSamples = 11;
+        double realValues[numSamples];
+        cse::step_number steps[numSamples];
+        observer->get_real_samples(9, realOutIndex, 0, gsl::make_span(realValues, numSamples), gsl::make_span(steps, numSamples));
+        cse::step_number lastStep = -1;
+        double lastValue = -1.0;
+        for (int k = 0; k < numSamples; k++) {
+            REQUIRE(steps[k] > lastStep);
+            lastStep = steps[k];
+
+            REQUIRE(realValues[k] > lastValue);
+            lastValue = realValues[k];
+        }
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
