@@ -43,7 +43,7 @@ private:
 template<typename T, typename D>
 bool approx_equal_duration(T t1, T t2, D dur)
 {
-    constexpr auto epsilon = 10ms;
+    constexpr auto epsilon = 20ms;
     const auto diff = t2 - t1 - dur;
     return -epsilon <= diff && diff <= epsilon;
 }
