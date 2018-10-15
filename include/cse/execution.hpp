@@ -41,9 +41,7 @@ struct variable_id
 /// Equality operator for `variable_id`.
 inline bool operator==(const variable_id& a, const variable_id& b) noexcept
 {
-    return a.simulator == b.simulator
-        && a.type == b.type
-        && a.index == b.index;
+    return a.simulator == b.simulator && a.type == b.type && a.index == b.index;
 }
 
 /// Inequality operator for `variable_id`.

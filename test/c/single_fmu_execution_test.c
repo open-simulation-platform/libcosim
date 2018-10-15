@@ -11,15 +11,17 @@
 #    define Sleep(x) usleep((x)*1000)
 #endif
 
-void print_last_error() {
+void print_last_error()
+{
     fprintf(
         stderr,
         "Error code %d: %s\n",
         cse_last_error_code(), cse_last_error_message());
 }
 
-int main() {
-    const char *dataDir = getenv("TEST_DATA_DIR");
+int main()
+{
+    const char* dataDir = getenv("TEST_DATA_DIR");
     if (!dataDir) {
         fprintf(stderr, "Environment variable TEST_DATA_DIR not set\n");
         return 1;
@@ -33,19 +35,19 @@ int main() {
     }
 
     // ===== Can step n times and get status
-    cse_execution *execution = cse_execution_create(0.0, 0.1);
+    cse_execution* execution = cse_execution_create(0.0, 0.1);
     if (!execution) {
         print_last_error();
         return 1;
     }
 
-    cse_slave *slave = cse_local_slave_create(fmuPath);
+    cse_slave* slave = cse_local_slave_create(fmuPath);
     if (!slave) {
         print_last_error();
         return 1;
     }
 
-    cse_observer *observer = cse_membuffer_observer_create();
+    cse_observer* observer = cse_membuffer_observer_create();
     if (!observer) {
         print_last_error();
         return 1;

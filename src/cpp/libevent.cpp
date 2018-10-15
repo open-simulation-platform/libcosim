@@ -1,7 +1,7 @@
 // Prevent macro redefinition errors due to <windows.h> being included
 // before <winsock2.h>
 #ifdef _WIN32
-#   define _WINSOCKAPI_
+#    define _WINSOCKAPI_
 #endif
 #include <cse/libevent.hpp>
 

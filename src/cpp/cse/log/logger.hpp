@@ -23,6 +23,6 @@ using logger_type = boost::log::sources::severity_logger_mt<level>;
 /// Returns the global logger.
 logger_type& logger();
 
-}
+} // namespace log
 } // namespace cse
 #endif // header guard

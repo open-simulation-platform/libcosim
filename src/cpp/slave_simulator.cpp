@@ -13,8 +13,16 @@ namespace cse
 namespace
 {
 
-template<typename T> struct var_view_type { using type = T; };
-template<> struct var_view_type<std::string> { using type = std::string_view; };
+template<typename T>
+struct var_view_type
+{
+    using type = T;
+};
+template<>
+struct var_view_type<std::string>
+{
+    using type = std::string_view;
+};
 
 template<typename T>
 struct exposed_vars
