@@ -6,8 +6,9 @@
 #define CSE_FMI_WINDOWS_HPP
 
 #ifdef _WIN32
-#    include <filesystem>
 #    include <string>
+
+#    include <boost/filesystem.hpp>
 
 
 namespace cse
@@ -44,7 +45,7 @@ class additional_path
 {
 public:
     /// Constructor. Adds `p` to `PATH`.
-    additional_path(const std::filesystem::path& p);
+    additional_path(const boost::filesystem::path& p);
 
     /// Destructor.  Removes the path from `PATH` again.
     ~additional_path();
@@ -58,7 +59,7 @@ private:
 
 
 /// Given `path/to/fmu`, returns `path/to/fmu/binaries/<platform>`
-std::filesystem::path fmu_binaries_dir(const std::filesystem::path& baseDir);
+boost::filesystem::path fmu_binaries_dir(const boost::filesystem::path& baseDir);
 
 
 } // namespace fmi

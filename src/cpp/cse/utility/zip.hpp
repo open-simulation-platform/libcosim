@@ -6,8 +6,9 @@
 #define CSE_UTILITY_ZIP_HPP
 
 #include <cstdint>
-#include <filesystem>
 #include <string>
+
+#include <boost/filesystem.hpp>
 
 #include <cse/exception.hpp>
 
@@ -77,7 +78,7 @@ public:
      *  \throws cse::utility::zip::error
      *      If there was an error opening the archive.
      */
-    explicit archive(const std::filesystem::path& path);
+    explicit archive(const boost::filesystem::path& path);
 
     // Disable copying.
     archive(const archive&) = delete;
@@ -101,7 +102,7 @@ public:
      *  \pre
      *      `is_open() == false`
      */
-    void open(const std::filesystem::path& path);
+    void open(const boost::filesystem::path& path);
 
     /**
      *  Closes the archive.
@@ -184,7 +185,7 @@ public:
      *  \pre
      *      `is_open() == true`
      */
-    void extract_all(const std::filesystem::path& targetDir) const;
+    void extract_all(const boost::filesystem::path& targetDir) const;
 
     /**
      *  Extracts a single file from the archive, placing it in a specific
@@ -208,9 +209,9 @@ public:
      *  \pre
      *      `is_open() == true`
      */
-    std::filesystem::path extract_file_to(
+    boost::filesystem::path extract_file_to(
         entry_index index,
-        const std::filesystem::path& targetDir) const;
+        const boost::filesystem::path& targetDir) const;
 
 private:
     ::zip* m_archive;

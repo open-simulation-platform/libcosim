@@ -5,10 +5,11 @@
 #ifndef CSE_FMI_V2_FMU_HPP
 #define CSE_FMI_V2_FMU_HPP
 
-#include <filesystem>
 #include <memory>
 #include <string>
 #include <vector>
+
+#include <boost/filesystem.hpp>
 
 #include <cse/fmi/fmu.hpp>
 #include <cse/fmi/importer.hpp>
@@ -49,7 +50,7 @@ private:
     friend class fmi::importer;
     fmu(
         std::shared_ptr<fmi::importer> importer,
-        const std::filesystem::path& fmuDir);
+        const boost::filesystem::path& fmuDir);
 
 public:
     // Disable copy and move
@@ -83,14 +84,14 @@ public:
     std::shared_ptr<v2::slave_instance> instantiate_v2_slave();
 
     /// Returns the path to the directory in which this FMU was unpacked.
-    std::filesystem::path directory() const;
+    boost::filesystem::path directory() const;
 
     /// Returns the underlying C API handle (for FMI Library)
     fmi2_import_t* fmilib_handle() const;
 
 private:
     std::shared_ptr<fmi::importer> importer_;
-    std::filesystem::path dir_;
+    boost::filesystem::path dir_;
 
     fmi2_import_t* handle_;
     cse::model_description modelDescription_;

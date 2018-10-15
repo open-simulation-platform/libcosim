@@ -3,8 +3,9 @@
 #include <cse/utility/zip.hpp>
 
 #include <cstdlib>
-#include <filesystem>
 #include <system_error>
+
+#include <boost/filesystem.hpp>
 
 #include <cse/utility/filesystem.hpp>
 
@@ -13,7 +14,7 @@ BOOST_AUTO_TEST_CASE(zip_archive)
 {
     namespace ut = cse::utility;
     namespace uz = cse::utility::zip;
-    namespace fs = std::filesystem;
+    namespace fs = boost::filesystem;
 
     // Info about the test archive file and its contents
     const std::uint64_t archiveEntryCount = 3;

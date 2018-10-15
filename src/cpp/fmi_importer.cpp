@@ -29,7 +29,7 @@ namespace fmi
 
 
 std::shared_ptr<importer> importer::create(
-    const std::filesystem::path& cachePath)
+    const boost::filesystem::path& cachePath)
 {
     return std::shared_ptr<importer>(new importer(cachePath));
 }
@@ -94,7 +94,7 @@ std::unique_ptr<jm_callbacks> make_callbacks()
 } // namespace
 
 
-importer::importer(const std::filesystem::path& cachePath)
+importer::importer(const boost::filesystem::path& cachePath)
     : callbacks_{make_callbacks()}
     , handle_{fmi_import_allocate_context(callbacks_.get()), &fmi_import_free_context}
     , fmuDir_{cachePath / "fmu"}
@@ -121,7 +121,7 @@ struct minimal_model_description
 
 // Reads the 'fmiVersion' and 'guid' attributes from the XML file.
 minimal_model_description peek_model_description(
-    const std::filesystem::path& fmuUnpackDir)
+    const boost::filesystem::path& fmuUnpackDir)
 {
     const auto xmlFile = fmuUnpackDir / "modelDescription.xml";
     boost::property_tree::ptree xml;
@@ -190,7 +190,7 @@ std::string sanitise_path(const std::string& str)
 } // namespace
 
 
-std::shared_ptr<fmu> importer::import(const std::filesystem::path& fmuPath)
+std::shared_ptr<fmu> importer::import(const boost::filesystem::path& fmuPath)
 {
     prune_ptr_caches();
     auto pit = pathCache_.find(fmuPath);
@@ -198,10 +198,10 @@ std::shared_ptr<fmu> importer::import(const std::filesystem::path& fmuPath)
 
     const auto zip = cse::utility::zip::archive(fmuPath);
     const auto tempMdDir = workDir_ / cse::utility::random_uuid();
-    std::filesystem::create_directories(tempMdDir);
+    boost::filesystem::create_directories(tempMdDir);
     const auto removeTempMdDir = gsl::finally([tempMdDir]() {
-        std::error_code ignored;
-        std::filesystem::remove_all(tempMdDir, ignored);
+        boost::system::error_code errorCode;
+        boost::filesystem::remove_all(tempMdDir, errorCode);
     });
 
     const auto modelDescriptionIndex = zip.find_entry("modelDescription.xml");
@@ -222,15 +222,15 @@ std::shared_ptr<fmu> importer::import(const std::filesystem::path& fmuPath)
     if (git != end(guidCache_)) return git->second.lock();
 
     const auto fmuUnpackDir = fmuDir_ / sanitise_path(minModelDesc.guid);
-    if (!std::filesystem::exists(fmuUnpackDir) ||
-        !std::filesystem::exists(fmuUnpackDir / "modelDescription.xml") ||
-        std::filesystem::last_write_time(fmuPath) > std::filesystem::last_write_time(fmuUnpackDir / "modelDescription.xml")) {
-        std::filesystem::create_directories(fmuUnpackDir);
+    if (!boost::filesystem::exists(fmuUnpackDir) ||
+        !boost::filesystem::exists(fmuUnpackDir / "modelDescription.xml") ||
+        boost::filesystem::last_write_time(fmuPath) > boost::filesystem::last_write_time(fmuUnpackDir / "modelDescription.xml")) {
+        boost::filesystem::create_directories(fmuUnpackDir);
         try {
             zip.extract_all(fmuUnpackDir);
         } catch (...) {
-            std::error_code ignoreErrors;
-            std::filesystem::remove_all(fmuUnpackDir, ignoreErrors);
+            boost::system::error_code errorCode;
+            boost::filesystem::remove_all(fmuUnpackDir, errorCode);
             throw;
         }
     }
@@ -245,7 +245,7 @@ std::shared_ptr<fmu> importer::import(const std::filesystem::path& fmuPath)
 
 
 std::shared_ptr<fmu> importer::import_unpacked(
-    const std::filesystem::path& unpackedFMUPath)
+    const boost::filesystem::path& unpackedFMUPath)
 {
     prune_ptr_caches();
     const auto minModelDesc = peek_model_description(unpackedFMUPath);
@@ -268,23 +268,23 @@ std::shared_ptr<fmu> importer::import_unpacked(
 void importer::clean_cache()
 {
     // Remove unused FMUs
-    if (std::filesystem::exists(fmuDir_)) {
-        std::error_code ignoredError;
-        for (auto it = std::filesystem::directory_iterator(fmuDir_);
-             it != std::filesystem::directory_iterator();
+    if (boost::filesystem::exists(fmuDir_)) {
+        boost::system::error_code errorCode;
+        for (auto it = boost::filesystem::directory_iterator(fmuDir_);
+             it != boost::filesystem::directory_iterator();
              ++it) {
             if (guidCache_.count(it->path().filename().string()) == 0) {
-                std::filesystem::remove_all(*it, ignoredError);
+                boost::filesystem::remove_all(*it, errorCode);
             }
         }
-        if (std::filesystem::is_empty(fmuDir_)) {
-            std::filesystem::remove(fmuDir_, ignoredError);
+        if (boost::filesystem::is_empty(fmuDir_)) {
+            boost::filesystem::remove(fmuDir_, errorCode);
         }
     }
 
     // Delete the temp-files directory
-    std::error_code ec;
-    std::filesystem::remove_all(workDir_, ec);
+    boost::system::error_code errorCode;
+    boost::filesystem::remove_all(workDir_, errorCode);
 }
 
 

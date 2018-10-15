@@ -82,6 +82,7 @@ target_link_libraries(csecorecpp
         Boost::boost
         Boost::context
         Boost::fiber
+        Boost::filesystem
         Boost::log
         Boost::system
         Boost::thread

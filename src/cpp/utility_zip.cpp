@@ -67,7 +67,7 @@ archive::archive() noexcept
 }
 
 
-archive::archive(const std::filesystem::path& path)
+archive::archive(const boost::filesystem::path& path)
     : m_archive{nullptr}
 {
     open(path);
@@ -96,7 +96,7 @@ archive::~archive() noexcept
 }
 
 
-void archive::open(const std::filesystem::path& path)
+void archive::open(const boost::filesystem::path& path)
 {
     assert(!is_open());
     int errorCode;
@@ -203,7 +203,7 @@ void copy_to_stream(
 void extract_file_as(
     ::zip* archive,
     entry_index index,
-    const std::filesystem::path& targetPath,
+    const boost::filesystem::path& targetPath,
     std::vector<char>& buffer)
 {
     assert(archive != nullptr);
@@ -231,11 +231,11 @@ void extract_file_as(
 
 
 void archive::extract_all(
-    const std::filesystem::path& targetDir) const
+    const boost::filesystem::path& targetDir) const
 {
     assert(is_open());
-    if (!std::filesystem::exists(targetDir) ||
-        !std::filesystem::is_directory(targetDir)) {
+    if (!boost::filesystem::exists(targetDir) ||
+        !boost::filesystem::is_directory(targetDir)) {
         throw std::system_error(
             make_error_code(std::errc::not_a_directory),
             targetDir.string());
@@ -246,25 +246,25 @@ void archive::extract_all(
     for (entry_index index = 0; index < entryCount; ++index) {
         const auto entryName = entry_name(index);
         if (!entryName.empty() && entryName.back() != '/') {
-            const auto entryPath = std::filesystem::path(entryName);
+            const auto entryPath = boost::filesystem::path(entryName);
             if (entryPath.has_root_path()) {
                 throw error(
                     "Archive contains an entry with an absolute path: " + entryName);
             }
             const auto targetPath = targetDir / entryPath;
-            std::filesystem::create_directories(targetPath.parent_path());
+            boost::filesystem::create_directories(targetPath.parent_path());
             extract_file_as(m_archive, index, targetPath, buffer);
         }
     }
 }
 
 
-std::filesystem::path archive::extract_file_to(
+boost::filesystem::path archive::extract_file_to(
     entry_index index,
-    const std::filesystem::path& targetDir) const
+    const boost::filesystem::path& targetDir) const
 {
     assert(is_open());
-    const auto entryPath = std::filesystem::path(entry_name(index));
+    const auto entryPath = boost::filesystem::path(entry_name(index));
     const auto targetPath = targetDir / entryPath.filename();
     auto buffer = std::vector<char>(4096 * 16);
     extract_file_as(m_archive, index, targetPath, buffer);
