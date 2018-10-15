@@ -67,6 +67,7 @@ endforeach()
 set(allSources ${publicHeadersFull} ${privateHeadersFull} ${sources})
 
 add_library(csecorecpp ${allSources})
+target_compile_definitions(csecorecpp PUBLIC "BOOST_ALL_DYN_LINK=1" "BOOST_ALL_NO_LIB=1")
 target_compile_features(csecorecpp PUBLIC "cxx_std_17")
 target_include_directories(csecorecpp
     PUBLIC
@@ -81,6 +82,7 @@ target_link_libraries(csecorecpp
         libevent2::core
         Boost::boost
         Boost::context
+        Boost::date_time
         Boost::fiber
         Boost::filesystem
         Boost::log

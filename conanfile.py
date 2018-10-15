@@ -23,7 +23,6 @@ class CSECoreConan(ConanFile):
         )
     default_options = (
         "boost_*:shared=True",
-        "boost_test:shared=False",
         "libevent:with_openssl=False",
         "libzip:shared=True"
         )

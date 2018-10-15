@@ -48,6 +48,17 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     add_compile_options("/W4" "/WX")
     add_compile_options("/wd4996")
+    if(CSECORE_USING_CONAN)
+        # C4251: 'identifier' : class 'type' needs to have dll-interface to be
+        #        used by clients of class 'type2'
+        #
+        # This could be a problem if a dependent DLL is compiled against a
+        # different version or variant of the C++ runtime than the one we
+        # use.  An example would be if Boost was built in release mode and
+        # we are compiling in release mode. However, when we use Conan, this
+        # should not be a problem, so we disable the warning.
+        add_compile_options("/wd4251")
+    endif()
     add_definitions("-D_SCL_SECURE_NO_WARNINGS")
 endif()
 
@@ -77,15 +88,13 @@ set(CSECORE_EXPORT_TARGET "${PROJECT_NAME}-targets")
 # Dependencies
 # ==============================================================================
 
-set(boostHeaderLibs test uuid)
-set(boostBinaryLibs context fiber filesystem log system thread)
-
+set(boostComponents context date_time fiber filesystem log system thread)
 if(CSECORE_USING_CONAN)
     include("${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")
     conan_basic_setup(NO_OUTPUT_DIRS)
-    set(boostComponents ${boostHeaderLibs} ${boostBinaryLibs})
+    list(APPEND boostComponents test uuid)
 else()
-    set(boostComponents ${boostBinaryLibs})
+    list(APPEND boostComponents unit_test_framework)
 endif()
 
 find_package(Threads REQUIRED) # OS thread library
