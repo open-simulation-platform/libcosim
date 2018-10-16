@@ -5,6 +5,7 @@
 #include <cse/algorithm.hpp>
 #include <cse/async_slave.hpp>
 #include <cse/execution.hpp>
+#include <cse/log.hpp>
 
 #include "mock_slave.hpp"
 
@@ -22,6 +23,8 @@ int main()
         constexpr cse::time_point midTime = 0.6;
         constexpr cse::time_point endTime = 1.0;
         constexpr cse::time_duration stepSize = 0.1;
+
+        cse::log::set_global_output_level(cse::log::level::debug);
 
         // Set up execution
         auto execution = cse::execution(
@@ -77,6 +80,18 @@ int main()
             REQUIRE(realValues[k] > lastValue);
             lastValue = realValues[k];
         }
+
+        constexpr cse::time_point finalTime = 5.0;
+
+        simResult = execution.simulate_until(finalTime);
+        const auto start = std::chrono::steady_clock::now();
+        REQUIRE(simResult.get());
+        const auto end = std::chrono::steady_clock::now();
+
+        const auto expected = std::chrono::duration<double>(finalTime - endTime);
+        const auto measured = end - start;
+        const auto tolerance = std::chrono::duration<double>(0.01);
+        REQUIRE(abs(measured - expected) < tolerance);
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
