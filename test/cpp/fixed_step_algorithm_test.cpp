@@ -50,7 +50,7 @@ int main()
         // Run simulation
         auto simResult = execution.simulate_until(midTime);
         REQUIRE(simResult.get());
-        REQUIRE(execution.current_time() == midTime);
+        REQUIRE(abs(execution.current_time() - midTime) < 1.0e-6);
         simResult = execution.simulate_until(endTime);
         REQUIRE(simResult.get());
 
@@ -90,7 +90,7 @@ int main()
 
         const auto expected = std::chrono::duration<double>(finalTime - endTime);
         const auto measured = end - start;
-        const auto tolerance = std::chrono::duration<double>(0.01);
+        const auto tolerance = std::chrono::duration<double>(0.05);
         REQUIRE(abs(measured - expected) < tolerance);
 
     } catch (const std::exception& e) {
