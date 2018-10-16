@@ -63,7 +63,7 @@ int main()
             observer->get_real(j, gsl::make_span(&realInIndex, 1), gsl::make_span(&realInValue, 1));
             if (j > 0) {
                 // Check that real input of slave j has same value as real output of slave j - 1
-                REQUIRE(realInValue == lastRealOutValue);
+                REQUIRE(abs(realInValue - lastRealOutValue) < 1.0e-9);
             }
         }
 
