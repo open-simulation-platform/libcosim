@@ -116,6 +116,7 @@ public:
 
     time_duration do_step(time_point currentT, time_duration maxDeltaT)
     {
+        printf("Stepping! Current time is %lf\n", currentT);
         const auto currentStepSize = std::min(stepSize_, maxDeltaT);
         step_simulators(currentT, currentStepSize);
         transfer_variables();

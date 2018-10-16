@@ -24,7 +24,7 @@ int main()
         constexpr cse::time_point endTime = 1.0;
         constexpr cse::time_duration stepSize = 0.1;
 
-        cse::log::set_global_output_level(cse::log::level::debug);
+        cse::log::set_global_output_level(cse::log::level::trace);
 
         // Set up execution
         auto execution = cse::execution(
