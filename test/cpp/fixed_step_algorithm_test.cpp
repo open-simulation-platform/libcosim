@@ -58,6 +58,14 @@ int main()
         double realInValue = -1.0;
 
         for (int j = 0; j < numSlaves; j++) {
+            observer->get_real(j, gsl::make_span(&realOutIndex, 1), gsl::make_span(&realOutValue, 1));
+            observer->get_real(j, gsl::make_span(&realInIndex, 1), gsl::make_span(&realInValue, 1));
+            if (j > 0) {
+                // Check that real input of slave j has same value as real output of slave j - 1
+                printf("Slave: %d, In: %lf, Out: %lf\n", j, realInValue, realOutValue);
+            }
+        }
+        for (int j = 0; j < numSlaves; j++) {
             double lastRealOutValue = realOutValue;
             observer->get_real(j, gsl::make_span(&realOutIndex, 1), gsl::make_span(&realOutValue, 1));
             observer->get_real(j, gsl::make_span(&realInIndex, 1), gsl::make_span(&realInValue, 1));
