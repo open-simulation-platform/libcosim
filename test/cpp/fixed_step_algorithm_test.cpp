@@ -96,7 +96,8 @@ int main()
 
         const auto expected = std::chrono::duration<double>(finalTime - endTime);
         const auto measured = end - start;
-        REQUIRE(fabs((measured - expected).count()) < 0.05);
+        const auto tolerance = std::chrono::duration<double>(0.05);
+        REQUIRE((measured - expected) < tolerance && (expected - measured) < tolerance);
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
