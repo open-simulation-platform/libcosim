@@ -91,7 +91,11 @@ int main()
         const auto expected = std::chrono::duration<double>(finalTime - endTime);
         const auto measured = end - start;
         const auto tolerance = std::chrono::duration<double>(0.05);
-        REQUIRE((measured - expected) < tolerance && (expected - measured) < tolerance);
+
+        bool fasterThanRealTime = (expected - measured) > tolerance;
+        bool slowerThanRealTime = (measured - expected) > tolerance;
+        REQUIRE(!slowerThanRealTime);
+        REQUIRE(!fasterThanRealTime);
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;

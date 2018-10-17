@@ -119,7 +119,7 @@ public:
                     obs->step_complete(lastStep_, stepSize, currentTime_);
                 }
                 algorithm_->timer_sleep();
-            } while (!stopped_ && fabs(currentTime_ - endTime) > stepSize * 0.01);
+            } while (!stopped_ && endTime - currentTime_ > stepSize * 0.01);
             return !stopped_;
         });
     }
