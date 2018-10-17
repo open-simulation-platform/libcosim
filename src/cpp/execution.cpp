@@ -120,8 +120,8 @@ public:
                     obs->step_complete(lastStep_, stepSize, currentTime_);
                 }
                 algorithm_->timer_sleep();
-            } while (!stopped_ && abs(currentTime_ - endTime) > stepSize * 0.01);
-            printf("Stopping simulation! Stopped is: %s, Current time is: %lf, remaining time is: %lf\n", stopped_? "true" : "false", currentTime_, abs(currentTime_ - endTime));
+            } while (!stopped_ && fabs(currentTime_ - endTime) > stepSize * 0.01);
+            printf("Stopping simulation! Stopped is: %s, Current time is: %lf, remaining time is: %lf\n", stopped_? "true" : "false", currentTime_, fabs(currentTime_ - endTime));
             return !stopped_;
         });
     }

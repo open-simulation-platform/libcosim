@@ -50,7 +50,7 @@ int main()
         // Run simulation
         auto simResult = execution.simulate_until(midTime);
         REQUIRE(simResult.get());
-        REQUIRE(abs(execution.current_time() - midTime) < 1.0e-6);
+        REQUIRE(fabs(execution.current_time() - midTime) < 1.0e-6);
         simResult = execution.simulate_until(endTime);
         REQUIRE(simResult.get());
 
@@ -69,7 +69,7 @@ int main()
             printf("In: %lf, Last out: %lf, Nano diff: %lf\n", realInValue, lastRealOutValue, 1.0e9 * (realInValue - lastRealOutValue));
             if (j > 0) {
                 // Check that real input of slave j has same value as real output of slave j - 1
-                REQUIRE(abs(realInValue - lastRealOutValue) < 1.0e-9);
+                REQUIRE(fabs(realInValue - lastRealOutValue) < 1.0e-9);
             }
         }
 
@@ -96,8 +96,7 @@ int main()
 
         const auto expected = std::chrono::duration<double>(finalTime - endTime);
         const auto measured = end - start;
-        const auto tolerance = std::chrono::duration<double>(0.05);
-        REQUIRE(abs(measured - expected) < tolerance);
+        REQUIRE(fabs((measured - expected).count()) < 0.05);
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
