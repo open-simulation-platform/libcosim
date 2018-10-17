@@ -24,7 +24,7 @@ int main()
         constexpr cse::time_point endTime = 1.0;
         constexpr cse::time_duration stepSize = 0.1;
 
-        cse::log::set_global_output_level(cse::log::level::trace);
+        cse::log::set_global_output_level(cse::log::level::debug);
 
         // Set up execution
         auto execution = cse::execution(
@@ -58,15 +58,9 @@ int main()
         double realInValue = -1.0;
 
         for (int j = 0; j < numSlaves; j++) {
-            observer->get_real(j, gsl::make_span(&realOutIndex, 1), gsl::make_span(&realOutValue, 1));
-            observer->get_real(j, gsl::make_span(&realInIndex, 1), gsl::make_span(&realInValue, 1));
-            printf("Slave: %d, In: %lf, Out: %lf\n", j, realInValue, realOutValue);
-        }
-        for (int j = 0; j < numSlaves; j++) {
             double lastRealOutValue = realOutValue;
             observer->get_real(j, gsl::make_span(&realOutIndex, 1), gsl::make_span(&realOutValue, 1));
             observer->get_real(j, gsl::make_span(&realInIndex, 1), gsl::make_span(&realInValue, 1));
-            printf("In: %lf, Last out: %lf, Nano diff: %lf\n", realInValue, lastRealOutValue, 1.0e9 * (realInValue - lastRealOutValue));
             if (j > 0) {
                 // Check that real input of slave j has same value as real output of slave j - 1
                 REQUIRE(fabs(realInValue - lastRealOutValue) < 1.0e-9);
