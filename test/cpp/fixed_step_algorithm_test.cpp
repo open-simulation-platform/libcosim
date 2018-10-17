@@ -1,3 +1,4 @@
+#include <cmath>
 #include <exception>
 #include <memory>
 #include <stdexcept>
@@ -50,7 +51,7 @@ int main()
         // Run simulation
         auto simResult = execution.simulate_until(midTime);
         REQUIRE(simResult.get());
-        REQUIRE(fabs(execution.current_time() - midTime) < 1.0e-6);
+        REQUIRE(std::fabs(execution.current_time() - midTime) < 1.0e-6);
         simResult = execution.simulate_until(endTime);
         REQUIRE(simResult.get());
 
@@ -63,7 +64,7 @@ int main()
             observer->get_real(j, gsl::make_span(&realInIndex, 1), gsl::make_span(&realInValue, 1));
             if (j > 0) {
                 // Check that real input of slave j has same value as real output of slave j - 1
-                REQUIRE(fabs(realInValue - lastRealOutValue) < 1.0e-9);
+                REQUIRE(std::fabs(realInValue - lastRealOutValue) < 1.0e-9);
             }
         }
 
