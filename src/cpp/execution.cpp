@@ -103,6 +103,8 @@ public:
 
     boost::fibers::future<bool> simulate_until(time_point endTime)
     {
+        constexpr double relativeTolerance = 0.01;
+
         return boost::fibers::async([=]() {
             if (!initialized_) {
                 algorithm_->initialize();
@@ -119,7 +121,7 @@ public:
                     obs->step_complete(lastStep_, stepSize, currentTime_);
                 }
                 algorithm_->timer_sleep();
-            } while (!stopped_ && endTime - currentTime_ > stepSize * 0.01);
+            } while (!stopped_ && endTime - currentTime_ > stepSize * relativeTolerance);
             return !stopped_;
         });
     }
