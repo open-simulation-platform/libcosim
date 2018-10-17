@@ -112,6 +112,7 @@ public:
             algorithm_->timer_start();
             time_duration stepSize;
             do {
+                printf("Stepping! Current time is %lf\n", currentTime_);
                 stepSize = algorithm_->do_step(currentTime_, endTime - currentTime_);
                 currentTime_ += stepSize;
                 ++lastStep_;
@@ -120,6 +121,7 @@ public:
                 }
                 algorithm_->timer_sleep();
             } while (!stopped_ && abs(currentTime_ - endTime) > stepSize * 0.01);
+            printf("Stopping simulation! Stopped is: %s, Current time is: %lf, remaining time is: %lf\n", stopped_? "true" : "false", currentTime_, abs(currentTime_ - endTime));
             return !stopped_;
         });
     }
