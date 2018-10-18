@@ -81,12 +81,12 @@ fixed_step_timer::fixed_step_timer(time_duration stepSize)
 
 fixed_step_timer::~fixed_step_timer() noexcept {}
 
-void fixed_step_timer::start()
+void fixed_step_timer::start(time_point /*currentTime*/)
 {
     pimpl_->start();
 }
 
-void fixed_step_timer::sleep()
+void fixed_step_timer::sleep(time_point /*currentTime*/, time_duration /*stepSize*/)
 {
     pimpl_->sleep();
 }

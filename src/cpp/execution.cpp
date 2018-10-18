@@ -113,7 +113,7 @@ public:
                 initialized_ = true;
             }
             stopped_ = false;
-            timer_->start();
+            timer_->start(currentTime_);
             time_duration stepSize;
             do {
                 stepSize = algorithm_->do_step(currentTime_, endTime - currentTime_);
@@ -122,7 +122,7 @@ public:
                 for (const auto& obs : observers_) {
                     obs->step_complete(lastStep_, stepSize, currentTime_);
                 }
-                timer_->sleep();
+                timer_->sleep(currentTime_, stepSize);
             } while (!stopped_ && endTime - currentTime_ > stepSize * relativeTolerance);
             return !stopped_;
         });
