@@ -17,7 +17,7 @@ class real_time_timer
 {
 
 public:
-    /*
+    /**
      * Creates a real_time_timer based on stepSize
      *
      * \param [in] stepSize
@@ -25,12 +25,12 @@ public:
      */
     real_time_timer(cse::time_duration stepSize);
 
-    /*
+    /**
      * Reset start time and internal step counter. To be called when the execution is started/resumed.
      */
     void start();
 
-    /*
+    /**
      * Calculates expected progress as well as elapsed time using system clock.
      * Calls thread sleep for the amount of time it would take to keep real time.
      * To be called at the tail end of each execution step.

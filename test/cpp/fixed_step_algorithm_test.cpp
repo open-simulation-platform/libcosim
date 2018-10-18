@@ -1,3 +1,4 @@
+#include <cmath>
 #include <exception>
 #include <memory>
 #include <stdexcept>
@@ -5,6 +6,7 @@
 #include <cse/algorithm.hpp>
 #include <cse/async_slave.hpp>
 #include <cse/execution.hpp>
+#include <cse/log.hpp>
 
 #include "mock_slave.hpp"
 
@@ -22,6 +24,8 @@ int main()
         constexpr cse::time_point midTime = 0.6;
         constexpr cse::time_point endTime = 1.0;
         constexpr cse::time_duration stepSize = 0.1;
+
+        cse::log::set_global_output_level(cse::log::level::debug);
 
         // Set up execution
         auto execution = cse::execution(
@@ -47,7 +51,7 @@ int main()
         // Run simulation
         auto simResult = execution.simulate_until(midTime);
         REQUIRE(simResult.get());
-        REQUIRE(execution.current_time() == midTime);
+        REQUIRE(std::fabs(execution.current_time() - midTime) < 1.0e-6);
         simResult = execution.simulate_until(endTime);
         REQUIRE(simResult.get());
 
@@ -60,7 +64,7 @@ int main()
             observer->get_real(j, gsl::make_span(&realInIndex, 1), gsl::make_span(&realInValue, 1));
             if (j > 0) {
                 // Check that real input of slave j has same value as real output of slave j - 1
-                REQUIRE(realInValue == lastRealOutValue);
+                REQUIRE(std::fabs(realInValue - lastRealOutValue) < 1.0e-9);
             }
         }
 
@@ -77,6 +81,22 @@ int main()
             REQUIRE(realValues[k] > lastValue);
             lastValue = realValues[k];
         }
+
+        constexpr cse::time_point finalTime = 5.0;
+
+        simResult = execution.simulate_until(finalTime);
+        const auto start = std::chrono::steady_clock::now();
+        REQUIRE(simResult.get());
+        const auto end = std::chrono::steady_clock::now();
+
+        const auto expected = std::chrono::duration<double>(finalTime - endTime);
+        const auto measured = end - start;
+        const auto tolerance = std::chrono::duration<double>(0.05);
+
+        bool fasterThanRealTime = (expected - measured) > tolerance;
+        bool slowerThanRealTime = (measured - expected) > tolerance;
+        REQUIRE(!slowerThanRealTime);
+        REQUIRE(!fasterThanRealTime);
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
