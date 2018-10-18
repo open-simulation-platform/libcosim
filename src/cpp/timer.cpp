@@ -23,13 +23,17 @@ public:
     void start()
     {
         startTime_ = Time::now();
+        rtStartTime_ = startTime_;
         counter_ = 1L;
+        rtCounter_ = 0L;
+        realTimeFactor_ = 1.0;
     }
 
     void sleep()
     {
+        Time::time_point current = Time::now();
+        update_real_time_factor(current);
         if (realTimeSimulation_) {
-            Time::time_point current = Time::now();
             Time::duration elapsed = current - startTime_;
 
             const std::chrono::nanoseconds expected(counter_ * stepDuration_.count());
@@ -55,8 +59,7 @@ public:
     void enable_real_time_simulation()
     {
         if (!realTimeSimulation_) {
-            startTime_ = Time::now();
-            counter_ = 1L;
+            start();
         }
         realTimeSimulation_ = true;
     }
@@ -66,12 +69,38 @@ public:
         realTimeSimulation_ = false;
     }
 
+    bool is_real_time_simulation()
+    {
+        return realTimeSimulation_;
+    }
+
+    double get_real_time_factor()
+    {
+        return realTimeFactor_;
+    }
+
 
 private:
     std::atomic<long> counter_ = 1L;
+    long rtCounter_ = 1L;
+    std::atomic<double> realTimeFactor_ = 1.0;
     std::chrono::nanoseconds stepDuration_;
-    std::chrono::steady_clock::time_point startTime_;
+    Time::time_point startTime_;
+    Time::time_point rtStartTime_;
     bool realTimeSimulation_ = false;
+
+    void update_real_time_factor(Time::time_point currentTime)
+    {
+        constexpr int stepsToMonitor = 5;
+        if (rtCounter_ >= stepsToMonitor) {
+            const std::chrono::nanoseconds expected(rtCounter_ * stepDuration_.count());
+            Time::duration elapsed = currentTime - rtStartTime_;
+            realTimeFactor_ = expected.count() / (1.0 * elapsed.count());
+            rtStartTime_ = currentTime;
+            rtCounter_ = 0L;
+        }
+        rtCounter_++;
+    }
 };
 
 fixed_step_timer::fixed_step_timer(time_duration stepSize)
@@ -100,6 +129,15 @@ void fixed_step_timer::disable_real_time_simulation()
 {
     pimpl_->disable_real_time_simulation();
 }
+
+bool fixed_step_timer::is_real_time_simulation()
+{
+    return pimpl_->is_real_time_simulation();
+};
+double fixed_step_timer::get_real_time_factor()
+{
+    return pimpl_->get_real_time_factor();
+};
 
 
 } // namespace cse

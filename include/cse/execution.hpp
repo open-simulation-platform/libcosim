@@ -75,6 +75,9 @@ public:
      *  \param algo
      *      The co-simulation algorithm which will be used. One `algorithm`
      *      object may only be used with one `execution`.
+     *  \param timer
+     *      The real-time timer which will be used. One `timer`
+     *      object may only be used with one `execution`.
      */
     execution(time_point startTime, std::shared_ptr<algorithm> algo, std::shared_ptr<real_time_timer> timer);
 
