@@ -10,7 +10,6 @@
 
 #include "cse/error.hpp"
 #include <cse/exception.hpp>
-#include <cse/timer.hpp>
 
 
 namespace
@@ -37,7 +36,6 @@ class fixed_step_algorithm::impl
 public:
     explicit impl(time_duration stepSize)
         : stepSize_(stepSize)
-        , timer_(stepSize)
     {
         CSE_INPUT_CHECK(stepSize > 0.0);
     }
@@ -120,16 +118,6 @@ public:
         step_simulators(currentT, currentStepSize);
         transfer_variables();
         return currentStepSize;
-    }
-
-    void timer_start()
-    {
-        timer_.start();
-    }
-
-    void timer_sleep()
-    {
-        timer_.sleep();
     }
 
 private:
@@ -230,7 +218,6 @@ private:
     std::optional<time_point> stopTime_;
     std::unordered_map<simulator_index, simulator*> simulators_;
     std::vector<connection> connections_;
-    real_time_timer timer_;
 };
 
 
@@ -305,16 +292,6 @@ time_duration fixed_step_algorithm::do_step(
     time_duration maxDeltaT)
 {
     return pimpl_->do_step(currentT, maxDeltaT);
-}
-
-void fixed_step_algorithm::timer_start()
-{
-    pimpl_->timer_start();
-}
-
-void fixed_step_algorithm::timer_sleep()
-{
-    pimpl_->timer_sleep();
 }
 
 

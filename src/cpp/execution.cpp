@@ -8,6 +8,7 @@
 
 #include "cse/slave_simulator.hpp"
 #include <cse/algorithm.hpp>
+#include <cse/timer.hpp>
 
 
 // Specialisation of std::hash for variable_id
@@ -35,12 +36,13 @@ namespace cse
 class execution::impl
 {
 public:
-    impl(time_point startTime, std::shared_ptr<algorithm> algo)
+    impl(time_point startTime, std::shared_ptr<algorithm> algo, std::shared_ptr<real_time_timer> timer)
         : lastStep_(0)
         , currentTime_(startTime)
         , initialized_(false)
         , stopped_(true)
         , algorithm_(algo)
+        , timer_(timer)
     {
         algorithm_->setup(currentTime_, std::nullopt);
     }
@@ -111,7 +113,7 @@ public:
                 initialized_ = true;
             }
             stopped_ = false;
-            algorithm_->timer_start();
+            timer_->start();
             time_duration stepSize;
             do {
                 stepSize = algorithm_->do_step(currentTime_, endTime - currentTime_);
@@ -120,7 +122,7 @@ public:
                 for (const auto& obs : observers_) {
                     obs->step_complete(lastStep_, stepSize, currentTime_);
                 }
-                algorithm_->timer_sleep();
+                timer_->sleep();
             } while (!stopped_ && endTime - currentTime_ > stepSize * relativeTolerance);
             return !stopped_;
         });
@@ -141,11 +143,12 @@ private:
     std::vector<std::unique_ptr<simulator>> simulators_;
     std::vector<std::shared_ptr<observer>> observers_;
     std::unordered_map<variable_id, variable_id> connections_; // (key, value) = (input, output)
+    std::shared_ptr<real_time_timer> timer_;
 };
 
 
-execution::execution(time_point startTime, std::shared_ptr<algorithm> algo)
-    : pimpl_(std::make_unique<impl>(startTime, algo))
+execution::execution(time_point startTime, std::shared_ptr<algorithm> algo, std::shared_ptr<real_time_timer> timer)
+    : pimpl_(std::make_unique<impl>(startTime, algo, timer))
 {
 }
 

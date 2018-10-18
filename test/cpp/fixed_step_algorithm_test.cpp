@@ -7,6 +7,7 @@
 #include <cse/async_slave.hpp>
 #include <cse/execution.hpp>
 #include <cse/log.hpp>
+#include <cse/timer.hpp>
 
 #include "mock_slave.hpp"
 
@@ -27,10 +28,13 @@ int main()
 
         cse::log::set_global_output_level(cse::log::level::debug);
 
+        std::shared_ptr<cse::real_time_timer> timer = std::make_unique<cse::fixed_step_timer>(stepSize);
+
         // Set up execution
         auto execution = cse::execution(
             startTime,
-            std::make_unique<cse::fixed_step_algorithm>(stepSize));
+            std::make_unique<cse::fixed_step_algorithm>(stepSize),
+            timer);
 
         auto observer = std::make_shared<cse::membuffer_observer>();
         execution.add_observer(observer);
@@ -50,10 +54,17 @@ int main()
 
         // Run simulation
         auto simResult = execution.simulate_until(midTime);
+        auto start = std::chrono::steady_clock::now();
         REQUIRE(simResult.get());
         REQUIRE(std::fabs(execution.current_time() - midTime) < 1.0e-6);
         simResult = execution.simulate_until(endTime);
         REQUIRE(simResult.get());
+        auto end = std::chrono::steady_clock::now();
+
+        auto simulatedDuration = std::chrono::duration<double>(endTime - startTime);
+        auto measuredDuration = end - start;
+        bool fasterThanRealTime = measuredDuration < simulatedDuration;
+        REQUIRE(fasterThanRealTime);
 
         double realOutValue = -1.0;
         double realInValue = -1.0;
@@ -84,17 +95,18 @@ int main()
 
         constexpr cse::time_point finalTime = 5.0;
 
+        timer->enable_real_time_simulation();
         simResult = execution.simulate_until(finalTime);
-        const auto start = std::chrono::steady_clock::now();
+        start = std::chrono::steady_clock::now();
         REQUIRE(simResult.get());
-        const auto end = std::chrono::steady_clock::now();
+        end = std::chrono::steady_clock::now();
 
-        const auto expected = std::chrono::duration<double>(finalTime - endTime);
-        const auto measured = end - start;
+        simulatedDuration = std::chrono::duration<double>(finalTime - endTime);
+        measuredDuration = end - start;
         const auto tolerance = std::chrono::duration<double>(0.05);
 
-        bool fasterThanRealTime = (expected - measured) > tolerance;
-        bool slowerThanRealTime = (measured - expected) > tolerance;
+        fasterThanRealTime = (simulatedDuration - measuredDuration) > tolerance;
+        bool slowerThanRealTime = (measuredDuration - simulatedDuration) > tolerance;
         REQUIRE(!slowerThanRealTime);
         REQUIRE(!fasterThanRealTime);
 

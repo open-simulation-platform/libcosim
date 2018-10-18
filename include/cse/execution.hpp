@@ -54,6 +54,7 @@ inline bool operator!=(const variable_id& a, const variable_id& b) noexcept
 // Forward declarations
 class algorithm;
 class observer;
+class real_time_timer;
 
 
 /**
@@ -75,7 +76,7 @@ public:
      *      The co-simulation algorithm which will be used. One `algorithm`
      *      object may only be used with one `execution`.
      */
-    execution(time_point startTime, std::shared_ptr<algorithm> algo);
+    execution(time_point startTime, std::shared_ptr<algorithm> algo, std::shared_ptr<real_time_timer> timer);
 
     ~execution() noexcept;
 
