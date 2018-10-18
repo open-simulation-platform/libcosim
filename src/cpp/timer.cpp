@@ -133,11 +133,12 @@ void fixed_step_timer::disable_real_time_simulation()
 bool fixed_step_timer::is_real_time_simulation()
 {
     return pimpl_->is_real_time_simulation();
-};
+}
+
 double fixed_step_timer::get_real_time_factor()
 {
     return pimpl_->get_real_time_factor();
-};
+}
 
 
 } // namespace cse
