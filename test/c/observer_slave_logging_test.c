@@ -76,7 +76,7 @@ int main()
         teardown(execution);
     }
 
-    cse_variable_index variableIndex = 0;
+    cse_variable_index variable_index = 0;
     const size_t numSamples = 20;
     const long fromStep = 0;
 
@@ -105,14 +105,14 @@ int main()
 
     int intValues[20];
     long steps[20];
-    size_t intSamples = cse_observer_slave_get_integer_samples(observer, observerSlaveIndex, variableIndex, fromStep, numSamples, intValues, steps);
+    size_t intSamples = cse_observer_slave_get_integer_samples(observer, observerSlaveIndex, variable_index, fromStep, numSamples, intValues, steps);
 
     if (intSamples != 20) {
         teardown_message(execution, "Expected 20 integer samples read");
     }
 
     double realValues[20];
-    size_t realSamples = cse_observer_slave_get_real_samples(observer, observerSlaveIndex, variableIndex, fromStep, numSamples, realValues, steps);
+    size_t realSamples = cse_observer_slave_get_real_samples(observer, observerSlaveIndex, variable_index, fromStep, numSamples, realValues, steps);
 
     if (realSamples != 20) {
         teardown_message(execution, "Expected 20 real samples read");
