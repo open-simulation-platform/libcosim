@@ -45,8 +45,7 @@ int main()
         // Setup all slaves
         std::vector<future<void>> setupResults;
         for (const auto& slave : asyncSlaves) {
-            setupResults.push_back(
-                slave->setup("", "", startTime, endTime, false, 0.0));
+            setupResults.push_back(slave->setup(startTime, endTime, std::nullopt));
         }
         for (auto& r : setupResults) {
             r.get(); // Throws if an operation failed

@@ -7,6 +7,7 @@
 
 #include <memory>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include <boost/filesystem.hpp>
@@ -67,10 +68,11 @@ public:
     std::shared_ptr<const cse::model_description>
     model_description() const override;
 
-    std::shared_ptr<fmi::slave_instance> instantiate_slave() override
+    std::shared_ptr<fmi::slave_instance> instantiate_slave(
+        std::string_view instanceName) override
     {
         return std::static_pointer_cast<fmi::slave_instance>(
-            instantiate_v2_slave());
+            instantiate_v2_slave(instanceName));
     }
 
     std::shared_ptr<fmi::importer> importer() const override;
@@ -81,7 +83,8 @@ public:
      *  This is equivalent to `instantiate_slave()`, except that the returned
      *  object is statically typed as an FMI 2.0 slave.
      */
-    std::shared_ptr<v2::slave_instance> instantiate_v2_slave();
+    std::shared_ptr<v2::slave_instance> instantiate_v2_slave(
+        std::string_view instanceName);
 
     /// Returns the path to the directory in which this FMU was unpacked.
     boost::filesystem::path directory() const;
@@ -109,8 +112,8 @@ class slave_instance : public fmi::slave_instance
 {
 private:
     // Only fmu is allowed to instantiate this class.
-    friend std::shared_ptr<slave_instance> fmu::instantiate_v2_slave();
-    slave_instance(std::shared_ptr<v2::fmu> fmu);
+    friend std::shared_ptr<slave_instance> fmu::instantiate_v2_slave(std::string_view);
+    slave_instance(std::shared_ptr<v2::fmu> fmu, std::string_view instanceName);
 
 public:
     // Disable copy and move.
@@ -123,12 +126,9 @@ public:
 
     // cse::slave methods
     void setup(
-        std::string_view slaveName,
-        std::string_view executionName,
         time_point startTime,
-        time_point stopTime,
-        bool adaptiveStepSize,
-        double relativeTolerance) override;
+        std::optional<time_point> stopTime,
+        std::optional<double> relativeTolerance) override;
     void start_simulation() override;
     void end_simulation() override;
     step_result do_step(time_point currentT, time_duration deltaT) override;

@@ -5,6 +5,7 @@
 #ifndef CSE_SLAVE_HPP
 #define CSE_SLAVE_HPP
 
+#include <optional>
 #include <string>
 
 #include <gsl/span>
@@ -60,29 +61,20 @@ public:
      *  (In other words, it is guaranteed that do_step() will never be called
      *  with a time point outside this interval.)
      *
-     *  \param [in] slaveName
-     *      The name of the slave in the current execution.  May be empty.
-     *  \param [in] executionName
-     *      The name of the current execution.  May be empty.
      *  \param [in] startTime
      *      The earliest possible time point for the simulation.
      *  \param [in] stopTime
      *      The latest possible time point for the simulation.  May be
-     *      `eternity`if there is no defined stop time.
-     *  \param [in] adaptiveStepSize
-     *      Whether the step size is being controlled by error estimation.
+     *      left unspecified if there is no defined stop time.
      *  \param [in] relativeTolerance
-     *      Only used if `adaptiveStepSize == true`, and then contains the
-     *      relative tolerance of the step size controller.  The slave may
-     *      then use this for error estimation in its internal integrator.
+     *      If specified, this contains the relative tolerance of the step
+     *      size controller.  The slave may then use this for error control
+     *      in its internal integrator.
      */
     virtual void setup(
-        std::string_view slaveName,
-        std::string_view executionName,
         time_point startTime,
-        time_point stopTime,
-        bool adaptiveStepSize,
-        double relativeTolerance) = 0;
+        std::optional<time_point> stopTime,
+        std::optional<double> relativeTolerance) = 0;
 
     /**
      *  Informs the slave that the initialisation stage ends and the

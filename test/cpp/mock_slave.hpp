@@ -61,12 +61,9 @@ public:
     }
 
     void setup(
-        std::string_view /*slaveName*/,
-        std::string_view /*executionName*/,
         cse::time_point /*startTime*/,
-        cse::time_point /*stopTime*/,
-        bool /*adaptiveStepSize*/,
-        double /*relativeTolerance*/) override
+        std::optional<cse::time_point> /*stopTime*/,
+        std::optional<double> /*relativeTolerance*/) override
     {
     }
 

@@ -71,8 +71,8 @@ void run_tests(std::shared_ptr<fmi::fmu> fmu)
     bool booleanVal = false;
     std::string stringVal;
 
-    auto instance = fmu->instantiate_slave();
-    instance->setup("testSlave", "testExecution", 0.0, tMax, false, 0.0);
+    auto instance = fmu->instantiate_slave("testSlave");
+    instance->setup(0.0, tMax, std::nullopt);
     instance->start_simulation();
 
     for (double t = 0; t < tMax; t += dt) {

@@ -169,13 +169,7 @@ public:
         std::optional<time_point> stopTime,
         std::optional<double> tolerance)
     {
-        return slave_->setup(
-            name_,
-            std::string(),
-            startTime,
-            stopTime ? *stopTime : cse::eternity,
-            !!tolerance,
-            tolerance ? *tolerance : 0.0);
+        return slave_->setup(startTime, stopTime, tolerance);
     }
 
     boost::fibers::future<step_result> do_step(

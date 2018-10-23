@@ -5,6 +5,7 @@
 #include <cstdarg>
 #include <cstdlib>
 #include <cstring>
+#include <limits>
 #include <mutex>
 #include <stdexcept>
 #include <type_traits>
@@ -112,8 +113,10 @@ void prune(std::vector<std::weak_ptr<slave_instance>>& instances)
 } // namespace
 
 
-std::shared_ptr<v1::slave_instance> fmu::instantiate_v1_slave()
+std::shared_ptr<v1::slave_instance> fmu::instantiate_v1_slave(
+    std::string_view instanceName)
 {
+    CSE_INPUT_CHECK(!instanceName.empty());
 #ifdef _WIN32
     if (!additionalDllSearchPath_) {
         additionalDllSearchPath_ =
@@ -128,8 +131,8 @@ std::shared_ptr<v1::slave_instance> fmu::instantiate_v1_slave()
             make_error_code(errc::unsupported_feature),
             "FMU can only be instantiated once");
     }
-    auto instance =
-        std::shared_ptr<slave_instance>(new slave_instance(shared_from_this()));
+    auto instance = std::shared_ptr<slave_instance>(
+        new slave_instance(shared_from_this(), instanceName));
     instances_.push_back(instance);
     return instance;
 }
@@ -252,10 +255,14 @@ log_record last_log_record(const std::string& instanceName)
 } // namespace
 
 
-slave_instance::slave_instance(std::shared_ptr<v1::fmu> fmu)
+slave_instance::slave_instance(
+    std::shared_ptr<v1::fmu> fmu,
+    std::string_view instanceName)
     : fmu_{fmu}
     , handle_{fmi1_import_parse_xml(fmu->importer()->fmilib_handle(), fmu->directory().string().c_str())}
+    , instanceName_(instanceName)
 {
+    assert(!instanceName.empty());
     if (handle_ == nullptr) {
         throw error(
             make_error_code(errc::bad_file),
@@ -275,48 +282,41 @@ slave_instance::slave_instance(std::shared_ptr<v1::fmu> fmu)
             make_error_code(errc::dl_load_error),
             fmu->importer()->last_error_message());
     }
+
+    const auto rc = fmi1_import_instantiate_slave(
+        handle_,
+        instanceName_.c_str(),
+        nullptr, // fmuLocation
+        nullptr, // mimeType
+        0, // timeout
+        fmi1_false, // visible
+        fmi1_false); // interactive
+    if (rc != jm_status_success) {
+        fmi1_import_destroy_dllfmu(handle_);
+        fmi1_import_free(handle_);
+        throw error(
+            make_error_code(errc::model_error),
+            last_log_record(instanceName_).message);
+    }
 }
 
 
 slave_instance::~slave_instance() noexcept
 {
-    if (setupComplete_) {
-        if (simStarted_) {
-            fmi1_import_terminate_slave(handle_);
-        }
-        fmi1_import_free_slave_instance(handle_);
+    if (simStarted_) {
+        fmi1_import_terminate_slave(handle_);
     }
+    fmi1_import_free_slave_instance(handle_);
     fmi1_import_destroy_dllfmu(handle_);
     fmi1_import_free(handle_);
 }
 
 
 void slave_instance::setup(
-    std::string_view slaveName,
-    std::string_view /*executionName*/,
     time_point startTime,
-    time_point stopTime,
-    bool /*adaptiveStepSize*/,
-    double /*relativeTolerance*/)
+    std::optional<time_point> stopTime,
+    std::optional<double> /*relativeTolerance*/)
 {
-    assert(!setupComplete_);
-    const auto instanceName = std::string(slaveName);
-    const auto rc = fmi1_import_instantiate_slave(
-        handle_,
-        instanceName.c_str(),
-        nullptr,
-        nullptr,
-        0,
-        fmi1_false,
-        fmi1_false);
-    if (rc != jm_status_success) {
-        throw error(
-            make_error_code(errc::model_error),
-            last_log_record(instanceName).message);
-    }
-    setupComplete_ = true;
-
-    instanceName_ = std::move(instanceName);
     startTime_ = startTime;
     stopTime_ = stopTime;
 }
@@ -324,13 +324,12 @@ void slave_instance::setup(
 
 void slave_instance::start_simulation()
 {
-    assert(setupComplete_);
     assert(!simStarted_);
     const auto rc = fmi1_import_initialize_slave(
         handle_,
         startTime_,
-        stopTime_ != eternity,
-        stopTime_);
+        stopTime_.has_value(),
+        stopTime_ ? *stopTime_ : std::numeric_limits<fmi1_real_t>::quiet_NaN());
     if (rc != fmi1_status_ok && rc != fmi1_status_warning) {
         throw error(
             make_error_code(errc::model_error),

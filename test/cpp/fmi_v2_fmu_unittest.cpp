@@ -29,8 +29,8 @@ BOOST_AUTO_TEST_CASE(v2_fmu)
     BOOST_TEST(d->version.empty());
     BOOST_TEST(std::static_pointer_cast<fmi::v2::fmu>(fmu)->fmilib_handle() != nullptr);
 
-    auto instance = fmu->instantiate_slave();
-    instance->setup("testSlave", "testExecution", 0.0, 1.0, false, 0.0);
+    auto instance = fmu->instantiate_slave("testSlave");
+    instance->setup(0.0, 1.0, std::nullopt);
 
     bool foundValve = false;
     bool foundMinlevel = false;

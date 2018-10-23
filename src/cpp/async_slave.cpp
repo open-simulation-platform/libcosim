@@ -44,16 +44,13 @@ public:
     }
 
     boost::fibers::future<void> setup(
-        std::string_view slaveName,
-        std::string_view executionName,
         cse::time_point startTime,
-        cse::time_point stopTime,
-        bool adaptiveStepSize,
-        double relativeTolerance)
+        std::optional<time_point> stopTime,
+        std::optional<double> relativeTolerance)
         override
     {
-        return boost::fibers::async([=, sn = std::string(slaveName), en = std::string(executionName)]() {
-            slave_->setup(sn, en, startTime, stopTime, adaptiveStepSize, relativeTolerance);
+        return boost::fibers::async([=]() {
+            slave_->setup(startTime, stopTime, relativeTolerance);
         });
     }
 
