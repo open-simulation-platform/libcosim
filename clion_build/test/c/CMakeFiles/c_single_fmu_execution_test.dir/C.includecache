@@ -1,0 +1,28 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+../include/cse.h
+stddef.h
+-
+stdint.h
+-
+
+C:/Dev/osp/cse-core-branches/master/cse-core/test/c/single_fmu_execution_test.c
+stdio.h
+-
+stdlib.h
+-
+cse.h
+-
+math.h
+-
+windows.h
+-
+unistd.h
+-
+
