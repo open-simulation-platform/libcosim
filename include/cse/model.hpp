@@ -22,10 +22,6 @@ namespace cse
 using time_point = double;
 
 
-/// A special `time_point` value that lies infinitely far in the future.
-const time_point eternity = std::numeric_limits<time_point>::infinity();
-
-
 /**
  *  The type used to specify (simulation) time durations.
  *
