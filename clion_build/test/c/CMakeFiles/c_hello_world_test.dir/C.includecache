@@ -1,0 +1,20 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+../include/cse.h
+stddef.h
+-
+stdint.h
+-
+
+C:/Dev/osp/cse-core-branches/master/cse-core/test/c/hello_world_test.c
+cse.h
+-
+string.h
+-
+

@@ -445,6 +445,10 @@ cse_slave_index cse_observer_add_slave(
     cse_observer* observer,
     cse_slave* slave);
 
+int cse_logIntValues(char* logPath, int* values, int nSamples, int binary);
+int cse_logRealValues(char* logPath, double* values, int nSamples, int binary);
+int cse_logMemoryMapped(char *logPath, double* values);
+
 
 #ifdef __cplusplus
 } // extern(C)
