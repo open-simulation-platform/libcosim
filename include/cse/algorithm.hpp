@@ -80,8 +80,9 @@ public:
     /**
      *  Performs pre-simulation setup and enters initialisation mode.
      *
-     *  It is optional to call this function, and it is only allowed to do so
-     *  before `do_step()` has been called for the first time.
+     *  This function must be called exactly once, before initialisation and
+     *  simulation can begin (i.e. before the first time either of
+     *  `do_iteration()` or `do_step()` are called).
      *
      *  \param startTime
      *      The logical time at which the simulation will start. (The first
@@ -104,6 +105,18 @@ public:
         std::optional<double> relativeTolerance) = 0;
 
 
+
+    /**
+     *  Updates the simulator with new input values and makes it calculate
+     *  new output values, without advancing logical time.
+     *
+     *  This function can be used in the initialisation phase, after `setup()`
+     *  has been called and before the first `do_step()` call.  It enables
+     *  iterative initialisation of the system.  The purpose could be to
+     *  propagate initial values between simulators and/or bring the system
+     *  to a steady state.
+     */
+    virtual boost::fibers::future<void> do_iteration() = 0;
 
     /**
      *  Performs a single time step.

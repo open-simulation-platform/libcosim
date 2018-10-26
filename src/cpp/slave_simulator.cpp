@@ -172,39 +172,61 @@ public:
         return slave_->setup(startTime, stopTime, relativeTolerance);
     }
 
+    boost::fibers::future<void> do_iteration()
+    {
+        // clang-format off
+        return boost::fibers::async([=]() {
+            set_variables();
+            get_variables();
+        });
+        // clang-format on
+    }
+
     boost::fibers::future<step_result> do_step(
         time_point currentT,
         time_duration deltaT)
     {
         // clang-format off
         return boost::fibers::async([=]() {
-            slave_->set_variables(
-                    gsl::make_span(realSetCache_.indexes),
-                    gsl::make_span(realSetCache_.values),
-                    gsl::make_span(integerSetCache_.indexes),
-                    gsl::make_span(integerSetCache_.values),
-                    gsl::make_span(booleanSetCache_.indexes),
-                    gsl::make_span(booleanSetCache_.values),
-                    gsl::make_span(stringSetCache_.indexes),
-                    gsl::make_span(stringSetCache_.values)
-                ).get();
+            if (slave_->state() == slave_state::initialisation) {
+                slave_->start_simulation().get();
+            }
+            set_variables();
             const auto result = slave_->do_step(currentT, deltaT).get();
-            const auto values = slave_->get_variables(
-                    gsl::make_span(realGetCache_.indexes),
-                    gsl::make_span(integerGetCache_.indexes),
-                    gsl::make_span(booleanGetCache_.indexes),
-                    gsl::make_span(stringGetCache_.indexes)
-                ).get();
-            copy_contents(values.real,    realGetCache_.values);
-            copy_contents(values.integer, integerGetCache_.values);
-            copy_contents(values.boolean, booleanGetCache_.values);
-            copy_contents(values.string,  stringGetCache_.values);
+            get_variables();
             return result;
         });
         // clang-format on
     }
 
 private:
+    void set_variables()
+    {
+        slave_->set_variables(
+                gsl::make_span(realSetCache_.indexes),
+                gsl::make_span(realSetCache_.values),
+                gsl::make_span(integerSetCache_.indexes),
+                gsl::make_span(integerSetCache_.values),
+                gsl::make_span(booleanSetCache_.indexes),
+                gsl::make_span(booleanSetCache_.values),
+                gsl::make_span(stringSetCache_.indexes),
+                gsl::make_span(stringSetCache_.values)
+            ).get();
+    }
+    void get_variables()
+    {
+        const auto values = slave_->get_variables(
+                gsl::make_span(realGetCache_.indexes),
+                gsl::make_span(integerGetCache_.indexes),
+                gsl::make_span(booleanGetCache_.indexes),
+                gsl::make_span(stringGetCache_.indexes)
+            ).get();
+        copy_contents(values.real,    realGetCache_.values);
+        copy_contents(values.integer, integerGetCache_.values);
+        copy_contents(values.boolean, booleanGetCache_.values);
+        copy_contents(values.string,  stringGetCache_.values);
+    }
+
     std::unique_ptr<async_slave> slave_;
     std::string name_;
     cse::model_description modelDescription_;
@@ -312,6 +334,12 @@ boost::fibers::future<void> slave_simulator::setup(
     std::optional<double> relativeTolerance)
 {
     return pimpl_->setup(startTime, stopTime, relativeTolerance);
+}
+
+
+boost::fibers::future<void> slave_simulator::do_iteration()
+{
+    return pimpl_->do_iteration();
 }
 
 
