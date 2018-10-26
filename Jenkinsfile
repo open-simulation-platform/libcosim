@@ -98,7 +98,7 @@ pipeline {
                         dockerfile { 
                             filename 'cse-core/Dockerfile.conan-build'
                             label 'linux && docker'
-                            args "-v ${env.HOME}/jenkins_slave/conan-repositories/${env.EXECUTOR_NUMBER}:/root/.conan -e CONAN_USER_HOME_SHORT=None"
+                            args '-v ${env.HOME}/jenkins_slave/conan-repositories/${env.EXECUTOR_NUMBER}:/root/.conan -e CONAN_USER_HOME_SHORT=None'
                         }
                     }
                     
