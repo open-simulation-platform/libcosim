@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include "slave_observer.hpp"
 
 namespace cse

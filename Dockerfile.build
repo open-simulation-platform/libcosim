@@ -2,8 +2,6 @@ FROM ubuntu:18.04
 
 RUN apt-get update && apt-get install -y \
   build-essential \
-  gcc-8 \
-  g++-8 \
   cmake \
   doxygen \
   git \
@@ -12,10 +10,6 @@ RUN apt-get update && apt-get install -y \
   libzip-dev \
   libmsgsl-dev \
   && rm -rf /var/lib/apt/lists/*
-
-# Make gcc-8 default
-RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 700 --slave /usr/bin/g++ g++ /usr/bin/g++-7
-RUN update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 800 --slave /usr/bin/g++ g++ /usr/bin/g++-8
 
 # Installing FMI Library from prebuilt .deb packages
 WORKDIR /tmp/libfmi

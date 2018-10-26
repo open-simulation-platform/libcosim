@@ -93,14 +93,15 @@ pipeline {
                         }
                     }
                 }
-                stage ( 'Build on Linux' ) {
-                    agent { label 'linux' }
-                    
-                    environment {
-                        CONAN_USER_HOME = "${env.HOME}/jenkins_slave/conan-repositories/${env.EXECUTOR_NUMBER}"
-                        CONAN_USER_HOME_SHORT = "${env.CONAN_USER_HOME}"
+                stage ( 'Build on Linux with Conan' ) {
+                    agent { 
+                        dockerfile { 
+                            filename 'cse-core/Dockerfile.conan-build'
+                            label 'linux && docker'
+                            args "-v ${env.HOME}/jenkins_slave/conan-repositories/${env.EXECUTOR_NUMBER}:/root/.conan -e CONAN_USER_HOME_SHORT=None"
+                        }
                     }
-
+                    
                     stages {
                         stage('Conan add remote') {
                             steps {
@@ -164,7 +165,7 @@ pipeline {
                         }
                     }
                 }
-                stage ( 'Build with Ubuntu 18.04 Dockerfile' ) {
+                stage ( 'Build on Linux with Docker' ) {
                     agent { 
                         dockerfile { 
                             filename 'cse-core/Dockerfile.build'
@@ -185,7 +186,7 @@ pipeline {
                         }
                         stage('Build Release') {
                             steps {
-                                dir('release-build') {
+                                dir('release-build ') {
                                     sh 'cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../install -DCSECORE_USING_CONAN=FALSE -DCSECORE_BUILD_PRIVATE_APIDOC=ON ../cse-core'
                                     sh 'cmake --build .'
                                     sh 'cmake --build . --target install'
