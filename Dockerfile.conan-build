@@ -5,8 +5,9 @@ RUN apt-get update && apt-get install -y \
   cmake \
   doxygen \
   git \
-  python-pip \
+  python-dev \
+  python3-pip \
   && rm -rf /var/lib/apt/lists/*
 
 # Install  Conan package manager
-RUN pip install conan
+RUN pip3 install conan
