@@ -5,6 +5,7 @@
 #include <cstdarg>
 #include <cstdlib>
 #include <cstring>
+#include <limits>
 #include <mutex>
 #include <stdexcept>
 #include <type_traits>
@@ -111,8 +112,10 @@ void prune(std::vector<std::weak_ptr<slave_instance>>& instances)
 } // namespace
 
 
-std::shared_ptr<v2::slave_instance> fmu::instantiate_v2_slave()
+std::shared_ptr<v2::slave_instance> fmu::instantiate_v2_slave(
+    std::string_view instanceName)
 {
+    CSE_INPUT_CHECK(!instanceName.empty());
 #ifdef _WIN32
     if (!additionalDllSearchPath_) {
         additionalDllSearchPath_ =
@@ -128,8 +131,8 @@ std::shared_ptr<v2::slave_instance> fmu::instantiate_v2_slave()
             make_error_code(errc::unsupported_feature),
             "FMU can only be instantiated once");
     }
-    auto instance =
-        std::shared_ptr<slave_instance>(new slave_instance(shared_from_this()));
+    auto instance = std::shared_ptr<slave_instance>(
+        new slave_instance(shared_from_this(), instanceName));
     instances_.push_back(instance);
     return instance;
 }
@@ -252,10 +255,14 @@ log_record last_log_record(const std::string& instanceName)
 } // namespace
 
 
-slave_instance::slave_instance(std::shared_ptr<v2::fmu> fmu)
+slave_instance::slave_instance(
+    std::shared_ptr<v2::fmu> fmu,
+    std::string_view instanceName)
     : fmu_{fmu}
     , handle_{fmi2_import_parse_xml(fmu->importer()->fmilib_handle(), fmu->directory().string().c_str(), nullptr)}
+    , instanceName_(instanceName)
 {
+    assert(!instanceName.empty());
     if (handle_ == nullptr) {
         throw error(
             make_error_code(errc::bad_file),
@@ -276,66 +283,61 @@ slave_instance::slave_instance(std::shared_ptr<v2::fmu> fmu)
             make_error_code(errc::dl_load_error),
             fmu->importer()->last_error_message());
     }
+
+    const auto rc = fmi2_import_instantiate(
+        handle_,
+        instanceName_.c_str(),
+        fmi2_cosimulation,
+        nullptr, // fmuResourceLocation
+        fmi2_false); // visible
+    if (rc != jm_status_success) {
+        fmi2_import_destroy_dllfmu(handle_);
+        fmi2_import_free(handle_);
+        throw error(
+            make_error_code(errc::model_error),
+            last_log_record(instanceName_).message);
+    }
 }
 
 
 slave_instance::~slave_instance() noexcept
 {
-    if (setupComplete_) {
-        if (simStarted_) {
-            fmi2_import_terminate(handle_);
-        }
-        fmi2_import_free_instance(handle_);
+    if (simStarted_) {
+        fmi2_import_terminate(handle_);
     }
+    fmi2_import_free_instance(handle_);
     fmi2_import_destroy_dllfmu(handle_);
     fmi2_import_free(handle_);
 }
 
 
 void slave_instance::setup(
-    std::string_view slaveName,
-    std::string_view /*executionName*/,
     time_point startTime,
-    time_point stopTime,
-    bool adaptiveStepSize,
-    double relativeTolerance)
+    std::optional<time_point> stopTime,
+    std::optional<double> relativeTolerance)
 {
     assert(!setupComplete_);
-    const auto instanceName = std::string(slaveName);
-    const auto rci = fmi2_import_instantiate(
-        handle_,
-        instanceName.c_str(),
-        fmi2_cosimulation,
-        nullptr,
-        fmi2_false);
-    if (rci != jm_status_success) {
-        throw error(
-            make_error_code(errc::model_error),
-            last_log_record(instanceName).message);
-    }
-
     const auto rcs = fmi2_import_setup_experiment(
         handle_,
-        adaptiveStepSize ? fmi2_true : fmi2_false,
-        relativeTolerance,
+        relativeTolerance ? fmi2_true : fmi2_false,
+        relativeTolerance ? *relativeTolerance : 0.0,
         startTime,
-        stopTime == eternity ? fmi2_false : fmi2_true,
-        stopTime);
+        stopTime ? fmi2_true : fmi2_false,
+        stopTime ? *stopTime : std::numeric_limits<fmi2_real_t>::quiet_NaN());
     if (rcs != fmi2_status_ok && rcs != fmi2_status_warning) {
         throw error(
             make_error_code(errc::model_error),
-            last_log_record(instanceName).message);
+            last_log_record(instanceName_).message);
     }
 
     const auto rce = fmi2_import_enter_initialization_mode(handle_);
     if (rce != fmi2_status_ok && rce != fmi2_status_warning) {
         throw error(
             make_error_code(errc::model_error),
-            last_log_record(instanceName).message);
+            last_log_record(instanceName_).message);
     }
 
     setupComplete_ = true;
-    instanceName_ = std::move(instanceName);
 }
 
 

@@ -171,7 +171,7 @@ cse_slave* cse_local_slave_create(const char* fmuPath)
         const auto importer = cse::fmi::importer::create();
         const auto fmu = importer->import(fmuPath);
         auto slave = std::make_unique<cse_slave>();
-        slave->instance = fmu->instantiate_slave();
+        slave->instance = fmu->instantiate_slave("unnamed slave");
         // slave address not in use yet. Should be something else than a string.
         slave->address = "local";
         return slave.release();
@@ -188,12 +188,9 @@ cse_slave_index cse_execution_add_slave(
     try {
         auto instance = slave->instance;
         instance->setup(
-            "unnamed slave",
-            "unnamed execution",
             execution->startTime + execution->currentSteps * execution->stepSize,
-            cse::eternity,
-            false,
-            0.0);
+            std::nullopt,
+            std::nullopt);
         instance->start_simulation();
         execution->slaves.push_back(instance);
         return static_cast<cse_slave_index>(execution->slaves.size() - 1);

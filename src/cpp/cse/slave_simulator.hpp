@@ -49,7 +49,7 @@ public:
     boost::fibers::future<void> setup(
         time_point startTime,
         std::optional<time_point> stopTime,
-        std::optional<double> tolerance) override;
+        std::optional<double> relativeTolerance) override;
 
     boost::fibers::future<step_result> do_step(
         time_point currentT,

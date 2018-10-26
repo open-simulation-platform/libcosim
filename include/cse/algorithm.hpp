@@ -78,7 +78,7 @@ public:
     virtual void set_string(variable_index index, std::string_view value) = 0;
 
     /**
-     *  Performs initial setup.
+     *  Performs pre-simulation setup and enters initialisation mode.
      *
      *  It is optional to call this function, and it is only allowed to do so
      *  before `do_step()` has been called for the first time.
@@ -90,18 +90,20 @@ public:
      *  \param stopTime
      *      The logical time at which the simulation will end. If specified,
      *      the simulator may not be stepped beyond this point.
-     *  \param tolerance
-     *      A suggested (usually relative) tolerance for the internal error
-     *      estimation of the simulator's solver.  This should be specified
-     *      if the co-simulation algorithm itself uses error estimation to
-     *      determine the length of communication intervals.  If the simulator's
+     *  \param relativeTolerance
+     *      A suggested relative tolerance for the internal error estimation
+     *      of the simulator's solver.  This should be specified if the
+     *      co-simulation algorithm itself uses error estimation to determine
+     *      the length of communication intervals.  If the simulator's
      *      solver doesn't use error estimation, it will just ignore this
      *      parameter.
      */
     virtual boost::fibers::future<void> setup(
         time_point startTime,
         std::optional<time_point> stopTime,
-        std::optional<double> tolerance) = 0;
+        std::optional<double> relativeTolerance) = 0;
+
+
 
     /**
      *  Performs a single time step.

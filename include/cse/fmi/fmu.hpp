@@ -6,6 +6,7 @@
 #define CSE_FMI_FMU_HPP
 
 #include <memory>
+#include <string_view>
 
 #include <cse/model.hpp>
 #include <cse/slave.hpp>
@@ -53,7 +54,8 @@ public:
     model_description() const = 0;
 
     /// Creates a co-simulation slave instance of this FMU.
-    virtual std::shared_ptr<slave_instance> instantiate_slave() = 0;
+    virtual std::shared_ptr<slave_instance> instantiate_slave(
+        std::string_view instanceName) = 0;
 
     /// The `fmi::importer` which was used to import this FMU.
     virtual std::shared_ptr<fmi::importer> importer() const = 0;

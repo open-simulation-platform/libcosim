@@ -6,8 +6,8 @@
 #define CSE_ASYNC_SLAVE_HPP
 
 #include <memory>
+#include <optional>
 #include <string>
-#include <string_view>
 
 #include <boost/fiber/future/future.hpp>
 #include <gsl/span>
@@ -65,12 +65,9 @@ public:
      *  \see slave::setup()
      */
     virtual boost::fibers::future<void> setup(
-        std::string_view slaveName,
-        std::string_view executionName,
         time_point startTime,
-        time_point stopTime,
-        bool adaptiveStepSize,
-        double relativeTolerance) = 0;
+        std::optional<time_point> stopTime,
+        std::optional<double> relativeTolerance) = 0;
 
     /**
      *  Informs the slave that the initialisation stage ends and the

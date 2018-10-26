@@ -167,15 +167,9 @@ public:
     boost::fibers::future<void> setup(
         time_point startTime,
         std::optional<time_point> stopTime,
-        std::optional<double> tolerance)
+        std::optional<double> relativeTolerance)
     {
-        return slave_->setup(
-            name_,
-            std::string(),
-            startTime,
-            stopTime ? *stopTime : cse::eternity,
-            !!tolerance,
-            tolerance ? *tolerance : 0.0);
+        return slave_->setup(startTime, stopTime, relativeTolerance);
     }
 
     boost::fibers::future<step_result> do_step(
@@ -315,9 +309,9 @@ void slave_simulator::set_string(variable_index index, std::string_view value)
 boost::fibers::future<void> slave_simulator::setup(
     time_point startTime,
     std::optional<time_point> stopTime,
-    std::optional<double> tolerance)
+    std::optional<double> relativeTolerance)
 {
-    return pimpl_->setup(startTime, stopTime, tolerance);
+    return pimpl_->setup(startTime, stopTime, relativeTolerance);
 }
 
 
