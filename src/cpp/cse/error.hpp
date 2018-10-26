@@ -70,6 +70,24 @@
         }                                                                                 \
     } while (false)
 
+
+/**
+ *  \def CSE_PRECONDITION()
+ *  Checks that a function's precondition holds, and if not, prints an
+ *  error message to the standard error stream and terminates the program.
+ *
+ *  The printed message will contain the name of the function whose
+ *  precondition was violated.  The program is terminated by calling
+ *  `std::terminate()`.
+ */
+#define CSE_PRECONDITION(condition)                                 \
+    do {                                                                    \
+        if (!(condition)) {                                                 \
+            ::cse::detail::precondition_violated(__FUNCTION__, #condition); \
+        }                                                                   \
+    } while (false)
+
+
 /**
  *  \def    CSE_PANIC()
  *  Prints an error message to the standard error stream and terminates
@@ -103,8 +121,9 @@ namespace cse
 {
 namespace detail
 {
+[[noreturn]] void precondition_violated(const char* function, const char* condition) noexcept;
 [[noreturn]] void panic(const char* file, int line, const char* msg) noexcept;
-}
+} // namespace detail
 
 
 /**
