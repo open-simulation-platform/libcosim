@@ -6,6 +6,8 @@
 #include <boost/container/vector.hpp>
 #include <boost/fiber/future/async.hpp>
 
+#include "cse/error.hpp"
+
 
 namespace cse
 {
@@ -25,6 +27,7 @@ class pseudo_async_slave : public cse::async_slave
 public:
     pseudo_async_slave(std::unique_ptr<cse::slave> slave)
         : slave_(std::move(slave))
+        , state_(slave_state::created)
     {}
 
     ~pseudo_async_slave() = default;
@@ -36,10 +39,28 @@ public:
     pseudo_async_slave& operator=(const pseudo_async_slave&) = delete;
 
     // cse::async_slave function implementations
+    slave_state state() const noexcept override
+    {
+        return state_;
+    }
+
     boost::fibers::future<cse::model_description> model_description() override
     {
+        CSE_PRECONDITION(
+            state_ != slave_state::error &&
+            state_ != slave_state::indeterminate);
+        const auto oldState = state_;
+        state_ = slave_state::indeterminate;
+
         return boost::fibers::async([=]() {
-            return slave_->model_description();
+            try {
+                const auto result = slave_->model_description();
+                state_ = oldState;
+                return result;
+            } catch (...) {
+                state_ = slave_state::error;
+                throw;
+            }
         });
     }
 
@@ -49,22 +70,49 @@ public:
         std::optional<double> relativeTolerance)
         override
     {
+        CSE_PRECONDITION(state_ == slave_state::created);
+        state_ = slave_state::indeterminate;
+
         return boost::fibers::async([=]() {
-            slave_->setup(startTime, stopTime, relativeTolerance);
+            try {
+                slave_->setup(startTime, stopTime, relativeTolerance);
+                state_ = slave_state::initialisation;
+            } catch (...) {
+                state_ = slave_state::error;
+                throw;
+            }
         });
     }
 
     boost::fibers::future<void> start_simulation() override
     {
+        CSE_PRECONDITION(state_ == slave_state::initialisation);
+        state_ = slave_state::indeterminate;
+
         return boost::fibers::async([=]() {
-            slave_->start_simulation();
+            try {
+                slave_->start_simulation();
+                state_ = slave_state::simulation;
+            } catch (...) {
+                state_ = slave_state::error;
+                throw;
+            }
         });
     }
 
     boost::fibers::future<void> end_simulation() override
     {
+        CSE_PRECONDITION(state_ == slave_state::simulation);
+        state_ = slave_state::indeterminate;
+
         return boost::fibers::async([=]() {
-            slave_->end_simulation();
+            try {
+                slave_->end_simulation();
+                state_ = slave_state::terminated;
+            } catch (...) {
+                state_ = slave_state::error;
+                throw;
+            }
         });
     }
 
@@ -73,8 +121,18 @@ public:
         cse::time_duration deltaT)
         override
     {
+        CSE_PRECONDITION(state_ == slave_state::simulation);
+        state_ = slave_state::indeterminate;
+
         return boost::fibers::async([=]() {
-            return slave_->do_step(currentT, deltaT);
+            try {
+                const auto result = slave_->do_step(currentT, deltaT);
+                state_ = slave_state::simulation;
+                return result;
+            } catch (...) {
+                state_ = slave_state::error;
+                throw;
+            }
         });
     }
 
@@ -87,10 +145,17 @@ public:
         gsl::span<const cse::variable_index> stringVariables)
         override
     {
+        CSE_PRECONDITION(
+            state_ == slave_state::initialisation ||
+            state_ == slave_state::simulation);
+
         realBuffer_.resize(realVariables.size());
         integerBuffer_.resize(integerVariables.size());
         booleanBuffer_.resize(booleanVariables.size());
         stringBuffer_.resize(stringVariables.size());
+
+        const auto oldState = state_;
+        state_ = slave_state::indeterminate;
 
         return boost::fibers::async(
             [
@@ -100,15 +165,21 @@ public:
                 bvi = to_vector(booleanVariables),
                 svi = to_vector(stringVariables)
             ]() {
-                auto rva = gsl::make_span(realBuffer_);
-                auto iva = gsl::make_span(integerBuffer_);
-                auto bva = gsl::make_span(booleanBuffer_);
-                auto sva = gsl::make_span(stringBuffer_);
-                slave_->get_real_variables(gsl::make_span(rvi), rva);
-                slave_->get_integer_variables(gsl::make_span(ivi), iva);
-                slave_->get_boolean_variables(gsl::make_span(bvi), bva);
-                slave_->get_string_variables(gsl::make_span(svi), sva);
-                return variable_values{rva, iva, bva, sva};
+                try {
+                    auto rva = gsl::make_span(realBuffer_);
+                    auto iva = gsl::make_span(integerBuffer_);
+                    auto bva = gsl::make_span(booleanBuffer_);
+                    auto sva = gsl::make_span(stringBuffer_);
+                    slave_->get_real_variables(gsl::make_span(rvi), rva);
+                    slave_->get_integer_variables(gsl::make_span(ivi), iva);
+                    slave_->get_boolean_variables(gsl::make_span(bvi), bva);
+                    slave_->get_string_variables(gsl::make_span(svi), sva);
+                    state_ = oldState;
+                    return variable_values{rva, iva, bva, sva};
+                } catch (...) {
+                    state_ = slave_state::error;
+                    throw;
+                }
             });
     }
 
@@ -123,6 +194,12 @@ public:
         gsl::span<const std::string> stringValues)
         override
     {
+        CSE_PRECONDITION(
+            state_ == slave_state::initialisation ||
+            state_ == slave_state::simulation);
+        const auto oldState = state_;
+        state_ = slave_state::indeterminate;
+
         return boost::fibers::async(
             [
                 =,
@@ -135,12 +212,18 @@ public:
                 svi = to_vector(stringVariables),
                 sva = to_vector(stringValues)
             ]() {
-                // NOTE: We don't handle nonfatal_bad_value correctly here.
-                // All functions should get called, and the exceptions should get merged.
-                slave_->set_real_variables(gsl::make_span(rvi), gsl::make_span(rva));
-                slave_->set_integer_variables(gsl::make_span(ivi), gsl::make_span(iva));
-                slave_->set_boolean_variables(gsl::make_span(bvi), gsl::make_span(bva));
-                slave_->set_string_variables(gsl::make_span(svi), gsl::make_span(sva));
+                try {
+                    // NOTE: We don't handle nonfatal_bad_value correctly here.
+                    // All functions should get called, and the exceptions should get merged.
+                    slave_->set_real_variables(gsl::make_span(rvi), gsl::make_span(rva));
+                    slave_->set_integer_variables(gsl::make_span(ivi), gsl::make_span(iva));
+                    slave_->set_boolean_variables(gsl::make_span(bvi), gsl::make_span(bva));
+                    slave_->set_string_variables(gsl::make_span(svi), gsl::make_span(sva));
+                    state_ = oldState;
+                } catch (...) {
+                    state_ = slave_state::error;
+                    throw;
+                }
             });
     }
 
@@ -148,6 +231,7 @@ public:
 
 private:
     std::unique_ptr<cse::slave> slave_;
+    slave_state state_;
 
     // We need Boost's vector<bool> to avoid the issues with std::vector<bool>.
     // The others are just for consistency.
