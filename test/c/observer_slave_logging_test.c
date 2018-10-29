@@ -128,7 +128,7 @@ int main()
     }
 
     rc = cse_log_real_values(logPath, realValues, 20, 0);
-    
+
     if (rc < 0) {
         teardown_message(execution, "Could not log real values");
     }
