@@ -8,7 +8,8 @@ namespace cse
 {
 
 single_slave_logger::single_slave_logger(char* logPath, int binary)
-    : logPath_(logPath), binary_(binary)
+    : logPath_(logPath)
+    , binary_(binary)
 {
     if (binary == 1) {
         fsw_ = std::ofstream(logPath_, std::ios_base::out | std::ios_base::binary);
@@ -23,7 +24,9 @@ single_slave_logger::single_slave_logger(char* logPath, int binary)
 
 single_slave_logger::~single_slave_logger()
 {
-    fsw_.close();
+    if (fsw_.is_open()) {
+        fsw_.close();
+    }
 }
 
 int single_slave_logger::write_int_samples(int* values, int nSamples)
