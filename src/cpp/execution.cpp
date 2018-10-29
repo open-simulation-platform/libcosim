@@ -122,7 +122,7 @@ public:
                 for (const auto& obs : observers_) {
                     obs->step_complete(lastStep_, stepSize, currentTime_);
                 }
-                timer_->sleep(currentTime_, stepSize);
+                timer_->sleep(currentTime_);
             } while (!stopped_ && endTime - currentTime_ > stepSize * relativeTolerance);
             return !stopped_;
         });

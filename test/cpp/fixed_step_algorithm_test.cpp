@@ -28,7 +28,7 @@ int main()
 
         cse::log::set_global_output_level(cse::log::level::debug);
 
-        std::shared_ptr<cse::real_time_timer> timer = std::make_unique<cse::fixed_step_timer>(stepSize);
+        std::shared_ptr<cse::real_time_timer> timer = std::make_unique<cse::general_timer>();
 
         // Default should not be real time
         REQUIRE(!timer->is_real_time_simulation());

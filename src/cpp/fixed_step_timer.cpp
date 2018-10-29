@@ -115,7 +115,7 @@ void fixed_step_timer::start(time_point /*currentTime*/)
     pimpl_->start();
 }
 
-void fixed_step_timer::sleep(time_point /*currentTime*/, time_duration /*stepSize*/)
+void fixed_step_timer::sleep(time_point /*currentTime*/)
 {
     pimpl_->sleep();
 }

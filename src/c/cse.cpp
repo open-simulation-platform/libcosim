@@ -255,7 +255,7 @@ int cse_execution_start(cse_execution* execution)
                 execution->realTimeTimer->start(calculate_current_time(execution));
                 while (execution->shouldRun) {
                     cse_execution_step(execution);
-                    execution->realTimeTimer->sleep(calculate_current_time(execution), execution->stepSize);
+                    execution->realTimeTimer->sleep(calculate_current_time(execution));
                 }
             });
 

@@ -31,9 +31,8 @@ public:
      * To be called at the tail end of each execution step.
      *
      * \param [in] currentTime The current simulation time.
-     * \param [in] stepSize The step size for the last performed step.
      */
-    virtual void sleep(time_point currentTime, time_duration stepSize) = 0;
+    virtual void sleep(time_point currentTime) = 0;
 
     /// Enables real time simulation
     virtual void enable_real_time_simulation() = 0;
@@ -69,7 +68,26 @@ public:
     ~fixed_step_timer() noexcept;
 
     void start(time_point currentTime) override;
-    void sleep(time_point currentTime, time_duration stepSize) override;
+    void sleep(time_point currentTime) override;
+    void enable_real_time_simulation() override;
+    void disable_real_time_simulation() override;
+    bool is_real_time_simulation() override;
+    double get_real_time_factor() override;
+
+private:
+    class impl;
+    std::unique_ptr<impl> pimpl_;
+};
+
+class general_timer : public real_time_timer
+{
+public:
+    /// Creates a general timer based on accumulated simulation time.
+    explicit general_timer();
+    ~general_timer() noexcept;
+
+    void start(time_point currentTime) override;
+    void sleep(time_point currentTime) override;
     void enable_real_time_simulation() override;
     void disable_real_time_simulation() override;
     bool is_real_time_simulation() override;
