@@ -29,8 +29,8 @@ private:
     int write_binary_ints(int* values);
     int write_binary_reals(double* values);
 
-    int binary_;
     const char* logPath_;
+    int binary_;
     std::ofstream fsw_;
 };
 
