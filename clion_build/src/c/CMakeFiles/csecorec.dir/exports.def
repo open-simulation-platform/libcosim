@@ -1475,8 +1475,8 @@ EXPORTS
 	cse_last_error_code
 	cse_last_error_message
 	cse_local_slave_create
-	cse_logIntValues
-	cse_logRealValues
+	cse_log_int_values
+	cse_log_real_values
 	cse_membuffer_observer_create
 	cse_observer_add_slave
 	cse_observer_slave_get_integer
