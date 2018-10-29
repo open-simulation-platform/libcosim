@@ -121,25 +121,25 @@ int main()
     char* logPath = "C:\\Dev\\osp\\cse-core-branches\\master\\cse-core\\test\\logs\\log.txt";
     char *binaryLogPath = "C:\\Dev\\osp\\cse-core-branches\\master\\cse-core\\test\\logs\\log.bin";
 
-    rc = cse_logIntValues(logPath, intValues, 20, 0);
+    rc = cse_log_int_values(logPath, intValues, 20, 0);
 
     if (rc < 0) {
         teardown_message(execution, "Could not log integer values");
     }
 
-    rc = cse_logRealValues(logPath, realValues, 20, 0);
-
+    rc = cse_log_real_values(logPath, realValues, 20, 0);
+    
     if (rc < 0) {
         teardown_message(execution, "Could not log real values");
     }
 
-    rc = cse_logIntValues(binaryLogPath, intValues, 20, 1);
+    rc = cse_log_int_values(binaryLogPath, intValues, 20, 1);
 
     if (rc < 0) {
         teardown_message(execution, "Could not log binary integer values");
     }
 
-    rc = cse_logRealValues(binaryLogPath, realValues, 20, 1);
+    rc = cse_log_real_values(binaryLogPath, realValues, 20, 1);
 
     if (rc < 0) {
         teardown_message(execution, "Could not log binary real values");

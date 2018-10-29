@@ -28,25 +28,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="8f8ae245-7944-4071-85c6-1994d4aee7e7" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml___jb_tmp___" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/clion_build/output/debug/bin/c_observer_slave_logging_test.exe" beforeDir="false" afterPath="$PROJECT_DIR$/clion_build/output/debug/bin/c_observer_slave_logging_test.exe" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/clion_build/output/debug/bin/c_observer_slave_logging_test.ilk" beforeDir="false" afterPath="$PROJECT_DIR$/clion_build/output/debug/bin/c_observer_slave_logging_test.ilk" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/clion_build/output/debug/bin/csecorec.dll" beforeDir="false" afterPath="$PROJECT_DIR$/clion_build/output/debug/bin/csecorec.dll" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/clion_build/output/debug/bin/csecorec.ilk" beforeDir="false" afterPath="$PROJECT_DIR$/clion_build/output/debug/bin/csecorec.ilk" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/clion_build/output/debug/lib/c_observer_slave_logging_test.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/clion_build/output/debug/lib/c_observer_slave_logging_test.pdb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/clion_build/output/debug/lib/csecorec.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/clion_build/output/debug/lib/csecorec.pdb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/clion_build/src/c/CMakeFiles/csecorec.dir/slave_logger.cpp.obj" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/clion_build/src/c/CMakeFiles/csecorec.dir/vc140.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/clion_build/src/c/CMakeFiles/csecorec.dir/vc140.pdb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/clion_build/test/c/CMakeFiles/c_observer_slave_logging_test.dir/observer_slave_logging_test.c.obj" beforeDir="false" afterPath="$PROJECT_DIR$/clion_build/test/c/CMakeFiles/c_observer_slave_logging_test.dir/observer_slave_logging_test.c.obj" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/clion_build/test/c/CMakeFiles/c_observer_slave_logging_test.dir/vc140.pdb" beforeDir="false" afterPath="$PROJECT_DIR$/clion_build/test/c/CMakeFiles/c_observer_slave_logging_test.dir/vc140.pdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/include/cse.h" beforeDir="false" afterPath="$PROJECT_DIR$/include/cse.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/c/cse.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/c/cse.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/c/slave_logger.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/c/slave_logger.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/c/slave_logger.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/src/c/slave_logger.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/test/c/observer_slave_logging_test.c" beforeDir="false" afterPath="$PROJECT_DIR$/test/c/observer_slave_logging_test.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test/c/observer_slave_logging_test.c___jb_tmp___" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/test/logs/log.bin" beforeDir="false" afterPath="$PROJECT_DIR$/test/logs/log.bin" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test/logs/log.txt" beforeDir="false" afterPath="$PROJECT_DIR$/test/logs/log.txt" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/cmake-build-debug/" />
     <ignored path="$PROJECT_DIR$/clion_build/" />
@@ -100,9 +84,9 @@
       </usages-collector>
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
-          <entry key="c" value="6160" />
-          <entry key="cpp" value="12889" />
-          <entry key="h" value="474" />
+          <entry key="c" value="6176" />
+          <entry key="cpp" value="12898" />
+          <entry key="h" value="483" />
           <entry key="hpp" value="2652" />
           <entry key="txt" value="148" />
         </counts>
@@ -110,7 +94,7 @@
       <usages-collector id="statistics.file.types.edit">
         <counts>
           <entry key="CMakeLists.txt" value="148" />
-          <entry key="ObjectiveC" value="22175" />
+          <entry key="ObjectiveC" value="22209" />
         </counts>
       </usages-collector>
     </session>
@@ -120,11 +104,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="false">
+      <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/test/c/observer_slave_logging_test.c">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1091">
-              <caret line="145" column="5" lean-forward="true" selection-start-line="145" selection-start-column="5" selection-end-line="145" selection-end-column="5" />
+            <state relative-caret-position="836">
+              <caret line="130" column="4" lean-forward="true" selection-start-line="130" selection-start-column="4" selection-end-line="130" selection-end-column="4" />
               <folding>
                 <element signature="e#42#60#0" expanded="true" />
                 <element signature="e#165#226#0" expanded="true" />
@@ -136,8 +120,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/include/cse.h">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="7633">
-              <caret line="449" column="23" selection-start-line="449" selection-start-column="4" selection-end-line="449" selection-end-column="23" />
+            <state relative-caret-position="1023">
+              <caret line="447" column="77" lean-forward="true" selection-start-line="447" selection-start-column="77" selection-end-line="447" selection-end-column="77" />
               <folding>
                 <element signature="e#91#110#0" expanded="true" />
                 <element signature="e#186#198#0" expanded="true" />
@@ -149,8 +133,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/c/cse.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1329">
-              <caret line="445" column="1" selection-start-line="445" selection-start-column="1" selection-end-line="445" selection-end-column="1" />
+            <state relative-caret-position="839">
+              <caret line="447" column="82" lean-forward="true" selection-start-line="447" selection-start-column="82" selection-end-line="447" selection-end-column="82" />
               <folding>
                 <element signature="e#0#16#0" expanded="true" />
               </folding>
@@ -170,11 +154,11 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/c/slave_logger.hpp">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="476">
-              <caret line="28" column="39" lean-forward="true" selection-start-line="28" selection-start-column="39" selection-end-line="28" selection-end-column="39" />
+              <caret line="28" column="39" selection-start-line="28" selection-start-column="39" selection-end-line="28" selection-end-column="39" />
               <folding>
                 <element signature="e#149#165#0" expanded="true" />
               </folding>
@@ -198,8 +182,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/c/slave_logger.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="969">
-              <caret line="57" column="25" lean-forward="true" selection-start-line="57" selection-start-column="25" selection-end-line="57" selection-end-column="25" />
+            <state relative-caret-position="901">
+              <caret line="53" selection-start-line="53" selection-end-line="53" />
             </state>
           </provider>
         </entry>
@@ -276,11 +260,11 @@
         <option value="$PROJECT_DIR$/test/cpp/async_slave_mockup_test.cpp" />
         <option value="$PROJECT_DIR$/test/c/single_fmu_execution_test.c" />
         <option value="$PROJECT_DIR$/test/c/observer_initial_samples_test.c" />
-        <option value="$PROJECT_DIR$/include/cse.h" />
-        <option value="$PROJECT_DIR$/test/c/observer_slave_logging_test.c" />
-        <option value="$PROJECT_DIR$/src/c/cse.cpp" />
         <option value="$PROJECT_DIR$/src/c/slave_logger.hpp" />
         <option value="$PROJECT_DIR$/src/c/slave_logger.cpp" />
+        <option value="$PROJECT_DIR$/include/cse.h" />
+        <option value="$PROJECT_DIR$/src/c/cse.cpp" />
+        <option value="$PROJECT_DIR$/test/c/observer_slave_logging_test.c" />
       </list>
     </option>
   </component>
@@ -513,12 +497,12 @@
       <workItem from="1540222134314" duration="610000" />
       <workItem from="1540281396994" duration="41384000" />
       <workItem from="1540443888978" duration="17202000" />
-      <workItem from="1540787944856" duration="6762000" />
+      <workItem from="1540787944856" duration="7737000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="172330000" />
+    <option name="totallyTimeSpent" value="173305000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -533,12 +517,12 @@
     <frame x="1912" y="-433" width="1216" height="1896" extended-state="6" />
     <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.46466166" visible="true" weight="0.22664359" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.46466166" visible="true" weight="0.22664359" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" sideWeight="0.53533834" side_tool="true" weight="0.15031983" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" />
-      <window_info active="true" anchor="bottom" id="Run" order="2" sideWeight="0.49913496" visible="true" weight="0.25581396" />
+      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.49913496" visible="true" weight="0.25581396" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
@@ -754,17 +738,6 @@
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/test/c/observer_slave_logging_test.c___jb_tmp___" />
-    <entry file="file://$PROJECT_DIR$/include/cse.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="7633">
-          <caret line="449" column="23" selection-start-line="449" selection-start-column="4" selection-end-line="449" selection-end-column="23" />
-          <folding>
-            <element signature="e#91#110#0" expanded="true" />
-            <element signature="e#186#198#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/test/c/observer_multiple_slaves_test.c">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="3298">
@@ -803,40 +776,51 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/test/c/observer_slave_logging_test.c">
+    <entry file="file://$PROJECT_DIR$/src/c/slave_logger.hpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1091">
-          <caret line="145" column="5" lean-forward="true" selection-start-line="145" selection-start-column="5" selection-end-line="145" selection-end-column="5" />
+        <state relative-caret-position="476">
+          <caret line="28" column="39" selection-start-line="28" selection-start-column="39" selection-end-line="28" selection-end-column="39" />
           <folding>
-            <element signature="e#42#60#0" expanded="true" />
-            <element signature="e#165#226#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/c/cse.cpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1329">
-          <caret line="445" column="1" selection-start-line="445" selection-start-column="1" selection-end-line="445" selection-end-column="1" />
-          <folding>
-            <element signature="e#0#16#0" expanded="true" />
+            <element signature="e#149#165#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/c/slave_logger.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="969">
-          <caret line="57" column="25" lean-forward="true" selection-start-line="57" selection-start-column="25" selection-end-line="57" selection-end-column="25" />
+        <state relative-caret-position="901">
+          <caret line="53" selection-start-line="53" selection-end-line="53" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/c/slave_logger.hpp">
+    <entry file="file://$PROJECT_DIR$/include/cse.h">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="476">
-          <caret line="28" column="39" lean-forward="true" selection-start-line="28" selection-start-column="39" selection-end-line="28" selection-end-column="39" />
+        <state relative-caret-position="1023">
+          <caret line="447" column="77" lean-forward="true" selection-start-line="447" selection-start-column="77" selection-end-line="447" selection-end-column="77" />
           <folding>
-            <element signature="e#149#165#0" expanded="true" />
+            <element signature="e#91#110#0" expanded="true" />
+            <element signature="e#186#198#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/c/cse.cpp">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="839">
+          <caret line="447" column="82" lean-forward="true" selection-start-line="447" selection-start-column="82" selection-end-line="447" selection-end-column="82" />
+          <folding>
+            <element signature="e#0#16#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/test/c/observer_slave_logging_test.c">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="836">
+          <caret line="130" column="4" lean-forward="true" selection-start-line="130" selection-start-column="4" selection-end-line="130" selection-end-column="4" />
+          <folding>
+            <element signature="e#42#60#0" expanded="true" />
+            <element signature="e#165#226#0" expanded="true" />
           </folding>
         </state>
       </provider>
