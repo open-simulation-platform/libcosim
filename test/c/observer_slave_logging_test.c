@@ -145,12 +145,5 @@ int main()
         teardown_message(execution, "Could not log binary real values");
     }
 
-    /* Currently crashes
-     * rc = cse_logMemoryMapped(binaryLogPath, realValues);
-
-    if (rc < 0) {
-        teardown_message(execution, "Could not log binary values from memory map");
-    }*/
-
     return 0;
 }

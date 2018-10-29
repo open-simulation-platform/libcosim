@@ -441,8 +441,8 @@ bool cse_observer_observe(cse_observer* observer, long currentStep)
 int cse_logIntValues(char* logPath, int* values, int nSamples, int binary)
 {
 
-    auto logger = cse::single_slave_logger(logPath);
-    int rc = logger.write_int_samples(values, nSamples, binary);
+    auto logger = cse::single_slave_logger(logPath, binary);
+    int rc = logger.write_int_samples(values, nSamples);
 
     if (rc < 0) {
         return failure;
@@ -453,20 +453,8 @@ int cse_logIntValues(char* logPath, int* values, int nSamples, int binary)
 
 int cse_logRealValues(char *logPath, double* values, int nSamples, int binary) {
 
-    auto logger = cse::single_slave_logger(logPath);
-    int rc = logger.write_real_samples(values, nSamples, binary);
-
-    if (rc < 0) {
-        return failure;
-    }
-
-    return success;
-}
-
-int cse_logMemoryMapped(char *logPath, double* values) {
-    auto logger = cse::single_slave_logger(logPath);
-
-    int rc = logger.memory_mapped_binary_write(values);
+    auto logger = cse::single_slave_logger(logPath, binary);
+    int rc = logger.write_real_samples(values, nSamples);
 
     if (rc < 0) {
         return failure;
