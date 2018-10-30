@@ -33,14 +33,14 @@ public:
     std::string name() const override;
     cse::model_description model_description() const override;
 
-    void expose_output(variable_type type, variable_index index) override;
+    void expose_for_getting(variable_type type, variable_index index) override;
     double get_real(variable_index index) const override;
     int get_integer(variable_index index) const override;
     bool get_boolean(variable_index index) const override;
     std::string_view get_string(variable_index index) const override;
 
     // `simulator` methods
-    void expose_input(variable_type type, variable_index index) override;
+    void expose_for_setting(variable_type type, variable_index index) override;
     void set_real(variable_index index, double value) override;
     void set_integer(variable_index index, int value) override;
     void set_boolean(variable_index index, bool value) override;

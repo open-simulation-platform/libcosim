@@ -70,7 +70,7 @@ public:
         : observable_(observable)
     {
         for (const auto& vd : observable->model_description().variables) {
-            observable->expose_output(vd.type, vd.index);
+            observable->expose_for_getting(vd.type, vd.index);
             if (vd.type == cse::variable_type::real) {
                 realIndexes_.push_back(vd.index);
             }
