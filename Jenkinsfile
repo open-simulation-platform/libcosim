@@ -111,16 +111,12 @@ pipeline {
                     stages {
                         stage('Conan add remote') {
                             steps {
-                                sh 'env'
                                 sh 'conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan --force'
                             }
                         }
                         stage('Build Debug') {
                             steps {
                                 dir('debug-build-conan') {
-                                    sh 'hostname'
-                                    sh 'ls -l /usr/lib/x86_64-linux-gnu/libz*'
-                                    sh 'mount'
                                     sh 'conan install ../cse-core -s compiler.libcxx=libstdc++11 -s build_type=Debug -b missing'
                                     sh 'cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=../install -DCSECORE_USING_CONAN=TRUE -DCSECORE_BUILD_PRIVATE_APIDOC=ON ../cse-core'
                                     sh 'cmake --build .'
@@ -187,7 +183,6 @@ pipeline {
                         stage('Build Debug') {
                             steps {
                                 dir('debug-build') {
-                                    sh 'uname -a'
                                     sh 'cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=../install -DCSECORE_USING_CONAN=FALSE -DCSECORE_BUILD_PRIVATE_APIDOC=ON ../cse-core'
                                     sh 'cmake --build .'
                                     sh 'cmake --build . --target install'
