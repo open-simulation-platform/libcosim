@@ -118,6 +118,9 @@ pipeline {
                         stage('Build Debug') {
                             steps {
                                 dir('debug-build') {
+                                    sh 'hostname'
+                                    sh 'ls -l /usr/lib/x86_64-linux-gnu/libz*'
+                                    sh 'mount'
                                     sh 'conan install ../cse-core -s compiler.libcxx=libstdc++11 -s build_type=Debug -b missing'
                                     sh 'cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=../install -DCSECORE_USING_CONAN=TRUE -DCSECORE_BUILD_PRIVATE_APIDOC=ON ../cse-core'
                                     sh 'cmake --build .'
