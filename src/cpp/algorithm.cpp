@@ -68,8 +68,8 @@ public:
         bool inputAlreadyConnected)
     {
         if (inputAlreadyConnected) disconnect_variable(input);
-        simulators_[output.simulator]->expose_output(output.type, output.index);
-        simulators_[input.simulator]->expose_input(input.type, input.index);
+        simulators_[output.simulator]->expose_for_getting(output.type, output.index);
+        simulators_[input.simulator]->expose_for_setting(input.type, input.index);
         connections_.push_back({output, input});
     }
 

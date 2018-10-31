@@ -88,80 +88,80 @@ public:
     }
 
 
-    void expose_output(variable_type type, variable_index index)
+    void expose_for_getting(variable_type type, variable_index index)
     {
         switch (type) {
             case variable_type::real:
-                realOutputs_.expose(index);
+                realGetCache_.expose(index);
                 break;
             case variable_type::integer:
-                integerOutputs_.expose(index);
+                integerGetCache_.expose(index);
                 break;
             case variable_type::boolean:
-                booleanOutputs_.expose(index);
+                booleanGetCache_.expose(index);
                 break;
             case variable_type::string:
-                stringOutputs_.expose(index);
+                stringGetCache_.expose(index);
                 break;
         }
     }
 
     double get_real(variable_index index) const
     {
-        return realOutputs_.get(index);
+        return realGetCache_.get(index);
     }
 
     int get_integer(variable_index index) const
     {
-        return integerOutputs_.get(index);
+        return integerGetCache_.get(index);
     }
 
     bool get_boolean(variable_index index) const
     {
-        return booleanOutputs_.get(index);
+        return booleanGetCache_.get(index);
     }
 
     std::string_view get_string(variable_index index) const
     {
-        return stringOutputs_.get(index);
+        return stringGetCache_.get(index);
     }
 
-    void expose_input(variable_type type, variable_index index)
+    void expose_for_setting(variable_type type, variable_index index)
     {
         switch (type) {
             case variable_type::real:
-                realInputs_.expose(index);
+                realSetCache_.expose(index);
                 break;
             case variable_type::integer:
-                integerInputs_.expose(index);
+                integerSetCache_.expose(index);
                 break;
             case variable_type::boolean:
-                booleanInputs_.expose(index);
+                booleanSetCache_.expose(index);
                 break;
             case variable_type::string:
-                stringInputs_.expose(index);
+                stringSetCache_.expose(index);
                 break;
         }
     }
 
     void set_real(variable_index index, double value)
     {
-        realInputs_.set(index, value);
+        realSetCache_.set(index, value);
     }
 
     void set_integer(variable_index index, int value)
     {
-        integerInputs_.set(index, value);
+        integerSetCache_.set(index, value);
     }
 
     void set_boolean(variable_index index, bool value)
     {
-        booleanInputs_.set(index, value);
+        booleanSetCache_.set(index, value);
     }
 
     void set_string(variable_index index, std::string_view value)
     {
-        stringInputs_.set(index, value);
+        stringSetCache_.set(index, value);
     }
 
     boost::fibers::future<void> setup(
@@ -179,26 +179,26 @@ public:
         // clang-format off
         return boost::fibers::async([=]() {
             slave_->set_variables(
-                    gsl::make_span(realInputs_.indexes),
-                    gsl::make_span(realInputs_.values),
-                    gsl::make_span(integerInputs_.indexes),
-                    gsl::make_span(integerInputs_.values),
-                    gsl::make_span(booleanInputs_.indexes),
-                    gsl::make_span(booleanInputs_.values),
-                    gsl::make_span(stringInputs_.indexes),
-                    gsl::make_span(stringInputs_.values)
+                    gsl::make_span(realSetCache_.indexes),
+                    gsl::make_span(realSetCache_.values),
+                    gsl::make_span(integerSetCache_.indexes),
+                    gsl::make_span(integerSetCache_.values),
+                    gsl::make_span(booleanSetCache_.indexes),
+                    gsl::make_span(booleanSetCache_.values),
+                    gsl::make_span(stringSetCache_.indexes),
+                    gsl::make_span(stringSetCache_.values)
                 ).get();
             const auto result = slave_->do_step(currentT, deltaT).get();
             const auto values = slave_->get_variables(
-                    gsl::make_span(realOutputs_.indexes),
-                    gsl::make_span(integerOutputs_.indexes),
-                    gsl::make_span(booleanOutputs_.indexes),
-                    gsl::make_span(stringOutputs_.indexes)
+                    gsl::make_span(realGetCache_.indexes),
+                    gsl::make_span(integerGetCache_.indexes),
+                    gsl::make_span(booleanGetCache_.indexes),
+                    gsl::make_span(stringGetCache_.indexes)
                 ).get();
-            copy_contents(values.real,    realOutputs_.values);
-            copy_contents(values.integer, integerOutputs_.values);
-            copy_contents(values.boolean, booleanOutputs_.values);
-            copy_contents(values.string,  stringOutputs_.values);
+            copy_contents(values.real,    realGetCache_.values);
+            copy_contents(values.integer, integerGetCache_.values);
+            copy_contents(values.boolean, booleanGetCache_.values);
+            copy_contents(values.string,  stringGetCache_.values);
             return result;
         });
         // clang-format on
@@ -209,15 +209,15 @@ private:
     std::string name_;
     cse::model_description modelDescription_;
 
-    exposed_vars<double> realOutputs_;
-    exposed_vars<int> integerOutputs_;
-    exposed_vars<bool> booleanOutputs_;
-    exposed_vars<std::string> stringOutputs_;
+    exposed_vars<double> realGetCache_;
+    exposed_vars<int> integerGetCache_;
+    exposed_vars<bool> booleanGetCache_;
+    exposed_vars<std::string> stringGetCache_;
 
-    exposed_vars<double> realInputs_;
-    exposed_vars<int> integerInputs_;
-    exposed_vars<bool> booleanInputs_;
-    exposed_vars<std::string> stringInputs_;
+    exposed_vars<double> realSetCache_;
+    exposed_vars<int> integerSetCache_;
+    exposed_vars<bool> booleanSetCache_;
+    exposed_vars<std::string> stringSetCache_;
 };
 
 
@@ -246,9 +246,9 @@ cse::model_description slave_simulator::model_description() const
 }
 
 
-void slave_simulator::expose_output(variable_type type, variable_index index)
+void slave_simulator::expose_for_getting(variable_type type, variable_index index)
 {
-    pimpl_->expose_output(type, index);
+    pimpl_->expose_for_getting(type, index);
 }
 
 
@@ -276,9 +276,9 @@ std::string_view slave_simulator::get_string(variable_index index) const
 }
 
 
-void slave_simulator::expose_input(variable_type type, variable_index index)
+void slave_simulator::expose_for_setting(variable_type type, variable_index index)
 {
-    pimpl_->expose_input(type, index);
+    pimpl_->expose_for_setting(type, index);
 }
 
 
