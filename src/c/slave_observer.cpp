@@ -1,6 +1,6 @@
-#include <algorithm>
-
 #include "slave_observer.hpp"
+
+#include <algorithm>
 
 namespace cse
 {
