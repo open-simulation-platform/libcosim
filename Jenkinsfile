@@ -117,7 +117,7 @@ pipeline {
                         }
                         stage('Build Debug') {
                             steps {
-                                dir('debug-build') {
+                                dir('debug-build-conan') {
                                     sh 'hostname'
                                     sh 'ls -l /usr/lib/x86_64-linux-gnu/libz*'
                                     sh 'mount'
@@ -130,7 +130,7 @@ pipeline {
                         }
                         stage('Build Release') {
                             steps {
-                                dir('release-build') {
+                                dir('release-build-conan') {
                                     sh 'conan install ../cse-core -s compiler.libcxx=libstdc++11 -s build_type=Release -b missing'
                                     sh 'cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../install -DCSECORE_USING_CONAN=TRUE -DCSECORE_BUILD_PRIVATE_APIDOC=ON ../cse-core'
                                     sh 'cmake --build .'
@@ -140,14 +140,14 @@ pipeline {
                         }
                         stage ('Test Debug') {
                             steps {
-                                dir('debug-build') {
+                                dir('debug-build-conan') {
                                     sh '. ./activate_run.sh && ctest -C Debug -T Test --no-compress-output --test-output-size-passed 307200 || true'
                                 }
                             }
                         }
                         stage ('Test Release') {
                             steps {
-                                dir('release-build') {
+                                dir('release-build-conan') {
                                     sh '. ./activate_run.sh && ctest -C Release -T Test --no-compress-output --test-output-size-passed 307200 || true'
                                 }
                             }
@@ -159,17 +159,17 @@ pipeline {
                                 testTimeMargin: '30000',
                                 thresholdMode: 1,
                                 thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
-                                tools: [ CTest(pattern: '*-build/Testing/**/Test.xml') ]
+                                tools: [ CTest(pattern: '*-build-conan/Testing/**/Test.xml') ]
                             )
                         }
                         success {
                             archiveArtifacts artifacts: 'install/**/*',  fingerprint: true
                         }
                         cleanup {
-                            dir('debug-build/Testing') {
+                            dir('debug-build-conan/Testing') {
                                 deleteDir();
                             }
-                            dir('release-build/Testing') {
+                            dir('release-build-conan/Testing') {
                                 deleteDir();
                             }
                         }
