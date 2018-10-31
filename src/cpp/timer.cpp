@@ -12,31 +12,32 @@ constexpr std::chrono::microseconds MIN_SLEEP(100);
 
 namespace cse
 {
-class fixed_step_timer::impl
+
+class real_time_timer::impl
 {
 public:
-    explicit impl(time_duration stepSize)
-        : stepDuration_(static_cast<long long>(stepSize * 1e9))
-    {
-    }
+    impl()
+    {}
 
-    void start()
+    void start(time_point currentTime)
     {
+        simulationStartTime_ = currentTime;
+        rtSimulationStartTime_ = currentTime;
         startTime_ = Time::now();
         rtStartTime_ = startTime_;
-        counter_ = 1L;
         rtCounter_ = 0L;
         realTimeFactor_ = 1.0;
     }
 
-    void sleep()
+    void sleep(time_point currentTime)
     {
         Time::time_point current = Time::now();
-        update_real_time_factor(current);
+        update_real_time_factor(current, currentTime);
+        lastSimulationTime_ = currentTime;
         if (realTimeSimulation_) {
             Time::duration elapsed = current - startTime_;
-
-            const std::chrono::nanoseconds expected(counter_ * stepDuration_.count());
+            const time_duration expectedSimulationTime = currentTime - simulationStartTime_;
+            const std::chrono::nanoseconds expected(static_cast<long long>(expectedSimulationTime * 1e9));
             const std::chrono::nanoseconds totalSleep = expected - elapsed;
 
             if (totalSleep > MIN_SLEEP) {
@@ -51,15 +52,13 @@ public:
                     << "Real time timer NOT sleeping, calculated sleep time "
                     << totalSleep.count() << " ns";
             }
-
-            counter_++;
         }
     }
 
     void enable_real_time_simulation()
     {
         if (!realTimeSimulation_) {
-            start();
+            start(lastSimulationTime_);
         }
         realTimeSimulation_ = true;
     }
@@ -81,61 +80,66 @@ public:
 
 
 private:
-    std::atomic<long> counter_ = 1L;
-    long rtCounter_ = 1L;
+    long rtCounter_ = 0L;
     std::atomic<double> realTimeFactor_ = 1.0;
-    std::chrono::nanoseconds stepDuration_;
+    std::atomic<bool> realTimeSimulation_ = false;
     Time::time_point startTime_;
     Time::time_point rtStartTime_;
-    bool realTimeSimulation_ = false;
+    time_point simulationStartTime_;
+    time_point rtSimulationStartTime_;
+    time_point lastSimulationTime_;
 
-    void update_real_time_factor(Time::time_point currentTime)
+    void update_real_time_factor(Time::time_point currentTime, time_point currentSimulationTime)
     {
         constexpr int stepsToMonitor = 5;
         if (rtCounter_ >= stepsToMonitor) {
-            const std::chrono::nanoseconds expected(rtCounter_ * stepDuration_.count());
+
+            const time_duration expectedSimulationTime = currentSimulationTime - rtSimulationStartTime_;
+            const std::chrono::nanoseconds expected(static_cast<long long>(expectedSimulationTime * 1e9));
+
             Time::duration elapsed = currentTime - rtStartTime_;
             realTimeFactor_ = expected.count() / (1.0 * elapsed.count());
             rtStartTime_ = currentTime;
+            rtSimulationStartTime_ = currentSimulationTime;
             rtCounter_ = 0L;
         }
         rtCounter_++;
     }
 };
 
-fixed_step_timer::fixed_step_timer(time_duration stepSize)
-    : pimpl_(std::make_unique<impl>(stepSize))
+real_time_timer::real_time_timer()
+    : pimpl_(std::make_unique<impl>())
 {
 }
 
-fixed_step_timer::~fixed_step_timer() noexcept {}
+real_time_timer::~real_time_timer() noexcept = default;
 
-void fixed_step_timer::start(time_point /*currentTime*/)
+void real_time_timer::start(time_point currentTime)
 {
-    pimpl_->start();
+    pimpl_->start(currentTime);
 }
 
-void fixed_step_timer::sleep(time_point /*currentTime*/)
+void real_time_timer::sleep(time_point currentTime)
 {
-    pimpl_->sleep();
+    pimpl_->sleep(currentTime);
 }
 
-void fixed_step_timer::enable_real_time_simulation()
+void real_time_timer::enable_real_time_simulation()
 {
     pimpl_->enable_real_time_simulation();
 }
 
-void fixed_step_timer::disable_real_time_simulation()
+void real_time_timer::disable_real_time_simulation()
 {
     pimpl_->disable_real_time_simulation();
 }
 
-bool fixed_step_timer::is_real_time_simulation()
+bool real_time_timer::is_real_time_simulation()
 {
     return pimpl_->is_real_time_simulation();
 }
 
-double fixed_step_timer::get_real_time_factor()
+double real_time_timer::get_real_time_factor()
 {
     return pimpl_->get_real_time_factor();
 }

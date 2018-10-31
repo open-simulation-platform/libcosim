@@ -19,7 +19,7 @@ public:
      *
      * \param [in] currentTime The current simulation time.
     */
-    virtual void start(time_point currentTime) = 0;
+    void start(time_point currentTime);
 
     /**
      * Calls thread sleep for the amount of time it would take to keep real time.
@@ -32,66 +32,23 @@ public:
      *
      * \param [in] currentTime The current simulation time.
      */
-    virtual void sleep(time_point currentTime) = 0;
+    void sleep(time_point currentTime);
 
     /// Enables real time simulation
-    virtual void enable_real_time_simulation() = 0;
+    void enable_real_time_simulation();
 
     /// Disables real time simulation
-    virtual void disable_real_time_simulation() = 0;
+    void disable_real_time_simulation();
 
     /// Returns if this is a real time simulation
-    virtual bool is_real_time_simulation() = 0;
+    bool is_real_time_simulation();
 
     /// Returns the current real time factor
-    virtual double get_real_time_factor() = 0;
+    double get_real_time_factor();
 
-    virtual ~real_time_timer() noexcept = default;
-};
-
-/**
- *  A real-time timer based on fixed step size.
- *
- *  The `fixed_step_timer` controls the real-time progression of a fixed step size
- *  simulation, and is suited for use with the `fixed_step_algorithm` class.
- */
-class fixed_step_timer : public real_time_timer
-{
-public:
-    /**
-     * Creates a fixed step timer based on a step size.
-     *
-     * \param [in] stepSize
-     *     The step size (in seconds) used in the execution.
-     */
-    explicit fixed_step_timer(time_duration stepSize);
-    ~fixed_step_timer() noexcept;
-
-    void start(time_point currentTime) override;
-    void sleep(time_point currentTime) override;
-    void enable_real_time_simulation() override;
-    void disable_real_time_simulation() override;
-    bool is_real_time_simulation() override;
-    double get_real_time_factor() override;
-
-private:
-    class impl;
-    std::unique_ptr<impl> pimpl_;
-};
-
-class general_timer : public real_time_timer
-{
-public:
-    /// Creates a general timer based on accumulated simulation time.
-    explicit general_timer();
-    ~general_timer() noexcept;
-
-    void start(time_point currentTime) override;
-    void sleep(time_point currentTime) override;
-    void enable_real_time_simulation() override;
-    void disable_real_time_simulation() override;
-    bool is_real_time_simulation() override;
-    double get_real_time_factor() override;
+    /// Constructor
+    real_time_timer();
+    ~real_time_timer() noexcept;
 
 private:
     class impl;

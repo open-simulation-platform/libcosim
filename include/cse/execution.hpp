@@ -54,7 +54,6 @@ inline bool operator!=(const variable_id& a, const variable_id& b) noexcept
 // Forward declarations
 class algorithm;
 class observer;
-class real_time_timer;
 
 
 /**
@@ -79,7 +78,7 @@ public:
      *      The real-time timer which will be used. One `timer`
      *      object may only be used with one `execution`.
      */
-    execution(time_point startTime, std::shared_ptr<algorithm> algo, std::shared_ptr<real_time_timer> timer);
+    execution(time_point startTime, std::shared_ptr<algorithm> algo);
 
     ~execution() noexcept;
 
@@ -138,6 +137,19 @@ public:
     boost::fibers::future<bool> simulate_until(time_point targetTime);
 
     void stop_simulation();
+
+    /// Enables real time simulation
+    void enable_real_time_simulation();
+
+    /// Disables real time simulation
+    void disable_real_time_simulation();
+
+    /// Returns if this is a real time simulation
+    bool is_real_time_simulation();
+
+    /// Returns the current real time factor
+    double get_real_time_factor();
+
 
 private:
     class impl;

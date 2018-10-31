@@ -36,13 +36,13 @@ namespace cse
 class execution::impl
 {
 public:
-    impl(time_point startTime, std::shared_ptr<algorithm> algo, std::shared_ptr<real_time_timer> timer)
+    impl(time_point startTime, std::shared_ptr<algorithm> algo)
         : lastStep_(0)
         , currentTime_(startTime)
         , initialized_(false)
         , stopped_(true)
         , algorithm_(algo)
-        , timer_(timer)
+        , timer_()
     {
         algorithm_->setup(currentTime_, std::nullopt);
     }
@@ -113,7 +113,7 @@ public:
                 initialized_ = true;
             }
             stopped_ = false;
-            timer_->start(currentTime_);
+            timer_.start(currentTime_);
             time_duration stepSize;
             do {
                 stepSize = algorithm_->do_step(currentTime_, endTime - currentTime_);
@@ -122,7 +122,7 @@ public:
                 for (const auto& obs : observers_) {
                     obs->step_complete(lastStep_, stepSize, currentTime_);
                 }
-                timer_->sleep(currentTime_);
+                timer_.sleep(currentTime_);
             } while (!stopped_ && endTime - currentTime_ > stepSize * relativeTolerance);
             return !stopped_;
         });
@@ -131,6 +131,26 @@ public:
     void stop_simulation()
     {
         stopped_ = true;
+    }
+
+    void enable_real_time_simulation()
+    {
+        timer_.enable_real_time_simulation();
+    }
+
+    void disable_real_time_simulation()
+    {
+        timer_.disable_real_time_simulation();
+    }
+
+    bool is_real_time_simulation()
+    {
+        return timer_.is_real_time_simulation();
+    }
+
+    double get_real_time_factor()
+    {
+        return timer_.get_real_time_factor();
     }
 
 private:
@@ -143,12 +163,12 @@ private:
     std::vector<std::unique_ptr<simulator>> simulators_;
     std::vector<std::shared_ptr<observer>> observers_;
     std::unordered_map<variable_id, variable_id> connections_; // (key, value) = (input, output)
-    std::shared_ptr<real_time_timer> timer_;
+    real_time_timer timer_;
 };
 
 
-execution::execution(time_point startTime, std::shared_ptr<algorithm> algo, std::shared_ptr<real_time_timer> timer)
-    : pimpl_(std::make_unique<impl>(startTime, algo, timer))
+execution::execution(time_point startTime, std::shared_ptr<algorithm> algo)
+    : pimpl_(std::make_unique<impl>(startTime, algo))
 {
 }
 
@@ -181,6 +201,26 @@ time_point execution::current_time() const noexcept
 boost::fibers::future<bool> execution::simulate_until(time_point endTime)
 {
     return pimpl_->simulate_until(endTime);
+}
+
+void execution::enable_real_time_simulation()
+{
+    pimpl_->enable_real_time_simulation();
+}
+
+void execution::disable_real_time_simulation()
+{
+    pimpl_->disable_real_time_simulation();
+}
+
+bool execution::is_real_time_simulation()
+{
+    return pimpl_->is_real_time_simulation();
+}
+
+double execution::get_real_time_factor()
+{
+    return pimpl_->get_real_time_factor();
 }
 
 

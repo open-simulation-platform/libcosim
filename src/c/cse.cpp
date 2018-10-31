@@ -134,7 +134,7 @@ cse_execution* cse_execution_create(cse_time_point startTime, cse_time_duration 
         execution->stepSize = stepSize;
         execution->error_code = CSE_ERRC_SUCCESS;
         execution->state = CSE_EXECUTION_STOPPED;
-        execution->realTimeTimer = std::make_unique<cse::fixed_step_timer>(stepSize);
+        execution->realTimeTimer = std::make_unique<cse::real_time_timer>();
         execution->realTimeTimer->enable_real_time_simulation();
         return execution.release();
     } catch (...) {

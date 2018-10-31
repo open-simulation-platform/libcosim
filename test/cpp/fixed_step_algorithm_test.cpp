@@ -7,7 +7,6 @@
 #include <cse/async_slave.hpp>
 #include <cse/execution.hpp>
 #include <cse/log.hpp>
-#include <cse/timer.hpp>
 
 #include "mock_slave.hpp"
 
@@ -28,16 +27,13 @@ int main()
 
         cse::log::set_global_output_level(cse::log::level::debug);
 
-        std::shared_ptr<cse::real_time_timer> timer = std::make_unique<cse::general_timer>();
-
-        // Default should not be real time
-        REQUIRE(!timer->is_real_time_simulation());
-
         // Set up execution
         auto execution = cse::execution(
             startTime,
-            std::make_unique<cse::fixed_step_algorithm>(stepSize),
-            timer);
+            std::make_unique<cse::fixed_step_algorithm>(stepSize));
+
+        // Default should not be real time
+        REQUIRE(!execution.is_real_time_simulation());
 
         auto observer = std::make_shared<cse::membuffer_observer>();
         execution.add_observer(observer);
@@ -60,7 +56,7 @@ int main()
         auto start = std::chrono::steady_clock::now();
         REQUIRE(simResult.get());
         REQUIRE(std::fabs(execution.current_time() - midTime) < 1.0e-6);
-        REQUIRE(timer->get_real_time_factor() > 1.0);
+        REQUIRE(execution.get_real_time_factor() > 1.0);
         simResult = execution.simulate_until(endTime);
         REQUIRE(simResult.get());
         auto end = std::chrono::steady_clock::now();
@@ -99,7 +95,7 @@ int main()
 
         constexpr cse::time_point finalTime = 5.0;
 
-        timer->enable_real_time_simulation();
+        execution.enable_real_time_simulation();
         simResult = execution.simulate_until(finalTime);
         start = std::chrono::steady_clock::now();
         REQUIRE(simResult.get());
@@ -114,8 +110,8 @@ int main()
         REQUIRE(!slowerThanRealTime);
         REQUIRE(!fasterThanRealTime);
 
-        printf("Real time factor: %lf\n", timer->get_real_time_factor());
-        REQUIRE(fabs(timer->get_real_time_factor() - 1.0) < 0.05);
+        printf("Real time factor: %lf\n", execution.get_real_time_factor());
+        REQUIRE(fabs(execution.get_real_time_factor() - 1.0) < 0.05);
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
