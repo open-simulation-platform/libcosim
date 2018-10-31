@@ -117,9 +117,8 @@ pipeline {
                         }
                         stage('Build Debug') {
                             steps {
-                                sh 'ls -la'
                                 dir('debug-build') {
-                                    sh 'conan install ../cse-core -s compiler.version=7 -s compiler.libcxx=libstdc++11 -s build_type=Debug -b missing'
+                                    sh 'conan install ../cse-core -s compiler.libcxx=libstdc++11 -s build_type=Debug -b missing'
                                     sh 'cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=../install -DCSECORE_USING_CONAN=TRUE -DCSECORE_BUILD_PRIVATE_APIDOC=ON ../cse-core'
                                     sh 'cmake --build .'
                                     sh 'cmake --build . --target install'
@@ -129,7 +128,7 @@ pipeline {
                         stage('Build Release') {
                             steps {
                                 dir('release-build') {
-                                    sh 'conan install ../cse-core -s compiler.version=7 -s compiler.libcxx=libstdc++11 -s build_type=Release -b missing'
+                                    sh 'conan install ../cse-core -s compiler.libcxx=libstdc++11 -s build_type=Release -b missing'
                                     sh 'cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../install -DCSECORE_USING_CONAN=TRUE -DCSECORE_BUILD_PRIVATE_APIDOC=ON ../cse-core'
                                     sh 'cmake --build .'
                                     sh 'cmake --build . --target install'
@@ -173,71 +172,71 @@ pipeline {
                         }
                     }
                 }
-                stage ( 'Build on Linux with Docker' ) {
-                    agent { 
-                        dockerfile { 
-                            filename 'cse-core/Dockerfile.build'
-                            label 'linux && docker'
-                        }
-                    }
+                // stage ( 'Build on Linux with Docker' ) {
+                //     agent { 
+                //         dockerfile { 
+                //             filename 'cse-core/Dockerfile.build'
+                //             label 'linux && docker'
+                //         }
+                //     }
 
-                    stages {
-                        stage('Build Debug') {
-                            steps {
-                                dir('debug-build') {
-                                    sh 'uname -a'
-                                    sh 'cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=../install -DCSECORE_USING_CONAN=FALSE -DCSECORE_BUILD_PRIVATE_APIDOC=ON ../cse-core'
-                                    sh 'cmake --build .'
-                                    sh 'cmake --build . --target install'
-                                }
-                            }
-                        }
-                        stage('Build Release') {
-                            steps {
-                                dir('release-build ') {
-                                    sh 'cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../install -DCSECORE_USING_CONAN=FALSE -DCSECORE_BUILD_PRIVATE_APIDOC=ON ../cse-core'
-                                    sh 'cmake --build .'
-                                    sh 'cmake --build . --target install'
-                                }
-                            }
-                        }
-                        stage ('Test Debug') {
-                            steps {
-                                dir('debug-build') {
-                                    sh 'ctest -C Debug -T Test --no-compress-output --test-output-size-passed 307200 || true'
-                                }
-                            }
-                        }
-                        stage ('Test Release') {
-                            steps {
-                                dir('release-build') {
-                                    sh 'ctest -C Release -T Test --no-compress-output --test-output-size-passed 307200 || true'
-                                }
-                            }
-                        }
-                    }
-                    post {
-                        always{
-                            xunit (
-                                testTimeMargin: '30000',
-                                thresholdMode: 1,
-                                thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
-                                tools: [ CTest(pattern: '*-build/Testing/**/Test.xml') ]
-                            )
-                        }
-                        success {
-                            archiveArtifacts artifacts: 'install/**/*',  fingerprint: true
-                        }
-                        cleanup {
-                            dir('debug-build/Testing') {
-                                deleteDir();
-                            }
-                            dir('release-build/Testing') {
-                                deleteDir();
-                            }
-                        }
-                    }
-                }
+                //     stages {
+                //         stage('Build Debug') {
+                //             steps {
+                //                 dir('debug-build') {
+                //                     sh 'uname -a'
+                //                     sh 'cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=../install -DCSECORE_USING_CONAN=FALSE -DCSECORE_BUILD_PRIVATE_APIDOC=ON ../cse-core'
+                //                     sh 'cmake --build .'
+                //                     sh 'cmake --build . --target install'
+                //                 }
+                //             }
+                //         }
+                //         stage('Build Release') {
+                //             steps {
+                //                 dir('release-build ') {
+                //                     sh 'cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../install -DCSECORE_USING_CONAN=FALSE -DCSECORE_BUILD_PRIVATE_APIDOC=ON ../cse-core'
+                //                     sh 'cmake --build .'
+                //                     sh 'cmake --build . --target install'
+                //                 }
+                //             }
+                //         }
+                //         stage ('Test Debug') {
+                //             steps {
+                //                 dir('debug-build') {
+                //                     sh 'ctest -C Debug -T Test --no-compress-output --test-output-size-passed 307200 || true'
+                //                 }
+                //             }
+                //         }
+                //         stage ('Test Release') {
+                //             steps {
+                //                 dir('release-build') {
+                //                     sh 'ctest -C Release -T Test --no-compress-output --test-output-size-passed 307200 || true'
+                //                 }
+                //             }
+                //         }
+                //     }
+                //     post {
+                //         always{
+                //             xunit (
+                //                 testTimeMargin: '30000',
+                //                 thresholdMode: 1,
+                //                 thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
+                //                 tools: [ CTest(pattern: '*-build/Testing/**/Test.xml') ]
+                //             )
+                //         }
+                //         success {
+                //             archiveArtifacts artifacts: 'install/**/*',  fingerprint: true
+                //         }
+                //         cleanup {
+                //             dir('debug-build/Testing') {
+                //                 deleteDir();
+                //             }
+                //             dir('release-build/Testing') {
+                //                 deleteDir();
+                //             }
+                //         }
+                //     }
+                // }
             }
         }
     }
