@@ -32,6 +32,9 @@ int main()
             startTime,
             std::make_unique<cse::fixed_step_algorithm>(stepSize));
 
+        // Default should not be real time
+        REQUIRE(!execution.is_real_time_simulation());
+
         auto observer = std::make_shared<cse::membuffer_observer>();
         execution.add_observer(observer);
 
@@ -50,10 +53,18 @@ int main()
 
         // Run simulation
         auto simResult = execution.simulate_until(midTime);
+        auto start = std::chrono::steady_clock::now();
         REQUIRE(simResult.get());
         REQUIRE(std::fabs(execution.current_time() - midTime) < 1.0e-6);
+        REQUIRE(execution.get_real_time_factor() > 1.0);
         simResult = execution.simulate_until(endTime);
         REQUIRE(simResult.get());
+        auto end = std::chrono::steady_clock::now();
+
+        auto simulatedDuration = std::chrono::duration<double>(endTime - startTime);
+        auto measuredDuration = end - start;
+        bool fasterThanRealTime = measuredDuration < simulatedDuration;
+        REQUIRE(fasterThanRealTime);
 
         double realOutValue = -1.0;
         double realInValue = -1.0;
@@ -84,19 +95,23 @@ int main()
 
         constexpr cse::time_point finalTime = 5.0;
 
+        execution.enable_real_time_simulation();
         simResult = execution.simulate_until(finalTime);
-        const auto start = std::chrono::steady_clock::now();
+        start = std::chrono::steady_clock::now();
         REQUIRE(simResult.get());
-        const auto end = std::chrono::steady_clock::now();
+        end = std::chrono::steady_clock::now();
 
-        const auto expected = std::chrono::duration<double>(finalTime - endTime);
-        const auto measured = end - start;
+        simulatedDuration = std::chrono::duration<double>(finalTime - endTime);
+        measuredDuration = end - start;
         const auto tolerance = std::chrono::duration<double>(0.05);
 
-        bool fasterThanRealTime = (expected - measured) > tolerance;
-        bool slowerThanRealTime = (measured - expected) > tolerance;
+        fasterThanRealTime = (simulatedDuration - measuredDuration) > tolerance;
+        bool slowerThanRealTime = (measuredDuration - simulatedDuration) > tolerance;
         REQUIRE(!slowerThanRealTime);
         REQUIRE(!fasterThanRealTime);
+
+        printf("Real time factor: %lf\n", execution.get_real_time_factor());
+        REQUIRE(fabs(execution.get_real_time_factor() - 1.0) < 0.05);
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;

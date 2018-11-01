@@ -234,22 +234,6 @@ public:
      */
     virtual time_duration do_step(time_point currentT, time_duration maxDeltaT) = 0;
 
-    /**
-     * Initializes the algorithm's real-time timer.
-     *
-     * This method is called for initialization purposes each time a simulation
-     * loop is started.
-     */
-    virtual void timer_start() = 0;
-
-    /**
-     * Calls the sleep function of the algorithm's real-time timer implementation.
-     *
-     * This method is called after `do_step`. The method should return after an
-     * appropriate amount of time in order to ensure real time execution.
-     */
-    virtual void timer_sleep() = 0;
-
     virtual ~algorithm() noexcept = default;
 };
 
@@ -291,8 +275,6 @@ public:
     void setup(time_point startTime, std::optional<time_point> stopTime) override;
     void initialize() override;
     time_duration do_step(time_point currentT, time_duration maxDeltaT) override;
-    void timer_start() override;
-    void timer_sleep() override;
 
 private:
     class impl;

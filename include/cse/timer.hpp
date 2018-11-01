@@ -1,9 +1,7 @@
 #ifndef CSECORE_TIMER_H
 #define CSECORE_TIMER_H
 
-#include <atomic>
-#include <chrono>
-#include <thread>
+#include <memory>
 
 #include <cse/model.hpp>
 
@@ -15,32 +13,46 @@ namespace cse
  */
 class real_time_timer
 {
-
 public:
     /**
-     * Creates a real_time_timer based on stepSize
+     * Reset the timer. To be called when the execution is started/resumed.
      *
-     * \param [in] stepSize
-     *     The step size (in seconds) used in the execution.
-     */
-    real_time_timer(cse::time_duration stepSize);
+     * \param [in] currentTime The current simulation time.
+    */
+    void start(time_point currentTime);
 
     /**
-     * Reset start time and internal step counter. To be called when the execution is started/resumed.
-     */
-    void start();
-
-    /**
-     * Calculates expected progress as well as elapsed time using system clock.
      * Calls thread sleep for the amount of time it would take to keep real time.
+     *
+     * If real time simulation is enabled, expected progress as well as elapsed time
+     * are calculated. Thread sleep is called for the amount of time it would take
+     * to synchronize against real time.
+     *
      * To be called at the tail end of each execution step.
+     *
+     * \param [in] currentTime The current simulation time.
      */
-    void sleep();
+    void sleep(time_point currentTime);
+
+    /// Enables real time simulation
+    void enable_real_time_simulation();
+
+    /// Disables real time simulation
+    void disable_real_time_simulation();
+
+    /// Returns if this is a real time simulation
+    bool is_real_time_simulation();
+
+    /// Returns the current real time factor
+    double get_real_time_factor();
+
+    /// Constructor
+    real_time_timer();
+    ~real_time_timer() noexcept;
 
 private:
-    std::atomic<long> counter_ = 1L;
-    std::chrono::nanoseconds stepDuration_;
-    std::chrono::steady_clock::time_point startTime_;
+    class impl;
+    std::unique_ptr<impl> pimpl_;
 };
 
 } // namespace cse
