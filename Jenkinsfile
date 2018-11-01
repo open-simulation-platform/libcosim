@@ -1,8 +1,6 @@
 pipeline {
     agent none
 
-    options { checkoutToSubdirectory('cse-core') }
-
     stages {
 
         stage('Build') {
@@ -24,8 +22,8 @@ pipeline {
                         stage('Build Debug') {
                             steps {
                                 dir('debug-build') {
-                                    bat 'conan install ../cse-core -s build_type=Debug -b missing'
-                                    bat 'cmake -DCMAKE_INSTALL_PREFIX=../install/debug -DCSECORE_USING_CONAN=TRUE -DCSECORE_BUILD_PRIVATE_APIDOC=ON -G "Visual Studio 15 2017 Win64" ../cse-core'
+                                    bat 'conan install ../ -s build_type=Debug -b missing'
+                                    bat 'cmake -DCMAKE_INSTALL_PREFIX=./install/debug -DCSECORE_USING_CONAN=TRUE -DCSECORE_BUILD_PRIVATE_APIDOC=ON -G "Visual Studio 15 2017 Win64" ../'
                                     bat 'cmake --build . --config Debug'
                                     bat 'cmake --build . --config Debug --target install'
                                 }
@@ -34,8 +32,8 @@ pipeline {
                         stage('Build Release') {
                             steps {
                                 dir('release-build') {
-                                    bat 'conan install ../cse-core -s build_type=Release -b missing'
-                                    bat 'cmake -DCMAKE_INSTALL_PREFIX=../install/release -DCSECORE_USING_CONAN=TRUE -DCSECORE_BUILD_PRIVATE_APIDOC=ON -G "Visual Studio 15 2017 Win64" ../cse-core'
+                                    bat 'conan install ../ -s build_type=Release -b missing'
+                                    bat 'cmake -DCMAKE_INSTALL_PREFIX=./install/release -DCSECORE_USING_CONAN=TRUE -DCSECORE_BUILD_PRIVATE_APIDOC=ON -G "Visual Studio 15 2017 Win64" ../'
                                     bat 'cmake --build . --config Release'
                                     bat 'cmake --build . --config Release --target install'
                                 }
@@ -96,7 +94,6 @@ pipeline {
                 stage ( 'Build on Linux with Conan' ) {
                     agent { 
                         dockerfile {
-                            // image 'conanio/gcc8' 
                             filename 'Dockerfile.conan-build'
                             label 'linux && docker'
                             args '-v ${HOME}/jenkins_slave/conan-repositories/${EXECUTOR_NUMBER}:/conan_repo'
@@ -117,8 +114,8 @@ pipeline {
                         stage('Build Debug') {
                             steps {
                                 dir('debug-build-conan') {
-                                    sh 'conan install ../cse-core -s compiler.libcxx=libstdc++11 -s build_type=Debug -b missing'
-                                    sh 'cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=../install -DCSECORE_USING_CONAN=TRUE -DCSECORE_BUILD_PRIVATE_APIDOC=ON ../cse-core'
+                                    sh 'conan install ../ -s compiler.libcxx=libstdc++11 -s build_type=Debug -b missing'
+                                    sh 'cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=./install -DCSECORE_USING_CONAN=TRUE -DCSECORE_BUILD_PRIVATE_APIDOC=ON ../'
                                     sh 'cmake --build .'
                                     sh 'cmake --build . --target install'
                                 }
@@ -127,8 +124,8 @@ pipeline {
                         stage('Build Release') {
                             steps {
                                 dir('release-build-conan') {
-                                    sh 'conan install ../cse-core -s compiler.libcxx=libstdc++11 -s build_type=Release -b missing'
-                                    sh 'cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../install -DCSECORE_USING_CONAN=TRUE -DCSECORE_BUILD_PRIVATE_APIDOC=ON ../cse-core'
+                                    sh 'conan install ../ -s compiler.libcxx=libstdc++11 -s build_type=Release -b missing'
+                                    sh 'cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=./install -DCSECORE_USING_CONAN=TRUE -DCSECORE_BUILD_PRIVATE_APIDOC=ON ../'
                                     sh 'cmake --build .'
                                     sh 'cmake --build . --target install'
                                 }
@@ -183,7 +180,7 @@ pipeline {
                         stage('Build Debug') {
                             steps {
                                 dir('debug-build') {
-                                    sh 'cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=../install -DCSECORE_USING_CONAN=FALSE -DCSECORE_BUILD_PRIVATE_APIDOC=ON ../cse-core'
+                                    sh 'cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=./install -DCSECORE_USING_CONAN=FALSE -DCSECORE_BUILD_PRIVATE_APIDOC=ON ../'
                                     sh 'cmake --build .'
                                     sh 'cmake --build . --target install'
                                 }
@@ -192,7 +189,7 @@ pipeline {
                         stage('Build Release') {
                             steps {
                                 dir('release-build ') {
-                                    sh 'cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../install -DCSECORE_USING_CONAN=FALSE -DCSECORE_BUILD_PRIVATE_APIDOC=ON ../cse-core'
+                                    sh 'cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=./install -DCSECORE_USING_CONAN=FALSE -DCSECORE_BUILD_PRIVATE_APIDOC=ON ../'
                                     sh 'cmake --build .'
                                     sh 'cmake --build . --target install'
                                 }
