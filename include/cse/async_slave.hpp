@@ -183,7 +183,7 @@ public:
      */
     virtual boost::fibers::future<step_result> do_step(
         time_point currentT,
-        time_duration deltaT) = 0;
+        duration deltaT) = 0;
 
     /// Result type for `get_variables()`.
     struct variable_values

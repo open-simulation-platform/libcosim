@@ -327,9 +327,10 @@ void slave_instance::start_simulation()
     assert(!simStarted_);
     const auto rc = fmi1_import_initialize_slave(
         handle_,
-        startTime_,
+        to_model_time_point(startTime_),
         stopTime_.has_value(),
-        stopTime_ ? *stopTime_ : std::numeric_limits<fmi1_real_t>::quiet_NaN());
+        stopTime_ ? to_model_time_point(*stopTime_)
+                  : std::numeric_limits<fmi1_real_t>::quiet_NaN());
     if (rc != fmi1_status_ok && rc != fmi1_status_warning) {
         throw error(
             make_error_code(errc::model_error),
@@ -352,10 +353,14 @@ void slave_instance::end_simulation()
 }
 
 
-step_result slave_instance::do_step(time_point currentT, time_duration deltaT)
+step_result slave_instance::do_step(time_point currentT, duration deltaT)
 {
     assert(simStarted_);
-    const auto rc = fmi1_import_do_step(handle_, currentT, deltaT, true);
+    const auto rc = fmi1_import_do_step(
+        handle_,
+        to_model_time_point(currentT),
+        to_model_duration(deltaT, currentT),
+        true);
     if (rc == fmi1_status_ok || rc == fmi1_status_warning) {
         return step_result::complete;
     } else if (rc == fmi1_status_discard) {

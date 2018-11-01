@@ -20,10 +20,10 @@ int main()
 {
     try {
         constexpr int numSlaves = 10;
-        constexpr cse::time_point startTime = 0.0;
-        constexpr cse::time_point midTime = 0.6;
-        constexpr cse::time_point endTime = 1.0;
-        constexpr cse::time_duration stepSize = 0.1;
+        constexpr cse::time_point startTime(0);
+        constexpr cse::time_point midTime = cse::to_time_point(0.6);
+        constexpr cse::time_point endTime = cse::to_time_point(1.0);
+        constexpr cse::duration stepSize = cse::to_duration(0.1);
 
         cse::log::set_global_output_level(cse::log::level::debug);
 
@@ -55,13 +55,14 @@ int main()
         auto simResult = execution.simulate_until(midTime);
         auto start = std::chrono::steady_clock::now();
         REQUIRE(simResult.get());
-        REQUIRE(std::fabs(execution.current_time() - midTime) < 1.0e-6);
+        REQUIRE(abs(execution.current_time() - midTime) < cse::to_duration(1.0e-6));
         REQUIRE(execution.get_real_time_factor() > 1.0);
         simResult = execution.simulate_until(endTime);
         REQUIRE(simResult.get());
         auto end = std::chrono::steady_clock::now();
 
-        auto simulatedDuration = std::chrono::duration<double>(endTime - startTime);
+        auto simulatedDuration = std::chrono::duration<double>(
+            cse::to_model_time_point(endTime) - cse::to_model_time_point(startTime));
         auto measuredDuration = end - start;
         bool fasterThanRealTime = measuredDuration < simulatedDuration;
         REQUIRE(fasterThanRealTime);
@@ -93,7 +94,7 @@ int main()
             lastValue = realValues[k];
         }
 
-        constexpr cse::time_point finalTime = 5.0;
+        constexpr auto finalTime = cse::to_time_point(5.0);
 
         execution.enable_real_time_simulation();
         simResult = execution.simulate_until(finalTime);
@@ -101,7 +102,8 @@ int main()
         REQUIRE(simResult.get());
         end = std::chrono::steady_clock::now();
 
-        simulatedDuration = std::chrono::duration<double>(finalTime - endTime);
+        simulatedDuration = std::chrono::duration<double>(
+            cse::to_model_time_point(finalTime) - cse::to_model_time_point(endTime));
         measuredDuration = end - start;
         const auto tolerance = std::chrono::duration<double>(0.05);
 

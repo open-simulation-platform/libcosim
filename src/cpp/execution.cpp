@@ -114,7 +114,7 @@ public:
             }
             stopped_ = false;
             timer_.start(currentTime_);
-            time_duration stepSize;
+            duration stepSize;
             do {
                 stepSize = algorithm_->do_step(currentTime_, endTime - currentTime_);
                 currentTime_ += stepSize;
@@ -123,7 +123,7 @@ public:
                     obs->step_complete(lastStep_, stepSize, currentTime_);
                 }
                 timer_.sleep(currentTime_);
-            } while (!stopped_ && endTime - currentTime_ > stepSize * relativeTolerance);
+            } while (!stopped_ && (endTime - currentTime_).count() > stepSize.count() * relativeTolerance);
             return !stopped_;
         });
     }

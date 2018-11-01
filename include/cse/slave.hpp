@@ -102,7 +102,7 @@ public:
      *      Currently, retrying a failed time step is not supported, but this is
      *      planned for a future version.
      */
-    virtual step_result do_step(time_point currentT, time_duration deltaT) = 0;
+    virtual step_result do_step(time_point currentT, duration deltaT) = 0;
 
     /**
      *  Retrieves the values of real variables.

@@ -155,7 +155,7 @@ void membuffer_observer::variable_disconnected(variable_id /*input*/)
 
 void membuffer_observer::step_complete(
     step_number lastStep,
-    time_duration /*lastStepSize*/,
+    duration /*lastStepSize*/,
     time_point /*currentTime*/)
 {
     for (const auto& slaveObserver : slaveObservers_) {

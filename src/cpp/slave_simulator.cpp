@@ -184,7 +184,7 @@ public:
 
     boost::fibers::future<step_result> do_step(
         time_point currentT,
-        time_duration deltaT)
+        duration deltaT)
     {
         // clang-format off
         return boost::fibers::async([=]() {
@@ -345,7 +345,7 @@ boost::fibers::future<void> slave_simulator::do_iteration()
 
 boost::fibers::future<step_result> slave_simulator::do_step(
     time_point currentT,
-    time_duration deltaT)
+    duration deltaT)
 {
     return pimpl_->do_step(currentT, deltaT);
 }

@@ -64,18 +64,19 @@ void run_tests(std::shared_ptr<fmi::fmu> fmu)
         }
     }
 
-    const double tMax = 1.0;
-    const double dt = 0.1;
+    const auto tStart = cse::time_point(0);
+    const auto tMax = cse::to_time_point(1.0);
+    const auto dt = cse::to_duration(0.1);
     double realVal = 0.0;
     int integerVal = 0;
     bool booleanVal = false;
     std::string stringVal;
 
     auto instance = fmu->instantiate_slave("testSlave");
-    instance->setup(0.0, tMax, std::nullopt);
+    instance->setup(tStart, tMax, std::nullopt);
     instance->start_simulation();
 
-    for (double t = 0; t < tMax; t += dt) {
+    for (auto t = tStart; t < tMax; t += dt) {
         double getRealVal = -1.0;
         int getIntegerVal = -1;
         bool getBooleanVal = true;

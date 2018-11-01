@@ -13,6 +13,20 @@ constexpr std::chrono::microseconds MIN_SLEEP(100);
 namespace cse
 {
 
+namespace
+{
+    std::chrono::nanoseconds to_real_duration(duration simDuration)
+    {
+        // We calculate the conversion factor first, because the two numbers
+        // will usually cancel, yielding exactly 1.
+        const auto tickConversionFactor = simDuration.resolution() * 1e9;
+        return std::chrono::nanoseconds(
+            static_cast<std::chrono::nanoseconds::rep>(
+                simDuration.count() * tickConversionFactor));
+    }
+}
+
+
 class real_time_timer::impl
 {
 public:
@@ -36,8 +50,8 @@ public:
         lastSimulationTime_ = currentTime;
         if (realTimeSimulation_) {
             Time::duration elapsed = current - startTime_;
-            const time_duration expectedSimulationTime = currentTime - simulationStartTime_;
-            const std::chrono::nanoseconds expected(static_cast<long long>(expectedSimulationTime * 1e9));
+            const duration expectedSimulationTime = currentTime - simulationStartTime_;
+            const std::chrono::nanoseconds expected = to_real_duration(expectedSimulationTime);
             const std::chrono::nanoseconds totalSleep = expected - elapsed;
 
             if (totalSleep > MIN_SLEEP) {
@@ -94,8 +108,8 @@ private:
         constexpr int stepsToMonitor = 5;
         if (rtCounter_ >= stepsToMonitor) {
 
-            const time_duration expectedSimulationTime = currentSimulationTime - rtSimulationStartTime_;
-            const std::chrono::nanoseconds expected(static_cast<long long>(expectedSimulationTime * 1e9));
+            const duration expectedSimulationTime = currentSimulationTime - rtSimulationStartTime_;
+            const std::chrono::nanoseconds expected = to_real_duration(expectedSimulationTime);
 
             Time::duration elapsed = currentTime - rtStartTime_;
             realTimeFactor_ = expected.count() / (1.0 * elapsed.count());

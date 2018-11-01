@@ -55,7 +55,7 @@ public:
 
     boost::fibers::future<step_result> do_step(
         time_point currentT,
-        time_duration deltaT) override;
+        duration deltaT) override;
 
 private:
     class impl;

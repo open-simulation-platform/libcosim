@@ -131,7 +131,7 @@ public:
         std::optional<double> relativeTolerance) override;
     void start_simulation() override;
     void end_simulation() override;
-    step_result do_step(time_point currentT, time_duration deltaT) override;
+    step_result do_step(time_point currentT, duration deltaT) override;
 
     void get_real_variables(
         gsl::span<const variable_index> variables,
@@ -178,7 +178,7 @@ private:
     bool simStarted_ = false;
 
     std::string instanceName_;
-    time_point startTime_ = 0.0;
+    time_point startTime_;
     std::optional<time_point> stopTime_;
 };
 
