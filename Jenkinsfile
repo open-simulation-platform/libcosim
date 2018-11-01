@@ -97,7 +97,7 @@ pipeline {
                     agent { 
                         dockerfile {
                             // image 'conanio/gcc8' 
-                            filename 'cse-core/Dockerfile.conan-build'
+                            filename 'Dockerfile.conan-build'
                             label 'linux && docker'
                             args '-v ${HOME}/jenkins_slave/conan-repositories/${EXECUTOR_NUMBER}:/conan_repo'
                         }
@@ -174,7 +174,7 @@ pipeline {
                 stage ( 'Build on Linux with Docker' ) {
                     agent { 
                         dockerfile { 
-                            filename 'cse-core/Dockerfile.build'
+                            filename 'Dockerfile.build'
                             label 'linux && docker'
                         }
                     }
