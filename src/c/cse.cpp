@@ -105,7 +105,7 @@ const char* cse_last_error_message()
 
 struct cse_execution_s
 {
-    std::atomic<cse::time_point> startTime;
+    std::atomic<cse::time_point> startTime = cse::time_point();
     std::shared_ptr<cse::real_time_timer> realTimeTimer;
     std::vector<std::shared_ptr<cse::slave>> slaves;
     std::vector<std::shared_ptr<cse_observer>> observers;
@@ -119,7 +119,7 @@ struct cse_execution_s
 
 cse::time_point calculate_current_time(cse_execution* execution)
 {
-    return execution->startTime + execution->currentSteps * execution->stepSize;
+    return execution->startTime.load() + execution->currentSteps.load() * execution->stepSize;
 }
 
 cse_execution* cse_execution_create(cse_time_point startTime, cse_duration stepSize)
@@ -189,7 +189,7 @@ cse_slave_index cse_execution_add_slave(
     try {
         auto instance = slave->instance;
         instance->setup(
-            execution->startTime + execution->currentSteps * execution->stepSize,
+            execution->startTime.load() + execution->currentSteps.load() * execution->stepSize,
             std::nullopt,
             std::nullopt);
         instance->start_simulation();

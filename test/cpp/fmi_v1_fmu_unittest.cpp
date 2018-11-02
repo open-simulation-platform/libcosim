@@ -64,7 +64,7 @@ void run_tests(std::shared_ptr<fmi::fmu> fmu)
         }
     }
 
-    const auto tStart = cse::time_point(0);
+    const auto tStart = cse::time_point();
     const auto tMax = cse::to_time_point(1.0);
     const auto dt = cse::to_duration(0.1);
     double realVal = 0.0;

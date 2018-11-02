@@ -5,12 +5,12 @@
 #ifndef CSE_MODEL_HPP
 #define CSE_MODEL_HPP
 
-#include <cassert>
+#include <chrono>
 #include <cstdint>
 #include <iterator>
 #include <limits>
 #include <ostream>
-#include <stdexcept>
+#include <ratio>
 #include <string>
 #include <utility>
 #include <vector>
@@ -19,279 +19,59 @@
 namespace cse
 {
 
-/**
- *  The default time resolution used for `time_point` and `duration` when
- *  nothing else is specified.
- *
- *  The value is currently `1e-9`.  As time points and durations are stored as
- *  64-bit signed integers that represent some multiple of the time resolution,
- *  the range of representable model time values is roughly -9,223,372,036 to
- *  +9,223,372,036.
- */
-constexpr double default_time_resolution = 1e-9;
-
 
 namespace detail
 {
-    template<typename T, typename U>
-    constexpr void time_resolution_check(T a, U b)
-    {
-        if (a.resolution() != b.resolution()) {
-            throw std::logic_error(
-                "Attempted to perform binary operation on time quantities "
-                "with different resolutions");
-        }
-    }
-}
-
-class duration;
-
-
-/**
- *  The type used to specify (simulation) time points.
- *
- *  This is a signed integer type which represents time as a multiple of some
- *  time resolution.  It is recommended to use `model_time_point()` to convert
- *  a `time_point` to actual model time.
- */
-class time_point
+class clock
 {
 public:
-    constexpr explicit time_point(
-        std::int64_t count = 0,
-        double resolution = default_time_resolution) noexcept
-        : count_(count), resolution_(resolution)
-    {
-        assert(resolution > 0.0);
-    }
-
-    constexpr std::int64_t count() const noexcept { return count_; }
-
-    constexpr double resolution() const noexcept { return resolution_; }
-
-    // Defined below
-    constexpr time_point& operator+=(const duration& dt);
-    constexpr time_point& operator-=(const duration& dt);
-
-private:
-    std::int64_t count_;
-    double resolution_;
+    using rep = std::int64_t;
+    using period = std::nano;
+    using duration = std::chrono::duration<rep, period>;
+    using time_point = std::chrono::time_point<clock>;
+    static constexpr bool is_steady = true;
+    static time_point now() = delete;
 };
+} // namespace detail
 
 
 /// The type used to specify (simulation) time durations.
-class duration
+using duration = detail::clock::duration;
+
+
+/// The type used to specify (simulation) time points.
+using time_point = detail::clock::time_point;
+
+
+/**
+ *  Converts a floating-point "model duration" to a `duration`,
+ *  assuming the duration starts at time 0.
+ */
+constexpr duration to_duration(double modelDuration)
 {
-public:
-    constexpr explicit duration(
-        std::int64_t count = 0,
-        double resolution = default_time_resolution) noexcept
-        : count_(count), resolution_(resolution)
-    {
-        assert(resolution > 0.0);
-    }
-
-    constexpr std::int64_t count() const noexcept { return count_; }
-
-    constexpr double resolution() const noexcept { return resolution_; }
-
-    constexpr duration operator-() const
-    {
-        return duration(-count_, resolution_);
-    }
-
-    constexpr duration operator+() const { return *this; }
-
-    // In-place arithmetics
-    constexpr duration& operator+=(duration other)
-    {
-        detail::time_resolution_check(*this, other);
-        count_ += other.count_;
-        return *this;
-    }
-
-    constexpr duration& operator-=(duration other)
-    {
-        detail::time_resolution_check(*this, other);
-        count_ -= other.count_;
-        return *this;
-    }
-
-    constexpr duration& operator*=(std::int64_t a)
-    {
-        count_ *= a;
-        return *this;
-    }
-
-private:
-    std::int64_t count_;
-    double resolution_;
-};
-
-
-// Time point comparisons
-constexpr bool operator==(time_point a, time_point b)
-{
-    detail::time_resolution_check(a, b);
-    return a.count() == b.count();
-}
-
-constexpr bool operator !=(time_point a, time_point b)
-{
-    detail::time_resolution_check(a, b);
-    return a.count() != b.count();
-}
-
-constexpr bool operator<(time_point a, time_point b)
-{
-    detail::time_resolution_check(a, b);
-    return a.count() < b.count();
-}
-
-constexpr bool operator<=(time_point a, time_point b)
-{
-    detail::time_resolution_check(a, b);
-    return a.count() <= b.count();
-}
-
-constexpr bool operator>(time_point a, time_point b)
-{
-    detail::time_resolution_check(a, b);
-    return a.count() >= b.count();
-}
-
-constexpr bool operator>=(time_point a, time_point b)
-{
-    detail::time_resolution_check(a, b);
-    return a.count() >= b.count();
-}
-
-// Duration comparisons
-constexpr bool operator==(duration a, duration b)
-{
-    detail::time_resolution_check(a, b);
-    return a.count() == b.count();
-}
-
-constexpr bool operator !=(duration a, duration b)
-{
-    detail::time_resolution_check(a, b);
-    return a.count() != b.count();
-}
-
-constexpr bool operator<(duration a, duration b)
-{
-    detail::time_resolution_check(a, b);
-    return a.count() < b.count();
-}
-
-constexpr bool operator<=(duration a, duration b)
-{
-    detail::time_resolution_check(a, b);
-    return a.count() <= b.count();
-}
-
-constexpr bool operator>(duration a, duration b)
-{
-    detail::time_resolution_check(a, b);
-    return a.count() >= b.count();
-}
-
-constexpr bool operator>=(duration a, duration b)
-{
-    detail::time_resolution_check(a, b);
-    return a.count() >= b.count();
-}
-
-// Duration arithmetics
-constexpr duration operator+(duration a, duration b)
-{
-    return a += b;
-}
-
-constexpr duration operator-(duration a, duration b)
-{
-    return a -= b;
-}
-
-constexpr duration operator*(duration a, std::int64_t b)
-{
-    return a *= b;
-}
-
-constexpr duration operator*(std::int64_t a, duration b)
-{
-    return b *= a;
-}
-
-// Time point-duration arithmetics
-constexpr time_point& time_point::operator+=(const duration& d)
-{
-    detail::time_resolution_check(*this, d);
-    count_ += d.count();
-    return *this;
-}
-
-constexpr time_point& time_point::operator-=(const duration& d)
-{
-    detail::time_resolution_check(*this, d);
-    count_ -= d.count();
-    return *this;
-}
-
-constexpr time_point operator+(time_point t, duration d)
-{
-    return t += d;
-}
-
-constexpr time_point operator-(time_point t, duration d)
-{
-    return t -= d;
-}
-
-constexpr duration operator-(time_point t1, time_point t2)
-{
-    detail::time_resolution_check(t1, t2);
-    return duration(t1.count() - t2.count(), t1.resolution());
-}
-
-
-/// Returns the absolute value of a `duration`.
-constexpr duration abs(duration d) noexcept
-{
-    return d.count() >= 0 ? d : -d;
+    return std::chrono::duration_cast<duration>(std::chrono::duration<double>(modelDuration));
 }
 
 
 /**
  *  Converts a floating-point "model time point" to a `time_point`.
  *
- *  The conversion is lossy if the result of the floating-point operation
- *  `modelTimePoint/resolution` is not an integer.  In other words, the
- *  relation
+ *  The conversion may cause loss of precision, meaning that the relation
  *
  *      to_model_time_point(to_time_point(t, r)) == t
  *
  *  does *not* necessarily hold.
  */
-constexpr time_point to_time_point(
-    double modelTimePoint,
-    double resolution = default_time_resolution)
+constexpr time_point to_time_point(double modelTimePoint) noexcept
 {
-    return time_point(
-        static_cast<std::int64_t>(modelTimePoint/resolution),
-        resolution);
+    return time_point(to_duration(modelTimePoint));
 }
 
 
-/**
- *  Converts a `time_point` to a floating-point "model time point".
- *
- *  The result is simply the product of `t.count()` and `t.resolution()`.
- */
+/// Converts a `time_point` to a floating-point "model time point".
 constexpr double to_model_time_point(time_point t) noexcept
 {
-    return t.count() * t.resolution();
+    return std::chrono::duration_cast<std::chrono::duration<double>>(t.time_since_epoch()).count();
 }
 
 
@@ -317,26 +97,9 @@ constexpr duration to_duration(double modelDuration, time_point startTime)
 {
     const auto modelStartTime = to_model_time_point(startTime);
     const auto modelEndTime = modelStartTime + modelDuration;
-    const auto endTime = to_time_point(modelEndTime, startTime.resolution());
+    const auto endTime = to_time_point(modelEndTime);
     return endTime - startTime;
 }
-
-
-/**
- *  Converts a floating-point "model duration" to a `duration`,
- *  assuming the duration starts at time 0.
- *
- *  This is a convenience function which is equivalent to:
- *
- *      to_duration(modelDuration, time_point(0, resolution));
- */
-constexpr duration to_duration(
-    double modelDuration,
-    double resolution = default_time_resolution)
-{
-    return to_duration(modelDuration, time_point(0, resolution));
-}
-
 
 /**
  *  Converts a floating-point "model duration" to a `duration`.

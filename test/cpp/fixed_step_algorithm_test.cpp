@@ -20,7 +20,7 @@ int main()
 {
     try {
         constexpr int numSlaves = 10;
-        constexpr cse::time_point startTime(0);
+        constexpr cse::time_point startTime;
         constexpr cse::time_point midTime = cse::to_time_point(0.6);
         constexpr cse::time_point endTime = cse::to_time_point(1.0);
         constexpr cse::duration stepSize = cse::to_duration(0.1);
@@ -55,14 +55,13 @@ int main()
         auto simResult = execution.simulate_until(midTime);
         auto start = std::chrono::steady_clock::now();
         REQUIRE(simResult.get());
-        REQUIRE(abs(execution.current_time() - midTime) < cse::to_duration(1.0e-6));
+        REQUIRE(std::chrono::abs(execution.current_time() - midTime) < std::chrono::microseconds(1));
         REQUIRE(execution.get_real_time_factor() > 1.0);
         simResult = execution.simulate_until(endTime);
         REQUIRE(simResult.get());
         auto end = std::chrono::steady_clock::now();
 
-        auto simulatedDuration = std::chrono::duration<double>(
-            cse::to_model_time_point(endTime) - cse::to_model_time_point(startTime));
+        auto simulatedDuration = endTime - startTime;
         auto measuredDuration = end - start;
         bool fasterThanRealTime = measuredDuration < simulatedDuration;
         REQUIRE(fasterThanRealTime);
@@ -102,10 +101,9 @@ int main()
         REQUIRE(simResult.get());
         end = std::chrono::steady_clock::now();
 
-        simulatedDuration = std::chrono::duration<double>(
-            cse::to_model_time_point(finalTime) - cse::to_model_time_point(endTime));
+        simulatedDuration = finalTime - endTime;
         measuredDuration = end - start;
-        const auto tolerance = std::chrono::duration<double>(0.05);
+        const auto tolerance = std::chrono::milliseconds(50);
 
         fasterThanRealTime = (simulatedDuration - measuredDuration) > tolerance;
         bool slowerThanRealTime = (measuredDuration - simulatedDuration) > tolerance;
