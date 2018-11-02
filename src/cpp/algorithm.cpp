@@ -88,27 +88,10 @@ public:
 
     void initialize()
     {
-        std::unordered_map<simulator_index, boost::fibers::future<void>> setupResults;
-        for (const auto& s : simulators_) {
-            setupResults.emplace(
-                s.first,
-                s.second->setup(startTime_, stopTime_, std::nullopt));
-        }
-
-        bool failed = false;
-        std::stringstream errMessages;
-        for (auto& r : setupResults) {
-            try {
-                r.second.get();
-            } catch (const std::exception& e) {
-                errMessages
-                    << simulators_.at(r.first)->name() << ": "
-                    << e.what() << '\n';
-                failed = true;
-            }
-        }
-        if (failed) {
-            throw error(make_error_code(errc::simulation_error), errMessages.str());
+        setup_simulators();
+        for (std::size_t i = 0; i < simulators_.size(); ++i) {
+            iterate_simulators();
+            transfer_variables();
         }
     }
 
@@ -138,16 +121,55 @@ private:
         connections_.erase(newEnd, connections_.end());
     }
 
-    void step_simulators(time_point currentT, time_duration deltaT)
+    template<typename F>
+    void for_all_simulators(F f)
     {
-        std::unordered_map<simulator_index, boost::fibers::future<step_result>> stepResults;
+        std::unordered_map<simulator_index, boost::fibers::future<void>> results;
         for (const auto& s : simulators_) {
-            stepResults.emplace(s.first, s.second->do_step(currentT, deltaT));
+            results.emplace(s.first, f(s.second));
         }
 
         bool failed = false;
         std::stringstream errMessages;
-        for (auto& r : stepResults) {
+        for (auto& r : results) {
+            try {
+                r.second.get();
+            } catch (const std::exception& e) {
+                errMessages
+                    << simulators_.at(r.first)->name() << ": "
+                    << e.what() << '\n';
+                failed = true;
+            }
+        }
+        if (failed) {
+            throw error(make_error_code(errc::simulation_error), errMessages.str());
+        }
+    }
+
+    void setup_simulators()
+    {
+        for_all_simulators([=](auto s) {
+            return s->setup(startTime_, stopTime_, std::nullopt);
+        });
+    }
+
+    void iterate_simulators()
+    {
+        for_all_simulators([=](auto s) {
+            return s->do_iteration();
+        });
+    }
+
+    void step_simulators(time_point currentT, time_duration deltaT)
+    {
+        std::unordered_map<simulator_index, boost::fibers::future<step_result>> results;
+        for (const auto& s : simulators_) {
+            results.emplace(s.first, s.second->do_step(currentT, deltaT));
+        }
+
+        bool failed = false;
+        std::stringstream errMessages;
+        for (auto& r : results) {
             if (auto ep = r.second.get_exception_ptr()) {
                 errMessages
                     << simulators_.at(r.first)->name() << ": "

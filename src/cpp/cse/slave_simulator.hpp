@@ -51,6 +51,8 @@ public:
         std::optional<time_point> stopTime,
         std::optional<double> relativeTolerance) override;
 
+    boost::fibers::future<void> do_iteration() override;
+
     boost::fibers::future<step_result> do_step(
         time_point currentT,
         time_duration deltaT) override;

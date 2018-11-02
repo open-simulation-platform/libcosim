@@ -20,6 +20,58 @@ namespace cse
 {
 
 
+/// Symbolic constants that represent the state of a slave.
+enum class slave_state
+{
+    /**
+     *  The slave exists but has not been configured yet.
+     *
+     *  The slave is in this state from its creation until `setup()` is called.
+     */
+    created,
+
+    /**
+     *  The slave is in initialisation mode.
+     *
+     *  The slave is in this state from the time `setup()` is called and until
+     *  `start_simulation()` is called.
+     */
+    initialisation,
+
+    /**
+     *  The slave is in simulation mode.
+     *
+     *  The slave is in this state from the time `start_simulation()` is called
+     *  and until `end_simulation()` is called.
+     */
+    simulation,
+
+    /**
+     *  The slave is terminated.
+     *
+     *  The slave is in this state from the time `end_simulation()` is called
+     *  and until its destruction.
+     */
+    terminated,
+
+    /**
+     *  An irrecoverable error occurred.
+     *
+     *  The slave is in this state from the time an exception is thrown and
+     *  until its destruction.
+     */
+    error,
+
+    /**
+     *  The slave is in an indeterminate state.
+     *
+     *  This is the case when a state-changing asynchronous function call is
+     *  currently in progress.
+     */
+    indeterminate,
+};
+
+
 /**
  *  An asynchronous co-simulation slave interface.
  *
@@ -51,8 +103,19 @@ class async_slave
 public:
     virtual ~async_slave() = default;
 
+    /// Returns the slave's current state.
+    virtual slave_state state() const noexcept = 0;
+
     /**
      *  Returns a model description.
+     *
+     *  \pre
+     *      `state()` is *not* `slave_state::error` or
+     *      `slave_state::indeterminate`.
+     *  \post
+     *      `state()` is `slave_state::indeterminate` until the asynchronous
+     *      call completes, after which it returns to its previous  state
+     *      or `slave_state::error`.
      *
      *  \see slave::model_description()
      */
@@ -61,6 +124,13 @@ public:
     /**
      *  Instructs the slave to perform pre-simulation setup and enter
      *  initialisation mode.
+     *
+     *  \pre
+     *      `state()` is `slave_state::created`
+     *  \post
+     *      `state()` is `slave_state::indeterminate` until the asynchronous
+     *      call completes, after which it is `slave_state::initialisation`
+     *      or `slave_state::error`.
      *
      *  \see slave::setup()
      */
@@ -73,12 +143,26 @@ public:
      *  Informs the slave that the initialisation stage ends and the
      *  simulation begins.
      *
+     *  \pre
+     *      `state()` is `slave_state::initialisation`
+     *  \post
+     *      `state()` is `slave_state::indeterminate` until the asynchronous
+     *      call completes, after which it is `slave_state::simulation`
+     *      or `slave_state::error`.
+     *
      *  \see slave::start_simulation()
      */
     virtual boost::fibers::future<void> start_simulation() = 0;
 
     /**
      *  Informs the slave that the simulation run has ended.
+     *
+     *  \pre
+     *      `state()` is `slave_state::simulation`
+     *  \post
+     *      `state()` is `slave_state::indeterminate` until the asynchronous
+     *      call completes, after which it is `slave_state::terminated`
+     *      or `slave_state::error`.
      *
      *  \see slave::end_simulation()
      */
@@ -88,7 +172,14 @@ public:
      *  Performs model calculations for the time step which starts at
      *  the time point `currentT` and has a duration of `deltaT`.
      *
-     *  \see slave::start_simulation()
+     *  \pre
+     *      `state()` is `slave_state::simulation`
+     *  \post
+     *      `state()` is `slave_state::indeterminate` until the asynchronous
+     *      call completes, after which it is `slave_state::simulation`
+     *      or `slave_state::error`.
+     *
+     *  \see slave::do_step()
      */
     virtual boost::fibers::future<step_result> do_step(
         time_point currentT,
@@ -125,6 +216,14 @@ public:
      *  are guaranteed to remain valid until another function is called on the
      *  same object.
      *
+     *  \pre
+     *      `state()` is `slave_state::initialisation` or
+     *      `slave_state::simulation`
+     *  \post
+     *      `state()` is `slave_state::indeterminate` until the asynchronous
+     *      call completes, after which it returns to its previous state
+     *      or `slave_state::error`.
+     *
      *  \see slave::get_real_variables()
      *  \see slave::get_integer_variables()
      *  \see slave::get_boolean_variables()
@@ -147,7 +246,15 @@ public:
      *  `<type>Variables` array to the value given in the corresponding
      *  element of the corresponding `<type>Values` array.
      *
-     *  \pre `<type>Variables.size() == <type>Values.size()`
+     *  \pre
+     *      `<type>Variables.size() == <type>Values.size()`
+     *  \pre
+     *      `state()` is `slave_state::initialisation` or
+     *      `slave_state::simulation`
+     *  \post
+     *      `state()` is `slave_state::indeterminate` until the asynchronous
+     *      call completes, after which it returns to its previous state
+     *      or `slave_state::error`.
      *
      *  \see slave::set_real_variables()
      *  \see slave::set_integer_variables()
