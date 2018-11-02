@@ -9,6 +9,7 @@
 #include <system_error>
 #include <thread>
 
+#include "slave_observer.hpp"
 #include <cse/exception.hpp>
 #include <cse/fmi/fmu.hpp>
 #include <cse/fmi/importer.hpp>
@@ -189,14 +190,8 @@ cse_slave_index cse_execution_add_slave(
     cse_slave* slave)
 {
     try {
-        auto instance = slave->instance;
-        instance->setup(
-            execution->startTime.load() + execution->currentSteps.load() * execution->stepSize,
-            std::nullopt,
-            std::nullopt);
-        instance->start_simulation();
-        execution->slaves.push_back(instance);
-        return static_cast<cse_slave_index>(execution->slaves.size() - 1);
+        auto index = execution->cpp_execution->add_slave(cse::make_pseudo_async(std::move(slave->instance2)), "unnamed slave");
+        return index;
     } catch (...) {
         handle_current_exception();
         return failure;
@@ -238,6 +233,14 @@ int cse_execution_start(cse_execution* execution)
         try {
             execution->cpp_execution->simulate_until(cse::eternity);
             execution->state = CSE_EXECUTION_RUNNING;
+            execution->t = std::thread([execution]() {
+                execution->realTimeTimer->start(calculate_current_time(execution));
+                while (execution->shouldRun) {
+                    cse_execution_step(execution);
+                    execution->realTimeTimer->sleep(calculate_current_time(execution));
+                }
+            });
+
             return success;
         } catch (...) {
             handle_current_exception();
@@ -300,7 +303,7 @@ int cse_execution_slave_set_real(
 {
     try {
         const auto sim = execution->cpp_execution->get_simulator(slaveIndex);
-        for (size_t i = 0; i < nv; i++) {
+        for (int i = 0; i < nv; i++) {
             sim->set_real(variables[i], values[i]);
         }
         return success;
@@ -319,7 +322,7 @@ int cse_execution_slave_set_integer(
 {
     try {
         const auto sim = execution->cpp_execution->get_simulator(slaveIndex);
-        for (size_t i = 0; i < nv; i++) {
+        for (int i = 0; i < nv; i++) {
             sim->set_integer(variables[i], values[i]);
         }
         return success;

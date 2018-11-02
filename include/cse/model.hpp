@@ -87,6 +87,9 @@ constexpr time_point to_time_point(double t)
     return time_point(to_duration(t));
 }
 
+/// A special `time_point` value that lies infinitely far in the future.
+const time_point eternity = std::numeric_limits<time_point>::infinity();
+
 
 /**
  *  Converts a `time_point` to a floating-point number.
