@@ -285,7 +285,7 @@ int cse_execution_get_status(cse_execution* execution, cse_execution_status* sta
         status->error_code = execution->error_code;
         status->state = execution->state;
         status->current_time =
-            cse::to_model_time_point(calculate_current_time(execution));
+            cse::to_double_time_point(calculate_current_time(execution));
         return success;
     } catch (...) {
         handle_current_exception();

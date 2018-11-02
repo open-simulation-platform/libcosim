@@ -19,9 +19,19 @@
 namespace cse
 {
 
-
 namespace detail
 {
+
+/*
+ *  A clock type for simulation time points.
+ *
+ *  This class fulfils the syntactic requirements of the "Clock" concept
+ *  (https://en.cppreference.com/w/cpp/named_req/Clock), but it does not have
+ *  any relation to wall-clock time, nor to the logical time of any specific
+ *  simulation.  (The `now()` method is therefore deleted.)  Its  sole raison
+ *  d'ètre is to be a basis for the definition of `time_point`.
+ *
+ */
 class clock
 {
 public:
@@ -29,9 +39,10 @@ public:
     using period = std::nano;
     using duration = std::chrono::duration<rep, period>;
     using time_point = std::chrono::time_point<clock>;
-    static constexpr bool is_steady = true;
+    static constexpr bool is_steady = false;
     static time_point now() = delete;
 };
+
 } // namespace detail
 
 
@@ -44,84 +55,119 @@ using time_point = detail::clock::time_point;
 
 
 /**
- *  Converts a floating-point "model duration" to a `duration`,
- *  assuming the duration starts at time 0.
+ *  Converts a floating-point number to a `duration`, assuming the duration
+ *  starts at time 0.
+ *
+ *  For durations that start at a nonzero time point, consider using
+ *  `to_duration(double, time_point)`.
+ *
+ *  The conversion may be subject to round-off error and truncation,
+ *  meaning that the relation
+ *
+ *      to_double_duration(to_duration(d)) == d
+ *
+ *  in general does not hold.
  */
-constexpr duration to_duration(double modelDuration)
+constexpr duration to_duration(double d)
 {
-    return std::chrono::duration_cast<duration>(std::chrono::duration<double>(modelDuration));
+    return std::chrono::duration_cast<duration>(std::chrono::duration<double>(d));
 }
 
 
 /**
- *  Converts a floating-point "model time point" to a `time_point`.
+ *  Converts a floating-point number to a `time_point`.
  *
- *  The conversion may cause loss of precision, meaning that the relation
+ *  The conversion may be subject to round-off error and truncation,
+ *  meaning that the relation
  *
- *      to_model_time_point(to_time_point(t, r)) == t
+ *      to_double_time_point(to_time_point(t)) == t
  *
- *  does *not* necessarily hold.
+ *  in general does not hold.
  */
-constexpr time_point to_time_point(double modelTimePoint) noexcept
+constexpr time_point to_time_point(double t)
 {
-    return time_point(to_duration(modelTimePoint));
-}
-
-
-/// Converts a `time_point` to a floating-point "model time point".
-constexpr double to_model_time_point(time_point t) noexcept
-{
-    return std::chrono::duration_cast<std::chrono::duration<double>>(t.time_since_epoch()).count();
+    return time_point(to_duration(t));
 }
 
 
 /**
- *  Converts a floating-point "model duration" to a `duration`.
+ *  Converts a `time_point` to a floating-point number.
+ *
+ *  The conversion may be subject to round-off error,
+ *  meaning that the relation
+ *
+ *      to_time_point(to_double_time_point(t)) == t
+ *
+ *  in general does not hold.
+ */
+constexpr double to_double_time_point(time_point t)
+{
+    return std::chrono::duration_cast<std::chrono::duration<double>>(
+        t.time_since_epoch())
+        .count();
+}
+
+
+/**
+ *  Converts a floating-point number to a `duration`.
  *
  *  The conversion in done in such a way as to preserve addition of a
- *  duration to a time point.  That is, the relation
+ *  duration to a time point.  That is, it ensures that the relation
  *
- *      t1 + to_duration(md, t1) == t2
+ *      t1 + to_duration(d, t1) == t2
  *
  *  holds if and only if
  *
- *      to_model_time_point(t1) + md == to_model_time_point(t2)
+ *      to_double_time_point(t1) + d == to_double_time_point(t2)
  *
- *  where `t1` and `t2` are both of type `time_point` and `md` is of
- *  type `double`.
+ *  where `t1` and `t2` are both of type `time_point` and `d` is of
+ *  type `double`.  Since the precision of a floating-point number
+ *  depends on its absolute value, the start time of the duration is
+ *  required for this calculation.
  *
- *  Since the precision of a floating-point number depends on its absolute
- *  value, the start time of the duration is required for this calculation.
+ *  The conversion may be subject to round-off error and truncation,
+ *  meaning that the relation
+ *
+ *      to_double_duration(to_duration(d, t), t) == d
+ *
+ *  in general does not hold.
  */
-constexpr duration to_duration(double modelDuration, time_point startTime)
+constexpr duration to_duration(double d, time_point startTime)
 {
-    const auto modelStartTime = to_model_time_point(startTime);
-    const auto modelEndTime = modelStartTime + modelDuration;
-    const auto endTime = to_time_point(modelEndTime);
+    const auto fpStartTime = to_double_time_point(startTime);
+    const auto fpEndTime = fpStartTime + d;
+    const auto endTime = to_time_point(fpEndTime);
     return endTime - startTime;
 }
 
+
 /**
- *  Converts a floating-point "model duration" to a `duration`.
+ *  Converts a floating-point number to a `duration`.
  *
  *  The conversion in done in such a way as to preserve addition of a
- *  duration to a time point.  That is, the relation
+ *  duration to a time point.  That is, it ensures that the relation
  *
- *      to_model_time_point(t1) + to_model_duration(d, t1) == to_model_time_point(t2)
+ *      to_double_time_point(t1) + to_model_duration(d, t1) == to_double_time_point(t2)
  *
  *  holds if and only if
  *
  *      t1 + d == t2
  *
  *  where `t1` and `t2` are both of type `time_point` and `d` is of
- *  type `duration`.
+ *  type `duration`.  Since the precision of a floating-point number
+ *  depends on its absolute value, the start time of the duration is
+ *  required for this calculation.
  *
- *  Since the precision of a floating-point number depends on its absolute
- *  value, the start time of the duration is required for this calculation.
+ *  The conversion may be subject to round-off error, meaning that the
+ *  relation
+ *
+ *      to_duration(to_double_duration(d, t), t) == d
+ *
+ *  in general does not hold.
  */
-constexpr double to_model_duration(duration d, time_point startTime)
+constexpr double to_double_duration(duration d, time_point startTime)
 {
-    return to_model_time_point(startTime + d) - to_model_time_point(startTime);
+    return to_double_time_point(startTime + d) - to_double_time_point(startTime);
 }
 
 
