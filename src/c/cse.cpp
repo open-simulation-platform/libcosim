@@ -9,7 +9,6 @@
 #include <system_error>
 #include <thread>
 
-#include "slave_observer.hpp"
 #include <cse/exception.hpp>
 #include <cse/fmi/fmu.hpp>
 #include <cse/fmi/importer.hpp>
@@ -303,7 +302,7 @@ int cse_execution_slave_set_real(
 {
     try {
         const auto sim = execution->cpp_execution->get_simulator(slaveIndex);
-        for (int i = 0; i < nv; i++) {
+        for (size_t i = 0; i < nv; i++) {
             sim->set_real(variables[i], values[i]);
         }
         return success;
@@ -322,7 +321,7 @@ int cse_execution_slave_set_integer(
 {
     try {
         const auto sim = execution->cpp_execution->get_simulator(slaveIndex);
-        for (int i = 0; i < nv; i++) {
+        for (size_t i = 0; i < nv; i++) {
             sim->set_integer(variables[i], values[i]);
         }
         return success;
