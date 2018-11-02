@@ -14,7 +14,11 @@
 #include <cse/fmi/fmu.hpp>
 #include <cse/fmi/importer.hpp>
 #include <cse/log.hpp>
-#include <cse/timer.hpp>
+
+#include <cse/algorithm.hpp>
+#include <cse/execution.hpp>
+#include <cse/model.hpp>
+#include <cse/observer.hpp>
 
 #include <cse/hello_world.hpp>
 #include <iostream>
@@ -134,8 +138,7 @@ cse_execution* cse_execution_create(cse_time_point startTime, cse_duration stepS
         execution->stepSize = cse::to_duration(stepSize, startTime);
         execution->error_code = CSE_ERRC_SUCCESS;
         execution->state = CSE_EXECUTION_STOPPED;
-        execution->realTimeTimer = std::make_unique<cse::real_time_timer>();
-        execution->realTimeTimer->enable_real_time_simulation();
+
         return execution.release();
     } catch (...) {
         handle_current_exception();
@@ -205,57 +208,37 @@ bool cse_observer_observe(cse_observer* observer, long currentStep);
 
 void cse_execution_step(cse_execution* execution)
 {
-    for (const auto& slave : execution->slaves) {
-        const auto stepResult = slave->do_step(calculate_current_time(execution), execution->stepSize);
-        if (stepResult != cse::step_result::complete) {
-            set_last_error(CSE_ERRC_STEP_TOO_LONG, "Time step too long");
-        }
-    }
-
-    execution->currentSteps++;
-
-    for (const auto& observer : execution->observers) {
-        const auto observeOK =
-            cse_observer_observe(observer.get(), execution->currentSteps);
-        if (!observeOK) {
-            set_last_error(CSE_ERRC_UNSPECIFIED, "Observer failed to observe");
-        }
-    }
+    execution->cpp_execution->step(execution->stepSize);
 }
 
 int cse_execution_step(cse_execution* execution, size_t numSteps)
 {
-    execution->state = CSE_EXECUTION_RUNNING;
-    for (size_t i = 0; i < numSteps; i++) {
-        try {
-            cse_execution_step(execution);
-        } catch (...) {
-            handle_current_exception();
-            execution->state = CSE_EXECUTION_ERROR;
-            return failure;
+    if (execution->cpp_execution->is_running()) {
+        return success;
+    } else {
+        execution->state = CSE_EXECUTION_RUNNING;
+        for (size_t i = 0; i < numSteps; i++) {
+            try {
+                cse_execution_step(execution);
+            } catch (...) {
+                handle_current_exception();
+                execution->state = CSE_EXECUTION_ERROR;
+                return failure;
+            }
         }
+        execution->state = CSE_EXECUTION_STOPPED;
+        return success;
     }
-    execution->state = CSE_EXECUTION_STOPPED;
-    return success;
 }
 
 int cse_execution_start(cse_execution* execution)
 {
-    if (execution->t.joinable()) {
-        // Already started
+    if (execution->cpp_execution->is_running()) {
         return success;
     } else {
         try {
-            execution->shouldRun = true;
+            execution->cpp_execution->simulate_until(cse::eternity);
             execution->state = CSE_EXECUTION_RUNNING;
-            execution->t = std::thread([execution]() {
-                execution->realTimeTimer->start(calculate_current_time(execution));
-                while (execution->shouldRun) {
-                    cse_execution_step(execution);
-                    execution->realTimeTimer->sleep(calculate_current_time(execution));
-                }
-            });
-
             return success;
         } catch (...) {
             handle_current_exception();
@@ -268,8 +251,7 @@ int cse_execution_start(cse_execution* execution)
 int cse_execution_stop(cse_execution* execution)
 {
     try {
-        execution->shouldRun = false;
-        execution->t.join();
+        execution->cpp_execution->stop_simulation();
         execution->state = CSE_EXECUTION_STOPPED;
         return success;
     } catch (...) {
@@ -295,8 +277,20 @@ int cse_execution_get_status(cse_execution* execution, cse_execution_status* sta
 
 struct cse_observer_s
 {
-    std::vector<std::shared_ptr<cse::single_slave_observer>> slaveObservers;
+    std::shared_ptr<cse::membuffer_observer> cpp_observer;
 };
+
+int cse_observer_destroy(cse_observer* observer)
+{
+    try {
+        if (!observer) return success;
+        const auto owned = std::unique_ptr<cse_observer>(observer);
+        return success;
+    } catch (...) {
+        handle_current_exception();
+        return failure;
+    }
+}
 
 int cse_execution_slave_set_real(
     cse_execution* execution,
@@ -306,7 +300,10 @@ int cse_execution_slave_set_real(
     const double values[])
 {
     try {
-        execution->slaves.at(slaveIndex)->set_real_variables(gsl::make_span(variables, nv), gsl::make_span(values, nv));
+        const auto sim = execution->cpp_execution->get_simulator(slaveIndex);
+        for (int i = 0; i < nv; i++) {
+            sim->set_real(variables[i], values[i]);
+        }
         return success;
     } catch (...) {
         handle_current_exception();
@@ -322,7 +319,10 @@ int cse_execution_slave_set_integer(
     const int values[])
 {
     try {
-        execution->slaves.at(slaveIndex)->set_integer_variables(gsl::make_span(variables, nv), gsl::make_span(values, nv));
+        const auto sim = execution->cpp_execution->get_simulator(slaveIndex);
+        for (int i = 0; i < nv; i++) {
+            sim->set_integer(variables[i], values[i]);
+        }
         return success;
     } catch (...) {
         handle_current_exception();
@@ -332,14 +332,14 @@ int cse_execution_slave_set_integer(
 
 int cse_observer_slave_get_real(
     cse_observer* observer,
-    cse_observer_slave_index slave,
+    cse_slave_index slave,
     const cse_variable_index variables[],
     size_t nv,
     double values[])
 {
     const auto singleSlaveObserver = observer->slaveObservers.at(slave);
     try {
-        singleSlaveObserver->get_real(variables, nv, values);
+        observer->cpp_observer->get_real(slave, gsl::make_span(variables, nv), gsl::make_span(values, nv));
         return success;
     } catch (...) {
         handle_current_exception();
@@ -349,14 +349,14 @@ int cse_observer_slave_get_real(
 
 int cse_observer_slave_get_integer(
     cse_observer* observer,
-    cse_observer_slave_index slave,
+    cse_slave_index slave,
     const cse_variable_index variables[],
     size_t nv,
     int values[])
 {
     const auto singleSlaveObserver = observer->slaveObservers.at(slave);
     try {
-        singleSlaveObserver->get_int(variables, nv, values);
+        observer->cpp_observer->get_integer(slave, gsl::make_span(variables, nv), gsl::make_span(values, nv));
         return success;
     } catch (...) {
         handle_current_exception();
@@ -366,33 +366,32 @@ int cse_observer_slave_get_integer(
 
 size_t cse_observer_slave_get_real_samples(
     cse_observer* observer,
-    cse_observer_slave_index slave,
+    cse_slave_index slave,
     cse_variable_index variableIndex,
     long fromStep,
     size_t nSamples,
     double values[],
-    long steps[])
+    long long steps[])
 {
-    const auto singleSlaveObserver = observer->slaveObservers.at(slave);
-    return singleSlaveObserver->get_real_samples(variableIndex, fromStep, nSamples, values, steps);
+    return observer->cpp_observer->get_real_samples(slave, variableIndex, fromStep, gsl::make_span(values, nSamples), gsl::make_span(steps, nSamples));
 }
 
 size_t cse_observer_slave_get_integer_samples(
     cse_observer* observer,
-    cse_observer_slave_index slave,
+    cse_slave_index slave,
     cse_variable_index variableIndex,
     long fromStep,
     size_t nSamples,
     int values[],
-    long steps[])
+    long long steps[])
 {
-    const auto singleSlaveObserver = observer->slaveObservers.at(slave);
-    return singleSlaveObserver->get_int_samples(variableIndex, fromStep, nSamples, values, steps);
+    return observer->cpp_observer->get_integer_samples(slave, variableIndex, fromStep, gsl::make_span(values, nSamples), gsl::make_span(steps, nSamples));
 }
 
 cse_observer* cse_membuffer_observer_create()
 {
     auto observer = std::make_unique<cse_observer>();
+    observer->cpp_observer = std::make_shared<cse::membuffer_observer>();
 
     return observer.release();
 }
@@ -402,8 +401,7 @@ cse_observer_index cse_execution_add_observer(
     cse_observer* observer)
 {
     try {
-        execution->observers.push_back(std::shared_ptr<cse_observer>(observer));
-        return static_cast<int>(execution->observers.size() - 1);
+        return execution->cpp_execution->add_observer(observer->cpp_observer);
     } catch (...) {
         handle_current_exception();
         return failure;

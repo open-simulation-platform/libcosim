@@ -59,13 +59,6 @@ int main()
         return 1;
     }
 
-    cse_slave_index observer_slave_index = cse_observer_add_slave(observer, slave);
-    if (observer_slave_index < 0) {
-        print_last_error();
-        cse_execution_destroy(execution);
-        return 1;
-    }
-
     int observer_index = cse_execution_add_observer(execution, observer);
     if (observer_index < 0) {
         print_last_error();
@@ -88,7 +81,7 @@ int main()
     const size_t nSamples = 10;
     double realSamples[10];
     int intSamples[10];
-    long steps[10];
+    long long steps[10];
 
     size_t readRealSamples = cse_observer_slave_get_real_samples(observer, slave_index, index, fromStep, nSamples, realSamples, steps);
     if (readRealSamples != nSamples) {
@@ -123,7 +116,7 @@ int main()
             return 1;
         }
         if (expectedSteps[i] != steps[i]) {
-            fprintf(stderr, "Sample nr %d expected step %li, got %li\n", i, expectedSteps[i], steps[i]);
+            fprintf(stderr, "Sample nr %d expected step %li, got %lli\n", i, expectedSteps[i], steps[i]);
             cse_execution_destroy(execution);
             return 1;
         }

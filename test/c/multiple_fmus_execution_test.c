@@ -76,20 +76,6 @@ int main()
         return 1;
     }
 
-    cse_slave_index observer_slave_index1 = cse_observer_add_slave(observer1, slave1);
-    if (observer_slave_index1 < 0) {
-        print_last_error();
-        cse_execution_destroy(execution);
-        return 1;
-    }
-
-    cse_slave_index observer_slave_index2 = cse_observer_add_slave(observer2, slave2);
-    if (observer_slave_index2 < 0) {
-        print_last_error();
-        cse_execution_destroy(execution);
-        return 1;
-    }
-
     cse_observer_index observer_index1 = cse_execution_add_observer(execution, observer1);
     if (observer_index1 < 0) {
         print_last_error();
@@ -159,7 +145,7 @@ int main()
 
     cse_variable_index realOutVar = 0;
     double realOutVal = -1.0;
-    rc = cse_observer_slave_get_real(observer1, observer_slave_index1, &realOutVar, 1, &realOutVal);
+    rc = cse_observer_slave_get_real(observer1, slave_index1, &realOutVar, 1, &realOutVal);
     if (rc < 0) {
         print_last_error();
         cse_execution_destroy(execution);
@@ -168,7 +154,7 @@ int main()
 
     cse_variable_index intOutVar = 0;
     int intOutVal = 10;
-    rc = cse_observer_slave_get_integer(observer1, observer_slave_index1, &intOutVar, 1, &intOutVal);
+    rc = cse_observer_slave_get_integer(observer1, slave_index1, &intOutVar, 1, &intOutVal);
     if (rc < 0) {
         print_last_error();
         cse_execution_destroy(execution);
@@ -186,14 +172,14 @@ int main()
         return 1;
     }
 
-    rc = cse_observer_slave_get_real(observer2, observer_slave_index2, &realOutVar, 1, &realOutVal);
+    rc = cse_observer_slave_get_real(observer2, slave_index2, &realOutVar, 1, &realOutVal);
     if (rc < 0) {
         print_last_error();
         cse_execution_destroy(execution);
         return 1;
     }
 
-    rc = cse_observer_slave_get_integer(observer2, observer_slave_index2, &intOutVar, 1, &intOutVal);
+    rc = cse_observer_slave_get_integer(observer2, slave_index2, &intOutVar, 1, &intOutVal);
     if (rc < 0) {
         print_last_error();
         cse_execution_destroy(execution);

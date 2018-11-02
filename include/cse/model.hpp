@@ -53,6 +53,9 @@ using duration = detail::clock::duration;
 /// The type used to specify (simulation) time points.
 using time_point = detail::clock::time_point;
 
+/// A special `time_point` value that lies infinitely far in the future.
+const time_point eternity = std::numeric_limits<time_point>::infinity();
+
 
 /**
  *  Converts a floating-point number to a `duration`, assuming that the

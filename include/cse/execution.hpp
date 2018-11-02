@@ -54,6 +54,7 @@ inline bool operator!=(const variable_id& a, const variable_id& b) noexcept
 // Forward declarations
 class algorithm;
 class observer;
+class simulator;
 
 
 /**
@@ -100,6 +101,8 @@ public:
         std::unique_ptr<async_slave> slave,
         std::string_view name);
 
+    std::shared_ptr<simulator> get_simulator(simulator_index index);
+
     observer_index add_observer(std::shared_ptr<observer> obs);
 
     /**
@@ -136,7 +139,12 @@ public:
      */
     boost::fibers::future<bool> simulate_until(time_point targetTime);
 
+    time_duration step(time_duration maxDeltaT);
+
     void stop_simulation();
+
+    /// Is the simulation loop currently running
+    bool is_running() const noexcept;
 
     /// Enables real time simulation
     void enable_real_time_simulation();

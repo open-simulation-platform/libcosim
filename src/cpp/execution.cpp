@@ -70,6 +70,11 @@ public:
         return index;
     }
 
+    std::shared_ptr<simulator> get_simulator(simulator_index index)
+    {
+        return std::shared_ptr<simulator>(std::move(simulators_.at(index)));
+    }
+
     observer_index add_observer(std::shared_ptr<observer> obs)
     {
         const auto index = static_cast<observer_index>(observers_.size());
@@ -103,6 +108,22 @@ public:
         return currentTime_;
     }
 
+    bool is_running() const noexcept
+    {
+        return !stopped_;
+    }
+
+    time_duration step(time_duration maxDeltaT)
+    {
+        const auto stepSize = algorithm_->do_step(currentTime_, maxDeltaT);
+        currentTime_ += stepSize;
+        ++lastStep_;
+        for (const auto& obs : observers_) {
+            obs->step_complete(lastStep_, stepSize, currentTime_);
+        }
+        return stepSize;
+    }
+
     boost::fibers::future<bool> simulate_until(time_point endTime)
     {
         constexpr double relativeTolerance = 0.01;
@@ -114,19 +135,15 @@ public:
             }
             stopped_ = false;
             timer_.start(currentTime_);
-            duration stepSize;
+            time_duration stepSize;
             do {
-                stepSize = algorithm_->do_step(currentTime_, endTime - currentTime_);
-                currentTime_ += stepSize;
-                ++lastStep_;
-                for (const auto& obs : observers_) {
-                    obs->step_complete(lastStep_, stepSize, currentTime_);
-                }
+                stepSize = step(endTime - currentTime_);
                 timer_.sleep(currentTime_);
             } while (!stopped_ && (endTime - currentTime_).count() > stepSize.count() * relativeTolerance);
             return !stopped_;
         });
     }
+
 
     void stop_simulation()
     {
@@ -183,6 +200,11 @@ simulator_index execution::add_slave(
     return pimpl_->add_slave(std::move(slave), name);
 }
 
+std::shared_ptr<simulator> execution::get_simulator(simulator_index index)
+{
+    return pimpl_->get_simulator(index);
+}
+
 observer_index execution::add_observer(std::shared_ptr<observer> obs)
 {
     return pimpl_->add_observer(obs);
@@ -201,6 +223,21 @@ time_point execution::current_time() const noexcept
 boost::fibers::future<bool> execution::simulate_until(time_point endTime)
 {
     return pimpl_->simulate_until(endTime);
+}
+
+time_duration execution::step(time_duration maxDeltaT)
+{
+    return pimpl_->step(maxDeltaT);
+}
+
+bool execution::is_running() const noexcept
+{
+    return pimpl_->is_running();
+}
+
+void execution::stop_simulation()
+{
+    pimpl_->stop_simulation();
 }
 
 void execution::enable_real_time_simulation()

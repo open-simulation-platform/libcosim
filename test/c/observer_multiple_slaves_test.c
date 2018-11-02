@@ -70,20 +70,6 @@ int main()
         return 1;
     }
 
-    cse_slave_index observerSlaveIndex1 = cse_observer_add_slave(observer, slave1);
-    if (observerSlaveIndex1 < 0) {
-        print_last_error();
-        cse_execution_destroy(execution);
-        return 1;
-    }
-
-    cse_slave_index observerSlaveIndex2 = cse_observer_add_slave(observer, slave2);
-    if (observerSlaveIndex2 < 0) {
-        print_last_error();
-        cse_execution_destroy(execution);
-        return 1;
-    }
-
     cse_observer_index observerIndex = cse_execution_add_observer(execution, observer);
     if (observerIndex < 0) {
         print_last_error();
@@ -145,7 +131,7 @@ int main()
 
     cse_variable_index realOutVar = 0;
     double realOutVal = -1.0;
-    rc = cse_observer_slave_get_real(observer, observerSlaveIndex1, &realOutVar, 1, &realOutVal);
+    rc = cse_observer_slave_get_real(observer, slaveIndex1, &realOutVar, 1, &realOutVal);
     if (rc < 0) {
         print_last_error();
         cse_execution_destroy(execution);
@@ -154,7 +140,7 @@ int main()
 
     cse_variable_index intOutVar = 0;
     int intOutVal = 10;
-    rc = cse_observer_slave_get_integer(observer, observerSlaveIndex1, &intOutVar, 1, &intOutVal);
+    rc = cse_observer_slave_get_integer(observer, slaveIndex1, &intOutVar, 1, &intOutVal);
     if (rc < 0) {
         print_last_error();
         cse_execution_destroy(execution);
@@ -172,14 +158,14 @@ int main()
         return 1;
     }
 
-    rc = cse_observer_slave_get_real(observer, observerSlaveIndex2, &realOutVar, 1, &realOutVal);
+    rc = cse_observer_slave_get_real(observer, slaveIndex2, &realOutVar, 1, &realOutVal);
     if (rc < 0) {
         print_last_error();
         cse_execution_destroy(execution);
         return 1;
     }
 
-    rc = cse_observer_slave_get_integer(observer, observerSlaveIndex2, &intOutVar, 1, &intOutVal);
+    rc = cse_observer_slave_get_integer(observer, slaveIndex2, &intOutVar, 1, &intOutVal);
     if (rc < 0) {
         print_last_error();
         cse_execution_destroy(execution);
