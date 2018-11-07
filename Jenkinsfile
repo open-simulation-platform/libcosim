@@ -4,6 +4,7 @@ pipeline {
     options { checkoutToSubdirectory('cse-core') }
 
     stages {
+
         stage('Build') {
             parallel {
                 stage('Build on Windows') {
@@ -92,14 +93,21 @@ pipeline {
                         }
                     }
                 }
-                stage ( 'Build on Linux' ) {
-                    agent { label 'linux' }
-                    
-                    environment {
-                        CONAN_USER_HOME = "${env.HOME}/jenkins_slave/conan-repositories/${env.EXECUTOR_NUMBER}"
-                        CONAN_USER_HOME_SHORT = "${env.CONAN_USER_HOME}"
+                stage ( 'Build on Linux with Conan' ) {
+                    agent { 
+                        dockerfile {
+                            filename 'Dockerfile.conan-build'
+                            dir 'cse-core/.dockerfiles'
+                            label 'linux && docker'
+                            args '-v ${HOME}/jenkins_slave/conan-repositories/${EXECUTOR_NUMBER}:/conan_repo'
+                        }
                     }
 
+                    environment {
+                        CONAN_USER_HOME = '/conan_repo'
+                        CONAN_USER_HOME_SHORT = 'None'
+                    }
+                    
                     stages {
                         stage('Conan add remote') {
                             steps {
@@ -108,7 +116,7 @@ pipeline {
                         }
                         stage('Build Debug') {
                             steps {
-                                dir('debug-build') {
+                                dir('debug-build-conan') {
                                     sh 'conan install ../cse-core -s compiler.libcxx=libstdc++11 -s build_type=Debug -b missing'
                                     sh 'cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=../install -DCSECORE_USING_CONAN=TRUE -DCSECORE_BUILD_PRIVATE_APIDOC=ON ../cse-core'
                                     sh 'cmake --build .'
@@ -118,7 +126,7 @@ pipeline {
                         }
                         stage('Build Release') {
                             steps {
-                                dir('release-build') {
+                                dir('release-build-conan') {
                                     sh 'conan install ../cse-core -s compiler.libcxx=libstdc++11 -s build_type=Release -b missing'
                                     sh 'cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../install -DCSECORE_USING_CONAN=TRUE -DCSECORE_BUILD_PRIVATE_APIDOC=ON ../cse-core'
                                     sh 'cmake --build .'
@@ -128,15 +136,80 @@ pipeline {
                         }
                         stage ('Test Debug') {
                             steps {
-                                dir('debug-build') {
+                                dir('debug-build-conan') {
                                     sh '. ./activate_run.sh && ctest -C Debug -T Test --no-compress-output --test-output-size-passed 307200 || true'
                                 }
                             }
                         }
                         stage ('Test Release') {
                             steps {
-                                dir('release-build') {
+                                dir('release-build-conan') {
                                     sh '. ./activate_run.sh && ctest -C Release -T Test --no-compress-output --test-output-size-passed 307200 || true'
+                                }
+                            }
+                        }
+                    }
+                    post {
+                        always{
+                            xunit (
+                                testTimeMargin: '30000',
+                                thresholdMode: 1,
+                                thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
+                                tools: [ CTest(pattern: '*-build-conan/Testing/**/Test.xml') ]
+                            )
+                        }
+                        success {
+                            archiveArtifacts artifacts: 'install/**/*',  fingerprint: true
+                        }
+                        cleanup {
+                            dir('debug-build-conan/Testing') {
+                                deleteDir();
+                            }
+                            dir('release-build-conan/Testing') {
+                                deleteDir();
+                            }
+                        }
+                    }
+                }
+                stage ( 'Build on Linux with Docker' ) {
+                    agent { 
+                        dockerfile { 
+                            filename 'Dockerfile.build'
+                            dir 'cse-core/.dockerfiles'
+                            label 'linux && docker'
+                        }
+                    }
+
+                    stages {
+                        stage('Build Debug') {
+                            steps {
+                                dir('debug-build') {
+                                    sh 'cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=../install -DCSECORE_USING_CONAN=FALSE -DCSECORE_BUILD_PRIVATE_APIDOC=ON ../cse-core'
+                                    sh 'cmake --build .'
+                                    sh 'cmake --build . --target install'
+                                }
+                            }
+                        }
+                        stage('Build Release') {
+                            steps {
+                                dir('release-build ') {
+                                    sh 'cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../install -DCSECORE_USING_CONAN=FALSE -DCSECORE_BUILD_PRIVATE_APIDOC=ON ../cse-core'
+                                    sh 'cmake --build .'
+                                    sh 'cmake --build . --target install'
+                                }
+                            }
+                        }
+                        stage ('Test Debug') {
+                            steps {
+                                dir('debug-build') {
+                                    sh 'ctest -C Debug -T Test --no-compress-output --test-output-size-passed 307200 || true'
+                                }
+                            }
+                        }
+                        stage ('Test Release') {
+                            steps {
+                                dir('release-build') {
+                                    sh 'ctest -C Release -T Test --no-compress-output --test-output-size-passed 307200 || true'
                                 }
                             }
                         }
