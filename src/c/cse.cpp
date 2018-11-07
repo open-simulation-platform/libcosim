@@ -9,10 +9,12 @@
 #include <system_error>
 #include <thread>
 
+#include "slave_logger.hpp"
 #include "slave_observer.hpp"
 #include <cse/exception.hpp>
 #include <cse/fmi/fmu.hpp>
 #include <cse/fmi/importer.hpp>
+
 #include <cse/log.hpp>
 #include <cse/timer.hpp>
 
@@ -435,6 +437,31 @@ bool cse_observer_observe(cse_observer* observer, long currentStep)
         handle_current_exception();
         return false;
     }
+}
+
+int cse_log_int_values(char* logPath, int* values, int nSamples, int binary)
+{
+
+    auto logger = cse::single_slave_logger(logPath, binary);
+    int rc = logger.write_int_samples(values, nSamples);
+
+    if (rc < 0) {
+        return failure;
+    }
+
+    return success;
+}
+
+int cse_log_real_values(char *logPath, double* values, int nSamples, int binary) {
+
+    auto logger = cse::single_slave_logger(logPath, binary);
+    int rc = logger.write_real_samples(values, nSamples);
+
+    if (rc < 0) {
+        return failure;
+    }
+
+    return success;
 }
 
 int cse_hello_world(char* buffer, size_t size)
