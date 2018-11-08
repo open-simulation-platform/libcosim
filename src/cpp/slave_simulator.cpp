@@ -3,8 +3,8 @@
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
-#include <stdexcept>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <unordered_map>
 
@@ -49,7 +49,7 @@ struct exposed_vars
             return values[it->second];
         } else {
             std::ostringstream oss;
-            oss << "variable_index " << i << " not found in exposed variables. Variables must be exposed before calling get()"
+            oss << "variable_index " << i << " not found in exposed variables. Variables must be exposed before calling get()";
             throw std::out_of_range(oss.str());
         }
     }
@@ -61,7 +61,7 @@ struct exposed_vars
             values[it->second] = v;
         } else {
             std::ostringstream oss;
-            oss << "variable_index " << i << " not found in exposed variables. Variables must be exposed before calling set()"
+            oss << "variable_index " << i << " not found in exposed variables. Variables must be exposed before calling set()";
             throw std::out_of_range(oss.str());
         }
     }
