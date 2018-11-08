@@ -55,8 +55,8 @@ using time_point = detail::clock::time_point;
 
 
 /**
- *  Converts a floating-point number to a `duration`, assuming the duration
- *  starts at time 0.
+ *  Converts a floating-point number to a `duration`, assuming that the
+ *  duration starts at time 0.
  *
  *  For durations that start at a nonzero time point, consider using
  *  `to_duration(double, double)`.
@@ -106,16 +106,11 @@ constexpr double to_double_time_point(time_point t)
 /**
  *  Converts a floating-point number to a `duration`.
  *
- *  The conversion in done in such a way as to preserve addition of a
- *  duration to a time point.  That is, it ensures that the relation
+ *  The conversion is done in such a way as to preserve addition of a
+ *  duration to a time point.  In other words, if `t1 + d == t2`, then
  *
  *      to_time_point(t1) + to_duration(d, t1) == to_time_point(t2)
  *
- *  holds if and only if
- *
- *      t1 + d == t2
- *
- *  where `t1`, `t2` and `d` are all of type `double`.
  *  Since the precision of a floating-point number depends on its absolute
  *  value, the start time of the duration is required for this calculation.
  *
@@ -136,16 +131,10 @@ constexpr duration to_duration(double d, double startTime)
  *  Converts a `duration` to a floating-point number.
  *
  *  The conversion in done in such a way as to preserve addition of a
- *  duration to a time point.  That is, it ensures that the relation
+ *  duration to a time point.  In other words, if `t1 + d == t2`, then
  *
  *      to_double_time_point(t1) + to_double_duration(d, t1) == to_double_time_point(t2)
  *
- *  holds if and only if
- *
- *      t1 + d == t2
- *
- *  where `t1` and `t2` are both of type `time_point` and `d` is of
- *  type `duration`.
  *  Since the precision of a floating-point number depends on its absolute
  *  value, the start time of the duration is required for this calculation.
  *
