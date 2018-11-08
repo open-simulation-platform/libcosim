@@ -4,6 +4,8 @@
 #include <cassert>
 #include <cstddef>
 #include <stdexcept>
+#include <sstream>
+#include <string>
 #include <unordered_map>
 
 #include <boost/container/vector.hpp>
