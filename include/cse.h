@@ -21,7 +21,7 @@ extern "C" {
 typedef double cse_time_point;
 
 /// The type used to specify (simulation) time durations.
-typedef double cse_time_duration;
+typedef double cse_duration;
 
 /// Variable index.
 typedef uint32_t cse_variable_index;
@@ -139,7 +139,7 @@ typedef struct cse_execution_s cse_execution;
  */
 cse_execution* cse_execution_create(
     cse_time_point startTime,
-    cse_time_duration stepSize);
+    cse_duration stepSize);
 
 
 /**

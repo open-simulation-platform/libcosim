@@ -118,7 +118,7 @@ public:
 
     boost::fibers::future<cse::step_result> do_step(
         cse::time_point currentT,
-        cse::time_duration deltaT)
+        cse::duration deltaT)
         override
     {
         CSE_PRECONDITION(state_ == slave_state::simulation);

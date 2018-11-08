@@ -92,6 +92,9 @@ target_link_libraries(csecorecpp
         gsl
         Threads::Threads
     )
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    target_link_libraries(csecorecpp INTERFACE "atomic")
+endif()
 if(WIN32 AND NOT BUILD_SHARED_LIBS)
     set_target_properties(csecorecpp PROPERTIES OUTPUT_NAME "libcsecorecpp")
 endif()

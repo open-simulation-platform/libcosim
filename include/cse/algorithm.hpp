@@ -131,7 +131,7 @@ public:
      */
     virtual boost::fibers::future<step_result> do_step(
         time_point currentT,
-        time_duration deltaT) = 0;
+        duration deltaT) = 0;
 };
 
 
@@ -245,7 +245,7 @@ public:
      *      The actual time step length, which must be less than or equal
      *      to `maxDeltaT`.
      */
-    virtual time_duration do_step(time_point currentT, time_duration maxDeltaT) = 0;
+    virtual duration do_step(time_point currentT, duration maxDeltaT) = 0;
 
     virtual ~algorithm() noexcept = default;
 };
@@ -267,7 +267,7 @@ public:
      *  \param stepSize
      *      The communication interval length.
      */
-    explicit fixed_step_algorithm(time_duration stepSize);
+    explicit fixed_step_algorithm(duration stepSize);
 
     ~fixed_step_algorithm() noexcept;
 
@@ -287,7 +287,7 @@ public:
     void disconnect_variable(variable_id input) override;
     void setup(time_point startTime, std::optional<time_point> stopTime) override;
     void initialize() override;
-    time_duration do_step(time_point currentT, time_duration maxDeltaT) override;
+    duration do_step(time_point currentT, duration maxDeltaT) override;
 
 private:
     class impl;

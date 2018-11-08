@@ -105,24 +105,24 @@ const char* cse_last_error_message()
 
 struct cse_execution_s
 {
-    std::atomic<cse::time_point> startTime;
+    std::atomic<cse::time_point> startTime = cse::time_point();
     std::shared_ptr<cse::real_time_timer> realTimeTimer;
     std::vector<std::shared_ptr<cse::slave>> slaves;
     std::vector<std::shared_ptr<cse_observer>> observers;
     std::atomic<long> currentSteps;
-    cse::time_duration stepSize;
+    cse::duration stepSize;
     std::thread t;
     std::atomic<bool> shouldRun = false;
     std::atomic<cse_execution_state> state;
     int error_code;
 };
 
-cse::time_duration calculate_current_time(cse_execution* execution)
+cse::time_point calculate_current_time(cse_execution* execution)
 {
-    return execution->startTime + execution->currentSteps * execution->stepSize;
+    return execution->startTime.load() + execution->currentSteps.load() * execution->stepSize;
 }
 
-cse_execution* cse_execution_create(cse_time_point startTime, cse_time_duration stepSize)
+cse_execution* cse_execution_create(cse_time_point startTime, cse_duration stepSize)
 {
     try {
         // No exceptions are possible right now, so try...catch and unique_ptr
@@ -130,8 +130,8 @@ cse_execution* cse_execution_create(cse_time_point startTime, cse_time_duration 
         cse::log::set_global_output_level(cse::log::level::info);
 
         auto execution = std::make_unique<cse_execution>();
-        execution->startTime = startTime;
-        execution->stepSize = stepSize;
+        execution->startTime = cse::to_time_point(startTime);
+        execution->stepSize = cse::to_duration(stepSize, startTime);
         execution->error_code = CSE_ERRC_SUCCESS;
         execution->state = CSE_EXECUTION_STOPPED;
         execution->realTimeTimer = std::make_unique<cse::real_time_timer>();
@@ -189,7 +189,7 @@ cse_slave_index cse_execution_add_slave(
     try {
         auto instance = slave->instance;
         instance->setup(
-            execution->startTime + execution->currentSteps * execution->stepSize,
+            execution->startTime.load() + execution->currentSteps.load() * execution->stepSize,
             std::nullopt,
             std::nullopt);
         instance->start_simulation();
@@ -284,7 +284,8 @@ int cse_execution_get_status(cse_execution* execution, cse_execution_status* sta
     try {
         status->error_code = execution->error_code;
         status->state = execution->state;
-        status->current_time = calculate_current_time(execution);
+        status->current_time =
+            cse::to_double_time_point(calculate_current_time(execution));
         return success;
     } catch (...) {
         handle_current_exception();

@@ -13,6 +13,7 @@ constexpr std::chrono::microseconds MIN_SLEEP(100);
 namespace cse
 {
 
+
 class real_time_timer::impl
 {
 public:
@@ -36,8 +37,8 @@ public:
         lastSimulationTime_ = currentTime;
         if (realTimeSimulation_) {
             Time::duration elapsed = current - startTime_;
-            const time_duration expectedSimulationTime = currentTime - simulationStartTime_;
-            const std::chrono::nanoseconds expected(static_cast<long long>(expectedSimulationTime * 1e9));
+            const duration expectedSimulationTime = currentTime - simulationStartTime_;
+            const auto expected = std::chrono::duration_cast<std::chrono::nanoseconds>(expectedSimulationTime);
             const std::chrono::nanoseconds totalSleep = expected - elapsed;
 
             if (totalSleep > MIN_SLEEP) {
@@ -94,8 +95,8 @@ private:
         constexpr int stepsToMonitor = 5;
         if (rtCounter_ >= stepsToMonitor) {
 
-            const time_duration expectedSimulationTime = currentSimulationTime - rtSimulationStartTime_;
-            const std::chrono::nanoseconds expected(static_cast<long long>(expectedSimulationTime * 1e9));
+            const duration expectedSimulationTime = currentSimulationTime - rtSimulationStartTime_;
+            const auto expected = std::chrono::duration_cast<std::chrono::nanoseconds>(expectedSimulationTime);
 
             Time::duration elapsed = currentTime - rtStartTime_;
             realTimeFactor_ = expected.count() / (1.0 * elapsed.count());

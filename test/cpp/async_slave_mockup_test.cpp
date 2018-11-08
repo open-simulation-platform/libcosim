@@ -22,9 +22,9 @@ int main()
 
     try {
         constexpr int numSlaves = 10;
-        constexpr double startTime = 0.0;
-        constexpr double endTime = 1.0;
-        constexpr double stepSize = 0.1;
+        constexpr auto startTime = cse::to_time_point(0.0);
+        constexpr auto endTime = cse::to_time_point(1.0);
+        constexpr auto stepSize = cse::to_duration(0.1);
 
         // Create the slaves
         std::vector<std::unique_ptr<cse::async_slave>> asyncSlaves;
@@ -61,7 +61,7 @@ int main()
         }
 
         // Simulation
-        for (double t = startTime; t <= endTime; t += stepSize) {
+        for (auto t = startTime; t <= endTime; t += stepSize) {
             // Perform time steps
             std::vector<future<cse::step_result>> stepResults;
             for (const auto& slave : asyncSlaves) {

@@ -34,10 +34,10 @@ namespace cse
 class fixed_step_algorithm::impl
 {
 public:
-    explicit impl(time_duration stepSize)
+    explicit impl(duration stepSize)
         : stepSize_(stepSize)
     {
-        CSE_INPUT_CHECK(stepSize > 0.0);
+        CSE_INPUT_CHECK(stepSize.count() > 0);
     }
 
     ~impl() noexcept = default;
@@ -95,7 +95,7 @@ public:
         }
     }
 
-    time_duration do_step(time_point currentT, time_duration maxDeltaT)
+    duration do_step(time_point currentT, duration maxDeltaT)
     {
         const auto currentStepSize = std::min(stepSize_, maxDeltaT);
         step_simulators(currentT, currentStepSize);
@@ -160,7 +160,7 @@ private:
         });
     }
 
-    void step_simulators(time_point currentT, time_duration deltaT)
+    void step_simulators(time_point currentT, duration deltaT)
     {
         std::unordered_map<simulator_index, boost::fibers::future<step_result>> results;
         for (const auto& s : simulators_) {
@@ -235,15 +235,15 @@ private:
             simulators_[output.simulator]->get_string(output.index));
     }
 
-    const time_duration stepSize_;
-    time_point startTime_ = 0.0;
+    const duration stepSize_;
+    time_point startTime_;
     std::optional<time_point> stopTime_;
     std::unordered_map<simulator_index, simulator*> simulators_;
     std::vector<connection> connections_;
 };
 
 
-fixed_step_algorithm::fixed_step_algorithm(time_duration stepSize)
+fixed_step_algorithm::fixed_step_algorithm(duration stepSize)
     : pimpl_(std::make_unique<impl>(stepSize))
 {
 }
@@ -309,9 +309,9 @@ void fixed_step_algorithm::initialize()
 }
 
 
-time_duration fixed_step_algorithm::do_step(
+duration fixed_step_algorithm::do_step(
     time_point currentT,
-    time_duration maxDeltaT)
+    duration maxDeltaT)
 {
     return pimpl_->do_step(currentT, maxDeltaT);
 }

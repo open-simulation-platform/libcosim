@@ -75,7 +75,7 @@ public:
     {
     }
 
-    cse::step_result do_step(cse::time_point /*currentT*/, cse::time_duration /*deltaT*/) override
+    cse::step_result do_step(cse::time_point /*currentT*/, cse::duration /*deltaT*/) override
     {
         realOut_ = realOp_ ? realOp_(realIn_) : realIn_;
         intOut_ = intOp_ ? intOp_(intIn_) : intIn_;
