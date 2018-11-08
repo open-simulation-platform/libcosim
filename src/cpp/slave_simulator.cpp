@@ -3,10 +3,10 @@
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
+#include <stdexcept>
 #include <unordered_map>
 
 #include <boost/container/vector.hpp>
-#include <cse/exception.hpp>
 
 
 namespace cse
@@ -42,23 +42,21 @@ struct exposed_vars
 
     typename var_view_type<T>::type get(variable_index i) const
     {
-        if (indexMapping.count(i)) {
-            return values[indexMapping.at(i)];
+        const auto it = indexMapping.find(i);
+        if (it != indexMapping.end()) {
+            return values[it->second];
         } else {
-            throw cse::error(
-                make_error_code(errc::unsupported_feature),
-                "Variable must be exposed before calling get()");
+            throw std::out_of_range("Variable must be exposed before calling get()");
         }
     }
 
     void set(variable_index i, typename var_view_type<T>::type v)
     {
-        if (indexMapping.count(i)) {
-            values[indexMapping.at(i)] = v;
+        const auto it = indexMapping.find(i);
+        if (it != indexMapping.end()) {
+            values[it->second] = v;
         } else {
-            throw cse::error(
-                make_error_code(errc::unsupported_feature),
-                "Variable must be exposed before calling set()");
+            throw std::out_of_range("Variable must be exposed before calling set()");
         }
     }
 };
