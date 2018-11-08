@@ -131,7 +131,7 @@ cse_execution* cse_execution_create(cse_time_point startTime, cse_duration stepS
 
         auto execution = std::make_unique<cse_execution>();
         execution->startTime = cse::to_time_point(startTime);
-        execution->stepSize = cse::to_duration(stepSize, execution->startTime);
+        execution->stepSize = cse::to_duration(stepSize, startTime);
         execution->error_code = CSE_ERRC_SUCCESS;
         execution->state = CSE_EXECUTION_STOPPED;
         execution->realTimeTimer = std::make_unique<cse::real_time_timer>();

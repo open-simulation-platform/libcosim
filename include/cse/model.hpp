@@ -59,14 +59,9 @@ using time_point = detail::clock::time_point;
  *  starts at time 0.
  *
  *  For durations that start at a nonzero time point, consider using
- *  `to_duration(double, time_point)`.
+ *  `to_duration(double, double)`.
  *
- *  The conversion may be subject to round-off error and truncation,
- *  meaning that the relation
- *
- *      to_double_duration(to_duration(d)) == d
- *
- *  in general does not hold.
+ *  The conversion may be subject to round-off error and truncation.
  */
 constexpr duration to_duration(double d)
 {
@@ -114,54 +109,50 @@ constexpr double to_double_time_point(time_point t)
  *  The conversion in done in such a way as to preserve addition of a
  *  duration to a time point.  That is, it ensures that the relation
  *
- *      t1 + to_duration(d, t1) == t2
+ *      to_time_point(t1) + to_duration(d, t1) == to_time_point(t2)
  *
  *  holds if and only if
  *
- *      to_double_time_point(t1) + d == to_double_time_point(t2)
+ *      t1 + d == t2
  *
- *  where `t1` and `t2` are both of type `time_point` and `d` is of
- *  type `double`.  Since the precision of a floating-point number
- *  depends on its absolute value, the start time of the duration is
- *  required for this calculation.
+ *  where `t1`, `t2` and `d` are all of type `double`.
+ *  Since the precision of a floating-point number depends on its absolute
+ *  value, the start time of the duration is required for this calculation.
  *
  *  The conversion may be subject to round-off error and truncation,
  *  meaning that the relation
  *
- *      to_double_duration(to_duration(d, t), t) == d
+ *      to_double_duration(to_duration(d, t), to_time_point(t)) == d
  *
  *  in general does not hold.
  */
-constexpr duration to_duration(double d, time_point startTime)
+constexpr duration to_duration(double d, double startTime)
 {
-    const auto fpStartTime = to_double_time_point(startTime);
-    const auto fpEndTime = fpStartTime + d;
-    const auto endTime = to_time_point(fpEndTime);
-    return endTime - startTime;
+    return to_time_point(startTime + d) - to_time_point(startTime);
 }
 
 
 /**
- *  Converts a floating-point number to a `duration`.
+ *  Converts a `duration` to a floating-point number.
  *
  *  The conversion in done in such a way as to preserve addition of a
  *  duration to a time point.  That is, it ensures that the relation
  *
- *      to_double_time_point(t1) + to_model_duration(d, t1) == to_double_time_point(t2)
+ *      to_double_time_point(t1) + to_double_duration(d, t1) == to_double_time_point(t2)
  *
  *  holds if and only if
  *
  *      t1 + d == t2
  *
  *  where `t1` and `t2` are both of type `time_point` and `d` is of
- *  type `duration`.  Since the precision of a floating-point number
- *  depends on its absolute value, the start time of the duration is
- *  required for this calculation.
+ *  type `duration`.
+ *  Since the precision of a floating-point number depends on its absolute
+ *  value, the start time of the duration is required for this calculation.
  *
  *  The conversion may be subject to round-off error, meaning that the
  *  relation
  *
- *      to_duration(to_double_duration(d, t), t) == d
+ *      to_duration(to_double_duration(d, t), to_double_time_point(t)) == d
  *
  *  in general does not hold.
  */
