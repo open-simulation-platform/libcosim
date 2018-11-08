@@ -112,38 +112,6 @@ int main()
     }
 
     double realValues[20];
-    size_t realSamples = cse_observer_slave_get_real_samples(observer, observerSlaveIndex, variable_index, fromStep, numSamples, realValues, steps);
-
-    if (realSamples != 20) {
-        teardown_message(execution, "Expected 20 real samples read");
-    }
-
-    char* logPath = "C:\\Dev\\osp\\cse-core-branches\\master\\cse-core\\test\\logs\\log.txt";
-    char *binaryLogPath = "C:\\Dev\\osp\\cse-core-branches\\master\\cse-core\\test\\logs\\log.bin";
-
-    rc = cse_log_int_values(logPath, intValues, 20, 0);
-
-    if (rc < 0) {
-        teardown_message(execution, "Could not log integer values");
-    }
-
-    rc = cse_log_real_values(logPath, realValues, 20, 0);
-
-    if (rc < 0) {
-        teardown_message(execution, "Could not log real values");
-    }
-
-    rc = cse_log_int_values(binaryLogPath, intValues, 20, 1);
-
-    if (rc < 0) {
-        teardown_message(execution, "Could not log binary integer values");
-    }
-
-    rc = cse_log_real_values(binaryLogPath, realValues, 20, 1);
-
-    if (rc < 0) {
-        teardown_message(execution, "Could not log binary real values");
-    }
 
     return 0;
 }

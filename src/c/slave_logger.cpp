@@ -99,4 +99,5 @@ int single_slave_logger::write_binary_reals(double* values)
     return 1;
 }
 
+
 } // namespace cse
