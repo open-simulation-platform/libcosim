@@ -58,7 +58,9 @@ struct exposed_vars
         if (it != indexMapping.end()) {
             values[it->second] = v;
         } else {
-            throw std::out_of_range("Variable must be exposed before calling set()");
+            std::ostringstream oss;
+            oss << "variable_index " << i << " not found in exposed variables. Variables must be exposed before calling set()"
+            throw std::out_of_range(oss.str());
         }
     }
 };
