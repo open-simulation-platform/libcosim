@@ -6,6 +6,7 @@
 #include <unordered_map>
 
 #include <boost/container/vector.hpp>
+#include <cse/exception.hpp>
 
 
 namespace cse
@@ -33,6 +34,7 @@ struct exposed_vars
 
     void expose(variable_index i)
     {
+        if (indexMapping.count(i)) return;
         indexes.push_back(i);
         values.push_back(T()); // TODO: Use start value from model description
         indexMapping[i] = indexes.size() - 1;
@@ -40,12 +42,24 @@ struct exposed_vars
 
     typename var_view_type<T>::type get(variable_index i) const
     {
-        return values[indexMapping.at(i)];
+        if (indexMapping.count(i)) {
+            return values[indexMapping.at(i)];
+        } else {
+            throw cse::error(
+                make_error_code(errc::unsupported_feature),
+                "Variable must be exposed before calling get()");
+        }
     }
 
     void set(variable_index i, typename var_view_type<T>::type v)
     {
-        values[indexMapping.at(i)] = v;
+        if (indexMapping.count(i)) {
+            values[indexMapping.at(i)] = v;
+        } else {
+            throw cse::error(
+                make_error_code(errc::unsupported_feature),
+                "Variable must be exposed before calling set()");
+        }
     }
 };
 
@@ -203,28 +217,28 @@ private:
     void set_variables()
     {
         slave_->set_variables(
-                gsl::make_span(realSetCache_.indexes),
-                gsl::make_span(realSetCache_.values),
-                gsl::make_span(integerSetCache_.indexes),
-                gsl::make_span(integerSetCache_.values),
-                gsl::make_span(booleanSetCache_.indexes),
-                gsl::make_span(booleanSetCache_.values),
-                gsl::make_span(stringSetCache_.indexes),
-                gsl::make_span(stringSetCache_.values)
-            ).get();
+                  gsl::make_span(realSetCache_.indexes),
+                  gsl::make_span(realSetCache_.values),
+                  gsl::make_span(integerSetCache_.indexes),
+                  gsl::make_span(integerSetCache_.values),
+                  gsl::make_span(booleanSetCache_.indexes),
+                  gsl::make_span(booleanSetCache_.values),
+                  gsl::make_span(stringSetCache_.indexes),
+                  gsl::make_span(stringSetCache_.values))
+            .get();
     }
     void get_variables()
     {
         const auto values = slave_->get_variables(
-                gsl::make_span(realGetCache_.indexes),
-                gsl::make_span(integerGetCache_.indexes),
-                gsl::make_span(booleanGetCache_.indexes),
-                gsl::make_span(stringGetCache_.indexes)
-            ).get();
-        copy_contents(values.real,    realGetCache_.values);
+                                      gsl::make_span(realGetCache_.indexes),
+                                      gsl::make_span(integerGetCache_.indexes),
+                                      gsl::make_span(booleanGetCache_.indexes),
+                                      gsl::make_span(stringGetCache_.indexes))
+                                .get();
+        copy_contents(values.real, realGetCache_.values);
         copy_contents(values.integer, integerGetCache_.values);
         copy_contents(values.boolean, booleanGetCache_.values);
-        copy_contents(values.string,  stringGetCache_.values);
+        copy_contents(values.string, stringGetCache_.values);
     }
 
     std::unique_ptr<async_slave> slave_;
