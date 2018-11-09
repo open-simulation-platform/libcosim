@@ -85,7 +85,7 @@ class observer
 {
 public:
     /// A simulator was added to the execution.
-    virtual void simulator_added(simulator_index, observable*) = 0;
+    virtual void simulator_added(simulator_index, observable*, time_point) = 0;
 
     /// A simulator was removed from the execution.
     virtual void simulator_removed(simulator_index) = 0;
@@ -144,7 +144,7 @@ class membuffer_observer : public observer
 public:
     membuffer_observer();
 
-    void simulator_added(simulator_index, observable*) override;
+    void simulator_added(simulator_index, observable*, time_point) override;
 
     void simulator_removed(simulator_index) override;
 
@@ -217,6 +217,23 @@ public:
         variable_index variableIndex,
         step_number fromStep,
         gsl::span<int> values,
+        gsl::span<step_number> steps);
+
+    /**
+     * Retrieves a series of observed simulation times with corresponding step numbers.
+     *
+     * \param [in] sim index of the simulator
+     * \param [in] fromStep the step number to start from
+     * \param [out] values the series of observed time stamps
+     * \param [out] steps the corresponding step numbers
+     *
+     * Returns the number of samples actually read, which may be smaller
+     * than the sizes of `values` and `steps`.
+     */
+    std::size_t get_time_samples(
+        simulator_index sim,
+        step_number fromStep,
+        gsl::span<double> values,
         gsl::span<step_number> steps);
 
     ~membuffer_observer() noexcept;

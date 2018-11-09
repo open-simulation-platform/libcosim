@@ -93,6 +93,21 @@ int main()
             lastValue = realValues[k];
         }
 
+        double timeValues[numSamples];
+        cse::step_number timeSteps[numSamples];
+        observer->get_time_samples(0, 0, gsl::make_span(timeValues, numSamples), gsl::make_span(timeSteps, numSamples));
+        cse::step_number lastTimeStep = -1;
+        double doubleStepSize = cse::to_double_duration(stepSize, startTime);
+        for (int k = 0; k < numSamples; k++) {
+            REQUIRE(timeSteps[k] > lastTimeStep);
+            lastTimeStep = timeSteps[k];
+
+            if (k > 0) {
+                double diff = timeValues[k] - timeValues[k - 1];
+                REQUIRE(std::fabs(diff - doubleStepSize) < 1.0e-9);
+            }
+        }
+
         constexpr auto finalTime = cse::to_time_point(5.0);
 
         execution.enable_real_time_simulation();

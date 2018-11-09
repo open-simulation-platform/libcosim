@@ -66,7 +66,7 @@ size_t get_samples(
 class membuffer_observer::single_slave_observer
 {
 public:
-    single_slave_observer(observable* observable)
+    single_slave_observer(observable* observable, time_point startTime)
         : observable_(observable)
     {
         for (const auto& vd : observable->model_description().variables) {
@@ -79,10 +79,10 @@ public:
             }
         }
 
-        observe(0);
+        observe(0, startTime);
     }
 
-    void observe(step_number timeStep)
+    void observe(step_number timeStep, time_point currentTime)
     {
         std::lock_guard<std::mutex> lock(lock_);
         realSamples_[timeStep].reserve(realIndexes_.size());
@@ -95,6 +95,7 @@ public:
         for (const auto idx : intIndexes_) {
             intSamples_[timeStep].push_back(observable_->get_integer(idx));
         }
+        timeSamples_[timeStep] = to_double_time_point(currentTime);
     }
 
     void get_real(gsl::span<const variable_index> variables, gsl::span<double> values)
@@ -121,9 +122,27 @@ public:
         return get_samples<int>(variableIndex, intIndexes_, intSamples_, fromStep, values, steps);
     }
 
+    size_t get_time_samples(step_number fromStep, gsl::span<double> values, gsl::span<step_number> steps)
+    {
+        std::lock_guard<std::mutex> lock(lock_);
+        size_t samplesRead = 0;
+        auto sampleIt = timeSamples_.find(fromStep);
+        for (samplesRead = 0; samplesRead < static_cast<std::size_t>(values.size()); samplesRead++) {
+            if (sampleIt != timeSamples_.end()) {
+                steps[samplesRead] = sampleIt->first;
+                values[samplesRead] = sampleIt->second;
+                sampleIt++;
+            } else {
+                break;
+            }
+        }
+        return samplesRead;
+    }
+
 private:
     std::map<step_number, std::vector<double>> realSamples_;
     std::map<step_number, std::vector<int>> intSamples_;
+    std::map<step_number, double> timeSamples_;
     std::vector<variable_index> realIndexes_;
     std::vector<variable_index> intIndexes_;
     observable* observable_;
@@ -135,9 +154,9 @@ membuffer_observer::membuffer_observer()
 {
 }
 
-void membuffer_observer::simulator_added(simulator_index index, observable* simulator)
+void membuffer_observer::simulator_added(simulator_index index, observable* simulator, time_point startTime)
 {
-    slaveObservers_[index] = std::make_unique<single_slave_observer>(simulator);
+    slaveObservers_[index] = std::make_unique<single_slave_observer>(simulator, startTime);
 }
 
 void membuffer_observer::simulator_removed(simulator_index index)
@@ -156,10 +175,10 @@ void membuffer_observer::variable_disconnected(variable_id /*input*/)
 void membuffer_observer::step_complete(
     step_number lastStep,
     duration /*lastStepSize*/,
-    time_point /*currentTime*/)
+    time_point currentTime)
 {
     for (const auto& slaveObserver : slaveObservers_) {
-        slaveObserver.second->observe(lastStep);
+        slaveObserver.second->observe(lastStep, currentTime);
     }
 }
 
@@ -201,6 +220,16 @@ std::size_t membuffer_observer::get_integer_samples(
 {
     CSE_INPUT_CHECK(values.size() == steps.size());
     return slaveObservers_.at(sim)->get_int_samples(variableIndex, fromStep, values, steps);
+}
+
+std::size_t membuffer_observer::get_time_samples(
+    simulator_index sim,
+    step_number fromStep,
+    gsl::span<double> values,
+    gsl::span<step_number> steps)
+{
+    CSE_INPUT_CHECK(values.size() == steps.size());
+    return slaveObservers_.at(sim)->get_time_samples(fromStep, values, steps);
 }
 
 membuffer_observer::~membuffer_observer() noexcept = default;

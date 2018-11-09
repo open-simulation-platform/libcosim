@@ -65,7 +65,7 @@ public:
         algorithm_->add_simulator(index, simulators_.back().get());
 
         for (const auto& obs : observers_) {
-            obs->simulator_added(index, simulators_.back().get());
+            obs->simulator_added(index, simulators_.back().get(), currentTime_);
         }
         return index;
     }
@@ -82,7 +82,8 @@ public:
         for (std::size_t i = 0; i < simulators_.size(); ++i) {
             obs->simulator_added(
                 static_cast<simulator_index>(i),
-                simulators_[i].get());
+                simulators_[i].get(),
+                currentTime_);
         }
         for (const auto conn : connections_) {
             obs->variables_connected(conn.second, conn.first);
