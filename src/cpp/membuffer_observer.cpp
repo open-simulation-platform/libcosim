@@ -139,6 +139,51 @@ public:
         return samplesRead;
     }
 
+    step_number* get_step_numbers(double tBegin, double tEnd)
+    {
+        std::lock_guard<std::mutex> lock(lock_);
+        step_number lastStep = timeSamples_.rbegin()->first;
+        auto lastEntry = std::find_if(
+            timeSamples_.begin(),
+            timeSamples_.end(),
+            [tEnd](const auto& entry) { entry->second >= tEnd; });
+        if (lastEntry != timeSamples_.end()) {
+            lastStep = lastEntry->first;
+        }
+
+        step_number firstStep = timeSamples_.begin()->first;
+        auto firstEntry = std::find_if(
+            timeSamples_.rbegin(),
+            timeSamples_.rend(),
+            [tBegin](const auto& entry) { entry->second <= tBegin; });
+        if (firstEntry != timeSamples_.rend()) {
+            firstStep = firstEntry->first;
+        }
+
+        static step_number result[2] = {firstStep, lastStep};
+        return result;
+    }
+
+    step_number* get_step_numbers(double duration)
+    {
+        std::lock_guard<std::mutex> lock(lock_);
+        auto lastEntry = timeSamples_.rbegin();
+        step_number lastStep = lastEntry->first;
+
+        step_number firstStep = timeSamples_.begin()->first;
+        double tBegin = lastEntry->second - duration;
+        auto firstIt = std::find_if(
+            timeSamples_.rbegin(),
+            timeSamples_.rend(),
+            [tBegin](auto&& entry) { entry->second <= tBegin; });
+        if (firstIt != timeSamples_.rend()) {
+            firstStep = firstIt->first;
+        }
+
+        static step_number result[2] = {firstStep, lastStep};
+        return result;
+    }
+
 private:
     std::map<step_number, std::vector<double>> realSamples_;
     std::map<step_number, std::vector<int>> intSamples_;
