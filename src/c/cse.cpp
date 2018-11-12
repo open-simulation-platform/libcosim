@@ -121,7 +121,7 @@ cse_execution* cse_execution_create(cse_time_point startTime, cse_duration stepS
     try {
         // No exceptions are possible right now, so try...catch and unique_ptr
         // are strictly unnecessary, but this will change soon enough.
-        cse::log::set_global_output_level(cse::log::level::trace);
+        cse::log::set_global_output_level(cse::log::level::info);
 
         auto execution = std::make_unique<cse_execution>();
 

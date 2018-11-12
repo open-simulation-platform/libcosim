@@ -209,11 +209,8 @@ public:
             if (slave_->state() == slave_state::initialisation) {
                 slave_->start_simulation().get();
             }
-            std::cout << "Before set_variabels" << std::endl;
             set_variables();
-            std::cout << "After set_variables" << std::endl;
             const auto result = slave_->do_step(currentT, deltaT).get();
-            std::cout << "After step" << std::endl;
             get_variables();
             return result;
         });
