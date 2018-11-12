@@ -108,31 +108,28 @@ const char* cse_last_error_message()
 
 struct cse_execution_s
 {
+    std::shared_ptr<cse::execution> cpp_execution;
     std::atomic<cse::time_point> startTime = cse::time_point();
-    std::shared_ptr<cse::real_time_timer> realTimeTimer;
-    std::vector<std::shared_ptr<cse::slave>> slaves;
-    std::vector<std::shared_ptr<cse_observer>> observers;
-    std::atomic<long> currentSteps;
     cse::duration stepSize;
     std::thread t;
-    std::atomic<bool> shouldRun = false;
     std::atomic<cse_execution_state> state;
     int error_code;
 };
-
-cse::time_point calculate_current_time(cse_execution* execution)
-{
-    return execution->startTime.load() + execution->currentSteps.load() * execution->stepSize;
-}
 
 cse_execution* cse_execution_create(cse_time_point startTime, cse_duration stepSize)
 {
     try {
         // No exceptions are possible right now, so try...catch and unique_ptr
         // are strictly unnecessary, but this will change soon enough.
-        cse::log::set_global_output_level(cse::log::level::info);
+        cse::log::set_global_output_level(cse::log::level::trace);
 
         auto execution = std::make_unique<cse_execution>();
+
+        execution->cpp_execution = std::make_unique<cse::execution>(
+                cse::to_time_point(startTime),
+                std::make_unique<cse::fixed_step_algorithm>(cse::to_duration(stepSize, startTime)));
+        execution->cpp_execution->enable_real_time_simulation();
+
         execution->startTime = cse::to_time_point(startTime);
         execution->stepSize = cse::to_duration(stepSize, startTime);
         execution->error_code = CSE_ERRC_SUCCESS;
@@ -150,9 +147,7 @@ int cse_execution_destroy(cse_execution* execution)
     try {
         if (!execution) return success;
         const auto owned = std::unique_ptr<cse_execution>(execution);
-        for (const auto& slave : owned->slaves) {
-            slave->end_simulation();
-        }
+        cse_execution_stop(execution);
         return success;
     } catch (...) {
         execution->state = CSE_EXECUTION_ERROR;
@@ -189,15 +184,13 @@ cse_slave_index cse_execution_add_slave(
     cse_slave* slave)
 {
     try {
-        auto index = execution->cpp_execution->add_slave(cse::make_pseudo_async(std::move(slave->instance2)), "unnamed slave");
+        auto index = execution->cpp_execution->add_slave(cse::make_pseudo_async(slave->instance), "unnamed slave");
         return index;
     } catch (...) {
         handle_current_exception();
         return failure;
     }
 }
-
-bool cse_observer_observe(cse_observer* observer, long currentStep);
 
 void cse_execution_step(cse_execution* execution)
 {
@@ -226,20 +219,15 @@ int cse_execution_step(cse_execution* execution, size_t numSteps)
 
 int cse_execution_start(cse_execution* execution)
 {
-    if (execution->cpp_execution->is_running()) {
+    if (execution->t.joinable()) {
         return success;
     } else {
         try {
-            execution->cpp_execution->simulate_until(cse::eternity);
             execution->state = CSE_EXECUTION_RUNNING;
             execution->t = std::thread([execution]() {
-                execution->realTimeTimer->start(calculate_current_time(execution));
-                while (execution->shouldRun) {
-                    cse_execution_step(execution);
-                    execution->realTimeTimer->sleep(calculate_current_time(execution));
-                }
+                auto future = execution->cpp_execution->simulate_until(cse::to_time_point(1e6));
+                future.get();
             });
-
             return success;
         } catch (...) {
             handle_current_exception();
@@ -253,6 +241,9 @@ int cse_execution_stop(cse_execution* execution)
 {
     try {
         execution->cpp_execution->stop_simulation();
+        if (execution->t.joinable()) {
+            execution->t.join();
+        }
         execution->state = CSE_EXECUTION_STOPPED;
         return success;
     } catch (...) {
@@ -267,8 +258,7 @@ int cse_execution_get_status(cse_execution* execution, cse_execution_status* sta
     try {
         status->error_code = execution->error_code;
         status->state = execution->state;
-        status->current_time =
-            cse::to_double_time_point(calculate_current_time(execution));
+        status->current_time = cse::to_double_time_point(execution->cpp_execution->current_time());
         return success;
     } catch (...) {
         handle_current_exception();
@@ -303,6 +293,7 @@ int cse_execution_slave_set_real(
     try {
         const auto sim = execution->cpp_execution->get_simulator(slaveIndex);
         for (size_t i = 0; i < nv; i++) {
+            sim->expose_for_setting(cse::variable_type::real, variables[i]);
             sim->set_real(variables[i], values[i]);
         }
         return success;
@@ -322,6 +313,7 @@ int cse_execution_slave_set_integer(
     try {
         const auto sim = execution->cpp_execution->get_simulator(slaveIndex);
         for (size_t i = 0; i < nv; i++) {
+            sim->expose_for_setting(cse::variable_type::integer, variables[i]);
             sim->set_integer(variables[i], values[i]);
         }
         return success;
@@ -338,7 +330,6 @@ int cse_observer_slave_get_real(
     size_t nv,
     double values[])
 {
-    const auto singleSlaveObserver = observer->slaveObservers.at(slave);
     try {
         observer->cpp_observer->get_real(slave, gsl::make_span(variables, nv), gsl::make_span(values, nv));
         return success;
@@ -355,7 +346,6 @@ int cse_observer_slave_get_integer(
     size_t nv,
     int values[])
 {
-    const auto singleSlaveObserver = observer->slaveObservers.at(slave);
     try {
         observer->cpp_observer->get_integer(slave, gsl::make_span(variables, nv), gsl::make_span(values, nv));
         return success;
@@ -406,34 +396,6 @@ cse_observer_index cse_execution_add_observer(
     } catch (...) {
         handle_current_exception();
         return failure;
-    }
-}
-
-cse_observer_slave_index cse_observer_add_slave(
-    cse_observer* observer,
-    cse_slave* slave)
-{
-    try {
-        auto slaveObserver = std::make_shared<cse::single_slave_observer>(slave->instance);
-        observer->slaveObservers.push_back(slaveObserver);
-
-        return static_cast<cse_observer_slave_index>(observer->slaveObservers.size() - 1);
-    } catch (...) {
-        handle_current_exception();
-        return failure;
-    }
-}
-
-bool cse_observer_observe(cse_observer* observer, long currentStep)
-{
-    try {
-        for (const auto& slaveObserver : observer->slaveObservers) {
-            slaveObserver->observe(currentStep);
-        }
-        return true;
-    } catch (...) {
-        handle_current_exception();
-        return false;
     }
 }
 

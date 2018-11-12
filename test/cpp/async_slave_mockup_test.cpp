@@ -27,10 +27,10 @@ int main()
         constexpr auto stepSize = cse::to_duration(0.1);
 
         // Create the slaves
-        std::vector<std::unique_ptr<cse::async_slave>> asyncSlaves;
+        std::vector<std::shared_ptr<cse::async_slave>> asyncSlaves;
         for (int i = 0; i < numSlaves; ++i) {
             asyncSlaves.push_back(
-                cse::make_pseudo_async(std::make_unique<mock_slave>()));
+                cse::make_pseudo_async(std::make_shared<mock_slave>()));
         }
 
         // Get model descriptions from all slaves

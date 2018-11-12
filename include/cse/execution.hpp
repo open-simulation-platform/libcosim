@@ -98,7 +98,7 @@ public:
      *      An execution-specific name for the slave.
      */
     simulator_index add_slave(
-        std::unique_ptr<async_slave> slave,
+        std::shared_ptr<async_slave> slave,
         std::string_view name);
 
     std::shared_ptr<simulator> get_simulator(simulator_index index);
@@ -139,7 +139,7 @@ public:
      */
     boost::fibers::future<bool> simulate_until(time_point targetTime);
 
-    time_duration step(time_duration maxDeltaT);
+    duration step(duration maxDeltaT);
 
     void stop_simulation();
 

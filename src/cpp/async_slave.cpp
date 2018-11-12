@@ -25,7 +25,7 @@ boost::container::vector<std::remove_cv_t<T>> to_vector(gsl::span<T> span)
 class pseudo_async_slave : public cse::async_slave
 {
 public:
-    pseudo_async_slave(std::unique_ptr<cse::slave> slave)
+    pseudo_async_slave(std::shared_ptr<cse::slave> slave)
         : slave_(std::move(slave))
         , state_(slave_state::created)
     {}
@@ -230,7 +230,7 @@ public:
     // clang-format on
 
 private:
-    std::unique_ptr<cse::slave> slave_;
+    std::shared_ptr<cse::slave> slave_;
     slave_state state_;
 
     // We need Boost's vector<bool> to avoid the issues with std::vector<bool>.
@@ -243,9 +243,9 @@ private:
 } // namespace
 
 
-std::unique_ptr<async_slave> make_pseudo_async(std::unique_ptr<slave> s)
+std::shared_ptr<async_slave> make_pseudo_async(std::shared_ptr<slave> s)
 {
-    return std::make_unique<pseudo_async_slave>(std::move(s));
+    return std::make_shared<pseudo_async_slave>(std::move(s));
 }
 
 

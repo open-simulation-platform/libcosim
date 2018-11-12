@@ -80,7 +80,7 @@ void copy_contents(Src&& src, Tgt&& tgt)
 class slave_simulator::impl
 {
 public:
-    impl(std::unique_ptr<async_slave> slave, std::string_view name)
+    impl(std::shared_ptr<async_slave> slave, std::string_view name)
         : slave_(std::move(slave))
         , name_(name)
         , modelDescription_(slave_->model_description().get())
@@ -209,8 +209,11 @@ public:
             if (slave_->state() == slave_state::initialisation) {
                 slave_->start_simulation().get();
             }
+            std::cout << "Before set_variabels" << std::endl;
             set_variables();
+            std::cout << "After set_variables" << std::endl;
             const auto result = slave_->do_step(currentT, deltaT).get();
+            std::cout << "After step" << std::endl;
             get_variables();
             return result;
         });
@@ -245,7 +248,8 @@ private:
         copy_contents(values.string, stringGetCache_.values);
     }
 
-    std::unique_ptr<async_slave> slave_;
+private:
+    std::shared_ptr<async_slave> slave_;
     std::string name_;
     cse::model_description modelDescription_;
 
@@ -262,7 +266,7 @@ private:
 
 
 slave_simulator::slave_simulator(
-    std::unique_ptr<async_slave> slave,
+    std::shared_ptr<async_slave> slave,
     std::string_view name)
     : pimpl_(std::make_unique<impl>(std::move(slave), name))
 {

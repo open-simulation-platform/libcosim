@@ -280,7 +280,7 @@ public:
  *  calls will be executed in fibers in the current thread (hence the "pseudo"
  *  modifier).
  */
-std::unique_ptr<async_slave> make_pseudo_async(std::unique_ptr<slave> s);
+std::shared_ptr<async_slave> make_pseudo_async(std::shared_ptr<slave> s);
 
 
 } // namespace cse

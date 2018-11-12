@@ -56,12 +56,11 @@ public:
     impl& operator=(impl&&) = delete;
 
     simulator_index add_slave(
-        std::unique_ptr<async_slave> slave,
+        std::shared_ptr<async_slave> slave,
         std::string_view name)
     {
         const auto index = static_cast<simulator_index>(simulators_.size());
-        simulators_.push_back(
-            std::make_unique<slave_simulator>(std::move(slave), name));
+        simulators_.push_back(std::make_unique<slave_simulator>(slave, name));
         algorithm_->add_simulator(index, simulators_.back().get());
 
         for (const auto& obs : observers_) {
@@ -72,7 +71,7 @@ public:
 
     std::shared_ptr<simulator> get_simulator(simulator_index index)
     {
-        return std::shared_ptr<simulator>(std::move(simulators_.at(index)));
+        return std::shared_ptr<simulator>(simulators_.at(index));
     }
 
     observer_index add_observer(std::shared_ptr<observer> obs)
@@ -113,8 +112,12 @@ public:
         return !stopped_;
     }
 
-    time_duration step(time_duration maxDeltaT)
+    duration step(duration maxDeltaT)
     {
+        if (!initialized_) {
+            algorithm_->initialize();
+            initialized_ = true;
+        }
         const auto stepSize = algorithm_->do_step(currentTime_, maxDeltaT);
         currentTime_ += stepSize;
         ++lastStep_;
@@ -129,21 +132,16 @@ public:
         constexpr double relativeTolerance = 0.01;
 
         return boost::fibers::async([=]() {
-            if (!initialized_) {
-                algorithm_->initialize();
-                initialized_ = true;
-            }
             stopped_ = false;
             timer_.start(currentTime_);
-            time_duration stepSize;
+            duration stepSize;
             do {
                 stepSize = step(endTime - currentTime_);
                 timer_.sleep(currentTime_);
-            } while (!stopped_ && (endTime - currentTime_).count() > stepSize.count() * relativeTolerance);
+            } while (!stopped_ && endTime - currentTime_ > stepSize * relativeTolerance);
             return !stopped_;
         });
     }
-
 
     void stop_simulation()
     {
@@ -177,7 +175,7 @@ private:
     bool stopped_;
 
     std::shared_ptr<algorithm> algorithm_;
-    std::vector<std::unique_ptr<simulator>> simulators_;
+    std::vector<std::shared_ptr<simulator>> simulators_;
     std::vector<std::shared_ptr<observer>> observers_;
     std::unordered_map<variable_id, variable_id> connections_; // (key, value) = (input, output)
     real_time_timer timer_;
@@ -194,7 +192,7 @@ execution::execution(execution&& other) noexcept = default;
 execution& execution::operator=(execution&& other) noexcept = default;
 
 simulator_index execution::add_slave(
-    std::unique_ptr<async_slave> slave,
+    std::shared_ptr<async_slave> slave,
     std::string_view name)
 {
     return pimpl_->add_slave(std::move(slave), name);
@@ -225,7 +223,7 @@ boost::fibers::future<bool> execution::simulate_until(time_point endTime)
     return pimpl_->simulate_until(endTime);
 }
 
-time_duration execution::step(time_duration maxDeltaT)
+duration execution::step(duration maxDeltaT)
 {
     return pimpl_->step(maxDeltaT);
 }
