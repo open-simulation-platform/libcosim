@@ -146,7 +146,7 @@ public:
         auto lastEntry = std::find_if(
             timeSamples_.begin(),
             timeSamples_.end(),
-            [tEnd](const auto& entry) { entry->second >= tEnd; });
+            [tEnd](const auto& entry) { return entry.second >= tEnd; });
         if (lastEntry != timeSamples_.end()) {
             lastStep = lastEntry->first;
         }
@@ -155,7 +155,7 @@ public:
         auto firstEntry = std::find_if(
             timeSamples_.rbegin(),
             timeSamples_.rend(),
-            [tBegin](const auto& entry) { entry->second <= tBegin; });
+            [tBegin](const auto& entry) { return entry.second <= tBegin; });
         if (firstEntry != timeSamples_.rend()) {
             firstStep = firstEntry->first;
         }
@@ -171,11 +171,11 @@ public:
         step_number lastStep = lastEntry->first;
 
         step_number firstStep = timeSamples_.begin()->first;
-        double tBegin = lastEntry->second - duration;
+        const double tBegin = lastEntry->second - duration;
         auto firstIt = std::find_if(
             timeSamples_.rbegin(),
             timeSamples_.rend(),
-            [tBegin](auto&& entry) { entry->second <= tBegin; });
+            [tBegin](const auto& entry) { return entry.second <= tBegin; });
         if (firstIt != timeSamples_.rend()) {
             firstStep = firstIt->first;
         }
@@ -275,6 +275,21 @@ std::size_t membuffer_observer::get_time_samples(
 {
     CSE_INPUT_CHECK(values.size() == steps.size());
     return slaveObservers_.at(sim)->get_time_samples(fromStep, values, steps);
+}
+
+step_number* membuffer_observer::get_step_numbers(
+    simulator_index sim,
+    double duration)
+{
+    return slaveObservers_.at(sim)->get_step_numbers(duration);
+}
+
+step_number* membuffer_observer::get_step_numbers(
+    simulator_index sim,
+    double tBegin,
+    double tEnd)
+{
+    return slaveObservers_.at(sim)->get_step_numbers(tBegin, tEnd);
 }
 
 membuffer_observer::~membuffer_observer() noexcept = default;

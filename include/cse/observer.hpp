@@ -236,6 +236,16 @@ public:
         gsl::span<double> values,
         gsl::span<step_number> steps);
 
+
+    step_number* get_step_numbers(
+        simulator_index sim,
+        double duration);
+
+    step_number* get_step_numbers(
+        simulator_index sim,
+        double tBegin,
+        double tEnd);
+
     ~membuffer_observer() noexcept;
 
 private:
