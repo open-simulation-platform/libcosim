@@ -230,7 +230,7 @@ public:
      *  Performs a single macro time step.
      *
      *  The actual time step length is determined by the algorithm, but it may
-     *  not exceed `maxDeltaT`.
+     *  not exceed `maxDeltaT` if specified.
      *
      *  This function is guaranteed to be called after `initialize()`. The
      *  first time it is called, `currentT` will be equal to the `startTime`
@@ -239,13 +239,13 @@ public:
      *  \param currentT
      *      The starting point of the time step.
      *  \param maxDeltaT
-     *      The maximum length of the time step.
+     *      The maximum length of the time step (optional).
      *
      *  \returns
      *      The actual time step length, which must be less than or equal
-     *      to `maxDeltaT`.
+     *      to `maxDeltaT`, if specified.
      */
-    virtual duration do_step(time_point currentT, duration maxDeltaT) = 0;
+    virtual duration do_step(time_point currentT, std::optional<duration> maxDeltaT) = 0;
 
     virtual ~algorithm() noexcept = default;
 };
@@ -287,7 +287,7 @@ public:
     void disconnect_variable(variable_id input) override;
     void setup(time_point startTime, std::optional<time_point> stopTime) override;
     void initialize() override;
-    duration do_step(time_point currentT, duration maxDeltaT) override;
+    duration do_step(time_point currentT, std::optional<duration> maxDeltaT) override;
 
 private:
     class impl;

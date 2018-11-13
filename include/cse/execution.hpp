@@ -6,6 +6,7 @@
 #define CSE_EXECUTION_HPP
 
 #include <memory>
+#include <optional>
 
 #include <boost/fiber/future.hpp>
 
@@ -128,18 +129,29 @@ public:
      *  again (e.g. by calling `boost::fibers::future::get()` on the result).
      *
      *  \param targetTime
-     *      The logical time at which the co-simulation should pause.
-     *      This must always be greater than the value of `current_time()`
-     *      at the moment the function is called.
+     *      The logical time at which the co-simulation should pause (optional).
+     *      If specified, this must always be greater than the value of
+     *      `current_time()` at the moment the function is called.
      *
      *  \returns
      *      `true` if the co-simulation was advanced to the given time,
      *      or `false` if it was stopped before this. In the latter case,
      *      `current_time()` may be called to determine the actual end time.
      */
-    boost::fibers::future<bool> simulate_until(time_point targetTime);
+    boost::fibers::future<bool> simulate_until(std::optional<time_point> targetTime);
 
-    duration step(duration maxDeltaT);
+    /**
+     *  Advance the co-simulation forward one single step.
+     *
+     *  \param maxDeltaT
+     *      The maximum duration of the step (optional).
+     *
+     *  \returns
+     *      The actual duration of the step.
+     *      `current_time()` may be called to determine the actual time after
+     *      the step completed.
+     */
+    duration step(std::optional<duration> maxDeltaT);
 
     void stop_simulation();
 

@@ -112,7 +112,7 @@ public:
         return !stopped_;
     }
 
-    duration step(duration maxDeltaT)
+    duration step(std::optional<duration> maxDeltaT)
     {
         if (!initialized_) {
             algorithm_->initialize();
@@ -127,18 +127,17 @@ public:
         return stepSize;
     }
 
-    boost::fibers::future<bool> simulate_until(time_point endTime)
+    boost::fibers::future<bool> simulate_until(std::optional<time_point> endTime)
     {
-        constexpr double relativeTolerance = 0.01;
-
         return boost::fibers::async([=]() {
             stopped_ = false;
             timer_.start(currentTime_);
             duration stepSize;
             do {
-                stepSize = step(endTime - currentTime_);
+                auto maxDeltaT = max_delta_t(endTime, currentTime_);
+                stepSize = step(maxDeltaT);
                 timer_.sleep(currentTime_);
-            } while (!stopped_ && endTime - currentTime_ > stepSize * relativeTolerance);
+            } while (!stopped_ && !timed_out(endTime, currentTime_, stepSize));
             return !stopped_;
         });
     }
@@ -169,6 +168,23 @@ public:
     }
 
 private:
+    static std::optional<duration> max_delta_t(std::optional<time_point> endTime, time_point currentTime)
+    {
+        if (endTime) {
+            return *endTime - currentTime;
+        }
+        return {};
+    }
+
+    static bool timed_out(std::optional<time_point> endTime, time_point currentTime, duration stepSize)
+    {
+        constexpr double relativeTolerance = 0.01;
+        if (endTime) {
+            return *endTime - currentTime < stepSize * relativeTolerance;
+        }
+        return false;
+    }
+
     step_number lastStep_;
     time_point currentTime_;
     bool initialized_;
@@ -218,12 +234,12 @@ time_point execution::current_time() const noexcept
     return pimpl_->current_time();
 }
 
-boost::fibers::future<bool> execution::simulate_until(time_point endTime)
+boost::fibers::future<bool> execution::simulate_until(std::optional<time_point> endTime)
 {
     return pimpl_->simulate_until(endTime);
 }
 
-duration execution::step(duration maxDeltaT)
+duration execution::step(std::optional<duration> maxDeltaT)
 {
     return pimpl_->step(maxDeltaT);
 }

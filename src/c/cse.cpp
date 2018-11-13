@@ -194,7 +194,7 @@ cse_slave_index cse_execution_add_slave(
 
 void cse_execution_step(cse_execution* execution)
 {
-    execution->cpp_execution->step(execution->stepSize);
+    execution->cpp_execution->step(std::nullopt);
 }
 
 int cse_execution_step(cse_execution* execution, size_t numSteps)
@@ -225,7 +225,7 @@ int cse_execution_start(cse_execution* execution)
         try {
             execution->state = CSE_EXECUTION_RUNNING;
             execution->t = std::thread([execution]() {
-                auto future = execution->cpp_execution->simulate_until(cse::to_time_point(1e6));
+                auto future = execution->cpp_execution->simulate_until(std::nullopt);
                 future.get();
             });
             return success;
@@ -240,6 +240,7 @@ int cse_execution_start(cse_execution* execution)
 int cse_execution_stop(cse_execution* execution)
 {
     try {
+        std::cout << "Stop was called!" << std::endl;
         execution->cpp_execution->stop_simulation();
         if (execution->t.joinable()) {
             execution->t.join();
