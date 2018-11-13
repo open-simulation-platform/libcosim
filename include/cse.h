@@ -403,6 +403,55 @@ size_t cse_observer_slave_get_integer_samples(
     int values[],
     long long steps[]);
 
+/**
+ *  \brief
+ *  Connects one real output variable to one real input variable.
+ *
+ *  \param [in] execution
+ *      The execution.
+ *  \param [in] outputSlaveIndex
+ *      The source slave.
+ *  \param [in] outputVariableIndex
+ *      The source variable.
+ *  \param [in] inputSlaveIndex
+ *      The destination slave.
+ *  \param [in] inputVariableIndex
+ *      The destination variable.
+ *
+ *  \returns
+ *      0 on success and -1 on error.
+ */
+int cse_execution_connect_real_variables(
+    cse_execution* execution,
+    cse_slave_index outputSlaveIndex,
+    cse_variable_index outputVariableIndex,
+    cse_slave_index inputSlaveIndex,
+    cse_variable_index inputVariableIndex);
+
+/**
+ *  \brief
+ *  Connects one integer output variable to one integer input variable.
+ *
+ *  \param [in] execution
+ *      The execution.
+ *  \param [in] outputSlaveIndex
+ *      The source slave.
+ *  \param [in] outputVariableIndex
+ *      The source variable.
+ *  \param [in] inputSlaveIndex
+ *      The destination slave.
+ *  \param [in] inputVariableIndex
+ *      The destination variable.
+ *
+ *  \returns
+ *      0 on success and -1 on error.
+ */
+int cse_execution_connect_integer_variables(
+    cse_execution* execution,
+    cse_slave_index outputSlaveIndex,
+    cse_variable_index outputVariableIndex,
+    cse_slave_index inputSlaveIndex,
+    cse_variable_index inputVariableIndex);
 
 /**
  *  Writes the string "Hello World!" to a character buffer.

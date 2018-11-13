@@ -3,7 +3,10 @@
 #include <atomic>
 #include <cassert>
 #include <cerrno>
+#include <iostream>
+#include <mutex>
 #include <optional>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <system_error>
@@ -20,8 +23,6 @@
 #include <cse/observer.hpp>
 
 #include <cse/hello_world.hpp>
-#include <iostream>
-#include <mutex>
 
 namespace
 {
@@ -126,8 +127,8 @@ cse_execution* cse_execution_create(cse_time_point startTime, cse_duration stepS
         auto execution = std::make_unique<cse_execution>();
 
         execution->cpp_execution = std::make_unique<cse::execution>(
-                cse::to_time_point(startTime),
-                std::make_unique<cse::fixed_step_algorithm>(cse::to_duration(stepSize, startTime)));
+            cse::to_time_point(startTime),
+            std::make_unique<cse::fixed_step_algorithm>(cse::to_duration(stepSize, startTime)));
         execution->cpp_execution->enable_real_time_simulation();
 
         execution->startTime = cse::to_time_point(startTime);
@@ -240,7 +241,6 @@ int cse_execution_start(cse_execution* execution)
 int cse_execution_stop(cse_execution* execution)
 {
     try {
-        std::cout << "Stop was called!" << std::endl;
         execution->cpp_execution->stop_simulation();
         if (execution->t.joinable()) {
             execution->t.join();
@@ -322,6 +322,70 @@ int cse_execution_slave_set_integer(
         handle_current_exception();
         return failure;
     }
+}
+
+cse::variable_id find_variable(std::vector<cse::variable_description> variables, cse::variable_id variableId, cse::variable_causality causality)
+{
+    const auto it = std::find_if(
+        variables.begin(),
+        variables.end(),
+        [=](const auto& var) { return var.causality == causality && var.type == variableId.type && var.index == variableId.index; });
+    if (it != variables.end()) {
+        return cse::variable_id{variableId.simulator, variableId.type, variableId.index};
+    } else {
+        std::ostringstream oss;
+        oss << "Cannot connect variable with index " << variableId.index
+            << ", causality " << cse::to_text(causality)
+            << " and type " << cse::to_text(variableId.type)
+            << " for simulator index " << variableId.simulator;
+        throw std::out_of_range(oss.str());
+    }
+}
+
+int connect_variables(cse_execution* execution,
+    cse::simulator_index outputSimulator,
+    cse::variable_index outputVariable,
+    cse::simulator_index inputSimulator,
+    cse::variable_index inputVariable,
+    cse::variable_type type)
+{
+    try {
+        const auto sourceSim = execution->cpp_execution->get_simulator(outputSimulator);
+        const auto sourceVars = sourceSim->model_description().variables;
+        const auto sourceId = cse::variable_id{outputSimulator, type, outputVariable};
+        const auto source = find_variable(sourceVars, sourceId, cse::variable_causality::output);
+
+        const auto destSim = execution->cpp_execution->get_simulator(inputSimulator);
+        const auto destVars = destSim->model_description().variables;
+        const auto destId = cse::variable_id{inputSimulator, type, inputVariable};
+        const auto dest = find_variable(destVars, destId, cse::variable_causality::input);
+
+        execution->cpp_execution->connect_variables(source, dest);
+        return success;
+    } catch (...) {
+        handle_current_exception();
+        return failure;
+    }
+}
+
+int cse_execution_connect_real_variables(
+    cse_execution* execution,
+    cse_slave_index outputSlaveIndex,
+    cse_variable_index outputVariableIndex,
+    cse_slave_index inputSlaveIndex,
+    cse_variable_index inputVariableIndex)
+{
+    return connect_variables(execution, outputSlaveIndex, outputVariableIndex, inputSlaveIndex, inputVariableIndex, cse::variable_type::real);
+}
+
+int cse_execution_connect_integer_variables(
+    cse_execution* execution,
+    cse_slave_index outputSlaveIndex,
+    cse_variable_index outputVariableIndex,
+    cse_slave_index inputSlaveIndex,
+    cse_variable_index inputVariableIndex)
+{
+    return connect_variables(execution, outputSlaveIndex, outputVariableIndex, inputSlaveIndex, inputVariableIndex, cse::variable_type::integer);
 }
 
 int cse_observer_slave_get_real(
