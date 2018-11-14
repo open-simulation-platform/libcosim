@@ -110,8 +110,6 @@ const char* cse_last_error_message()
 struct cse_execution_s
 {
     std::unique_ptr<cse::execution> cpp_execution;
-    std::atomic<cse::time_point> startTime = cse::time_point();
-    cse::duration stepSize;
     std::thread t;
     std::atomic<cse_execution_state> state;
     int error_code;
@@ -130,9 +128,6 @@ cse_execution* cse_execution_create(cse_time_point startTime, cse_duration stepS
             cse::to_time_point(startTime),
             std::make_unique<cse::fixed_step_algorithm>(cse::to_duration(stepSize, startTime)));
         execution->cpp_execution->enable_real_time_simulation();
-
-        execution->startTime = cse::to_time_point(startTime);
-        execution->stepSize = cse::to_duration(stepSize, startTime);
         execution->error_code = CSE_ERRC_SUCCESS;
         execution->state = CSE_EXECUTION_STOPPED;
 
