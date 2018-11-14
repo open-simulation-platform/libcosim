@@ -49,6 +49,15 @@ int main()
         return 1;
     }
 
+    // Test that this fails
+    rc = cse_execution_connect_integer_variables(execution, slaveIndex1, 1, slaveIndex2, 1);
+    if (rc != -1) {
+        fprintf(stderr, "Expected to fail when connecting nonexistent variables");
+        print_last_error();
+        cse_execution_destroy(execution);
+        return 1;
+    }
+
     cse_variable_index realInVar = 0;
     const double realInVal = 5.0;
     cse_execution_slave_set_real(execution, slaveIndex1, &realInVar, 1, &realInVal);

@@ -324,15 +324,18 @@ int cse_execution_slave_set_integer(
     }
 }
 
-cse::variable_id find_variable(std::vector<cse::variable_description> variables, cse::variable_id variableId, cse::variable_causality causality)
+void validate_variable(
+    cse_execution* execution,
+    cse::simulator_index simulator,
+    cse::variable_id variableId,
+    cse::variable_causality causality)
 {
+    const auto variables = execution->cpp_execution->get_simulator(simulator)->model_description().variables;
     const auto it = std::find_if(
         variables.begin(),
         variables.end(),
         [=](const auto& var) { return var.causality == causality && var.type == variableId.type && var.index == variableId.index; });
-    if (it != variables.end()) {
-        return cse::variable_id{variableId.simulator, variableId.type, variableId.index};
-    } else {
+    if (it == variables.end()) {
         std::ostringstream oss;
         oss << "Cannot connect variable with index " << variableId.index
             << ", causality " << cse::to_text(causality)
@@ -342,7 +345,8 @@ cse::variable_id find_variable(std::vector<cse::variable_description> variables,
     }
 }
 
-int connect_variables(cse_execution* execution,
+int connect_variables(
+    cse_execution* execution,
     cse::simulator_index outputSimulator,
     cse::variable_index outputVariable,
     cse::simulator_index inputSimulator,
@@ -350,17 +354,13 @@ int connect_variables(cse_execution* execution,
     cse::variable_type type)
 {
     try {
-        const auto sourceSim = execution->cpp_execution->get_simulator(outputSimulator);
-        const auto sourceVars = sourceSim->model_description().variables;
-        const auto sourceId = cse::variable_id{outputSimulator, type, outputVariable};
-        const auto source = find_variable(sourceVars, sourceId, cse::variable_causality::output);
+        const auto outputId = cse::variable_id{outputSimulator, type, outputVariable};
+        validate_variable(execution, outputSimulator, outputId, cse::variable_causality::output);
 
-        const auto destSim = execution->cpp_execution->get_simulator(inputSimulator);
-        const auto destVars = destSim->model_description().variables;
-        const auto destId = cse::variable_id{inputSimulator, type, inputVariable};
-        const auto dest = find_variable(destVars, destId, cse::variable_causality::input);
+        const auto inputId = cse::variable_id{inputSimulator, type, inputVariable};
+        validate_variable(execution, inputSimulator, inputId, cse::variable_causality::input);
 
-        execution->cpp_execution->connect_variables(source, dest);
+        execution->cpp_execution->connect_variables(outputId, inputId);
         return success;
     } catch (...) {
         handle_current_exception();
