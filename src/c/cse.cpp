@@ -109,7 +109,7 @@ const char* cse_last_error_message()
 
 struct cse_execution_s
 {
-    std::shared_ptr<cse::execution> cpp_execution;
+    std::unique_ptr<cse::execution> cpp_execution;
     std::atomic<cse::time_point> startTime = cse::time_point();
     cse::duration stepSize;
     std::thread t;
