@@ -299,6 +299,11 @@ struct cse_observer_s
     std::vector<std::shared_ptr<cse::single_slave_observer>> slaveObservers;
 };
 
+struct cse_file_observer_s
+{
+
+};
+
 int cse_execution_slave_set_real(
     cse_execution* execution,
     cse_slave_index slaveIndex,
@@ -437,31 +442,6 @@ bool cse_observer_observe(cse_observer* observer, long currentStep)
         handle_current_exception();
         return false;
     }
-}
-
-int cse_log_int_values(char* logPath, int* values, int nSamples, int binary)
-{
-
-    auto logger = cse::single_slave_logger(logPath, binary);
-    int rc = logger.write_int_samples(values, nSamples);
-
-    if (rc < 0) {
-        return failure;
-    }
-
-    return success;
-}
-
-int cse_log_real_values(char *logPath, double* values, int nSamples, int binary) {
-
-    auto logger = cse::single_slave_logger(logPath, binary);
-    int rc = logger.write_real_samples(values, nSamples);
-
-    if (rc < 0) {
-        return failure;
-    }
-
-    return success;
 }
 
 int cse_hello_world(char* buffer, size_t size)

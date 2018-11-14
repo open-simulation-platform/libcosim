@@ -1,6 +1,7 @@
 set(tests
     "async_slave_mockup_test"
     "fixed_step_algorithm_test"
+    "file_observer_logging_test"
     "hello_world_test"
 )
 set(unittests

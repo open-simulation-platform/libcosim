@@ -47,7 +47,6 @@ void info_message(char* message)
 int main()
 {
     const char* dataDir = getenv("TEST_DATA_DIR");
-
     char fmuPath[1024];
 
     int rc = snprintf(fmuPath, sizeof fmuPath, "%s/fmi1/identity.fmu", dataDir);
@@ -112,6 +111,10 @@ int main()
     }
 
     double realValues[20];
+    size_t realSamples = cse_observer_slave_get_real_samples(observer, observerSlaveIndex, variable_index, fromStep, numSamples, realValues, steps);
+
+    // C api for updated file logger not yet in use
+    (void)realSamples;
 
     return 0;
 }
