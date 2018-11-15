@@ -19,9 +19,9 @@
 
 int main() {
     try {
-        constexpr cse::time_point startTime = 0.0;
-        constexpr cse::time_point endTime = 10.0;
-        constexpr cse::time_duration stepSize = 0.1;
+        constexpr cse::time_point startTime = cse::to_time_point(0.0);
+        constexpr cse::time_point endTime = cse::to_time_point(10.0);
+        constexpr cse::duration stepSize = cse::to_duration(0.1);
 
         // Set up paths to log files based on data_dir env variable
         const char* dataDir = std::getenv("TEST_DATA_DIR");
@@ -43,6 +43,7 @@ int main() {
         cse::simulator_index sim_index_1 = execution.add_observer(csv_observer);
         cse::simulator_index sim_index_2 = execution.add_observer(bin_observer);
 
+        // This is not needed, sim_index_1 = sim_index_2
         (void)sim_index_2;
 
         // Add a slave to the execution and connect variables

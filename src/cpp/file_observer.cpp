@@ -96,7 +96,7 @@ void file_observer::variable_disconnected(variable_id /*input*/)
 {
 }
 
-void file_observer::step_complete(step_number lastStep, time_duration /*lastStepSize*/, time_point /*currentTime*/)
+void file_observer::step_complete(step_number lastStep, duration /*lastStepSize*/, time_point /*currentTime*/)
 {
     for (const auto& slaveObserver : slaveObservers_) {
         slaveObserver.second->observe(lastStep);

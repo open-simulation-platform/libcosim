@@ -98,7 +98,7 @@ public:
     /// A time step is complete, and a communication point was reached.
     virtual void step_complete(
         step_number lastStep,
-        time_duration lastStepSize,
+        duration lastStepSize,
         time_point currentTime) = 0;
 
     virtual ~observer() noexcept {}
@@ -122,7 +122,7 @@ public:
 
     void step_complete(
         step_number lastStep,
-        time_duration lastStepSize,
+        duration lastStepSize,
         time_point currentTime) override;
 
     void write_real_samples(simulator_index sim);
@@ -155,7 +155,7 @@ public:
 
     void step_complete(
         step_number lastStep,
-        time_duration lastStepSize,
+        duration lastStepSize,
         time_point currentTime) override;
 
     /**
