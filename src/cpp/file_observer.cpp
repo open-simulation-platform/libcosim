@@ -109,12 +109,13 @@ void file_observer::write_real_samples(simulator_index sim)
 
     if (fsw_.is_open()) {
         if (binary_) {
-            for (auto const& [timeStep, values] : samples) {
+            for (auto const& [stepCount, values] : samples) {
+                (void)stepCount;
                 fsw_.write((char*)&values[0], values.size() * sizeof(double));
             }
         } else {
-            for (auto const& [timeStep, values] : samples) {
-                fsw_ << timeStep << ": ";
+            for (auto const& [stepCount, values] : samples) {
+                fsw_ << stepCount << ": ";
 
                 for (auto value : values) {
                     fsw_ << value << ",";
@@ -132,12 +133,13 @@ void file_observer::write_int_samples(simulator_index sim)
 
     if (fsw_.is_open()) {
         if (binary_) {
-            for (auto const& [timeStep, values] : samples) {
+            for (auto const& [stepCount, values] : samples) {
+                (void)stepCount;
                 fsw_.write((char*)&values[0], values.size() * sizeof(int));
             }
         } else {
-            for (auto const& [timeStep, values] : samples) {
-                fsw_ << timeStep << ": ";
+            for (auto const& [stepCount, values] : samples) {
+                fsw_ << stepCount << ": ";
 
                 for (auto value : values) {
                     fsw_ << value << ",";
