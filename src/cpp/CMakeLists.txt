@@ -44,6 +44,7 @@ set(sources
     "fmi_v1_fmu.cpp"
     "fmi_v2_fmu.cpp"
     "membuffer_observer.cpp"
+    "file_observer.cpp"
 
     "error.cpp"
     "fmi_glue.cpp"
