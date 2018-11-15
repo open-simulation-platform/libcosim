@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ssd:SystemStructureDescription name="simple-cse-example" version="Draft20180219">
+  <ssd:System name="cse-instance" description="An example of how to use Core Simulation Environment">
+
+    <ssd:SimulationInformation>
+      <ssd:FixedStepMaster description="FixedStepAlgorithm" stepSize="1e-1" />
+    </ssd:SimulationInformation>
+
+    <ssd:Elements>
+      <ssd:Component name="FMU1" source="FMU1.fmu">
+        <ssd:Connectors>
+          <!-- Seems to match nicely with our consept of "expose" -->
+          <ssd:Connector name="Out" kind="ouput" type="Real"/>
+        </ssd:Connectors>
+      </ssd:Component>
+      <ssd:Component name="FMU2" source="FMU2.fmu">
+        <ssd:Connectors>
+          <ssd:Connector name="In" kind="inut" type="Real"/>
+        </ssd:Connectors>
+      </ssd:Component>
+    </ssd:Elements>
+
+    <ssd:Connections>
+      <ssd:Connection startElement="FMU1" startConnector="Out" endElement="FMU2" endConnector="In"/>
+    </ssd:Connections>
+
+  </ssd:System>
+</ssd:SystemStructureDescription>
