@@ -1,5 +1,6 @@
 #include <cse/execution.hpp>
 
+#include <sstream>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -91,6 +92,9 @@ public:
 
     void connect_variables(variable_id output, variable_id input)
     {
+        validate_variable(output, variable_causality::output);
+        validate_variable(input, variable_causality::input);
+
         const auto existing = connections_.find(input);
         const auto hasExisting = existing != connections_.end();
 
@@ -168,6 +172,23 @@ public:
     }
 
 private:
+    void validate_variable(variable_id variable, variable_causality causality)
+    {
+        const auto variables = simulators_.at(variable.simulator)->model_description().variables;
+        const auto it = std::find_if(
+            variables.begin(),
+            variables.end(),
+            [=](const auto& var) { return var.causality == causality && var.type == variable.type && var.index == variable.index; });
+        if (it == variables.end()) {
+            std::ostringstream oss;
+            oss << "Cannot find variable with index " << variable.index
+                << ", causality " << cse::to_text(causality)
+                << " and type " << cse::to_text(variable.type)
+                << " for simulator " << variable.simulator;
+            throw std::out_of_range(oss.str());
+        }
+    }
+
     static std::optional<duration> max_delta_t(std::optional<time_point> endTime, time_point currentTime)
     {
         if (endTime) {

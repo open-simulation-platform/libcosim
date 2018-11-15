@@ -113,6 +113,11 @@ public:
      *  input value at the co-simulation algorithm's discretion.  Different
      *  algorithms may handle this in different ways, and could for instance
      *  choose to extrapolate or correct the variable value during transfer.
+     *
+     *  When calling this method, the validity of both variables are checked
+     *  against the metadata of their respective `simulator`s. If either is
+     *  found to be invalid (i.e. not found, wrong type or causality, an
+     *  exception will be thrown.
      */
     void connect_variables(variable_id output, variable_id input);
 

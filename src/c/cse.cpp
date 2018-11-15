@@ -319,27 +319,6 @@ int cse_execution_slave_set_integer(
     }
 }
 
-void validate_variable(
-    cse_execution* execution,
-    cse::simulator_index simulator,
-    cse::variable_id variableId,
-    cse::variable_causality causality)
-{
-    const auto variables = execution->cpp_execution->get_simulator(simulator)->model_description().variables;
-    const auto it = std::find_if(
-        variables.begin(),
-        variables.end(),
-        [=](const auto& var) { return var.causality == causality && var.type == variableId.type && var.index == variableId.index; });
-    if (it == variables.end()) {
-        std::ostringstream oss;
-        oss << "Cannot connect variable with index " << variableId.index
-            << ", causality " << cse::to_text(causality)
-            << " and type " << cse::to_text(variableId.type)
-            << " for simulator index " << variableId.simulator;
-        throw std::out_of_range(oss.str());
-    }
-}
-
 int connect_variables(
     cse_execution* execution,
     cse::simulator_index outputSimulator,
@@ -350,11 +329,7 @@ int connect_variables(
 {
     try {
         const auto outputId = cse::variable_id{outputSimulator, type, outputVariable};
-        validate_variable(execution, outputSimulator, outputId, cse::variable_causality::output);
-
         const auto inputId = cse::variable_id{inputSimulator, type, inputVariable};
-        validate_variable(execution, inputSimulator, inputId, cse::variable_causality::input);
-
         execution->cpp_execution->connect_variables(outputId, inputId);
         return success;
     } catch (...) {
