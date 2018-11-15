@@ -6,6 +6,7 @@
 
 #include <cse.h>
 #include <math.h>
+#include <string.h>
 
 #ifdef _WINDOWS
 #    include <Windows.h>
@@ -118,10 +119,10 @@ int main()
         teardown_message(execution, "Expected 20 real samples read");
     }
 
-    char* logPath = "C:\\Dev\\osp\\cse-core-branches\\master\\cse-core\\test\\logs\\log.txt";
 
+    /*
     FILE* stream;
-    rc = fopen_s(&stream, logPath, "a+");
+    rc = fopen(&stream, logPath);
 
     if (rc < 0) {
         teardown_message(execution, "Log file could not be opened or created");
@@ -140,7 +141,7 @@ int main()
         if (rc < 0) {
             teardown_message(execution, "Log file could not be closed");
         }
-    }
+    }*/
 
     return 0;
 }
