@@ -19,7 +19,7 @@ namespace cse
 class slave_simulator : public simulator
 {
 public:
-    slave_simulator(std::unique_ptr<async_slave> slave, std::string_view name);
+    slave_simulator(std::shared_ptr<async_slave> slave, std::string_view name);
 
     ~slave_simulator() noexcept;
 

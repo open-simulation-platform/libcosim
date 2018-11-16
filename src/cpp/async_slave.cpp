@@ -25,7 +25,7 @@ boost::container::vector<std::remove_cv_t<T>> to_vector(gsl::span<T> span)
 class pseudo_async_slave : public cse::async_slave
 {
 public:
-    pseudo_async_slave(std::unique_ptr<cse::slave> slave)
+    pseudo_async_slave(std::shared_ptr<cse::slave> slave)
         : slave_(std::move(slave))
         , state_(slave_state::created)
     {}
@@ -215,10 +215,19 @@ public:
                 try {
                     // NOTE: We don't handle nonfatal_bad_value correctly here.
                     // All functions should get called, and the exceptions should get merged.
-                    slave_->set_real_variables(gsl::make_span(rvi), gsl::make_span(rva));
-                    slave_->set_integer_variables(gsl::make_span(ivi), gsl::make_span(iva));
-                    slave_->set_boolean_variables(gsl::make_span(bvi), gsl::make_span(bva));
-                    slave_->set_string_variables(gsl::make_span(svi), gsl::make_span(sva));
+                    // TODO: This check is at the moment necessary for some tests to pass. Should maybe find an alternative solution!
+                    if (!rvi.empty()) {
+                        slave_->set_real_variables(gsl::make_span(rvi), gsl::make_span(rva));
+                    }
+                    if (!ivi.empty()) {
+                        slave_->set_integer_variables(gsl::make_span(ivi), gsl::make_span(iva));
+                    }
+                    if (!bvi.empty()) {
+                        slave_->set_boolean_variables(gsl::make_span(bvi), gsl::make_span(bva));
+                    }
+                    if (!svi.empty()) {
+                        slave_->set_string_variables(gsl::make_span(svi), gsl::make_span(sva));
+                    }
                     state_ = oldState;
                 } catch (...) {
                     state_ = slave_state::error;
@@ -230,7 +239,7 @@ public:
     // clang-format on
 
 private:
-    std::unique_ptr<cse::slave> slave_;
+    std::shared_ptr<cse::slave> slave_;
     slave_state state_;
 
     // We need Boost's vector<bool> to avoid the issues with std::vector<bool>.
@@ -243,9 +252,9 @@ private:
 } // namespace
 
 
-std::unique_ptr<async_slave> make_pseudo_async(std::unique_ptr<slave> s)
+std::shared_ptr<async_slave> make_pseudo_async(std::shared_ptr<slave> s)
 {
-    return std::make_unique<pseudo_async_slave>(std::move(s));
+    return std::make_shared<pseudo_async_slave>(std::move(s));
 }
 
 

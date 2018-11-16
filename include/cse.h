@@ -32,10 +32,6 @@ typedef int cse_slave_index;
 /// Observer index.
 typedef int cse_observer_index;
 
-/// Observer slave index.
-typedef int cse_observer_slave_index;
-
-
 /// Error codes.
 typedef enum
 {
@@ -329,7 +325,7 @@ int cse_execution_slave_set_real(
  */
 int cse_observer_slave_get_real(
     cse_observer* observer,
-    cse_observer_slave_index slave,
+    cse_slave_index slave,
     const cse_variable_index variables[],
     size_t nv,
     double values[]);
@@ -337,12 +333,12 @@ int cse_observer_slave_get_real(
 
 size_t cse_observer_slave_get_real_samples(
     cse_observer* observer,
-    cse_observer_slave_index slave,
+    cse_slave_index slave,
     cse_variable_index variableIndex,
     long fromStep,
     size_t nSamples,
     double values[],
-    long steps[]);
+    long long steps[]);
 
 /**
  *  \brief
@@ -393,20 +389,69 @@ int cse_execution_slave_set_integer(
  */
 int cse_observer_slave_get_integer(
     cse_observer* observer,
-    cse_observer_slave_index slave,
+    cse_slave_index slave,
     const cse_variable_index variables[],
     size_t nv,
     int values[]);
 
 size_t cse_observer_slave_get_integer_samples(
     cse_observer* observer,
-    cse_observer_slave_index slave,
+    cse_slave_index slave,
     cse_variable_index variableIndex,
     long fromStep,
     size_t nSamples,
     int values[],
-    long steps[]);
+    long long steps[]);
 
+/**
+ *  \brief
+ *  Connects one real output variable to one real input variable.
+ *
+ *  \param [in] execution
+ *      The execution.
+ *  \param [in] outputSlaveIndex
+ *      The source slave.
+ *  \param [in] outputVariableIndex
+ *      The source variable.
+ *  \param [in] inputSlaveIndex
+ *      The destination slave.
+ *  \param [in] inputVariableIndex
+ *      The destination variable.
+ *
+ *  \returns
+ *      0 on success and -1 on error.
+ */
+int cse_execution_connect_real_variables(
+    cse_execution* execution,
+    cse_slave_index outputSlaveIndex,
+    cse_variable_index outputVariableIndex,
+    cse_slave_index inputSlaveIndex,
+    cse_variable_index inputVariableIndex);
+
+/**
+ *  \brief
+ *  Connects one integer output variable to one integer input variable.
+ *
+ *  \param [in] execution
+ *      The execution.
+ *  \param [in] outputSlaveIndex
+ *      The source slave.
+ *  \param [in] outputVariableIndex
+ *      The source variable.
+ *  \param [in] inputSlaveIndex
+ *      The destination slave.
+ *  \param [in] inputVariableIndex
+ *      The destination variable.
+ *
+ *  \returns
+ *      0 on success and -1 on error.
+ */
+int cse_execution_connect_integer_variables(
+    cse_execution* execution,
+    cse_slave_index outputSlaveIndex,
+    cse_variable_index outputVariableIndex,
+    cse_slave_index inputSlaveIndex,
+    cse_variable_index inputVariableIndex);
 
 /**
  *  Writes the string "Hello World!" to a character buffer.
@@ -440,11 +485,6 @@ cse_address* cse_slave_get_address(cse_slave* s);
 cse_observer_index cse_execution_add_observer(
     cse_execution* execution,
     cse_observer* observer);
-
-cse_slave_index cse_observer_add_slave(
-    cse_observer* observer,
-    cse_slave* slave);
-
 
 #ifdef __cplusplus
 } // extern(C)

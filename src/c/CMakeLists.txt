@@ -2,13 +2,9 @@ set(publicHeaderDir "${CMAKE_SOURCE_DIR}/include")
 set(publicHeaders
     "cse.h"
 )
-set(privateHeaders
-    "slave_observer.hpp"
-)
 
 set(sources
     "cse.cpp"
-    "slave_observer.cpp"
 )
 
 set(publicHeadersFull)
