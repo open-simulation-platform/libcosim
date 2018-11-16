@@ -1,6 +1,3 @@
-//
-// Created by STENBRO on 10/9/2018.
-//
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -118,7 +115,6 @@ int main()
     if (realSamples != 20) {
         teardown_message(execution, "Expected 20 real samples read");
     }
-
 
     /*
     FILE* stream;

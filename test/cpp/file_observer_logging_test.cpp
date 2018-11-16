@@ -1,7 +1,3 @@
-//
-// Created by STENBRO on 11/13/2018.
-//
-
 #include <exception>
 #include <memory>
 #include <stdexcept>
@@ -40,14 +36,11 @@ int main() {
         // Set up and add file observers of csv and binary format to the execution
         auto csv_observer = std::make_shared<cse::file_observer>(csv_log_path, false);
         auto bin_observer = std::make_shared<cse::file_observer>(bin_log_path, true);
-        cse::simulator_index sim_index_1 = execution.add_observer(csv_observer);
-        cse::simulator_index sim_index_2 = execution.add_observer(bin_observer);
-
-        // This is not needed, sim_index_1 = sim_index_2
-        (void)sim_index_2;
+        execution.add_observer(csv_observer);
+        execution.add_observer(bin_observer);
 
         // Add a slave to the execution and connect variables
-        execution.add_slave(
+        cse::simulator_index sim_index = execution.add_slave(
                 cse::make_pseudo_async(std::make_unique<mock_slave>([](double x) { return x + 1.234; })), "slave");
 
         // Run the simulation
@@ -55,8 +48,8 @@ int main() {
         REQUIRE(simResult.get());
 
         // Log the observed results
-        csv_observer->write_real_samples(sim_index_1);
-        bin_observer->write_real_samples(sim_index_1);
+        csv_observer->log_samples(sim_index);
+        bin_observer->log_samples(sim_index);
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;

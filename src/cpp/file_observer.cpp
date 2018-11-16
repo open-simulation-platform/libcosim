@@ -1,7 +1,3 @@
-//
-// Created by STENBRO on 10/30/2018.
-//
-
 #include <cse/error.hpp>
 #include <cse/observer.hpp>
 #include <map>
@@ -103,51 +99,29 @@ void file_observer::step_complete(step_number lastStep, duration /*lastStepSize*
     }
 }
 
-void file_observer::write_real_samples(simulator_index sim)
+void file_observer::log_samples(simulator_index sim)
 {
-    std::map<step_number, std::vector<double>> samples = slaveObservers_.at(sim)->get_real_samples();
+    auto samples = slaveObservers_.at(sim)->get_real_samples();
 
     if (fsw_.is_open()) {
-        if (binary_) {
-            for (auto const& [stepCount, values] : samples) {
-                (void)stepCount;
-                fsw_.write((char*)&values[0], values.size() * sizeof(double));
-            }
-        } else {
-            for (auto const& [stepCount, values] : samples) {
-                fsw_ << stepCount << ": ";
-
-                for (auto value : values) {
-                    fsw_ << value << ",";
-                }
-
-                fsw_ << std::endl;
-            }
+        for (auto const& [stepCount, values] : samples) {
+            write(values);
         }
     }
 }
 
-void file_observer::write_int_samples(simulator_index sim)
+template <typename T>
+void file_observer::write(const std::vector<T> values)
 {
-    std::map<step_number, std::vector<int>> samples = slaveObservers_.at(sim)->get_integer_samples();
+    if (binary_) {
+        fsw_.write((char*)&values[0], values.size() * sizeof(T));
+    } else {
 
-    if (fsw_.is_open()) {
-        if (binary_) {
-            for (auto const& [stepCount, values] : samples) {
-                (void)stepCount;
-                fsw_.write((char*)&values[0], values.size() * sizeof(int));
-            }
-        } else {
-            for (auto const& [stepCount, values] : samples) {
-                fsw_ << stepCount << ": ";
-
-                for (auto value : values) {
-                    fsw_ << value << ",";
-                }
-
-                fsw_ << std::endl;
-            }
+        for (auto value : values) {
+            fsw_ << value << ",";
         }
+
+        fsw_ << std::endl;
     }
 }
 
