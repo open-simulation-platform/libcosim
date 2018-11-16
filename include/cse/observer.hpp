@@ -56,7 +56,7 @@ public:
      *  Returns the value of a boolean variable.
      *
      *  The variable must previously have been exposed with `expose_for_getting()`.
-         */
+     */
     virtual bool get_boolean(variable_index) const = 0;
 
     /**
@@ -132,7 +132,6 @@ public:
     ~file_observer();
 
 private:
-
     class single_slave_observer;
     std::unordered_map<simulator_index, std::unique_ptr<single_slave_observer>> slaveObservers_;
     bool binary_;
@@ -161,41 +160,41 @@ public:
         time_point currentTime) override;
 
     /**
-         * Retrieves the latest observed values for a range of real variables.
-         *
-         * \param [in] sim index of the simulator
-         * \param [in] variables the variable indices to retrieve values for
-         * \param [out] values a collection where the observed values will be stored
-         */
+     * Retrieves the latest observed values for a range of real variables.
+     *
+     * \param [in] sim index of the simulator
+     * \param [in] variables the variable indices to retrieve values for
+     * \param [out] values a collection where the observed values will be stored
+     */
     void get_real(
         simulator_index sim,
         gsl::span<const variable_index> variables,
         gsl::span<double> values);
 
     /**
-         * Retrieves the latest observed values for a range of integer variables.
-         *
-         * \param [in] sim index of the simulator
-         * \param [in] variables the variable indices to retrieve values for
-         * \param [out] values a collection where the observed values will be stored
-         */
+     * Retrieves the latest observed values for a range of integer variables.
+     *
+     * \param [in] sim index of the simulator
+     * \param [in] variables the variable indices to retrieve values for
+     * \param [out] values a collection where the observed values will be stored
+     */
     void get_integer(
         simulator_index sim,
         gsl::span<const variable_index> variables,
         gsl::span<int> values);
 
     /**
-         * Retrieves a series of observed values and step numbers for a real variable.
-         *
-         * \param [in] sim index of the simulator
-         * \param [in] variableIndex the variable index
-         * \param [in] fromStep the step number to start from
-         * \param [out] values the series of observed values
-         * \param [out] steps the corresponding step numbers
-         *
-         * Returns the number of samples actually read, which may be smaller
-         * than the sizes of `values` and `steps`.
-         */
+     * Retrieves a series of observed values and step numbers for a real variable.
+     *
+     * \param [in] sim index of the simulator
+     * \param [in] variableIndex the variable index
+     * \param [in] fromStep the step number to start from
+     * \param [out] values the series of observed values
+     * \param [out] steps the corresponding step numbers
+     *
+     * Returns the number of samples actually read, which may be smaller
+     * than the sizes of `values` and `steps`.
+     */
     std::size_t get_real_samples(
         simulator_index sim,
         variable_index variableIndex,
@@ -204,17 +203,17 @@ public:
         gsl::span<step_number> steps);
 
     /**
-         * Retrieves a series of observed values and step numbers for an integer variable.
-         *
-         * \param [in] sim index of the simulator
-         * \param [in] variableIndex the variable index
-         * \param [in] fromStep the step number to start from
-         * \param [out] values the series of observed values
-         * \param [out] steps the corresponding step numbers
-         *
-         * Returns the number of samples actually read, which may be smaller
-         * than the sizes of `values` and `steps`.
-         */
+     * Retrieves a series of observed values and step numbers for an integer variable.
+     *
+     * \param [in] sim index of the simulator
+     * \param [in] variableIndex the variable index
+     * \param [in] fromStep the step number to start from
+     * \param [out] values the series of observed values
+     * \param [out] steps the corresponding step numbers
+     *
+     * Returns the number of samples actually read, which may be smaller
+     * than the sizes of `values` and `steps`.
+     */
     std::size_t get_integer_samples(
         simulator_index sim,
         variable_index variableIndex,
@@ -226,7 +225,6 @@ public:
 
 private:
     class single_slave_observer;
-
     std::unordered_map<simulator_index, std::unique_ptr<single_slave_observer>> slaveObservers_;
 };
 
