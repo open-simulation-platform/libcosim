@@ -6,7 +6,6 @@ set(tests
     "observer_can_buffer_samples"
     "observer_multiple_slaves_test"
     "real_time_test"
-    "observer_slave_logging_test"
     "connections_test"
 )
 
