@@ -23,9 +23,7 @@ int main()
         constexpr cse::time_point endTime = cse::to_time_point(10.0);
         constexpr cse::duration stepSize = cse::to_duration(0.1);
 
-        // Set up paths to log files based on data_dir env variable
-        const auto testDataDir = std::getenv("TEST_DATA_DIR");
-        const auto logPath = boost::filesystem::path(testDataDir) / "logs";
+        const auto logPath = boost::filesystem::current_path() / "logs";
 
         cse::log::set_global_output_level(cse::log::level::debug);
 

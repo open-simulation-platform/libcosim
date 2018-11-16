@@ -1,7 +1,12 @@
-#include <cse/error.hpp>
-#include <cse/observer.hpp>
 #include <map>
 #include <mutex>
+
+#include <boost/filesystem/operations.hpp>
+#include <boost/filesystem/fstream.hpp>
+
+#include <cse/error.hpp>
+#include <cse/observer.hpp>
+
 
 namespace cse
 {
@@ -14,15 +19,17 @@ namespace
 class file_observer::single_slave_observer
 {
 public:
-    single_slave_observer(observable* observable, std::string logPath, bool binary, size_t limit)
+    single_slave_observer(observable* observable, boost::filesystem::path logPath, bool binary, size_t limit)
         : observable_(observable)
         , binary_(binary)
         , limit_(limit)
     {
+        boost::filesystem::create_directories(logPath.parent_path());
+
         if (binary_) {
-            fsw_ = std::ofstream(logPath, std::ios_base::out | std::ios_base::binary);
+            fsw_.open(logPath, std::ios_base::out | std::ios_base::binary);
         } else {
-            fsw_ = std::ofstream(logPath, std::ios_base::out | std::ios_base::app);
+            fsw_.open(logPath, std::ios_base::out | std::ios_base::app);
         }
         if (fsw_.fail()) {
             throw std::runtime_error("Failed to open file stream for logging");
@@ -101,7 +108,7 @@ private:
     std::vector<variable_index> realIndexes_;
     std::vector<variable_index> intIndexes_;
     observable* observable_;
-    std::ofstream fsw_;
+    boost::filesystem::ofstream fsw_;
     bool binary_;
     size_t counter_ = 0;
     size_t limit_ = 10;
@@ -118,7 +125,7 @@ void file_observer::simulator_added(simulator_index index, observable* simulator
 {
     auto filename = std::to_string(index).append(binary_ ? ".bin" : ".csv");
     auto slaveLogPath = logDir_ / filename;
-    slaveObservers_[index] = std::make_unique<single_slave_observer>(simulator, slaveLogPath.string(), binary_, limit_);
+    slaveObservers_[index] = std::make_unique<single_slave_observer>(simulator, slaveLogPath, binary_, limit_);
 }
 
 void file_observer::simulator_removed(simulator_index index)
