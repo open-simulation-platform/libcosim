@@ -14,6 +14,8 @@
 #include <cse/execution.hpp>
 #include <cse/model.hpp>
 
+#include <boost/filesystem/path.hpp>
+
 
 namespace cse
 {
@@ -109,7 +111,7 @@ public:
 class file_observer : public observer
 {
 public:
-    file_observer(std::string logPath, bool binary);
+    file_observer(boost::filesystem::path logDir, bool binary, size_t limit);
 
     void simulator_added(simulator_index, observable*) override;
 
@@ -124,18 +126,14 @@ public:
         duration lastStepSize,
         time_point currentTime) override;
 
-    void log_samples(simulator_index sim);
-
-    template<typename T>
-    void write(const std::vector<T> values);
-
     ~file_observer();
 
 private:
     class single_slave_observer;
     std::unordered_map<simulator_index, std::unique_ptr<single_slave_observer>> slaveObservers_;
     bool binary_;
-    std::ofstream fsw_;
+    size_t limit_;
+    boost::filesystem::path logDir_;
 };
 
 /**

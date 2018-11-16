@@ -9,24 +9,23 @@
 
 #include "mock_slave.hpp"
 
+#include <boost/filesystem.hpp>
+
+
 // A helper macro to test various assertions
 #define REQUIRE(test) \
     if (!(test)) throw std::runtime_error("Requirement not satisfied: " #test)
 
-int main() {
+int main()
+{
     try {
         constexpr cse::time_point startTime = cse::to_time_point(0.0);
         constexpr cse::time_point endTime = cse::to_time_point(10.0);
         constexpr cse::duration stepSize = cse::to_duration(0.1);
 
         // Set up paths to log files based on data_dir env variable
-        const char* dataDir = std::getenv("TEST_DATA_DIR");
-
-        std::string csv_log_path(dataDir);
-        std::string bin_log_path(dataDir);
-
-        csv_log_path.append("log.txt");
-        bin_log_path.append("log.bin");
+        const auto testDataDir = std::getenv("TEST_DATA_DIR");
+        const auto logPath = boost::filesystem::path(testDataDir) / "logs";
 
         cse::log::set_global_output_level(cse::log::level::debug);
 
@@ -34,22 +33,20 @@ int main() {
         auto execution = cse::execution(startTime, std::make_unique<cse::fixed_step_algorithm>(stepSize));
 
         // Set up and add file observers of csv and binary format to the execution
-        auto csv_observer = std::make_shared<cse::file_observer>(csv_log_path, false);
-        auto bin_observer = std::make_shared<cse::file_observer>(bin_log_path, true);
+        auto csv_observer = std::make_shared<cse::file_observer>(logPath, false, 50);
+        auto bin_observer = std::make_shared<cse::file_observer>(logPath, true, 50);
         execution.add_observer(csv_observer);
         execution.add_observer(bin_observer);
 
         // Add a slave to the execution and connect variables
-        cse::simulator_index sim_index = execution.add_slave(
-                cse::make_pseudo_async(std::make_unique<mock_slave>([](double x) { return x + 1.234; })), "slave");
+        execution.add_slave(
+            cse::make_pseudo_async(std::make_unique<mock_slave>([](double x) { return x + 1.234; })), "slave uno");
+        execution.add_slave(
+            cse::make_pseudo_async(std::make_unique<mock_slave>([](double x) { return x + 1.234; }, [](int y) { return y - 4; })), "slave dos");
 
         // Run the simulation
         auto simResult = execution.simulate_until(endTime);
         REQUIRE(simResult.get());
-
-        // Log the observed results
-        csv_observer->log_samples(sim_index);
-        bin_observer->log_samples(sim_index);
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
