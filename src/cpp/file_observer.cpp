@@ -22,7 +22,7 @@ public:
                 realIndexes_.push_back(vd.index);
             }
             if (vd.type == cse::variable_type::integer) {
-                realIndexes_.push_back(vd.index);
+                intIndexes_.push_back(vd.index);
             }
         }
 
