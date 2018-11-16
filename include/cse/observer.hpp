@@ -131,9 +131,9 @@ public:
 private:
     class single_slave_observer;
     std::unordered_map<simulator_index, std::unique_ptr<single_slave_observer>> slaveObservers_;
+    boost::filesystem::path logDir_;
     bool binary_;
     size_t limit_;
-    boost::filesystem::path logDir_;
 };
 
 /**
