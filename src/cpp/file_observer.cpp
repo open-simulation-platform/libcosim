@@ -1,20 +1,16 @@
+#include <cse/observer.hpp>
+
 #include <map>
 #include <mutex>
 
-#include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/fstream.hpp>
+#include <boost/filesystem/operations.hpp>
 
 #include <cse/error.hpp>
-#include <cse/observer.hpp>
 
 
 namespace cse
 {
-
-namespace
-{
-
-} // namespace
 
 class file_observer::single_slave_observer
 {
