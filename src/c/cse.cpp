@@ -425,21 +425,35 @@ size_t cse_observer_slave_get_time_samples(
     return observer->cpp_observer->get_time_samples(slave, fromStep, gsl::make_span(values, nSamples), gsl::make_span(steps, nSamples));
 }
 
-cse_step_number* cse_observer_get_step_numbers_for_duration(
+int cse_observer_get_step_numbers_for_duration(
     cse_observer* observer,
     cse_slave_index slave,
-    double duration)
+    double duration,
+    cse_step_number steps[])
 {
-    return observer->cpp_observer->get_step_numbers(slave, duration);
+    try {
+        observer->cpp_observer->get_step_numbers(slave, duration, gsl::make_span(steps, 2));
+        return success;
+    } catch (...) {
+        handle_current_exception();
+        return failure;
+    }
 }
 
-cse_step_number* cse_observer_get_step_numbers(
+int cse_observer_get_step_numbers(
     cse_observer* observer,
     cse_slave_index slave,
     double begin,
-    double end)
+    double end,
+    cse_step_number steps[])
 {
-    return observer->cpp_observer->get_step_numbers(slave, begin, end);
+    try {
+        observer->cpp_observer->get_step_numbers(slave, begin, end, gsl::make_span(steps, 2));
+        return success;
+    } catch (...) {
+        handle_current_exception();
+        return failure;
+    }
 }
 
 cse_observer* cse_membuffer_observer_create()

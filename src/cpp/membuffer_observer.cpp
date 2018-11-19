@@ -139,7 +139,7 @@ public:
         return samplesRead;
     }
 
-    step_number* get_step_numbers(double tBegin, double tEnd)
+    void get_step_numbers(double tBegin, double tEnd, gsl::span<step_number> steps)
     {
         std::lock_guard<std::mutex> lock(lock_);
         step_number lastStep = timeSamples_.rbegin()->first;
@@ -160,11 +160,11 @@ public:
             firstStep = firstEntry->first;
         }
 
-        static step_number result[2] = {firstStep, lastStep};
-        return result;
+        steps[0] = firstStep;
+        steps[1] = lastStep;
     }
 
-    step_number* get_step_numbers(double duration)
+    void get_step_numbers(double duration, gsl::span<step_number> steps)
     {
         std::lock_guard<std::mutex> lock(lock_);
         auto lastEntry = timeSamples_.rbegin();
@@ -180,8 +180,8 @@ public:
             firstStep = firstIt->first;
         }
 
-        static step_number result[2] = {firstStep, lastStep};
-        return result;
+        steps[0] = firstStep;
+        steps[1] = lastStep;
     }
 
 private:
@@ -277,19 +277,21 @@ std::size_t membuffer_observer::get_time_samples(
     return slaveObservers_.at(sim)->get_time_samples(fromStep, values, steps);
 }
 
-step_number* membuffer_observer::get_step_numbers(
+void membuffer_observer::get_step_numbers(
     simulator_index sim,
-    double duration)
+    double duration,
+    gsl::span<step_number> steps)
 {
-    return slaveObservers_.at(sim)->get_step_numbers(duration);
+    slaveObservers_.at(sim)->get_step_numbers(duration, steps);
 }
 
-step_number* membuffer_observer::get_step_numbers(
+void membuffer_observer::get_step_numbers(
     simulator_index sim,
     double tBegin,
-    double tEnd)
+    double tEnd,
+    gsl::span<step_number> steps)
 {
-    return slaveObservers_.at(sim)->get_step_numbers(tBegin, tEnd);
+    slaveObservers_.at(sim)->get_step_numbers(tBegin, tEnd, steps);
 }
 
 membuffer_observer::~membuffer_observer() noexcept = default;

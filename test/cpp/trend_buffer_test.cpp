@@ -51,11 +51,13 @@ int main()
         auto simResult = execution.simulate_until(midTime);
         REQUIRE(simResult.get());
 
-        cse::step_number* stepNumbers1 = observer->get_step_numbers(0, 0.5);
+        cse::step_number stepNumbers1[2];
+        observer->get_step_numbers(0, 0.5, gsl::make_span(stepNumbers1, 2));
         REQUIRE(stepNumbers1[0] == 5);
         REQUIRE(stepNumbers1[1] == 10);
 
-        cse::step_number* stepNumbers2 = observer->get_step_numbers(0, 0.4, 0.9);
+        cse::step_number stepNumbers2[2];
+        observer->get_step_numbers(0, 0.4, 0.9, gsl::make_span(stepNumbers2, 2));
         REQUIRE(stepNumbers2[0] == 4);
         REQUIRE(stepNumbers2[1] == 9);
 

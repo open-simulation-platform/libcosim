@@ -414,16 +414,18 @@ size_t cse_observer_slave_get_time_samples(
         double values[],
         cse_step_number steps[]);
 
-cse_step_number* cse_observer_get_step_numbers_for_duration(
+int cse_observer_get_step_numbers_for_duration(
         cse_observer* observer,
         cse_slave_index slave,
-        double duration);
+        double duration,
+        cse_step_number steps[]);
 
-cse_step_number* cse_observer_get_step_numbers(
+int cse_observer_get_step_numbers(
         cse_observer* observer,
         cse_slave_index slave,
         double begin,
-        double end);
+        double end,
+        cse_step_number steps[]);
 
 /**
  *  \brief

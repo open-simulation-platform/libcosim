@@ -122,8 +122,8 @@ int main()
         }
     }
 
-    long long* nums;
-    nums = cse_observer_get_step_numbers_for_duration(observer, 0, 0.5);
+    cse_step_number nums[2];
+    cse_observer_get_step_numbers_for_duration(observer, 0, 0.5, nums);
     if (nums[0] != 5) {
         fprintf(stderr, "Expected step number %i, got %lli\n", 5, nums[0]);
         cse_execution_destroy(execution);
@@ -135,7 +135,7 @@ int main()
         return 1;
     }
 
-    nums = cse_observer_get_step_numbers(observer, 0, 0.3, 0.6);
+    cse_observer_get_step_numbers(observer, 0, 0.3, 0.6, nums);
     if (nums[0] != 3) {
         fprintf(stderr, "Expected step number %i, got %lli\n", 3, nums[0]);
         cse_execution_destroy(execution);
