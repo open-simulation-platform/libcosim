@@ -113,7 +113,7 @@ class file_observer : public observer
 public:
     file_observer(boost::filesystem::path logDir, bool binary, size_t limit);
 
-    void simulator_added(simulator_index, observable*) override;
+    void simulator_added(simulator_index, observable*, time_point) override;
 
     void simulator_removed(simulator_index) override;
 
