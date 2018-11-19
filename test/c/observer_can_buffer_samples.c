@@ -77,7 +77,7 @@ int main()
         cse_execution_step(execution, 1);
     }
 
-    long fromStep = 0;
+    long long fromStep = 0;
     const size_t nSamples = 10;
     double realSamples[10];
     int intSamples[10];
@@ -121,6 +121,60 @@ int main()
             return 1;
         }
     }
+
+    long long* nums;
+    nums = cse_observer_get_step_numbers_for_duration(observer, 0, 0.5);
+    if (nums[0] != 5) {
+        fprintf(stderr, "Expected step number %i, got %lli\n", 5, nums[0]);
+        cse_execution_destroy(execution);
+        return 1;
+    }
+    if (nums[1] != 10) {
+        fprintf(stderr, "Expected step number %i, got %lli\n", 10, nums[1]);
+        cse_execution_destroy(execution);
+        return 1;
+    }
+
+    nums = cse_observer_get_step_numbers(observer, 0, 0.3, 0.6);
+    if (nums[0] != 3) {
+        fprintf(stderr, "Expected step number %i, got %lli\n", 3, nums[0]);
+        cse_execution_destroy(execution);
+        return 1;
+    }
+    if (nums[1] != 6) {
+        fprintf(stderr, "Expected step number %i, got %lli\n", 6, nums[1]);
+        cse_execution_destroy(execution);
+        return 1;
+    }
+
+    double expectedTime[4] = {0.3, 0.4, 0.5, 0.6};
+    long long expectedTimeSteps[4] = {3, 4, 5, 6};
+
+    const size_t numSamples = (size_t)(nums[1] - nums[0] + 1);
+    double timeSamples[4];
+    long long timeSteps[4];
+
+    size_t readTimeSamples = cse_observer_slave_get_time_samples(observer, 0, nums[0], numSamples, timeSamples, timeSteps);
+    if (readTimeSamples != numSamples) {
+        print_last_error();
+        fprintf(stderr, "Expected to read 4 time samples, got %zu\n", readTimeSamples);
+        cse_execution_destroy(execution);
+        return 1;
+    }
+
+    for (int i = 0; i < 4; i++) {
+        if (fabs(expectedTime[i] - timeSamples[i]) > 0.000001) {
+            fprintf(stderr, "Sample nr %d expected time sample %lf, got %lf\n", i, expectedTime[i], timeSamples[i]);
+            cse_execution_destroy(execution);
+            return 1;
+        }
+        if (expectedTimeSteps[i] != timeSteps[i]) {
+            fprintf(stderr, "Sample nr %d expected step %lli, got %lli\n", i, expectedTimeSteps[i], timeSteps[i]);
+            cse_execution_destroy(execution);
+            return 1;
+        }
+    }
+
 
     cse_execution_destroy(execution);
     return 0;

@@ -394,10 +394,10 @@ size_t cse_observer_slave_get_real_samples(
     cse_observer* observer,
     cse_slave_index slave,
     cse_variable_index variableIndex,
-    long fromStep,
+    cse_step_number fromStep,
     size_t nSamples,
     double values[],
-    long long steps[])
+    cse_step_number steps[])
 {
     return observer->cpp_observer->get_real_samples(slave, variableIndex, fromStep, gsl::make_span(values, nSamples), gsl::make_span(steps, nSamples));
 }
@@ -406,12 +406,40 @@ size_t cse_observer_slave_get_integer_samples(
     cse_observer* observer,
     cse_slave_index slave,
     cse_variable_index variableIndex,
-    long fromStep,
+    cse_step_number fromStep,
     size_t nSamples,
     int values[],
-    long long steps[])
+    cse_step_number steps[])
 {
     return observer->cpp_observer->get_integer_samples(slave, variableIndex, fromStep, gsl::make_span(values, nSamples), gsl::make_span(steps, nSamples));
+}
+
+size_t cse_observer_slave_get_time_samples(
+    cse_observer* observer,
+    cse_slave_index slave,
+    cse_step_number fromStep,
+    size_t nSamples,
+    double values[],
+    cse_step_number steps[])
+{
+    return observer->cpp_observer->get_time_samples(slave, fromStep, gsl::make_span(values, nSamples), gsl::make_span(steps, nSamples));
+}
+
+cse_step_number* cse_observer_get_step_numbers_for_duration(
+    cse_observer* observer,
+    cse_slave_index slave,
+    double duration)
+{
+    return observer->cpp_observer->get_step_numbers(slave, duration);
+}
+
+cse_step_number* cse_observer_get_step_numbers(
+    cse_observer* observer,
+    cse_slave_index slave,
+    double begin,
+    double end)
+{
+    return observer->cpp_observer->get_step_numbers(slave, begin, end);
 }
 
 cse_observer* cse_membuffer_observer_create()

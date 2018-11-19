@@ -32,6 +32,9 @@ typedef int cse_slave_index;
 /// Observer index.
 typedef int cse_observer_index;
 
+/// Step number
+typedef long long cse_step_number;
+
 /// Error codes.
 typedef enum
 {
@@ -335,10 +338,10 @@ size_t cse_observer_slave_get_real_samples(
     cse_observer* observer,
     cse_slave_index slave,
     cse_variable_index variableIndex,
-    long fromStep,
+    cse_step_number fromStep,
     size_t nSamples,
     double values[],
-    long long steps[]);
+    cse_step_number steps[]);
 
 /**
  *  \brief
@@ -398,10 +401,29 @@ size_t cse_observer_slave_get_integer_samples(
     cse_observer* observer,
     cse_slave_index slave,
     cse_variable_index variableIndex,
-    long fromStep,
+    cse_step_number fromStep,
     size_t nSamples,
     int values[],
-    long long steps[]);
+    cse_step_number steps[]);
+
+size_t cse_observer_slave_get_time_samples(
+        cse_observer* observer,
+        cse_slave_index slave,
+        cse_step_number fromStep,
+        size_t nSamples,
+        double values[],
+        cse_step_number steps[]);
+
+cse_step_number* cse_observer_get_step_numbers_for_duration(
+        cse_observer* observer,
+        cse_slave_index slave,
+        double duration);
+
+cse_step_number* cse_observer_get_step_numbers(
+        cse_observer* observer,
+        cse_slave_index slave,
+        double begin,
+        double end);
 
 /**
  *  \brief
