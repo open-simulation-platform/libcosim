@@ -81,9 +81,10 @@ int main()
     const size_t nSamples = 10;
     double realSamples[10];
     int intSamples[10];
+    double times[10];
     long long steps[10];
 
-    size_t readRealSamples = cse_observer_slave_get_real_samples(observer, slave_index, index, fromStep, nSamples, realSamples, steps);
+    size_t readRealSamples = cse_observer_slave_get_real_samples(observer, slave_index, index, fromStep, nSamples, realSamples, steps, times);
     if (readRealSamples != nSamples) {
         print_last_error();
         fprintf(stderr, "Expected to read 10 real samples, got %zu\n", readRealSamples);
@@ -91,7 +92,7 @@ int main()
         return 1;
     }
 
-    size_t readIntSamples = cse_observer_slave_get_integer_samples(observer, slave_index, index, fromStep, nSamples, intSamples, steps);
+    size_t readIntSamples = cse_observer_slave_get_integer_samples(observer, slave_index, index, fromStep, nSamples, intSamples, steps, times);
     if (readIntSamples != nSamples) {
         print_last_error();
         fprintf(stderr, "Expected to read 10 int samples, got %zu\n", readIntSamples);
@@ -102,6 +103,7 @@ int main()
     long expectedSteps[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
     double expectedRealSamples[10] = {0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9};
     int expectedIntSamples[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+    double expectedTimeSamples[10] = {0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9};
 
 
     for (int i = 0; i < 10; i++) {
@@ -117,6 +119,11 @@ int main()
         }
         if (expectedSteps[i] != steps[i]) {
             fprintf(stderr, "Sample nr %d expected step %li, got %lli\n", i, expectedSteps[i], steps[i]);
+            cse_execution_destroy(execution);
+            return 1;
+        }
+        if (fabs(expectedTimeSamples[i] - times[i]) > 0.000001) {
+            fprintf(stderr, "Sample nr %d expected time sample %lf, got %lf\n", i, expectedTimeSamples[i], times[i]);
             cse_execution_destroy(execution);
             return 1;
         }

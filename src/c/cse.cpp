@@ -397,9 +397,10 @@ size_t cse_observer_slave_get_real_samples(
     cse_step_number fromStep,
     size_t nSamples,
     double values[],
-    cse_step_number steps[])
+    cse_step_number steps[],
+    double times[])
 {
-    return observer->cpp_observer->get_real_samples(slave, variableIndex, fromStep, gsl::make_span(values, nSamples), gsl::make_span(steps, nSamples));
+    return observer->cpp_observer->get_real_samples(slave, variableIndex, fromStep, gsl::make_span(values, nSamples), gsl::make_span(steps, nSamples), gsl::make_span(times, nSamples));
 }
 
 size_t cse_observer_slave_get_integer_samples(
@@ -409,9 +410,10 @@ size_t cse_observer_slave_get_integer_samples(
     cse_step_number fromStep,
     size_t nSamples,
     int values[],
-    cse_step_number steps[])
+    cse_step_number steps[],
+    double times[])
 {
-    return observer->cpp_observer->get_integer_samples(slave, variableIndex, fromStep, gsl::make_span(values, nSamples), gsl::make_span(steps, nSamples));
+    return observer->cpp_observer->get_integer_samples(slave, variableIndex, fromStep, gsl::make_span(values, nSamples), gsl::make_span(steps, nSamples),gsl::make_span(times, nSamples));
 }
 
 size_t cse_observer_slave_get_time_samples(

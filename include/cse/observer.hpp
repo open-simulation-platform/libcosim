@@ -198,7 +198,8 @@ public:
         variable_index variableIndex,
         step_number fromStep,
         gsl::span<double> values,
-        gsl::span<step_number> steps);
+        gsl::span<step_number> steps,
+        gsl::span<double> times);
 
     /**
      * Retrieves a series of observed values and step numbers for an integer variable.
@@ -217,7 +218,8 @@ public:
         variable_index variableIndex,
         step_number fromStep,
         gsl::span<int> values,
-        gsl::span<step_number> steps);
+        gsl::span<step_number> steps,
+        gsl::span<double> times);
 
     /**
      * Retrieves a series of observed simulation times with corresponding step numbers.

@@ -341,7 +341,8 @@ size_t cse_observer_slave_get_real_samples(
     cse_step_number fromStep,
     size_t nSamples,
     double values[],
-    cse_step_number steps[]);
+    cse_step_number steps[],
+    double times[]);
 
 /**
  *  \brief
@@ -404,7 +405,8 @@ size_t cse_observer_slave_get_integer_samples(
     cse_step_number fromStep,
     size_t nSamples,
     int values[],
-    cse_step_number steps[]);
+    cse_step_number steps[],
+    double times[]);
 
 size_t cse_observer_slave_get_time_samples(
         cse_observer* observer,

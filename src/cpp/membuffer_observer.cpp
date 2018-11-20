@@ -19,7 +19,6 @@ void get(
     const std::map<step_number, std::vector<T>>& samples,
     gsl::span<T> values)
 {
-    assert(values.size() == variables.size());
     if (samples.empty()) {
         throw std::out_of_range("no samples available");
     }
@@ -38,11 +37,12 @@ size_t get_samples(
     variable_index variableIndex,
     const std::vector<cse::variable_index>& indices,
     const std::map<step_number, std::vector<T>>& samples,
+    std::map<step_number, double> timeSamples,
     step_number fromStep,
     gsl::span<T> values,
-    gsl::span<step_number> steps)
+    gsl::span<step_number> steps,
+    gsl::span<double> times)
 {
-    assert(values.size() == steps.size());
     size_t samplesRead = 0;
     const auto variableIndexIt = std::find(indices.begin(), indices.end(), variableIndex);
     if (variableIndexIt != indices.end()) {
@@ -52,6 +52,7 @@ size_t get_samples(
             if (sampleIt != samples.end()) {
                 steps[samplesRead] = sampleIt->first;
                 values[samplesRead] = sampleIt->second[valueIndex];
+                times[samplesRead] = timeSamples[sampleIt->first];
                 sampleIt++;
             } else {
                 break;
@@ -110,16 +111,16 @@ public:
         get<int>(variables, intIndexes_, intSamples_, values);
     }
 
-    size_t get_real_samples(variable_index variableIndex, step_number fromStep, gsl::span<double> values, gsl::span<step_number> steps)
+    size_t get_real_samples(variable_index variableIndex, step_number fromStep, gsl::span<double> values, gsl::span<step_number> steps, gsl::span<double> times)
     {
         std::lock_guard<std::mutex> lock(lock_);
-        return get_samples<double>(variableIndex, realIndexes_, realSamples_, fromStep, values, steps);
+        return get_samples<double>(variableIndex, realIndexes_, realSamples_, timeSamples_, fromStep, values, steps, times);
     }
 
-    size_t get_int_samples(variable_index variableIndex, step_number fromStep, gsl::span<int> values, gsl::span<step_number> steps)
+    size_t get_int_samples(variable_index variableIndex, step_number fromStep, gsl::span<int> values, gsl::span<step_number> steps, gsl::span<double> times)
     {
         std::lock_guard<std::mutex> lock(lock_);
-        return get_samples<int>(variableIndex, intIndexes_, intSamples_, fromStep, values, steps);
+        return get_samples<int>(variableIndex, intIndexes_, intSamples_, timeSamples_, fromStep, values, steps, times);
     }
 
     size_t get_time_samples(step_number fromStep, gsl::span<double> values, gsl::span<step_number> steps)
@@ -250,10 +251,12 @@ std::size_t membuffer_observer::get_real_samples(
     variable_index variableIndex,
     step_number fromStep,
     gsl::span<double> values,
-    gsl::span<step_number> steps)
+    gsl::span<step_number> steps,
+    gsl::span<double> times)
 {
     CSE_INPUT_CHECK(values.size() == steps.size());
-    return slaveObservers_.at(sim)->get_real_samples(variableIndex, fromStep, values, steps);
+    CSE_INPUT_CHECK(times.size() == values.size());
+    return slaveObservers_.at(sim)->get_real_samples(variableIndex, fromStep, values, steps, times);
 }
 
 std::size_t membuffer_observer::get_integer_samples(
@@ -261,10 +264,12 @@ std::size_t membuffer_observer::get_integer_samples(
     variable_index variableIndex,
     step_number fromStep,
     gsl::span<int> values,
-    gsl::span<step_number> steps)
+    gsl::span<step_number> steps,
+    gsl::span<double> times)
 {
     CSE_INPUT_CHECK(values.size() == steps.size());
-    return slaveObservers_.at(sim)->get_int_samples(variableIndex, fromStep, values, steps);
+    CSE_INPUT_CHECK(times.size() == values.size());
+    return slaveObservers_.at(sim)->get_int_samples(variableIndex, fromStep, values, steps, times);
 }
 
 std::size_t membuffer_observer::get_time_samples(
