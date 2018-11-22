@@ -111,12 +111,5 @@ size_t slave_value_provider::get_samples(
     return samplesRead;
 }
 
-std::map<step_number, std::vector<double>> realSamples_;
-std::map<step_number, std::vector<int>> intSamples_;
-std::vector<variable_index> realIndexes_;
-std::vector<variable_index> intIndexes_;
-observable* observable_;
-std::mutex lock_;
-
 
 } // namespace cse
