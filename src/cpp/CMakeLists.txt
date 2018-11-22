@@ -28,6 +28,7 @@ set(privateHeaders
     "fmi/windows.hpp"
     "log/logger.hpp"
     "slave_simulator.hpp"
+    "slave_value_provider.hpp"
     "utility/filesystem.hpp"
     "utility/uuid.hpp"
     "utility/zip.hpp"
@@ -45,6 +46,7 @@ set(sources
     "fmi_v2_fmu.cpp"
     "membuffer_observer.cpp"
     "file_observer.cpp"
+    "slave_value_provider.cpp"
 
     "error.cpp"
     "fmi_glue.cpp"
