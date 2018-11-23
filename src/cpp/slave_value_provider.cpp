@@ -6,10 +6,13 @@
 
 namespace cse
 {
+
 slave_value_provider::slave_value_provider(observable* observable)
+    : observable_(observable)
 {
-    for (const auto& vd : observable->model_description().variables) {
-        observable->expose_for_getting(vd.type, vd.index);
+
+    for (const auto& vd : observable_->model_description().variables) {
+        observable_->expose_for_getting(vd.type, vd.index);
         if (vd.type == cse::variable_type::real) {
             realIndexes_.push_back(vd.index);
         }
@@ -21,10 +24,11 @@ slave_value_provider::slave_value_provider(observable* observable)
     observe(0);
 }
 
-slave_value_provider::~slave_value_provider() {};
+slave_value_provider::~slave_value_provider(){};
 
 void slave_value_provider::observe(step_number timeStep)
 {
+
     std::lock_guard<std::mutex> lock(lock_);
     realSamples_[timeStep].reserve(realIndexes_.size());
     intSamples_[timeStep].reserve(intIndexes_.size());

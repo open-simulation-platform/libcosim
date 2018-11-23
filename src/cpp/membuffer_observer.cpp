@@ -14,7 +14,6 @@ membuffer_observer::membuffer_observer()
 
 void membuffer_observer::simulator_added(simulator_index index, observable* simulator)
 {
-    std::cout << "Add simulator " << index;
     valueProviders_[index] = std::make_unique<slave_value_provider>(simulator);
 }
 

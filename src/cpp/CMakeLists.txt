@@ -18,6 +18,7 @@ set(publicHeaders
     "log.hpp"
     "model.hpp"
     "observer.hpp"
+    "slave_value_provider.hpp"
     "slave.hpp"
     "timer.hpp"
 )
@@ -28,7 +29,6 @@ set(privateHeaders
     "fmi/windows.hpp"
     "log/logger.hpp"
     "slave_simulator.hpp"
-    "slave_value_provider.hpp"
     "utility/filesystem.hpp"
     "utility/uuid.hpp"
     "utility/zip.hpp"
