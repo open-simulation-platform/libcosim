@@ -131,8 +131,8 @@ public:
     ~file_observer();
 
 private:
-    class single_slave_observer;
-    std::unordered_map<simulator_index, std::unique_ptr<single_slave_observer>> slaveObservers_;
+    class slave_value_writer;
+    std::unordered_map<simulator_index, std::unique_ptr<slave_value_writer>> valueWriters_;
     boost::filesystem::path logDir_;
     bool binary_;
     size_t limit_;
