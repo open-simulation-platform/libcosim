@@ -18,7 +18,6 @@ set(publicHeaders
     "log.hpp"
     "model.hpp"
     "observer.hpp"
-    "slave_value_provider.hpp"
     "slave.hpp"
     "timer.hpp"
 )
@@ -30,6 +29,7 @@ set(privateHeaders
     "log/logger.hpp"
     "slave_simulator.hpp"
     "utility/filesystem.hpp"
+    "slave_value_provider.hpp"
     "utility/uuid.hpp"
     "utility/zip.hpp"
 )

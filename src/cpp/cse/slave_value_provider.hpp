@@ -1,7 +1,7 @@
 #ifndef CSECORE_SLAVE_VALUE_PROVIDER_HPP
 #define CSECORE_SLAVE_VALUE_PROVIDER_HPP
 
-#include <cse/observable.hpp>
+#include <cse/observer.hpp>
 #include <cse/execution.hpp>
 #include <cse/model.hpp>
 

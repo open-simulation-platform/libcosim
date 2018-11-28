@@ -3,6 +3,7 @@
 #include <map>
 #include <mutex>
 #include <cse/error.hpp>
+#include <cse/slave_value_provider.hpp>
 
 
 namespace cse
