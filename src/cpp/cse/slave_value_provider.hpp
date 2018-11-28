@@ -13,7 +13,7 @@ class slave_value_provider
 
 public:
     slave_value_provider(observable* obs);
-    ~slave_value_provider();
+    ~slave_value_provider() noexcept;
     void observe(step_number timeStep);
     void get_real(gsl::span<const variable_index> variables, gsl::span<double> values);
     void get_int(gsl::span<const variable_index> variables, gsl::span<int> values);

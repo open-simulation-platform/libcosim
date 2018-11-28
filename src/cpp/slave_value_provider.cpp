@@ -24,7 +24,7 @@ slave_value_provider::slave_value_provider(observable* observable)
     observe(0);
 }
 
-slave_value_provider::~slave_value_provider(){};
+slave_value_provider::~slave_value_provider() noexcept = default;
 
 void slave_value_provider::observe(step_number timeStep)
 {
