@@ -47,8 +47,11 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang
     add_compile_options("-Wall" "-Wextra" "-Wpedantic" "-Werror")
     add_compile_options("-Wno-parentheses")
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    add_compile_options("/W4" "/WX")
+    add_compile_options("/W4")
     add_compile_options("/wd4996")
+    if(NOT CSECORE_USING_VCPKG)
+        add_compile_options("/WX")
+    endif()
     if(CSECORE_USING_CONAN)
         # C4251: 'identifier' : class 'type' needs to have dll-interface to be
         #        used by clients of class 'type2'
