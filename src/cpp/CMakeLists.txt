@@ -94,7 +94,10 @@ target_link_libraries(csecorecpp
         Threads::Threads
     )
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    target_link_libraries(csecorecpp INTERFACE "atomic" BZip2::BZip2 OpenSSL::Crypto)
+    target_link_libraries(csecorecpp INTERFACE "atomic" BZip2::BZip2)
+endif()
+if (CSECORE_USING_VCPKG)
+    target_link_libraries(csecorecpp PRIVATE bcrypt)
 endif()
 if(WIN32 AND NOT BUILD_SHARED_LIBS)
     set_target_properties(csecorecpp PROPERTIES OUTPUT_NAME "libcsecorecpp")
