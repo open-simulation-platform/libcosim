@@ -27,11 +27,16 @@ public:
 private:
     boost::filesystem::path xmlPath_;
     boost::property_tree::ptree pt_;
-    std::string name_;
-    std::string description_;
 
-    cse::algorithm *algo_;
-    std::vector<cse::fmi::fmu> fmus_;
+    struct simulationInformation_ {
+        std::string fixedStepMasterDescription;
+        std::string fixedStepMasterStepSize;
+    };
+
+    struct systemDescription_ {
+        std::string systemName;
+        std::string systemVersion;
+    };
 
 };
 

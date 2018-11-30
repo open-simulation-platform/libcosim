@@ -9,7 +9,7 @@ set(publicHeaders
     "event_loop.hpp"
     "exception.hpp"
     "execution.hpp"
-    "ssp_parser.cpp"
+    "ssp_parser.hpp"
     "fmi/fmu.hpp"
     "fmi/importer.hpp"
     "fmi/v1/fmu.hpp"

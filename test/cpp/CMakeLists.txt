@@ -2,6 +2,7 @@ set(tests
     "async_slave_mockup_test"
     "fixed_step_algorithm_test"
     "hello_world_test"
+    "ssp_parser_test"
 )
 set(unittests
     "fmi_v1_fmu_unittest"
