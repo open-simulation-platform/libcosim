@@ -10,6 +10,7 @@ option(CSECORE_BUILD_TESTS "Build test suite" ON)
 option(CSECORE_BUILD_APIDOC "Build API documentation" ON)
 option(CSECORE_BUILD_PRIVATE_APIDOC "Build private API documentation" OFF)
 option(CSECORE_USING_CONAN "Whether Conan is used for package management" OFF)
+option(CSECORE_USING_VCPKG "Whether vcpkg is used for package management" OFF)
 
 # ==============================================================================
 # Global internal configuration
@@ -45,6 +46,10 @@ endforeach()
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     add_compile_options("-Wall" "-Wextra" "-Wpedantic" "-Werror")
     add_compile_options("-Wno-parentheses")
+    if(CSECORE_USING_VCPKG)
+        find_package(BZip2 REQUIRED)
+        find_package(OpenSSL COMPONENTS Crypto REQUIRED)
+    endif()
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     add_compile_options("/W4" "/WX")
     add_compile_options("/wd4996")
