@@ -24,20 +24,52 @@ public:
     ssp_parser(boost::filesystem::path xmlPath);
     ~ssp_parser() noexcept;
 
+    struct SimulationInformation
+    {
+        std::string description;
+        std::string stepSize;
+    };
+
+    struct SystemDescription
+    {
+        std::string name;
+        std::string version;
+        std::string systemName;
+        std::string systemDescription;
+    };
+
+    struct Connector
+    {
+        std::string name;
+        std::string kind;
+        std::string type;
+    };
+
+    struct Component
+    {
+        std::string name;
+        std::string source;
+        std::vector<Connector> connectors;
+    };
+
+    struct Connection
+    {
+        std::string startElement;
+        std::string startConnector;
+        std::string endElement;
+        std::string endConnector;
+    };
+
 private:
     boost::filesystem::path xmlPath_;
     boost::property_tree::ptree pt_;
 
-    struct simulationInformation_ {
-        std::string fixedStepMasterDescription;
-        std::string fixedStepMasterStepSize;
-    };
+    SystemDescription systemDescription_;
+    SimulationInformation simulationInformation_;
+    std::vector<Component> elements_;
+    std::vector<Connection> connections_;
 
-    struct systemDescription_ {
-        std::string systemName;
-        std::string systemVersion;
-    };
-
+    std::string get_attribute(boost::property_tree::ptree tree, std::string key);
 };
 
 } // namespace cse
