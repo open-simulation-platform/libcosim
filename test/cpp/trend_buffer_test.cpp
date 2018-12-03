@@ -52,12 +52,12 @@ int main()
         REQUIRE(simResult.get());
 
         cse::step_number stepNumbers1[2];
-        observer->get_step_numbers(0, 0.5, gsl::make_span(stepNumbers1, 2));
+        observer->get_step_numbers(0, cse::to_duration(0.5), gsl::make_span(stepNumbers1, 2));
         REQUIRE(stepNumbers1[0] == 5);
         REQUIRE(stepNumbers1[1] == 10);
 
         cse::step_number stepNumbers2[2];
-        observer->get_step_numbers(0, 0.4, 0.9, gsl::make_span(stepNumbers2, 2));
+        observer->get_step_numbers(0, cse::to_time_point(0.4), cse::to_time_point(0.9), gsl::make_span(stepNumbers2, 2));
         REQUIRE(stepNumbers2[0] == 4);
         REQUIRE(stepNumbers2[1] == 9);
 

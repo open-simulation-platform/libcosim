@@ -37,11 +37,11 @@ size_t get_samples(
     variable_index variableIndex,
     const std::vector<cse::variable_index>& indices,
     const std::map<step_number, std::vector<T>>& samples,
-    std::map<step_number, double> timeSamples,
+    std::map<step_number, time_point> timeSamples,
     step_number fromStep,
     gsl::span<T> values,
     gsl::span<step_number> steps,
-    gsl::span<double> times)
+    gsl::span<time_point> times)
 {
     size_t samplesRead = 0;
     const auto variableIndexIt = std::find(indices.begin(), indices.end(), variableIndex);
@@ -96,7 +96,7 @@ public:
         for (const auto idx : intIndexes_) {
             intSamples_[timeStep].push_back(observable_->get_integer(idx));
         }
-        timeSamples_[timeStep] = to_double_time_point(currentTime);
+        timeSamples_[timeStep] = currentTime;
     }
 
     void get_real(gsl::span<const variable_index> variables, gsl::span<double> values)
@@ -111,19 +111,19 @@ public:
         get<int>(variables, intIndexes_, intSamples_, values);
     }
 
-    size_t get_real_samples(variable_index variableIndex, step_number fromStep, gsl::span<double> values, gsl::span<step_number> steps, gsl::span<double> times)
+    size_t get_real_samples(variable_index variableIndex, step_number fromStep, gsl::span<double> values, gsl::span<step_number> steps, gsl::span<time_point> times)
     {
         std::lock_guard<std::mutex> lock(lock_);
         return get_samples<double>(variableIndex, realIndexes_, realSamples_, timeSamples_, fromStep, values, steps, times);
     }
 
-    size_t get_int_samples(variable_index variableIndex, step_number fromStep, gsl::span<int> values, gsl::span<step_number> steps, gsl::span<double> times)
+    size_t get_int_samples(variable_index variableIndex, step_number fromStep, gsl::span<int> values, gsl::span<step_number> steps, gsl::span<time_point> times)
     {
         std::lock_guard<std::mutex> lock(lock_);
         return get_samples<int>(variableIndex, intIndexes_, intSamples_, timeSamples_, fromStep, values, steps, times);
     }
 
-    void get_step_numbers(double tBegin, double tEnd, gsl::span<step_number> steps)
+    void get_step_numbers(time_point tBegin, time_point tEnd, gsl::span<step_number> steps)
     {
         std::lock_guard<std::mutex> lock(lock_);
         step_number lastStep = timeSamples_.rbegin()->first;
@@ -148,14 +148,14 @@ public:
         steps[1] = lastStep;
     }
 
-    void get_step_numbers(double duration, gsl::span<step_number> steps)
+    void get_step_numbers(duration duration, gsl::span<step_number> steps)
     {
         std::lock_guard<std::mutex> lock(lock_);
         auto lastEntry = timeSamples_.rbegin();
         step_number lastStep = lastEntry->first;
 
         step_number firstStep = timeSamples_.begin()->first;
-        const double tBegin = lastEntry->second - duration;
+        const time_point tBegin = lastEntry->second - duration;
         auto firstIt = std::find_if(
             timeSamples_.rbegin(),
             timeSamples_.rend(),
@@ -171,7 +171,7 @@ public:
 private:
     std::map<step_number, std::vector<double>> realSamples_;
     std::map<step_number, std::vector<int>> intSamples_;
-    std::map<step_number, double> timeSamples_;
+    std::map<step_number, time_point> timeSamples_;
     std::vector<variable_index> realIndexes_;
     std::vector<variable_index> intIndexes_;
     observable* observable_;
@@ -235,7 +235,7 @@ std::size_t membuffer_observer::get_real_samples(
     step_number fromStep,
     gsl::span<double> values,
     gsl::span<step_number> steps,
-    gsl::span<double> times)
+    gsl::span<time_point> times)
 {
     CSE_INPUT_CHECK(values.size() == steps.size());
     CSE_INPUT_CHECK(times.size() == values.size());
@@ -248,7 +248,7 @@ std::size_t membuffer_observer::get_integer_samples(
     step_number fromStep,
     gsl::span<int> values,
     gsl::span<step_number> steps,
-    gsl::span<double> times)
+    gsl::span<time_point> times)
 {
     CSE_INPUT_CHECK(values.size() == steps.size());
     CSE_INPUT_CHECK(times.size() == values.size());
@@ -257,7 +257,7 @@ std::size_t membuffer_observer::get_integer_samples(
 
 void membuffer_observer::get_step_numbers(
     simulator_index sim,
-    double duration,
+    duration duration,
     gsl::span<step_number> steps)
 {
     slaveObservers_.at(sim)->get_step_numbers(duration, steps);
@@ -265,8 +265,8 @@ void membuffer_observer::get_step_numbers(
 
 void membuffer_observer::get_step_numbers(
     simulator_index sim,
-    double tBegin,
-    double tEnd,
+    time_point tBegin,
+    time_point tEnd,
     gsl::span<step_number> steps)
 {
     slaveObservers_.at(sim)->get_step_numbers(tBegin, tEnd, steps);

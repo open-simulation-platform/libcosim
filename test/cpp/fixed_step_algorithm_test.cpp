@@ -82,11 +82,10 @@ int main()
         const int numSamples = 11;
         double realValues[numSamples];
         cse::step_number steps[numSamples];
-        double timeValues[numSamples];
+        cse::time_point timeValues[numSamples];
         observer->get_real_samples(9, realOutIndex, 0, gsl::make_span(realValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(timeValues, numSamples));
         cse::step_number lastStep = -1;
         double lastValue = -1.0;
-        double doubleStepSize = cse::to_double_duration(stepSize, startTime);
         for (int k = 0; k < numSamples; k++) {
             REQUIRE(steps[k] > lastStep);
             lastStep = steps[k];
@@ -95,8 +94,8 @@ int main()
             lastValue = realValues[k];
 
             if (k > 0) {
-                double diff = timeValues[k] - timeValues[k - 1];
-                REQUIRE(std::fabs(diff - doubleStepSize) < 1.0e-9);
+                cse::duration diff = timeValues[k] - timeValues[k - 1];
+                REQUIRE(diff == stepSize);
             }
         }
 

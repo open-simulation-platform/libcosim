@@ -400,7 +400,12 @@ size_t cse_observer_slave_get_real_samples(
     cse_step_number steps[],
     double times[])
 {
-    return observer->cpp_observer->get_real_samples(slave, variableIndex, fromStep, gsl::make_span(values, nSamples), gsl::make_span(steps, nSamples), gsl::make_span(times, nSamples));
+    std::vector<cse::time_point> timePoints(nSamples);
+    size_t samplesRead = observer->cpp_observer->get_real_samples(slave, variableIndex, fromStep, gsl::make_span(values, nSamples), gsl::make_span(steps, nSamples), timePoints);
+    for (int i = 0; i < samplesRead; ++i) {
+        times[i] = cse::to_double_time_point(timePoints[i]);
+    }
+    return samplesRead;
 }
 
 size_t cse_observer_slave_get_integer_samples(
@@ -413,7 +418,12 @@ size_t cse_observer_slave_get_integer_samples(
     cse_step_number steps[],
     double times[])
 {
-    return observer->cpp_observer->get_integer_samples(slave, variableIndex, fromStep, gsl::make_span(values, nSamples), gsl::make_span(steps, nSamples),gsl::make_span(times, nSamples));
+    std::vector<cse::time_point> timePoints(nSamples);
+    size_t samplesRead = observer->cpp_observer->get_integer_samples(slave, variableIndex, fromStep, gsl::make_span(values, nSamples), gsl::make_span(steps, nSamples), timePoints);
+    for (int i = 0; i < samplesRead; ++i) {
+        times[i] = cse::to_double_time_point(timePoints[i]);
+    }
+    return samplesRead;
 }
 
 int cse_observer_get_step_numbers_for_duration(
@@ -423,7 +433,7 @@ int cse_observer_get_step_numbers_for_duration(
     cse_step_number steps[])
 {
     try {
-        observer->cpp_observer->get_step_numbers(slave, duration, gsl::make_span(steps, 2));
+        observer->cpp_observer->get_step_numbers(slave, cse::to_duration(duration), gsl::make_span(steps, 2));
         return success;
     } catch (...) {
         handle_current_exception();
@@ -439,7 +449,7 @@ int cse_observer_get_step_numbers(
     cse_step_number steps[])
 {
     try {
-        observer->cpp_observer->get_step_numbers(slave, begin, end, gsl::make_span(steps, 2));
+        observer->cpp_observer->get_step_numbers(slave, cse::to_time_point(begin), cse::to_time_point(end), gsl::make_span(steps, 2));
         return success;
     } catch (...) {
         handle_current_exception();

@@ -200,7 +200,7 @@ public:
         step_number fromStep,
         gsl::span<double> values,
         gsl::span<step_number> steps,
-        gsl::span<double> times);
+        gsl::span<time_point> times);
 
     /**
      * Retrieves a series of observed values, step numbers and times for an integer variable.
@@ -221,7 +221,7 @@ public:
         step_number fromStep,
         gsl::span<int> values,
         gsl::span<step_number> steps,
-        gsl::span<double> times);
+        gsl::span<time_point> times);
 
     /**
      * Retrieves the step numbers for a range given by a duration.
@@ -235,7 +235,7 @@ public:
      */
     void get_step_numbers(
         simulator_index sim,
-        double duration,
+        duration duration,
         gsl::span<step_number> steps);
 
     /**
@@ -251,8 +251,8 @@ public:
      */
     void get_step_numbers(
         simulator_index sim,
-        double tBegin,
-        double tEnd,
+        time_point tBegin,
+        time_point tEnd,
         gsl::span<step_number> steps);
 
     ~membuffer_observer() noexcept;
