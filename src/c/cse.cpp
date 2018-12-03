@@ -402,7 +402,7 @@ size_t cse_observer_slave_get_real_samples(
 {
     std::vector<cse::time_point> timePoints(nSamples);
     size_t samplesRead = observer->cpp_observer->get_real_samples(slave, variableIndex, fromStep, gsl::make_span(values, nSamples), gsl::make_span(steps, nSamples), timePoints);
-    for (int i = 0; i < samplesRead; ++i) {
+    for (size_t i = 0; i < samplesRead; ++i) {
         times[i] = cse::to_double_time_point(timePoints[i]);
     }
     return samplesRead;
@@ -420,7 +420,7 @@ size_t cse_observer_slave_get_integer_samples(
 {
     std::vector<cse::time_point> timePoints(nSamples);
     size_t samplesRead = observer->cpp_observer->get_integer_samples(slave, variableIndex, fromStep, gsl::make_span(values, nSamples), gsl::make_span(steps, nSamples), timePoints);
-    for (int i = 0; i < samplesRead; ++i) {
+    for (size_t i = 0; i < samplesRead; ++i) {
         times[i] = cse::to_double_time_point(timePoints[i]);
     }
     return samplesRead;
