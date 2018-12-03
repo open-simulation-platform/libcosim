@@ -441,28 +441,6 @@ size_t cse_observer_slave_get_integer_samples(
 
 /**
  * \brief
- * Retrieves a series of observed simulation times with corresponding step numbers.
- *
- * \param [in] observer the observer
- * \param [in] slave index of the slave
- * \param [in] fromStep the step number to start from
- * \param [in] nSamples the number of samples to read
- * \param [out] values the series of observed time stamps
- * \param [out] steps the corresponding step numbers
- *
- * Returns the number of samples actually read, which may be smaller
- * than the sizes of `values` and `steps`.
- */
-size_t cse_observer_slave_get_time_samples(
-    cse_observer* observer,
-    cse_slave_index slave,
-    cse_step_number fromStep,
-    size_t nSamples,
-    double values[],
-    cse_step_number steps[]);
-
-/**
- * \brief
  * Retrieves the step numbers for a range given by a duration.
  *
  * Helper function which can be used in conjunction with `cse_observer_slave_get_xxx_samples()`

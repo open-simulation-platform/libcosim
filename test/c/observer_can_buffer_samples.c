@@ -154,34 +154,6 @@ int main()
         return 1;
     }
 
-    double expectedTime[4] = {0.3, 0.4, 0.5, 0.6};
-    long long expectedTimeSteps[4] = {3, 4, 5, 6};
-
-    const size_t numSamples = (size_t)(nums[1] - nums[0] + 1);
-    double timeSamples[4];
-    long long timeSteps[4];
-
-    size_t readTimeSamples = cse_observer_slave_get_time_samples(observer, 0, nums[0], numSamples, timeSamples, timeSteps);
-    if (readTimeSamples != numSamples) {
-        print_last_error();
-        fprintf(stderr, "Expected to read 4 time samples, got %zu\n", readTimeSamples);
-        cse_execution_destroy(execution);
-        return 1;
-    }
-
-    for (int i = 0; i < 4; i++) {
-        if (fabs(expectedTime[i] - timeSamples[i]) > 0.000001) {
-            fprintf(stderr, "Sample nr %d expected time sample %lf, got %lf\n", i, expectedTime[i], timeSamples[i]);
-            cse_execution_destroy(execution);
-            return 1;
-        }
-        if (expectedTimeSteps[i] != timeSteps[i]) {
-            fprintf(stderr, "Sample nr %d expected step %lli, got %lli\n", i, expectedTimeSteps[i], timeSteps[i]);
-            cse_execution_destroy(execution);
-            return 1;
-        }
-    }
-
 
     cse_execution_destroy(execution);
     return 0;

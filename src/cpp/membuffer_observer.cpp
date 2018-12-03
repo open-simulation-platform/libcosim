@@ -123,23 +123,6 @@ public:
         return get_samples<int>(variableIndex, intIndexes_, intSamples_, timeSamples_, fromStep, values, steps, times);
     }
 
-    size_t get_time_samples(step_number fromStep, gsl::span<double> values, gsl::span<step_number> steps)
-    {
-        std::lock_guard<std::mutex> lock(lock_);
-        size_t samplesRead = 0;
-        auto sampleIt = timeSamples_.find(fromStep);
-        for (samplesRead = 0; samplesRead < static_cast<std::size_t>(values.size()); samplesRead++) {
-            if (sampleIt != timeSamples_.end()) {
-                steps[samplesRead] = sampleIt->first;
-                values[samplesRead] = sampleIt->second;
-                sampleIt++;
-            } else {
-                break;
-            }
-        }
-        return samplesRead;
-    }
-
     void get_step_numbers(double tBegin, double tEnd, gsl::span<step_number> steps)
     {
         std::lock_guard<std::mutex> lock(lock_);
@@ -270,16 +253,6 @@ std::size_t membuffer_observer::get_integer_samples(
     CSE_INPUT_CHECK(values.size() == steps.size());
     CSE_INPUT_CHECK(times.size() == values.size());
     return slaveObservers_.at(sim)->get_int_samples(variableIndex, fromStep, values, steps, times);
-}
-
-std::size_t membuffer_observer::get_time_samples(
-    simulator_index sim,
-    step_number fromStep,
-    gsl::span<double> values,
-    gsl::span<step_number> steps)
-{
-    CSE_INPUT_CHECK(values.size() == steps.size());
-    return slaveObservers_.at(sim)->get_time_samples(fromStep, values, steps);
 }
 
 void membuffer_observer::get_step_numbers(

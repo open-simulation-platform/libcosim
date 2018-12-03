@@ -224,23 +224,6 @@ public:
         gsl::span<double> times);
 
     /**
-     * Retrieves a series of observed simulation times with corresponding step numbers.
-     *
-     * \param [in] sim index of the simulator
-     * \param [in] fromStep the step number to start from
-     * \param [out] values the series of observed time stamps
-     * \param [out] steps the corresponding step numbers
-     *
-     * Returns the number of samples actually read, which may be smaller
-     * than the sizes of `values` and `steps`.
-     */
-    std::size_t get_time_samples(
-        simulator_index sim,
-        step_number fromStep,
-        gsl::span<double> values,
-        gsl::span<step_number> steps);
-
-    /**
      * Retrieves the step numbers for a range given by a duration.
      *
      * Helper function which can be used in conjunction with `get_xxx_samples()`
