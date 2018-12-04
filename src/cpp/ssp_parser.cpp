@@ -30,14 +30,23 @@ ssp_parser::ssp_parser(boost::filesystem::path xmlPath)
     }
 
     for (const auto& component : tmpTree.get_child("ssd:Elements")) {
-        std::cout << get_attribute(component.second, "name");
-        /*for (const auto& connector : component.second.get_child("ssd:Connectors")) {
-            std::cout << get_attribute(connector.second, "name");
-        }*/
+        std::string name = get_attribute(component.second, "name");
+        std::string source = get_attribute(component.second, "source");
+
+        std::cout << name << " " << source << std::endl;
+        for (const auto& connector : component.second.get_child("ssd:Connectors")) {
+            std::cout << connector.first << std::endl;
+        }
     }
 
     for (const auto& connection : tmpTree.get_child("ssd:Connections")) {
-        std::cout << get_attribute(connection.second, "startElement");
+
+        std::string startElement = get_attribute(connection.second, "startElement");
+        std::string startConnector = get_attribute(connection.second, "startConnector");
+        std::string endElement = get_attribute(connection.second, "endElement");
+        std::string endConnector = get_attribute(connection.second, "endConnector");
+
+        std::cout << startElement << startConnector << endElement << endConnector << std::endl;
     }
 }
 
