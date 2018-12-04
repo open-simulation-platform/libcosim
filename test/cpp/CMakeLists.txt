@@ -12,6 +12,7 @@ set(unittests
     "utility_filesystem_unittest"
     "utility_uuid_unittest"
     "utility_zip_unittest"
+    "file_observer_logging_test"
 )
 
 include("AddTestExecutable")

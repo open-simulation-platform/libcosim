@@ -5,6 +5,7 @@
 #ifndef CSE_OBSERVER_HPP
 #define CSE_OBSERVER_HPP
 
+#include <fstream>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -12,6 +13,8 @@
 
 #include <cse/execution.hpp>
 #include <cse/model.hpp>
+
+#include <boost/filesystem/path.hpp>
 
 
 namespace cse
@@ -71,7 +74,6 @@ public:
     virtual ~observable() noexcept {}
 };
 
-
 /**
  *  An interface for observers.
  *
@@ -101,6 +103,37 @@ public:
         time_point currentTime) = 0;
 
     virtual ~observer() noexcept {}
+};
+
+/**
+ * An observer implementation, for saving observed variable values to file in the preferred format (csv or binary).
+ */
+class file_observer : public observer
+{
+public:
+    file_observer(boost::filesystem::path logDir, bool binary, size_t limit);
+
+    void simulator_added(simulator_index, observable*) override;
+
+    void simulator_removed(simulator_index) override;
+
+    void variables_connected(variable_id output, variable_id input) override;
+
+    void variable_disconnected(variable_id input) override;
+
+    void step_complete(
+        step_number lastStep,
+        duration lastStepSize,
+        time_point currentTime) override;
+
+    ~file_observer();
+
+private:
+    class single_slave_observer;
+    std::unordered_map<simulator_index, std::unique_ptr<single_slave_observer>> slaveObservers_;
+    boost::filesystem::path logDir_;
+    bool binary_;
+    size_t limit_;
 };
 
 /**

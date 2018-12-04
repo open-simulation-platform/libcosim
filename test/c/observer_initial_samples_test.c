@@ -59,13 +59,6 @@ int main()
         return 1;
     }
 
-    cse_slave_index observer_slave_index = cse_observer_add_slave(observer, slave);
-    if (observer_slave_index < 0) {
-        print_last_error();
-        cse_execution_destroy(execution);
-        return 1;
-    }
-
     int observer_index = cse_execution_add_observer(execution, observer);
     if (observer_index < 0) {
         print_last_error();

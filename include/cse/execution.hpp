@@ -6,6 +6,7 @@
 #define CSE_EXECUTION_HPP
 
 #include <memory>
+#include <optional>
 
 #include <boost/fiber/future.hpp>
 
@@ -54,6 +55,7 @@ inline bool operator!=(const variable_id& a, const variable_id& b) noexcept
 // Forward declarations
 class algorithm;
 class observer;
+class simulator;
 
 
 /**
@@ -97,8 +99,10 @@ public:
      *      An execution-specific name for the slave.
      */
     simulator_index add_slave(
-        std::unique_ptr<async_slave> slave,
+        std::shared_ptr<async_slave> slave,
         std::string_view name);
+
+    std::shared_ptr<simulator> get_simulator(simulator_index index);
 
     observer_index add_observer(std::shared_ptr<observer> obs);
 
@@ -109,6 +113,11 @@ public:
      *  input value at the co-simulation algorithm's discretion.  Different
      *  algorithms may handle this in different ways, and could for instance
      *  choose to extrapolate or correct the variable value during transfer.
+     *
+     *  When calling this method, the validity of both variables are checked
+     *  against the metadata of their respective `simulator`s. If either is
+     *  found to be invalid (i.e. not found, wrong type or causality, an
+     *  exception will be thrown.
      */
     void connect_variables(variable_id output, variable_id input);
 
@@ -125,18 +134,34 @@ public:
      *  again (e.g. by calling `boost::fibers::future::get()` on the result).
      *
      *  \param targetTime
-     *      The logical time at which the co-simulation should pause.
-     *      This must always be greater than the value of `current_time()`
-     *      at the moment the function is called.
+     *      The logical time at which the co-simulation should pause (optional).
+     *      If specified, this must always be greater than the value of
+     *      `current_time()` at the moment the function is called.
      *
      *  \returns
      *      `true` if the co-simulation was advanced to the given time,
      *      or `false` if it was stopped before this. In the latter case,
      *      `current_time()` may be called to determine the actual end time.
      */
-    boost::fibers::future<bool> simulate_until(time_point targetTime);
+    boost::fibers::future<bool> simulate_until(std::optional<time_point> targetTime);
+
+    /**
+     *  Advance the co-simulation forward one single step.
+     *
+     *  \param maxDeltaT
+     *      The maximum duration of the step (optional).
+     *
+     *  \returns
+     *      The actual duration of the step.
+     *      `current_time()` may be called to determine the actual time after
+     *      the step completed.
+     */
+    duration step(std::optional<duration> maxDeltaT);
 
     void stop_simulation();
+
+    /// Is the simulation loop currently running
+    bool is_running() const noexcept;
 
     /// Enables real time simulation
     void enable_real_time_simulation();
