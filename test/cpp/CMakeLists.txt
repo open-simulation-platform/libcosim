@@ -2,7 +2,6 @@ set(tests
     "async_slave_mockup_test"
     "fixed_step_algorithm_test"
     "hello_world_test"
-    "ssp_parser_test"
 )
 set(unittests
     "fmi_v1_fmu_unittest"
@@ -13,6 +12,7 @@ set(unittests
     "utility_uuid_unittest"
     "utility_zip_unittest"
     "file_observer_logging_test"
+    "ssp_parser_test"
 )
 
 include("AddTestExecutable")
