@@ -72,7 +72,9 @@ public:
         std::string endConnector;
     };
 
-private:
+    const std::vector<Connection> &get_connections() const;
+
+ private:
     boost::filesystem::path xmlPath_;
     boost::property_tree::ptree pt_;
 

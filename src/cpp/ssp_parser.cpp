@@ -53,13 +53,11 @@ ssp_parser::ssp_parser(boost::filesystem::path xmlPath)
     }
 
     for (const auto& connection : tmpTree.get_child("ssd:Connections")) {
-
-        std::string startElement = get_attribute<std::string>(connection.second, "startElement");
-        std::string startConnector = get_attribute<std::string>(connection.second, "startConnector");
-        std::string endElement = get_attribute<std::string>(connection.second, "endElement");
-        std::string endConnector = get_attribute<std::string>(connection.second, "endConnector");
-
-        std::cout << startElement << startConnector << endElement << endConnector << std::endl;
+        connections_.emplace_back();
+        connections_.back().startElement = get_attribute<std::string>(connection.second, "startElement");
+        connections_.back().startConnector = get_attribute<std::string>(connection.second, "startConnector");
+        connections_.back().endElement = get_attribute<std::string>(connection.second, "endElement");
+        connections_.back().endConnector = get_attribute<std::string>(connection.second, "endConnector");
     }
 }
 
@@ -76,5 +74,9 @@ ssp_parser::~ssp_parser() noexcept = default;
     const std::vector<ssp_parser::Component> &ssp_parser::get_elements() const {
         return elements_;
     }
+
+    const std::vector<ssp_parser::Connection> &ssp_parser::get_connections() const {
+        return connections_;
+}
 
 } // namespace cse
