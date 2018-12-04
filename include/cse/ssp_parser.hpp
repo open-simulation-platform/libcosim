@@ -24,11 +24,21 @@ public:
     ssp_parser(boost::filesystem::path xmlPath);
     ~ssp_parser() noexcept;
 
+    struct DefaultExperiment
+    {
+        double startTime;
+        double stopTime;
+    };
+
+    const DefaultExperiment &get_default_experiment() const;
+
     struct SimulationInformation
     {
         std::string description;
-        std::string stepSize;
+        double stepSize;
     };
+
+    const SimulationInformation &get_simulation_information() const;
 
     struct SystemDescription
     {
@@ -52,6 +62,8 @@ public:
         std::vector<Connector> connectors;
     };
 
+    const std::vector<Component> &get_elements() const;
+
     struct Connection
     {
         std::string startElement;
@@ -65,11 +77,11 @@ private:
     boost::property_tree::ptree pt_;
 
     SystemDescription systemDescription_;
+    DefaultExperiment defaultExperiment_;
     SimulationInformation simulationInformation_;
     std::vector<Component> elements_;
     std::vector<Connection> connections_;
 
-    std::string get_attribute(boost::property_tree::ptree tree, std::string key);
 };
 
 } // namespace cse
