@@ -69,7 +69,7 @@ endforeach()
 set(allSources ${publicHeadersFull} ${privateHeadersFull} ${sources})
 
 add_library(csecorecpp ${allSources})
-target_compile_definitions(csecorecpp PUBLIC "BOOST_ALL_DYN_LINK=1" "BOOST_ALL_NO_LIB=1")
+target_compile_definitions(csecorecpp PUBLIC "BOOST_ALL_DYN_LINK=1" "BOOST_ALL_NO_LIB=1" "BOOST_CONFIG_SUPPRESS_OUTDATED_MESSAGE=1")
 target_compile_features(csecorecpp PUBLIC "cxx_std_17")
 target_include_directories(csecorecpp
     PUBLIC
