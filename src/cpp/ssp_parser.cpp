@@ -35,8 +35,6 @@ public:
         double stopTime;
     };
 
-    const DefaultExperiment& get_default_experiment() const;
-
     struct SimulationInformation
     {
         std::string description;
@@ -149,11 +147,6 @@ ssp_parser::~ssp_parser() noexcept = default;
 const ssp_parser::SimulationInformation& ssp_parser::get_simulation_information() const
 {
     return simulationInformation_;
-}
-
-const ssp_parser::DefaultExperiment& ssp_parser::get_default_experiment() const
-{
-    return defaultExperiment_;
 }
 
 const std::vector<ssp_parser::Component>& ssp_parser::get_elements() const
