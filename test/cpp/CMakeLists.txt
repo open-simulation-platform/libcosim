@@ -12,6 +12,7 @@ set(unittests
     "utility_uuid_unittest"
     "utility_zip_unittest"
     "file_observer_logging_test"
+    "membuffer_observer_test"
     "ssp_parser_test"
 )
 

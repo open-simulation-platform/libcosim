@@ -12,10 +12,10 @@
 namespace cse
 {
 
-class file_observer::single_slave_observer
+class file_observer::slave_value_writer
 {
 public:
-    single_slave_observer(observable* observable, boost::filesystem::path logPath, bool binary, size_t limit)
+    slave_value_writer(observable* observable, boost::filesystem::path logPath, bool binary, size_t limit)
         : observable_(observable)
         , binary_(binary)
         , limit_(limit)
@@ -61,7 +61,7 @@ public:
         }
     }
 
-    ~single_slave_observer()
+    ~slave_value_writer()
     {
         persist();
         if (fsw_.is_open()) {
@@ -121,12 +121,12 @@ void file_observer::simulator_added(simulator_index index, observable* simulator
 {
     auto filename = std::to_string(index).append(binary_ ? ".bin" : ".csv");
     auto slaveLogPath = logDir_ / filename;
-    slaveObservers_[index] = std::make_unique<single_slave_observer>(simulator, slaveLogPath, binary_, limit_);
+    valueWriters_[index] = std::make_unique<slave_value_writer>(simulator, slaveLogPath, binary_, limit_);
 }
 
 void file_observer::simulator_removed(simulator_index index)
 {
-    slaveObservers_.erase(index);
+    valueWriters_.erase(index);
 }
 
 void file_observer::variables_connected(variable_id /*output*/, variable_id /*input*/)
@@ -139,8 +139,8 @@ void file_observer::variable_disconnected(variable_id /*input*/)
 
 void file_observer::step_complete(step_number lastStep, duration /*lastStepSize*/, time_point /*currentTime*/)
 {
-    for (const auto& slaveObserver : slaveObservers_) {
-        slaveObserver.second->observe(lastStep);
+    for (const auto& valueWriter : valueWriters_) {
+        valueWriter.second->observe(lastStep);
     }
 }
 

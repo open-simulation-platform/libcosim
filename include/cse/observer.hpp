@@ -20,7 +20,6 @@
 namespace cse
 {
 
-
 /// Interface for observable entities in a simulation.
 class observable
 {
@@ -74,6 +73,7 @@ public:
     virtual ~observable() noexcept {}
 };
 
+
 /**
  *  An interface for observers.
  *
@@ -105,6 +105,8 @@ public:
     virtual ~observer() noexcept {}
 };
 
+class slave_value_provider;
+
 /**
  * An observer implementation, for saving observed variable values to file in the preferred format (csv or binary).
  */
@@ -129,8 +131,8 @@ public:
     ~file_observer();
 
 private:
-    class single_slave_observer;
-    std::unordered_map<simulator_index, std::unique_ptr<single_slave_observer>> slaveObservers_;
+    class slave_value_writer;
+    std::unordered_map<simulator_index, std::unique_ptr<slave_value_writer>> valueWriters_;
     boost::filesystem::path logDir_;
     bool binary_;
     size_t limit_;
@@ -222,8 +224,7 @@ public:
     ~membuffer_observer() noexcept;
 
 private:
-    class single_slave_observer;
-    std::unordered_map<simulator_index, std::unique_ptr<single_slave_observer>> slaveObservers_;
+    std::unordered_map<simulator_index, std::unique_ptr<slave_value_provider>> valueProviders_;
 };
 
 } // namespace cse
