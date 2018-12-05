@@ -49,8 +49,9 @@ int main()
     }
 
     double stepSize = 0.1;
+    int64_t nanoStepSize = (int64_t) (stepSize*1.0e9);
 
-    cse_execution* execution = cse_execution_create(0.0, stepSize);
+    cse_execution* execution = cse_execution_create(0, nanoStepSize);
 
     cse_slave* slave1 = cse_local_slave_create(fmuPath1);
     if (!slave1) {

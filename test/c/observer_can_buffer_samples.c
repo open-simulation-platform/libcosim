@@ -34,7 +34,8 @@ int main()
         return 1;
     }
 
-    cse_execution* execution = cse_execution_create(0.0, 0.1);
+    int64_t nanoStepSize = (int64_t)(0.1 * 1.0e9);
+    cse_execution* execution = cse_execution_create(0, nanoStepSize);
     if (!execution) {
         print_last_error();
         return 1;
@@ -81,7 +82,7 @@ int main()
     const size_t nSamples = 10;
     double realSamples[10];
     int intSamples[10];
-    double times[10];
+    int64_t times[10];
     long long steps[10];
 
     size_t readRealSamples = cse_observer_slave_get_real_samples(observer, slave_index, index, fromStep, nSamples, realSamples, steps, times);
@@ -103,7 +104,11 @@ int main()
     long expectedSteps[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
     double expectedRealSamples[10] = {0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9};
     int expectedIntSamples[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-    double expectedTimeSamples[10] = {0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9};
+    double t[10] = {0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9};
+    int64_t expectedTimeSamples[10];
+    for (int j = 0; j < 10; ++j) {
+        expectedTimeSamples[j] = (int64_t)(1.0e9 * t[j]);
+    }
 
 
     for (int i = 0; i < 10; i++) {
@@ -122,15 +127,16 @@ int main()
             cse_execution_destroy(execution);
             return 1;
         }
-        if (fabs(expectedTimeSamples[i] - times[i]) > 0.000001) {
-            fprintf(stderr, "Sample nr %d expected time sample %lf, got %lf\n", i, expectedTimeSamples[i], times[i]);
+        if (expectedTimeSamples[i] != times[i]) {
+            fprintf(stderr, "Sample nr %d expected time sample %lli, got %lli\n", i, expectedTimeSamples[i], times[i]);
             cse_execution_destroy(execution);
             return 1;
         }
     }
 
     cse_step_number nums[2];
-    cse_observer_get_step_numbers_for_duration(observer, 0, 0.5, nums);
+    cse_duration dur = (int64_t)(0.5 * 1.0e9);
+    cse_observer_get_step_numbers_for_duration(observer, 0, dur, nums);
     if (nums[0] != 5) {
         fprintf(stderr, "Expected step number %i, got %lli\n", 5, nums[0]);
         cse_execution_destroy(execution);
@@ -142,7 +148,9 @@ int main()
         return 1;
     }
 
-    cse_observer_get_step_numbers(observer, 0, 0.3, 0.6, nums);
+    cse_time_point t1 = (int64_t)(0.3 * 1e9);
+    cse_time_point t2 = (int64_t)(0.6 * 1e9);
+    cse_observer_get_step_numbers(observer, 0, t1, t2, nums);
     if (nums[0] != 3) {
         fprintf(stderr, "Expected step number %i, got %lli\n", 3, nums[0]);
         cse_execution_destroy(execution);

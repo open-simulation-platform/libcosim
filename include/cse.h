@@ -18,10 +18,10 @@ extern "C" {
 
 
 /// The type used to specify (simulation) time points.
-typedef double cse_time_point;
+typedef int64_t cse_time_point;
 
 /// The type used to specify (simulation) time durations.
-typedef double cse_duration;
+typedef int64_t cse_duration;
 
 /// Variable index.
 typedef uint32_t cse_variable_index;
@@ -357,7 +357,7 @@ size_t cse_observer_slave_get_real_samples(
     size_t nSamples,
     double values[],
     cse_step_number steps[],
-    double times[]);
+    cse_time_point times[]);
 
 /**
  *  \brief
@@ -437,7 +437,7 @@ size_t cse_observer_slave_get_integer_samples(
     size_t nSamples,
     int values[],
     cse_step_number steps[],
-    double times[]);
+    cse_time_point times[]);
 
 /**
  * \brief
@@ -454,7 +454,7 @@ size_t cse_observer_slave_get_integer_samples(
 int cse_observer_get_step_numbers_for_duration(
     cse_observer* observer,
     cse_slave_index slave,
-    double duration,
+    cse_duration duration,
     cse_step_number steps[]);
 
 /**
@@ -472,8 +472,8 @@ int cse_observer_get_step_numbers_for_duration(
 int cse_observer_get_step_numbers(
     cse_observer* observer,
     cse_slave_index slave,
-    double begin,
-    double end,
+    cse_time_point begin,
+    cse_time_point end,
     cse_step_number steps[]);
 
 /**

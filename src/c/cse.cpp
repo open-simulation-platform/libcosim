@@ -94,6 +94,22 @@ void handle_current_exception()
             "An exception of unknown type was thrown");
     }
 }
+
+constexpr cse_time_point to_integer_time_point(cse::time_point t)
+{
+    return std::chrono::duration_cast<std::chrono::duration<cse_time_point>>(t.time_since_epoch()).count();
+}
+
+constexpr cse::duration to_duration(cse_duration nanos)
+{
+    return std::chrono::duration<cse::detail::clock::rep, cse::detail::clock::period>(nanos);
+}
+
+constexpr cse::time_point to_time_point(cse_time_point nanos)
+{
+    return cse::time_point(to_duration(nanos));
+}
+
 } // namespace
 
 
@@ -125,8 +141,8 @@ cse_execution* cse_execution_create(cse_time_point startTime, cse_duration stepS
         auto execution = std::make_unique<cse_execution>();
 
         execution->cpp_execution = std::make_unique<cse::execution>(
-            cse::to_time_point(startTime),
-            std::make_unique<cse::fixed_step_algorithm>(cse::to_duration(stepSize, startTime)));
+            to_time_point(startTime),
+            std::make_unique<cse::fixed_step_algorithm>(to_duration(stepSize)));
         execution->cpp_execution->enable_real_time_simulation();
         execution->error_code = CSE_ERRC_SUCCESS;
         execution->state = CSE_EXECUTION_STOPPED;
@@ -398,12 +414,12 @@ size_t cse_observer_slave_get_real_samples(
     size_t nSamples,
     double values[],
     cse_step_number steps[],
-    double times[])
+    cse_time_point times[])
 {
     std::vector<cse::time_point> timePoints(nSamples);
     size_t samplesRead = observer->cpp_observer->get_real_samples(slave, variableIndex, fromStep, gsl::make_span(values, nSamples), gsl::make_span(steps, nSamples), timePoints);
     for (size_t i = 0; i < samplesRead; ++i) {
-        times[i] = cse::to_double_time_point(timePoints[i]);
+        times[i] = to_integer_time_point(timePoints[i]);
     }
     return samplesRead;
 }
@@ -416,12 +432,12 @@ size_t cse_observer_slave_get_integer_samples(
     size_t nSamples,
     int values[],
     cse_step_number steps[],
-    double times[])
+    cse_time_point times[])
 {
     std::vector<cse::time_point> timePoints(nSamples);
     size_t samplesRead = observer->cpp_observer->get_integer_samples(slave, variableIndex, fromStep, gsl::make_span(values, nSamples), gsl::make_span(steps, nSamples), timePoints);
     for (size_t i = 0; i < samplesRead; ++i) {
-        times[i] = cse::to_double_time_point(timePoints[i]);
+        times[i] = to_integer_time_point(timePoints[i]);
     }
     return samplesRead;
 }
@@ -429,11 +445,11 @@ size_t cse_observer_slave_get_integer_samples(
 int cse_observer_get_step_numbers_for_duration(
     cse_observer* observer,
     cse_slave_index slave,
-    double duration,
+    cse_duration duration,
     cse_step_number steps[])
 {
     try {
-        observer->cpp_observer->get_step_numbers(slave, cse::to_duration(duration), gsl::make_span(steps, 2));
+        observer->cpp_observer->get_step_numbers(slave, to_duration(duration), gsl::make_span(steps, 2));
         return success;
     } catch (...) {
         handle_current_exception();
@@ -444,12 +460,12 @@ int cse_observer_get_step_numbers_for_duration(
 int cse_observer_get_step_numbers(
     cse_observer* observer,
     cse_slave_index slave,
-    double begin,
-    double end,
+    cse_time_point begin,
+    cse_time_point end,
     cse_step_number steps[])
 {
     try {
-        observer->cpp_observer->get_step_numbers(slave, cse::to_time_point(begin), cse::to_time_point(end), gsl::make_span(steps, 2));
+        observer->cpp_observer->get_step_numbers(slave, to_time_point(begin), to_time_point(end), gsl::make_span(steps, 2));
         return success;
     } catch (...) {
         handle_current_exception();

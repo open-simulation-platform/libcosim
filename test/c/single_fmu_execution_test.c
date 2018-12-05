@@ -35,7 +35,8 @@ int main()
     }
 
     // ===== Can step n times and get status
-    cse_execution* execution = cse_execution_create(0.0, 0.1);
+    int64_t nanoStepSize = (int64_t)(0.1 * 1.0e9);
+    cse_execution* execution = cse_execution_create(0, nanoStepSize);
     if (!execution) {
         print_last_error();
         return 1;
