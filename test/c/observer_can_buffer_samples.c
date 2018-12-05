@@ -129,7 +129,7 @@ int main()
             return 1;
         }
         if (expectedTimeSamples[i] != times[i]) {
-            fprintf(stderr, "Sample nr %d expected time sample %lli, got %lli\n", i, expectedTimeSamples[i], times[i]);
+            fprintf(stderr, "Sample nr %d expected time sample %" PRId64 ", got %" PRId64 "\n", i, expectedTimeSamples[i], times[i]);
             cse_execution_destroy(execution);
             return 1;
         }
