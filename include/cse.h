@@ -250,7 +250,7 @@ typedef enum
 
 typedef struct
 {
-    double current_time;
+    cse_time_point current_time;
     cse_execution_state state;
     int error_code;
 } cse_execution_status;

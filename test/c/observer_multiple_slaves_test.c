@@ -112,8 +112,9 @@ int main()
     }
 
     double precision = 1e-9;
-    if (fabs(executionStatus.current_time - 1.0) > precision) {
-        fprintf(stderr, "Expected current time == 1.0, got %f\n", executionStatus.current_time);
+    double simTime = executionStatus.current_time * 1e-9;
+    if (fabs(simTime - 1.0) > precision) {
+        fprintf(stderr, "Expected current time == 1.0s, got %f\n", simTime);
         cse_execution_destroy(execution);
         return 1;
     }

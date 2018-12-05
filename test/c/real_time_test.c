@@ -97,8 +97,9 @@ int main()
         return 1;
     }
 
-    if (fabs(executionStatus.current_time - elapsed) > 1.0e-3) {
-        fprintf(stderr, "Expected final simulation time == %f, got %f\n", elapsedS, executionStatus.current_time);
+    double simTime = executionStatus.current_time * 1e-9;
+    if (fabs(simTime - elapsed) > 1.0e-3) {
+        fprintf(stderr, "Expected final simulation time == %f, got %f\n", elapsedS, simTime);
         cse_execution_destroy(execution);
         return 1;
     }

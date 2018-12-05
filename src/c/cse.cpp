@@ -97,7 +97,7 @@ void handle_current_exception()
 
 constexpr cse_time_point to_integer_time_point(cse::time_point t)
 {
-    return std::chrono::duration_cast<std::chrono::duration<cse_time_point>>(t.time_since_epoch()).count();
+    return t.time_since_epoch().count();
 }
 
 constexpr cse::duration to_duration(cse_duration nanos)
@@ -270,7 +270,7 @@ int cse_execution_get_status(cse_execution* execution, cse_execution_status* sta
     try {
         status->error_code = execution->error_code;
         status->state = execution->state;
-        status->current_time = cse::to_double_time_point(execution->cpp_execution->current_time());
+        status->current_time = to_integer_time_point(execution->cpp_execution->current_time());
         return success;
     } catch (...) {
         handle_current_exception();
