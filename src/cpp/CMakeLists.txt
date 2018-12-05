@@ -9,6 +9,7 @@ set(publicHeaders
     "event_loop.hpp"
     "exception.hpp"
     "execution.hpp"
+    "ssp_parser.hpp"
     "fmi/fmu.hpp"
     "fmi/importer.hpp"
     "fmi/v1/fmu.hpp"
@@ -28,6 +29,7 @@ set(privateHeaders
     "fmi/windows.hpp"
     "log/logger.hpp"
     "slave_simulator.hpp"
+    "slave_value_provider.hpp"
     "utility/filesystem.hpp"
     "utility/uuid.hpp"
     "utility/zip.hpp"
@@ -40,11 +42,13 @@ set(sources
     "event_loop.cpp"
     "exception.cpp"
     "execution.cpp"
+    "ssp_parser.cpp"
     "fmi_importer.cpp"
     "fmi_v1_fmu.cpp"
     "fmi_v2_fmu.cpp"
     "membuffer_observer.cpp"
     "file_observer.cpp"
+    "slave_value_provider.cpp"
 
     "error.cpp"
     "fmi_glue.cpp"
@@ -69,7 +73,7 @@ endforeach()
 set(allSources ${publicHeadersFull} ${privateHeadersFull} ${sources})
 
 add_library(csecorecpp ${allSources})
-target_compile_definitions(csecorecpp PUBLIC "BOOST_ALL_DYN_LINK=1" "BOOST_ALL_NO_LIB=1")
+target_compile_definitions(csecorecpp PUBLIC "BOOST_ALL_DYN_LINK=1" "BOOST_ALL_NO_LIB=1" "BOOST_CONFIG_SUPPRESS_OUTDATED_MESSAGE=1")
 target_compile_features(csecorecpp PUBLIC "cxx_std_17")
 target_include_directories(csecorecpp
     PUBLIC

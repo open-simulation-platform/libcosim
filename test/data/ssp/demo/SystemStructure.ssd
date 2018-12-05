@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ssd:SystemStructureDescription name="simple-cse-example" version="Draft20180219">
+  <ssd:DefaultExperiment startTime="0.0" stopTime="2e-4"/>
+  <ssd:System name="cse-instance" description="An example of how to use Core Simulation Environment">
+
+    <ssd:SimulationInformation>
+      <ssd:FixedStepMaster description="FixedStepAlgorithm" stepSize="1e-4" />
+    </ssd:SimulationInformation>
+
+    <ssd:Elements>
+      <ssd:Component name="CraneController" source="CraneController.fmu">
+        <ssd:Connectors>
+          <!-- Seems to match nicely with our consept of "expose" -->
+          <ssd:Connector name="p_Crane.e[1]" kind="output" type="Real"/>
+          <ssd:Connector name="p_Crane.e[2]" kind="output" type="Real"/>
+          <ssd:Connector name="p_Crane.e[3]" kind="output" type="Real"/>
+          <ssd:Connector name="p_Crane.f[1]" kind="input" type="Real"/>
+          <ssd:Connector name="p_Crane.f[2]" kind="input" type="Real"/>
+          <ssd:Connector name="p_Crane.f[3]" kind="input" type="Real"/>
+        </ssd:Connectors>
+      </ssd:Component>
+      <ssd:Component name="KnuckleBoomCrane" source="KnuckleBoomCrane.fmu">
+        <ssd:Connectors>
+          <ssd:Connector name="p_Crane.e[1]" kind="input" type="Real"/>
+          <ssd:Connector name="p_Crane.e[2]" kind="input" type="Real"/>
+          <ssd:Connector name="p_Crane.e[3]" kind="input" type="Real"/>
+          <ssd:Connector name="p_Crane.f[1]" kind="output" type="Real"/>
+          <ssd:Connector name="p_Crane.f[2]" kind="output" type="Real"/>
+          <ssd:Connector name="p_Crane.f[3]" kind="output" type="Real"/>
+        </ssd:Connectors>
+      </ssd:Component>
+    </ssd:Elements>
+
+    <ssd:Connections>
+      <ssd:Connection startElement="CraneController" startConnector="p_Crane.e[1]" endElement="KnuckleBoomCrane" endConnector="p_Crane.e[1]"/>
+    </ssd:Connections>
+
+  </ssd:System>
+</ssd:SystemStructureDescription>

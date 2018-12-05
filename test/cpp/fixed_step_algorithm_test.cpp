@@ -15,7 +15,6 @@
 #define REQUIRE(test) \
     if (!(test)) throw std::runtime_error("Requirement not satisfied: " #test)
 
-
 int main()
 {
     try {

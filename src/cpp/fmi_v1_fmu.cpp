@@ -378,6 +378,7 @@ void slave_instance::get_real_variables(
     gsl::span<double> values) const
 {
     CSE_INPUT_CHECK(variables.size() == values.size());
+    if (variables.empty()) return;
     const auto status = fmi1_import_get_real(
         handle_, variables.data(), variables.size(), values.data());
     if (status != fmi1_status_ok && status != fmi1_status_warning) {
@@ -393,6 +394,7 @@ void slave_instance::get_integer_variables(
     gsl::span<int> values) const
 {
     CSE_INPUT_CHECK(variables.size() == values.size());
+    if (variables.empty()) return;
     const auto status = fmi1_import_get_integer(
         handle_, variables.data(), variables.size(), values.data());
     if (status != fmi1_status_ok && status != fmi1_status_warning) {
@@ -408,6 +410,7 @@ void slave_instance::get_boolean_variables(
     gsl::span<bool> values) const
 {
     CSE_INPUT_CHECK(variables.size() == values.size());
+    if (variables.empty()) return;
     std::vector<fmi1_boolean_t> fmiValues(values.size());
     const auto status = fmi1_import_get_boolean(
         handle_, variables.data(), variables.size(), fmiValues.data());
@@ -427,6 +430,7 @@ void slave_instance::get_string_variables(
     gsl::span<std::string> values) const
 {
     CSE_INPUT_CHECK(variables.size() == values.size());
+    if (variables.empty()) return;
     std::vector<fmi1_string_t> fmiValues(values.size());
     const auto status = fmi1_import_get_string(
         handle_, variables.data(), variables.size(), fmiValues.data());
@@ -447,6 +451,7 @@ void slave_instance::set_real_variables(
     gsl::span<const double> values)
 {
     CSE_INPUT_CHECK(variables.size() == values.size());
+    if (variables.empty()) return;
     const auto status = fmi1_import_set_real(
         handle_, variables.data(), variables.size(), values.data());
     if (status == fmi1_status_ok || status == fmi1_status_warning) {
@@ -466,6 +471,7 @@ void slave_instance::set_integer_variables(
     gsl::span<const int> values)
 {
     CSE_INPUT_CHECK(variables.size() == values.size());
+    if (variables.empty()) return;
     const auto status = fmi1_import_set_integer(
         handle_, variables.data(), variables.size(), values.data());
     if (status == fmi1_status_ok || status == fmi1_status_warning) {
@@ -485,6 +491,7 @@ void slave_instance::set_boolean_variables(
     gsl::span<const bool> values)
 {
     CSE_INPUT_CHECK(variables.size() == values.size());
+    if (variables.empty()) return;
     std::vector<fmi1_boolean_t> fmiValues(values.size());
     for (int i = 0; i < values.size(); ++i) {
         fmiValues[i] =
@@ -509,6 +516,7 @@ void slave_instance::set_string_variables(
     gsl::span<const std::string> values)
 {
     CSE_INPUT_CHECK(variables.size() == values.size());
+    if (variables.empty()) return;
     std::vector<fmi1_string_t> fmiValues(values.size());
     for (int i = 0; i < values.size(); ++i) {
         fmiValues[i] = values[i].c_str();
