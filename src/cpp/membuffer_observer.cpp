@@ -91,7 +91,7 @@ void membuffer_observer::get_step_numbers(
     duration duration,
     gsl::span<step_number> steps)
 {
-    slaveObservers_.at(sim)->get_step_numbers(duration, steps);
+    valueProviders_.at(sim)->get_step_numbers(duration, steps);
 }
 
 void membuffer_observer::get_step_numbers(
@@ -100,7 +100,7 @@ void membuffer_observer::get_step_numbers(
     time_point tEnd,
     gsl::span<step_number> steps)
 {
-    slaveObservers_.at(sim)->get_step_numbers(tBegin, tEnd, steps);
+    valueProviders_.at(sim)->get_step_numbers(tBegin, tEnd, steps);
 }
 
 membuffer_observer::~membuffer_observer() noexcept = default;

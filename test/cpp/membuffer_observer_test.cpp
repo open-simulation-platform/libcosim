@@ -40,17 +40,23 @@ int main()
         const cse::variable_index varIndex = 0;
         double realValues[numSamples];
         cse::step_number steps[numSamples];
+        cse::time_point times[numSamples];
 
-        observer->get_real_samples(simIndex, varIndex, 0, gsl::make_span(realValues, numSamples), gsl::make_span(steps, numSamples));
+        size_t samplesRead = observer->get_real_samples(simIndex, varIndex, 0, gsl::make_span(realValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
 
-        double expectedReals[] = {0, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234
-                , 1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234};
+        double expectedReals[] = {0, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234};
 
-        int counter=0;
+        int counter = 0;
         for (double value : realValues) {
             REQUIRE(std::fabs(value - expectedReals[counter]) < 1.0e-9);
             counter++;
         }
+        for (size_t i = 0; i < samplesRead; i++) {
+            if (i > 0) {
+                REQUIRE(times[i] > times[i - 1]);
+            }
+        }
+
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
