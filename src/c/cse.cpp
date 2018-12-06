@@ -23,6 +23,7 @@
 #include <cse/observer.hpp>
 
 #include <cse/hello_world.hpp>
+#include <cse/ssp_parser.hpp>
 
 namespace
 {
@@ -131,6 +132,19 @@ cse_execution* cse_execution_create(cse_time_point startTime, cse_duration stepS
         execution->error_code = CSE_ERRC_SUCCESS;
         execution->state = CSE_EXECUTION_STOPPED;
 
+        return execution.release();
+    } catch (...) {
+        handle_current_exception();
+        return nullptr;
+    }
+}
+
+cse_execution* cse_ssp_execution_create(const char* sspDir, cse_time_point startTime)
+{
+    try {
+        auto execution = std::make_unique<cse_execution>();
+        execution->cpp_execution = std::make_unique<cse::execution>(
+            cse::load_ssp(sspDir, cse::to_time_point(startTime)));
         return execution.release();
     } catch (...) {
         handle_current_exception();

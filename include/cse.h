@@ -137,6 +137,21 @@ cse_execution* cse_execution_create(
     cse_time_point startTime,
     cse_duration stepSize);
 
+/**
+ *  \brief
+ *  Creates a new execution based on a SystemStructure.ssd file
+ *
+ *  \param [in] sspDir
+ *      Path to the directory holding SystemStructure.ssd
+ *  \param [in] startTime
+ *      The (logical) time point at which the simulation should start.
+ *  \returns
+ *      A pointer to an object which holds the execution state,
+ *      or NULL on error.
+ */
+cse_execution* cse_ssp_execution_create(
+    const char* sspDir,
+    cse_time_point startTime);
 
 /**
  *  \brief
