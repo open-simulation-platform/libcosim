@@ -88,13 +88,13 @@ public:
     virtual void simulator_added(simulator_index, observable*, time_point) = 0;
 
     /// A simulator was removed from the execution.
-    virtual void simulator_removed(simulator_index) = 0;
+    virtual void simulator_removed(simulator_index, time_point) = 0;
 
     /// A variable connection was established.
-    virtual void variables_connected(variable_id output, variable_id input) = 0;
+    virtual void variables_connected(variable_id output, variable_id input, time_point) = 0;
 
     /// A variable connection was broken.
-    virtual void variable_disconnected(variable_id input) = 0;
+    virtual void variable_disconnected(variable_id input, time_point) = 0;
 
     /// A time step is complete, and a communication point was reached.
     virtual void step_complete(
@@ -117,11 +117,11 @@ public:
 
     void simulator_added(simulator_index, observable*, time_point) override;
 
-    void simulator_removed(simulator_index) override;
+    void simulator_removed(simulator_index, time_point) override;
 
-    void variables_connected(variable_id output, variable_id input) override;
+    void variables_connected(variable_id output, variable_id input, time_point) override;
 
-    void variable_disconnected(variable_id input) override;
+    void variable_disconnected(variable_id input, time_point) override;
 
     void step_complete(
         step_number lastStep,
@@ -148,11 +148,11 @@ public:
 
     void simulator_added(simulator_index, observable*, time_point) override;
 
-    void simulator_removed(simulator_index) override;
+    void simulator_removed(simulator_index, time_point) override;
 
-    void variables_connected(variable_id output, variable_id input) override;
+    void variables_connected(variable_id output, variable_id input, time_point) override;
 
-    void variable_disconnected(variable_id input) override;
+    void variable_disconnected(variable_id input, time_point) override;
 
     void step_complete(
         step_number lastStep,

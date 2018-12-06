@@ -14,21 +14,21 @@ membuffer_observer::membuffer_observer()
 {
 }
 
-void membuffer_observer::simulator_added(simulator_index index, observable* simulator, time_point startTime)
+void membuffer_observer::simulator_added(simulator_index index, observable* simulator, time_point currentTime)
 {
-    valueProviders_[index] = std::make_unique<slave_value_provider>(simulator, startTime);
+    valueProviders_[index] = std::make_unique<slave_value_provider>(simulator, currentTime);
 }
 
-void membuffer_observer::simulator_removed(simulator_index index)
+void membuffer_observer::simulator_removed(simulator_index index, time_point /*currentTime*/)
 {
     valueProviders_.erase(index);
 }
 
-void membuffer_observer::variables_connected(variable_id /*output*/, variable_id /*input*/)
+void membuffer_observer::variables_connected(variable_id /*output*/, variable_id /*input*/, time_point /*currentTime*/)
 {
 }
 
-void membuffer_observer::variable_disconnected(variable_id /*input*/)
+void membuffer_observer::variable_disconnected(variable_id /*input*/, time_point /*currentTime*/)
 {
 }
 

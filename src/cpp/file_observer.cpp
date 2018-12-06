@@ -15,7 +15,7 @@ namespace cse
 class file_observer::slave_value_writer
 {
 public:
-    slave_value_writer(observable* observable, boost::filesystem::path logPath, bool binary, size_t limit, time_point startTime)
+    slave_value_writer(observable* observable, boost::filesystem::path logPath, bool binary, size_t limit, time_point currentTime)
         : observable_(observable)
         , binary_(binary)
         , limit_(limit)
@@ -41,7 +41,7 @@ public:
             }
         }
 
-        observe(0, startTime);
+        observe(0, currentTime);
     }
 
     void observe(step_number timeStep, time_point currentTime)
@@ -123,23 +123,23 @@ file_observer::file_observer(boost::filesystem::path logDir, bool binary, size_t
 {
 }
 
-void file_observer::simulator_added(simulator_index index, observable* simulator, time_point startTime)
+void file_observer::simulator_added(simulator_index index, observable* simulator, time_point currentTime)
 {
     auto filename = std::to_string(index).append(binary_ ? ".bin" : ".csv");
     auto slaveLogPath = logDir_ / filename;
-    valueWriters_[index] = std::make_unique<slave_value_writer>(simulator, slaveLogPath, binary_, limit_, startTime);
+    valueWriters_[index] = std::make_unique<slave_value_writer>(simulator, slaveLogPath, binary_, limit_, currentTime);
 }
 
-void file_observer::simulator_removed(simulator_index index)
+void file_observer::simulator_removed(simulator_index index, time_point /*currentTime*/)
 {
     valueWriters_.erase(index);
 }
 
-void file_observer::variables_connected(variable_id /*output*/, variable_id /*input*/)
+void file_observer::variables_connected(variable_id /*output*/, variable_id /*input*/, time_point /*currentTime*/)
 {
 }
 
-void file_observer::variable_disconnected(variable_id /*input*/)
+void file_observer::variable_disconnected(variable_id /*input*/, time_point /*currentTime*/)
 {
 }
 

@@ -86,7 +86,7 @@ public:
                 currentTime_);
         }
         for (const auto conn : connections_) {
-            obs->variables_connected(conn.second, conn.first);
+            obs->variables_connected(conn.second, conn.first, currentTime_);
         }
         return index;
     }
