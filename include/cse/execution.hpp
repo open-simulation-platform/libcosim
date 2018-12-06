@@ -76,9 +76,6 @@ public:
      *  \param algo
      *      The co-simulation algorithm which will be used. One `algorithm`
      *      object may only be used with one `execution`.
-     *  \param timer
-     *      The real-time timer which will be used. One `timer`
-     *      object may only be used with one `execution`.
      */
     execution(time_point startTime, std::shared_ptr<algorithm> algo);
 
@@ -102,8 +99,18 @@ public:
         std::shared_ptr<async_slave> slave,
         std::string_view name);
 
+    /**
+     * Retrieves a `simulator`. This method will mostly likely disappear in the future.
+     * \param index the simulator index
+     * \returns A `simulator`
+     */
     std::shared_ptr<simulator> get_simulator(simulator_index index);
 
+    /**
+     * Adds an observer to the execution.
+     * \param obs the observer to add
+     * \returns The index of the observer
+     */
     observer_index add_observer(std::shared_ptr<observer> obs);
 
     /**
@@ -136,7 +143,8 @@ public:
      *  \param targetTime
      *      The logical time at which the co-simulation should pause (optional).
      *      If specified, this must always be greater than the value of
-     *      `current_time()` at the moment the function is called.
+     *      `current_time()` at the moment the function is called. If not specified,
+     *      the co-simulation will continue until `stop_simulation()` is called.
      *
      *  \returns
      *      `true` if the co-simulation was advanced to the given time,
@@ -158,6 +166,7 @@ public:
      */
     duration step(std::optional<duration> maxDeltaT);
 
+    /// Stops the co-simulation temporarily.
     void stop_simulation();
 
     /// Is the simulation loop currently running

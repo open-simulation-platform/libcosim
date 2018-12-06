@@ -49,8 +49,9 @@ int main()
     }
 
     double stepSize = 0.1;
+    int64_t nanoStepSize = (int64_t) (stepSize*1.0e9);
 
-    cse_execution* execution = cse_execution_create(0.0, stepSize);
+    cse_execution* execution = cse_execution_create(0, nanoStepSize);
 
     cse_slave* slave1 = cse_local_slave_create(fmuPath1);
     if (!slave1) {
@@ -96,8 +97,9 @@ int main()
         return 1;
     }
 
-    if (fabs(executionStatus.current_time - elapsed) > 1.0e-3) {
-        fprintf(stderr, "Expected final simulation time == %f, got %f\n", elapsedS, executionStatus.current_time);
+    double simTime = executionStatus.current_time * 1e-9;
+    if (fabs(simTime - elapsed) > 1.0e-3) {
+        fprintf(stderr, "Expected final simulation time == %f, got %f\n", elapsedS, simTime);
         cse_execution_destroy(execution);
         return 1;
     }
