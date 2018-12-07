@@ -158,9 +158,10 @@ cse_execution* cse_execution_create(cse_time_point startTime, cse_duration stepS
 cse_execution* cse_ssp_execution_create(const char* sspDir, cse_time_point startTime)
 {
     try {
+        cse::log::set_global_output_level(cse::log::level::info);
         auto execution = std::make_unique<cse_execution>();
         execution->cpp_execution = std::make_unique<cse::execution>(
-            cse::load_ssp(sspDir, cse::to_time_point(startTime)));
+            cse::load_ssp(sspDir, to_time_point(startTime)));
         return execution.release();
     } catch (...) {
         handle_current_exception();

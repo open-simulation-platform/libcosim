@@ -33,13 +33,13 @@ int main() {
         return 1;
     }
 
-    cse_execution* execution = cse_ssp_execution_create(sspDir, 0.0);
+    cse_execution* execution = cse_ssp_execution_create(sspDir, 0);
     if (!execution) {
         print_last_error();
         return 1;
     }
 
-    rc = cse_execution_step(execution, 10);
+    rc = cse_execution_step(execution, 3);
     if (rc < 0) {
         print_last_error();
         cse_execution_destroy(execution);
