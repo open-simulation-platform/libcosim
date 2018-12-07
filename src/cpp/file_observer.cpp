@@ -15,7 +15,7 @@ namespace cse
 class file_observer::slave_value_writer
 {
 public:
-    slave_value_writer(observable* observable, boost::filesystem::path logPath, bool binary, size_t limit)
+    slave_value_writer(observable* observable, boost::filesystem::path logPath, bool binary, size_t limit, time_point currentTime)
         : observable_(observable)
         , binary_(binary)
         , limit_(limit)
@@ -41,10 +41,10 @@ public:
             }
         }
 
-        observe(0);
+        observe(0, currentTime);
     }
 
-    void observe(step_number timeStep)
+    void observe(step_number timeStep, time_point currentTime)
     {
         realSamples_[timeStep].reserve(realIndexes_.size());
         intSamples_[timeStep].reserve(intIndexes_.size());
@@ -55,6 +55,8 @@ public:
         for (const auto idx : intIndexes_) {
             intSamples_[timeStep].push_back(observable_->get_integer(idx));
         }
+        timeSamples_[timeStep] = to_double_time_point(currentTime);
+
         if (++counter_ >= limit_) {
             persist();
             counter_ = 0;
@@ -72,15 +74,17 @@ public:
 
 private:
     template<typename T>
-    void write(step_number stepCount, const std::vector<T>& values)
+    void write(step_number stepCount, double time, const std::vector<T>& values)
     {
         if (fsw_.is_open()) {
             if (binary_) {
                 fsw_.write((char*)&values[0], values.size() * sizeof(T));
             } else {
-                fsw_ << stepCount << ": ";
-                for (auto value : values) {
-                    fsw_ << value << ",";
+                fsw_ << stepCount << ",";
+                fsw_ << time << ",";
+                for (auto it = values.begin(); it != values.end(); ++it) {
+                    if (it != values.begin()) fsw_ << ",";
+                    fsw_ << *it;
                 }
                 fsw_ << std::endl;
             }
@@ -90,19 +94,21 @@ private:
     void persist()
     {
         for (auto const& [stepCount, values] : realSamples_) {
-            write<double>(stepCount, values);
+            write<double>(stepCount, timeSamples_[stepCount], values);
         }
         for (auto const& [stepCount, values] : intSamples_) {
-            write<int>(stepCount, values);
+            write<int>(stepCount, timeSamples_[stepCount], values);
         }
         realSamples_.clear();
         intSamples_.clear();
+        timeSamples_.clear();
     }
 
     std::map<step_number, std::vector<double>> realSamples_;
     std::map<step_number, std::vector<int>> intSamples_;
     std::vector<variable_index> realIndexes_;
     std::vector<variable_index> intIndexes_;
+    std::map<step_number, double> timeSamples_;
     observable* observable_;
     boost::filesystem::ofstream fsw_;
     bool binary_;
@@ -117,30 +123,30 @@ file_observer::file_observer(boost::filesystem::path logDir, bool binary, size_t
 {
 }
 
-void file_observer::simulator_added(simulator_index index, observable* simulator)
+void file_observer::simulator_added(simulator_index index, observable* simulator, time_point currentTime)
 {
     auto filename = std::to_string(index).append(binary_ ? ".bin" : ".csv");
     auto slaveLogPath = logDir_ / filename;
-    valueWriters_[index] = std::make_unique<slave_value_writer>(simulator, slaveLogPath, binary_, limit_);
+    valueWriters_[index] = std::make_unique<slave_value_writer>(simulator, slaveLogPath, binary_, limit_, currentTime);
 }
 
-void file_observer::simulator_removed(simulator_index index)
+void file_observer::simulator_removed(simulator_index index, time_point /*currentTime*/)
 {
     valueWriters_.erase(index);
 }
 
-void file_observer::variables_connected(variable_id /*output*/, variable_id /*input*/)
+void file_observer::variables_connected(variable_id /*output*/, variable_id /*input*/, time_point /*currentTime*/)
 {
 }
 
-void file_observer::variable_disconnected(variable_id /*input*/)
+void file_observer::variable_disconnected(variable_id /*input*/, time_point /*currentTime*/)
 {
 }
 
-void file_observer::step_complete(step_number lastStep, duration /*lastStepSize*/, time_point /*currentTime*/)
+void file_observer::step_complete(step_number lastStep, duration /*lastStepSize*/, time_point currentTime)
 {
     for (const auto& valueWriter : valueWriters_) {
-        valueWriter.second->observe(lastStep);
+        valueWriter.second->observe(lastStep, currentTime);
     }
 }
 

@@ -14,9 +14,9 @@
 void print_last_error()
 {
     fprintf(
-            stderr,
-            "Error code %d: %s\n",
-            cse_last_error_code(), cse_last_error_message());
+        stderr,
+        "Error code %d: %s\n",
+        cse_last_error_code(), cse_last_error_message());
 }
 
 int main()
@@ -25,7 +25,8 @@ int main()
     char fmuPath[1024];
     snprintf(fmuPath, sizeof fmuPath, "%s/fmi1/identity.fmu", dataDir);
 
-    cse_execution* execution = cse_execution_create(0.0, 0.1);
+    int64_t nanoStepSize = (int64_t)(0.1 * 1.0e9);
+    cse_execution* execution = cse_execution_create(0, nanoStepSize);
     cse_slave* slave1 = cse_local_slave_create(fmuPath);
     cse_slave* slave2 = cse_local_slave_create(fmuPath);
     cse_observer* observer = cse_membuffer_observer_create();

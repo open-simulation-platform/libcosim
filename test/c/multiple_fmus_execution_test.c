@@ -34,7 +34,8 @@ int main()
         return 1;
     }
 
-    cse_execution* execution = cse_execution_create(0.0, 0.1);
+    int64_t nanoStepSize = (int64_t)(0.1 * 1.0e9);
+    cse_execution* execution = cse_execution_create(0, nanoStepSize);
     if (!execution) {
         print_last_error();
         return 1;
@@ -116,8 +117,8 @@ int main()
         return 1;
     }
 
-    cse_execution_status execution_status;
-    rc = cse_execution_get_status(execution, &execution_status);
+    cse_execution_status executionStatus;
+    rc = cse_execution_get_status(execution, &executionStatus);
     if (rc < 0) {
         print_last_error();
         cse_execution_destroy(execution);
@@ -125,20 +126,21 @@ int main()
     }
 
     double precision = 1e-9;
-    if (fabs(execution_status.current_time - 1.0) > precision) {
-        fprintf(stderr, "Expected current time == 1.0, got %f\n", execution_status.current_time);
+    double simTime = executionStatus.current_time * 1e-9;
+    if (fabs(simTime - 1.0) > precision) {
+        fprintf(stderr, "Expected current time == 1.0 s, got %f\n", simTime);
         cse_execution_destroy(execution);
         return 1;
     }
 
-    if (execution_status.state != CSE_EXECUTION_STOPPED) {
-        fprintf(stderr, "Expected state == %i, got %i\n", CSE_EXECUTION_STOPPED, execution_status.state);
+    if (executionStatus.state != CSE_EXECUTION_STOPPED) {
+        fprintf(stderr, "Expected state == %i, got %i\n", CSE_EXECUTION_STOPPED, executionStatus.state);
         cse_execution_destroy(execution);
         return 1;
     }
 
-    if (execution_status.error_code != CSE_ERRC_SUCCESS) {
-        fprintf(stderr, "Expected error code == %i, got %i\n", CSE_ERRC_SUCCESS, execution_status.error_code);
+    if (executionStatus.error_code != CSE_ERRC_SUCCESS) {
+        fprintf(stderr, "Expected error code == %i, got %i\n", CSE_ERRC_SUCCESS, executionStatus.error_code);
         cse_execution_destroy(execution);
         return 1;
     }

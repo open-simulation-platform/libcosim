@@ -85,16 +85,16 @@ class observer
 {
 public:
     /// A simulator was added to the execution.
-    virtual void simulator_added(simulator_index, observable*) = 0;
+    virtual void simulator_added(simulator_index, observable*, time_point) = 0;
 
     /// A simulator was removed from the execution.
-    virtual void simulator_removed(simulator_index) = 0;
+    virtual void simulator_removed(simulator_index, time_point) = 0;
 
     /// A variable connection was established.
-    virtual void variables_connected(variable_id output, variable_id input) = 0;
+    virtual void variables_connected(variable_id output, variable_id input, time_point) = 0;
 
     /// A variable connection was broken.
-    virtual void variable_disconnected(variable_id input) = 0;
+    virtual void variable_disconnected(variable_id input, time_point) = 0;
 
     /// A time step is complete, and a communication point was reached.
     virtual void step_complete(
@@ -115,13 +115,13 @@ class file_observer : public observer
 public:
     file_observer(boost::filesystem::path logDir, bool binary, size_t limit);
 
-    void simulator_added(simulator_index, observable*) override;
+    void simulator_added(simulator_index, observable*, time_point) override;
 
-    void simulator_removed(simulator_index) override;
+    void simulator_removed(simulator_index, time_point) override;
 
-    void variables_connected(variable_id output, variable_id input) override;
+    void variables_connected(variable_id output, variable_id input, time_point) override;
 
-    void variable_disconnected(variable_id input) override;
+    void variable_disconnected(variable_id input, time_point) override;
 
     void step_complete(
         step_number lastStep,
@@ -146,13 +146,13 @@ class membuffer_observer : public observer
 public:
     membuffer_observer();
 
-    void simulator_added(simulator_index, observable*) override;
+    void simulator_added(simulator_index, observable*, time_point) override;
 
-    void simulator_removed(simulator_index) override;
+    void simulator_removed(simulator_index, time_point) override;
 
-    void variables_connected(variable_id output, variable_id input) override;
+    void variables_connected(variable_id output, variable_id input, time_point) override;
 
-    void variable_disconnected(variable_id input) override;
+    void variable_disconnected(variable_id input, time_point) override;
 
     void step_complete(
         step_number lastStep,
@@ -184,13 +184,14 @@ public:
         gsl::span<int> values);
 
     /**
-     * Retrieves a series of observed values and step numbers for a real variable.
+     * Retrieves a series of observed values, step numbers and times for a real variable.
      *
      * \param [in] sim index of the simulator
      * \param [in] variableIndex the variable index
      * \param [in] fromStep the step number to start from
      * \param [out] values the series of observed values
      * \param [out] steps the corresponding step numbers
+     * \param [out] times the corresponding simulation times
      *
      * Returns the number of samples actually read, which may be smaller
      * than the sizes of `values` and `steps`.
@@ -200,16 +201,18 @@ public:
         variable_index variableIndex,
         step_number fromStep,
         gsl::span<double> values,
-        gsl::span<step_number> steps);
+        gsl::span<step_number> steps,
+        gsl::span<time_point> times);
 
     /**
-     * Retrieves a series of observed values and step numbers for an integer variable.
+     * Retrieves a series of observed values, step numbers and times for an integer variable.
      *
      * \param [in] sim index of the simulator
      * \param [in] variableIndex the variable index
      * \param [in] fromStep the step number to start from
      * \param [out] values the series of observed values
      * \param [out] steps the corresponding step numbers
+     * \param [out] times the corresponding simulation times
      *
      * Returns the number of samples actually read, which may be smaller
      * than the sizes of `values` and `steps`.
@@ -219,6 +222,39 @@ public:
         variable_index variableIndex,
         step_number fromStep,
         gsl::span<int> values,
+        gsl::span<step_number> steps,
+        gsl::span<time_point> times);
+
+    /**
+     * Retrieves the step numbers for a range given by a duration.
+     *
+     * Helper function which can be used in conjunction with `get_xxx_samples()`
+     * when it is desired to retrieve the latest available samples given a certain duration.
+     *
+     * \param [in] sim index of the simulator
+     * \param [in] duration the duration to get step numbers for
+     * \param [out] steps the corresponding step numbers
+     */
+    void get_step_numbers(
+        simulator_index sim,
+        duration duration,
+        gsl::span<step_number> steps);
+
+    /**
+     * Retrieves the step numbers for a range given by two points in time.
+     *
+     * Helper function which can be used in conjunction with `get_xxx_samples()`
+     * when it is desired to retrieve samples between two points in time.
+     *
+     * \param [in] sim index of the simulator
+     * \param [in] tBegin the start of the range
+     * \param [in] tEnd the end of the range
+     * \param [out] steps the corresponding step numbers
+     */
+    void get_step_numbers(
+        simulator_index sim,
+        time_point tBegin,
+        time_point tEnd,
         gsl::span<step_number> steps);
 
     ~membuffer_observer() noexcept;

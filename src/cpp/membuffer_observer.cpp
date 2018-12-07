@@ -2,6 +2,7 @@
 
 #include <map>
 #include <mutex>
+
 #include <cse/error.hpp>
 #include <cse/slave_value_provider.hpp>
 
@@ -13,31 +14,31 @@ membuffer_observer::membuffer_observer()
 {
 }
 
-void membuffer_observer::simulator_added(simulator_index index, observable* simulator)
+void membuffer_observer::simulator_added(simulator_index index, observable* simulator, time_point currentTime)
 {
-    valueProviders_[index] = std::make_unique<slave_value_provider>(simulator);
+    valueProviders_[index] = std::make_unique<slave_value_provider>(simulator, currentTime);
 }
 
-void membuffer_observer::simulator_removed(simulator_index index)
+void membuffer_observer::simulator_removed(simulator_index index, time_point /*currentTime*/)
 {
     valueProviders_.erase(index);
 }
 
-void membuffer_observer::variables_connected(variable_id /*output*/, variable_id /*input*/)
+void membuffer_observer::variables_connected(variable_id /*output*/, variable_id /*input*/, time_point /*currentTime*/)
 {
 }
 
-void membuffer_observer::variable_disconnected(variable_id /*input*/)
+void membuffer_observer::variable_disconnected(variable_id /*input*/, time_point /*currentTime*/)
 {
 }
 
 void membuffer_observer::step_complete(
     step_number lastStep,
     duration /*lastStepSize*/,
-    time_point /*currentTime*/)
+    time_point currentTime)
 {
     for (const auto& valueProvider : valueProviders_) {
-        valueProvider.second->observe(lastStep);
+        valueProvider.second->observe(lastStep, currentTime);
     }
 }
 
@@ -64,10 +65,12 @@ std::size_t membuffer_observer::get_real_samples(
     variable_index variableIndex,
     step_number fromStep,
     gsl::span<double> values,
-    gsl::span<step_number> steps)
+    gsl::span<step_number> steps,
+    gsl::span<time_point> times)
 {
     CSE_INPUT_CHECK(values.size() == steps.size());
-    return valueProviders_.at(sim)->get_real_samples(variableIndex, fromStep, values, steps);
+    CSE_INPUT_CHECK(times.size() == values.size());
+    return valueProviders_.at(sim)->get_real_samples(variableIndex, fromStep, values, steps, times);
 }
 
 std::size_t membuffer_observer::get_integer_samples(
@@ -75,10 +78,29 @@ std::size_t membuffer_observer::get_integer_samples(
     variable_index variableIndex,
     step_number fromStep,
     gsl::span<int> values,
-    gsl::span<step_number> steps)
+    gsl::span<step_number> steps,
+    gsl::span<time_point> times)
 {
     CSE_INPUT_CHECK(values.size() == steps.size());
-    return valueProviders_.at(sim)->get_int_samples(variableIndex, fromStep, values, steps);
+    CSE_INPUT_CHECK(times.size() == values.size());
+    return valueProviders_.at(sim)->get_int_samples(variableIndex, fromStep, values, steps, times);
+}
+
+void membuffer_observer::get_step_numbers(
+    simulator_index sim,
+    duration duration,
+    gsl::span<step_number> steps)
+{
+    valueProviders_.at(sim)->get_step_numbers(duration, steps);
+}
+
+void membuffer_observer::get_step_numbers(
+    simulator_index sim,
+    time_point tBegin,
+    time_point tEnd,
+    gsl::span<step_number> steps)
+{
+    valueProviders_.at(sim)->get_step_numbers(tBegin, tEnd, steps);
 }
 
 membuffer_observer::~membuffer_observer() noexcept = default;

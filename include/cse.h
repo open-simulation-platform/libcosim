@@ -18,10 +18,10 @@ extern "C" {
 
 
 /// The type used to specify (simulation) time points.
-typedef double cse_time_point;
+typedef int64_t cse_time_point;
 
 /// The type used to specify (simulation) time durations.
-typedef double cse_duration;
+typedef int64_t cse_duration;
 
 /// Variable index.
 typedef uint32_t cse_variable_index;
@@ -31,6 +31,9 @@ typedef int cse_slave_index;
 
 /// Observer index.
 typedef int cse_observer_index;
+
+/// Step number
+typedef long long cse_step_number;
 
 /// Error codes.
 typedef enum
@@ -262,7 +265,7 @@ typedef enum
 
 typedef struct
 {
-    double current_time;
+    cse_time_point current_time;
     cse_execution_state state;
     int error_code;
 } cse_execution_status;
@@ -345,15 +348,31 @@ int cse_observer_slave_get_real(
     size_t nv,
     double values[]);
 
-
+/**
+ * \brief
+ * Retrieves a series of observed values, step numbers and times for a real variable.
+ *
+ * \param [in] observer the observer
+ * \param [in] slave index of the slave
+ * \param [in] variableIndex the variable index
+ * \param [in] fromStep the step number to start from
+ * \param [in] nSamples the number of samples to read
+ * \param [out] values the series of observed values
+ * \param [out] steps the corresponding step numbers
+ * \param [out] times the corresponding simulation times
+ *
+ * Returns the number of samples actually read, which may be smaller
+ * than `nSamples`.
+ */
 size_t cse_observer_slave_get_real_samples(
     cse_observer* observer,
     cse_slave_index slave,
     cse_variable_index variableIndex,
-    long fromStep,
+    cse_step_number fromStep,
     size_t nSamples,
     double values[],
-    long long steps[]);
+    cse_step_number steps[],
+    cse_time_point times[]);
 
 /**
  *  \brief
@@ -389,7 +408,7 @@ int cse_execution_slave_set_integer(
  *  \param [in] observer
  *      The observer.
  *  \param [in] slave
- *      The slave.
+ *      The slave index.
  *  \param [in] variables
  *      A pointer to an array of length `nv` that contains the (slave-specific)
  *      indices of variables to retrieve.
@@ -409,14 +428,68 @@ int cse_observer_slave_get_integer(
     size_t nv,
     int values[]);
 
+/**
+ * \brief
+ * Retrieves a series of observed values, step numbers and times for an integer variable.
+ *
+ * \param [in] observer the observer
+ * \param [in] slave index of the slave
+ * \param [in] variableIndex the variable index
+ * \param [in] fromStep the step number to start from
+ * \param [in] nSamples the number of samples to read
+ * \param [out] values the series of observed values
+ * \param [out] steps the corresponding step numbers
+ * \param [out] times the corresponding simulation times
+ *
+ * Returns the number of samples actually read, which may be smaller
+ * than `nSamples`.
+ */
 size_t cse_observer_slave_get_integer_samples(
     cse_observer* observer,
     cse_slave_index slave,
     cse_variable_index variableIndex,
-    long fromStep,
+    cse_step_number fromStep,
     size_t nSamples,
     int values[],
-    long long steps[]);
+    cse_step_number steps[],
+    cse_time_point times[]);
+
+/**
+ * \brief
+ * Retrieves the step numbers for a range given by a duration.
+ *
+ * Helper function which can be used in conjunction with `cse_observer_slave_get_xxx_samples()`
+ * when it is desired to retrieve the latest available samples given a certain duration.
+ *
+ * \param [in] observer the observer
+ * \param [in] sim index of the slave
+ * \param [in] duration the duration to get step numbers for
+ * \param [out] steps the corresponding step numbers
+ */
+int cse_observer_get_step_numbers_for_duration(
+    cse_observer* observer,
+    cse_slave_index slave,
+    cse_duration duration,
+    cse_step_number steps[]);
+
+/**
+ * Retrieves the step numbers for a range given by two points in time.
+ *
+ * Helper function which can be used in conjunction with `cse_observer_slave_get_xxx_samples()`
+ * when it is desired to retrieve samples between two points in time.
+ *
+ * \param [in] observer the observer
+ * \param [in] sim index of the simulator
+ * \param [in] tBegin the start of the range
+ * \param [in] tEnd the end of the range
+ * \param [out] steps the corresponding step numbers
+ */
+int cse_observer_get_step_numbers(
+    cse_observer* observer,
+    cse_slave_index slave,
+    cse_time_point begin,
+    cse_time_point end,
+    cse_step_number steps[]);
 
 /**
  *  \brief
