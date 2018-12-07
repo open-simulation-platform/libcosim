@@ -33,6 +33,14 @@
 
     <ssd:Connections>
       <ssd:Connection startElement="CraneController" startConnector="p_Crane.e[1]" endElement="KnuckleBoomCrane" endConnector="p_Crane.e[1]"/>
+      <ssd:Connection startElement="CraneController" startConnector="p_Crane.e[2]" endElement="KnuckleBoomCrane" endConnector="p_Crane.e[2]"/>
+      <ssd:Connection startElement="CraneController" startConnector="p_Crane.e[3]" endElement="KnuckleBoomCrane" endConnector="p_Crane.e[3]"/>
+      <ssd:Connection startElement="KnuckleBoomCrane" startConnector="p_Crane.f[1]" endElement="CraneController" endConnector="p_Crane.f[1]"/>
+      <ssd:Connection startElement="KnuckleBoomCrane" startConnector="p_Crane.f[2]" endElement="CraneController" endConnector="p_Crane.f[2]"/>
+      <ssd:Connection startElement="KnuckleBoomCrane" startConnector="p_Crane.f[3]" endElement="CraneController" endConnector="p_Crane.f[3]"/>
+      <ssd:Connection startElement="KnuckleBoomCrane" startConnector="Act_Limits[1]" endElement="CraneController" endConnector="Act_Limits[1]"/>
+      <ssd:Connection startElement="KnuckleBoomCrane" startConnector="Act_Limits[2]" endElement="CraneController" endConnector="Act_Limits[2]"/>
+      <ssd:Connection startElement="KnuckleBoomCrane" startConnector="Act_Limits[3]" endElement="CraneController" endConnector="Act_Limits[3]"/>
     </ssd:Connections>
 
   </ssd:System>

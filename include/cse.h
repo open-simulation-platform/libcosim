@@ -272,8 +272,8 @@ typedef struct
 
 typedef struct
 {
-    char* name;
-    char* fmuFileName;
+    const char* name;
+    const char* source;
     cse_slave_index index;
 } cse_slave_info;
 

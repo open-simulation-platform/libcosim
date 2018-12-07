@@ -125,7 +125,7 @@ ssp_parser::ssp_parser(boost::filesystem::path xmlPath)
 
         for (const auto& connector : component.second.get_child("ssd:Connectors")) {
             if (connector.first == "ssd::Connector") {
-                auto &c = e.connectors.emplace_back();
+                auto& c = e.connectors.emplace_back();
                 c.name = get_attribute<std::string>(connector.second, "name");
                 c.kind = get_attribute<std::string>(connector.second, "kind");
                 c.type = get_attribute<std::string>(connector.second, "type");
@@ -175,24 +175,18 @@ execution load_ssp(const boost::filesystem::path& sspDir, cse::time_point startT
     const auto& simInfo = parser.get_simulation_information();
     const cse::duration stepSize = cse::to_duration(simInfo.stepSize);
 
-    std::map<std::string, slave_info> slaves;
+    auto elements = parser.get_elements();
 
-    auto elems = parser.get_elements();
-    for (const auto& comp : elems) {
-        std::cout << "Name:" << comp.name << std::endl;
-        std::cout << "Source: " << comp.source << std::endl;
-    }
-
-    // Set up execution
     auto execution = cse::execution(
         startTime,
         std::make_unique<cse::fixed_step_algorithm>(stepSize));
 
+    std::map<std::string, slave_info> slaves;
     auto importer = cse::fmi::importer::create();
-    for (const auto& component : elems) {
+    for (const auto& component : elements) {
         auto fmu = importer->import(sspDir / component.source);
         auto slave = fmu->instantiate_slave(component.name);
-        slaves[component.name].index = execution.add_slave(cse::make_pseudo_async(slave), component.name);
+        slaves[component.name].index = execution.add_slave(cse::make_pseudo_async(slave), component.name, component.source);
         for (const auto& v : fmu->model_description()->variables) {
             slaves[component.name].variables[v.name] = v;
         }

@@ -63,7 +63,7 @@ int main()
 
     for (int i = 0; i < numSlaves; i++) {
         printf("Name: %s\n", infos[i].name);
-        printf("File: %s\n", infos[i].fmuFileName);
+        printf("Source: %s\n", infos[i].source);
         printf("Index: %d\n", infos[i].index);
     }
 

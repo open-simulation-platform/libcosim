@@ -186,17 +186,19 @@ int cse_execution_destroy(cse_execution* execution)
 
 size_t cse_execution_get_num_slaves(cse_execution* execution)
 {
-    return execution->cpp_execution->get_num_simulators();
+    return execution->cpp_execution->get_simulator_ids().size();
 }
 
-int cse_execution_get_slave_indexes();
-
-int cse_execution_get_slave_infos(cse_execution* execution, cse_slave_info* infos, size_t numSlaves) {
+int cse_execution_get_slave_infos(cse_execution* execution, cse_slave_info* infos, size_t numSlaves)
+{
     try {
+        auto simulatorIds = execution->cpp_execution->get_simulator_ids();
         for (auto slave = 0; slave < numSlaves; slave++) {
-            auto simulator = execution->cpp_execution->get_simulator(slave);
-            simulator->model_description().name;
-            infos[slave] = cse_slave_info{"mordi", "fardi", slave};
+            const auto& simulatorId = simulatorIds.at(slave);
+            infos[slave] = cse_slave_info{
+                std::string(simulatorId.name).c_str(),
+                std::string(simulatorId.source).c_str(),
+                simulatorId.index};
         }
         return success;
     } catch (...) {
@@ -205,12 +207,13 @@ int cse_execution_get_slave_infos(cse_execution* execution, cse_slave_info* info
         handle_current_exception();
         return failure;
     }
-
 }
 
 struct cse_slave_s
 {
     std::string address;
+    std::string_view name;
+    std::string_view source;
     std::shared_ptr<cse::slave> instance;
 };
 
@@ -220,9 +223,11 @@ cse_slave* cse_local_slave_create(const char* fmuPath)
         const auto importer = cse::fmi::importer::create();
         const auto fmu = importer->import(fmuPath);
         auto slave = std::make_unique<cse_slave>();
-        slave->instance = fmu->instantiate_slave("unnamed slave");
+        slave->name = fmu->model_description()->name;
+        slave->instance = fmu->instantiate_slave(slave->name);
         // slave address not in use yet. Should be something else than a string.
         slave->address = "local";
+        slave->source = fmuPath;
         return slave.release();
     } catch (...) {
         handle_current_exception();
@@ -235,7 +240,7 @@ cse_slave_index cse_execution_add_slave(
     cse_slave* slave)
 {
     try {
-        auto index = execution->cpp_execution->add_slave(cse::make_pseudo_async(slave->instance), "unnamed slave");
+        auto index = execution->cpp_execution->add_slave(cse::make_pseudo_async(slave->instance), slave->name, slave->source);
         return index;
     } catch (...) {
         handle_current_exception();

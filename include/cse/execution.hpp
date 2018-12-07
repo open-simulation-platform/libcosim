@@ -39,6 +39,13 @@ struct variable_id
     variable_index index;
 };
 
+struct simulator_id
+{
+    simulator_index index;
+    std::string name;
+    std::string source;
+};
+
 /// Equality operator for `variable_id`.
 inline bool operator==(const variable_id& a, const variable_id& b) noexcept
 {
@@ -97,7 +104,8 @@ public:
      */
     simulator_index add_slave(
         std::shared_ptr<async_slave> slave,
-        std::string_view name);
+        std::string_view name,
+        std::string_view source);
 
     /**
      * Retrieves a `simulator`. This method will mostly likely disappear in the future.
@@ -184,8 +192,7 @@ public:
     /// Returns the current real time factor
     double get_real_time_factor();
 
-    /// Returns the number of simulators
-    size_t get_num_simulators();
+    std::vector<simulator_id> get_simulator_ids();
 
 
 private:
