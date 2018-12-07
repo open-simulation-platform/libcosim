@@ -184,6 +184,9 @@ public:
     /// Returns the current real time factor
     double get_real_time_factor();
 
+    /// Returns the number of simulators
+    size_t get_num_simulators();
+
 
 private:
     class impl;

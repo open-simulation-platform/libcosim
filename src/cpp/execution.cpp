@@ -172,6 +172,11 @@ public:
         return timer_.get_real_time_factor();
     }
 
+    size_t get_num_simulators()
+    {
+        return simulators_.size();
+    }
+
 private:
     void validate_variable(variable_id variable, variable_causality causality)
     {
@@ -296,5 +301,9 @@ double execution::get_real_time_factor()
     return pimpl_->get_real_time_factor();
 }
 
+size_t execution::get_num_simulators()
+{
+    return pimpl_->get_num_simulators();
+}
 
 } // namespace cse

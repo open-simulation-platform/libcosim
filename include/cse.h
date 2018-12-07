@@ -270,6 +270,17 @@ typedef struct
     int error_code;
 } cse_execution_status;
 
+typedef struct
+{
+    char* name;
+    char* fmuFileName;
+    cse_slave_index index;
+} cse_slave_info;
+
+size_t cse_execution_get_num_slaves(cse_execution* execution);
+
+int cse_execution_get_slave_infos(cse_execution* execution, cse_slave_info* infos, size_t numSlaves);
+
 
 /**
  *  \brief

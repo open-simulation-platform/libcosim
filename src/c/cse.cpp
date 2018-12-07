@@ -184,6 +184,30 @@ int cse_execution_destroy(cse_execution* execution)
     }
 }
 
+size_t cse_execution_get_num_slaves(cse_execution* execution)
+{
+    return execution->cpp_execution->get_num_simulators();
+}
+
+int cse_execution_get_slave_indexes();
+
+int cse_execution_get_slave_infos(cse_execution* execution, cse_slave_info* infos, size_t numSlaves) {
+    try {
+        for (auto slave = 0; slave < numSlaves; slave++) {
+            auto simulator = execution->cpp_execution->get_simulator(slave);
+            simulator->model_description().name;
+            infos[slave] = cse_slave_info{"mordi", "fardi", slave};
+        }
+        return success;
+    } catch (...) {
+        execution->state = CSE_EXECUTION_ERROR;
+        execution->error_code = CSE_ERRC_UNSPECIFIED;
+        handle_current_exception();
+        return failure;
+    }
+
+}
+
 struct cse_slave_s
 {
     std::string address;
