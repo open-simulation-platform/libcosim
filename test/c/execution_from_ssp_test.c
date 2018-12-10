@@ -61,7 +61,7 @@ int main()
         return 1;
     }
 
-    for (int i = 0; i < numSlaves; i++) {
+    for (size_t i = 0; i < numSlaves; i++) {
         printf("Name: %s\n", infos[i].name);
         printf("Source: %s\n", infos[i].source);
         printf("Index: %d\n", infos[i].index);
