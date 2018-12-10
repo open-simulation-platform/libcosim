@@ -193,7 +193,7 @@ int cse_execution_get_slave_infos(cse_execution* execution, cse_slave_info* info
 {
     try {
         auto simulatorIds = execution->cpp_execution->get_simulator_ids();
-        for (auto slave = 0; slave < numSlaves; slave++) {
+        for (size_t slave = 0; slave < numSlaves; slave++) {
             const auto& simulatorId = simulatorIds.at(slave);
             infos[slave] = cse_slave_info{
                 std::string(simulatorId.name).c_str(),
