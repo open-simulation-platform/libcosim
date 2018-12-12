@@ -270,16 +270,18 @@ typedef struct
     int error_code;
 } cse_execution_status;
 
+#define SLAVE_NAME_MAX_SIZE 1024
+
 typedef struct
 {
-    const char* name;
-    const char* source;
+    char name[SLAVE_NAME_MAX_SIZE];
+    char source[SLAVE_NAME_MAX_SIZE];
     cse_slave_index index;
 } cse_slave_info;
 
 size_t cse_execution_get_num_slaves(cse_execution* execution);
 
-int cse_execution_get_slave_infos(cse_execution* execution, cse_slave_info* infos, size_t numSlaves);
+int cse_execution_get_slave_infos(cse_execution* execution, cse_slave_info infos[], size_t numSlaves);
 
 
 /**

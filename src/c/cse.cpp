@@ -3,6 +3,7 @@
 #include <atomic>
 #include <cassert>
 #include <cerrno>
+#include <cstring>
 #include <iostream>
 #include <mutex>
 #include <optional>
@@ -189,16 +190,15 @@ size_t cse_execution_get_num_slaves(cse_execution* execution)
     return execution->cpp_execution->get_simulator_ids().size();
 }
 
-int cse_execution_get_slave_infos(cse_execution* execution, cse_slave_info* infos, size_t numSlaves)
+int cse_execution_get_slave_infos(cse_execution* execution, cse_slave_info infos[], size_t numSlaves)
 {
     try {
-        auto simulatorIds = execution->cpp_execution->get_simulator_ids();
-        for (size_t slave = 0; slave < numSlaves; slave++) {
-            const auto& simulatorId = simulatorIds.at(slave);
-            infos[slave] = cse_slave_info{
-                std::string(simulatorId.name).c_str(),
-                std::string(simulatorId.source).c_str(),
-                simulatorId.index};
+        auto ids = execution->cpp_execution->get_simulator_ids();
+        for (size_t slave = 0; slave < std::min<size_t>(numSlaves, ids.size()); slave++) {
+            const auto& simulatorId = ids.at(slave);
+            strcpy_s(infos[slave].name, SLAVE_NAME_MAX_SIZE, simulatorId.name.c_str());
+            strcpy_s(infos[slave].source, SLAVE_NAME_MAX_SIZE, simulatorId.source.c_str());
+            infos[slave].index = simulatorId.index;
         }
         return success;
     } catch (...) {
