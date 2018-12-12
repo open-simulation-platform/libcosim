@@ -196,8 +196,8 @@ int cse_execution_get_slave_infos(cse_execution* execution, cse_slave_info infos
         auto ids = execution->cpp_execution->get_simulator_ids();
         for (size_t slave = 0; slave < std::min<size_t>(numSlaves, ids.size()); slave++) {
             const auto& simulatorId = ids.at(slave);
-            strcpy_s(infos[slave].name, SLAVE_NAME_MAX_SIZE, simulatorId.name.c_str());
-            strcpy_s(infos[slave].source, SLAVE_NAME_MAX_SIZE, simulatorId.source.c_str());
+            std::strcpy(infos[slave].name, simulatorId.name.c_str());
+            std::strcpy(infos[slave].source, simulatorId.source.c_str());
             infos[slave].index = simulatorId.index;
         }
         return success;
