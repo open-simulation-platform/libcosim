@@ -168,8 +168,10 @@ struct slave_info
 
 } // namespace
 
-execution load_ssp(const boost::filesystem::path& sspDir, cse::time_point startTime)
+std::pair<execution, simulator_map> load_ssp(const boost::filesystem::path& sspDir, cse::time_point startTime)
 {
+    simulator_map simulatorMap;
+
     const auto parser = cse::ssp_parser(sspDir / "SystemStructure.ssd");
 
     const auto& simInfo = parser.get_simulation_information();
@@ -186,7 +188,10 @@ execution load_ssp(const boost::filesystem::path& sspDir, cse::time_point startT
     for (const auto& component : elements) {
         auto fmu = importer->import(sspDir / component.source);
         auto slave = fmu->instantiate_slave(component.name);
-        slaves[component.name].index = execution.add_slave(cse::make_pseudo_async(slave), component.name, component.source);
+        simulator_index index = slaves[component.name].index = execution.add_slave(cse::make_pseudo_async(slave), component.name);
+
+        simulatorMap[component.name] = simulator_map_entry{index, component.source};
+
         for (const auto& v : fmu->model_description()->variables) {
             slaves[component.name].variables[v.name] = v;
         }
@@ -204,7 +209,7 @@ execution load_ssp(const boost::filesystem::path& sspDir, cse::time_point startT
         execution.connect_variables(output, input);
     }
 
-    return execution;
+    return std::make_pair(std::move(execution), std::move(simulatorMap));
 }
 
 

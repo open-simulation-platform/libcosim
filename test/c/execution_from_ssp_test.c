@@ -3,6 +3,7 @@
 
 #include <cse.h>
 #include <math.h>
+#include <string.h>
 
 #ifdef _WINDOWS
 #    include <windows.h>
@@ -51,7 +52,6 @@ int main()
     }
 
     size_t numSlaves = cse_execution_get_num_slaves(execution);
-    printf("Num slaves: %zu\n", numSlaves);
 
     cse_slave_info infos[2];
     rc = cse_execution_get_slave_infos(execution, &infos[0], numSlaves);
@@ -62,15 +62,27 @@ int main()
     }
 
     for (size_t i = 0; i < numSlaves; i++) {
-        printf("Name: %s\n", infos[i].name);
-        printf("Source: %s\n", infos[i].source);
-        printf("Index: %d\n", infos[i].index);
+        if (0 == strncmp(infos[i].name, "KnuckleBoomCrane", SLAVE_NAME_MAX_SIZE)) {
+            double value = -1;
+            cse_slave_index slaveIndex = infos[i].index;
+            cse_variable_index varIndex = 2;
+            rc = cse_observer_slave_get_real(observer, slaveIndex, &varIndex, 1, &value);
+            if (rc < 0) {
+                print_last_error();
+                cse_execution_destroy(execution);
+                return 1;
+            }
+            if (value != 0.05) {
+                fprintf(stderr, "Expected value 0.05, got %f\n", value);
+                cse_execution_destroy(execution);
+                return 1;
+            }
+        }
     }
 
-    double values = -1;
-    cse_slave_index slaveIndex = 0; // what is it?
-    cse_variable_index varIndex = 0; // what is it?
-    cse_observer_slave_get_real(observer, slaveIndex, &varIndex, 1, &values);
+    cse_execution_start(execution);
+    Sleep(100);
+    cse_execution_stop(execution);
 
     return 0;
 }

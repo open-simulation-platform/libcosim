@@ -127,6 +127,7 @@ const char* cse_last_error_message()
 
 struct cse_execution_s
 {
+    cse::simulator_map simulators;
     std::unique_ptr<cse::execution> cpp_execution;
     std::thread t;
     std::atomic<cse_execution_state> state;
@@ -161,8 +162,12 @@ cse_execution* cse_ssp_execution_create(const char* sspDir, cse_time_point start
     try {
         cse::log::set_global_output_level(cse::log::level::info);
         auto execution = std::make_unique<cse_execution>();
-        execution->cpp_execution = std::make_unique<cse::execution>(
-            cse::load_ssp(sspDir, to_time_point(startTime)));
+
+        auto sim = cse::load_ssp(sspDir, to_time_point(startTime));
+
+        execution->cpp_execution = std::make_unique<cse::execution>(std::move(sim.first));
+        execution->simulators = std::move(sim.second);
+
         return execution.release();
     } catch (...) {
         handle_current_exception();
@@ -187,18 +192,21 @@ int cse_execution_destroy(cse_execution* execution)
 
 size_t cse_execution_get_num_slaves(cse_execution* execution)
 {
-    return execution->cpp_execution->get_simulator_ids().size();
+    return execution->simulators.size();
 }
 
 int cse_execution_get_slave_infos(cse_execution* execution, cse_slave_info infos[], size_t numSlaves)
 {
     try {
-        auto ids = execution->cpp_execution->get_simulator_ids();
-        for (size_t slave = 0; slave < std::min<size_t>(numSlaves, ids.size()); slave++) {
-            const auto& simulatorId = ids.at(slave);
-            std::strcpy(infos[slave].name, simulatorId.name.c_str());
-            std::strcpy(infos[slave].source, simulatorId.source.c_str());
-            infos[slave].index = simulatorId.index;
+        auto ids = execution->simulators;
+        size_t slave = 0;
+        for (const auto& [name, entry] : ids) {
+            std::strncpy(infos[slave].name, name.c_str(), SLAVE_NAME_MAX_SIZE);
+            std::strncpy(infos[slave].source, entry.source.c_str(), SLAVE_NAME_MAX_SIZE);
+            infos[slave].index = entry.index;
+            if (++slave >= numSlaves) {
+                break;
+            }
         }
         return success;
     } catch (...) {
@@ -212,8 +220,8 @@ int cse_execution_get_slave_infos(cse_execution* execution, cse_slave_info infos
 struct cse_slave_s
 {
     std::string address;
-    std::string_view name;
-    std::string_view source;
+    std::string name;
+    std::string source;
     std::shared_ptr<cse::slave> instance;
 };
 
@@ -240,7 +248,8 @@ cse_slave_index cse_execution_add_slave(
     cse_slave* slave)
 {
     try {
-        auto index = execution->cpp_execution->add_slave(cse::make_pseudo_async(slave->instance), slave->name, slave->source);
+        auto index = execution->cpp_execution->add_slave(cse::make_pseudo_async(slave->instance), slave->name);
+        execution->simulators[slave->name] = cse::simulator_map_entry{index, slave->source};
         return index;
     } catch (...) {
         handle_current_exception();

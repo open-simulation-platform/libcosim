@@ -58,13 +58,11 @@ public:
 
     simulator_index add_slave(
         std::shared_ptr<async_slave> slave,
-        std::string_view name,
-        std::string_view source)
+        std::string_view name)
     {
         const auto index = static_cast<simulator_index>(simulators_.size());
         simulators_.push_back(std::make_unique<slave_simulator>(slave, name));
         algorithm_->add_simulator(index, simulators_.back().get());
-        simulatorIds_.push_back(simulator_id{index, name.data(), source.data()});
 
         for (const auto& obs : observers_) {
             obs->simulator_added(index, simulators_.back().get(), currentTime_);
@@ -174,11 +172,6 @@ public:
         return timer_.get_real_time_factor();
     }
 
-    std::vector<simulator_id> get_simulator_ids()
-    {
-        return simulatorIds_;
-    }
-
 private:
     void validate_variable(variable_id variable, variable_causality causality)
     {
@@ -224,7 +217,6 @@ private:
     std::vector<std::shared_ptr<observer>> observers_;
     std::unordered_map<variable_id, variable_id> connections_; // (key, value) = (input, output)
     real_time_timer timer_;
-    std::vector<simulator_id> simulatorIds_;
 };
 
 
@@ -239,10 +231,9 @@ execution& execution::operator=(execution&& other) noexcept = default;
 
 simulator_index execution::add_slave(
     std::shared_ptr<async_slave> slave,
-    std::string_view name,
-    std::string_view source)
+    std::string_view name)
 {
-    return pimpl_->add_slave(std::move(slave), name, source);
+    return pimpl_->add_slave(std::move(slave), name);
 }
 
 std::shared_ptr<simulator> execution::get_simulator(simulator_index index)
@@ -305,9 +296,5 @@ double execution::get_real_time_factor()
     return pimpl_->get_real_time_factor();
 }
 
-std::vector<simulator_id> execution::get_simulator_ids()
-{
-    return pimpl_->get_simulator_ids();
-}
 
 } // namespace cse

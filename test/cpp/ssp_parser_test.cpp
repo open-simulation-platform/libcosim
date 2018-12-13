@@ -19,7 +19,13 @@ int main()
         REQUIRE(testDataDir);
         boost::filesystem::path xmlPath = boost::filesystem::path(testDataDir) / "ssp" / "demo";
         std::cout << "Path: " << xmlPath.string() << std::endl;
-        auto execution = cse::load_ssp(xmlPath, cse::to_time_point(0.0));
+        auto simulation = cse::load_ssp(xmlPath, cse::to_time_point(0.0));
+        auto& execution = simulation.first;
+
+        auto& simulator_map = simulation.second;
+        REQUIRE(simulator_map.size() == 2);
+        REQUIRE(simulator_map.at("CraneController").source == "CraneController.fmu");
+        REQUIRE(simulator_map.at("KnuckleBoomCrane").source == "KnuckleBoomCrane.fmu");
 
         auto result = execution.simulate_until(cse::to_time_point(1e-3));
         REQUIRE(result.get());

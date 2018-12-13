@@ -38,9 +38,9 @@ int main()
 
         // Add a slave to the execution and connect variables
         execution.add_slave(
-            cse::make_pseudo_async(std::make_unique<mock_slave>([](double x) { return x + 1.234; })), "slave uno", "mock");
+            cse::make_pseudo_async(std::make_unique<mock_slave>([](double x) { return x + 1.234; })), "slave uno");
         execution.add_slave(
-            cse::make_pseudo_async(std::make_unique<mock_slave>([](double x) { return x + 1.234; }, [](int y) { return y - 4; })), "slave dos", "mock");
+            cse::make_pseudo_async(std::make_unique<mock_slave>([](double x) { return x + 1.234; }, [](int y) { return y - 4; })), "slave dos");
 
         // Run the simulation
         auto simResult = execution.simulate_until(endTime);

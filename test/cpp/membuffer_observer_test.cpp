@@ -30,7 +30,7 @@ int main()
 
         // Add slaves to the execution and connect variables
         auto simIndex = execution.add_slave(
-            cse::make_pseudo_async(std::make_unique<mock_slave>([](double x) { return x + 1.234; })), "slave uno", "mock");
+            cse::make_pseudo_async(std::make_unique<mock_slave>([](double x) { return x + 1.234; })), "slave uno");
 
         // Run the simulation
         auto simResult = execution.simulate_until(endTime);
