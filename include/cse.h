@@ -377,7 +377,7 @@ int cse_observer_slave_get_real(
  * Returns the number of samples actually read, which may be smaller
  * than `nSamples`.
  */
-size_t cse_observer_slave_get_real_samples(
+int64_t cse_observer_slave_get_real_samples(
     cse_observer* observer,
     cse_slave_index slave,
     cse_variable_index variableIndex,
@@ -457,7 +457,7 @@ int cse_observer_slave_get_integer(
  * Returns the number of samples actually read, which may be smaller
  * than `nSamples`.
  */
-size_t cse_observer_slave_get_integer_samples(
+int64_t cse_observer_slave_get_integer_samples(
     cse_observer* observer,
     cse_slave_index slave,
     cse_variable_index variableIndex,
@@ -574,6 +574,8 @@ int cse_hello_world(char* buffer, size_t size);
 
 
 cse_observer* cse_membuffer_observer_create();
+
+cse_observer* cse_file_observer_create(const char* logDir);
 
 int cse_observer_destroy(cse_observer* observer);
 
