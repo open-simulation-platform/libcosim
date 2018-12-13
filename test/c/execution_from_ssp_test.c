@@ -3,6 +3,7 @@
 
 #include <cse.h>
 #include <math.h>
+#include <string.h>
 
 #ifdef _WINDOWS
 #    include <windows.h>
@@ -19,7 +20,8 @@ void print_last_error()
         cse_last_error_code(), cse_last_error_message());
 }
 
-int main() {
+int main()
+{
     const char* dataDir = getenv("TEST_DATA_DIR");
     if (!dataDir) {
         fprintf(stderr, "Environment variable TEST_DATA_DIR not set\n");
@@ -39,11 +41,48 @@ int main() {
         return 1;
     }
 
+    cse_observer* observer = cse_membuffer_observer_create();
+    cse_execution_add_observer(execution, observer);
+
     rc = cse_execution_step(execution, 3);
     if (rc < 0) {
         print_last_error();
         cse_execution_destroy(execution);
         return 1;
     }
+
+    size_t numSlaves = cse_execution_get_num_slaves(execution);
+
+    cse_slave_info infos[2];
+    rc = cse_execution_get_slave_infos(execution, &infos[0], numSlaves);
+    if (rc < 0) {
+        print_last_error();
+        cse_execution_destroy(execution);
+        return 1;
+    }
+
+    for (size_t i = 0; i < numSlaves; i++) {
+        if (0 == strncmp(infos[i].name, "KnuckleBoomCrane", SLAVE_NAME_MAX_SIZE)) {
+            double value = -1;
+            cse_slave_index slaveIndex = infos[i].index;
+            cse_variable_index varIndex = 2;
+            rc = cse_observer_slave_get_real(observer, slaveIndex, &varIndex, 1, &value);
+            if (rc < 0) {
+                print_last_error();
+                cse_execution_destroy(execution);
+                return 1;
+            }
+            if (value != 0.05) {
+                fprintf(stderr, "Expected value 0.05, got %f\n", value);
+                cse_execution_destroy(execution);
+                return 1;
+            }
+        }
+    }
+
+    cse_execution_start(execution);
+    Sleep(100);
+    cse_execution_stop(execution);
+
     return 0;
 }

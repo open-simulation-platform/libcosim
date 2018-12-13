@@ -59,7 +59,7 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
         # should not be a problem, so we disable the warning.
         add_compile_options("/wd4251")
     endif()
-    add_definitions("-D_SCL_SECURE_NO_WARNINGS")
+    add_definitions("-D_SCL_SECURE_NO_WARNINGS" "-D_CRT_SECURE_NO_WARNINGS")
 endif()
 
 # Automatically export all symbols in Windows DLLs.

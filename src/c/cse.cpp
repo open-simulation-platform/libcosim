@@ -3,6 +3,7 @@
 #include <atomic>
 #include <cassert>
 #include <cerrno>
+#include <cstring>
 #include <iostream>
 #include <mutex>
 #include <optional>
@@ -126,6 +127,7 @@ const char* cse_last_error_message()
 
 struct cse_execution_s
 {
+    cse::simulator_map simulators;
     std::unique_ptr<cse::execution> cpp_execution;
     std::thread t;
     std::atomic<cse_execution_state> state;
@@ -160,8 +162,12 @@ cse_execution* cse_ssp_execution_create(const char* sspDir, cse_time_point start
     try {
         cse::log::set_global_output_level(cse::log::level::info);
         auto execution = std::make_unique<cse_execution>();
-        execution->cpp_execution = std::make_unique<cse::execution>(
-            cse::load_ssp(sspDir, to_time_point(startTime)));
+
+        auto sim = cse::load_ssp(sspDir, to_time_point(startTime));
+
+        execution->cpp_execution = std::make_unique<cse::execution>(std::move(sim.first));
+        execution->simulators = std::move(sim.second);
+
         return execution.release();
     } catch (...) {
         handle_current_exception();
@@ -184,9 +190,38 @@ int cse_execution_destroy(cse_execution* execution)
     }
 }
 
+size_t cse_execution_get_num_slaves(cse_execution* execution)
+{
+    return execution->simulators.size();
+}
+
+int cse_execution_get_slave_infos(cse_execution* execution, cse_slave_info infos[], size_t numSlaves)
+{
+    try {
+        auto ids = execution->simulators;
+        size_t slave = 0;
+        for (const auto& [name, entry] : ids) {
+            std::strncpy(infos[slave].name, name.c_str(), SLAVE_NAME_MAX_SIZE);
+            std::strncpy(infos[slave].source, entry.source.c_str(), SLAVE_NAME_MAX_SIZE);
+            infos[slave].index = entry.index;
+            if (++slave >= numSlaves) {
+                break;
+            }
+        }
+        return success;
+    } catch (...) {
+        execution->state = CSE_EXECUTION_ERROR;
+        execution->error_code = CSE_ERRC_UNSPECIFIED;
+        handle_current_exception();
+        return failure;
+    }
+}
+
 struct cse_slave_s
 {
     std::string address;
+    std::string name;
+    std::string source;
     std::shared_ptr<cse::slave> instance;
 };
 
@@ -196,9 +231,11 @@ cse_slave* cse_local_slave_create(const char* fmuPath)
         const auto importer = cse::fmi::importer::create();
         const auto fmu = importer->import(fmuPath);
         auto slave = std::make_unique<cse_slave>();
-        slave->instance = fmu->instantiate_slave("unnamed slave");
+        slave->name = fmu->model_description()->name;
+        slave->instance = fmu->instantiate_slave(slave->name);
         // slave address not in use yet. Should be something else than a string.
         slave->address = "local";
+        slave->source = fmuPath;
         return slave.release();
     } catch (...) {
         handle_current_exception();
@@ -211,7 +248,8 @@ cse_slave_index cse_execution_add_slave(
     cse_slave* slave)
 {
     try {
-        auto index = execution->cpp_execution->add_slave(cse::make_pseudo_async(slave->instance), "unnamed slave");
+        auto index = execution->cpp_execution->add_slave(cse::make_pseudo_async(slave->instance), slave->name);
+        execution->simulators[slave->name] = cse::simulator_map_entry{index, slave->source};
         return index;
     } catch (...) {
         handle_current_exception();
