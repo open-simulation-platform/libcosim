@@ -333,7 +333,7 @@ int cse_execution_get_status(cse_execution* execution, cse_execution_status* sta
 
 struct cse_observer_s
 {
-    std::shared_ptr<cse::membuffer_observer> cpp_observer;
+    std::shared_ptr<cse::observer> cpp_observer;
 };
 
 int cse_observer_destroy(cse_observer* observer)
@@ -414,7 +414,8 @@ int cse_execution_connect_real_variables(
     cse_slave_index inputSlaveIndex,
     cse_variable_index inputVariableIndex)
 {
-    return connect_variables(execution, outputSlaveIndex, outputVariableIndex, inputSlaveIndex, inputVariableIndex, cse::variable_type::real);
+    return connect_variables(execution, outputSlaveIndex, outputVariableIndex, inputSlaveIndex, inputVariableIndex,
+        cse::variable_type::real);
 }
 
 int cse_execution_connect_integer_variables(
@@ -424,7 +425,8 @@ int cse_execution_connect_integer_variables(
     cse_slave_index inputSlaveIndex,
     cse_variable_index inputVariableIndex)
 {
-    return connect_variables(execution, outputSlaveIndex, outputVariableIndex, inputSlaveIndex, inputVariableIndex, cse::variable_type::integer);
+    return connect_variables(execution, outputSlaveIndex, outputVariableIndex, inputSlaveIndex, inputVariableIndex,
+        cse::variable_type::integer);
 }
 
 int cse_observer_slave_get_real(
@@ -435,7 +437,11 @@ int cse_observer_slave_get_real(
     double values[])
 {
     try {
-        observer->cpp_observer->get_real(slave, gsl::make_span(variables, nv), gsl::make_span(values, nv));
+        const auto membufferObserver = std::dynamic_pointer_cast<cse::membuffer_observer>(observer->cpp_observer);
+        if (!membufferObserver) {
+            throw std::invalid_argument("Not a membuffer observer");
+        }
+        membufferObserver->get_real(slave, gsl::make_span(variables, nv), gsl::make_span(values, nv));
         return success;
     } catch (...) {
         handle_current_exception();
@@ -451,7 +457,11 @@ int cse_observer_slave_get_integer(
     int values[])
 {
     try {
-        observer->cpp_observer->get_integer(slave, gsl::make_span(variables, nv), gsl::make_span(values, nv));
+        const auto membufferObserver = std::dynamic_pointer_cast<cse::membuffer_observer>(observer->cpp_observer);
+        if (!membufferObserver) {
+            throw std::invalid_argument("Not a membuffer observer");
+        }
+        membufferObserver->get_integer(slave, gsl::make_span(variables, nv), gsl::make_span(values, nv));
         return success;
     } catch (...) {
         handle_current_exception();
@@ -459,7 +469,7 @@ int cse_observer_slave_get_integer(
     }
 }
 
-size_t cse_observer_slave_get_real_samples(
+int64_t cse_observer_slave_get_real_samples(
     cse_observer* observer,
     cse_slave_index slave,
     cse_variable_index variableIndex,
@@ -469,15 +479,26 @@ size_t cse_observer_slave_get_real_samples(
     cse_step_number steps[],
     cse_time_point times[])
 {
-    std::vector<cse::time_point> timePoints(nSamples);
-    size_t samplesRead = observer->cpp_observer->get_real_samples(slave, variableIndex, fromStep, gsl::make_span(values, nSamples), gsl::make_span(steps, nSamples), timePoints);
-    for (size_t i = 0; i < samplesRead; ++i) {
-        times[i] = to_integer_time_point(timePoints[i]);
+    try {
+        std::vector<cse::time_point> timePoints(nSamples);
+        const auto membufferObserver = std::dynamic_pointer_cast<cse::membuffer_observer>(observer->cpp_observer);
+        if (!membufferObserver) {
+            throw std::invalid_argument("Not a membuffer observer");
+        }
+        size_t samplesRead = membufferObserver->get_real_samples(slave, variableIndex, fromStep,
+            gsl::make_span(values, nSamples),
+            gsl::make_span(steps, nSamples), timePoints);
+        for (size_t i = 0; i < samplesRead; ++i) {
+            times[i] = to_integer_time_point(timePoints[i]);
+        }
+        return samplesRead;
+    } catch (...) {
+        handle_current_exception();
+        return failure;
     }
-    return samplesRead;
 }
 
-size_t cse_observer_slave_get_integer_samples(
+int64_t cse_observer_slave_get_integer_samples(
     cse_observer* observer,
     cse_slave_index slave,
     cse_variable_index variableIndex,
@@ -487,12 +508,23 @@ size_t cse_observer_slave_get_integer_samples(
     cse_step_number steps[],
     cse_time_point times[])
 {
-    std::vector<cse::time_point> timePoints(nSamples);
-    size_t samplesRead = observer->cpp_observer->get_integer_samples(slave, variableIndex, fromStep, gsl::make_span(values, nSamples), gsl::make_span(steps, nSamples), timePoints);
-    for (size_t i = 0; i < samplesRead; ++i) {
-        times[i] = to_integer_time_point(timePoints[i]);
+    try {
+        std::vector<cse::time_point> timePoints(nSamples);
+        const auto membufferObserver = std::dynamic_pointer_cast<cse::membuffer_observer>(observer->cpp_observer);
+        if (!membufferObserver) {
+            throw std::invalid_argument("Not a membuffer observer");
+        }
+        size_t samplesRead = membufferObserver->get_integer_samples(slave, variableIndex, fromStep,
+            gsl::make_span(values, nSamples),
+            gsl::make_span(steps, nSamples), timePoints);
+        for (size_t i = 0; i < samplesRead; ++i) {
+            times[i] = to_integer_time_point(timePoints[i]);
+        }
+        return samplesRead;
+    } catch (...) {
+        handle_current_exception();
+        return failure;
     }
-    return samplesRead;
 }
 
 int cse_observer_get_step_numbers_for_duration(
@@ -501,8 +533,11 @@ int cse_observer_get_step_numbers_for_duration(
     cse_duration duration,
     cse_step_number steps[])
 {
-    try {
-        observer->cpp_observer->get_step_numbers(slave, to_duration(duration), gsl::make_span(steps, 2));
+    try {const auto membufferObserver = std::dynamic_pointer_cast<cse::membuffer_observer>(observer->cpp_observer);
+        if (!membufferObserver) {
+            throw std::invalid_argument("Not a membuffer observer");
+        }
+        membufferObserver->get_step_numbers(slave, to_duration(duration), gsl::make_span(steps, 2));
         return success;
     } catch (...) {
         handle_current_exception();
@@ -518,7 +553,12 @@ int cse_observer_get_step_numbers(
     cse_step_number steps[])
 {
     try {
-        observer->cpp_observer->get_step_numbers(slave, to_time_point(begin), to_time_point(end), gsl::make_span(steps, 2));
+        const auto membufferObserver = std::dynamic_pointer_cast<cse::membuffer_observer>(observer->cpp_observer);
+        if (!membufferObserver) {
+            throw std::invalid_argument("Not a membuffer observer");
+        }
+        membufferObserver->get_step_numbers(slave, to_time_point(begin), to_time_point(end),
+            gsl::make_span(steps, 2));
         return success;
     } catch (...) {
         handle_current_exception();
@@ -530,6 +570,14 @@ cse_observer* cse_membuffer_observer_create()
 {
     auto observer = std::make_unique<cse_observer>();
     observer->cpp_observer = std::make_shared<cse::membuffer_observer>();
+
+    return observer.release();
+}
+
+cse_observer* cse_file_observer_create(const char* logDir)
+{
+    auto observer = std::make_unique<cse_observer>();
+    observer->cpp_observer = std::make_shared<cse::file_observer>(logDir, false, 100);
 
     return observer.release();
 }
