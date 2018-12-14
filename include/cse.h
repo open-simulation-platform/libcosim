@@ -268,21 +268,9 @@ typedef struct
     cse_time_point current_time;
     cse_execution_state state;
     int error_code;
+    double real_time_factor;
+    int is_real_time_simulation;
 } cse_execution_status;
-
-#define SLAVE_NAME_MAX_SIZE 1024
-
-typedef struct
-{
-    char name[SLAVE_NAME_MAX_SIZE];
-    char source[SLAVE_NAME_MAX_SIZE];
-    cse_slave_index index;
-} cse_slave_info;
-
-size_t cse_execution_get_num_slaves(cse_execution* execution);
-
-int cse_execution_get_slave_infos(cse_execution* execution, cse_slave_info infos[], size_t numSlaves);
-
 
 /**
  *  \brief
@@ -300,6 +288,26 @@ int cse_execution_get_slave_infos(cse_execution* execution, cse_slave_info infos
 int cse_execution_get_status(
     cse_execution* execution,
     cse_execution_status* status);
+
+#define SLAVE_NAME_MAX_SIZE 1024
+
+typedef struct
+{
+    char name[SLAVE_NAME_MAX_SIZE];
+    char source[SLAVE_NAME_MAX_SIZE];
+    cse_slave_index index;
+} cse_slave_info;
+
+size_t cse_execution_get_num_slaves(cse_execution* execution);
+
+int cse_execution_get_slave_infos(cse_execution* execution, cse_slave_info infos[], size_t numSlaves);
+
+
+/// Enables real time simulation
+int cse_execution_enable_real_time_simulation(cse_execution* execution);
+
+/// Disables real time simulation
+int cse_execution_disable_real_time_simulation(cse_execution* execution);
 
 
 // Observer

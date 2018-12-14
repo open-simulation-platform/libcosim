@@ -185,7 +185,8 @@ private:
             oss << "Cannot find variable with index " << variable.index
                 << ", causality " << cse::to_text(causality)
                 << " and type " << cse::to_text(variable.type)
-                << " for simulator " << variable.simulator;
+                << " for simulator with index " << variable.simulator
+                << " and name " << simulators_.at(variable.simulator)->name();
             throw std::out_of_range(oss.str());
         }
     }
