@@ -123,22 +123,26 @@ ssp_parser::ssp_parser(boost::filesystem::path xmlPath)
         e.name = get_attribute<std::string>(component.second, "name");
         e.source = get_attribute<std::string>(component.second, "source");
 
-        for (const auto& connector : component.second.get_child("ssd:Connectors")) {
-            if (connector.first == "ssd::Connector") {
-                auto& c = e.connectors.emplace_back();
-                c.name = get_attribute<std::string>(connector.second, "name");
-                c.kind = get_attribute<std::string>(connector.second, "kind");
-                c.type = get_attribute<std::string>(connector.second, "type");
+        if (component.second.get_child_optional("ssd:Connectors")) {
+            for (const auto& connector : component.second.get_child("ssd:Connectors")) {
+                if (connector.first == "ssd::Connector") {
+                    auto& c = e.connectors.emplace_back();
+                    c.name = get_attribute<std::string>(connector.second, "name");
+                    c.kind = get_attribute<std::string>(connector.second, "kind");
+                    c.type = get_attribute<std::string>(connector.second, "type");
+                }
             }
         }
     }
 
-    for (const auto& connection : tmpTree.get_child("ssd:Connections")) {
-        auto& c = connections_.emplace_back();
-        c.startElement = get_attribute<std::string>(connection.second, "startElement");
-        c.startConnector = get_attribute<std::string>(connection.second, "startConnector");
-        c.endElement = get_attribute<std::string>(connection.second, "endElement");
-        c.endConnector = get_attribute<std::string>(connection.second, "endConnector");
+    if (tmpTree.get_child_optional("ssd:Connections")) {
+        for (const auto& connection : tmpTree.get_child("ssd:Connections")) {
+            auto& c = connections_.emplace_back();
+            c.startElement = get_attribute<std::string>(connection.second, "startElement");
+            c.startConnector = get_attribute<std::string>(connection.second, "startConnector");
+            c.endElement = get_attribute<std::string>(connection.second, "endElement");
+            c.endConnector = get_attribute<std::string>(connection.second, "endConnector");
+        }
     }
 }
 
