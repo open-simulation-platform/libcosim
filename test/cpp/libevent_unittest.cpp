@@ -86,7 +86,7 @@ BOOST_AUTO_TEST_CASE(libevent_timers)
     BOOST_TEST(stopped);
     BOOST_TEST(approx_equal_duration(startTime, immediateTriggered, 0ms));
     BOOST_TEST(approx_equal_duration(startTime, delayedTriggered, delayedDuration));
-    BOOST_TEST(recurringTriggered.size() == 3);
+    BOOST_TEST(recurringTriggered.size() == 3U);
     for (std::size_t i = 0; i < recurringTriggered.size(); ++i) {
         BOOST_TEST(approx_equal_duration(startTime, recurringTriggered[i], long(i + 1) * recurringDuration));
     }

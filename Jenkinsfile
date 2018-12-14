@@ -16,11 +16,6 @@ pipeline {
                     }
 
                     stages {
-                        stage('Conan add remote') {
-                            steps {
-                                bat 'conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan --force'
-                            }
-                        }
                         stage('Build Debug') {
                             steps {
                                 dir('debug-build') {
@@ -109,11 +104,6 @@ pipeline {
                     }
                     
                     stages {
-                        stage('Conan add remote') {
-                            steps {
-                                sh 'conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan --force'
-                            }
-                        }
                         stage('Build Debug') {
                             steps {
                                 dir('debug-build-conan') {
