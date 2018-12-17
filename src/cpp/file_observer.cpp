@@ -2,9 +2,12 @@
 
 #include <map>
 #include <mutex>
+#include <locale>
+#include <codecvt>
 
 #include <boost/filesystem/fstream.hpp>
 #include <boost/filesystem/operations.hpp>
+#include <boost/date_time/local_time/local_time.hpp>
 
 #include <cse/error.hpp>
 
@@ -123,11 +126,28 @@ file_observer::file_observer(boost::filesystem::path logDir, bool binary, size_t
 {
 }
 
+std::string format_time(boost::posix_time::ptime now) {
+    std::locale loc(std::wcout.getloc(), new boost::posix_time::wtime_facet(L"%Y%m%d_%H%M%S"));
+
+    std::basic_stringstream<wchar_t> wss;
+    wss.imbue(loc);
+    wss << now;
+
+    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
+
+    return converter.to_bytes(wss.str());
+}
+
 void file_observer::simulator_added(simulator_index index, observable* simulator, time_point currentTime)
 {
-    auto filename = std::to_string(index).append(binary_ ? ".bin" : ".csv");
-    auto slaveLogPath = logDir_ / filename;
-    valueWriters_[index] = std::make_unique<slave_value_writer>(simulator, slaveLogPath, binary_, limit_, currentTime);
+    auto time_str = format_time(boost::posix_time::second_clock::local_time());
+
+    auto name = simulator->model_description().name.append("_").append(std::to_string(index)).append("__");
+    auto extension = time_str.append(binary_ ? ".bin" : ".csv");
+    auto filename = name.append(extension);
+
+    logPath_ = logDir_ / filename;
+    valueWriters_[index] = std::make_unique<slave_value_writer>(simulator, logPath_, binary_, limit_, currentTime);
 }
 
 void file_observer::simulator_removed(simulator_index index, time_point /*currentTime*/)
@@ -148,6 +168,10 @@ void file_observer::step_complete(step_number lastStep, duration /*lastStepSize*
     for (const auto& valueWriter : valueWriters_) {
         valueWriter.second->observe(lastStep, currentTime);
     }
+}
+
+boost::filesystem::path file_observer::get_log_path() {
+    return logPath_;
 }
 
 file_observer::~file_observer()
