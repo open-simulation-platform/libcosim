@@ -27,17 +27,12 @@ foreach(test IN LISTS tests)
     )
 endforeach()
 
-if(CSECORE_USING_CONAN)
-    set(unittestDeps "Boost::test")
-else()
-    set(unittestDeps "Boost::unit_test_framework")
-endif()
 foreach(test IN LISTS unittests)
     add_test_executable(
         "cpp_${test}"
         FOLDER "C++ unit tests"
         SOURCES "${test}.cpp"
-        DEPENDENCIES csecorecpp ${unittestDeps}
+        DEPENDENCIES csecorecpp "Boost::unit_test_framework"
         DATA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../data"
     )
     target_include_directories("cpp_${test}" PRIVATE "$<TARGET_PROPERTY:csecorecpp,SOURCE_DIR>")

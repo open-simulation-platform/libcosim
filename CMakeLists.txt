@@ -88,18 +88,13 @@ set(CSECORE_EXPORT_TARGET "${PROJECT_NAME}-targets")
 # Dependencies
 # ==============================================================================
 
-set(boostComponents context date_time fiber filesystem log system thread)
 if(CSECORE_USING_CONAN)
     include("${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")
     conan_basic_setup(NO_OUTPUT_DIRS)
-    list(APPEND boostComponents test uuid)
-else()
-    list(APPEND boostComponents unit_test_framework)
 endif()
 
-find_package(Threads REQUIRED) # OS thread library
 find_package(GSL REQUIRED)
-find_package(Boost REQUIRED COMPONENTS ${boostComponents})
+find_package(Boost REQUIRED COMPONENTS date_time fiber filesystem log unit_test_framework)
 find_package(FMILibrary REQUIRED)
 find_package(LIBZIP REQUIRED)
 find_package(Libevent2 REQUIRED)

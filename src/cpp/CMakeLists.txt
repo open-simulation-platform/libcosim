@@ -87,15 +87,11 @@ target_link_libraries(csecorecpp
         libzip::libzip
         libevent2::core
         Boost::boost
-        Boost::context
         Boost::date_time
         Boost::fiber
         Boost::filesystem
         Boost::log
-        Boost::system
-        Boost::thread
         gsl
-        Threads::Threads
     )
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_link_libraries(csecorecpp INTERFACE "atomic")
