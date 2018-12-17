@@ -1,9 +1,17 @@
 import os
 
-from conans import ConanFile, CMake, tools
+from conans import ConanFile, CMake
 
 
 class CSECoreConan(ConanFile):
+    name = "cse-core"
+    version = "0.0.1"
+    author = "osp"
+    scm = {
+        "type": "git",
+        "url": "auto",
+        "revision": "auto"
+    }
     settings = "os", "compiler", "build_type", "arch"
     generators = "cmake", "virtualrunenv"
     requires = (
@@ -18,8 +26,19 @@ class CSECoreConan(ConanFile):
         "libevent:with_openssl=False",
         "libzip:shared=True"
         )
-
+    
     def imports(self):
         binDir = os.path.join("output", str(self.settings.build_type).lower(), "bin")
         self.copy("*.dll", dst=binDir, keep_path=False)
         self.copy("*.pdb", dst=binDir, keep_path=False)
+
+    def build(self):
+        cmake = CMake(self)
+        cmake.definitions["CSECORE_USING_CONAN"] = "ON"
+        cmake.configure()
+        cmake.build()
+        cmake.test()
+
+    def package(self):
+        cmake = CMake(self)
+        cmake.install()
