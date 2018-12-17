@@ -146,7 +146,6 @@ cse_execution* cse_execution_create(cse_time_point startTime, cse_duration stepS
         execution->cpp_execution = std::make_unique<cse::execution>(
             to_time_point(startTime),
             std::make_unique<cse::fixed_step_algorithm>(to_duration(stepSize)));
-        execution->cpp_execution->enable_real_time_simulation();
         execution->error_code = CSE_ERRC_SUCCESS;
         execution->state = CSE_EXECUTION_STOPPED;
 
@@ -324,11 +323,25 @@ int cse_execution_get_status(cse_execution* execution, cse_execution_status* sta
         status->error_code = execution->error_code;
         status->state = execution->state;
         status->current_time = to_integer_time_point(execution->cpp_execution->current_time());
+        status->real_time_factor = execution->cpp_execution->get_real_time_factor();
+        status->is_real_time_simulation = execution->cpp_execution->is_real_time_simulation() ? 1 : 0;
         return success;
     } catch (...) {
         handle_current_exception();
         return failure;
     }
+}
+
+int cse_execution_enable_real_time_simulation(cse_execution* execution)
+{
+    execution->cpp_execution->enable_real_time_simulation();
+    return success;
+}
+
+int cse_execution_disable_real_time_simulation(cse_execution* execution)
+{
+    execution->cpp_execution->disable_real_time_simulation();
+    return success;
 }
 
 struct cse_observer_s
@@ -533,7 +546,8 @@ int cse_observer_get_step_numbers_for_duration(
     cse_duration duration,
     cse_step_number steps[])
 {
-    try {const auto membufferObserver = std::dynamic_pointer_cast<cse::membuffer_observer>(observer->cpp_observer);
+    try {
+        const auto membufferObserver = std::dynamic_pointer_cast<cse::membuffer_observer>(observer->cpp_observer);
         if (!membufferObserver) {
             throw std::invalid_argument("Not a membuffer observer");
         }

@@ -49,7 +49,7 @@ int main()
     }
 
     double stepSize = 0.1;
-    int64_t nanoStepSize = (int64_t) (stepSize*1.0e9);
+    int64_t nanoStepSize = (int64_t)(stepSize * 1.0e9);
 
     cse_execution* execution = cse_execution_create(0, nanoStepSize);
 
@@ -67,11 +67,20 @@ int main()
     cse_execution_add_slave(execution, slave1);
     cse_execution_add_slave(execution, slave2);
 
-
+    cse_execution_status executionStatus;
+    rc = cse_execution_get_status(execution, &executionStatus);
+    if (rc < 0) {
+        print_last_error();
+        cse_execution_destroy(execution);
+        return 1;
+    }
+    if (!executionStatus.is_real_time_simulation) {
+        cse_execution_enable_real_time_simulation(execution);
+    }
 
     cse_execution_start(execution);
     int64_t before1 = GetCurrentTime();
-    Sleep(5000);
+    Sleep(2000);
     cse_execution_stop(execution);
     int64_t after1 = GetCurrentTime();
 
@@ -79,7 +88,7 @@ int main()
 
     cse_execution_start(execution);
     int64_t before2 = GetCurrentTime();
-    Sleep(5000);
+    Sleep(2000);
     cse_execution_stop(execution);
     int64_t after2 = GetCurrentTime();
 
@@ -89,7 +98,6 @@ int main()
     int rounded = (int)(0.5 + elapsedS / stepSize);
     double elapsed = rounded * stepSize;
 
-    cse_execution_status executionStatus;
     rc = cse_execution_get_status(execution, &executionStatus);
     if (rc < 0) {
         print_last_error();
