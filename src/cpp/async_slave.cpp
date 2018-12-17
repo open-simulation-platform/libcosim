@@ -128,7 +128,7 @@ public:
         return boost::fibers::async(
             boost::fibers::launch::post,
             std::allocator_arg,
-            boost::fibers::protected_fixedsize_stack(100*1024*1024),
+            boost::fibers::protected_fixedsize_stack(1024*1024),
             [=]() {
                 try {
                     const auto result = slave_->do_step(currentT, deltaT);
