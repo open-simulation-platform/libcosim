@@ -5,6 +5,7 @@
 
 #include <boost/container/vector.hpp>
 #include <boost/fiber/future/async.hpp>
+#include <boost/fiber/protected_fixedsize_stack.hpp>
 
 #include "cse/error.hpp"
 
@@ -124,16 +125,20 @@ public:
         CSE_PRECONDITION(state_ == slave_state::simulation);
         state_ = slave_state::indeterminate;
 
-        return boost::fibers::async([=]() {
-            try {
-                const auto result = slave_->do_step(currentT, deltaT);
-                state_ = slave_state::simulation;
-                return result;
-            } catch (...) {
-                state_ = slave_state::error;
-                throw;
-            }
-        });
+        return boost::fibers::async(
+            boost::fibers::launch::post,
+            std::allocator_arg,
+            boost::fibers::protected_fixedsize_stack(100*1024*1024),
+            [=]() {
+                try {
+                    const auto result = slave_->do_step(currentT, deltaT);
+                    state_ = slave_state::simulation;
+                    return result;
+                } catch (...) {
+                    state_ = slave_state::error;
+                    throw;
+                }
+            });
     }
 
     // clang-format off
