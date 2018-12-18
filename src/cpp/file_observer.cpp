@@ -4,6 +4,7 @@
 #include <locale>
 #include <map>
 #include <mutex>
+#include <sstream>
 
 #include <boost/date_time/local_time/local_time.hpp>
 #include <boost/filesystem/fstream.hpp>
@@ -18,9 +19,10 @@ namespace cse
 class file_observer::slave_value_writer
 {
 public:
-    slave_value_writer(observable* observable, boost::filesystem::path logPath, bool binary, time_point currentTime)
+    slave_value_writer(observable* observable, boost::filesystem::path logPath, bool binary, size_t limit, time_point currentTime)
         : observable_(observable)
         , binary_(binary)
+        , limit_(limit)
     {
         boost::filesystem::create_directories(logPath.parent_path());
 
@@ -59,22 +61,27 @@ public:
                 }
             }
 
-            fsw_ << "Time,StepCount,";
+            ss_.str(std::string());
+            ss_ << "Time,StepCount,";
 
             for (const auto& vd : realVars) {
-                fsw_ << vd.name << " [" << vd.index << " " << vd.type << " " << vd.causality << "],";
+                ss_ << vd.name << " [" << vd.index << " " << vd.type << " " << vd.causality << "],";
             }
             for (const auto& vd : intVars) {
-                fsw_ << vd.name << " [" << vd.index << " " << vd.type << " " << vd.causality << "],";
+                ss_ << vd.name << " [" << vd.index << " " << vd.type << " " << vd.causality << "],";
             }
             for (const auto& vd : boolVars) {
-                fsw_ << vd.name << " [" << vd.index << " " << vd.type << " " << vd.causality << "],";
+                ss_ << vd.name << " [" << vd.index << " " << vd.type << " " << vd.causality << "],";
             }
             for (const auto& vd : strVars) {
-                fsw_ << vd.name << " [" << vd.index << " " << vd.type << " " << vd.causality << "],";
+                ss_ << vd.name << " [" << vd.index << " " << vd.type << " " << vd.causality << "],";
             }
 
-            fsw_ << std::endl;
+            ss_ << std::endl;
+
+            if (fsw_.is_open()) {
+                fsw_ << ss_.str();
+            }
         }
 
         // Expose variables & group indexes, ignore local variables
@@ -107,7 +114,10 @@ public:
         }
         timeSamples_[timeStep] = to_double_time_point(currentTime);
 
-        persist();
+        if (++counter_ >= limit_) {
+            persist();
+            counter_ = 0;
+        }
     }
 
     ~slave_value_writer()
@@ -128,29 +138,29 @@ private:
                 fsw_.write((char*)&values[0], values.size() * sizeof(T));
             } else {
                 for (auto it = values.begin(); it != values.end(); ++it) {
-                    if (it != values.begin()) fsw_ << ",";
-                    fsw_ << *it;
+                    if (it != values.begin()) ss_ << ",";
+                    ss_ << *it;
                 }
-                fsw_ << ",";
+                ss_ << ",";
             }
         }
     }
 
     void persist()
     {
+        ss_.clear();
+        ss_.str(std::string());
 
-        for (auto const& [stepCount, values] : realSamples_) {
-            fsw_ << timeSamples_[stepCount] << "," << stepCount << ",";
+        for (const auto& [stepCount, values] : realSamples_) {
+            ss_ << timeSamples_[stepCount] << "," << stepCount << ",";
             write<double>(values);
+            write<int>(intSamples_[stepCount]);
+            ss_ << std::endl;
         }
 
-// GCC versions < 8.0 do not support unused bindings, suppress the unused variable warning
-        for (auto const& [unused, values] : intSamples_) {
-            (void)unused;
-            write<int>(values);
+        if (fsw_.is_open()) {
+            fsw_ << ss_.str();
         }
-
-        fsw_ << std::endl;
 
         realSamples_.clear();
         intSamples_.clear();
@@ -164,7 +174,10 @@ private:
     std::map<step_number, double> timeSamples_;
     observable* observable_;
     boost::filesystem::ofstream fsw_;
+    std::stringstream ss_;
     bool binary_;
+    size_t counter_ = 0;
+    size_t limit_ = 10;
 };
 
 file_observer::file_observer(boost::filesystem::path logDir, bool binary, size_t limit)
@@ -196,7 +209,7 @@ void file_observer::simulator_added(simulator_index index, observable* simulator
     auto filename = name.append(extension);
 
     logPath_ = logDir_ / filename;
-    valueWriters_[index] = std::make_unique<slave_value_writer>(simulator, logPath_, binary_, currentTime);
+    valueWriters_[index] = std::make_unique<slave_value_writer>(simulator, logPath_, binary_, limit_, currentTime);
 }
 
 void file_observer::simulator_removed(simulator_index index, time_point /*currentTime*/)
