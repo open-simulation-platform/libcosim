@@ -4,6 +4,7 @@
 #include <utility>
 
 #include <boost/container/vector.hpp>
+#include <boost/fiber/fixedsize_stack.hpp>
 #include <boost/fiber/future/async.hpp>
 
 #include "cse/error.hpp"
@@ -13,6 +14,26 @@ namespace cse
 {
 namespace
 {
+
+/*
+ *  Runs `f` in a new fiber with a bigger-than-default stack size.
+ *
+ *  The default fiber stack size in Boost.Fiber is just a few kilobytes.
+ *  This function sets it to a more "normal" stack size of 1 MiB, because
+ *  third-party model code (FMUs) should not have to care about the fact
+ *  that it's running in a fiber.
+ */
+template<typename F>
+auto big_stack_async(F&& f)
+{
+    constexpr std::size_t stackSize = 1024 * 1024;
+    return boost::fibers::async(
+        boost::fibers::launch::post,
+        std::allocator_arg,
+        boost::fibers::fixedsize_stack(stackSize),
+        std::forward<F>(f));
+}
+
 
 // Copies the contents of `span` into a new vector.
 template<typename T>
@@ -52,7 +73,7 @@ public:
         const auto oldState = state_;
         state_ = slave_state::indeterminate;
 
-        return boost::fibers::async([=]() {
+        return big_stack_async([=]() {
             try {
                 const auto result = slave_->model_description();
                 state_ = oldState;
@@ -73,7 +94,7 @@ public:
         CSE_PRECONDITION(state_ == slave_state::created);
         state_ = slave_state::indeterminate;
 
-        return boost::fibers::async([=]() {
+        return big_stack_async([=]() {
             try {
                 slave_->setup(startTime, stopTime, relativeTolerance);
                 state_ = slave_state::initialisation;
@@ -89,7 +110,7 @@ public:
         CSE_PRECONDITION(state_ == slave_state::initialisation);
         state_ = slave_state::indeterminate;
 
-        return boost::fibers::async([=]() {
+        return big_stack_async([=]() {
             try {
                 slave_->start_simulation();
                 state_ = slave_state::simulation;
@@ -105,7 +126,7 @@ public:
         CSE_PRECONDITION(state_ == slave_state::simulation);
         state_ = slave_state::indeterminate;
 
-        return boost::fibers::async([=]() {
+        return big_stack_async([=]() {
             try {
                 slave_->end_simulation();
                 state_ = slave_state::terminated;
@@ -124,7 +145,7 @@ public:
         CSE_PRECONDITION(state_ == slave_state::simulation);
         state_ = slave_state::indeterminate;
 
-        return boost::fibers::async([=]() {
+        return big_stack_async([=]() {
             try {
                 const auto result = slave_->do_step(currentT, deltaT);
                 state_ = slave_state::simulation;
@@ -157,7 +178,7 @@ public:
         const auto oldState = state_;
         state_ = slave_state::indeterminate;
 
-        return boost::fibers::async(
+        return big_stack_async(
             [
                 =,
                 rvi = to_vector(realVariables),
@@ -200,7 +221,7 @@ public:
         const auto oldState = state_;
         state_ = slave_state::indeterminate;
 
-        return boost::fibers::async(
+        return big_stack_async(
             [
                 =,
                 rvi = to_vector(realVariables),
