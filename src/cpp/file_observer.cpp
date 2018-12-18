@@ -68,10 +68,10 @@ public:
             for (const auto& vd : intVars) {
                 fsw_ << vd.name << " [" << vd.index << " " << vd.type << " " << vd.causality << "],";
             }
-            for (const auto& vd : strVars) {
+            for (const auto& vd : boolVars) {
                 fsw_ << vd.name << " [" << vd.index << " " << vd.type << " " << vd.causality << "],";
             }
-            for (const auto& vd : boolVars) {
+            for (const auto& vd : strVars) {
                 fsw_ << vd.name << " [" << vd.index << " " << vd.type << " " << vd.causality << "],";
             }
 
