@@ -1,13 +1,13 @@
 #include <cse/observer.hpp>
 
+#include <codecvt>
+#include <locale>
 #include <map>
 #include <mutex>
-#include <locale>
-#include <codecvt>
 
+#include <boost/date_time/local_time/local_time.hpp>
 #include <boost/filesystem/fstream.hpp>
 #include <boost/filesystem/operations.hpp>
-#include <boost/date_time/local_time/local_time.hpp>
 
 #include <cse/error.hpp>
 
@@ -34,13 +34,61 @@ public:
             throw std::runtime_error("Failed to open file stream for logging");
         }
 
-        for (const auto& vd : observable->model_description().variables) {
-            observable->expose_for_getting(vd.type, vd.index);
-            if (vd.type == cse::variable_type::real) {
-                realIndexes_.push_back(vd.index);
+        // Create CSV header row
+        if (!binary_) {
+            std::vector<variable_description> intVars;
+            std::vector<variable_description> realVars;
+            std::vector<variable_description> strVars;
+            std::vector<variable_description> boolVars;
+
+            for (const auto& vd : observable->model_description().variables) {
+                if (vd.causality != variable_causality::local) {
+                    switch (vd.type) {
+                        case variable_type::real:
+                            realVars.push_back(vd);
+                            break;
+                        case variable_type::integer:
+                            intVars.push_back(vd);
+                            break;
+                        case variable_type::string:
+                            strVars.push_back(vd);
+                            break;
+                        case variable_type::boolean:
+                            boolVars.push_back(vd);
+                            break;
+                    }
+                }
             }
-            if (vd.type == cse::variable_type::integer) {
-                intIndexes_.push_back(vd.index);
+
+            fsw_ << "Time,StepCount,";
+
+            for (const auto& vd : realVars) {
+                fsw_ << vd.name << " [" << vd.index << " " << vd.type << " " << vd.causality << "],";
+            }
+            for (const auto& vd : intVars) {
+                fsw_ << vd.name << " [" << vd.index << " " << vd.type << " " << vd.causality << "],";
+            }
+            for (const auto& vd : strVars) {
+                fsw_ << vd.name << " [" << vd.index << " " << vd.type << " " << vd.causality << "],";
+            }
+            for (const auto& vd : boolVars) {
+                fsw_ << vd.name << " [" << vd.index << " " << vd.type << " " << vd.causality << "],";
+            }
+
+            fsw_ << std::endl;
+        }
+
+        // Expose variables & group indexes, ignore local variables
+        for (const auto& vd : observable->model_description().variables) {
+            if (vd.causality != variable_causality::local) {
+
+                observable->expose_for_getting(vd.type, vd.index);
+                if (vd.type == variable_type::real) {
+                    realIndexes_.push_back(vd.index);
+                }
+                if (vd.type == variable_type::integer) {
+                    intIndexes_.push_back(vd.index);
+                }
             }
         }
 
@@ -60,8 +108,9 @@ public:
         }
         timeSamples_[timeStep] = to_double_time_point(currentTime);
 
+        persist();
+
         if (++counter_ >= limit_) {
-            persist();
             counter_ = 0;
         }
     }
@@ -77,31 +126,34 @@ public:
 
 private:
     template<typename T>
-    void write(step_number stepCount, double time, const std::vector<T>& values)
+    void write(const std::vector<T>& values)
     {
         if (fsw_.is_open()) {
             if (binary_) {
-                fsw_.write((char*)&values[0], values.size() * sizeof(T));
+                fsw_.write((char*) &values[0], values.size() * sizeof(T));
             } else {
-                fsw_ << stepCount << ",";
-                fsw_ << time << ",";
                 for (auto it = values.begin(); it != values.end(); ++it) {
                     if (it != values.begin()) fsw_ << ",";
                     fsw_ << *it;
                 }
-                fsw_ << std::endl;
+                fsw_ << ",";
             }
         }
     }
 
     void persist()
     {
+
         for (auto const& [stepCount, values] : realSamples_) {
-            write<double>(stepCount, timeSamples_[stepCount], values);
+            fsw_ << timeSamples_[stepCount] << "," << stepCount << ",";
+            write<double>(values);
         }
         for (auto const& [stepCount, values] : intSamples_) {
-            write<int>(stepCount, timeSamples_[stepCount], values);
+            write<int>(values);
         }
+
+        fsw_ << std::endl;
+
         realSamples_.clear();
         intSamples_.clear();
         timeSamples_.clear();
@@ -126,7 +178,8 @@ file_observer::file_observer(boost::filesystem::path logDir, bool binary, size_t
 {
 }
 
-std::string format_time(boost::posix_time::ptime now) {
+std::string format_time(boost::posix_time::ptime now)
+{
     std::locale loc(std::wcout.getloc(), new boost::posix_time::wtime_facet(L"%Y%m%d_%H%M%S"));
 
     std::basic_stringstream<wchar_t> wss;
@@ -170,7 +223,8 @@ void file_observer::step_complete(step_number lastStep, duration /*lastStepSize*
     }
 }
 
-boost::filesystem::path file_observer::get_log_path() {
+boost::filesystem::path file_observer::get_log_path()
+{
     return logPath_;
 }
 
