@@ -18,10 +18,9 @@ namespace cse
 class file_observer::slave_value_writer
 {
 public:
-    slave_value_writer(observable* observable, boost::filesystem::path logPath, bool binary, size_t limit, time_point currentTime)
+    slave_value_writer(observable* observable, boost::filesystem::path logPath, bool binary, time_point currentTime)
         : observable_(observable)
         , binary_(binary)
-        , limit_(limit)
     {
         boost::filesystem::create_directories(logPath.parent_path());
 
@@ -109,10 +108,6 @@ public:
         timeSamples_[timeStep] = to_double_time_point(currentTime);
 
         persist();
-
-        if (++counter_ >= limit_) {
-            counter_ = 0;
-        }
     }
 
     ~slave_value_writer()
@@ -170,8 +165,6 @@ private:
     observable* observable_;
     boost::filesystem::ofstream fsw_;
     bool binary_;
-    size_t counter_ = 0;
-    size_t limit_ = 10;
 };
 
 file_observer::file_observer(boost::filesystem::path logDir, bool binary, size_t limit)
@@ -203,7 +196,7 @@ void file_observer::simulator_added(simulator_index index, observable* simulator
     auto filename = name.append(extension);
 
     logPath_ = logDir_ / filename;
-    valueWriters_[index] = std::make_unique<slave_value_writer>(simulator, logPath_, binary_, limit_, currentTime);
+    valueWriters_[index] = std::make_unique<slave_value_writer>(simulator, logPath_, binary_, currentTime);
 }
 
 void file_observer::simulator_removed(simulator_index index, time_point /*currentTime*/)
