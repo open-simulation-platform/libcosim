@@ -150,10 +150,8 @@ private:
         }
 
 // GCC versions < 8.0 do not support unused bindings, suppress the unused variable warning
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-variable"
         for (auto const& [unused, values] : intSamples_) {
-#pragma GCC diagnostic pop
+            (void)unused;
             write<int>(values);
         }
 
