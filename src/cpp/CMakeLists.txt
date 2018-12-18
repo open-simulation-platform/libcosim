@@ -3,7 +3,6 @@ set(privateHeaderDir "${CMAKE_CURRENT_SOURCE_DIR}/cse")
 
 set(publicHeaders
     "algorithm.hpp"
-    "hello_world.hpp"
     "async_slave.hpp"
     "config.hpp"
     "event_loop.hpp"
@@ -35,8 +34,6 @@ set(privateHeaders
     "utility/zip.hpp"
 )
 set(sources
-    "hello_world.cpp"
-
     "algorithm.cpp"
     "async_slave.cpp"
     "event_loop.cpp"

@@ -562,24 +562,6 @@ int cse_execution_connect_integer_variables(
     cse_slave_index inputSlaveIndex,
     cse_variable_index inputVariableIndex);
 
-/**
- *  Writes the string "Hello World!" to a character buffer.
- *
- *  The size of `buffer` must be at least `size`. If it is less than 13 bytes,
- *  the string will be truncated.  The string will always be terminated by a
- *  zero byte, even if it is truncated.
- *
- *  \param buffer
- *      A buffer to hold the friendly greeting.
- *  \param size
- *      The size of the buffer.
- *
- *  \returns
- *      The answer to the ultimate question about life, the universe and
- *      everything, for no apparent reason.
- */
-int cse_hello_world(char* buffer, size_t size);
-
 
 cse_observer* cse_membuffer_observer_create();
 
