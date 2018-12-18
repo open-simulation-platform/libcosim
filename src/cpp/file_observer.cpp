@@ -130,7 +130,7 @@ private:
     {
         if (fsw_.is_open()) {
             if (binary_) {
-                fsw_.write((char*) &values[0], values.size() * sizeof(T));
+                fsw_.write((char*)&values[0], values.size() * sizeof(T));
             } else {
                 for (auto it = values.begin(); it != values.end(); ++it) {
                     if (it != values.begin()) fsw_ << ",";
@@ -148,7 +148,12 @@ private:
             fsw_ << timeSamples_[stepCount] << "," << stepCount << ",";
             write<double>(values);
         }
-        for (auto const& [stepCount, values] : intSamples_) {
+
+// GCC versions < 8.0 do not support unused bindings, suppress the unused variable warning
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-variable"
+        for (auto const& [unused, values] : intSamples_) {
+#pragma GCC diagnostic pop
             write<int>(values);
         }
 
