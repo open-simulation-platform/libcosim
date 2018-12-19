@@ -18,7 +18,7 @@ int main()
         const auto testDataDir = std::getenv("TEST_DATA_DIR");
         REQUIRE(testDataDir);
         boost::filesystem::path xmlPath = boost::filesystem::path(testDataDir) / "ssp" / "demo";
-        std::cout << "Path: " << xmlPath.string() << std::endl;
+
         auto simulation = cse::load_ssp(xmlPath, cse::to_time_point(0.0));
         auto& execution = simulation.first;
 

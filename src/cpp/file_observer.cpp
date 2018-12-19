@@ -1,8 +1,12 @@
 #include <cse/observer.hpp>
 
+#include <codecvt>
+#include <locale>
 #include <map>
 #include <mutex>
+#include <sstream>
 
+#include <boost/date_time/local_time/local_time.hpp>
 #include <boost/filesystem/fstream.hpp>
 #include <boost/filesystem/operations.hpp>
 
@@ -31,13 +35,65 @@ public:
             throw std::runtime_error("Failed to open file stream for logging");
         }
 
-        for (const auto& vd : observable->model_description().variables) {
-            observable->expose_for_getting(vd.type, vd.index);
-            if (vd.type == cse::variable_type::real) {
-                realIndexes_.push_back(vd.index);
+        // Create CSV header row
+        if (!binary_) {
+            std::vector<variable_description> intVars;
+            std::vector<variable_description> realVars;
+            std::vector<variable_description> strVars;
+            std::vector<variable_description> boolVars;
+
+            for (const auto& vd : observable->model_description().variables) {
+                if (vd.causality != variable_causality::local) {
+                    switch (vd.type) {
+                        case variable_type::real:
+                            realVars.push_back(vd);
+                            break;
+                        case variable_type::integer:
+                            intVars.push_back(vd);
+                            break;
+                        case variable_type::string:
+                            strVars.push_back(vd);
+                            break;
+                        case variable_type::boolean:
+                            boolVars.push_back(vd);
+                            break;
+                    }
+                }
             }
-            if (vd.type == cse::variable_type::integer) {
-                intIndexes_.push_back(vd.index);
+
+            ss_ << "Time,StepCount,";
+
+            for (const auto& vd : realVars) {
+                ss_ << vd.name << " [" << vd.index << " " << vd.type << " " << vd.causality << "],";
+            }
+            for (const auto& vd : intVars) {
+                ss_ << vd.name << " [" << vd.index << " " << vd.type << " " << vd.causality << "],";
+            }
+            for (const auto& vd : boolVars) {
+                ss_ << vd.name << " [" << vd.index << " " << vd.type << " " << vd.causality << "],";
+            }
+            for (const auto& vd : strVars) {
+                ss_ << vd.name << " [" << vd.index << " " << vd.type << " " << vd.causality << "],";
+            }
+
+            ss_ << std::endl;
+
+            if (fsw_.is_open()) {
+                fsw_ << ss_.rdbuf();
+            }
+        }
+
+        // Expose variables & group indexes, ignore local variables
+        for (const auto& vd : observable->model_description().variables) {
+            if (vd.causality != variable_causality::local) {
+
+                observable->expose_for_getting(vd.type, vd.index);
+                if (vd.type == variable_type::real) {
+                    realIndexes_.push_back(vd.index);
+                }
+                if (vd.type == variable_type::integer) {
+                    intIndexes_.push_back(vd.index);
+                }
             }
         }
 
@@ -74,31 +130,37 @@ public:
 
 private:
     template<typename T>
-    void write(step_number stepCount, double time, const std::vector<T>& values)
+    void write(const std::vector<T>& values)
     {
         if (fsw_.is_open()) {
             if (binary_) {
                 fsw_.write((char*)&values[0], values.size() * sizeof(T));
             } else {
-                fsw_ << stepCount << ",";
-                fsw_ << time << ",";
                 for (auto it = values.begin(); it != values.end(); ++it) {
-                    if (it != values.begin()) fsw_ << ",";
-                    fsw_ << *it;
+                    if (it != values.begin()) ss_ << ",";
+                    ss_ << *it;
                 }
-                fsw_ << std::endl;
+                ss_ << ",";
             }
         }
     }
 
     void persist()
     {
-        for (auto const& [stepCount, values] : realSamples_) {
-            write<double>(stepCount, timeSamples_[stepCount], values);
+        ss_.clear();
+        ss_.str(std::string());
+
+        for (const auto& [stepCount, values] : realSamples_) {
+            ss_ << timeSamples_[stepCount] << "," << stepCount << ",";
+            write<double>(values);
+            write<int>(intSamples_[stepCount]);
+            ss_ << std::endl;
         }
-        for (auto const& [stepCount, values] : intSamples_) {
-            write<int>(stepCount, timeSamples_[stepCount], values);
+
+        if (fsw_.is_open()) {
+            fsw_ << ss_.rdbuf();
         }
+
         realSamples_.clear();
         intSamples_.clear();
         timeSamples_.clear();
@@ -111,6 +173,7 @@ private:
     std::map<step_number, double> timeSamples_;
     observable* observable_;
     boost::filesystem::ofstream fsw_;
+    std::stringstream ss_;
     bool binary_;
     size_t counter_ = 0;
     size_t limit_ = 10;
@@ -123,11 +186,29 @@ file_observer::file_observer(boost::filesystem::path logDir, bool binary, size_t
 {
 }
 
+std::string format_time(boost::posix_time::ptime now)
+{
+    std::locale loc(std::wcout.getloc(), new boost::posix_time::wtime_facet(L"%Y%m%d_%H%M%S"));
+
+    std::basic_stringstream<wchar_t> wss;
+    wss.imbue(loc);
+    wss << now;
+
+    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
+
+    return converter.to_bytes(wss.str());
+}
+
 void file_observer::simulator_added(simulator_index index, observable* simulator, time_point currentTime)
 {
-    auto filename = std::to_string(index).append(binary_ ? ".bin" : ".csv");
-    auto slaveLogPath = logDir_ / filename;
-    valueWriters_[index] = std::make_unique<slave_value_writer>(simulator, slaveLogPath, binary_, limit_, currentTime);
+    auto time_str = format_time(boost::posix_time::second_clock::local_time());
+
+    auto name = simulator->model_description().name.append("_").append(std::to_string(index)).append("__");
+    auto extension = time_str.append(binary_ ? ".bin" : ".csv");
+    auto filename = name.append(extension);
+
+    logPath_ = logDir_ / filename;
+    valueWriters_[index] = std::make_unique<slave_value_writer>(simulator, logPath_, binary_, limit_, currentTime);
 }
 
 void file_observer::simulator_removed(simulator_index index, time_point /*currentTime*/)
@@ -148,6 +229,11 @@ void file_observer::step_complete(step_number lastStep, duration /*lastStepSize*
     for (const auto& valueWriter : valueWriters_) {
         valueWriter.second->observe(lastStep, currentTime);
     }
+}
+
+boost::filesystem::path file_observer::get_log_path()
+{
+    return logPath_;
 }
 
 file_observer::~file_observer()
