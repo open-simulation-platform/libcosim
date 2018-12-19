@@ -61,7 +61,6 @@ public:
                 }
             }
 
-            ss_.str(std::string());
             ss_ << "Time,StepCount,";
 
             for (const auto& vd : realVars) {
@@ -80,7 +79,7 @@ public:
             ss_ << std::endl;
 
             if (fsw_.is_open()) {
-                fsw_ << ss_.str();
+                fsw_ << ss_.rdbuf();
             }
         }
 
@@ -159,7 +158,7 @@ private:
         }
 
         if (fsw_.is_open()) {
-            fsw_ << ss_.str();
+            fsw_ << ss_.rdbuf();
         }
 
         realSamples_.clear();
