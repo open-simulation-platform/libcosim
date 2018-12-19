@@ -26,11 +26,6 @@ of course you can always build and install dependencies manually.
 
 ### Step 1: Configure Conan
 
-First of all, ensure that Conan is aware of [Bincrafters' public-conan
-repository], which contains many of the packages we'll need:
-
-    conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
-
 As we will build the library using the *debug* configuration in this guide (as
 opposed to *release*), we must use the Conan setting `build_type=Debug`.  For
 GCC, we also need to set `compiler.libcxx=libstdc++11`, because the library
