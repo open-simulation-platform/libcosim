@@ -14,6 +14,7 @@ pipeline {
                         CONAN_USER_HOME = "${env.BASE}\\conan-repositories\\${env.EXECUTOR_NUMBER}"
                         CONAN_USER_HOME_SHORT = "${env.CONAN_USER_HOME}"
                         OSP_CONAN_CREDS = credentials('jenkins-osp-conan-creds')
+                        CONAN_BRANCH_NAME = "${env.BRANCH_NAME}".replaceAll("/", "_")
                     }
 
                     stages {
@@ -56,8 +57,9 @@ pipeline {
                                 }
                                 success {
                                     dir('debug-build') {
-                                        bat 'conan export-pkg ../cse-core osp/$env.BRANCH_NAME'
-                                        bat 'conan upload cse-core/*@osp/$env.BRANCH_NAME --all -r=osp --confirm'
+                                        sh 'printenv'
+                                        sh "conan export-pkg ../cse-core osp/${CONAN_BRANCH_NAME}"
+                                        sh "conan upload cse-core/*@osp/${CONAN_BRANCH_NAME} --all -r=osp --confirm"
                                     }
                                     archiveArtifacts artifacts: 'install/debug/**/*',  fingerprint: true
                                 }
@@ -85,8 +87,9 @@ pipeline {
                                 }
                                 success {
                                     dir('release-build') {
-                                        bat 'conan export-pkg ../cse-core osp/$env.BRANCH_NAME'
-                                        bat 'conan upload cse-core/*@osp/$env.BRANCH_NAME --all -r=osp --confirm'
+                                        sh 'printenv'
+                                        sh "conan export-pkg ../cse-core osp/${CONAN_BRANCH_NAME}"
+                                        sh "conan upload cse-core/*@osp/${CONAN_BRANCH_NAME} --all -r=osp --confirm"
                                     }
                                     archiveArtifacts artifacts: 'install/release/**/*',  fingerprint: true
                                 }
