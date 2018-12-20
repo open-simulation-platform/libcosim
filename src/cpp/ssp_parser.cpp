@@ -95,7 +95,8 @@ ssp_parser::ssp_parser(boost::filesystem::path xmlPath)
     std::string path = "ssd:SystemStructureDescription";
 
     boost::property_tree::ptree tmpTree;
-    boost::property_tree::read_xml(xmlPath.string(), pt_);
+    boost::property_tree::read_xml(xmlPath.string(), pt_,
+            boost::property_tree::xml_parser::no_comments | boost::property_tree::xml_parser::trim_whitespace);
 
     tmpTree = pt_.get_child(path);
     systemDescription_.name = get_attribute<std::string>(tmpTree, "name");
@@ -105,9 +106,7 @@ ssp_parser::ssp_parser(boost::filesystem::path xmlPath)
     defaultExperiment_.startTime = get_attribute<double>(defaultExperiment, "startTime");
     defaultExperiment_.stopTime = get_attribute<double>(defaultExperiment, "stopTime");
 
-    path += ".ssd:System";
-    tmpTree = pt_.get_child(path);
-
+    tmpTree = pt_.get_child(path + ".ssd:System");
     systemDescription_.systemName = get_attribute<std::string>(tmpTree, "name");
     systemDescription_.systemDescription = get_attribute<std::string>(tmpTree, "description");
 
@@ -119,6 +118,7 @@ ssp_parser::ssp_parser(boost::filesystem::path xmlPath)
     }
 
     for (const auto& component : tmpTree.get_child("ssd:Elements")) {
+
         auto& e = elements_.emplace_back();
         e.name = get_attribute<std::string>(component.second, "name");
         e.source = get_attribute<std::string>(component.second, "source");
@@ -215,6 +215,5 @@ std::pair<execution, simulator_map> load_ssp(const boost::filesystem::path& sspD
 
     return std::make_pair(std::move(execution), std::move(simulatorMap));
 }
-
 
 } // namespace cse
