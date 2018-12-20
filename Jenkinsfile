@@ -14,7 +14,7 @@ pipeline {
                         CONAN_USER_HOME = "${env.BASE}\\conan-repositories\\${env.EXECUTOR_NUMBER}"
                         CONAN_USER_HOME_SHORT = "${env.CONAN_USER_HOME}"
                         OSP_CONAN_CREDS = credentials('jenkins-osp-conan-creds')
-                        CONAN_BRANCH_NAME = "${env.BRANCH_NAME}".replaceAll("/", "_")
+                        CSE_CONAN_CHANNEL = "${env.BRANCH_NAME}".replaceAll("/", "_")
                     }
 
                     stages {
@@ -28,7 +28,7 @@ pipeline {
                             steps {
                                 dir('debug-build') {
                                     bat 'conan install ../cse-core -s build_type=Debug -b missing -o ci=True'
-                                    bat 'conan build -c -b -i ../cse-core'
+                                    bat 'conan build -c -b ../cse-core'
                                 }
                             }
                         }
@@ -36,7 +36,7 @@ pipeline {
                             steps {
                                 dir('release-build') {
                                     bat 'conan install ../cse-core -s build_type=Release -b missing -o ci=True'
-                                    bat 'conan build -c -b -i ../cse-core'
+                                    bat 'conan build -c -b ../cse-core'
                                 }
                             }
                         }
@@ -57,11 +57,10 @@ pipeline {
                                 }
                                 success {
                                     dir('debug-build') {
-                                        sh 'printenv'
-                                        sh "conan export-pkg ../cse-core osp/${CONAN_BRANCH_NAME}"
-                                        sh "conan upload cse-core/*@osp/${CONAN_BRANCH_NAME} --all -r=osp --confirm"
+                                        sh "conan export-pkg ../cse-core osp/${CSE_CONAN_CHANNEL} --force"
+                                        sh "conan upload cse-core/*@osp/${CSE_CONAN_CHANNEL} --all -r=osp --confirm"
                                     }
-                                    archiveArtifacts artifacts: 'install/debug/**/*',  fingerprint: true
+                                    archiveArtifacts artifacts: 'debug-build/package/**/*',  fingerprint: true
                                 }
                                 cleanup {
                                     dir('debug-build/Testing') {
@@ -87,11 +86,10 @@ pipeline {
                                 }
                                 success {
                                     dir('release-build') {
-                                        sh 'printenv'
-                                        sh "conan export-pkg ../cse-core osp/${CONAN_BRANCH_NAME}"
-                                        sh "conan upload cse-core/*@osp/${CONAN_BRANCH_NAME} --all -r=osp --confirm"
+                                        sh "conan export-pkg ../cse-core osp/${CSE_CONAN_CHANNEL} --force"
+                                        sh "conan upload cse-core/*@osp/${CSE_CONAN_CHANNEL} --all -r=osp --confirm"
                                     }
-                                    archiveArtifacts artifacts: 'install/release/**/*',  fingerprint: true
+                                    archiveArtifacts artifacts: 'release-build/package/**/*',  fingerprint: true
                                 }
                                 cleanup {
                                     dir('release-build/Testing') {
