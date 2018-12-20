@@ -21,7 +21,9 @@ class CSECoreConan(ConanFile):
         "libevent/2.0.22@bincrafters/stable",
         "libzip/1.5.1@bincrafters/stable"
         )
+    options = {"ci": [True, False]}
     default_options = (
+        "ci=False",
         "boost:shared=True",
         "libevent:with_openssl=False",
         "libzip:shared=True"
@@ -35,6 +37,8 @@ class CSECoreConan(ConanFile):
     def build(self):
         cmake = CMake(self)
         cmake.definitions["CSECORE_USING_CONAN"] = "ON"
+        if self.options.ci:
+            cmake.definitions["CSCSECORE_BUILD_PRIVATE_APIDOC"] = "ON"
         cmake.configure()
         cmake.build()
         cmake.test()

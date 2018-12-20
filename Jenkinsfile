@@ -13,26 +13,29 @@ pipeline {
                     environment {
                         CONAN_USER_HOME = "${env.BASE}\\conan-repositories\\${env.EXECUTOR_NUMBER}"
                         CONAN_USER_HOME_SHORT = "${env.CONAN_USER_HOME}"
+                        OSP_CONAN_CREDS = credentials('jenkins-osp-conan-creds')
                     }
 
                     stages {
+                        stage('Configure Conan') {
+                            steps {
+                                sh 'conan remote add osp http://osp-conan.azurewebsites.net/artifactory/api/conan/conan-local --force'
+                                sh 'conan user -p $OSP_CONAN_CREDS_PSW -r osp $OSP_CONAN_CREDS_USR'
+                            }
+                        }
                         stage('Build Debug') {
                             steps {
                                 dir('debug-build') {
-                                    bat 'conan install ../cse-core -s build_type=Debug -b missing'
-                                    bat 'cmake -DCMAKE_INSTALL_PREFIX=../install/debug -DCSECORE_USING_CONAN=TRUE -DCSECORE_BUILD_PRIVATE_APIDOC=ON -G "Visual Studio 15 2017 Win64" ../cse-core'
-                                    bat 'cmake --build . --config Debug'
-                                    bat 'cmake --build . --config Debug --target install'
+                                    bat 'conan install ../cse-core -s build_type=Debug -b missing -o ci=True'
+                                    bat 'conan build -c -b -i ../cse-core'
                                 }
                             }
                         }
                         stage('Build Release') {
                             steps {
                                 dir('release-build') {
-                                    bat 'conan install ../cse-core -s build_type=Release -b missing'
-                                    bat 'cmake -DCMAKE_INSTALL_PREFIX=../install/release -DCSECORE_USING_CONAN=TRUE -DCSECORE_BUILD_PRIVATE_APIDOC=ON -G "Visual Studio 15 2017 Win64" ../cse-core'
-                                    bat 'cmake --build . --config Release'
-                                    bat 'cmake --build . --config Release --target install'
+                                    bat 'conan install ../cse-core -s build_type=Release -b missing -o ci=True'
+                                    bat 'conan build -c -b -i ../cse-core'
                                 }
                             }
                         }
@@ -52,6 +55,10 @@ pipeline {
                                     )
                                 }
                                 success {
+                                    dir('debug-build') {
+                                        bat 'conan export-pkg ../cse-core osp/$env.BRANCH_NAME'
+                                        bat 'conan upload cse-core/*@osp/$env.BRANCH_NAME --all -r=osp --confirm'
+                                    }
                                     archiveArtifacts artifacts: 'install/debug/**/*',  fingerprint: true
                                 }
                                 cleanup {
@@ -77,6 +84,10 @@ pipeline {
                                     )
                                 }
                                 success {
+                                    dir('release-build') {
+                                        bat 'conan export-pkg ../cse-core osp/$env.BRANCH_NAME'
+                                        bat 'conan upload cse-core/*@osp/$env.BRANCH_NAME --all -r=osp --confirm'
+                                    }
                                     archiveArtifacts artifacts: 'install/release/**/*',  fingerprint: true
                                 }
                                 cleanup {
