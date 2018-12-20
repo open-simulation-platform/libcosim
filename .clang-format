@@ -23,3 +23,13 @@ BraceWrapping:
   AfterFunction: true
   AfterNamespace : true
   AfterControlStatement: false
+IncludeBlocks: Regroup
+IncludeCategories:
+  - Regex:      '^[<"]cse[/.]'
+    Priority:   20
+  - Regex:      '^[<"](boost|event2|fmilib|gsl|zip)[/.]'
+    Priority:   30
+  - Regex:      '^"'
+    Priority:   10
+  - Regex:      '.*'
+    Priority:   40
