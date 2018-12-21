@@ -96,7 +96,7 @@ ssp_parser::ssp_parser(boost::filesystem::path xmlPath)
 
     boost::property_tree::ptree tmpTree;
     boost::property_tree::read_xml(xmlPath.string(), pt_,
-            boost::property_tree::xml_parser::no_comments | boost::property_tree::xml_parser::trim_whitespace);
+        boost::property_tree::xml_parser::no_comments | boost::property_tree::xml_parser::trim_whitespace);
 
     tmpTree = pt_.get_child(path);
     systemDescription_.name = get_attribute<std::string>(tmpTree, "name");
