@@ -23,10 +23,9 @@ int main()
         constexpr cse::time_point endTime = cse::to_time_point(10.0);
         constexpr cse::duration stepSize = cse::to_duration(0.1);
 
-        const auto testDataDir = std::getenv("TEST_DATA_DIR");
-        REQUIRE(testDataDir);
-        boost::filesystem::path csvPath = boost::filesystem::path(testDataDir) / "logs";
-        boost::filesystem::path binPath = boost::filesystem::path(testDataDir) / "logs";
+        const auto logPath = boost::filesystem::current_path() / "logs";
+        boost::filesystem::path csvPath = boost::filesystem::path(logPath);
+        boost::filesystem::path binPath = boost::filesystem::path(logPath);
 
         cse::log::set_global_output_level(cse::log::level::debug);
 
