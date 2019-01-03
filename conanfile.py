@@ -38,6 +38,7 @@ class CSECoreConan(ConanFile):
         cmake = CMake(self)
         cmake.definitions["CSECORE_USING_CONAN"] = "ON"
         if self.options.ci:
+            cmake.parallel = False
             cmake.definitions["CSCSECORE_BUILD_PRIVATE_APIDOC"] = "ON"
         cmake.configure()
         cmake.build()
