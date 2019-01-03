@@ -25,7 +25,7 @@ int main()
 
         const auto logPath = boost::filesystem::current_path() / "logs";
         boost::filesystem::path csvPath = boost::filesystem::path(logPath);
-        boost::filesystem::path binPath = boost::filesystem::path(logPath);
+        //boost::filesystem::path binPath = boost::filesystem::path(logPath);
 
         cse::log::set_global_output_level(cse::log::level::debug);
 
