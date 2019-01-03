@@ -594,12 +594,13 @@ cse_observer* cse_file_observer_create(const char* logDir)
     return observer.release();
 }
 
-cse_observer_index cse_execution_add_observer(
+int cse_execution_add_observer(
     cse_execution* execution,
     cse_observer* observer)
 {
     try {
-        return execution->cpp_execution->add_observer(observer->cpp_observer);
+        execution->cpp_execution->add_observer(observer->cpp_observer);
+        return success;
     } catch (...) {
         handle_current_exception();
         return failure;

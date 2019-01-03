@@ -29,9 +29,6 @@ typedef uint32_t cse_variable_index;
 /// Slave index.
 typedef int cse_slave_index;
 
-/// Observer index.
-typedef int cse_observer_index;
-
 /// Step number
 typedef long long cse_step_number;
 
@@ -625,9 +622,9 @@ int cse_observer_destroy(cse_observer* observer);
  *      The observer.
  *
  *  \returns
- *      The index of the observer.
+ *      0 on success and -1 on error.
  */
-cse_observer_index cse_execution_add_observer(
+int cse_execution_add_observer(
     cse_execution* execution,
     cse_observer* observer);
 

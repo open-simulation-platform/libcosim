@@ -77,15 +77,15 @@ int main()
         return 1;
     }
 
-    cse_observer_index observer_index1 = cse_execution_add_observer(execution, observer1);
-    if (observer_index1 < 0) {
+    rc = cse_execution_add_observer(execution, observer1);
+    if (rc < 0) {
         print_last_error();
         cse_execution_destroy(execution);
         return 1;
     }
 
-    cse_observer_index observer_index2 = cse_execution_add_observer(execution, observer2);
-    if (observer_index2 < 0) {
+    rc = cse_execution_add_observer(execution, observer2);
+    if (rc < 0) {
         print_last_error();
         cse_execution_destroy(execution);
         return 1;

@@ -1,6 +1,6 @@
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <inttypes.h>
 
 #include <cse.h>
 #include <math.h>
@@ -61,8 +61,8 @@ int main()
         return 1;
     }
 
-    int observer_index = cse_execution_add_observer(execution, observer);
-    if (observer_index < 0) {
+    rc = cse_execution_add_observer(execution, observer);
+    if (rc < 0) {
         print_last_error();
         cse_execution_destroy(execution);
         return 1;
@@ -86,18 +86,18 @@ int main()
     cse_time_point times[10];
     cse_step_number steps[10];
 
-    size_t readRealSamples = cse_observer_slave_get_real_samples(observer, slave_index, index, fromStep, nSamples, realSamples, steps, times);
-    if (readRealSamples != nSamples) {
+    int64_t readRealSamples = cse_observer_slave_get_real_samples(observer, slave_index, index, fromStep, nSamples, realSamples, steps, times);
+    if (readRealSamples != (int64_t)nSamples) {
         print_last_error();
-        fprintf(stderr, "Expected to read 10 real samples, got %zu\n", readRealSamples);
+        fprintf(stderr, "Expected to read 10 real samples, got %" PRId64 "\n", readRealSamples);
         cse_execution_destroy(execution);
         return 1;
     }
 
-    size_t readIntSamples = cse_observer_slave_get_integer_samples(observer, slave_index, index, fromStep, nSamples, intSamples, steps, times);
-    if (readIntSamples != nSamples) {
+    int64_t readIntSamples = cse_observer_slave_get_integer_samples(observer, slave_index, index, fromStep, nSamples, intSamples, steps, times);
+    if (readIntSamples != (int64_t)nSamples) {
         print_last_error();
-        fprintf(stderr, "Expected to read 10 int samples, got %zu\n", readIntSamples);
+        fprintf(stderr, "Expected to read 10 int samples, got %" PRId64 "\n", readIntSamples);
         cse_execution_destroy(execution);
         return 1;
     }
