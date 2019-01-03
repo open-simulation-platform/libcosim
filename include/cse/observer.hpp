@@ -128,12 +128,15 @@ public:
         duration lastStepSize,
         time_point currentTime) override;
 
+    boost::filesystem::path get_log_path();
+
     ~file_observer();
 
 private:
     class slave_value_writer;
     std::unordered_map<simulator_index, std::unique_ptr<slave_value_writer>> valueWriters_;
     boost::filesystem::path logDir_;
+    boost::filesystem::path logPath_;
     bool binary_;
     size_t limit_;
 };

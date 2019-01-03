@@ -22,8 +22,6 @@
 #include <cse/execution.hpp>
 #include <cse/model.hpp>
 #include <cse/observer.hpp>
-
-#include <cse/hello_world.hpp>
 #include <cse/ssp_parser.hpp>
 
 namespace
@@ -606,11 +604,4 @@ cse_observer_index cse_execution_add_observer(
         handle_current_exception();
         return failure;
     }
-}
-
-int cse_hello_world(char* buffer, size_t size)
-{
-    const auto n = cse::hello_world(gsl::make_span(buffer, size - 1));
-    buffer[n] = '\0';
-    return cse::get_ultimate_answer();
 }
