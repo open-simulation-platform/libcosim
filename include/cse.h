@@ -52,7 +52,6 @@ typedef enum
     CSE_ERRC_OUT_OF_RANGE,
 
     /**
-     *  \brief
      *  The time step failed, but can be retried with a shorter step length
      *  (if supported by all slaves).
      */
@@ -78,7 +77,6 @@ typedef enum
 
 
 /**
- *  \brief
  *  Returns the error code associated with the last reported error.
  *
  *  Most functions in this library will indicate that an error occurred by
@@ -96,7 +94,6 @@ cse_errc cse_last_error_code();
 
 
 /**
- *  \brief
  *  Returns a textual description of the last reported error.
  *
  *  Most functions in this library will indicate that an error occurred by
@@ -122,7 +119,6 @@ typedef struct cse_execution_s cse_execution;
 
 
 /**
- *  \brief
  *  Creates a new execution.
  * 
  *  \param [in] startTime
@@ -138,8 +134,7 @@ cse_execution* cse_execution_create(
     cse_duration stepSize);
 
 /**
- *  \brief
- *  Creates a new execution based on a SystemStructure.ssd file
+ *  Creates a new execution based on a SystemStructure.ssd file.
  *
  *  \param [in] sspDir
  *      Path to the directory holding SystemStructure.ssd
@@ -154,7 +149,6 @@ cse_execution* cse_ssp_execution_create(
     cse_time_point startTime);
 
 /**
- *  \brief
  *  Destroys an execution.
  *
  *  \returns
@@ -169,7 +163,6 @@ typedef struct cse_slave_s cse_slave;
 
 
 /**
- *  \brief
  *  Creates a new local slave.
  *
  *  \param [in] fmuPath
@@ -183,7 +176,6 @@ cse_slave* cse_local_slave_create(const char* fmuPath);
 
 
 /**
- *  \brief
  *  Loads a co-simulation FMU, instantiates a slave based on it, and adds it
  *  to an execution.
  *
@@ -192,7 +184,7 @@ cse_slave* cse_local_slave_create(const char* fmuPath);
  *  \param [in] execution
  *      The execution to which the slave should be added.
  *  \param [in] slave
- *      The slave.
+ *      A pointer to a slave, which may not be null. The slave may not previously have been added to any execution.
  *
  *  \returns
  *      The slave's unique index in the execution, or -1 on error.
@@ -203,7 +195,6 @@ cse_slave_index cse_execution_add_slave(
 
 
 /**
- *  \brief
  *  Advances an execution a number of time steps.
  *
  *  \param [in] execution
@@ -218,7 +209,6 @@ int cse_execution_step(cse_execution* execution, size_t numSteps);
 
 
 /**
- *  \brief
  *  Starts an execution.
  *
  *  The execution will run until `cse_execution_stop()` is called.
@@ -233,7 +223,6 @@ int cse_execution_start(cse_execution* execution);
 
 
 /**
- *  \brief
  *  Stops an execution.
  *
  *  \param [in] execution
@@ -277,7 +266,6 @@ typedef struct
 } cse_execution_status;
 
 /**
- *  \brief
  *  Returns execution status.
  *
  *  \param [in] execution
@@ -307,30 +295,23 @@ typedef struct
     cse_slave_index index;
 } cse_slave_info;
 
-/**
- *  \brief
- *  Returns the number of slaves which have been added to an exeuction.
- *
- *  \param [in] execution
- *      The execution.
- */
+/// Returns the number of slaves which have been added to an execution.
 size_t cse_execution_get_num_slaves(cse_execution* execution);
 
 /**
- *  \brief
  *  Returns slave infos.
  *
  *  \param [in] execution
  *      The execution to get slave infos from.
  *  \param [out] infos
  *      A pointer to an array of length `num_slaves` which will be filled with actual `slave_info` values.
- *  \param [in] num_slaves
+ *  \param [in] numSlaves
  *      The length of the `infos` array.
  *
  *  \returns
  *      0 on success and -1 on error.
  */
-int cse_execution_get_slave_infos(cse_execution* execution, cse_slave_info infos[], size_t num_slaves);
+int cse_execution_get_slave_infos(cse_execution* execution, cse_slave_info infos[], size_t numSlaves);
 
 
 // Observer
@@ -341,7 +322,6 @@ typedef struct cse_observer_s cse_observer;
 
 
 /**
- *  \brief
  *  Sets the values of real variables for one slave.
  *
  *  \param [in] execution
@@ -368,7 +348,6 @@ int cse_execution_slave_set_real(
     const double values[]);
 
 /**
- *  \brief
  *  Retrieves the values of real variables for one slave.
  *
  *  \param [in] observer
@@ -395,7 +374,6 @@ int cse_observer_slave_get_real(
     double values[]);
 
 /**
- * \brief
  * Retrieves a series of observed values, step numbers and times for a real variable.
  *
  * \param [in] observer the observer
@@ -421,7 +399,6 @@ int64_t cse_observer_slave_get_real_samples(
     cse_time_point times[]);
 
 /**
- *  \brief
  *  Sets the values of integer variables for one slave.
  *
  *  \param [in] execution
@@ -448,7 +425,6 @@ int cse_execution_slave_set_integer(
     const int values[]);
 
 /**
- *  \brief
  *  Retrieves the values of integer variables for one slave.
  *
  *  \param [in] observer
@@ -475,7 +451,6 @@ int cse_observer_slave_get_integer(
     int values[]);
 
 /**
- * \brief
  * Retrieves a series of observed values, step numbers and times for an integer variable.
  *
  * \param [in] observer the observer
@@ -501,7 +476,6 @@ int64_t cse_observer_slave_get_integer_samples(
     cse_time_point times[]);
 
 /**
- * \brief
  * Retrieves the step numbers for a range given by a duration.
  *
  * Helper function which can be used in conjunction with `cse_observer_slave_get_xxx_samples()`
@@ -544,7 +518,6 @@ int cse_observer_get_step_numbers(
     cse_step_number steps[]);
 
 /**
- *  \brief
  *  Connects one real output variable to one real input variable.
  *
  *  \param [in] execution
@@ -569,7 +542,6 @@ int cse_execution_connect_real_variables(
     cse_variable_index inputVariableIndex);
 
 /**
- *  \brief
  *  Connects one integer output variable to one integer input variable.
  *
  *  \param [in] execution
@@ -598,7 +570,6 @@ int cse_execution_connect_integer_variables(
 cse_observer* cse_membuffer_observer_create();
 
 /**
- * \brief
  * Creates an observer which logs variable values to file in csv format.
  *
  * @param logDir
@@ -613,13 +584,13 @@ int cse_observer_destroy(cse_observer* observer);
 
 
 /**
- *  \brief
  *  Add an observer to an execution.
  *
  *  \param [in] execution
  *      The execution.
  *  \param [in] observer
- *      The observer.
+ *      A pointer to an observer, which may not be null. The observer may
+ *      not previously have been added to any execution.
  *
  *  \returns
  *      0 on success and -1 on error.
