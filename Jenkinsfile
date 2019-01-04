@@ -28,7 +28,7 @@ pipeline {
                             steps {
                                 dir('debug-build') {
                                     bat 'conan install ../cse-core -s build_type=Debug -b missing -o ci=True'
-                                    bat 'conan build -c -b -pf package/debug ../cse-core'
+                                    bat 'conan build -c -b -pf package/windows/debug ../cse-core'
                                 }
                             }
                         }
@@ -36,7 +36,7 @@ pipeline {
                             steps {
                                 dir('release-build') {
                                     bat 'conan install ../cse-core -s build_type=Release -b missing -o ci=True'
-                                    bat 'conan build -c -b -pf package/release ../cse-core'
+                                    bat 'conan build -c -b -pf package/windows/release ../cse-core'
                                 }
                             }
                         }
@@ -124,7 +124,7 @@ pipeline {
                             steps {
                                 dir('debug-build-conan') {
                                     sh 'conan install ../cse-core -s compiler.libcxx=libstdc++11 -s build_type=Debug -b missing'
-                                    sh 'cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=../install -DCSECORE_USING_CONAN=TRUE -DCSECORE_BUILD_PRIVATE_APIDOC=ON ../cse-core'
+                                    sh 'cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=../install/linux/debug -DCSECORE_USING_CONAN=TRUE -DCSECORE_BUILD_PRIVATE_APIDOC=ON ../cse-core'
                                     sh 'cmake --build .'
                                     sh 'cmake --build . --target install'
                                 }
@@ -134,7 +134,7 @@ pipeline {
                             steps {
                                 dir('release-build-conan') {
                                     sh 'conan install ../cse-core -s compiler.libcxx=libstdc++11 -s build_type=Release -b missing'
-                                    sh 'cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../install -DCSECORE_USING_CONAN=TRUE -DCSECORE_BUILD_PRIVATE_APIDOC=ON ../cse-core'
+                                    sh 'cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../install/linux/release -DCSECORE_USING_CONAN=TRUE -DCSECORE_BUILD_PRIVATE_APIDOC=ON ../cse-core'
                                     sh 'cmake --build .'
                                     sh 'cmake --build . --target install'
                                 }
@@ -165,7 +165,9 @@ pipeline {
                             )
                         }
                         success {
-                            archiveArtifacts artifacts: 'install/**/*',  fingerprint: true
+                            dir('install') {
+                                archiveArtifacts artifacts: '**/*',  fingerprint: true
+                            }
                         }
                         cleanup {
                             dir('debug-build-conan/Testing') {
