@@ -28,7 +28,7 @@ pipeline {
                             steps {
                                 dir('debug-build') {
                                     bat 'conan install ../cse-core -s build_type=Debug -b missing -o ci=True'
-                                    bat 'conan build -c -b ../cse-core'
+                                    bat 'conan build -c -b -pf package/debug ../cse-core'
                                 }
                             }
                         }
@@ -36,7 +36,7 @@ pipeline {
                             steps {
                                 dir('release-build') {
                                     bat 'conan install ../cse-core -s build_type=Release -b missing -o ci=True'
-                                    bat 'conan build -c -b ../cse-core'
+                                    bat 'conan build -c -b -pf package/release ../cse-core'
                                 }
                             }
                         }
@@ -60,7 +60,9 @@ pipeline {
                                         sh "conan export-pkg ../cse-core osp/${CSE_CONAN_CHANNEL} --force"
                                         sh "conan upload cse-core/*@osp/${CSE_CONAN_CHANNEL} --all -r=osp --confirm"
                                     }
-                                    archiveArtifacts artifacts: 'debug-build/package/**/*',  fingerprint: true
+                                    dir('debug-build/package') {
+                                        archiveArtifacts artifacts: '**/*',  fingerprint: true
+                                    }
                                 }
                                 cleanup {
                                     dir('debug-build/Testing') {
@@ -87,9 +89,11 @@ pipeline {
                                 success {
                                     dir('release-build') {
                                         sh "conan export-pkg ../cse-core osp/${CSE_CONAN_CHANNEL} --force"
-                                        sh "conan upload cse-core/*@osp/${CSE_CONAN_CHANNEL} --all -r=osp --confirm"
+                                        sh "conan upload cse-core/*@osp/${CSE_CONAN_CHANNEL} --all -r=osp --confirm"    
                                     }
-                                    archiveArtifacts artifacts: 'release-build/package/**/*',  fingerprint: true
+                                    dir('release-build/package') {
+                                        archiveArtifacts artifacts: '**/*',  fingerprint: true
+                                    }
                                 }
                                 cleanup {
                                     dir('release-build/Testing') {
