@@ -221,7 +221,7 @@ int cse_execution_step(cse_execution* execution, size_t numSteps);
  *  \brief
  *  Starts an execution.
  *
- *  The execution will run until `cse_execution_stop` is called.
+ *  The execution will run until `cse_execution_stop()` is called.
  *
  *  \param [in] execution
  *      The execution to be started.
