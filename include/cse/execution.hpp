@@ -20,9 +20,6 @@ namespace cse
 /// An index which identifies a sub-simulator in an execution.
 using simulator_index = int;
 
-/// An index which identifies an observer in an execution.
-using observer_index = int;
-
 /// An number which identifies a specific time step in an execution.
 using step_number = long long;
 
@@ -109,9 +106,8 @@ public:
     /**
      * Adds an observer to the execution.
      * \param obs the observer to add
-     * \returns The index of the observer
      */
-    observer_index add_observer(std::shared_ptr<observer> obs);
+    void add_observer(std::shared_ptr<observer> obs);
 
     /**
      *  Connects an output variable to an input variable.

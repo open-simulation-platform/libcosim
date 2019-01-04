@@ -71,8 +71,8 @@ int main()
         return 1;
     }
 
-    cse_observer_index observerIndex = cse_execution_add_observer(execution, observer);
-    if (observerIndex < 0) {
+    rc = cse_execution_add_observer(execution, observer);
+    if (rc < 0) {
         print_last_error();
         cse_execution_destroy(execution);
         return 1;

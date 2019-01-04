@@ -75,9 +75,8 @@ public:
         return std::shared_ptr<simulator>(simulators_.at(index));
     }
 
-    observer_index add_observer(std::shared_ptr<observer> obs)
+    void add_observer(std::shared_ptr<observer> obs)
     {
-        const auto index = static_cast<observer_index>(observers_.size());
         observers_.push_back(obs);
         for (std::size_t i = 0; i < simulators_.size(); ++i) {
             obs->simulator_added(
@@ -88,7 +87,6 @@ public:
         for (const auto conn : connections_) {
             obs->variables_connected(conn.second, conn.first, currentTime_);
         }
-        return index;
     }
 
     void connect_variables(variable_id output, variable_id input)
@@ -242,7 +240,7 @@ std::shared_ptr<simulator> execution::get_simulator(simulator_index index)
     return pimpl_->get_simulator(index);
 }
 
-observer_index execution::add_observer(std::shared_ptr<observer> obs)
+void execution::add_observer(std::shared_ptr<observer> obs)
 {
     return pimpl_->add_observer(obs);
 }

@@ -17,10 +17,10 @@ extern "C" {
 #endif
 
 
-/// The type used to specify (simulation) time points.
+/// The type used to specify (simulation) time points. The time unit is nanoseconds.
 typedef int64_t cse_time_point;
 
-/// The type used to specify (simulation) time durations.
+/// The type used to specify (simulation) time durations. The time unit is nanoseconds.
 typedef int64_t cse_duration;
 
 /// Variable index.
@@ -28,9 +28,6 @@ typedef uint32_t cse_variable_index;
 
 /// Slave index.
 typedef int cse_slave_index;
-
-/// Observer index.
-typedef int cse_observer_index;
 
 /// Step number
 typedef long long cse_step_number;
@@ -55,7 +52,6 @@ typedef enum
     CSE_ERRC_OUT_OF_RANGE,
 
     /**
-     *  \brief
      *  The time step failed, but can be retried with a shorter step length
      *  (if supported by all slaves).
      */
@@ -81,7 +77,6 @@ typedef enum
 
 
 /**
- *  \brief
  *  Returns the error code associated with the last reported error.
  *
  *  Most functions in this library will indicate that an error occurred by
@@ -99,7 +94,6 @@ cse_errc cse_last_error_code();
 
 
 /**
- *  \brief
  *  Returns a textual description of the last reported error.
  *
  *  Most functions in this library will indicate that an error occurred by
@@ -125,7 +119,6 @@ typedef struct cse_execution_s cse_execution;
 
 
 /**
- *  \brief
  *  Creates a new execution.
  * 
  *  \param [in] startTime
@@ -141,8 +134,7 @@ cse_execution* cse_execution_create(
     cse_duration stepSize);
 
 /**
- *  \brief
- *  Creates a new execution based on a SystemStructure.ssd file
+ *  Creates a new execution based on a SystemStructure.ssd file.
  *
  *  \param [in] sspDir
  *      Path to the directory holding SystemStructure.ssd
@@ -157,7 +149,6 @@ cse_execution* cse_ssp_execution_create(
     cse_time_point startTime);
 
 /**
- *  \brief
  *  Destroys an execution.
  *
  *  \returns
@@ -165,20 +156,13 @@ cse_execution* cse_ssp_execution_create(
  */
 int cse_execution_destroy(cse_execution* execution);
 
-
-struct cse_address_s;
-typedef struct cse_address_s cse_address;
-
-
-int cse_address_destroy(cse_address* address);
-
-
 struct cse_slave_s;
+
+/// An opaque object which contains the state for a slave.
 typedef struct cse_slave_s cse_slave;
 
 
 /**
- *  \brief
  *  Creates a new local slave.
  *
  *  \param [in] fmuPath
@@ -192,20 +176,15 @@ cse_slave* cse_local_slave_create(const char* fmuPath);
 
 
 /**
- *  \brief
  *  Loads a co-simulation FMU, instantiates a slave based on it, and adds it
  *  to an execution.
  *
  *  The slave is owned by the execution and is destroyed along with it.
  *
- *  \note
- *      Currently (and of course temporarily), only one slave may be added to
- *      an execution.
- *
  *  \param [in] execution
  *      The execution to which the slave should be added.
  *  \param [in] slave
- *      The slave.
+ *      A pointer to a slave, which may not be null. The slave may not previously have been added to any execution.
  *
  *  \returns
  *      The slave's unique index in the execution, or -1 on error.
@@ -216,13 +195,12 @@ cse_slave_index cse_execution_add_slave(
 
 
 /**
- *  \brief
- *  Advances an execution one time step.
+ *  Advances an execution a number of time steps.
  *
  *  \param [in] execution
  *      The execution to be stepped.
  *  \param [in] numSteps
- *      The number of steps to advance the execution to which the slave should be added.
+ *      The number of steps to advance the simulation execution.
  *
  *  \returns
  *      0 on success and -1 on error.
@@ -231,8 +209,9 @@ int cse_execution_step(cse_execution* execution, size_t numSteps);
 
 
 /**
- *  \brief
  *  Starts an execution.
+ *
+ *  The execution will run until `cse_execution_stop()` is called.
  *
  *  \param [in] execution
  *      The execution to be started.
@@ -244,7 +223,6 @@ int cse_execution_start(cse_execution* execution);
 
 
 /**
- *  \brief
  *  Stops an execution.
  *
  *  \param [in] execution
@@ -256,6 +234,15 @@ int cse_execution_start(cse_execution* execution);
 int cse_execution_stop(cse_execution* execution);
 
 
+/// Enables real time simulation for an execution.
+int cse_execution_enable_real_time_simulation(cse_execution* execution);
+
+
+/// Disables real time simulation for an execution.
+int cse_execution_disable_real_time_simulation(cse_execution* execution);
+
+
+/// Execution states.
 typedef enum
 {
     CSE_EXECUTION_STOPPED,
@@ -263,17 +250,22 @@ typedef enum
     CSE_EXECUTION_ERROR
 } cse_execution_state;
 
+/// A struct containing the execution status.
 typedef struct
 {
+    /// Current simulation time.
     cse_time_point current_time;
+    /// Current execution state.
     cse_execution_state state;
+    /// Last recorded error code.
     int error_code;
+    /// Current real time factor.
     double real_time_factor;
+    /// Executing towards real time target.
     int is_real_time_simulation;
 } cse_execution_status;
 
 /**
- *  \brief
  *  Returns execution status.
  *
  *  \param [in] execution
@@ -289,34 +281,47 @@ int cse_execution_get_status(
     cse_execution* execution,
     cse_execution_status* status);
 
+/// Max number of characters used for slave name and source.
 #define SLAVE_NAME_MAX_SIZE 1024
 
+/// A struct containing information about a slave which has been added to an execution.
 typedef struct
 {
+    /// The slave instance name.
     char name[SLAVE_NAME_MAX_SIZE];
+    /// The slave source (FMU file name).
     char source[SLAVE_NAME_MAX_SIZE];
+    /// The slave's unique index in the exeuction.
     cse_slave_index index;
 } cse_slave_info;
 
+/// Returns the number of slaves which have been added to an execution.
 size_t cse_execution_get_num_slaves(cse_execution* execution);
 
+/**
+ *  Returns slave infos.
+ *
+ *  \param [in] execution
+ *      The execution to get slave infos from.
+ *  \param [out] infos
+ *      A pointer to an array of length `num_slaves` which will be filled with actual `slave_info` values.
+ *  \param [in] numSlaves
+ *      The length of the `infos` array.
+ *
+ *  \returns
+ *      0 on success and -1 on error.
+ */
 int cse_execution_get_slave_infos(cse_execution* execution, cse_slave_info infos[], size_t numSlaves);
-
-
-/// Enables real time simulation
-int cse_execution_enable_real_time_simulation(cse_execution* execution);
-
-/// Disables real time simulation
-int cse_execution_disable_real_time_simulation(cse_execution* execution);
 
 
 // Observer
 struct cse_observer_s;
+
+/// An opaque object which contains the state for an observer.
 typedef struct cse_observer_s cse_observer;
 
 
 /**
- *  \brief
  *  Sets the values of real variables for one slave.
  *
  *  \param [in] execution
@@ -343,7 +348,6 @@ int cse_execution_slave_set_real(
     const double values[]);
 
 /**
- *  \brief
  *  Retrieves the values of real variables for one slave.
  *
  *  \param [in] observer
@@ -370,7 +374,6 @@ int cse_observer_slave_get_real(
     double values[]);
 
 /**
- * \brief
  * Retrieves a series of observed values, step numbers and times for a real variable.
  *
  * \param [in] observer the observer
@@ -382,8 +385,8 @@ int cse_observer_slave_get_real(
  * \param [out] steps the corresponding step numbers
  * \param [out] times the corresponding simulation times
  *
- * Returns the number of samples actually read, which may be smaller
- * than `nSamples`.
+ * \returns
+ *      The number of samples actually read, which may be smaller than `nSamples`.
  */
 int64_t cse_observer_slave_get_real_samples(
     cse_observer* observer,
@@ -396,7 +399,6 @@ int64_t cse_observer_slave_get_real_samples(
     cse_time_point times[]);
 
 /**
- *  \brief
  *  Sets the values of integer variables for one slave.
  *
  *  \param [in] execution
@@ -423,7 +425,6 @@ int cse_execution_slave_set_integer(
     const int values[]);
 
 /**
- *  \brief
  *  Retrieves the values of integer variables for one slave.
  *
  *  \param [in] observer
@@ -450,7 +451,6 @@ int cse_observer_slave_get_integer(
     int values[]);
 
 /**
- * \brief
  * Retrieves a series of observed values, step numbers and times for an integer variable.
  *
  * \param [in] observer the observer
@@ -462,8 +462,8 @@ int cse_observer_slave_get_integer(
  * \param [out] steps the corresponding step numbers
  * \param [out] times the corresponding simulation times
  *
- * Returns the number of samples actually read, which may be smaller
- * than `nSamples`.
+ * \returns
+ *      The number of samples actually read, which may be smaller than `nSamples`.
  */
 int64_t cse_observer_slave_get_integer_samples(
     cse_observer* observer,
@@ -476,14 +476,16 @@ int64_t cse_observer_slave_get_integer_samples(
     cse_time_point times[]);
 
 /**
- * \brief
  * Retrieves the step numbers for a range given by a duration.
  *
  * Helper function which can be used in conjunction with `cse_observer_slave_get_xxx_samples()`
  * when it is desired to retrieve the latest available samples given a certain duration.
  *
+ * \note
+ * It is assumed that `steps` has a length of 2.
+ *
  * \param [in] observer the observer
- * \param [in] sim index of the slave
+ * \param [in] slave index of the slave
  * \param [in] duration the duration to get step numbers for
  * \param [out] steps the corresponding step numbers
  */
@@ -499,10 +501,13 @@ int cse_observer_get_step_numbers_for_duration(
  * Helper function which can be used in conjunction with `cse_observer_slave_get_xxx_samples()`
  * when it is desired to retrieve samples between two points in time.
  *
+ * \note
+ * It is assumed that `steps` has a length of 2.
+ *
  * \param [in] observer the observer
- * \param [in] sim index of the simulator
- * \param [in] tBegin the start of the range
- * \param [in] tEnd the end of the range
+ * \param [in] slave index of the simulator
+ * \param [in] begin the start of the range
+ * \param [in] end the end of the range
  * \param [out] steps the corresponding step numbers
  */
 int cse_observer_get_step_numbers(
@@ -513,7 +518,6 @@ int cse_observer_get_step_numbers(
     cse_step_number steps[]);
 
 /**
- *  \brief
  *  Connects one real output variable to one real input variable.
  *
  *  \param [in] execution
@@ -538,7 +542,6 @@ int cse_execution_connect_real_variables(
     cse_variable_index inputVariableIndex);
 
 /**
- *  \brief
  *  Connects one integer output variable to one integer input variable.
  *
  *  \param [in] execution
@@ -563,19 +566,36 @@ int cse_execution_connect_integer_variables(
     cse_variable_index inputVariableIndex);
 
 
+/// Creates an observer which buffers variable values in memory.
 cse_observer* cse_membuffer_observer_create();
 
+/**
+ * Creates an observer which logs variable values to file in csv format.
+ *
+ * @param logDir
+ *      The directory where log files will be created.
+ * \returns
+ *      The created observer.
+ */
 cse_observer* cse_file_observer_create(const char* logDir);
 
+/// Destroys an observer
 int cse_observer_destroy(cse_observer* observer);
 
-cse_address* cse_observer_get_address(cse_observer* observer);
 
-int cse_slave_destroy(cse_slave* slave);
-
-cse_address* cse_slave_get_address(cse_slave* s);
-
-cse_observer_index cse_execution_add_observer(
+/**
+ *  Add an observer to an execution.
+ *
+ *  \param [in] execution
+ *      The execution.
+ *  \param [in] observer
+ *      A pointer to an observer, which may not be null. The observer may
+ *      not previously have been added to any execution.
+ *
+ *  \returns
+ *      0 on success and -1 on error.
+ */
+int cse_execution_add_observer(
     cse_execution* execution,
     cse_observer* observer);
 
