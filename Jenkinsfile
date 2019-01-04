@@ -61,7 +61,7 @@ pipeline {
                                         sh "conan upload cse-core/*@osp/${CSE_CONAN_CHANNEL} --all -r=osp --confirm"
                                     }
                                     dir('debug-build/package') {
-                                        archiveArtifacts artifacts: '**/*',  fingerprint: true
+                                        archiveArtifacts artifacts: '**',  fingerprint: true
                                     }
                                 }
                                 cleanup {
@@ -92,7 +92,7 @@ pipeline {
                                         sh "conan upload cse-core/*@osp/${CSE_CONAN_CHANNEL} --all -r=osp --confirm"    
                                     }
                                     dir('release-build/package') {
-                                        archiveArtifacts artifacts: '**/*',  fingerprint: true
+                                        archiveArtifacts artifacts: '**',  fingerprint: true
                                     }
                                 }
                                 cleanup {
@@ -166,7 +166,7 @@ pipeline {
                         }
                         success {
                             dir('install') {
-                                archiveArtifacts artifacts: '**/*',  fingerprint: true
+                                archiveArtifacts artifacts: '**',  fingerprint: true
                             }
                         }
                         cleanup {
