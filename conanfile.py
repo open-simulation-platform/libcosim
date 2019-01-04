@@ -47,4 +47,5 @@ class CSECoreConan(ConanFile):
 
     def package(self):
         cmake = CMake(self)
+        cmake.parallel = False
         cmake.install()
