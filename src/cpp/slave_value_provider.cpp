@@ -1,6 +1,5 @@
 #include <cse/slave_value_provider.hpp>
 
-#include <iterator>
 #include <map>
 #include <mutex>
 
