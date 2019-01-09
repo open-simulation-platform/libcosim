@@ -10,6 +10,10 @@
 namespace cse
 {
 
+membuffer_observer::membuffer_observer()
+    : bufSize_(10000)
+{}
+
 membuffer_observer::membuffer_observer(size_t bufSize)
     : bufSize_(bufSize)
 {

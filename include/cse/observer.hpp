@@ -147,6 +147,16 @@ private:
 class membuffer_observer : public observer
 {
 public:
+    /**
+     * Default constructor, sets the internal sample buffer size to 10000
+     */
+    membuffer_observer();
+
+    /**
+     * Constructor for custom sample buffer size
+     *
+     * \param [in] maximum sample buffer size
+     */
     membuffer_observer(size_t);
 
     void simulator_added(simulator_index, observable*, time_point) override;
