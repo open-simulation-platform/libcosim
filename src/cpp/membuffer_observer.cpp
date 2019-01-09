@@ -10,13 +10,14 @@
 namespace cse
 {
 
-membuffer_observer::membuffer_observer()
+membuffer_observer::membuffer_observer(size_t bufSize)
+    : bufSize_(bufSize)
 {
 }
 
 void membuffer_observer::simulator_added(simulator_index index, observable* simulator, time_point currentTime)
 {
-    valueProviders_[index] = std::make_unique<slave_value_provider>(simulator, currentTime);
+    valueProviders_[index] = std::make_unique<slave_value_provider>(simulator, currentTime, bufSize_);
 }
 
 void membuffer_observer::simulator_removed(simulator_index index, time_point /*currentTime*/)
@@ -101,6 +102,21 @@ void membuffer_observer::get_step_numbers(
     gsl::span<step_number> steps)
 {
     valueProviders_.at(sim)->get_step_numbers(tBegin, tEnd, steps);
+}
+
+size_t membuffer_observer::get_max_size()
+{
+    return bufSize_;
+}
+
+size_t membuffer_observer::size(simulator_index sim)
+{
+    return valueProviders_.at(sim)->real_samples_size();
+}
+
+bool membuffer_observer::buffer_is_full(simulator_index sim)
+{
+    return valueProviders_.at(sim)->real_samples_buffer_is_full();
 }
 
 membuffer_observer::~membuffer_observer() noexcept = default;

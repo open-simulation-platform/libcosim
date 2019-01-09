@@ -1,5 +1,6 @@
 #include <cse/slave_value_provider.hpp>
 
+#include <iterator>
 #include <map>
 #include <mutex>
 
@@ -47,6 +48,7 @@ size_t get_samples(
     if (variableIndexIt != indices.end()) {
         const size_t valueIndex = variableIndexIt - indices.begin();
         auto sampleIt = samples.find(fromStep);
+
         for (samplesRead = 0; samplesRead < static_cast<std::size_t>(values.size()); samplesRead++) {
             if (sampleIt != samples.end()) {
                 steps[samplesRead] = sampleIt->first;
@@ -63,8 +65,9 @@ size_t get_samples(
 
 } // namespace
 
-slave_value_provider::slave_value_provider(observable* observable, time_point startTime)
+slave_value_provider::slave_value_provider(observable* observable, time_point startTime, size_t bufSize)
     : observable_(observable)
+    , bufSize_(bufSize)
 {
 
     for (const auto& vd : observable->model_description().variables) {
@@ -85,8 +88,20 @@ slave_value_provider::~slave_value_provider() noexcept = default;
 void slave_value_provider::observe(step_number timeStep, time_point currentTime)
 {
     std::lock_guard<std::mutex> lock(lock_);
+
     realSamples_[timeStep].reserve(realIndexes_.size());
     intSamples_[timeStep].reserve(intIndexes_.size());
+
+    if (real_samples_buffer_is_full())
+    {
+        realSamples_.erase(realSamples_.begin());
+        timeSamples_.erase(timeSamples_.begin());
+    }
+
+    if (int_samples_buffer_is_full())
+    {
+        intSamples_.erase(intSamples_.begin());
+    }
 
     for (const auto idx : realIndexes_) {
         realSamples_[timeStep].push_back(observable_->get_real(idx));
@@ -95,7 +110,9 @@ void slave_value_provider::observe(step_number timeStep, time_point currentTime)
     for (const auto idx : intIndexes_) {
         intSamples_[timeStep].push_back(observable_->get_integer(idx));
     }
+
     timeSamples_[timeStep] = currentTime;
+
 }
 
 void slave_value_provider::get_real(gsl::span<const variable_index> variables, gsl::span<double> values)
@@ -113,12 +130,14 @@ void slave_value_provider::get_int(gsl::span<const variable_index> variables, gs
 size_t slave_value_provider::get_real_samples(variable_index variableIndex, step_number fromStep, gsl::span<double> values, gsl::span<step_number> steps, gsl::span<time_point> times)
 {
     std::lock_guard<std::mutex> lock(lock_);
+    CSE_INPUT_CHECK(fromStep >= realSamples_.begin()->first);
     return get_samples<double>(variableIndex, realIndexes_, realSamples_, timeSamples_, fromStep, values, steps, times);
 }
 
 size_t slave_value_provider::get_int_samples(variable_index variableIndex, step_number fromStep, gsl::span<int> values, gsl::span<step_number> steps, gsl::span<time_point> times)
 {
     std::lock_guard<std::mutex> lock(lock_);
+    CSE_INPUT_CHECK(fromStep >= realSamples_.begin()->first);
     return get_samples<int>(variableIndex, intIndexes_, intSamples_, timeSamples_, fromStep, values, steps, times);
 }
 
@@ -165,6 +184,26 @@ void slave_value_provider::get_step_numbers(duration duration, gsl::span<step_nu
 
     steps[0] = firstStep;
     steps[1] = lastStep;
+}
+
+size_t slave_value_provider::real_samples_size()
+{
+    return realSamples_.size();
+}
+
+size_t slave_value_provider::int_samples_size()
+{
+    return intSamples_.size();
+}
+
+bool slave_value_provider::real_samples_buffer_is_full()
+{
+    return (realSamples_.size() > bufSize_);
+}
+
+bool slave_value_provider::int_samples_buffer_is_full()
+{
+    return (intSamples_.size() > bufSize_);
 }
 
 } // namespace cse

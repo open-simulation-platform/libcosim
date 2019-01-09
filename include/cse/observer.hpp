@@ -147,7 +147,7 @@ private:
 class membuffer_observer : public observer
 {
 public:
-    membuffer_observer();
+    membuffer_observer(size_t);
 
     void simulator_added(simulator_index, observable*, time_point) override;
 
@@ -260,9 +260,18 @@ public:
         time_point tEnd,
         gsl::span<step_number> steps);
 
+    /**
+     * Returns the maximum size of the underlying value storage. In practice the maximum
+     * number of timesteps that is stored in memory.
+     */
+    size_t get_max_size();
+    size_t size(simulator_index sim);
+    bool buffer_is_full(simulator_index sim);
+
     ~membuffer_observer() noexcept;
 
 private:
+    size_t bufSize_;
     std::unordered_map<simulator_index, std::unique_ptr<slave_value_provider>> valueProviders_;
 };
 
