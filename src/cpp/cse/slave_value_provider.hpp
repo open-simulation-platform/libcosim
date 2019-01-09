@@ -27,8 +27,6 @@ public:
     bool int_samples_buffer_is_full();
 
 private:
-    size_t bufSize_;
-
     std::map<step_number, std::vector<double>> realSamples_;
     std::map<step_number, std::vector<int>> intSamples_;
     std::map<step_number, time_point> timeSamples_;
@@ -36,6 +34,7 @@ private:
     std::vector<variable_index> intIndexes_;
     observable* observable_;
     std::mutex lock_;
+    size_t bufSize_;
 };
 
 } // namespace cse
