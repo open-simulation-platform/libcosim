@@ -46,6 +46,7 @@ set(sources
     "membuffer_observer.cpp"
     "file_observer.cpp"
     "slave_value_provider.cpp"
+    "time_series_observer.cpp"
 
     "error.cpp"
     "fmi_glue.cpp"

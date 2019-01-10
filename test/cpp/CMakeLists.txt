@@ -4,6 +4,7 @@ set(tests
     "file_observer_logging_test"
     "membuffer_observer_test"
     "ssp_parser_test"
+    "time_series_observer_test"
     "trend_buffer_test"
 )
 set(unittests
