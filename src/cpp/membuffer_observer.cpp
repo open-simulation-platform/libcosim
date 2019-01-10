@@ -108,14 +108,24 @@ void membuffer_observer::get_step_numbers(
     valueProviders_.at(sim)->get_step_numbers(tBegin, tEnd, steps);
 }
 
-size_t membuffer_observer::get_max_size()
+void membuffer_observer::clear(simulator_index sim)
+{
+    valueProviders_.at(sim)->clear();
+}
+
+size_t membuffer_observer::get_buffer_size()
 {
     return bufSize_;
 }
 
-size_t membuffer_observer::size(simulator_index sim)
+size_t membuffer_observer::real_samples_size(simulator_index sim)
 {
     return valueProviders_.at(sim)->real_samples_size();
+}
+
+size_t membuffer_observer::int_samples_size(simulator_index sim)
+{
+    return valueProviders_.at(sim)->int_samples_size();
 }
 
 bool membuffer_observer::buffer_is_full(simulator_index sim)

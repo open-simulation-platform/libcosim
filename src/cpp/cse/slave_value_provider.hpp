@@ -25,6 +25,7 @@ public:
     size_t int_samples_size();
     bool real_samples_buffer_is_full();
     bool int_samples_buffer_is_full();
+    void clear();
 
 private:
     std::map<step_number, std::vector<double>> realSamples_;
