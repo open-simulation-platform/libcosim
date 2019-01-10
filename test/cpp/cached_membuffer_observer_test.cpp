@@ -45,7 +45,7 @@ int main()
         size_t samplesRead = observer->get_real_samples(simIndex, varIndex, 51, gsl::make_span(realValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
 
         REQUIRE(numSamples == samplesRead);
-        REQUIRE(numSamples == observer->size(simIndex));
+        REQUIRE(numSamples == observer->real_samples_size(simIndex));
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
