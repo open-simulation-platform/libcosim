@@ -31,7 +31,7 @@ size_t get_samples(
             sampleIt = samples.find(fromStep);
         }
         for (samplesRead = 0; samplesRead < static_cast<std::size_t>(values.size()); samplesRead++) {
-            if (sampleIt != samples.end()) {
+            if ((sampleIt != samples.end()) && (sampleIt->first < fromStep + values.size())) {
                 steps[samplesRead] = sampleIt->first;
                 values[samplesRead] = sampleIt->second;
                 times[samplesRead] = timeSamples[sampleIt->first];
@@ -84,7 +84,7 @@ public:
             default:
                 std::ostringstream oss;
                 oss << "No support for observing variable with type " << type
-                << " and index " << index;
+                    << " and index " << index;
                 throw std::invalid_argument(oss.str());
         }
     }

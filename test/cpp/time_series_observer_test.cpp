@@ -40,7 +40,7 @@ int main()
         auto simResult = execution.simulate_until(time1);
         REQUIRE(simResult.get());
 
-        const int numSamples = 30;
+        const int numSamples = 15;
         const cse::variable_index varIndex = 0;
         double realValues[numSamples];
         cse::step_number steps[numSamples];
@@ -54,10 +54,11 @@ int main()
         simResult = execution.simulate_until(time2);
         REQUIRE(simResult.get());
 
-        samplesRead = observer->get_real_samples(simIndex, varIndex, 0, gsl::make_span(realValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
-        REQUIRE(samplesRead == 10);
+        samplesRead = observer->get_real_samples(simIndex, varIndex, 1, gsl::make_span(realValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
 
-        double expectedReals[] = {1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234};
+        REQUIRE(samplesRead == 5); // Don't expect values beyond fromStep + values.size()
+
+        double expectedReals[] = {1.234, 1.234, 1.234, 1.234, 1.234};
         int counter = 0;
         for (size_t i = 0; i < samplesRead; i++) {
             REQUIRE(std::fabs(expectedReals[i] - realValues[i]) < 1.0e-9);
