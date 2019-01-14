@@ -107,7 +107,6 @@ public:
         }
     }
 
-
     size_t get_real_samples(variable_index variableIndex, step_number fromStep, gsl::span<double> values, gsl::span<step_number> steps, gsl::span<time_point> times)
     {
         std::lock_guard<std::mutex> lock(lock_);

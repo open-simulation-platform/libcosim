@@ -148,8 +148,9 @@ private:
  *  observer providing time series data.
  */
 
-class time_series_provider
+class time_series_provider : public observer
 {
+public:
     /**
      * Retrieves a series of observed values, step numbers and times for a real variable.
      *
@@ -228,7 +229,7 @@ class time_series_provider
 /**
  *  An observer implementation, storing all observed variable values in memory.
  */
-class membuffer_observer : public observer, time_series_provider
+class membuffer_observer : public time_series_provider
 {
 public:
     membuffer_observer();
@@ -304,9 +305,9 @@ private:
 };
 
 /**
- *  An observer implementation, storing all observed variable values for some variables in memory.
+ *  An observer implementation, storing all observed variable values for a user-specified set of variables in memory.
  */
-class time_series_observer : public observer, time_series_provider
+class time_series_observer : public time_series_provider
 {
 public:
     time_series_observer();

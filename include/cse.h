@@ -32,6 +32,14 @@ typedef int cse_slave_index;
 /// Step number
 typedef long long cse_step_number;
 
+typedef enum
+{
+    CSE_REAL,
+    CSE_INTEGER,
+    CSE_STRING,
+    CSE_BOOLEAN,
+} cse_variable_type;
+
 /// Error codes.
 typedef enum
 {
@@ -578,6 +586,15 @@ cse_observer* cse_membuffer_observer_create();
  *      The created observer.
  */
 cse_observer* cse_file_observer_create(const char* logDir);
+
+/// Creates an observer which buffers variable values in memory on demand.
+cse_observer* cse_time_series_observer_create();
+
+/// Start observing a variable with a `time_series_observer`
+int cse_observer_start_observing(cse_observer* observer, cse_slave_index slave, cse_variable_type type, cse_variable_index index);
+
+/// Stop observing a variable with a `time_series_observer`
+int cse_observer_stop_observing(cse_observer* observer, cse_slave_index slave, cse_variable_type type, cse_variable_index index);
 
 /// Destroys an observer
 int cse_observer_destroy(cse_observer* observer);
