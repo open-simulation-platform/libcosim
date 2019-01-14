@@ -43,9 +43,9 @@ int main()
         cse::step_number steps[numSamples];
         cse::time_point times[numSamples];
 
-        size_t samplesRead = observer->get_real_samples(simIndex, varIndex, 50, gsl::make_span(realValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
+        size_t samplesRead = observer->get_real_samples(simIndex, varIndex, 51, gsl::make_span(realValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
 
-        // Observer should be bounded to 49 last samples due to the >= bufSize_ check in slave_value_provider
+        // Observer should be bounded to 49 last samples due to the >= check in slave_value_provider
         REQUIRE(samplesRead == (numSamples - 1));
 
     } catch (const std::exception& e) {
