@@ -129,7 +129,6 @@ void slave_value_provider::get_int(gsl::span<const variable_index> variables, gs
 
 size_t slave_value_provider::get_real_samples(variable_index variableIndex, step_number fromStep, gsl::span<double> values, gsl::span<step_number> steps, gsl::span<time_point> times)
 {
-    CSE_INPUT_CHECK(fromStep >= realSamples_.begin()->first);
 
     std::lock_guard<std::mutex> lock(lock_);
     return get_samples<double>(variableIndex, realIndexes_, realSamples_, timeSamples_, fromStep, values, steps, times);
