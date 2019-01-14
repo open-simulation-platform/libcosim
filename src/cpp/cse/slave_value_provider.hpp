@@ -21,11 +21,6 @@ public:
     size_t get_int_samples(variable_index variableIndex, step_number fromStep, gsl::span<int> values, gsl::span<step_number> steps, gsl::span<time_point> times);
     void get_step_numbers(time_point tBegin, time_point tEnd, gsl::span<step_number> steps);
     void get_step_numbers(duration duration, gsl::span<step_number> steps);
-    size_t real_samples_size();
-    size_t int_samples_size();
-    bool real_samples_buffer_is_full();
-    bool int_samples_buffer_is_full();
-    void clear();
 
 private:
     std::map<step_number, std::vector<double>> realSamples_;

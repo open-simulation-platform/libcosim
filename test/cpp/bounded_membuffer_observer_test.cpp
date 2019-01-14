@@ -15,8 +15,9 @@
 int main()
 {
     try {
+        // Configure a 100 sample simulation
         constexpr cse::time_point startTime = cse::to_time_point(0.0);
-        constexpr cse::time_point endTime = cse::to_time_point(10.0);
+        constexpr cse::time_point endTime = cse::to_time_point(9.9);
         constexpr cse::duration stepSize = cse::to_duration(0.1);
 
         cse::log::set_global_output_level(cse::log::level::debug);
@@ -42,10 +43,10 @@ int main()
         cse::step_number steps[numSamples];
         cse::time_point times[numSamples];
 
-        size_t samplesRead = observer->get_real_samples(simIndex, varIndex, 51, gsl::make_span(realValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
+        size_t samplesRead = observer->get_real_samples(simIndex, varIndex, 50, gsl::make_span(realValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
 
-        REQUIRE(numSamples == samplesRead);
-        REQUIRE(numSamples == observer->real_samples_size(simIndex));
+        // Observer should be bounded to 49 last samples due to the >= bufSize_ check in slave_value_provider
+        REQUIRE(samplesRead == (numSamples - 1));
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;

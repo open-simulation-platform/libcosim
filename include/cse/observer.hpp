@@ -270,42 +270,6 @@ public:
         time_point tEnd,
         gsl::span<step_number> steps);
 
-    /**
-     * Clears the internal buffer.
-     *
-     * \param [in] sim index of the simulator
-     */
-    void clear(simulator_index sim);
-
-    /**
-     * Returns the maximum size of the underlying value storage. In practice the maximum
-     * number of timesteps that is stored in memory.
-     */
-    size_t get_buffer_size();
-
-    /**
-     * Returns the current size of the internal buffer for real samples.
-     *
-     * @param [in] sim index of the simulator
-     */
-    size_t real_samples_size(simulator_index sim);
-
-    /**
-     *
-     * Returns the current size of the internal buffer for int samples.
-     *
-     * @param [in] sim index of the simulator
-     */
-    size_t int_samples_size(simulator_index sim);
-
-    /**
-     * Returns true if the internal buffer is at capacity, false otherwise.
-     *
-     * @param [in] sim index of the simulator
-     *
-     */
-    bool buffer_is_full(simulator_index sim);
-
     ~membuffer_observer() noexcept;
 
 private:

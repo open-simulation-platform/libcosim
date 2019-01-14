@@ -3,7 +3,7 @@ set(tests
     "fixed_step_algorithm_test"
     "file_observer_logging_test"
     "membuffer_observer_test"
-    "cached_membuffer_observer_test"
+    "bounded_membuffer_observer_test"
     "ssp_parser_test"
     "trend_buffer_test"
 )

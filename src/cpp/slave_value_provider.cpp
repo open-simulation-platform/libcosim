@@ -46,10 +46,14 @@ size_t get_samples(
     const auto variableIndexIt = std::find(indices.begin(), indices.end(), variableIndex);
     if (variableIndexIt != indices.end()) {
         const size_t valueIndex = variableIndexIt - indices.begin();
-        auto sampleIt = samples.find(fromStep);
+        auto sampleIt = samples.begin();
+
+        if (fromStep >= sampleIt->first) {
+            sampleIt = samples.find(fromStep);
+        }
 
         for (samplesRead = 0; samplesRead < static_cast<std::size_t>(values.size()); samplesRead++) {
-            if (sampleIt != samples.end()) {
+            if ((sampleIt != samples.end()) && (sampleIt->first < fromStep + values.size())) {
                 steps[samplesRead] = sampleIt->first;
                 values[samplesRead] = sampleIt->second[valueIndex];
                 times[samplesRead] = timeSamples[sampleIt->first];
@@ -91,15 +95,12 @@ void slave_value_provider::observe(step_number timeStep, time_point currentTime)
     realSamples_[timeStep].reserve(realIndexes_.size());
     intSamples_[timeStep].reserve(intIndexes_.size());
 
-    if (real_samples_buffer_is_full())
+    // Assuming realSamples_.size() == intSamples_.size() as is currently the case
+    if (realSamples_.size() >= bufSize_)
     {
         realSamples_.erase(realSamples_.begin());
-        timeSamples_.erase(timeSamples_.begin());
-    }
-
-    if (int_samples_buffer_is_full())
-    {
         intSamples_.erase(intSamples_.begin());
+        timeSamples_.erase(timeSamples_.begin());
     }
 
     for (const auto idx : realIndexes_) {
@@ -185,34 +186,6 @@ void slave_value_provider::get_step_numbers(duration duration, gsl::span<step_nu
 
     steps[0] = firstStep;
     steps[1] = lastStep;
-}
-
-void slave_value_provider::clear()
-{
-    std::lock_guard<std::mutex> lock(lock_);
-    realSamples_.clear();
-    intSamples_.clear();
-    timeSamples_.clear();
-}
-
-size_t slave_value_provider::real_samples_size()
-{
-    return realSamples_.size();
-}
-
-size_t slave_value_provider::int_samples_size()
-{
-    return intSamples_.size();
-}
-
-bool slave_value_provider::real_samples_buffer_is_full()
-{
-    return (realSamples_.size() > bufSize_);
-}
-
-bool slave_value_provider::int_samples_buffer_is_full()
-{
-    return (intSamples_.size() > bufSize_);
 }
 
 } // namespace cse
