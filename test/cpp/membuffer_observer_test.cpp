@@ -20,13 +20,13 @@ int main()
         constexpr cse::duration stepSize = cse::to_duration(0.1);
 
         cse::log::set_global_output_level(cse::log::level::debug);
-        const int numSamples = 11;
+        const int numSamples = 10;
 
         // Set up the execution
         auto execution = cse::execution(startTime, std::make_unique<cse::fixed_step_algorithm>(stepSize));
 
         // Set up the observer and add to the execution
-        auto observer = std::make_shared<cse::membuffer_observer>(numSamples);
+        auto observer = std::make_shared<cse::membuffer_observer>();
         execution.add_observer(observer);
 
         // Add slaves to the execution and connect variables
