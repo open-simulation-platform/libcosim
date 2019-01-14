@@ -17,7 +17,7 @@ int main()
     try {
         // Configure a 100 sample simulation
         constexpr cse::time_point startTime = cse::to_time_point(0.0);
-        constexpr cse::time_point endTime = cse::to_time_point(9.9);
+        constexpr cse::time_point endTime = cse::to_time_point(10.0);
         constexpr cse::duration stepSize = cse::to_duration(0.1);
 
         cse::log::set_global_output_level(cse::log::level::debug);
