@@ -46,9 +46,12 @@ size_t get_samples(
     const auto variableIndexIt = std::find(indices.begin(), indices.end(), variableIndex);
     if (variableIndexIt != indices.end()) {
         const size_t valueIndex = variableIndexIt - indices.begin();
-        auto sampleIt = samples.find(fromStep);
+        auto sampleIt = samples.begin();
+        if (fromStep >= sampleIt->first) {
+            sampleIt = samples.find(fromStep);
+        }
         for (samplesRead = 0; samplesRead < static_cast<std::size_t>(values.size()); samplesRead++) {
-            if (sampleIt != samples.end()) {
+            if ((sampleIt != samples.end()) && (sampleIt->first < fromStep + values.size())) {
                 steps[samplesRead] = sampleIt->first;
                 values[samplesRead] = sampleIt->second[valueIndex];
                 times[samplesRead] = timeSamples[sampleIt->first];
@@ -63,10 +66,10 @@ size_t get_samples(
 
 } // namespace
 
-slave_value_provider::slave_value_provider(observable* observable, time_point startTime)
+slave_value_provider::slave_value_provider(observable* observable, time_point startTime, size_t bufSize)
     : observable_(observable)
+    , bufSize_(bufSize)
 {
-
     for (const auto& vd : observable->model_description().variables) {
         observable->expose_for_getting(vd.type, vd.index);
         if (vd.type == cse::variable_type::real) {
@@ -76,7 +79,6 @@ slave_value_provider::slave_value_provider(observable* observable, time_point st
             intIndexes_.push_back(vd.index);
         }
     }
-
     observe(0, startTime);
 }
 
@@ -85,8 +87,16 @@ slave_value_provider::~slave_value_provider() noexcept = default;
 void slave_value_provider::observe(step_number timeStep, time_point currentTime)
 {
     std::lock_guard<std::mutex> lock(lock_);
+
     realSamples_[timeStep].reserve(realIndexes_.size());
     intSamples_[timeStep].reserve(intIndexes_.size());
+
+    // Assuming realSamples_.size() == intSamples_.size() as is currently the case
+    if (realSamples_.size() >= bufSize_) {
+        realSamples_.erase(realSamples_.begin());
+        intSamples_.erase(intSamples_.begin());
+        timeSamples_.erase(timeSamples_.begin());
+    }
 
     for (const auto idx : realIndexes_) {
         realSamples_[timeStep].push_back(observable_->get_real(idx));
@@ -95,6 +105,7 @@ void slave_value_provider::observe(step_number timeStep, time_point currentTime)
     for (const auto idx : intIndexes_) {
         intSamples_[timeStep].push_back(observable_->get_integer(idx));
     }
+
     timeSamples_[timeStep] = currentTime;
 }
 

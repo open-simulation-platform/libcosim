@@ -12,7 +12,7 @@ class slave_value_provider
 {
 
 public:
-    slave_value_provider(observable* obs, time_point);
+    slave_value_provider(observable* obs, time_point, size_t);
     ~slave_value_provider() noexcept;
     void observe(step_number timeStep, time_point);
     void get_real(gsl::span<const variable_index> variables, gsl::span<double> values);
@@ -30,6 +30,7 @@ private:
     std::vector<variable_index> intIndexes_;
     observable* observable_;
     std::mutex lock_;
+    size_t bufSize_;
 };
 
 } // namespace cse

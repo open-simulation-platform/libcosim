@@ -11,12 +11,17 @@ namespace cse
 {
 
 membuffer_observer::membuffer_observer()
+    : bufSize_(10000)
+{}
+
+membuffer_observer::membuffer_observer(size_t bufSize)
+    : bufSize_(bufSize)
 {
 }
 
 void membuffer_observer::simulator_added(simulator_index index, observable* simulator, time_point currentTime)
 {
-    valueProviders_[index] = std::make_unique<slave_value_provider>(simulator, currentTime);
+    valueProviders_[index] = std::make_unique<slave_value_provider>(simulator, currentTime, bufSize_);
 }
 
 void membuffer_observer::simulator_removed(simulator_index index, time_point /*currentTime*/)
