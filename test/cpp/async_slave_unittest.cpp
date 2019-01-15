@@ -58,22 +58,22 @@ public:
 };
 
 
-BOOST_AUTO_TEST_CASE(pseudo_async_slave_error_handling)
+void test_error_handling_1(async_slave& as)
 {
-    auto as = make_pseudo_async(std::make_shared<test_slave>());
-    BOOST_REQUIRE(as->state() == slave_state::created);
-    auto f1 = as->setup(to_time_point(0.0), to_time_point(-1.0), std::nullopt);
-    BOOST_REQUIRE(as->state() == slave_state::indeterminate);
+    BOOST_REQUIRE(as.state() == slave_state::created);
+    auto f1 = as.setup(to_time_point(0.0), to_time_point(-1.0), std::nullopt);
+    BOOST_REQUIRE(as.state() == slave_state::indeterminate);
     BOOST_REQUIRE_THROW(f1.get(), std::logic_error);
-    BOOST_REQUIRE(as->state() == slave_state::error);
+    BOOST_REQUIRE(as.state() == slave_state::error);
+}
 
-    // `as` is now defunct, so make a new slave.
-    as = make_pseudo_async(std::make_shared<test_slave>());
-    as->setup(to_time_point(0.0), to_time_point(1.0), std::nullopt).get();
-    auto f2 = as->start_simulation();
-    BOOST_REQUIRE(as->state() == slave_state::indeterminate);
+void test_error_handling_2(async_slave& as)
+{
+    as.setup(to_time_point(0.0), to_time_point(1.0), std::nullopt).get();
+    auto f2 = as.start_simulation();
+    BOOST_REQUIRE(as.state() == slave_state::indeterminate);
     f2.get();
-    BOOST_REQUIRE(as->state() == slave_state::simulation);
+    BOOST_REQUIRE(as.state() == slave_state::simulation);
 
     variable_index realIndex = 0;
     double realValue = 1.0;
@@ -83,14 +83,14 @@ BOOST_AUTO_TEST_CASE(pseudo_async_slave_error_handling)
     bool booleanValue = true;
     variable_index stringIndex = 0;
     std::string stringValue = "foo";
-    auto f3 = as->set_variables(
+    auto f3 = as.set_variables(
         gsl::make_span(&realIndex, 1), gsl::make_span(&realValue, 1),
         gsl::make_span(&integerIndex, 1), gsl::make_span(&integerValue, 1),
         gsl::make_span(&booleanIndex, 1), gsl::make_span(&booleanValue, 1),
         gsl::make_span(&stringIndex, 1), gsl::make_span(&stringValue, 1));
-    BOOST_REQUIRE(as->state() == slave_state::indeterminate);
+    BOOST_REQUIRE(as.state() == slave_state::indeterminate);
     f3.get();
-    BOOST_REQUIRE(as->state() == slave_state::simulation);
+    BOOST_REQUIRE(as.state() == slave_state::simulation);
 
     // Check that `nonfatal_bad_value` errors are accumulated across
     // variable types.
@@ -98,12 +98,12 @@ BOOST_AUTO_TEST_CASE(pseudo_async_slave_error_handling)
     integerValue = 0;
     booleanValue = false;
     stringValue.clear();
-    auto f4 = as->set_variables(
+    auto f4 = as.set_variables(
         gsl::make_span(&realIndex, 1), gsl::make_span(&realValue, 1),
         gsl::make_span(&integerIndex, 1), gsl::make_span(&integerValue, 1),
         gsl::make_span(&booleanIndex, 1), gsl::make_span(&booleanValue, 1),
         gsl::make_span(&stringIndex, 1), gsl::make_span(&stringValue, 1));
-    BOOST_REQUIRE(as->state() == slave_state::indeterminate);
+    BOOST_REQUIRE(as.state() == slave_state::indeterminate);
     BOOST_REQUIRE_EXCEPTION(
         f4.get(),
         nonfatal_bad_value,
@@ -116,16 +116,34 @@ BOOST_AUTO_TEST_CASE(pseudo_async_slave_error_handling)
                 msg.find("boolean") != std::string::npos &&
                 msg.find("string") != std::string::npos;
         });
-    BOOST_REQUIRE(as->state() == slave_state::simulation);
+    BOOST_REQUIRE(as.state() == slave_state::simulation);
 
     // Check that other exceptions are *not* accumulated.
     integerIndex = 1;
-    auto f5 = as->set_variables(
+    auto f5 = as.set_variables(
         gsl::make_span(&realIndex, 1), gsl::make_span(&realValue, 1),
         gsl::make_span(&integerIndex, 1), gsl::make_span(&integerValue, 1),
         gsl::make_span(&booleanIndex, 1), gsl::make_span(&booleanValue, 1),
         gsl::make_span(&stringIndex, 1), gsl::make_span(&stringValue, 1));
-    BOOST_REQUIRE(as->state() == slave_state::indeterminate);
+    BOOST_REQUIRE(as.state() == slave_state::indeterminate);
     BOOST_REQUIRE_THROW(f5.get(), std::logic_error);
-    BOOST_REQUIRE(as->state() == slave_state::error);
+    BOOST_REQUIRE(as.state() == slave_state::error);
+}
+
+
+BOOST_AUTO_TEST_CASE(pseudo_async_slave_error_handling)
+{
+    auto as1 = make_pseudo_async(std::make_shared<test_slave>());
+    test_error_handling_1(*as1);
+    auto as2 = make_pseudo_async(std::make_shared<test_slave>());
+    test_error_handling_2(*as2);
+}
+
+
+BOOST_AUTO_TEST_CASE(background_thread_slave_error_handling)
+{
+    auto as1 = make_background_thread_slave(std::make_shared<test_slave>());
+    test_error_handling_1(*as1);
+    auto as2 = make_background_thread_slave(std::make_shared<test_slave>());
+    test_error_handling_2(*as2);
 }
