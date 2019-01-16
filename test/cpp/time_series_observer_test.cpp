@@ -36,6 +36,18 @@ int main()
 
         auto variableId = cse::variable_id{simIndex, cse::variable_type::real, 0};
 
+        cse::step_number stepNumbers[2];
+        try {
+            observer->get_step_numbers(0, cse::to_duration(10.0), gsl::make_span(stepNumbers, 2));
+        } catch (const std::exception& e) {
+            std::cout << "Got expected exception: " << e.what() << std::endl;
+        }
+        try {
+            observer->get_step_numbers(0, cse::to_time_point(0.0), cse::to_time_point(10.0), gsl::make_span(stepNumbers, 2));
+        } catch (const std::exception& e) {
+            std::cout << "Got expected exception: " << e.what() << std::endl;
+        }
+
         // Run the simulation
         auto simResult = execution.simulate_until(time1);
         REQUIRE(simResult.get());
@@ -48,6 +60,14 @@ int main()
 
         size_t samplesRead = observer->get_real_samples(simIndex, varIndex, 0, gsl::make_span(realValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
         REQUIRE(samplesRead == 0);
+
+        observer->start_observing(cse::variable_id{simIndex, cse::variable_type::integer, 0});
+        int intValues[numSamples];
+        try {
+            observer->get_integer_samples(simIndex, varIndex, 0, gsl::make_span(intValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
+        } catch (const std::exception& e) {
+            std::cout << "Got expected exception: " << e.what() << std::endl;
+        }
 
         observer->start_observing(variableId);
 
@@ -77,7 +97,7 @@ int main()
 
         samplesRead = observer->get_real_samples(simIndex, varIndex, 0, gsl::make_span(realValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
         REQUIRE(samplesRead == 0);
-        
+
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
         return 1;

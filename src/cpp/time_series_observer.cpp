@@ -26,6 +26,9 @@ size_t get_samples(
     const auto& samplesIt = variables.find(variableIndex);
     if (samplesIt != variables.end()) {
         const auto& samples = samplesIt->second;
+        if (samples.empty()) {
+            throw std::out_of_range("No samples recorded yet!");
+        }
         auto sampleIt = samples.begin();
         if (fromStep >= sampleIt->first) {
             sampleIt = samples.find(fromStep);
@@ -50,9 +53,10 @@ class time_series_observer::single_slave_observer
 {
 
 public:
-    single_slave_observer(observable* observable, time_point /*startTime*/)
+    single_slave_observer(observable* observable, time_point startTime)
         : observable_(observable)
     {
+        observe(0, startTime);
     }
 
     ~single_slave_observer() noexcept = default;
