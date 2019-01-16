@@ -6,6 +6,7 @@ project("csecore" VERSION "0.1.0")
 # ==============================================================================
 
 option(BUILD_SHARED_LIBS "Build shared libraries instead of static libraries" ON)
+option(CSECORE_TREAT_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" ON)
 option(CSECORE_BUILD_TESTS "Build test suite" ON)
 option(CSECORE_BUILD_APIDOC "Build API documentation" ON)
 option(CSECORE_BUILD_PRIVATE_APIDOC "Build private API documentation" OFF)
@@ -44,11 +45,17 @@ endforeach()
 # Use the highest warning levels and treat all warnings as errors,
 # but ignore a few selected warnings.
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
-    add_compile_options("-Wall" "-Wextra" "-Wpedantic" "-Werror")
+    add_compile_options("-Wall" "-Wextra" "-Wpedantic")
     add_compile_options("-Wno-parentheses")
+    if(CSECORE_TREAT_WARNINGS_AS_ERRORS)
+        add_compile_options("-Werror")
+    endif()
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    add_compile_options("/W4" "/WX")
+    add_compile_options("/W4")
     add_compile_options("/wd4996")
+    if(CSECORE_TREAT_WARNINGS_AS_ERRORS)
+        add_compile_options("/WX")
+    endif()
     if(CSECORE_USING_CONAN)
         # C4251: 'identifier' : class 'type' needs to have dll-interface to be
         #        used by clients of class 'type2'
