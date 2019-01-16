@@ -40,6 +40,7 @@ class CSECoreConan(ConanFile):
         if self.options.ci:
             cmake.parallel = False
             cmake.definitions["CSCSECORE_BUILD_PRIVATE_APIDOC"] = "ON"
+            cmake.definitions["CSECORE_STANDALONE_INSTALLATION"] = "ON"
         cmake.configure()
         cmake.build()
         cmake.test()
