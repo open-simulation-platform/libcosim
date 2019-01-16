@@ -37,7 +37,7 @@ if (UNIX)
     set (CMAKE_FIND_LIBRARY_SUFFIXES ".a")
 endif ()
 find_library (FMILibrary_LIBRARY
-    NAMES "fmilib2" "fmilib"
+    NAMES "fmilib2" "fmilib" "fmilib_shared"
     PATHS ${FMILibrary_DIR} $ENV{FMILibrary_DIR}
     PATH_SUFFIXES "lib")
 mark_as_advanced (FMILibrary_LIBRARY)
