@@ -97,6 +97,9 @@ endif()
 if(WIN32 AND NOT BUILD_SHARED_LIBS)
     set_target_properties(csecorecpp PROPERTIES OUTPUT_NAME "libcsecorecpp")
 endif()
+if(CSECORE_STANDALONE_INSTALLATION)
+    set_target_properties(csecorecpp PROPERTIES INSTALL_RPATH "\$ORIGIN")
+endif()
 
 install(
     TARGETS csecorecpp

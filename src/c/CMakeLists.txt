@@ -20,6 +20,9 @@ target_link_libraries(csecorec PUBLIC csecorecpp)
 if(WIN32 AND NOT BUILD_SHARED_LIBS)
     set_target_properties(csecorec PROPERTIES OUTPUT_NAME "libcsecorec")
 endif()
+if(CSECORE_STANDALONE_INSTALLATION)
+    set_target_properties(csecorec PROPERTIES INSTALL_RPATH "\$ORIGIN")
+endif()
 
 install(
     TARGETS csecorec
