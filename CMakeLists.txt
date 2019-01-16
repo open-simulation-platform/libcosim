@@ -96,7 +96,7 @@ endif()
 
 set(Boost_components date_time fiber filesystem log)
 if (CSECORE_BUILD_TESTS)
-    list(APPEND Boost_components unit_test_framework
+    list(APPEND Boost_components unit_test_framework)
 endif()
 
 find_package(GSL REQUIRED)
