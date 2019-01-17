@@ -242,7 +242,7 @@ public:
      *
      * \param [in] maximum sample buffer size
      */
-    membuffer_observer(size_t);
+    explicit membuffer_observer(size_t);
 
     void simulator_added(simulator_index, observable*, time_point) override;
 
@@ -308,7 +308,7 @@ public:
         time_point tEnd,
         gsl::span<step_number> steps) override;
 
-    ~membuffer_observer() noexcept;
+    ~membuffer_observer() noexcept override;
 
 private:
     size_t bufSize_;
@@ -321,7 +321,15 @@ private:
 class time_series_observer : public time_series_provider
 {
 public:
+    /**
+     * Default constructor. Creates an unbuffered `time_series_observer`.
+     */
     time_series_observer();
+
+    /**
+     * Constructor for a buffered `time_series_observer`, which will store up to `bufferSize` samples for each observed variable.
+     */
+    explicit time_series_observer(size_t bufferSize);
 
     void simulator_added(simulator_index, observable*, time_point) override;
 
@@ -336,8 +344,19 @@ public:
         duration lastStepSize,
         time_point currentTime) override;
 
+    /**
+     * Start observing a variable.
+     *
+     * After calling this method, it will then be possible to extract observed values for this variable
+     * with `get_real_samples()` or `get_integer_samples()`.
+     */
     void start_observing(variable_id id);
 
+    /**
+     * Stop observing a variable.
+     *
+     * After calling this method, it will no longer be possible to extract observed values for this variable.
+     */
     void stop_observing(variable_id id);
 
     std::size_t get_real_samples(
@@ -367,10 +386,11 @@ public:
         time_point tEnd,
         gsl::span<step_number> steps) override;
 
-    ~time_series_observer() noexcept;
+    ~time_series_observer() noexcept override;
 
 private:
     class single_slave_observer;
+    size_t bufSize_;
     std::unordered_map<simulator_index, std::unique_ptr<single_slave_observer>> slaveObservers_;
 };
 

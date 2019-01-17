@@ -47,14 +47,26 @@ size_t get_samples(
     return samplesRead;
 }
 
+template<typename T>
+void adjustIfFull(std::map<step_number, T>& buffer, size_t maxSize)
+{
+    if (maxSize <= 0) {
+        return;
+    }
+    if (buffer.size() > maxSize) {
+        buffer.erase(buffer.begin());
+    }
+}
+
 } // namespace
 
 class time_series_observer::single_slave_observer
 {
 
 public:
-    single_slave_observer(observable* observable, time_point startTime)
+    single_slave_observer(observable* observable, time_point startTime, size_t bufSize)
         : observable_(observable)
+        , bufSize_(bufSize)
     {
         observe(0, startTime);
     }
@@ -66,11 +78,14 @@ public:
         std::lock_guard<std::mutex> lock(lock_);
         for (auto& [idx, samples] : realSamples_) {
             samples[timeStep] = observable_->get_real(idx);
+            adjustIfFull(samples, bufSize_);
         }
         for (auto& [idx, samples] : intSamples_) {
             samples[timeStep] = observable_->get_integer(idx);
+            adjustIfFull(samples, bufSize_);
         }
         timeSamples_[timeStep] = currentTime;
+        adjustIfFull(timeSamples_, bufSize_);
     }
 
     void start_observing(variable_type type, variable_index index)
@@ -173,16 +188,23 @@ private:
     std::map<variable_index, std::map<step_number, int>> intSamples_;
     std::map<step_number, time_point> timeSamples_;
     observable* observable_;
+    size_t bufSize_;
     std::mutex lock_;
 };
 
 time_series_observer::time_series_observer()
+    : bufSize_(0)
+{
+}
+
+time_series_observer::time_series_observer(size_t bufferSize)
+    : bufSize_(bufferSize)
 {
 }
 
 void time_series_observer::simulator_added(simulator_index index, observable* simulator, time_point currentTime)
 {
-    slaveObservers_[index] = std::make_unique<single_slave_observer>(simulator, currentTime);
+    slaveObservers_[index] = std::make_unique<single_slave_observer>(simulator, currentTime, bufSize_);
 }
 
 void time_series_observer::simulator_removed(simulator_index index, time_point /*currentTime*/)
@@ -203,8 +225,8 @@ void time_series_observer::step_complete(
     duration /*lastStepSize*/,
     time_point currentTime)
 {
-    for (const auto& valueProvider : slaveObservers_) {
-        valueProvider.second->observe(lastStep, currentTime);
+    for (const auto& slaveObserver : slaveObservers_) {
+        slaveObserver.second->observe(lastStep, currentTime);
     }
 }
 

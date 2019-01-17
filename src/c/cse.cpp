@@ -582,7 +582,6 @@ cse_observer* cse_membuffer_observer_create()
 {
     auto observer = std::make_unique<cse_observer>();
     observer->cpp_observer = std::make_shared<cse::membuffer_observer>();
-
     return observer.release();
 }
 
@@ -590,7 +589,6 @@ cse_observer* cse_file_observer_create(const char* logDir)
 {
     auto observer = std::make_unique<cse_observer>();
     observer->cpp_observer = std::make_shared<cse::file_observer>(logDir, false, 100);
-
     return observer.release();
 }
 
@@ -598,8 +596,13 @@ cse_observer* cse_time_series_observer_create()
 {
     auto observer = std::make_unique<cse_observer>();
     observer->cpp_observer = std::make_shared<cse::time_series_observer>();
+    return observer.release();
+}
 
-
+cse_observer* cse_buffered_time_series_observer_create(size_t bufferSize)
+{
+    auto observer = std::make_unique<cse_observer>();
+    observer->cpp_observer = std::make_shared<cse::time_series_observer>(bufferSize);
     return observer.release();
 }
 

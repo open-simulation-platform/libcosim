@@ -23,14 +23,14 @@ int main()
 
         cse::log::set_global_output_level(cse::log::level::debug);
 
-        // Set up the execution
         auto execution = cse::execution(startTime, std::make_unique<cse::fixed_step_algorithm>(stepSize));
 
-        // Set up the observer and add to the execution
         auto observer = std::make_shared<cse::time_series_observer>();
         execution.add_observer(observer);
 
-        // Add slaves to the execution and connect variables
+        auto bufferedObserver = std::make_shared<cse::time_series_observer>(3);
+        execution.add_observer(bufferedObserver);
+
         auto simIndex = execution.add_slave(
             cse::make_pseudo_async(std::make_unique<mock_slave>([](double x) { return x + 1.234; })), "slave uno");
 
@@ -92,11 +92,16 @@ int main()
 
         observer->stop_observing(variableId);
 
+        bufferedObserver->start_observing(variableId);
+
         simResult = execution.simulate_until(endTime);
         REQUIRE(simResult.get());
 
         samplesRead = observer->get_real_samples(simIndex, varIndex, 0, gsl::make_span(realValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
         REQUIRE(samplesRead == 0);
+
+        samplesRead = bufferedObserver->get_real_samples(simIndex, varIndex, 20, gsl::make_span(realValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
+        REQUIRE(samplesRead == 3);
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;

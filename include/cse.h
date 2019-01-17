@@ -574,7 +574,7 @@ int cse_execution_connect_integer_variables(
     cse_variable_index inputVariableIndex);
 
 
-/// Creates an observer which buffers variable values in memory.
+/// Creates an observer which buffers all variable values in memory.
 cse_observer* cse_membuffer_observer_create();
 
 /**
@@ -587,13 +587,24 @@ cse_observer* cse_membuffer_observer_create();
  */
 cse_observer* cse_file_observer_create(const char* logDir);
 
-/// Creates an observer which buffers variable values in memory on demand.
+/**
+ * Creates an observer which buffers variable values in memory.
+ *
+ * To start observing a variable, `cse_observer_start_observing()` must be called.
+ */
 cse_observer* cse_time_series_observer_create();
 
-/// Start observing a variable with a `time_series_observer`
+/**
+ * Creates an observer which buffers up to `bufferSize` variable values in memory.
+ *
+ * To start observing a variable, `cse_observer_start_observing()` must be called.
+ */
+cse_observer* cse_buffered_time_series_observer_create(size_t bufferSize);
+
+/// Start observing a variable with a `time_series_observer`.
 int cse_observer_start_observing(cse_observer* observer, cse_slave_index slave, cse_variable_type type, cse_variable_index index);
 
-/// Stop observing a variable with a `time_series_observer`
+/// Stop observing a variable with a `time_series_observer`.
 int cse_observer_stop_observing(cse_observer* observer, cse_slave_index slave, cse_variable_type type, cse_variable_index index);
 
 /// Destroys an observer
