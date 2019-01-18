@@ -91,13 +91,6 @@ void slave_value_provider::observe(step_number timeStep, time_point currentTime)
     realSamples_[timeStep].reserve(realIndexes_.size());
     intSamples_[timeStep].reserve(intIndexes_.size());
 
-    // Assuming realSamples_.size() == intSamples_.size() as is currently the case
-    if (realSamples_.size() >= bufSize_) {
-        realSamples_.erase(realSamples_.begin());
-        intSamples_.erase(intSamples_.begin());
-        timeSamples_.erase(timeSamples_.begin());
-    }
-
     for (const auto idx : realIndexes_) {
         realSamples_[timeStep].push_back(observable_->get_real(idx));
     }
@@ -107,6 +100,13 @@ void slave_value_provider::observe(step_number timeStep, time_point currentTime)
     }
 
     timeSamples_[timeStep] = currentTime;
+
+    // Assuming realSamples_.size() == intSamples_.size() as is currently the case
+    if (realSamples_.size() > bufSize_) {
+        realSamples_.erase(realSamples_.begin());
+        intSamples_.erase(intSamples_.begin());
+        timeSamples_.erase(timeSamples_.begin());
+    }
 }
 
 void slave_value_provider::get_real(gsl::span<const variable_index> variables, gsl::span<double> values)
