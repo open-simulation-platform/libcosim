@@ -20,6 +20,8 @@ set(publicHeaders
     "observer.hpp"
     "slave.hpp"
     "timer.hpp"
+    "scenario.hpp"
+    "manipulator.hpp"
 )
 set(privateHeaders
     "error.hpp"
@@ -46,6 +48,7 @@ set(sources
     "membuffer_observer.cpp"
     "file_observer.cpp"
     "slave_value_provider.cpp"
+    "scenario_manager.cpp"
 
     "error.cpp"
     "fmi_glue.cpp"

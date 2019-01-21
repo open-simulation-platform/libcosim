@@ -6,6 +6,7 @@ set(tests
     "bounded_membuffer_observer_test"
     "ssp_parser_test"
     "trend_buffer_test"
+    "scenario_manager_test"
 )
 set(unittests
     "fmi_v1_fmu_unittest"

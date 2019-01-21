@@ -14,6 +14,7 @@
 #include <cse/execution.hpp>
 #include <cse/model.hpp>
 #include <cse/observer.hpp>
+#include <cse/manipulator.hpp>
 
 
 namespace cse
@@ -34,49 +35,9 @@ namespace cse
  *  `boost::fibers::future::get()` on the future returned from the previous
  *  function call.
  */
-class simulator : public observable
+class simulator : public observable, public manipulable
 {
 public:
-    /**
-     *  Exposes a variable for assignment with `set_xxx()`.
-     *
-     *  The purpose is fundamentally to select which variables get transferred
-     *  to remote simulators at each step, so that each individual `set_xxx()`
-     *  function call doesn't trigger a new data exchange.
-     *
-     *  Calling this function more than once for the same variable has no
-     *  effect.
-     */
-    virtual void expose_for_setting(variable_type type, variable_index index) = 0;
-
-    /**
-     *  Sets the value of a real variable.
-     *
-     *  The variable must previously have been exposed with `expose_for_setting()`.
-     */
-    virtual void set_real(variable_index index, double value) = 0;
-
-    /**
-     *  Sets the value of an integer variable.
-     *
-     *  The variable must previously have been exposed with `expose_for_setting()`.
-     */
-    virtual void set_integer(variable_index index, int value) = 0;
-
-    /**
-     *  Sets the value of a boolean variable.
-     *
-     *  The variable must previously have been exposed with `expose_for_setting()`.
-     */
-    virtual void set_boolean(variable_index index, bool value) = 0;
-
-    /**
-     *  Sets the value of a string variable.
-     *
-     *  The variable must previously have been exposed with `expose_for_setting()`.
-     */
-    virtual void set_string(variable_index index, std::string_view value) = 0;
-
     /**
      *  Performs pre-simulation setup and enters initialisation mode.
      *

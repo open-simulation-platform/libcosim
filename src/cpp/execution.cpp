@@ -67,6 +67,9 @@ public:
         for (const auto& obs : observers_) {
             obs->simulator_added(index, simulators_.back().get(), currentTime_);
         }
+        for (const auto& man : manipulators_) {
+            man->simulator_added(index, simulators_.back().get(), currentTime_);
+        }
         return index;
     }
 
@@ -86,6 +89,17 @@ public:
         }
         for (const auto conn : connections_) {
             obs->variables_connected(conn.second, conn.first, currentTime_);
+        }
+    }
+
+    void add_manipulator(std::shared_ptr<manipulator> man)
+    {
+        manipulators_.push_back(man);
+        for (std::size_t i = 0; i < simulators_.size(); ++i) {
+            man->simulator_added(
+                static_cast<simulator_index>(i),
+                simulators_[i].get(),
+                currentTime_);
         }
     }
 
@@ -120,6 +134,9 @@ public:
         if (!initialized_) {
             algorithm_->initialize();
             initialized_ = true;
+        }
+        for (const auto& man : manipulators_) {
+            man->step_commencing(currentTime_);
         }
         const auto stepSize = algorithm_->do_step(currentTime_, maxDeltaT);
         currentTime_ += stepSize;
@@ -214,6 +231,7 @@ private:
     std::shared_ptr<algorithm> algorithm_;
     std::vector<std::shared_ptr<simulator>> simulators_;
     std::vector<std::shared_ptr<observer>> observers_;
+    std::vector<std::shared_ptr<manipulator>> manipulators_;
     std::unordered_map<variable_id, variable_id> connections_; // (key, value) = (input, output)
     real_time_timer timer_;
 };
@@ -243,6 +261,11 @@ std::shared_ptr<simulator> execution::get_simulator(simulator_index index)
 void execution::add_observer(std::shared_ptr<observer> obs)
 {
     return pimpl_->add_observer(obs);
+}
+
+void execution::add_manipulator(std::shared_ptr<manipulator> man)
+{
+    return pimpl_->add_manipulator(man);
 }
 
 void execution::connect_variables(variable_id output, variable_id input)
