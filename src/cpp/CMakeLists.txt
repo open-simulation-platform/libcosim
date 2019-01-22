@@ -29,6 +29,7 @@ set(privateHeaders
     "log/logger.hpp"
     "slave_simulator.hpp"
     "slave_value_provider.hpp"
+    "utility/concurrency.hpp"
     "utility/filesystem.hpp"
     "utility/uuid.hpp"
     "utility/zip.hpp"
