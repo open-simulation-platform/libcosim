@@ -450,7 +450,7 @@ int cse_observer_slave_get_real(
     try {
         const auto membufferObserver = std::dynamic_pointer_cast<cse::membuffer_observer>(observer->cpp_observer);
         if (!membufferObserver) {
-            throw std::invalid_argument("Not a membuffer observer");
+            throw std::invalid_argument("Invalid observer! The provided observer must be a membuffer_observer.");
         }
         membufferObserver->get_real(slave, gsl::make_span(variables, nv), gsl::make_span(values, nv));
         return success;
@@ -470,7 +470,7 @@ int cse_observer_slave_get_integer(
     try {
         const auto membufferObserver = std::dynamic_pointer_cast<cse::membuffer_observer>(observer->cpp_observer);
         if (!membufferObserver) {
-            throw std::invalid_argument("Not a membuffer observer");
+            throw std::invalid_argument("Invalid observer! The provided observer must be a membuffer_observer.");
         }
         membufferObserver->get_integer(slave, gsl::make_span(variables, nv), gsl::make_span(values, nv));
         return success;
@@ -494,7 +494,7 @@ int64_t cse_observer_slave_get_real_samples(
         std::vector<cse::time_point> timePoints(nSamples);
         const auto timeSeriesProvider = std::dynamic_pointer_cast<cse::time_series_provider>(observer->cpp_observer);
         if (!timeSeriesProvider) {
-            throw std::invalid_argument("Not a time series provider");
+            throw std::invalid_argument("Invalid observer! The provided observer must be either a time_series_observer or a membuffer_observer.");
         }
         size_t samplesRead = timeSeriesProvider->get_real_samples(slave, variableIndex, fromStep,
             gsl::make_span(values, nSamples),
@@ -523,7 +523,7 @@ int64_t cse_observer_slave_get_integer_samples(
         std::vector<cse::time_point> timePoints(nSamples);
         const auto timeSeriesProvider = std::dynamic_pointer_cast<cse::time_series_provider>(observer->cpp_observer);
         if (!timeSeriesProvider) {
-            throw std::invalid_argument("Not a time series provider");
+            throw std::invalid_argument("Invalid observer! The provided observer must be either a time_series_observer or a membuffer_observer.");
         }
         size_t samplesRead = timeSeriesProvider->get_integer_samples(slave, variableIndex, fromStep,
             gsl::make_span(values, nSamples),
@@ -547,7 +547,7 @@ int cse_observer_get_step_numbers_for_duration(
     try {
         const auto timeSeriesProvider = std::dynamic_pointer_cast<cse::time_series_provider>(observer->cpp_observer);
         if (!timeSeriesProvider) {
-            throw std::invalid_argument("Not a time series provider");
+            throw std::invalid_argument("Invalid observer! The provided observer must be either a time_series_observer or a membuffer_observer.");
         }
         timeSeriesProvider->get_step_numbers(slave, to_duration(duration), gsl::make_span(steps, 2));
         return success;
@@ -567,7 +567,7 @@ int cse_observer_get_step_numbers(
     try {
         const auto timeSeriesProvider = std::dynamic_pointer_cast<cse::time_series_provider>(observer->cpp_observer);
         if (!timeSeriesProvider) {
-            throw std::invalid_argument("Not a time series provider");
+            throw std::invalid_argument("Invalid observer! The provided observer must be either a time_series_observer or a membuffer_observer.");
         }
         timeSeriesProvider->get_step_numbers(slave, to_time_point(begin), to_time_point(end),
             gsl::make_span(steps, 2));
@@ -613,7 +613,7 @@ cse_observer* cse_buffered_time_series_observer_create(size_t bufferSize)
     return observer.release();
 }
 
-cse::variable_type toVariableType(cse_variable_type type)
+cse::variable_type to_variable_type(cse_variable_type type)
 {
     switch (type) {
         case CSE_REAL:
@@ -634,9 +634,9 @@ int cse_observer_start_observing(cse_observer* observer, cse_slave_index slave, 
     try {
         const auto timeSeriesObserver = std::dynamic_pointer_cast<cse::time_series_observer>(observer->cpp_observer);
         if (!timeSeriesObserver) {
-            throw std::invalid_argument("Not a time series observer");
+            throw std::invalid_argument("Invalid observer! The provided observer must be a time_series_observer.");
         }
-        const auto variableId = cse::variable_id{slave, toVariableType(type), index};
+        const auto variableId = cse::variable_id{slave, to_variable_type(type), index};
         timeSeriesObserver->start_observing(variableId);
         return success;
     } catch (...) {
@@ -649,9 +649,9 @@ int cse_observer_stop_observing(cse_observer* observer, cse_slave_index slave, c
     try {
         const auto timeSeriesObserver = std::dynamic_pointer_cast<cse::time_series_observer>(observer->cpp_observer);
         if (!timeSeriesObserver) {
-            throw std::invalid_argument("Not a time series observer");
+            throw std::invalid_argument("Invalid observer! The provided observer must be a time_series_observer.");
         }
-        const auto variableId = cse::variable_id{slave, toVariableType(type), index};
+        const auto variableId = cse::variable_id{slave, to_variable_type(type), index};
         timeSeriesObserver->stop_observing(variableId);
         return success;
     } catch (...) {
