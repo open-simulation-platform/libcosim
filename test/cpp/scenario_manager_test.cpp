@@ -17,7 +17,6 @@ int main()
 {
     try {
         constexpr cse::time_point startTime = cse::to_time_point(0.0);
-        constexpr cse::time_point midTime = cse::to_time_point(1.0);
         constexpr cse::time_point endTime = cse::to_time_point(2.0);
         constexpr cse::duration stepSize = cse::to_duration(0.2);
 
