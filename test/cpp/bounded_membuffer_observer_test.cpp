@@ -21,7 +21,7 @@ int main()
         constexpr cse::duration stepSize = cse::to_duration(0.1);
 
         cse::log::set_global_output_level(cse::log::level::debug);
-        const int numSamples = 50;
+        const int numSamples = 1;
 
         // Set up the execution
         auto execution = cse::execution(startTime, std::make_unique<cse::fixed_step_algorithm>(stepSize));
@@ -43,10 +43,10 @@ int main()
         cse::step_number steps[numSamples];
         cse::time_point times[numSamples];
 
-        size_t samplesRead = observer->get_real_samples(simIndex, varIndex, 51, gsl::make_span(realValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
+        size_t samplesRead = observer->get_real_samples(simIndex, varIndex, (101 - numSamples), gsl::make_span(realValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
 
-        // Observer should be bounded to 49 last samples due to the >= check in slave_value_provider
-        REQUIRE(samplesRead == (numSamples - 1));
+        // Observer should be bounded to numSamples last samples due to the > check in slave_value_provider
+        REQUIRE(samplesRead == numSamples);
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;

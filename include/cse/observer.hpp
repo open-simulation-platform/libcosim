@@ -142,9 +142,94 @@ private:
 };
 
 /**
+ *  An interface for time series providers.
+ *
+ *  The methods in this interface represent ways to extract data from an
+ *  observer providing time series data.
+ */
+
+class time_series_provider : public observer
+{
+public:
+    /**
+     * Retrieves a series of observed values, step numbers and times for a real variable.
+     *
+     * \param [in] sim index of the simulator
+     * \param [in] variableIndex the variable index
+     * \param [in] fromStep the step number to start from
+     * \param [out] values the series of observed values
+     * \param [out] steps the corresponding step numbers
+     * \param [out] times the corresponding simulation times
+     *
+     * Returns the number of samples actually read, which may be smaller
+     * than the sizes of `values` and `steps`.
+     */
+    virtual std::size_t get_real_samples(
+        simulator_index sim,
+        variable_index variableIndex,
+        step_number fromStep,
+        gsl::span<double> values,
+        gsl::span<step_number> steps,
+        gsl::span<time_point> times) = 0;
+
+    /**
+     * Retrieves a series of observed values, step numbers and times for an integer variable.
+     *
+     * \param [in] sim index of the simulator
+     * \param [in] variableIndex the variable index
+     * \param [in] fromStep the step number to start from
+     * \param [out] values the series of observed values
+     * \param [out] steps the corresponding step numbers
+     * \param [out] times the corresponding simulation times
+     *
+     * Returns the number of samples actually read, which may be smaller
+     * than the sizes of `values` and `steps`.
+     */
+    virtual std::size_t get_integer_samples(
+        simulator_index sim,
+        variable_index variableIndex,
+        step_number fromStep,
+        gsl::span<int> values,
+        gsl::span<step_number> steps,
+        gsl::span<time_point> times) = 0;
+
+    /**
+     * Retrieves the step numbers for a range given by a duration.
+     *
+     * Helper function which can be used in conjunction with `get_xxx_samples()`
+     * when it is desired to retrieve the latest available samples given a certain duration.
+     *
+     * \param [in] sim index of the simulator
+     * \param [in] duration the duration to get step numbers for
+     * \param [out] steps the corresponding step numbers
+     */
+    virtual void get_step_numbers(
+        simulator_index sim,
+        duration duration,
+        gsl::span<step_number> steps) = 0;
+
+    /**
+     * Retrieves the step numbers for a range given by two points in time.
+     *
+     * Helper function which can be used in conjunction with `get_xxx_samples()`
+     * when it is desired to retrieve samples between two points in time.
+     *
+     * \param [in] sim index of the simulator
+     * \param [in] tBegin the start of the range
+     * \param [in] tEnd the end of the range
+     * \param [out] steps the corresponding step numbers
+     */
+    virtual void get_step_numbers(
+        simulator_index sim,
+        time_point tBegin,
+        time_point tEnd,
+        gsl::span<step_number> steps) = 0;
+};
+
+/**
  *  An observer implementation, storing all observed variable values in memory.
  */
-class membuffer_observer : public observer
+class membuffer_observer : public time_series_provider
 {
 public:
     /**
@@ -157,7 +242,7 @@ public:
      *
      * \param [in] maximum sample buffer size
      */
-    membuffer_observer(size_t);
+    explicit membuffer_observer(size_t);
 
     void simulator_added(simulator_index, observable*, time_point) override;
 
@@ -196,85 +281,117 @@ public:
         gsl::span<const variable_index> variables,
         gsl::span<int> values);
 
-    /**
-     * Retrieves a series of observed values, step numbers and times for a real variable.
-     *
-     * \param [in] sim index of the simulator
-     * \param [in] variableIndex the variable index
-     * \param [in] fromStep the step number to start from
-     * \param [out] values the series of observed values
-     * \param [out] steps the corresponding step numbers
-     * \param [out] times the corresponding simulation times
-     *
-     * Returns the number of samples actually read, which may be smaller
-     * than the sizes of `values` and `steps`.
-     */
     std::size_t get_real_samples(
         simulator_index sim,
         variable_index variableIndex,
         step_number fromStep,
         gsl::span<double> values,
         gsl::span<step_number> steps,
-        gsl::span<time_point> times);
+        gsl::span<time_point> times) override;
 
-    /**
-     * Retrieves a series of observed values, step numbers and times for an integer variable.
-     *
-     * \param [in] sim index of the simulator
-     * \param [in] variableIndex the variable index
-     * \param [in] fromStep the step number to start from
-     * \param [out] values the series of observed values
-     * \param [out] steps the corresponding step numbers
-     * \param [out] times the corresponding simulation times
-     *
-     * Returns the number of samples actually read, which may be smaller
-     * than the sizes of `values` and `steps`.
-     */
     std::size_t get_integer_samples(
         simulator_index sim,
         variable_index variableIndex,
         step_number fromStep,
         gsl::span<int> values,
         gsl::span<step_number> steps,
-        gsl::span<time_point> times);
+        gsl::span<time_point> times) override;
 
-    /**
-     * Retrieves the step numbers for a range given by a duration.
-     *
-     * Helper function which can be used in conjunction with `get_xxx_samples()`
-     * when it is desired to retrieve the latest available samples given a certain duration.
-     *
-     * \param [in] sim index of the simulator
-     * \param [in] duration the duration to get step numbers for
-     * \param [out] steps the corresponding step numbers
-     */
     void get_step_numbers(
         simulator_index sim,
         duration duration,
-        gsl::span<step_number> steps);
+        gsl::span<step_number> steps) override;
 
-    /**
-     * Retrieves the step numbers for a range given by two points in time.
-     *
-     * Helper function which can be used in conjunction with `get_xxx_samples()`
-     * when it is desired to retrieve samples between two points in time.
-     *
-     * \param [in] sim index of the simulator
-     * \param [in] tBegin the start of the range
-     * \param [in] tEnd the end of the range
-     * \param [out] steps the corresponding step numbers
-     */
     void get_step_numbers(
         simulator_index sim,
         time_point tBegin,
         time_point tEnd,
-        gsl::span<step_number> steps);
+        gsl::span<step_number> steps) override;
 
-    ~membuffer_observer() noexcept;
+    ~membuffer_observer() noexcept override;
 
 private:
     size_t bufSize_;
     std::unordered_map<simulator_index, std::unique_ptr<slave_value_provider>> valueProviders_;
+};
+
+/**
+ *  An observer implementation, storing all observed variable values for a user-specified set of variables in memory.
+ */
+class time_series_observer : public time_series_provider
+{
+public:
+    /**
+     * Default constructor. Creates an unbuffered `time_series_observer`.
+     */
+    time_series_observer();
+
+    /**
+     * Constructor for a buffered `time_series_observer`, which will store up to `bufferSize` samples for each observed variable.
+     */
+    explicit time_series_observer(size_t bufferSize);
+
+    void simulator_added(simulator_index, observable*, time_point) override;
+
+    void simulator_removed(simulator_index, time_point) override;
+
+    void variables_connected(variable_id output, variable_id input, time_point) override;
+
+    void variable_disconnected(variable_id input, time_point) override;
+
+    void step_complete(
+        step_number lastStep,
+        duration lastStepSize,
+        time_point currentTime) override;
+
+    /**
+     * Start observing a variable.
+     *
+     * After calling this method, it will then be possible to extract observed values for this variable
+     * with `get_real_samples()` or `get_integer_samples()`.
+     */
+    void start_observing(variable_id id);
+
+    /**
+     * Stop observing a variable.
+     *
+     * After calling this method, it will no longer be possible to extract observed values for this variable.
+     */
+    void stop_observing(variable_id id);
+
+    std::size_t get_real_samples(
+        simulator_index sim,
+        variable_index variableIndex,
+        step_number fromStep,
+        gsl::span<double> values,
+        gsl::span<step_number> steps,
+        gsl::span<time_point> times) override;
+
+    std::size_t get_integer_samples(
+        simulator_index sim,
+        variable_index variableIndex,
+        step_number fromStep,
+        gsl::span<int> values,
+        gsl::span<step_number> steps,
+        gsl::span<time_point> times) override;
+
+    void get_step_numbers(
+        simulator_index sim,
+        duration duration,
+        gsl::span<step_number> steps) override;
+
+    void get_step_numbers(
+        simulator_index sim,
+        time_point tBegin,
+        time_point tEnd,
+        gsl::span<step_number> steps) override;
+
+    ~time_series_observer() noexcept override;
+
+private:
+    class single_slave_observer;
+    size_t bufSize_;
+    std::unordered_map<simulator_index, std::unique_ptr<single_slave_observer>> slaveObservers_;
 };
 
 } // namespace cse
