@@ -3,7 +3,7 @@
 #include <cassert>
 
 #include "cse/error.hpp"
-#include <cse/exception.hpp>
+#include "cse/exception.hpp"
 
 
 namespace cse

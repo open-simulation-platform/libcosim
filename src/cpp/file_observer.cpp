@@ -1,4 +1,4 @@
-#include <cse/observer.hpp>
+#include "cse/observer.hpp"
 
 #include <codecvt>
 #include <locale>
@@ -10,7 +10,7 @@
 #include <boost/filesystem/fstream.hpp>
 #include <boost/filesystem/operations.hpp>
 
-#include <cse/error.hpp>
+#include "cse/error.hpp"
 
 
 namespace cse

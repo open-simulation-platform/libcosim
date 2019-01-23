@@ -1,4 +1,4 @@
-#include <cse/execution.hpp>
+#include "cse/execution.hpp"
 
 #include <sstream>
 #include <unordered_map>
@@ -8,8 +8,8 @@
 #include <boost/functional/hash.hpp>
 
 #include "cse/slave_simulator.hpp"
-#include <cse/algorithm.hpp>
-#include <cse/timer.hpp>
+#include "cse/algorithm.hpp"
+#include "cse/timer.hpp"
 
 
 // Specialisation of std::hash for variable_id

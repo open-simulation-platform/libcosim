@@ -1,4 +1,4 @@
-#include <cse/fmi/v1/fmu.hpp>
+#include "cse/fmi/v1/fmu.hpp"
 
 #include <algorithm>
 #include <cassert>
@@ -18,8 +18,8 @@
 #include "cse/fmi/fmilib.h"
 #include "cse/fmi/glue.hpp"
 #include "cse/log/logger.hpp"
-#include <cse/exception.hpp>
-#include <cse/fmi/importer.hpp>
+#include "cse/exception.hpp"
+#include "cse/fmi/importer.hpp"
 
 #ifdef _WIN32
 #    include "cse/fmi/windows.hpp"
