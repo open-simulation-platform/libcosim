@@ -1,10 +1,10 @@
 #include "cse/observer/membuffer_observer.hpp"
 
-#include <map>
-#include <mutex>
-
 #include "cse/error.hpp"
 #include "cse/observer/slave_value_provider.hpp"
+
+#include <map>
+#include <mutex>
 
 
 namespace cse

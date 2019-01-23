@@ -5,15 +5,15 @@
 #ifndef CSE_ALGORITHM_HPP
 #define CSE_ALGORITHM_HPP
 
-#include <memory>
-#include <optional>
-#include <string_view>
-
-#include <boost/fiber/future.hpp>
-
 #include <cse/execution.hpp>
 #include <cse/model.hpp>
 #include <cse/observer/observer.hpp>
+
+#include <boost/fiber/future.hpp>
+
+#include <memory>
+#include <optional>
+#include <string_view>
 
 
 namespace cse
@@ -103,7 +103,6 @@ public:
         time_point startTime,
         std::optional<time_point> stopTime,
         std::optional<double> relativeTolerance) = 0;
-
 
 
     /**

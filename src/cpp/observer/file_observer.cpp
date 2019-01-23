@@ -1,17 +1,17 @@
 #include "cse/observer/file_observer.hpp"
 
+#include "cse/error.hpp"
+
+#include <boost/date_time/local_time/local_time.hpp>
+#include <boost/filesystem/fstream.hpp>
+#include <boost/filesystem/operations.hpp>
+
 #include <codecvt>
 #include <locale>
 #include <map>
 #include <mutex>
 #include <sstream>
 #include <vector>
-
-#include <boost/date_time/local_time/local_time.hpp>
-#include <boost/filesystem/fstream.hpp>
-#include <boost/filesystem/operations.hpp>
-
-#include "cse/error.hpp"
 
 
 namespace cse

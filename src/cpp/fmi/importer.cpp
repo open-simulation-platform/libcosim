@@ -1,25 +1,24 @@
 #include "cse/fmi/importer.hpp"
 
+#include "cse/error.hpp"
+#include "cse/fmi/fmilib.h"
+#include "cse/fmi/v1/fmu.hpp"
+#include "cse/fmi/v2/fmu.hpp"
+#include "cse/log/logger.hpp"
+#include "cse/utility/filesystem.hpp"
+#include "cse/utility/uuid.hpp"
+#include "cse/utility/zip.hpp"
+
+#include <boost/algorithm/string/trim.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/xml_parser.hpp>
+#include <gsl/gsl_util>
+
 #include <cassert>
 #include <cstdlib>
 #include <cstring>
 #include <new>
 #include <sstream>
-
-#include <gsl/gsl_util>
-
-#include <boost/algorithm/string/trim.hpp>
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/xml_parser.hpp>
-
-#include "cse/error.hpp"
-#include "cse/fmi/fmilib.h"
-#include "cse/log/logger.hpp"
-#include "cse/utility/filesystem.hpp"
-#include "cse/utility/uuid.hpp"
-#include "cse/utility/zip.hpp"
-#include "cse/fmi/v1/fmu.hpp"
-#include "cse/fmi/v2/fmu.hpp"
 
 
 namespace cse

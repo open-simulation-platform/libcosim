@@ -1,14 +1,14 @@
+#include "mock_slave.hpp"
+
+#include <cse/async_slave.hpp>
+
+#include <boost/fiber/future.hpp>
+
 #include <algorithm>
 #include <exception>
 #include <memory>
 #include <stdexcept>
 #include <vector>
-
-#include <boost/fiber/future.hpp>
-
-#include <cse/async_slave.hpp>
-
-#include "mock_slave.hpp"
 
 
 // A helper macro to test various assertions

@@ -5,14 +5,14 @@
 #ifndef CSE_OBSERVER_MEMBUFFER_OBSERVER_HPP
 #define CSE_OBSERVER_MEMBUFFER_OBSERVER_HPP
 
-#include <memory>
-#include <unordered_map>
-
-#include <gsl/span>
-
 #include <cse/execution.hpp>
 #include <cse/model.hpp>
 #include <cse/observer/time_series_provider.hpp>
+
+#include <gsl/span>
+
+#include <memory>
+#include <unordered_map>
 
 
 namespace cse

@@ -5,13 +5,13 @@
 #ifndef CSE_OBSERVER_OBSERVER_HPP
 #define CSE_OBSERVER_OBSERVER_HPP
 
-#include <string>
-#include <string_view>
+#include <cse/execution.hpp>
+#include <cse/model.hpp>
 
 #include <boost/filesystem/path.hpp>
 
-#include <cse/execution.hpp>
-#include <cse/model.hpp>
+#include <string>
+#include <string_view>
 
 
 namespace cse

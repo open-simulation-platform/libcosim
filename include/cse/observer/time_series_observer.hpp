@@ -5,12 +5,12 @@
 #ifndef CSE_OBSERVER_TIME_SERIES_OBSERVER_HPP
 #define CSE_OBSERVER_TIME_SERIES_OBSERVER_HPP
 
-#include <memory>
-#include <unordered_map>
-
 #include <cse/execution.hpp>
 #include <cse/model.hpp>
 #include <cse/observer/time_series_provider.hpp>
+
+#include <memory>
+#include <unordered_map>
 
 
 namespace cse

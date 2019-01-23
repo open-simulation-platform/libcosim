@@ -1,6 +1,4 @@
-#include <exception>
-#include <memory>
-#include <stdexcept>
+#include "mock_slave.hpp"
 
 #include <cse/algorithm.hpp>
 #include <cse/async_slave.hpp>
@@ -8,9 +6,11 @@
 #include <cse/log.hpp>
 #include <cse/observer/file_observer.hpp>
 
-#include "mock_slave.hpp"
-
 #include <boost/filesystem.hpp>
+
+#include <exception>
+#include <memory>
+#include <stdexcept>
 
 
 // A helper macro to test various assertions

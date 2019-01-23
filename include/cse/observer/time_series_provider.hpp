@@ -5,11 +5,11 @@
 #ifndef CSE_OBSERVER_TIME_SERIES_PROVIDER_HPP
 #define CSE_OBSERVER_TIME_SERIES_PROVIDER_HPP
 
-#include <gsl/span>
-
 #include <cse/execution.hpp>
 #include <cse/model.hpp>
 #include <cse/observer/observer.hpp>
+
+#include <gsl/span>
 
 
 namespace cse

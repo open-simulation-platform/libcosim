@@ -1,5 +1,15 @@
 #include "cse/fmi/v2/fmu.hpp"
 
+#include "cse/error.hpp"
+#include "cse/exception.hpp"
+#include "cse/fmi/fmilib.h"
+#include "cse/fmi/glue.hpp"
+#include "cse/fmi/importer.hpp"
+#include "cse/fmi/windows.hpp"
+#include "cse/log/logger.hpp"
+
+#include <gsl/gsl_util>
+
 #include <algorithm>
 #include <cassert>
 #include <cstdarg>
@@ -11,19 +21,6 @@
 #include <type_traits>
 #include <unordered_map>
 #include <vector>
-
-#include <gsl/gsl_util>
-
-#include "cse/error.hpp"
-#include "cse/fmi/fmilib.h"
-#include "cse/fmi/glue.hpp"
-#include "cse/log/logger.hpp"
-#include "cse/exception.hpp"
-#include "cse/fmi/importer.hpp"
-
-#ifdef _WIN32
-#    include "cse/fmi/windows.hpp"
-#endif
 
 
 namespace cse

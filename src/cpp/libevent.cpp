@@ -11,17 +11,17 @@
 #    include <sys/time.h>
 #endif
 
+#include "cse/error.hpp"
+
+#include <boost/numeric/conversion/cast.hpp>
+#include <event2/event.h>
+
 #include <algorithm>
 #include <cassert>
 #include <list>
 #include <memory>
 #include <system_error>
 #include <utility>
-
-#include <boost/numeric/conversion/cast.hpp>
-#include <event2/event.h>
-
-#include "cse/error.hpp"
 
 
 namespace cse

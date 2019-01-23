@@ -1,6 +1,4 @@
-#include <exception>
-#include <memory>
-#include <stdexcept>
+#include "mock_slave.hpp"
 
 #include <cse/algorithm.hpp>
 #include <cse/async_slave.hpp>
@@ -8,7 +6,9 @@
 #include <cse/log.hpp>
 #include <cse/observer/membuffer_observer.hpp>
 
-#include "mock_slave.hpp"
+#include <exception>
+#include <memory>
+#include <stdexcept>
 
 #define REQUIRE(test) \
     if (!(test)) throw std::runtime_error("Requirement not satisfied: " #test)

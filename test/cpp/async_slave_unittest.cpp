@@ -1,10 +1,10 @@
-#define BOOST_TEST_MODULE cse / async_slave.hpp unittests
-#include <stdexcept>
+#define BOOST_TEST_MODULE async_slave.hpp unittests
+#include <cse/async_slave.hpp>
+#include <cse/exception.hpp>
 
 #include <boost/test/unit_test.hpp>
 
-#include <cse/async_slave.hpp>
-#include <cse/exception.hpp>
+#include <stdexcept>
 
 using namespace cse;
 

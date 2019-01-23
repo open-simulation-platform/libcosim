@@ -5,12 +5,12 @@
 #ifndef CSE_OBSERVER_FILE_OBSERVER_HPP
 #define CSE_OBSERVER_FILE_OBSERVER_HPP
 
-#include <memory>
-#include <unordered_map>
-
 #include <cse/observer/observer.hpp>
 
 #include <boost/filesystem/path.hpp>
+
+#include <memory>
+#include <unordered_map>
 
 
 namespace cse

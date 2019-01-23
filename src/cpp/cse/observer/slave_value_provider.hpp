@@ -1,15 +1,15 @@
 #ifndef CSE_OBSERVER_SLAVE_VALUE_PROVIDER_HPP
 #define CSE_OBSERVER_SLAVE_VALUE_PROVIDER_HPP
 
-#include <map>
-#include <mutex>
-#include <vector>
-
-#include <gsl/span>
-
 #include <cse/execution.hpp>
 #include <cse/model.hpp>
 #include <cse/observer/observer.hpp>
+
+#include <gsl/span>
+
+#include <map>
+#include <mutex>
+#include <vector>
 
 namespace cse
 {

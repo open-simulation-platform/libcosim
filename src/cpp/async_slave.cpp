@@ -1,19 +1,19 @@
 #include "cse/async_slave.hpp"
 
+#include "cse/error.hpp"
+#include "cse/exception.hpp"
+#include "cse/utility/concurrency.hpp"
+
+#include <boost/container/vector.hpp>
+#include <boost/fiber/fixedsize_stack.hpp>
+#include <boost/fiber/future/async.hpp>
+
 #include <exception>
 #include <optional>
 #include <sstream>
 #include <type_traits>
 #include <utility>
 #include <variant>
-
-#include <boost/container/vector.hpp>
-#include <boost/fiber/fixedsize_stack.hpp>
-#include <boost/fiber/future/async.hpp>
-
-#include "cse/error.hpp"
-#include "cse/exception.hpp"
-#include "cse/utility/concurrency.hpp"
 
 
 namespace cse

@@ -1,9 +1,9 @@
 #include "cse/observer/slave_value_provider.hpp"
 
+#include "cse/error.hpp"
+
 #include <map>
 #include <mutex>
-
-#include "cse/error.hpp"
 
 namespace cse
 {

@@ -1,9 +1,9 @@
 #ifndef CSECORE_TIMER_H
 #define CSECORE_TIMER_H
 
-#include <memory>
-
 #include <cse/model.hpp>
+
+#include <memory>
 
 namespace cse
 {

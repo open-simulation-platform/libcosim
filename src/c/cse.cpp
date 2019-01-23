@@ -1,4 +1,13 @@
 #include <cse.h>
+#include <cse/algorithm.hpp>
+#include <cse/exception.hpp>
+#include <cse/execution.hpp>
+#include <cse/fmi/fmu.hpp>
+#include <cse/fmi/importer.hpp>
+#include <cse/log.hpp>
+#include <cse/model.hpp>
+#include <cse/observer.hpp>
+#include <cse/ssp_parser.hpp>
 
 #include <atomic>
 #include <cassert>
@@ -12,17 +21,6 @@
 #include <string>
 #include <system_error>
 #include <thread>
-
-#include <cse/exception.hpp>
-#include <cse/fmi/fmu.hpp>
-#include <cse/fmi/importer.hpp>
-#include <cse/log.hpp>
-
-#include <cse/algorithm.hpp>
-#include <cse/execution.hpp>
-#include <cse/model.hpp>
-#include <cse/observer.hpp>
-#include <cse/ssp_parser.hpp>
 
 namespace
 {

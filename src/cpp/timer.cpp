@@ -1,10 +1,11 @@
-#include <atomic>
-#include <chrono>
-#include <thread>
+#include "cse/timer.hpp"
 
 #include "cse/log.hpp"
 #include "cse/log/logger.hpp"
-#include "cse/timer.hpp"
+
+#include <atomic>
+#include <chrono>
+#include <thread>
 
 
 typedef std::chrono::steady_clock Time;

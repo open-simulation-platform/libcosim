@@ -5,11 +5,11 @@
 #ifndef CSE_SLAVE_SIMULATOR_HPP
 #define CSE_SLAVE_SIMULATOR_HPP
 
-#include <memory>
-#include <string_view>
-
 #include <cse/algorithm.hpp>
 #include <cse/async_slave.hpp>
+
+#include <memory>
+#include <string_view>
 
 
 namespace cse

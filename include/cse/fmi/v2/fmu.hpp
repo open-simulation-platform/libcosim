@@ -5,16 +5,16 @@
 #ifndef CSE_FMI_V2_FMU_HPP
 #define CSE_FMI_V2_FMU_HPP
 
+#include <cse/fmi/fmu.hpp>
+#include <cse/fmi/importer.hpp>
+#include <cse/model.hpp>
+
+#include <boost/filesystem.hpp>
+
 #include <memory>
 #include <string>
 #include <string_view>
 #include <vector>
-
-#include <boost/filesystem.hpp>
-
-#include <cse/fmi/fmu.hpp>
-#include <cse/fmi/importer.hpp>
-#include <cse/model.hpp>
 
 
 struct fmi2_import_t;

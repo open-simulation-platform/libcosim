@@ -1,9 +1,9 @@
 #include "cse/fmi/glue.hpp"
 
-#include <cassert>
-
 #include "cse/error.hpp"
 #include "cse/exception.hpp"
+
+#include <cassert>
 
 
 namespace cse
