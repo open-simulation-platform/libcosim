@@ -13,7 +13,7 @@
 
 #include <cse/execution.hpp>
 #include <cse/model.hpp>
-#include <cse/observer.hpp>
+#include <cse/observer/observer.hpp>
 
 
 namespace cse

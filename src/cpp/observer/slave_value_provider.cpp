@@ -1,4 +1,4 @@
-#include "cse/slave_value_provider.hpp"
+#include "cse/observer/slave_value_provider.hpp"
 
 #include <map>
 #include <mutex>

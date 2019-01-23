@@ -1,10 +1,11 @@
-#include "cse/observer.hpp"
+#include "cse/observer/file_observer.hpp"
 
 #include <codecvt>
 #include <locale>
 #include <map>
 #include <mutex>
 #include <sstream>
+#include <vector>
 
 #include <boost/date_time/local_time/local_time.hpp>
 #include <boost/filesystem/fstream.hpp>

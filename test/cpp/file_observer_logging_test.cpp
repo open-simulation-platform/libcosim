@@ -6,6 +6,7 @@
 #include <cse/async_slave.hpp>
 #include <cse/execution.hpp>
 #include <cse/log.hpp>
+#include <cse/observer/file_observer.hpp>
 
 #include "mock_slave.hpp"
 
