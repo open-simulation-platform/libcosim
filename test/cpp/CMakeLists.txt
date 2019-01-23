@@ -5,14 +5,17 @@ set(tests
     "membuffer_observer_test"
     "bounded_membuffer_observer_test"
     "ssp_parser_test"
+    "time_series_observer_test"
     "trend_buffer_test"
     "scenario_manager_test"
 )
 set(unittests
+    "async_slave_unittest"
     "fmi_v1_fmu_unittest"
     "fmi_v2_fmu_unittest"
     "libevent_unittest"
     "model_unittest"
+    "utility_concurrency_unittest"
     "utility_filesystem_unittest"
     "utility_uuid_unittest"
     "utility_zip_unittest"

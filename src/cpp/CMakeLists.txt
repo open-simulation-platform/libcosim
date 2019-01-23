@@ -31,6 +31,7 @@ set(privateHeaders
     "log/logger.hpp"
     "slave_simulator.hpp"
     "slave_value_provider.hpp"
+    "utility/concurrency.hpp"
     "utility/filesystem.hpp"
     "utility/uuid.hpp"
     "utility/zip.hpp"
@@ -49,6 +50,7 @@ set(sources
     "file_observer.cpp"
     "slave_value_provider.cpp"
     "scenario_manager.cpp"
+    "time_series_observer.cpp"
 
     "error.cpp"
     "fmi_glue.cpp"

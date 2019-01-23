@@ -283,5 +283,20 @@ public:
 std::shared_ptr<async_slave> make_pseudo_async(std::shared_ptr<slave> s);
 
 
+/**
+ *  Runs a slave in another thread.
+ *
+ *  This function will create a new thread for running `slave`.  Any
+ *  (asynchronous) function call on the returned `async_slave` will be
+ *  communicated to this "background thread" and executed (synchronously)
+ *  there.
+ *
+ *  The background thread will be terminated if and only if the slave
+ *  transitions to the states `slave_state::terminated` or
+ *  `slave_state::error`.
+ */
+std::shared_ptr<async_slave> make_background_thread_slave(std::shared_ptr<slave> slave);
+
+
 } // namespace cse
 #endif // header guard
