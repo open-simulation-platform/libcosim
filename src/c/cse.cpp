@@ -245,7 +245,7 @@ cse_slave_index cse_execution_add_slave(
     cse_slave* slave)
 {
     try {
-        auto index = execution->cpp_execution->add_slave(cse::make_pseudo_async(slave->instance), slave->name);
+        auto index = execution->cpp_execution->add_slave(cse::make_background_thread_slave(slave->instance), slave->name);
         execution->simulators[slave->name] = cse::simulator_map_entry{index, slave->source};
         return index;
     } catch (...) {
