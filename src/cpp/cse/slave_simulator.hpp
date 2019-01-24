@@ -46,6 +46,31 @@ public:
     void set_boolean(variable_index index, bool value) override;
     void set_string(variable_index index, std::string_view value) override;
 
+    void set_real_input_manipulator(
+        variable_index index,
+        std::function<double(double)> manipulator) override;
+    void set_integer_input_manipulator(
+        variable_index index,
+        std::function<int(int)> manipulator) override;
+    void set_boolean_input_manipulator(
+        variable_index index,
+        std::function<bool(bool)> manipulator) override;
+    void set_string_input_manipulator(
+        variable_index index,
+        std::function<std::string(std::string_view)> manipulator) override;
+    void set_real_output_manipulator(
+        variable_index index,
+        std::function<double(double)> manipulator) override;
+    void set_integer_output_manipulator(
+        variable_index index,
+        std::function<int(int)> manipulator) override;
+    void set_boolean_output_manipulator(
+        variable_index index,
+        std::function<bool(bool)> manipulator) override;
+    void set_string_output_manipulator(
+        variable_index index,
+        std::function<std::string(std::string_view)> manipulator) override;
+
     boost::fibers::future<void> setup(
         time_point startTime,
         std::optional<time_point> stopTime,
