@@ -1,13 +1,13 @@
 #include "cse/utility/zip.hpp"
 
+#include <zip.h>
+
 #include <cassert>
 #include <cerrno>
 #include <cstring>
 #include <fstream>
 #include <system_error>
 #include <vector>
-
-#include <zip.h>
 
 
 namespace cse

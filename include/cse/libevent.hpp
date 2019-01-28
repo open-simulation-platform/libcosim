@@ -5,9 +5,9 @@
 #ifndef CSE_LIBEVENT_HPP
 #define CSE_LIBEVENT_HPP
 
-#include <memory>
-
 #include <cse/event_loop.hpp>
+
+#include <memory>
 
 
 namespace cse

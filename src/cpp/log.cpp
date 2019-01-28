@@ -1,4 +1,6 @@
-#include <cse/log.hpp>
+#include "cse/log.hpp"
+
+#include "cse/log/logger.hpp"
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/log/attributes.hpp>
@@ -8,8 +10,6 @@
 #include <boost/log/sinks/text_ostream_backend.hpp>
 #include <boost/log/support/date_time.hpp>
 #include <boost/log/utility/setup/common_attributes.hpp>
-
-#include "cse/log/logger.hpp"
 
 
 namespace cse
