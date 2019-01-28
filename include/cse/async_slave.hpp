@@ -5,15 +5,15 @@
 #ifndef CSE_ASYNC_SLAVE_HPP
 #define CSE_ASYNC_SLAVE_HPP
 
-#include <memory>
-#include <optional>
-#include <string>
+#include <cse/model.hpp>
+#include <cse/slave.hpp>
 
 #include <boost/fiber/future/future.hpp>
 #include <gsl/span>
 
-#include <cse/model.hpp>
-#include <cse/slave.hpp>
+#include <memory>
+#include <optional>
+#include <string>
 
 
 namespace cse

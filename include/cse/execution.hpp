@@ -5,13 +5,13 @@
 #ifndef CSE_EXECUTION_HPP
 #define CSE_EXECUTION_HPP
 
-#include <memory>
-#include <optional>
+#include <cse/async_slave.hpp>
+#include <cse/model.hpp>
 
 #include <boost/fiber/future.hpp>
 
-#include <cse/async_slave.hpp>
-#include <cse/model.hpp>
+#include <memory>
+#include <optional>
 
 
 namespace cse

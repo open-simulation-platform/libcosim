@@ -1,15 +1,15 @@
-#include <cse/execution.hpp>
+#include "cse/execution.hpp"
+
+#include "cse/algorithm.hpp"
+#include "cse/slave_simulator.hpp"
+#include "cse/timer.hpp"
+
+#include <boost/functional/hash.hpp>
 
 #include <sstream>
 #include <unordered_map>
 #include <utility>
 #include <vector>
-
-#include <boost/functional/hash.hpp>
-
-#include "cse/slave_simulator.hpp"
-#include <cse/algorithm.hpp>
-#include <cse/timer.hpp>
 
 
 // Specialisation of std::hash for variable_id

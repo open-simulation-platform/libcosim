@@ -5,12 +5,12 @@
 #ifndef CSE_UTILITY_ZIP_HPP
 #define CSE_UTILITY_ZIP_HPP
 
-#include <cstdint>
-#include <string>
+#include <cse/exception.hpp>
 
 #include <boost/filesystem.hpp>
 
-#include <cse/exception.hpp>
+#include <cstdint>
+#include <string>
 
 
 // Forward declarations to avoid dependency on zip.h
