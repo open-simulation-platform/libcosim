@@ -1,8 +1,8 @@
+#include <cse.h>
+
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-#include <cse.h>
-#include <math.h>
 
 #ifdef _WINDOWS
 #    include <windows.h>
@@ -34,7 +34,7 @@ int main()
         return 1;
     }
 
-    int64_t nanoStepSize = (int64_t) (0.1*1.0e9);
+    int64_t nanoStepSize = (int64_t)(0.1 * 1.0e9);
     cse_execution* execution = cse_execution_create(0, nanoStepSize);
     if (!execution) {
         print_last_error();

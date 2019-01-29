@@ -5,12 +5,11 @@
 #ifndef CSE_LOG_LOGGER_HPP
 #define CSE_LOG_LOGGER_HPP
 
-#include <boost/log/sources/severity_logger.hpp>
-// These are just to introduce some convenient macros like BOOST_LOG_SEV:
-#include <boost/log/sources/record_ostream.hpp>
-#include <boost/log/sources/severity_feature.hpp>
-
 #include <cse/log.hpp>
+
+#include <boost/log/sources/record_ostream.hpp> // for convenience
+#include <boost/log/sources/severity_feature.hpp> // for convenience
+#include <boost/log/sources/severity_logger.hpp>
 
 
 namespace cse

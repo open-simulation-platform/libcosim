@@ -1,9 +1,9 @@
+#include <cse.h>
+
 #include <inttypes.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-#include <cse.h>
-#include <math.h>
 
 #ifdef _WINDOWS
 #    include <windows.h>
@@ -15,9 +15,9 @@
 void print_last_error()
 {
     fprintf(
-            stderr,
-            "Error code %d: %s\n",
-            cse_last_error_code(), cse_last_error_message());
+        stderr,
+        "Error code %d: %s\n",
+        cse_last_error_code(), cse_last_error_message());
 }
 
 int main()

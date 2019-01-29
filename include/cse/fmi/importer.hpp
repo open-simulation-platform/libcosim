@@ -5,11 +5,11 @@
 #ifndef CSE_FMI_IMPORTER_HPP
 #define CSE_FMI_IMPORTER_HPP
 
+#include <boost/filesystem.hpp>
+
 #include <map>
 #include <memory>
 #include <string>
-
-#include <boost/filesystem.hpp>
 
 
 // Forward declarations to avoid external dependency on FMI Library.

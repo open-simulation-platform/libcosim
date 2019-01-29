@@ -7,8 +7,6 @@
 
 #include <boost/filesystem.hpp>
 
-#include <cse/config.hpp>
-
 
 namespace cse
 {

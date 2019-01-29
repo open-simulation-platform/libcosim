@@ -1,6 +1,7 @@
 #define BOOST_TEST_MODULE cse::utility uuid unittests
-#include <boost/test/unit_test.hpp>
 #include <cse/utility/uuid.hpp>
+
+#include <boost/test/unit_test.hpp>
 
 
 BOOST_AUTO_TEST_CASE(random_uuid)

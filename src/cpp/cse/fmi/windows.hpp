@@ -4,11 +4,11 @@
  */
 #ifndef CSE_FMI_WINDOWS_HPP
 #define CSE_FMI_WINDOWS_HPP
-
 #ifdef _WIN32
-#    include <string>
 
 #    include <boost/filesystem.hpp>
+
+#    include <string>
 
 
 namespace cse
@@ -64,5 +64,6 @@ boost::filesystem::path fmu_binaries_dir(const boost::filesystem::path& baseDir)
 
 } // namespace fmi
 } // namespace cse
+
 #endif // _WIN32
 #endif // header guard

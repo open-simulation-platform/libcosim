@@ -1,6 +1,8 @@
 #define BOOST_TEST_MODULE cse::utility shared_queue unittests
-#include <boost/test/unit_test.hpp>
 #include <cse/utility/concurrency.hpp>
+
+#include <boost/test/unit_test.hpp>
+
 #include <thread>
 #include <vector>
 

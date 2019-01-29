@@ -80,7 +80,7 @@
  *  precondition was violated.  The program is terminated by calling
  *  `std::terminate()`.
  */
-#define CSE_PRECONDITION(condition)                                 \
+#define CSE_PRECONDITION(condition)                                         \
     do {                                                                    \
         if (!(condition)) {                                                 \
             ::cse::detail::precondition_violated(__FUNCTION__, #condition); \

@@ -5,11 +5,11 @@
 #ifndef CSE_FMI_FMU_HPP
 #define CSE_FMI_FMU_HPP
 
-#include <memory>
-#include <string_view>
-
 #include <cse/model.hpp>
 #include <cse/slave.hpp>
+
+#include <memory>
+#include <string_view>
 
 
 namespace cse

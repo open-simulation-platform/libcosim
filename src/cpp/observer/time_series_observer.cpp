@@ -1,10 +1,10 @@
-#include <cse/observer.hpp>
+#include "cse/observer/time_series_observer.hpp"
+
+#include "cse/error.hpp"
 
 #include <map>
 #include <mutex>
 #include <sstream>
-
-#include <cse/error.hpp>
 
 
 namespace cse

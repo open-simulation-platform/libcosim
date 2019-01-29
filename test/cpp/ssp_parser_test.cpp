@@ -1,10 +1,10 @@
-#include <cstdlib>
-#include <exception>
-
-#include <cse/ssp_parser.hpp>
 #include <cse/log.hpp>
+#include <cse/ssp_parser.hpp>
 
 #include <boost/filesystem.hpp>
+
+#include <cstdlib>
+#include <exception>
 
 
 #define REQUIRE(test) \
