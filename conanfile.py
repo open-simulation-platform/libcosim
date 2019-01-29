@@ -15,11 +15,13 @@ class CSECoreConan(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
     generators = "cmake", "virtualrunenv"
     requires = (
+        "OpenSSL/1.0.2o@conan/stable",
         "boost/1.66.0@conan/stable",
         "FMILibrary/2.0.3@kyllingstad/testing",
         "gsl_microsoft/1.0.0@bincrafters/stable",
         "libevent/2.0.22@bincrafters/stable",
-        "libzip/1.5.1@bincrafters/stable"
+        "libzip/1.5.1@bincrafters/stable",
+        "thrift/0.12.0@helmesjo/stable"
         )
     options = {"ci": [True, False]}
     default_options = (
