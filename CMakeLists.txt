@@ -97,8 +97,12 @@ set(CSECORE_EXPORT_TARGET "${PROJECT_NAME}-targets")
 # ==============================================================================
 
 if(CSECORE_USING_CONAN)
-    include("${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")
-    conan_basic_setup(NO_OUTPUT_DIRS)
+    if(EXISTS ${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+        include("${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")
+        conan_basic_setup(NO_OUTPUT_DIRS)
+    else()
+        message(WARNING "The file conanbuildinfo.cmake doesn't exist, you have to run conan install first")
+    endif()
 endif()
 
 set(Boost_components date_time fiber filesystem log)
