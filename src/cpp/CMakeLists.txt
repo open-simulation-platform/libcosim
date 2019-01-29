@@ -38,6 +38,8 @@ set(privateHeaders
     "utility/filesystem.hpp"
     "utility/uuid.hpp"
     "utility/zip.hpp"
+    "fmuproxy/fmu_service.hpp"
+    "fmuproxy/service_types.hpp"
 )
 set(sources
     "algorithm.cpp"
@@ -64,6 +66,8 @@ set(sources
     "utility/filesystem.cpp"
     "utility/uuid.cpp"
     "utility/zip.cpp"
+    "fmuproxy/fmu_service.cpp"
+    "fmuproxy/service_types.cpp"
 )
 
 set(publicHeadersFull)
@@ -87,6 +91,7 @@ target_include_directories(csecorecpp
 )
 target_link_libraries(csecorecpp
     PUBLIC
+        ${THRIFT_LIBRARIES}
         ${FMILibrary_LIBRARIES}
         libzip::libzip
         libevent2::core
