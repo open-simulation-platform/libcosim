@@ -54,7 +54,6 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     add_compile_options("/W4")
     add_compile_options("/wd4996")
-    add_definitions(-DNOMINMAX)
     if(CSECORE_TREAT_WARNINGS_AS_ERRORS)
         add_compile_options("/WX")
     endif()
@@ -69,7 +68,7 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
         # should not be a problem, so we disable the warning.
         add_compile_options("/wd4251")
     endif()
-    add_definitions("-D_SCL_SECURE_NO_WARNINGS" "-D_CRT_SECURE_NO_WARNINGS")
+    add_definitions("-D_SCL_SECURE_NO_WARNINGS" "-D_CRT_SECURE_NO_WARNINGS" "-DNOMINMAX")
 endif()
 
 # Automatically export all symbols in Windows DLLs.
@@ -113,10 +112,10 @@ find_package(Boost REQUIRED COMPONENTS ${Boost_components})
 find_package(FMILibrary REQUIRED)
 find_package(LIBZIP REQUIRED)
 find_package(Libevent2 REQUIRED)
-
 if(CSECORE_WITH_FMUPROXY)
     find_package(Thrift REQUIRED)
 endif()
+
 # ==============================================================================
 # Targets
 # ==============================================================================
