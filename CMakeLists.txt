@@ -101,7 +101,7 @@ if(CSECORE_USING_CONAN)
         include("${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")
         conan_basic_setup(NO_OUTPUT_DIRS)
     else()
-        message(WARNING "The file conanbuildinfo.cmake doesn't exist, you have to run conan install first")
+        message(FATAL_ERROR "The file conanbuildinfo.cmake doesn't exist, you have to run conan install first")
     endif()
 endif()
 
