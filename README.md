@@ -66,8 +66,11 @@ Then, acquire dependencies with Conan:
 
     conan install .. --build=missing
 
-Now, we can run CMake to generate the build system.  For **Visual Studio**,
-enter:
+Now, we can run CMake to generate the build system.  (If you have not installed
+Doxygen at this point, append `-DCSECORE_BUILD_APIDOC=OFF` to the next command
+to disable API documentation generation.)
+
+For **Visual Studio**, enter:
 
     cmake .. -DCSECORE_USING_CONAN=TRUE -G "Visual Studio 15 2017 Win64"
 
