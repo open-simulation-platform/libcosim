@@ -1,6 +1,7 @@
-#define BOOST_TEST_MODULE cse/model.hpp unittests
-#include <boost/test/unit_test.hpp>
+#define BOOST_TEST_MODULE model.hpp unittests
 #include <cse/model.hpp>
+
+#include <boost/test/unit_test.hpp>
 
 
 BOOST_AUTO_TEST_CASE(to_double_time_point_duration_addition)

@@ -1,14 +1,15 @@
-#include <cmath>
-#include <exception>
-#include <memory>
-#include <stdexcept>
+#include "mock_slave.hpp"
 
 #include <cse/algorithm.hpp>
 #include <cse/async_slave.hpp>
 #include <cse/execution.hpp>
 #include <cse/log.hpp>
+#include <cse/observer/membuffer_observer.hpp>
 
-#include "mock_slave.hpp"
+#include <cmath>
+#include <exception>
+#include <memory>
+#include <stdexcept>
 
 
 // A helper macro to test various assertions
@@ -28,8 +29,8 @@ int main()
 
         // Set up execution
         auto execution = cse::execution(
-                startTime,
-                std::make_unique<cse::fixed_step_algorithm>(stepSize));
+            startTime,
+            std::make_unique<cse::fixed_step_algorithm>(stepSize));
 
         auto observer = std::make_shared<cse::membuffer_observer>();
         execution.add_observer(observer);
@@ -40,8 +41,8 @@ int main()
         // Add slaves to it
         for (int i = 0; i < numSlaves; ++i) {
             execution.add_slave(
-                    cse::make_pseudo_async(std::make_unique<mock_slave>([](double x) { return x + 1.234; })),
-                    "slave" + std::to_string(i));
+                cse::make_pseudo_async(std::make_unique<mock_slave>([](double x) { return x + 1.234; })),
+                "slave" + std::to_string(i));
             if (i > 0) {
                 execution.connect_variables(cse::variable_id{i - 1, cse::variable_type::real, realOutIndex}, cse::variable_id{i, cse::variable_type::real, realInIndex});
             }

@@ -1,13 +1,12 @@
 #define BOOST_TEST_MODULE cse::utility::zip unittest
-#include <boost/test/unit_test.hpp>
+#include <cse/utility/filesystem.hpp>
 #include <cse/utility/zip.hpp>
+
+#include <boost/filesystem.hpp>
+#include <boost/test/unit_test.hpp>
 
 #include <cstdlib>
 #include <system_error>
-
-#include <boost/filesystem.hpp>
-
-#include <cse/utility/filesystem.hpp>
 
 
 BOOST_AUTO_TEST_CASE(zip_archive)

@@ -5,12 +5,12 @@
 #ifndef CSE_TEST_MOCK_SLAVE_HPP
 #define CSE_TEST_MOCK_SLAVE_HPP
 
+#include <cse/slave.hpp>
+
 #include <functional>
 #include <stdexcept>
 #include <string>
 #include <utility>
-
-#include <cse/slave.hpp>
 
 
 /**

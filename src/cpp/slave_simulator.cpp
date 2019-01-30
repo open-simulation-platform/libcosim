@@ -1,5 +1,7 @@
 #include "cse/slave_simulator.hpp"
 
+#include <boost/container/vector.hpp>
+
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
@@ -8,7 +10,6 @@
 #include <string>
 #include <unordered_map>
 
-#include <boost/container/vector.hpp>
 
 
 namespace cse {
@@ -82,106 +83,123 @@ namespace cse {
         };
 
 // Copies the contents of a contiguous-storage container or span into another.
-        template<typename Src, typename Tgt>
-        void copy_contents(Src &&src, Tgt &&tgt) {
-            assert(static_cast<std::size_t>(src.size()) <= static_cast<std::size_t>(tgt.size()));
-            std::copy(src.data(), src.data() + src.size(), tgt.data());
+template<typename Src, typename Tgt>
+void copy_contents(Src&& src, Tgt&& tgt)
+{
+    assert(static_cast<std::size_t>(src.size()) <= static_cast<std::size_t>(tgt.size()));
+    std::copy(src.data(), src.data() + src.size(), tgt.data());
+}
+} // namespace
+
+
+class slave_simulator::impl
+{
+public:
+    impl(std::shared_ptr<async_slave> slave, std::string_view name)
+        : slave_(std::move(slave))
+        , name_(name)
+        , modelDescription_(slave_->model_description().get())
+    {
+        assert(slave_);
+        assert(!name_.empty());
+    }
+
+    ~impl() noexcept = default;
+
+    impl(const impl&) = delete;
+
+    impl& operator=(const impl&) = delete;
+
+    impl(impl&&) noexcept = delete;
+
+    impl& operator=(impl&&) noexcept = delete;
+
+    std::string name() const
+    {
+        return name_;
+    }
+
+    cse::model_description model_description() const
+    {
+        return modelDescription_;
+    }
+
+
+    void expose_for_getting(variable_type type, variable_index index)
+    {
+        switch (type) {
+            case variable_type::real:
+                realGetCache_.expose(index);
+                break;
+            case variable_type::integer:
+                integerGetCache_.expose(index);
+                break;
+            case variable_type::boolean:
+                booleanGetCache_.expose(index);
+                break;
+            case variable_type::string:
+                stringGetCache_.expose(index);
+                break;
         }
-    } // namespace
+    }
 
+    double get_real(variable_index index) const
+    {
+        return realGetCache_.get(index);
+    }
 
-    class slave_simulator::impl {
-    public:
-        impl(std::shared_ptr<async_slave> slave, std::string_view name)
-                : slave_(std::move(slave)), name_(name), modelDescription_(slave_->model_description().get()) {
-            assert(slave_);
-            assert(!name_.empty());
+    int get_integer(variable_index index) const
+    {
+        return integerGetCache_.get(index);
+    }
+
+    bool get_boolean(variable_index index) const
+    {
+        return booleanGetCache_.get(index);
+    }
+
+    std::string_view get_string(variable_index index) const
+    {
+        return stringGetCache_.get(index);
+    }
+
+    void expose_for_setting(variable_type type, variable_index index)
+    {
+        switch (type) {
+            case variable_type::real:
+                realSetCache_.expose(index);
+                break;
+            case variable_type::integer:
+                integerSetCache_.expose(index);
+                break;
+            case variable_type::boolean:
+                booleanSetCache_.expose(index);
+                break;
+            case variable_type::string:
+                stringSetCache_.expose(index);
+                break;
         }
+    }
 
-        ~impl() noexcept = default;
+    void set_real(variable_index index, double value)
+    {
+        realSetCache_.set(index, value);
+    }
 
-        impl(const impl &) = delete;
+    void set_integer(variable_index index, int value)
+    {
+        integerSetCache_.set(index, value);
+    }
 
-        impl &operator=(const impl &) = delete;
+    void set_boolean(variable_index index, bool value)
+    {
+        booleanSetCache_.set(index, value);
+    }
 
-        impl(impl &&) noexcept = delete;
-
-        impl &operator=(impl &&) noexcept = delete;
-
-        std::string name() const {
-            return name_;
-        }
-
-        cse::model_description model_description() const {
-            return modelDescription_;
-        }
-
-
-        void expose_for_getting(variable_type type, variable_index index) {
-            switch (type) {
-                case variable_type::real:
-                    realGetCache_.expose(index);
-                    break;
-                case variable_type::integer:
-                    integerGetCache_.expose(index);
-                    break;
-                case variable_type::boolean:
-                    booleanGetCache_.expose(index);
-                    break;
-                case variable_type::string:
-                    stringGetCache_.expose(index);
-                    break;
-            }
-        }
-
-        double get_real(variable_index index) const {
-            return realGetCache_.get(index);
-        }
-
-        int get_integer(variable_index index) const {
-            return integerGetCache_.get(index);
-        }
-
-        bool get_boolean(variable_index index) const {
-            return booleanGetCache_.get(index);
-        }
-
-        std::string_view get_string(variable_index index) const {
-            return stringGetCache_.get(index);
-        }
-
-        void expose_for_setting(variable_type type, variable_index index) {
-            switch (type) {
-                case variable_type::real:
-                    realSetCache_.expose(index);
-                    break;
-                case variable_type::integer:
-                    integerSetCache_.expose(index);
-                    break;
-                case variable_type::boolean:
-                    booleanSetCache_.expose(index);
-                    break;
-                case variable_type::string:
-                    stringSetCache_.expose(index);
-                    break;
-            }
-        }
-
-        void set_real(variable_index index, double value) {
-            realSetCache_.set(index, value);
-        }
-
-        void set_integer(variable_index index, int value) {
-            integerSetCache_.set(index, value);
-        }
-
-        void set_boolean(variable_index index, bool value) {
-            booleanSetCache_.set(index, value);
-        }
-
-        void set_string(variable_index index, std::string_view value) {
-            stringSetCache_.set(index, value);
-        }
+    void set_string(variable_index index, std::string_view value)
+    {
+        stringSetCache_.set(index, value);
+    }
 
         void set_real_input_manipulator(
             variable_index index,
@@ -246,19 +264,21 @@ namespace cse {
             return slave_->setup(startTime, stopTime, relativeTolerance);
         }
 
-        boost::fibers::future<void> do_iteration() {
-            // clang-format off
+    boost::fibers::future<void> do_iteration()
+    {
+        // clang-format off
             return boost::fibers::async([=]() {
                 set_variables();
                 get_variables();
             });
-            // clang-format on
-        }
+        // clang-format on
+    }
 
-        boost::fibers::future<step_result> do_step(
-                time_point currentT,
-                duration deltaT) {
-            // clang-format off
+    boost::fibers::future<step_result> do_step(
+        time_point currentT,
+        duration deltaT)
+    {
+        // clang-format off
             return boost::fibers::async([=]() {
                 if (slave_->state() == slave_state::initialisation) {
                     slave_->start_simulation().get();
@@ -268,8 +288,8 @@ namespace cse {
                 get_variables();
                 return result;
             });
-            // clang-format on
-        }
+        // clang-format on
+    }
 
     private:
         void set_variables() {
@@ -306,95 +326,108 @@ namespace cse {
             stringGetCache_.run_manipulators();
         }
 
-    private:
-        std::shared_ptr<async_slave> slave_;
-        std::string name_;
-        cse::model_description modelDescription_;
+private:
+    std::shared_ptr<async_slave> slave_;
+    std::string name_;
+    cse::model_description modelDescription_;
 
-        exposed_vars<double> realGetCache_;
-        exposed_vars<int> integerGetCache_;
-        exposed_vars<bool> booleanGetCache_;
-        exposed_vars<std::string> stringGetCache_;
+    exposed_vars<double> realGetCache_;
+    exposed_vars<int> integerGetCache_;
+    exposed_vars<bool> booleanGetCache_;
+    exposed_vars<std::string> stringGetCache_;
 
-        exposed_vars<double> realSetCache_;
-        exposed_vars<int> integerSetCache_;
-        exposed_vars<bool> booleanSetCache_;
-        exposed_vars<std::string> stringSetCache_;
-    };
-
-
-    slave_simulator::slave_simulator(
-            std::shared_ptr<async_slave> slave,
-            std::string_view name)
-            : pimpl_(std::make_unique<impl>(std::move(slave), name)) {
-    }
+    exposed_vars<double> realSetCache_;
+    exposed_vars<int> integerSetCache_;
+    exposed_vars<bool> booleanSetCache_;
+    exposed_vars<std::string> stringSetCache_;
+};
 
 
-    slave_simulator::~slave_simulator() noexcept = default;
-
-    slave_simulator::slave_simulator(slave_simulator &&) noexcept = default;
-
-    slave_simulator &slave_simulator::operator=(slave_simulator &&) noexcept = default;
-
-
-    std::string slave_simulator::name() const {
-        return pimpl_->name();
-    }
+slave_simulator::slave_simulator(
+    std::shared_ptr<async_slave> slave,
+    std::string_view name)
+    : pimpl_(std::make_unique<impl>(std::move(slave), name))
+{
+}
 
 
-    cse::model_description slave_simulator::model_description() const {
-        return pimpl_->model_description();
-    }
+slave_simulator::~slave_simulator() noexcept = default;
+
+slave_simulator::slave_simulator(slave_simulator&&) noexcept = default;
+
+slave_simulator& slave_simulator::operator=(slave_simulator&&) noexcept = default;
 
 
-    void slave_simulator::expose_for_getting(variable_type type, variable_index index) {
-        pimpl_->expose_for_getting(type, index);
-    }
+std::string slave_simulator::name() const
+{
+    return pimpl_->name();
+}
 
 
-    double slave_simulator::get_real(variable_index index) const {
-        return pimpl_->get_real(index);
-    }
+cse::model_description slave_simulator::model_description() const
+{
+    return pimpl_->model_description();
+}
 
 
-    int slave_simulator::get_integer(variable_index index) const {
-        return pimpl_->get_integer(index);
-    }
+void slave_simulator::expose_for_getting(variable_type type, variable_index index)
+{
+    pimpl_->expose_for_getting(type, index);
+}
 
 
-    bool slave_simulator::get_boolean(variable_index index) const {
-        return pimpl_->get_boolean(index);
-    }
+double slave_simulator::get_real(variable_index index) const
+{
+    return pimpl_->get_real(index);
+}
 
 
-    std::string_view slave_simulator::get_string(variable_index index) const {
-        return pimpl_->get_string(index);
-    }
+int slave_simulator::get_integer(variable_index index) const
+{
+    return pimpl_->get_integer(index);
+}
 
 
-    void slave_simulator::expose_for_setting(variable_type type, variable_index index) {
-        pimpl_->expose_for_setting(type, index);
-    }
+bool slave_simulator::get_boolean(variable_index index) const
+{
+    return pimpl_->get_boolean(index);
+}
 
 
-    void slave_simulator::set_real(variable_index index, double value) {
-        pimpl_->set_real(index, value);
-    }
+std::string_view slave_simulator::get_string(variable_index index) const
+{
+    return pimpl_->get_string(index);
+}
 
 
-    void slave_simulator::set_integer(variable_index index, int value) {
-        pimpl_->set_integer(index, value);
-    }
+void slave_simulator::expose_for_setting(variable_type type, variable_index index)
+{
+    pimpl_->expose_for_setting(type, index);
+}
 
 
-    void slave_simulator::set_boolean(variable_index index, bool value) {
-        pimpl_->set_boolean(index, value);
-    }
+void slave_simulator::set_real(variable_index index, double value)
+{
+    pimpl_->set_real(index, value);
+}
 
 
-    void slave_simulator::set_string(variable_index index, std::string_view value) {
-        pimpl_->set_string(index, value);
-    }
+void slave_simulator::set_integer(variable_index index, int value)
+{
+    pimpl_->set_integer(index, value);
+}
+
+
+void slave_simulator::set_boolean(variable_index index, bool value)
+{
+    pimpl_->set_boolean(index, value);
+}
+
+
+void slave_simulator::set_string(variable_index index, std::string_view value)
+{
+    pimpl_->set_string(index, value);
+}
 
     void slave_simulator::set_real_input_manipulator(
         variable_index index,
@@ -452,24 +485,27 @@ namespace cse {
         pimpl_->set_string_output_manipulator(index, manipulator);
     }
 
-    boost::fibers::future<void> slave_simulator::setup(
-            time_point startTime,
-            std::optional<time_point> stopTime,
-            std::optional<double> relativeTolerance) {
-        return pimpl_->setup(startTime, stopTime, relativeTolerance);
-    }
+boost::fibers::future<void> slave_simulator::setup(
+    time_point startTime,
+    std::optional<time_point> stopTime,
+    std::optional<double> relativeTolerance)
+{
+    return pimpl_->setup(startTime, stopTime, relativeTolerance);
+}
 
 
-    boost::fibers::future<void> slave_simulator::do_iteration() {
-        return pimpl_->do_iteration();
-    }
+boost::fibers::future<void> slave_simulator::do_iteration()
+{
+    return pimpl_->do_iteration();
+}
 
 
-    boost::fibers::future<step_result> slave_simulator::do_step(
-            time_point currentT,
-            duration deltaT) {
-        return pimpl_->do_step(currentT, deltaT);
-    }
+boost::fibers::future<step_result> slave_simulator::do_step(
+    time_point currentT,
+    duration deltaT)
+{
+    return pimpl_->do_step(currentT, deltaT);
+}
 
 
 } // namespace cse

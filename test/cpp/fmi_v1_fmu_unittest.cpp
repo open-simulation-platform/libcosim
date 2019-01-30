@@ -1,14 +1,13 @@
 #define BOOST_TEST_MODULE cse::fmi::v1::fmu unittest
-#include <boost/test/unit_test.hpp>
-
-#include <cstdlib>
-
 #include <cse/fmi/importer.hpp>
 #include <cse/fmi/v1/fmu.hpp>
 #include <cse/utility/filesystem.hpp>
 #include <cse/utility/zip.hpp>
 
 #include <boost/filesystem.hpp>
+#include <boost/test/unit_test.hpp>
+
+#include <cstdlib>
 
 
 using namespace cse;

@@ -5,12 +5,12 @@
 #ifndef CSE_SLAVE_HPP
 #define CSE_SLAVE_HPP
 
-#include <optional>
-#include <string>
+#include <cse/model.hpp>
 
 #include <gsl/span>
 
-#include <cse/model.hpp>
+#include <optional>
+#include <string>
 
 
 namespace cse

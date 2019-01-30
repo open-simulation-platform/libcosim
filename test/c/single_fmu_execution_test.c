@@ -1,8 +1,8 @@
+#include <cse.h>
+
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-#include <cse.h>
-#include <math.h>
 
 #ifdef _WINDOWS
 #    include <windows.h>

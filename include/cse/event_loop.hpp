@@ -5,13 +5,13 @@
 #ifndef CSE_EVENT_LOOP_HPP
 #define CSE_EVENT_LOOP_HPP
 
-#include <chrono>
-#include <cstdint>
-#include <memory>
+#include <cse/detail/macros.hpp>
 
 #include <boost/fiber/fiber.hpp>
 
-#include <cse/detail/macros.hpp>
+#include <chrono>
+#include <cstdint>
+#include <memory>
 
 
 namespace cse

@@ -1,15 +1,15 @@
 #ifdef _WIN32
 #    define NOMINMAX
 #endif
-#include <cse/algorithm.hpp>
+#include "cse/algorithm.hpp"
+
+#include "cse/error.hpp"
+#include "cse/exception.hpp"
 
 #include <algorithm>
 #include <sstream>
 #include <unordered_map>
 #include <vector>
-
-#include "cse/error.hpp"
-#include <cse/exception.hpp>
 
 
 namespace

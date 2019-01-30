@@ -5,11 +5,11 @@
 #ifndef CSE_UTILITY_CONCURRENCY
 #define CSE_UTILITY_CONCURRENCY
 
-#include <mutex>
-#include <optional>
-
 #include <boost/fiber/condition_variable.hpp>
 #include <boost/fiber/mutex.hpp>
+
+#include <mutex>
+#include <optional>
 
 
 namespace cse

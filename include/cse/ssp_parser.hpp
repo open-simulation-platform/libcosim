@@ -2,19 +2,21 @@
 #ifndef CSECORE_SSP_PARSER_HPP
 #define CSECORE_SSP_PARSER_HPP
 
-#include <boost/filesystem/path.hpp>
-#include <string>
-#include <map>
-
 #include <cse/execution.hpp>
 #include <cse/model.hpp>
+
+#include <boost/filesystem/path.hpp>
+
+#include <map>
+#include <string>
 
 
 namespace cse
 {
 
 
-struct simulator_map_entry {
+struct simulator_map_entry
+{
     simulator_index index;
     std::string source;
 };

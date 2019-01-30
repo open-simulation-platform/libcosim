@@ -1,6 +1,7 @@
 #define BOOST_TEST_MODULE libevent unittests
-#include <boost/test/unit_test.hpp>
 #include <cse/libevent.hpp>
+
+#include <boost/test/unit_test.hpp>
 
 #include <chrono>
 #include <functional>

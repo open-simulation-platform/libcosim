@@ -1,13 +1,13 @@
-#include <cse/ssp_parser.hpp>
+#include "cse/ssp_parser.hpp"
 
-#include <string>
+#include "cse/algorithm.hpp"
+#include "cse/fmi/fmu.hpp"
+#include "cse/fmi/importer.hpp"
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 
-#include <cse/algorithm.hpp>
-#include <cse/fmi/fmu.hpp>
-#include <cse/fmi/importer.hpp>
+#include <string>
 
 
 namespace cse
@@ -192,7 +192,7 @@ std::pair<execution, simulator_map> load_ssp(const boost::filesystem::path& sspD
     for (const auto& component : elements) {
         auto fmu = importer->import(sspDir / component.source);
         auto slave = fmu->instantiate_slave(component.name);
-        simulator_index index = slaves[component.name].index = execution.add_slave(cse::make_pseudo_async(slave), component.name);
+        simulator_index index = slaves[component.name].index = execution.add_slave(cse::make_background_thread_slave(slave), component.name);
 
         simulatorMap[component.name] = simulator_map_entry{index, component.source};
 
