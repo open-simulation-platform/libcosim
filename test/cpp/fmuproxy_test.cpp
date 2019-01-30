@@ -1,6 +1,7 @@
 
 #include <iostream>
 #include <string>
+#include <vector>
 #include <cse/fmuproxy/remote_fmu.hpp>
 
 using namespace cse;
@@ -22,6 +23,12 @@ int main() {
     slave->start_simulation();
 
     slave->do_step(t, cse::to_duration(dt));
+
+    std::vector<cse::variable_index > vr {46};
+    std::vector<double> values(1);
+    slave->get_real_variables(vr, values);
+
+    std::cout << values[0] << std::endl;
 
     slave->end_simulation();
 
