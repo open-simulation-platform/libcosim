@@ -1,6 +1,7 @@
 
-#include <utility>
+#include <string>
 
+#include <cse/error.hpp>
 #include <cse/fmuproxy/remote_fmu.hpp>
 #include <cse/fmuproxy/remote_slave.hpp>
 
@@ -25,7 +26,12 @@ cse::fmuproxy::remote_fmu::remote_fmu(FmuId fmuId, std::string host, unsigned in
     transport_ = std::make_shared<TBufferedTransport>(socket);
     std::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport_));
     client_ = std::make_shared<FmuServiceClient>(protocol);
-    transport_->open();
+    try  {
+        transport_->open();
+    } catch(TTransportException ex) {
+        std::string msg = "Failed to connect to remote FMU @ " + host + ":" + std::to_string(port);
+        CSE_PANIC_M(msg.c_str());
+    }
     modelDescription_ = getModelDescription(*client_, fmuId_);
 }
 
