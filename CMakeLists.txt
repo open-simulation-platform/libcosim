@@ -12,6 +12,7 @@ option(CSECORE_BUILD_APIDOC "Build API documentation" ON)
 option(CSECORE_BUILD_PRIVATE_APIDOC "Build private API documentation" OFF)
 option(CSECORE_STANDALONE_INSTALLATION "Whether to build for a standalone installation (Linux only; sets a relative RPATH)" OFF)
 option(CSECORE_USING_CONAN "Whether Conan is used for package management" OFF)
+option(CSECORE_WITH_FMUPROXY "Whether or not to build with fmuproxy integration" OFF)
 
 # ==============================================================================
 # Global internal configuration
@@ -112,8 +113,10 @@ find_package(Boost REQUIRED COMPONENTS ${Boost_components})
 find_package(FMILibrary REQUIRED)
 find_package(LIBZIP REQUIRED)
 find_package(Libevent2 REQUIRED)
-find_package(Thrift REQUIRED)
 
+if(CSECORE_WITH_FMUPROXY)
+    find_package(Thrift REQUIRED)
+endif()
 # ==============================================================================
 # Targets
 # ==============================================================================

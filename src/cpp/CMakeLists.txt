@@ -25,8 +25,6 @@ set(publicHeaders
     "observer/time_series_provider.hpp"
     "slave.hpp"
     "timer.hpp"
-
-    "fmuproxy/remote_fmu.hpp"
 )
 set(privateHeaders
     "error.hpp"
@@ -40,9 +38,6 @@ set(privateHeaders
     "utility/filesystem.hpp"
     "utility/uuid.hpp"
     "utility/zip.hpp"
-
-    "fmuproxy/fmuproxy_helper.hpp"
-    "fmuproxy/remote_slave.hpp"
 )
 set(sources
     "algorithm.cpp"
@@ -69,12 +64,24 @@ set(sources
     "utility/filesystem.cpp"
     "utility/uuid.cpp"
     "utility/zip.cpp"
-
-    "fmuproxy/fmu_service.cpp"
-    "fmuproxy/service_types.cpp"
-    "fmuproxy/remote_slave.cpp"
-    "fmuproxy/remote_fmu.cpp"
 )
+
+if(CSECORE_WITH_FMUPROXY)
+    list(APPEND publicHeaders
+            "fmuproxy/remote_fmu.hpp"
+    )
+
+    list(APPEND privateHeaders
+            "fmuproxy/fmuproxy_helper.hpp"
+            "fmuproxy/remote_slave.hpp"
+    )
+    list(APPEND sources
+            "fmuproxy/fmu_service.cpp"
+            "fmuproxy/service_types.cpp"
+            "fmuproxy/remote_slave.cpp"
+            "fmuproxy/remote_fmu.cpp"
+    )
+endif()
 
 set(publicHeadersFull)
 foreach(h IN LISTS publicHeaders)
@@ -97,7 +104,6 @@ target_include_directories(csecorecpp
 )
 target_link_libraries(csecorecpp
     PUBLIC
-        ${THRIFT_LIBRARIES}
         ${FMILibrary_LIBRARIES}
         libzip::libzip
         libevent2::core
@@ -108,6 +114,13 @@ target_link_libraries(csecorecpp
         Boost::log
         gsl
     )
+if(CSECORE_WITH_FMUPROXY)
+    target_link_libraries(csecorecpp
+        PUBLIC
+            ${THRIFT_LIBRARIES}
+        )
+endif()
+
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_link_libraries(csecorecpp INTERFACE "atomic")
 endif()

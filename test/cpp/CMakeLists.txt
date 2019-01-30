@@ -7,9 +7,12 @@ set(tests
     "ssp_parser_test"
     "time_series_observer_test"
     "trend_buffer_test"
-
-    "fmuproxy_test"
 )
+
+if(CSECORE_WITH_FMUPROXY)
+    list(APPEND tests "fmuproxy_test")
+endif()
+
 set(unittests
     "async_slave_unittest"
     "fmi_v1_fmu_unittest"
