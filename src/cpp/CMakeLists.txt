@@ -25,6 +25,8 @@ set(publicHeaders
     "observer/time_series_provider.hpp"
     "slave.hpp"
     "timer.hpp"
+
+    "fmuproxy/remote_fmu.hpp"
 )
 set(privateHeaders
     "error.hpp"
@@ -38,8 +40,9 @@ set(privateHeaders
     "utility/filesystem.hpp"
     "utility/uuid.hpp"
     "utility/zip.hpp"
-    "fmuproxy/fmu_service.hpp"
-    "fmuproxy/service_types.hpp"
+
+    "fmuproxy/fmuproxy_helper.hpp"
+    "fmuproxy/remote_slave.hpp"
 )
 set(sources
     "algorithm.cpp"
@@ -66,8 +69,11 @@ set(sources
     "utility/filesystem.cpp"
     "utility/uuid.cpp"
     "utility/zip.cpp"
+
     "fmuproxy/fmu_service.cpp"
     "fmuproxy/service_types.cpp"
+    "fmuproxy/remote_slave.cpp"
+    "fmuproxy/remote_fmu.cpp"
 )
 
 set(publicHeadersFull)
