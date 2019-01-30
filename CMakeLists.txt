@@ -53,6 +53,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     add_compile_options("/W4")
     add_compile_options("/wd4996")
+    add_definitions(-DNOMINMAX)
     if(CSECORE_TREAT_WARNINGS_AS_ERRORS)
         add_compile_options("/WX")
     endif()
