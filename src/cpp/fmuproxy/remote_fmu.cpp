@@ -20,14 +20,13 @@ namespace {
 
 }
 
-cse::fmuproxy::remote_fmu::remote_fmu(FmuId fmuId, std::string host, unsigned int port) {
+cse::fmuproxy::remote_fmu::remote_fmu(FmuId fmuId, std::string host, unsigned int port): fmuId_(fmuId) {
     std::shared_ptr<TTransport> socket(new TSocket(host, port));
     transport_ = std::make_shared<TBufferedTransport>(socket);
     std::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport_));
     client_ = std::make_shared<FmuServiceClient>(protocol);
-
+    transport_->open();
     modelDescription_ = getModelDescription(*client_, fmuId_);
-
 }
 
 std::shared_ptr<const cse::model_description> cse::fmuproxy::remote_fmu::model_description() const {
