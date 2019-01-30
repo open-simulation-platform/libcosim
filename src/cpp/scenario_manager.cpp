@@ -72,19 +72,19 @@ void scenario_manager::execute_action(manipulable* sim, const scenario::variable
         visitor(
             [=](double d) {
                 sim->expose_for_setting(a.variableId.type, a.variableId.index);
-                sim->set_real(a.variableId.index, d);
+                sim->set_real_input_manipulator(a.variableId.index, [d](double /*original*/) { return d; });
             },
             [=](int i) {
                 sim->expose_for_setting(a.variableId.type, a.variableId.index);
-                sim->set_integer(a.variableId.index, i);
+                sim->set_integer_input_manipulator(a.variableId.index, [i](int /*original*/) { return i; });
             },
             [=](bool b) {
                 sim->expose_for_setting(a.variableId.type, a.variableId.index);
-                sim->set_boolean(a.variableId.index, b);
+                sim->set_boolean_input_manipulator(a.variableId.index, [b](bool /*original*/) { return b; });
             },
             [=](std::string s) {
                 sim->expose_for_setting(a.variableId.type, a.variableId.index);
-                sim->set_string(a.variableId.index, s);
+                sim->set_string_input_manipulator(a.variableId.index, [s](std::string_view /*original*/) { return s; });
             }),
         a.value);
 }
