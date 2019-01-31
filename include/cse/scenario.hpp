@@ -21,7 +21,9 @@ struct time_trigger
 
 struct variable_action
 {
-    variable_id variableId;
+    simulator_index simulator;
+    variable_causality causality;
+    variable_index variable;
     std::variant<double, int, bool, std::string> value;
 };
 
