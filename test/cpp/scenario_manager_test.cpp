@@ -4,7 +4,6 @@
 #include <cse/async_slave.hpp>
 #include <cse/execution.hpp>
 #include <cse/log.hpp>
-#include <cse/observer/membuffer_observer.hpp>
 #include <cse/observer/time_series_observer.hpp>
 
 #include <exception>
@@ -38,23 +37,39 @@ int main()
             "slave uno");
 
         observer->start_observing(cse::variable_id{simIndex, cse::variable_type::real, 0});
+        observer->start_observing(cse::variable_id{simIndex, cse::variable_type::real, 1});
         observer->start_observing(cse::variable_id{simIndex, cse::variable_type::integer, 0});
         observer->start_observing(cse::variable_id{simIndex, cse::variable_type::integer, 1});
 
-        auto realTrigger = cse::scenario::time_trigger{cse::to_time_point(0.5)};
-        auto realAction = cse::scenario::variable_action{simIndex, cse::variable_causality::input, 1, 1.001};
-        auto realEvent = cse::scenario::event{123, realTrigger, realAction};
+        double numbers[] = {1.0, 2.0, 1.0, 2.0, 1.0};
+        int index = 0;
+        auto funky = [numbers, &index](double original) {
+            return original + numbers[index++];
+        };
+
+        auto realTrigger1 = cse::scenario::time_trigger{cse::to_time_point(0.5)};
+        auto realManipulator1 = cse::scenario::real_manipulator{[](double original) { return original + 1.001; }};
+        auto realAction1 = cse::scenario::variable_action{simIndex, cse::variable_causality::input, 1, realManipulator1};
+        auto realEvent1 = cse::scenario::event{42, realTrigger1, realAction1};
+
+        auto realTrigger2 = cse::scenario::time_trigger{cse::to_time_point(0.45)};
+        auto realManipulator2 = cse::scenario::real_manipulator{funky};
+        auto realAction2 = cse::scenario::variable_action{simIndex, cse::variable_causality::output, 0, realManipulator2};
+        auto realEvent2 = cse::scenario::event{123, realTrigger2, realAction2};
 
         auto intTrigger1 = cse::scenario::time_trigger{cse::to_time_point(0.65)};
-        auto intAction1 = cse::scenario::variable_action{simIndex, cse::variable_causality::input, 1, 2};
+        auto intManipulator1 = cse::scenario::integer_manipulator{[](int /*original*/) { return 2; }};
+        auto intAction1 = cse::scenario::variable_action{simIndex, cse::variable_causality::input, 1, intManipulator1};
         auto intEvent1 = cse::scenario::event{456, intTrigger1, intAction1};
 
         auto intTrigger2 = cse::scenario::time_trigger{cse::to_time_point(0.8)};
-        auto intAction2 = cse::scenario::variable_action{simIndex, cse::variable_causality::output, 0, 5};
+        auto intManipulator2 = cse::scenario::integer_manipulator{[](int /*original*/) { return 5; }};
+        auto intAction2 = cse::scenario::variable_action{simIndex, cse::variable_causality::output, 0, intManipulator2};
         auto intEvent2 = cse::scenario::event{789, intTrigger2, intAction2};
 
         auto events = std::vector<cse::scenario::event>();
-        events.push_back(realEvent);
+        events.push_back(realEvent1);
+        events.push_back(realEvent2);
         events.push_back(intEvent1);
         events.push_back(intEvent2);
         auto scenario = cse::scenario::scenario{events};
@@ -65,25 +80,30 @@ int main()
         REQUIRE(simResult.get());
 
         const int numSamples = 10;
-        double realValues[numSamples];
+        double realInputValues[numSamples];
+        double realOutputValues[numSamples];
         int intInputValues[numSamples];
         int intOutputValues[numSamples];
         cse::step_number steps[numSamples];
         cse::time_point times[numSamples];
 
-        size_t samplesRead = observer->get_real_samples(simIndex, 0, 1, gsl::make_span(realValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
+        size_t samplesRead = observer->get_real_samples(simIndex, 1, 1, gsl::make_span(realInputValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
+        REQUIRE(samplesRead == 10);
+        samplesRead = observer->get_real_samples(simIndex, 0, 1, gsl::make_span(realOutputValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
         REQUIRE(samplesRead == 10);
         samplesRead = observer->get_integer_samples(simIndex, 1, 1, gsl::make_span(intInputValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
         REQUIRE(samplesRead == 10);
         samplesRead = observer->get_integer_samples(simIndex, 0, 1, gsl::make_span(intOutputValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
         REQUIRE(samplesRead == 10);
 
-        double expectedReals[] = {1.234, 1.234, 1.234, 1.234, 1.234, 2.235, 2.235, 2.235, 2.235, 2.235};
+        double expectedRealInputs[] = {0.0, 0.0, 0.0, 0.0, 0.0, 1.001, 1.001, 1.001, 1.001, 1.001};
+        double expectedRealOutputs[] = {1.234, 1.234, 1.234, 1.234, 1.234, 3.235, 4.235, 3.235, 4.235, 3.235};
         int expectedIntInputs[] = {0, 0, 0, 0, 0, 0, 0, 2, 2, 2};
         int expectedIntOutputs[] = {2, 2, 2, 2, 2, 2, 2, 4, 5, 5};
 
         for (size_t i = 0; i < samplesRead; i++) {
-            REQUIRE(std::fabs(realValues[i] - expectedReals[i]) < 1.0e-9);
+            REQUIRE(std::fabs(realInputValues[i] - expectedRealInputs[i]) < 1.0e-9);
+            REQUIRE(std::fabs(realOutputValues[i] - expectedRealOutputs[i]) < 1.0e-9);
             REQUIRE(intInputValues[i] == expectedIntInputs[i]);
             REQUIRE(intOutputValues[i] == expectedIntOutputs[i]);
         }
