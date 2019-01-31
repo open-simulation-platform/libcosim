@@ -21,9 +21,8 @@ class CSECoreConan(ConanFile):
         "libevent/2.0.22@bincrafters/stable",
         "libzip/1.5.1@bincrafters/stable"
         )
-    options = {"ci": [True, False]}
+    
     default_options = (
-        "ci=False",
         "boost:shared=True",
         "libevent:with_openssl=False",
         "libzip:shared=True"
@@ -34,19 +33,21 @@ class CSECoreConan(ConanFile):
         self.copy("*.dll", dst=binDir, keep_path=False)
         self.copy("*.pdb", dst=binDir, keep_path=False)
 
-    def build(self):
+    def configure_cmake(self):
         cmake = CMake(self)
+        #cmake.parallel = False
         cmake.definitions["CSECORE_USING_CONAN"] = "ON"
-        if self.options.ci:
-            cmake.parallel = False
-            cmake.definitions["CSCSECORE_BUILD_PRIVATE_APIDOC"] = "ON"
-            cmake.definitions["CSECORE_STANDALONE_INSTALLATION"] = "ON"
+        cmake.definitions["CSCSECORE_BUILD_PRIVATE_APIDOC"] = "ON"
+        cmake.definitions["CSECORE_STANDALONE_INSTALLATION"] = "ON"
         cmake.configure()
+        return cmake
+
+    def build(self):
+        cmake = self.configure_cmake()
         cmake.build()
         cmake.test()
         self.run('cmake --build . --target doc')
 
     def package(self):
-        cmake = CMake(self)
-        cmake.parallel = False
+        cmake = self.configure_cmake()
         cmake.install()

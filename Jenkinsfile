@@ -27,16 +27,16 @@ pipeline {
                         stage('Build Debug') {
                             steps {
                                 dir('debug-build') {
-                                    bat 'conan install ../cse-core -s build_type=Debug -b missing -o ci=True'
-                                    bat 'conan build -c -b -pf package/windows/debug ../cse-core'
+                                    bat 'conan install ../cse-core -s build_type=Debug -b missing'
+                                    bat 'conan package ../cse-core -pf package/windows/debug'
                                 }
                             }
                         }
                         stage('Build Release') {
                             steps {
                                 dir('release-build') {
-                                    bat 'conan install ../cse-core -s build_type=Release -b missing -o ci=True'
-                                    bat 'conan build -c -b -pf package/windows/release ../cse-core'
+                                    bat 'conan install ../cse-core -s build_type=Release -b missing'
+                                    bat 'conan package ../cse-core -pf package/windows/release'
                                 }
                             }
                         }
@@ -57,7 +57,7 @@ pipeline {
                                 }
                                 success {
                                     dir('debug-build') {
-                                        sh "conan export-pkg ../cse-core osp/${CSE_CONAN_CHANNEL} --force"
+                                        sh "conan export-pkg ../cse-core osp/${CSE_CONAN_CHANNEL} -pf package/windows/debug --force"
                                         sh "conan upload cse-core/*@osp/${CSE_CONAN_CHANNEL} --all -r=osp --confirm"
                                     }
                                     dir('debug-build/package') {
@@ -88,7 +88,7 @@ pipeline {
                                 }
                                 success {
                                     dir('release-build') {
-                                        sh "conan export-pkg ../cse-core osp/${CSE_CONAN_CHANNEL} --force"
+                                        sh "conan export-pkg ../cse-core osp/${CSE_CONAN_CHANNEL} -pf package/windows/release --force"
                                         sh "conan upload cse-core/*@osp/${CSE_CONAN_CHANNEL} --all -r=osp --confirm"    
                                     }
                                     dir('release-build/package') {
@@ -131,16 +131,16 @@ pipeline {
                         stage('Build Debug') {
                             steps {
                                 dir('debug-build-conan') {
-                                    sh 'conan install ../cse-core -s compiler.libcxx=libstdc++11 -s build_type=Debug -b missing -o ci=True'
-                                    sh 'conan build -c -b -pf package/linux/debug ../cse-core'
+                                    sh 'conan install ../cse-core -s compiler.libcxx=libstdc++11 -s build_type=Debug -b missing'
+                                    sh 'conan package ../cse-core -pf package/linux/debug'
                                 }
                             }
                         }
                         stage('Build Release') {
                             steps {
                                 dir('release-build-conan') {
-                                    sh 'conan install ../cse-core -s compiler.libcxx=libstdc++11 -s build_type=Release -b missing -o ci=True'
-                                    sh 'conan build -c -b -pf package/linux/release ../cse-core'
+                                    sh 'conan install ../cse-core -s compiler.libcxx=libstdc++11 -s build_type=Release -b missing'
+                                    sh 'conan package ../cse-core -pf package/linux/release'
                                 }
                             }
                         }
@@ -161,7 +161,7 @@ pipeline {
                                 }
                                 success {
                                     dir('debug-build-conan') {
-                                        sh "conan export-pkg ../cse-core osp/${CSE_CONAN_CHANNEL} --force"
+                                        sh "conan export-pkg ../cse-core osp/${CSE_CONAN_CHANNEL} -pf package/linux/debug --force"
                                         sh "conan upload cse-core/*@osp/${CSE_CONAN_CHANNEL} --all -r=osp --confirm"
                                     }
                                     dir('debug-build-conan/package') {
@@ -193,7 +193,7 @@ pipeline {
                                 }
                                 success {
                                     dir('release-build-conan') {
-                                        sh "conan export-pkg ../cse-core osp/${CSE_CONAN_CHANNEL} --force"
+                                        sh "conan export-pkg ../cse-core osp/${CSE_CONAN_CHANNEL} -pf package/linux/release --force"
                                         sh "conan upload cse-core/*@osp/${CSE_CONAN_CHANNEL} --all -r=osp --confirm"
                                     }
                                     dir('release-build-conan/package') {
