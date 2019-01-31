@@ -54,9 +54,9 @@ namespace {
         } else if (v.attribute.__isset.realAttribute) {
             return cse::variable_type::real;
         } else if (v.attribute.__isset.stringAttribute) {
-            return cse::variable_type::real;
+            return cse::variable_type::string;
         } else if (v.attribute.__isset.booleanAttribute) {
-            return cse::variable_type::real;
+            return cse::variable_type::boolean;
         } else {
             CSE_PANIC();
         }
