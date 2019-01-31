@@ -36,9 +36,21 @@ namespace cse
  *  `boost::fibers::future::get()` on the future returned from the previous
  *  function call.
  */
-class simulator : public observable, public manipulable
+class simulator : public observable
 {
 public:
+
+    /**
+     *  Exposes a variable for assignment with `set_xxx()`.
+     *
+     *  The purpose is fundamentally to select which variables get transferred
+     *  to remote simulators at each step, so that each individual `set_xxx()`
+     *  function call doesn't trigger a new data exchange.
+     *
+     *  Calling this function more than once for the same variable has no
+     *  effect.
+     */
+    virtual void expose_for_setting(variable_type type, variable_index index) = 0;
 
     /**
      *  Sets the value of a real variable.
@@ -67,6 +79,38 @@ public:
      *  The variable must previously have been exposed with `expose_for_setting()`.
      */
     virtual void set_string(variable_index index, std::string_view value) = 0;
+
+    virtual void set_real_input_manipulator(
+            variable_index index,
+            std::function<double(double)> manipulator) = 0;
+
+    virtual void set_integer_input_manipulator(
+            variable_index index,
+            std::function<int(int)> manipulator) = 0;
+
+    virtual void set_boolean_input_manipulator(
+            variable_index index,
+            std::function<bool(bool)> manipulator) = 0;
+
+    virtual void set_string_input_manipulator(
+            variable_index index,
+            std::function<std::string(std::string_view)> manipulator) = 0;
+
+    virtual void set_real_output_manipulator(
+            variable_index index,
+            std::function<double(double)> manipulator) = 0;
+
+    virtual void set_integer_output_manipulator(
+            variable_index index,
+            std::function<int(int)> manipulator) = 0;
+
+    virtual void set_boolean_output_manipulator(
+            variable_index index,
+            std::function<bool(bool)> manipulator) = 0;
+
+    virtual void set_string_output_manipulator(
+            variable_index index,
+            std::function<std::string(std::string_view)> manipulator) = 0;
 
     /**
      *  Performs pre-simulation setup and enters initialisation mode.

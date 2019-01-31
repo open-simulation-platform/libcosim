@@ -1,7 +1,7 @@
 #include <cse/manipulator.hpp>
 
 #include <cse/scenario.hpp>
-
+#include <cse/algorithm.hpp>
 
 namespace cse
 {
@@ -52,7 +52,7 @@ void scenario_manager::step_commencing(time_point currentTime)
     }
 }
 
-void scenario_manager::simulator_added(simulator_index index, manipulable* sim, time_point /*currentTime*/)
+void scenario_manager::simulator_added(simulator_index index, simulator* sim, time_point /*currentTime*/)
 {
     simulators_[index] = sim;
 }
@@ -66,7 +66,7 @@ scenario_manager::~scenario_manager()
 {
 }
 
-void scenario_manager::execute_action(manipulable* sim, const scenario::variable_action& a)
+void scenario_manager::execute_action(simulator* sim, const scenario::variable_action& a)
 {
     std::visit(
         visitor(

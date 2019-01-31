@@ -40,13 +40,12 @@ public:
     std::string_view get_string(variable_index index) const override;
 
     // `simulator` methods
+    void expose_for_setting(variable_type type, variable_index index) override;
     void set_real(variable_index index, double value) override;
     void set_integer(variable_index index, int value) override;
     void set_boolean(variable_index index, bool value) override;
     void set_string(variable_index index, std::string_view value) override;
 
-    // `manipulable` methods
-    void expose_for_setting(variable_type type, variable_index index) override;
     void set_real_input_manipulator(
         variable_index index,
         std::function<double(double)> manipulator) override;
