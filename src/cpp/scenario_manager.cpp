@@ -1,8 +1,7 @@
-#include "cse/manipulator.hpp"
-
 #include "cse/algorithm.hpp"
 #include "cse/log.hpp"
 #include "cse/log/logger.hpp"
+#include "cse/manipulator.hpp"
 #include "cse/scenario.hpp"
 
 namespace cse
@@ -76,69 +75,37 @@ void scenario_manager::execute_action(simulator* sim, const scenario::variable_a
 {
     std::visit(
         visitor(
-            [=](scenario::real_manipulator m) {
-                switch (a.causality) {
-                    case variable_causality::input:
-                    case variable_causality::parameter:
-                        sim->expose_for_setting(variable_type::real, a.variable);
-                        sim->set_real_input_manipulator(a.variable, m.f);
-                        break;
-                    case variable_causality::output:
-                    case variable_causality::calculated_parameter:
-                        sim->expose_for_getting(variable_type::real, a.variable);
-                        sim->set_real_output_manipulator(a.variable, m.f);
-                        break;
-                    default:
-                        throw std::invalid_argument("Cannot set real manipulator for this causality");
-                }
+            [=](scenario::real_input_manipulator m) {
+                sim->expose_for_setting(variable_type::real, a.variable);
+                sim->set_real_input_manipulator(a.variable, m.f);
             },
-            [=](scenario::integer_manipulator m) {
-                switch (a.causality) {
-                    case variable_causality::input:
-                    case variable_causality::parameter:
-                        sim->expose_for_setting(variable_type::integer, a.variable);
-                        sim->set_integer_input_manipulator(a.variable, m.f);
-                        break;
-                    case variable_causality::output:
-                    case variable_causality::calculated_parameter:
-                        sim->expose_for_getting(variable_type::integer, a.variable);
-                        sim->set_integer_output_manipulator(a.variable, m.f);
-                        break;
-                    default:
-                        throw std::invalid_argument("Cannot set integer manipulator for this causality");
-                }
+            [=](scenario::real_output_manipulator m) {
+                sim->expose_for_getting(variable_type::real, a.variable);
+                sim->set_real_output_manipulator(a.variable, m.f);
             },
-            [=](scenario::boolean_manipulator m) {
-                switch (a.causality) {
-                    case variable_causality::input:
-                    case variable_causality::parameter:
-                        sim->expose_for_setting(variable_type::boolean, a.variable);
-                        sim->set_boolean_input_manipulator(a.variable, m.f);
-                        break;
-                    case variable_causality::output:
-                    case variable_causality::calculated_parameter:
-                        sim->expose_for_getting(variable_type::boolean, a.variable);
-                        sim->set_boolean_output_manipulator(a.variable, m.f);
-                        break;
-                    default:
-                        throw std::invalid_argument("Cannot set boolean manipulator for this causality");
-                }
+            [=](scenario::integer_input_manipulator m) {
+                sim->expose_for_setting(variable_type::integer, a.variable);
+                sim->set_integer_input_manipulator(a.variable, m.f);
             },
-            [=](scenario::string_manipulator m) {
-                switch (a.causality) {
-                    case variable_causality::input:
-                    case variable_causality::parameter:
-                        sim->expose_for_setting(variable_type::string, a.variable);
-                        sim->set_string_input_manipulator(a.variable, m.f);
-                        break;
-                    case variable_causality::output:
-                    case variable_causality::calculated_parameter:
-                        sim->expose_for_getting(variable_type::string, a.variable);
-                        sim->set_string_output_manipulator(a.variable, m.f);
-                        break;
-                    default:
-                        throw std::invalid_argument("Cannot set string manipulator for this causality");
-                }
+            [=](scenario::integer_output_manipulator m) {
+                sim->expose_for_getting(variable_type::integer, a.variable);
+                sim->set_integer_output_manipulator(a.variable, m.f);
+            },
+            [=](scenario::boolean_input_manipulator m) {
+                sim->expose_for_setting(variable_type::boolean, a.variable);
+                sim->set_boolean_input_manipulator(a.variable, m.f);
+            },
+            [=](scenario::boolean_output_manipulator m) {
+                sim->expose_for_getting(variable_type::boolean, a.variable);
+                sim->set_boolean_output_manipulator(a.variable, m.f);
+            },
+            [=](scenario::string_input_manipulator m) {
+                sim->expose_for_setting(variable_type::string, a.variable);
+                sim->set_string_input_manipulator(a.variable, m.f);
+            },
+            [=](scenario::string_output_manipulator m) {
+                sim->expose_for_getting(variable_type::string, a.variable);
+                sim->set_string_output_manipulator(a.variable, m.f);
             }),
         a.manipulator);
 }
