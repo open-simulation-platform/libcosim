@@ -26,6 +26,7 @@ set(publicHeaders
     "slave.hpp"
     "timer.hpp"
     "scenario.hpp"
+    "scenario_parser.hpp"
     "manipulator.hpp"
 )
 set(privateHeaders
@@ -55,6 +56,7 @@ set(sources
     "observer/membuffer_observer.cpp"
     "observer/time_series_observer.cpp"
     "scenario_manager.cpp"
+    "scenario_parser.cpp"
 
     "error.cpp"
     "fmi/glue.cpp"
@@ -99,6 +101,7 @@ target_link_libraries(csecorecpp
         Boost::filesystem
         Boost::log
         gsl
+        nlohmann_json::nlohmann_json
     )
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_link_libraries(csecorecpp INTERFACE "atomic")

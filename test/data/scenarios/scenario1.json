@@ -1,0 +1,26 @@
+{
+  "scenario": [
+    {
+      "trigger": {
+        "time": 500
+      },
+      "actions": [
+        {
+          "override": {
+            "model": "Ref",
+            "output": "x_wp",
+            "real": 20.0
+          }
+        },
+        {
+          "override": {
+            "model": "Ref",
+            "output": "x_tp",
+            "real": 700.0
+          }
+        }
+      ]
+    }
+  ]
+}
+
