@@ -69,6 +69,8 @@ set(sources
 if(CSECORE_WITH_FMUPROXY)
     list(APPEND publicHeaders
             "fmuproxy/remote_fmu.hpp"
+            "fmuproxy/fmu_service.hpp"
+            "fmuproxy/service_types.hpp"
     )
 
     list(APPEND privateHeaders
