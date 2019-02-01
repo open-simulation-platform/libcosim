@@ -1,6 +1,7 @@
 {
-  "scenario": [
+  "events": [
     {
+      "id": 123,
       "trigger": {
         "time": 500
       },
