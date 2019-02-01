@@ -7,6 +7,7 @@ set(tests
     "ssp_parser_test"
     "time_series_observer_test"
     "trend_buffer_test"
+    "scenario_manager_test"
 )
 set(unittests
     "async_slave_unittest"

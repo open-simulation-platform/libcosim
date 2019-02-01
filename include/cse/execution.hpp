@@ -52,6 +52,7 @@ inline bool operator!=(const variable_id& a, const variable_id& b) noexcept
 // Forward declarations
 class algorithm;
 class observer;
+class manipulator;
 class simulator;
 
 
@@ -108,6 +109,8 @@ public:
      * \param obs the observer to add
      */
     void add_observer(std::shared_ptr<observer> obs);
+
+    void add_manipulator(std::shared_ptr<manipulator> man);
 
     /**
      *  Connects an output variable to an input variable.
