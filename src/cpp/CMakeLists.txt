@@ -102,7 +102,7 @@ target_link_libraries(csecorecpp
         Boost::log
         gsl
     PRIVATE
-        nlohmann_json::nlohmann_json
+        nlohmann_json
     )
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_link_libraries(csecorecpp INTERFACE "atomic")
