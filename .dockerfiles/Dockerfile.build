@@ -1,16 +1,20 @@
 FROM ubuntu:18.04
 
-RUN apt-get update && apt-get install -y \
-  build-essential \
-  cmake \
-  doxygen \
-  git \
-  libboost-all-dev \
-  libevent-dev \
-  libzip-dev \
-  libmsgsl-dev \
-  nlohmann-json-dev \
-  && rm -rf /var/lib/apt/lists/*
+RUN echo "deb http://azure.archive.ubuntu.com/ubuntu bionic main universe multiverse" > /etc/sources.list && \
+    echo "deb http://azure.archive.ubuntu.com/ubuntu bionic-security main" > /etc/sources.list && \
+    echo "deb http://azure.archive.ubuntu.com/ubuntu bionic-updates main universe multiverse" > /etc/sources.list && \
+    apt-get update && \
+    apt-get install -y -no-install-recomends \
+    build-essential \
+    cmake \
+    doxygen \
+    git \
+    libboost-all-dev \
+    libevent-dev \
+    libzip-dev \
+    libmsgsl-dev \
+    nlohmann-json-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 # Installing FMI Library from prebuilt .deb packages
 WORKDIR /tmp/libfmi
