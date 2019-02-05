@@ -2,4 +2,4 @@
 * text=auto
 
 # Declare files that will always have LF line endings on checkout.
-conanfile.py text eol=crlf
+conanfile.py text eol=lf
