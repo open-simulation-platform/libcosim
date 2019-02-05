@@ -11,7 +11,7 @@
 
 namespace {
 
-    cse::variable_causality convert(const fmuproxy::thrift::Causality::type &c) {
+    inline cse::variable_causality convert(const fmuproxy::thrift::Causality::type &c) {
         switch (c) {
             case fmuproxy::thrift::Causality::type::INPUT_CAUSALITY:
                 return cse::variable_causality::input;
@@ -30,7 +30,7 @@ namespace {
         }
     }
 
-    cse::variable_variability convert(const fmuproxy::thrift::Variability::type &v) {
+    inline cse::variable_variability convert(const fmuproxy::thrift::Variability::type &v) {
         switch (v) {
             case fmuproxy::thrift::Variability::type::CONSTANT_VARIABILITY:
                 return cse::variable_variability::constant;
@@ -48,7 +48,7 @@ namespace {
         }
     }
 
-    cse::variable_type getType(const fmuproxy::thrift::ScalarVariable &v) {
+    inline cse::variable_type getType(const fmuproxy::thrift::ScalarVariable &v) {
         if (v.attribute.__isset.integerAttribute) {
             return cse::variable_type::integer;
         } else if (v.attribute.__isset.realAttribute) {
@@ -62,7 +62,7 @@ namespace {
         }
     }
 
-    cse::variable_description convert(const fmuproxy::thrift::ScalarVariable &v) {
+    inline cse::variable_description convert(const fmuproxy::thrift::ScalarVariable &v) {
         cse::variable_description var;
         var.name = v.name;
         var.index = (cse::variable_index) v.valueReference;
@@ -72,7 +72,7 @@ namespace {
         return var;
     }
 
-    std::vector<cse::variable_description> convert(fmuproxy::thrift::ModelVariables &vars) {
+    inline std::vector<cse::variable_description> convert(fmuproxy::thrift::ModelVariables &vars) {
         std::vector<cse::variable_description> modelVariables(vars.size());
         for (const auto &v : vars) {
             modelVariables.push_back(convert(v));
@@ -80,7 +80,7 @@ namespace {
         return modelVariables;
     }
 
-    std::shared_ptr<cse::model_description> convert(fmuproxy::thrift::ModelDescription &md) {
+    inline std::shared_ptr<cse::model_description> convert(fmuproxy::thrift::ModelDescription &md) {
 
         auto modelDescription = std::make_shared<cse::model_description>();
         modelDescription->name = md.modelName;
@@ -95,4 +95,4 @@ namespace {
 
 }
 
-#endif //CSECORE_FMUPROXY_HELPER_HPP
+#endif

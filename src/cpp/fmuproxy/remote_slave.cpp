@@ -48,7 +48,7 @@ void cse::fmuproxy::remote_slave::get_real_variables(gsl::span<const cse::variab
     ::fmuproxy::thrift::RealRead read;
     ::fmuproxy::thrift::ValueReferences vr(variables.begin(), variables.end());
     client_->readReal(read, instanceId_, vr);
-    for (int i = 0; i < read.value.size(); i++) {
+    for (unsigned int i = 0; i < read.value.size(); i++) {
         values[i] = read.value[i];
     }
 }
@@ -58,7 +58,7 @@ void cse::fmuproxy::remote_slave::get_integer_variables(gsl::span<const cse::var
     ::fmuproxy::thrift::IntegerRead read;
     ::fmuproxy::thrift::ValueReferences vr(variables.begin(), variables.end());
     client_->readInteger(read, instanceId_, vr);
-    for (int i = 0; i < read.value.size(); i++) {
+    for (unsigned int i = 0; i < read.value.size(); i++) {
         values[i] = read.value[i];
     }
 }
@@ -68,7 +68,7 @@ void cse::fmuproxy::remote_slave::get_boolean_variables(gsl::span<const cse::var
     ::fmuproxy::thrift::BooleanRead read;
     ::fmuproxy::thrift::ValueReferences vr(variables.begin(), variables.end());
     client_->readBoolean(read, instanceId_, vr);
-    for (int i = 0; i < read.value.size(); i++) {
+    for (unsigned int i = 0; i < read.value.size(); i++) {
         values[i] = read.value[i];
     }
 }
@@ -78,7 +78,7 @@ void cse::fmuproxy::remote_slave::get_string_variables(gsl::span<const cse::vari
     ::fmuproxy::thrift::StringRead read;
     ::fmuproxy::thrift::ValueReferences vr(variables.begin(), variables.end());
     client_->readString(read, instanceId_, vr);
-    for (int i = 0; i < read.value.size(); i++) {
+    for (unsigned int i = 0; i < read.value.size(); i++) {
         values[i] = read.value[i];
     }
 }
@@ -87,23 +87,23 @@ void cse::fmuproxy::remote_slave::set_real_variables(gsl::span<const cse::variab
                                                      gsl::span<const double> values) {
 
     ::fmuproxy::thrift::ValueReferences vr(variables.begin(), variables.end());
-    client_->writeReal(instanceId_, vr, std::vector(values.begin(), values.end()));
+    client_->writeReal(instanceId_, vr, std::vector<double>(values.begin(), values.end()));
 }
 
 void cse::fmuproxy::remote_slave::set_integer_variables(gsl::span<const cse::variable_index> variables,
                                                         gsl::span<const int> values) {
     ::fmuproxy::thrift::ValueReferences vr(variables.begin(), variables.end());
-    client_->writeInteger(instanceId_, vr, std::vector(values.begin(), values.end()));
+    client_->writeInteger(instanceId_, vr, std::vector<int>(values.begin(), values.end()));
 }
 
 void cse::fmuproxy::remote_slave::set_boolean_variables(gsl::span<const cse::variable_index> variables,
                                                         gsl::span<const bool> values) {
     ::fmuproxy::thrift::ValueReferences vr(variables.begin(), variables.end());
-    client_->writeBoolean(instanceId_, vr, std::vector(values.begin(), values.end()));
+    client_->writeBoolean(instanceId_, vr, std::vector<bool>(values.begin(), values.end()));
 }
 
 void cse::fmuproxy::remote_slave::set_string_variables(gsl::span<const cse::variable_index> variables,
                                                        gsl::span<const std::string> values) {
     ::fmuproxy::thrift::ValueReferences vr(variables.begin(), variables.end());
-    client_->writeString(instanceId_, vr, std::vector(values.begin(), values.end()));
+    client_->writeString(instanceId_, vr, std::vector<std::string>(values.begin(), values.end()));
 }
