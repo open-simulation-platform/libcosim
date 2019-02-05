@@ -2,35 +2,67 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <ctime>
 #include <cse/fmuproxy/remote_fmu.hpp>
+#include <cse/execution.hpp>
+
+#include <cse/algorithm.hpp>
 
 using namespace cse;
 using namespace cse::fmuproxy;
 
-int main() {
 
-    const double dt = 1.0/100;
-    cse::time_point t = cse::to_time_point(0);
-    const std::string fmuId = "{06c2700b-b39c-4895-9151-304ddde28443}";
+const double stop = 100;
+const double stepSize = 1.0/100;
+const int numSteps = (int) (stop/stepSize);
 
-    remote_fmu fmu(fmuId, "localhost", 9090);
-    auto md = fmu.model_description();
+const std::string fmuId = "{9c347d26-2562-424a-9731-e44a4c2de5bb}";
 
-    std::cout << "modelName=" << md->name << std::endl;
+void run1(remote_fmu &fmu) {
 
     auto slave = fmu.instantiate_slave();
-    slave->setup(t, {}, {});
+    slave->setup(cse::time_point(), {}, {});
     slave->start_simulation();
 
-    slave->do_step(t, cse::to_duration(dt));
+    clock_t begin = clock();
+    for (int i = 0; i < numSteps; i++) {
+        slave->do_step(cse::time_point(), cse::to_duration(stepSize));
+    }
+    clock_t end = clock();
 
-    std::vector<cse::variable_index > vr {46};
-    std::vector<double> values(1);
-    slave->get_real_variables(vr, values);
-
-    std::cout << values[0] << std::endl;
+    double elapsed_secs = double(end-begin) / CLOCKS_PER_SEC;
+    std::cout << "elapsed=" << elapsed_secs << "s" << std::endl;
 
     slave->end_simulation();
+}
+
+void run2(remote_fmu &fmu) {
+
+    auto slave = fmu.instantiate_slave();
+    auto execution =  cse::execution(cse::time_point(), std::make_unique<cse::fixed_step_algorithm>(cse::to_duration(stepSize)));
+
+    execution.add_slave(cse::make_pseudo_async(slave), "slave1");
+    execution.step({});
+
+    clock_t begin = clock();
+    for (int i = 0; i < numSteps-1; i++) {
+        execution.step({});
+    }
+    clock_t end = clock();
+
+    double elapsed_secs = double(end-begin) / CLOCKS_PER_SEC;
+    std::cout << "elapsed=" << elapsed_secs << "s" << std::endl;
+
+    slave->end_simulation();
+
+}
+
+int main() {
+
+
+    remote_fmu fmu(fmuId, "localhost", 9090);
+    run1(fmu);
+    run2(fmu);
 
     return 0;
 
