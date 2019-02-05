@@ -1,26 +1,62 @@
 {
   "events": [
     {
+      "id": 42,
+      "trigger": {
+        "time": 0.45
+      },
+      "action": {
+        "bias": {
+          "model": "slave uno",
+          "output": "realOut",
+          "real": [
+            1.0,
+            2.0,
+            1.0,
+            2.0,
+            1.0
+          ]
+        }
+      }
+    },
+    {
       "id": 123,
       "trigger": {
-        "time": 500
+        "time": 0.5
       },
-      "actions": [
-        {
-          "override": {
-            "model": "Ref",
-            "output": "x_wp",
-            "real": 20.0
-          }
-        },
-        {
-          "override": {
-            "model": "Ref",
-            "output": "x_tp",
-            "real": 700.0
-          }
+      "action": {
+        "bias": {
+          "model": "slave uno",
+          "input": "realIn",
+          "real": 1.001
         }
-      ]
+      }
+    },
+    {
+      "id": 456,
+      "trigger": {
+        "time": 0.65
+      },
+      "action": {
+        "override": {
+          "model": "slave uno",
+          "input": "intIn",
+          "integer": 2
+        }
+      }
+    },
+    {
+      "id": 798,
+      "trigger": {
+        "time": 0.8
+      },
+      "action": {
+        "override": {
+          "model": "slave uno",
+          "output": "intOut",
+          "integer": 5
+        }
+      }
     }
   ]
 }

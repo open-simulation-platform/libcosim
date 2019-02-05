@@ -8,6 +8,8 @@
 #include <cse/model.hpp>
 #include <cse/scenario.hpp>
 
+#include <boost/filesystem/path.hpp>
+
 namespace cse
 {
 
@@ -38,6 +40,8 @@ public:
         time_point currentTime) override;
 
     void load_scenario(scenario::scenario s, time_point currentTime);
+
+    void load_scenario(boost::filesystem::path scenarioFile, time_point currentTime);
 
     ~scenario_manager() noexcept override;
 

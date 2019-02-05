@@ -3,6 +3,7 @@
 #include "cse/log/logger.hpp"
 #include "cse/manipulator.hpp"
 #include "cse/scenario.hpp"
+#include "cse/scenario_parser.hpp"
 
 namespace cse
 {
@@ -38,6 +39,12 @@ void scenario_manager::load_scenario(scenario::scenario s, time_point currentTim
     }
     startTime_ = currentTime;
 }
+
+void scenario_manager::load_scenario(boost::filesystem::path scenarioFile, time_point currentTime) {
+    auto scenario = parse_scenario(scenarioFile, simulators_);
+    load_scenario(scenario, currentTime);
+}
+
 
 void scenario_manager::step_commencing(time_point currentTime)
 {
