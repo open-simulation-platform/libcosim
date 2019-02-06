@@ -22,7 +22,7 @@ namespace cse {
 
         public:
 
-            remote_fmu(std::string fmuId, std::string host, unsigned int port);
+            remote_fmu(std::string fmuId, std::string host, unsigned int port, bool concurrent = true);
 
             std::shared_ptr<const cse::model_description> model_description() const;
 

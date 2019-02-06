@@ -23,14 +23,17 @@ namespace {
 
 }
 
-cse::fmuproxy::remote_fmu::remote_fmu(FmuId fmuId, std::string host, unsigned int port): fmuId_(fmuId) {
+cse::fmuproxy::remote_fmu::remote_fmu(FmuId fmuId, std::string host, unsigned int port, bool concurrent): fmuId_(fmuId) {
     std::shared_ptr<TTransport> socket(new TSocketPool(host, port));
     transport_ = std::make_shared<TFramedTransport>(socket);
     std::shared_ptr<TProtocol> protocol(new TCompactProtocol(transport_));
-    client_ = std::make_shared<FmuServiceConcurrentClient>(protocol);
+    if (!concurrent) {
+        client_ = std::make_shared<FmuServiceClient>(protocol);
+    } else {
+        client_ = std::make_shared<FmuServiceConcurrentClient>(protocol);
+    }
     try  {
         transport_->open();
-
     } catch(TTransportException ex) {
         std::string msg = "Failed to connect to remote FMU @ " + host + ":" + std::to_string(port);
         CSE_PANIC_M(msg.c_str());
