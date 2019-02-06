@@ -3,25 +3,6 @@
     {
       "id": 42,
       "trigger": {
-        "time": 0.45
-      },
-      "action": {
-        "bias": {
-          "model": "slave uno",
-          "output": "realOut",
-          "real": [
-            1.0,
-            2.0,
-            1.0,
-            2.0,
-            1.0
-          ]
-        }
-      }
-    },
-    {
-      "id": 123,
-      "trigger": {
         "time": 0.5
       },
       "action": {
@@ -29,6 +10,32 @@
           "model": "slave uno",
           "input": "realIn",
           "real": 1.001
+        }
+      }
+    },
+    {
+      "id": 123,
+      "trigger": {
+        "time": 0.2
+      },
+      "action": {
+        "override": {
+          "model": "slave uno",
+          "output": "realOut",
+          "real": -1.0
+        }
+      }
+    },
+    {
+      "id": 234,
+      "trigger": {
+        "time": 0.3
+      },
+      "action": {
+        "reset": {
+          "model": "slave uno",
+          "output": "realOut",
+          "real": null
         }
       }
     },

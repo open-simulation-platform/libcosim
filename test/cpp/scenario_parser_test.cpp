@@ -69,7 +69,7 @@ int main()
         REQUIRE(samplesRead == 10);
 
         double expectedRealInputs[] = {0.0, 0.0, 0.0, 0.0, 0.0, 1.001, 1.001, 1.001, 1.001, 1.001};
-        double expectedRealOutputs[] = {1.234, 1.234, 1.234, 1.234, 1.234, 3.235, 4.235, 3.235, 4.235, 3.235};
+        double expectedRealOutputs[] = {1.234, 1.234, -1.0, 1.234, 1.234, 2.235, 2.235, 2.235, 2.235, 2.235};
         int expectedIntInputs[] = {0, 0, 0, 0, 0, 0, 0, 2, 2, 2};
         int expectedIntOutputs[] = {2, 2, 2, 2, 2, 2, 2, 4, 5, 5};
 

@@ -35,7 +35,7 @@ cse::variable_type find_variable_type(const nlohmann::json& j)
     } else if (j.count("string")) {
         return variable_type::string;
     }
-    throw std::invalid_argument("Can't find variable type");
+    throw std::invalid_argument("Can't process unknown variable type");
 }
 
 std::pair<cse::variable_causality, std::string> find_causality_and_name(const nlohmann::json& j)
@@ -51,7 +51,7 @@ std::pair<cse::variable_causality, std::string> find_causality_and_name(const nl
     } else if (j.count("local")) {
         return std::make_pair(variable_causality::local, j.at("local").get<std::string>());
     }
-    throw std::invalid_argument("Can't find variable type");
+    throw std::invalid_argument("Can't process unknown variable type");
 }
 
 cse::variable_index find_variable_index(const std::vector<variable_description>& variables,
@@ -68,36 +68,16 @@ cse::variable_index find_variable_index(const std::vector<variable_description>&
 }
 
 template<typename T>
-std::function<T(T)> generate_manipulator(const std::string& kind, T value)
+std::function<T(T)> generate_manipulator(const std::string& kind, const nlohmann::json& valueRep)
 {
+    if ("reset" == kind) {
+        return nullptr;
+    }
+    T value = valueRep.get<T>();
     if ("bias" == kind) {
         return [value](T original) { return original + value; };
     } else if ("override" == kind) {
         return [value](T /*original*/) { return value; };
-    }
-    throw std::invalid_argument("Can't process unknown modifier kind");
-}
-
-template<typename T>
-std::function<T(T)> generate_series_manipulator(const std::string& kind, std::vector<T> values)
-{
-    int i = 0;
-    if ("bias" == kind) {
-        return [&i, values](T original) {
-            if (i < values.size()) {
-                return original + values.at(i++);
-            } else {
-                return original + values.back();
-            }
-        };
-    } else if ("override" == kind) {
-        return [&i, values](T /*original*/) {
-            if (i < values.size()) {
-                return values.at(i++);
-            } else {
-                return values.back();
-            }
-        };
     }
     throw std::invalid_argument("Can't process unknown modifier kind");
 }
@@ -152,42 +132,19 @@ scenario::event generate_event(const nlohmann::json& j, std::string mode, int id
     switch (type) {
         case variable_type::real: {
             auto real_m = j.at("real");
-            if (real_m.is_array()) {
-                std::vector<double> reals;
-                for (auto& it : real_m) {
-                    reals.push_back(it.get<double>());
-                }
-                std::function f = generate_series_manipulator<double>(mode, reals);
-                scenario::variable_action a = get_real_action(f, causality, index, varIndex);
-                return cse::scenario::event{id, tr, a};
-            } else if (real_m.is_number()) {
-                auto value = real_m.get<double>();
-                std::function f = generate_manipulator<double>(mode, value);
-                scenario::variable_action a = get_real_action(f, causality, index, varIndex);
-                return cse::scenario::event{id, tr, a};
-            }
-        } break;
+            std::function f = generate_manipulator<double>(mode, real_m);
+            scenario::variable_action a = get_real_action(f, causality, index, varIndex);
+            return cse::scenario::event{id, tr, a};
+        }
         case variable_type::integer: {
             auto int_m = j.at("integer");
-            if (int_m.is_array()) {
-                std::vector<int> ints;
-                for (auto& it : int_m) {
-                    ints.push_back(it.get<int>());
-                }
-                std::function f = generate_series_manipulator<int>(mode, ints);
-                scenario::variable_action a = get_integer_action(f, causality, index, varIndex);
-                return cse::scenario::event{id, tr, a};
-            } else if (int_m.is_number()) {
-                auto value = int_m.get<int>();
-                std::function f = generate_manipulator<int>(mode, value);
-                scenario::variable_action a = get_integer_action(f, causality, index, varIndex);
-                return cse::scenario::event{id, tr, a};
-            }
-        } break;
+            std::function f = generate_manipulator<int>(mode, int_m);
+            scenario::variable_action a = get_integer_action(f, causality, index, varIndex);
+            return cse::scenario::event{id, tr, a};
+        }
         default:
             throw std::invalid_argument("No support for this variable type yet");
     }
-    throw std::invalid_argument("Don't know what to do!");
 }
 
 scenario::scenario parse_scenario(boost::filesystem::path& scenarioFile, const std::unordered_map<simulator_index, simulator*>& simulators)
@@ -213,6 +170,9 @@ scenario::scenario parse_scenario(boost::filesystem::path& scenarioFile, const s
             } else if (action.count("override")) {
                 auto override = action.at("override");
                 events.emplace_back(generate_event(override, "override", id, tr, simulators));
+            } else if (action.count("reset")) {
+                auto reset = action.at("reset");
+                events.emplace_back(generate_event(reset, "reset", id, tr, simulators));
             } else {
                 throw std::invalid_argument("Unknown variable manipulation type");
             }
