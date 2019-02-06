@@ -1,15 +1,13 @@
 #include "mock_slave.hpp"
 
-#include <cse/scenario_parser.hpp>
-#include <cse/log.hpp>
+#include "cse/algorithm.hpp"
+#include "cse/manipulator.hpp"
+#include "cse/observer/time_series_observer.hpp"
 
 #include <exception>
 #include <memory>
 #include <stdexcept>
 #include <vector>
-#include <cse/algorithm.hpp>
-#include <cse/observer/time_series_observer.hpp>
-#include <cse/manipulator.hpp>
 
 #define REQUIRE(test) \
     if (!(test)) throw std::runtime_error("Requirement not satisfied: " #test)
@@ -17,14 +15,9 @@
 int main()
 {
     try {
-        cse::log::set_global_output_level(cse::log::level::trace);
-
         constexpr cse::time_point startTime = cse::to_time_point(0.0);
         constexpr cse::time_point endTime = cse::to_time_point(1.0);
         constexpr cse::duration stepSize = cse::to_duration(0.1);
-
-        cse::log::set_global_output_level(cse::log::level::trace);
-
         auto execution = cse::execution(startTime, std::make_unique<cse::fixed_step_algorithm>(stepSize));
 
         auto observer = std::make_shared<cse::time_series_observer>();
@@ -33,10 +26,10 @@ int main()
         execution.add_manipulator(scenarioManager);
 
         auto simIndex = execution.add_slave(
-                cse::make_pseudo_async(std::make_unique<mock_slave>(
-                        [](double x) { return x + 1.234; },
-                        [](int y) { return y + 2; })),
-                "slave uno");
+            cse::make_pseudo_async(std::make_unique<mock_slave>(
+                [](double x) { return x + 1.234; },
+                [](int y) { return y + 2; })),
+            "slave uno");
 
         observer->start_observing(cse::variable_id{simIndex, cse::variable_type::real, 0});
         observer->start_observing(cse::variable_id{simIndex, cse::variable_type::real, 1});
@@ -79,7 +72,6 @@ int main()
             REQUIRE(intInputValues[i] == expectedIntInputs[i]);
             REQUIRE(intOutputValues[i] == expectedIntOutputs[i]);
         }
-
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;

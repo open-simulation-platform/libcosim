@@ -1,10 +1,10 @@
 #include "mock_slave.hpp"
 
-#include <cse/algorithm.hpp>
-#include <cse/async_slave.hpp>
-#include <cse/execution.hpp>
-#include <cse/log.hpp>
-#include <cse/observer/time_series_observer.hpp>
+#include "cse/algorithm.hpp"
+#include "cse/async_slave.hpp"
+#include "cse/execution.hpp"
+#include "cse/log.hpp"
+#include "cse/observer/time_series_observer.hpp"
 
 #include <exception>
 #include <memory>
