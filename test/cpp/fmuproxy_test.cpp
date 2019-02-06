@@ -2,7 +2,10 @@
 #include <iostream>
 #include <string>
 #include <ctime>
+
+#ifdef _WIN32
 #include <thread>
+#endif
 
 //must appear before other cse headers due to <winsock2.h> #include
 #include <cse/fmuproxy/remote_fmu.hpp>
@@ -17,8 +20,6 @@ const int numFmus = 25;
 const double stop = 1;
 const double stepSize = 1.0 / 100;
 const int numSteps = (int) (stop / stepSize);
-
-const std::string fmuId = "{06c2700b-b39c-4895-9151-304ddde28443}";
 
 void run1(remote_fmu &fmu) {
     cse::time_point t = cse::time_point();
@@ -68,7 +69,7 @@ void run2(remote_fmu &fmu) {
 
 }
 
-
+#ifdef _WIN32
 void thread_run(std::shared_ptr<cse::slave> slave, cse::time_point t, cse::duration dt) {
     slave->do_step(t, dt);
 }
@@ -109,17 +110,28 @@ void run3(remote_fmu *fmu) {
     std::cout << "elapsed=" << elapsed_secs << "s" << std::endl;
 
 }
+#endif
 
+int main(int argc, char** argv) {
 
-int main() {
+    if (argc != 4) {
+        std::cerr << "Missing one or more program arguments: [fmuId:string, host:string, port:int]" << std::endl;
+        return 1;
+    }
 
-    remote_fmu fmu1(fmuId, "localhost", 9090, false);
-    remote_fmu *fmu2 = new remote_fmu(fmuId, "localhost", 9090, true);
+    auto fmuId = argv[1];
+    auto host = argv[2];
+    auto port = std::stoi(argv[3]);
+    remote_fmu fmu1(fmuId, host, port, false);
+
     run1(fmu1);
     run2(fmu1);
-    run3(fmu2);
 
+#ifdef _WIN32
+    remote_fmu *fmu2 = new remote_fmu(fmuId, host, port, true);
+    run3(fmu2);
     delete fmu2;
+#endif
 
     return 0;
 
