@@ -3,7 +3,7 @@
 #include <cse/fmuproxy/remote_slave.hpp>
 
 cse::fmuproxy::remote_slave::remote_slave(std::string instanceId,
-                                          std::shared_ptr<::fmuproxy::thrift::FmuServiceClient> client,
+                                          std::shared_ptr<::fmuproxy::thrift::FmuServiceIf> client,
                                           std::shared_ptr<const cse::model_description> modelDescription)
         : instanceId_(instanceId), client_(client), modelDescription_(modelDescription) {}
 

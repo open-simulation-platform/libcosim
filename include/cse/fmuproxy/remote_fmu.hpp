@@ -3,15 +3,12 @@
 #define CSE_REMOTE_FMU_HPP
 
 #ifdef _WIN32
+//must be included before <windows.h>
 #include <winsock2.h>
 #endif
 
+#include <string>
 #include <memory>
-#include <string_view>
-
-#include <thrift/transport/TSocket.h>
-#include <thrift/protocol/TBinaryProtocol.h>
-#include <thrift/transport/TTransportUtils.h>
 
 #include <cse/model.hpp>
 #include <cse/async_slave.hpp>
@@ -31,13 +28,13 @@ namespace cse {
 
             std::shared_ptr<cse::slave> instantiate_slave();
 
-            ~remote_fmu() = default;
+            ~remote_fmu();
 
         private:
 
             std::string fmuId_;
             std::shared_ptr<const cse::model_description> modelDescription_;
-            std::shared_ptr<::fmuproxy::thrift::FmuServiceClient> client_;
+            std::shared_ptr<::fmuproxy::thrift::FmuServiceIf> client_;
             std::shared_ptr<apache::thrift::transport::TTransport> transport_;
 
         };

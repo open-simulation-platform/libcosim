@@ -17,7 +17,7 @@ namespace cse {
         public:
 
             remote_slave(std::string instanceId,
-                         std::shared_ptr<::fmuproxy::thrift::FmuServiceClient> client,
+                         std::shared_ptr<::fmuproxy::thrift::FmuServiceIf> client,
                          std::shared_ptr<const cse::model_description> modelDescription);
 
 
@@ -56,7 +56,7 @@ namespace cse {
 
             std::string instanceId_;
             cse::time_point startTime_;
-            std::shared_ptr<::fmuproxy::thrift::FmuServiceClient> client_;
+            std::shared_ptr<::fmuproxy::thrift::FmuServiceIf> client_;
             std::shared_ptr<const cse::model_description> modelDescription_;
 
         };

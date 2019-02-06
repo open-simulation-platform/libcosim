@@ -1,9 +1,11 @@
 
-#include <string>
-
 #include <cse/error.hpp>
 #include <cse/fmuproxy/remote_fmu.hpp>
 #include <cse/fmuproxy/remote_slave.hpp>
+
+#include <thrift/transport/TSocketPool.h>
+#include <thrift/protocol/TCompactProtocol.h>
+#include <thrift/transport/TTransportUtils.h>
 
 #include "cse/fmuproxy/fmuproxy_helper.hpp"
 
@@ -13,7 +15,7 @@ using namespace apache::thrift::protocol;
 
 namespace {
 
-    std::shared_ptr<cse::model_description> getModelDescription(FmuServiceClient &client, FmuId &fmuId) {
+    std::shared_ptr<cse::model_description> getModelDescription(FmuServiceIf &client, FmuId &fmuId) {
         ::fmuproxy::thrift::ModelDescription md = ModelDescription();
         client.getModelDescription(md, fmuId);
         return convert(md);
@@ -22,12 +24,13 @@ namespace {
 }
 
 cse::fmuproxy::remote_fmu::remote_fmu(FmuId fmuId, std::string host, unsigned int port): fmuId_(fmuId) {
-    std::shared_ptr<TTransport> socket(new TSocket(host, port));
-    transport_ = std::make_shared<TBufferedTransport>(socket);
-    std::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport_));
-    client_ = std::make_shared<FmuServiceClient>(protocol);
+    std::shared_ptr<TTransport> socket(new TSocketPool(host, port));
+    transport_ = std::make_shared<TFramedTransport>(socket);
+    std::shared_ptr<TProtocol> protocol(new TCompactProtocol(transport_));
+    client_ = std::make_shared<FmuServiceConcurrentClient>(protocol);
     try  {
         transport_->open();
+
     } catch(TTransportException ex) {
         std::string msg = "Failed to connect to remote FMU @ " + host + ":" + std::to_string(port);
         CSE_PANIC_M(msg.c_str());
@@ -44,4 +47,8 @@ std::shared_ptr<cse::slave> cse::fmuproxy::remote_fmu::instantiate_slave() {
     client_->createInstanceFromCS(instanceId, fmuId_);
     std::shared_ptr<cse::slave> slave(new cse::fmuproxy::remote_slave(instanceId, client_, modelDescription_));
     return slave;
+}
+
+cse::fmuproxy::remote_fmu::~remote_fmu() {
+    transport_->close();
 }
