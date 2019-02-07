@@ -35,7 +35,7 @@ void run1(remote_fmu &fmu) {
             slave->do_step(t, dt);
             t += dt;
         }
-        slave->end_simulation();
+
     }
     clock_t end = clock();
 
@@ -48,23 +48,18 @@ void run2(remote_fmu &fmu) {
 
     auto execution = cse::execution(cse::time_point(),
                                     std::make_unique<cse::fixed_step_algorithm>(cse::to_duration(stepSize)));
-    std::vector<std::shared_ptr<cse::slave>> slaves;
+
     clock_t begin = clock();
     for (int i = 0; i < numFmus; i++) {
         auto slave = fmu.instantiate_slave();
-        slaves.emplace_back(slave);
         execution.add_slave(cse::make_pseudo_async(slave), std::string("slave") + std::to_string(i));
     }
-
 
     execution.step({});
     for (int i = 0; i < numSteps - 1; i++) {
         execution.step({});
     }
 
-    for (int i = 0; i < numFmus; i++) {
-        slaves[i]->end_simulation();
-    }
     clock_t end = clock();
 
     double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
@@ -127,7 +122,7 @@ int main(int argc, char** argv) {
     auto port = std::stoi(argv[3]);
     remote_fmu fmu1(fmuId, host, port, false);
 
-//    run1(fmu1);
+    run1(fmu1);
     run2(fmu1);
 
 #ifdef _WIN32

@@ -52,8 +52,11 @@ namespace cse {
             void set_string_variables(gsl::span<const variable_index> variables,
                                       gsl::span<const std::string> values) override;
 
+            ~remote_slave() override;
+
         private:
 
+            bool terminated_;
             std::string instanceId_;
             cse::time_point startTime_;
             std::shared_ptr<::fmuproxy::thrift::FmuServiceIf> client_;

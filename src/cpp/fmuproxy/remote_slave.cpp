@@ -41,9 +41,12 @@ void cse::fmuproxy::remote_slave::start_simulation() {
 }
 
 void cse::fmuproxy::remote_slave::end_simulation() {
-    auto status = client_->terminate(instanceId_);
-    if (status != ::fmuproxy::thrift::Status::OK_STATUS) {
-        CSE_PANIC();
+    if (!terminated_) {
+        auto status = client_->terminate(instanceId_);
+        if (status != ::fmuproxy::thrift::Status::OK_STATUS) {
+            CSE_PANIC();
+        }
+        terminated_ = true;
     }
 }
 
@@ -158,4 +161,8 @@ void cse::fmuproxy::remote_slave::set_string_variables(gsl::span<const cse::vari
     if (status != ::fmuproxy::thrift::Status::OK_STATUS) {
         CSE_PANIC();
     }
+}
+
+cse::fmuproxy::remote_slave::~remote_slave() {
+    end_simulation();
 }
