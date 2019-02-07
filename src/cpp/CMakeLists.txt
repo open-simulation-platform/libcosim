@@ -20,7 +20,7 @@ set(publicHeaders
     "observer.hpp"
     "observer/observer.hpp"
     "observer/file_observer.hpp"
-    "observer/membuffer_observer.hpp"
+    "observer/last_value_provider.hpp"
     "observer/time_series_observer.hpp"
     "observer/time_series_provider.hpp"
     "slave.hpp"
@@ -52,7 +52,7 @@ set(sources
     "fmi/v1/fmu.cpp"
     "fmi/v2/fmu.cpp"
     "observer/file_observer.cpp"
-    "observer/membuffer_observer.cpp"
+    "observer/last_value_observer.cpp"
     "observer/time_series_observer.cpp"
     "scenario_manager.cpp"
 
