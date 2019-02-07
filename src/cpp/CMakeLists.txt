@@ -116,10 +116,11 @@ target_link_libraries(csecorecpp
         Boost::log
         gsl
     )
+
 if(CSECORE_WITH_FMUPROXY)
     target_link_libraries(csecorecpp
         PUBLIC
-            ${THRIFT_LIBRARIES}
+            thrift::thrift
         )
 endif()
 
