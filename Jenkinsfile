@@ -123,7 +123,7 @@ pipeline {
                     stages {
                         stage('Configure Conan') {
                             steps {
-                                sh 'conan remote add helmesjo https://api.bintray.com/conan/helmesjo/public-conan'
+                                sh 'conan remote add helmesjo https://api.bintray.com/conan/helmesjo/public-conan --force'
                             }
                         }
                         stage('Build Debug') {
