@@ -119,8 +119,13 @@ pipeline {
                         CONAN_USER_HOME = '/conan_repo'
                         CONAN_USER_HOME_SHORT = 'None'
                     }
-                    
+
                     stages {
+                        stage('Configure Conan') {
+                            steps {
+                                sh 'conan remote add helmesjo https://api.bintray.com/conan/helmesjo/public-conan'
+                            }
+                        }
                         stage('Build Debug') {
                             steps {
                                 dir('debug-build-conan') {
