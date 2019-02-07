@@ -48,9 +48,6 @@ void slave_value_provider::observe()
 {
     std::lock_guard<std::mutex> lock(lock_);
 
-    //    for (auto &realSample : realSamples_) {
-    //        realSample.second = observable_->get_real(realSample.first);
-    //    }
     for (auto& [idx, value] : realSamples_) {
         value = observable_->get_real(idx);
     }
