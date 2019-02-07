@@ -25,6 +25,8 @@ set(publicHeaders
     "observer/time_series_provider.hpp"
     "slave.hpp"
     "timer.hpp"
+    "scenario.hpp"
+    "manipulator.hpp"
 )
 set(privateHeaders
     "error.hpp"
@@ -52,6 +54,7 @@ set(sources
     "observer/file_observer.cpp"
     "observer/membuffer_observer.cpp"
     "observer/time_series_observer.cpp"
+    "scenario_manager.cpp"
 
     "error.cpp"
     "fmi/glue.cpp"
