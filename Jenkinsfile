@@ -21,7 +21,7 @@ pipeline {
                         stage('Configure Conan') {
                             steps {
                                 sh 'conan remote add osp https://osp-conan.azurewebsites.net/artifactory/api/conan/conan-local --force'
-                                sh 'conan remote add helmesjo https://api.bintray.com/conan/helmesjo/public-conan'
+                                sh 'conan remote add helmesjo https://api.bintray.com/conan/helmesjo/public-conan --force'
                                 sh 'conan user -p $OSP_CONAN_CREDS_PSW -r osp $OSP_CONAN_CREDS_USR'
                             }
                         }
