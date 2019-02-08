@@ -97,19 +97,10 @@ public:
         std::shared_ptr<async_slave> slave,
         std::string_view name);
 
-    /**
-     * Retrieves a `simulator`. This method will mostly likely disappear in the future.
-     * \param index the simulator index
-     * \returns A `simulator`
-     */
-    std::shared_ptr<simulator> get_simulator(simulator_index index);
-
-    /**
-     * Adds an observer to the execution.
-     * \param obs the observer to add
-     */
+    /// Adds an observer to the execution.
     void add_observer(std::shared_ptr<observer> obs);
 
+    /// Adds a manipulator to the execution.
     void add_manipulator(std::shared_ptr<manipulator> man);
 
     /**

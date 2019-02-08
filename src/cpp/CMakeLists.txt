@@ -55,6 +55,7 @@ set(sources
     "observer/membuffer_observer.cpp"
     "observer/time_series_observer.cpp"
     "scenario_manager.cpp"
+    "override_manipulator.cpp"
 
     "error.cpp"
     "fmi/glue.cpp"

@@ -328,12 +328,18 @@ struct cse_observer_s;
 /// An opaque object which contains the state for an observer.
 typedef struct cse_observer_s cse_observer;
 
+// Manipulator
+struct cse_manipulator_s;
+
+/// An opaque object which contains the state for a manipulator.
+typedef struct cse_manipulator_s cse_manipulator;
+
 
 /**
  *  Sets the values of real variables for one slave.
  *
- *  \param [in] execution
- *      The execution.
+ *  \param [in] manipulator
+ *      The manipulator.
  *  \param [in] slaveIndex
  *      The slave.
  *  \param [in] variables
@@ -348,8 +354,8 @@ typedef struct cse_observer_s cse_observer;
  *  \returns
  *      0 on success and -1 on error.
  */
-int cse_execution_slave_set_real(
-    cse_execution* execution,
+int cse_manipulator_slave_set_real(
+    cse_manipulator* manipulator,
     cse_slave_index slaveIndex,
     const cse_variable_index variables[],
     size_t nv,
@@ -409,8 +415,8 @@ int64_t cse_observer_slave_get_real_samples(
 /**
  *  Sets the values of integer variables for one slave.
  *
- *  \param [in] execution
- *      The execution.
+ *  \param [in] manipulator
+ *      The manipulator.
  *  \param [in] slaveIndex
  *      The slave.
  *  \param [in] variables
@@ -425,8 +431,8 @@ int64_t cse_observer_slave_get_real_samples(
  *  \returns
  *      0 on success and -1 on error.
  */
-int cse_execution_slave_set_integer(
-    cse_execution* execution,
+int cse_manipulator_slave_set_integer(
+    cse_manipulator* manipulator,
     cse_slave_index slaveIndex,
     const cse_variable_index variables[],
     size_t nv,
@@ -629,6 +635,28 @@ int cse_observer_destroy(cse_observer* observer);
 int cse_execution_add_observer(
     cse_execution* execution,
     cse_observer* observer);
+
+/// Creates a manipulator for overriding variable values
+cse_manipulator* cse_override_manipulator_create();
+
+/**
+ *  Add a manipulator to an execution.
+ *
+ *  \param [in] execution
+ *      The execution.
+ *  \param [in] manipulator
+ *      A pointer to a manipulator, which may not be null. The manipulator may
+ *      not previously have been added to any execution.
+ *
+ *  \returns
+ *      0 on success and -1 on error.
+ */
+int cse_execution_add_manipulator(
+    cse_execution* execution,
+    cse_manipulator* manipulator);
+
+/// Destroys a manipulator
+int cse_manipulator_destroy(cse_manipulator* manipulator);
 
 #ifdef __cplusplus
 } // extern(C)
