@@ -6,6 +6,7 @@
 #define CSE_ALGORITHM_HPP
 
 #include <cse/execution.hpp>
+#include <cse/manipulator.hpp>
 #include <cse/model.hpp>
 #include <cse/observer/observer.hpp>
 
@@ -38,6 +39,7 @@ namespace cse
 class simulator : public observable
 {
 public:
+
     /**
      *  Exposes a variable for assignment with `set_xxx()`.
      *
@@ -79,36 +81,36 @@ public:
     virtual void set_string(variable_index index, std::string_view value) = 0;
 
     virtual void set_real_input_manipulator(
-        variable_index index,
-        std::function<double(double)> manipulator) = 0;
+            variable_index index,
+            std::function<double(double)> manipulator) = 0;
 
     virtual void set_integer_input_manipulator(
-        variable_index index,
-        std::function<int(int)> manipulator) = 0;
+            variable_index index,
+            std::function<int(int)> manipulator) = 0;
 
     virtual void set_boolean_input_manipulator(
-        variable_index index,
-        std::function<bool(bool)> manipulator) = 0;
+            variable_index index,
+            std::function<bool(bool)> manipulator) = 0;
 
     virtual void set_string_input_manipulator(
-        variable_index index,
-        std::function<std::string(std::string_view)> manipulator) = 0;
+            variable_index index,
+            std::function<std::string(std::string_view)> manipulator) = 0;
 
     virtual void set_real_output_manipulator(
-        variable_index index,
-        std::function<double(double)> manipulator) = 0;
+            variable_index index,
+            std::function<double(double)> manipulator) = 0;
 
     virtual void set_integer_output_manipulator(
-        variable_index index,
-        std::function<int(int)> manipulator) = 0;
+            variable_index index,
+            std::function<int(int)> manipulator) = 0;
 
     virtual void set_boolean_output_manipulator(
-        variable_index index,
-        std::function<bool(bool)> manipulator) = 0;
+            variable_index index,
+            std::function<bool(bool)> manipulator) = 0;
 
     virtual void set_string_output_manipulator(
-        variable_index index,
-        std::function<std::string(std::string_view)> manipulator) = 0;
+            variable_index index,
+            std::function<std::string(std::string_view)> manipulator) = 0;
 
     /**
      *  Performs pre-simulation setup and enters initialisation mode.
