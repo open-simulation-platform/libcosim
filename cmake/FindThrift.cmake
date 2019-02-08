@@ -7,7 +7,7 @@
 #   THRIFT_FOUND          - True if Thrift found.
 #
 
-find_path(THRIFT_INCLUDE_DIR NAMES thrift/thrift.h)
+find_path(THRIFT_INCLUDE_DIR NAMES thrift/Thrift.h)
 mark_as_advanced(THRIFT_INCLUDE_DIR)
 
 find_library(THRIFT_LIBRARY NAMES thrift thriftmd)
