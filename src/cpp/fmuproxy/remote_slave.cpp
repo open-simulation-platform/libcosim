@@ -6,7 +6,7 @@
 cse::fmuproxy::remote_slave::remote_slave(std::string instanceId,
                                           std::shared_ptr<::fmuproxy::thrift::FmuServiceIf> client,
                                           std::shared_ptr<const cse::model_description> modelDescription)
-        : instanceId_(instanceId), client_(client), modelDescription_(modelDescription) {}
+        : terminated_(false), instanceId_(instanceId), client_(client), modelDescription_(modelDescription) {}
 
 cse::model_description cse::fmuproxy::remote_slave::model_description() const {
     return *modelDescription_;
