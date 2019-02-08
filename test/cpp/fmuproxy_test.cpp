@@ -24,7 +24,7 @@ void run1(remote_fmu &fmu) {
     cse::time_point t = cse::time_point();
     auto dt = cse::to_duration(stepSize);
 
-    auto start = Clock::now();
+    auto t_start = Clock::now();
     for (int i = 0; i < numFmus; i++) {
         auto slave = fmu.instantiate_slave();
         slave->setup(t, {}, {});
@@ -36,9 +36,9 @@ void run1(remote_fmu &fmu) {
         }
 
     }
-    auto stop = Clock::now();
-    auto elapsed = std::chrono::duration<float>(stop - start).count();
-    std::cout << "elapsed=" << elapsed << "s" << std::endl;
+    auto t_stop = Clock::now();
+    auto elapsed = std::chrono::duration<float>(t_stop - t_start).count();
+    std::cout << "[serial] elapsed=" << elapsed << "s" << std::endl;
 
 }
 
@@ -47,7 +47,7 @@ void run2(remote_fmu &fmu) {
     auto execution = cse::execution(cse::time_point(),
                                     std::make_unique<cse::fixed_step_algorithm>(cse::to_duration(stepSize)));
 
-    auto start = Clock::now();
+    auto t_start = Clock::now();
     for (int i = 0; i < numFmus; i++) {
         auto slave = fmu.instantiate_slave();
         execution.add_slave(cse::make_pseudo_async(slave), std::string("slave") + std::to_string(i));
@@ -58,13 +58,13 @@ void run2(remote_fmu &fmu) {
         execution.step({});
     }
 
-    auto stop = Clock::now();
-    auto elapsed = std::chrono::duration<float>(stop - start).count();
-    std::cout << "elapsed=" << elapsed << "s" << std::endl;
+    auto t_stop = Clock::now();
+    auto elapsed = std::chrono::duration<float>(t_stop - t_start).count();
+    std::cout << "[fibers] elapsed=" << elapsed << "s" << std::endl;
 
 }
 
-void thread_run(std::shared_ptr<cse::slave> slave, cse::time_point t, cse::duration dt) {
+void thread_run(const std::shared_ptr<cse::slave> &slave, cse::time_point t, cse::duration dt) {
     slave->do_step(t, dt);
 }
 
@@ -74,12 +74,12 @@ void run3(remote_fmu *fmu) {
     cse::duration dt = cse::to_duration(stepSize);
     std::shared_ptr<cse::slave> slaves[numFmus];
 
-    auto start = Clock::now();
-    for (int i = 0; i < numFmus; i++) {
+    auto t_start = Clock::now();
+    for (auto &i : slaves) {
         auto slave = fmu->instantiate_slave();
         slave->setup(t, {}, {});
         slave->start_simulation();
-        slaves[i] = slave;
+        i = slave;
     }
 
     for (int k = 0; k < numSteps; k++) {
@@ -89,19 +89,19 @@ void run3(remote_fmu *fmu) {
         }
         t += dt;
 
-        for (int l = 0; l < numFmus; l++) {
-            threads[l].join();
+        for (auto &thread : threads) {
+            thread.join();
         }
 
     }
 
-    for (int p = 0; p < numFmus; p++) {
-        slaves[p]->end_simulation();
+    for (auto &slave : slaves) {
+        slave->end_simulation();
     }
 
-    auto stop = Clock::now();
-    auto elapsed = std::chrono::duration<float>(stop - start).count();
-    std::cout << "elapsed=" << elapsed << "s" << std::endl;
+    auto t_stop = Clock::now();
+    auto elapsed = std::chrono::duration<float>(t_stop - t_start).count();
+    std::cout << "[threads] elapsed=" << elapsed << "s" << std::endl;
 
 }
 
