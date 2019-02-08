@@ -1,11 +1,8 @@
 
 #include <iostream>
 #include <string>
-#include <ctime>
-
-#ifdef _WIN32
+#include <chrono>
 #include <thread>
-#endif
 
 //must appear before other cse headers due to <winsock2.h> #include
 #include <cse/fmuproxy/remote_fmu.hpp>
@@ -21,11 +18,13 @@ const double stop = 1;
 const double stepSize = 1.0 / 100;
 const int numSteps = (int) (stop / stepSize);
 
+typedef std::chrono::high_resolution_clock Clock;
+
 void run1(remote_fmu &fmu) {
     cse::time_point t = cse::time_point();
     auto dt = cse::to_duration(stepSize);
 
-    clock_t begin = clock();
+    auto start = Clock::now();
     for (int i = 0; i < numFmus; i++) {
         auto slave = fmu.instantiate_slave();
         slave->setup(t, {}, {});
@@ -37,10 +36,9 @@ void run1(remote_fmu &fmu) {
         }
 
     }
-    clock_t end = clock();
-
-    double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
-    std::cout << "elapsed=" << elapsed_secs << "s" << std::endl;
+    auto stop = Clock::now();
+    auto elapsed = std::chrono::duration<float>(stop - start).count();
+    std::cout << "elapsed=" << elapsed << "s" << std::endl;
 
 }
 
@@ -49,7 +47,7 @@ void run2(remote_fmu &fmu) {
     auto execution = cse::execution(cse::time_point(),
                                     std::make_unique<cse::fixed_step_algorithm>(cse::to_duration(stepSize)));
 
-    clock_t begin = clock();
+    auto start = Clock::now();
     for (int i = 0; i < numFmus; i++) {
         auto slave = fmu.instantiate_slave();
         execution.add_slave(cse::make_pseudo_async(slave), std::string("slave") + std::to_string(i));
@@ -60,14 +58,12 @@ void run2(remote_fmu &fmu) {
         execution.step({});
     }
 
-    clock_t end = clock();
-
-    double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
-    std::cout << "elapsed=" << elapsed_secs << "s" << std::endl;
+    auto stop = Clock::now();
+    auto elapsed = std::chrono::duration<float>(stop - start).count();
+    std::cout << "elapsed=" << elapsed << "s" << std::endl;
 
 }
 
-#ifdef _WIN32
 void thread_run(std::shared_ptr<cse::slave> slave, cse::time_point t, cse::duration dt) {
     slave->do_step(t, dt);
 }
@@ -78,7 +74,7 @@ void run3(remote_fmu *fmu) {
     cse::duration dt = cse::to_duration(stepSize);
     std::shared_ptr<cse::slave> slaves[numFmus];
 
-    clock_t begin = clock();
+    auto start = Clock::now();
     for (int i = 0; i < numFmus; i++) {
         auto slave = fmu->instantiate_slave();
         slave->setup(t, {}, {});
@@ -102,13 +98,12 @@ void run3(remote_fmu *fmu) {
     for (int p = 0; p < numFmus; p++) {
         slaves[p]->end_simulation();
     }
-    clock_t end = clock();
 
-    double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
-    std::cout << "elapsed=" << elapsed_secs << "s" << std::endl;
+    auto stop = Clock::now();
+    auto elapsed = std::chrono::duration<float>(stop - start).count();
+    std::cout << "elapsed=" << elapsed << "s" << std::endl;
 
 }
-#endif
 
 int main(int argc, char** argv) {
 
@@ -125,11 +120,9 @@ int main(int argc, char** argv) {
     run1(fmu1);
     run2(fmu1);
 
-#ifdef _WIN32
     remote_fmu *fmu2 = new remote_fmu(fmuId, host, port, true);
     run3(fmu2);
     delete fmu2;
-#endif
 
     return 0;
 
