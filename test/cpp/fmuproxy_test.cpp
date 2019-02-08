@@ -21,11 +21,12 @@ const int numSteps = (int) (stop / stepSize);
 typedef std::chrono::high_resolution_clock Clock;
 
 void run1(remote_fmu &fmu) {
-    cse::time_point t = cse::time_point();
+
     auto dt = cse::to_duration(stepSize);
 
     auto t_start = Clock::now();
     for (int i = 0; i < numFmus; i++) {
+        cse::time_point t = cse::time_point();
         auto slave = fmu.instantiate_slave();
         slave->setup(t, {}, {});
         slave->start_simulation();
