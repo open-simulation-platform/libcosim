@@ -4,7 +4,7 @@
 #include <cse/async_slave.hpp>
 #include <cse/execution.hpp>
 #include <cse/log.hpp>
-#include <cse/observer/membuffer_observer.hpp>
+#include <cse/observer/time_series_observer.hpp>
 
 #include <cmath>
 #include <exception>
@@ -32,7 +32,7 @@ int main()
             startTime,
             std::make_unique<cse::fixed_step_algorithm>(stepSize));
 
-        auto observer = std::make_shared<cse::membuffer_observer>();
+        auto observer = std::make_shared<cse::time_series_observer>();
         execution.add_observer(observer);
 
         const cse::variable_index realOutIndex = 0;

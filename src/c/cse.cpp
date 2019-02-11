@@ -407,11 +407,11 @@ int cse_observer_slave_get_real(
     double values[])
 {
     try {
-        const auto membufferObserver = std::dynamic_pointer_cast<cse::membuffer_observer>(observer->cpp_observer);
-        if (!membufferObserver) {
-            throw std::invalid_argument("Invalid observer! The provided observer must be a membuffer_observer.");
+        const auto obs = std::dynamic_pointer_cast<cse::last_value_provider>(observer->cpp_observer);
+        if (!obs) {
+            throw std::invalid_argument("Invalid observer! The provided observer must be a last_value_observer.");
         }
-        membufferObserver->get_real(slave, gsl::make_span(variables, nv), gsl::make_span(values, nv));
+        obs->get_real(slave, gsl::make_span(variables, nv), gsl::make_span(values, nv));
         return success;
     } catch (...) {
         handle_current_exception();
@@ -427,11 +427,11 @@ int cse_observer_slave_get_integer(
     int values[])
 {
     try {
-        const auto membufferObserver = std::dynamic_pointer_cast<cse::membuffer_observer>(observer->cpp_observer);
-        if (!membufferObserver) {
-            throw std::invalid_argument("Invalid observer! The provided observer must be a membuffer_observer.");
+        const auto obs = std::dynamic_pointer_cast<cse::last_value_provider>(observer->cpp_observer);
+        if (!obs) {
+            throw std::invalid_argument("Invalid observer! The provided observer must be a last_value_observer.");
         }
-        membufferObserver->get_integer(slave, gsl::make_span(variables, nv), gsl::make_span(values, nv));
+        obs->get_integer(slave, gsl::make_span(variables, nv), gsl::make_span(values, nv));
         return success;
     } catch (...) {
         handle_current_exception();
@@ -451,11 +451,11 @@ int64_t cse_observer_slave_get_real_samples(
 {
     try {
         std::vector<cse::time_point> timePoints(nSamples);
-        const auto timeSeriesProvider = std::dynamic_pointer_cast<cse::time_series_provider>(observer->cpp_observer);
-        if (!timeSeriesProvider) {
-            throw std::invalid_argument("Invalid observer! The provided observer must be either a time_series_observer or a membuffer_observer.");
+        const auto obs = std::dynamic_pointer_cast<cse::time_series_provider>(observer->cpp_observer);
+        if (!obs) {
+            throw std::invalid_argument("Invalid observer! The provided observer must be a time_series_observer.");
         }
-        size_t samplesRead = timeSeriesProvider->get_real_samples(slave, variableIndex, fromStep,
+        size_t samplesRead = obs->get_real_samples(slave, variableIndex, fromStep,
             gsl::make_span(values, nSamples),
             gsl::make_span(steps, nSamples), timePoints);
         for (size_t i = 0; i < samplesRead; ++i) {
@@ -480,11 +480,11 @@ int64_t cse_observer_slave_get_integer_samples(
 {
     try {
         std::vector<cse::time_point> timePoints(nSamples);
-        const auto timeSeriesProvider = std::dynamic_pointer_cast<cse::time_series_provider>(observer->cpp_observer);
-        if (!timeSeriesProvider) {
-            throw std::invalid_argument("Invalid observer! The provided observer must be either a time_series_observer or a membuffer_observer.");
+        const auto obs = std::dynamic_pointer_cast<cse::time_series_provider>(observer->cpp_observer);
+        if (!obs) {
+            throw std::invalid_argument("Invalid observer! The provided observer must be a time_series_observer.");
         }
-        size_t samplesRead = timeSeriesProvider->get_integer_samples(slave, variableIndex, fromStep,
+        size_t samplesRead = obs->get_integer_samples(slave, variableIndex, fromStep,
             gsl::make_span(values, nSamples),
             gsl::make_span(steps, nSamples), timePoints);
         for (size_t i = 0; i < samplesRead; ++i) {
@@ -504,11 +504,11 @@ int cse_observer_get_step_numbers_for_duration(
     cse_step_number steps[])
 {
     try {
-        const auto timeSeriesProvider = std::dynamic_pointer_cast<cse::time_series_provider>(observer->cpp_observer);
-        if (!timeSeriesProvider) {
-            throw std::invalid_argument("Invalid observer! The provided observer must be either a time_series_observer or a membuffer_observer.");
+        const auto obs = std::dynamic_pointer_cast<cse::time_series_provider>(observer->cpp_observer);
+        if (!obs) {
+            throw std::invalid_argument("Invalid observer! The provided observer must be a time_series_observer.");
         }
-        timeSeriesProvider->get_step_numbers(slave, to_duration(duration), gsl::make_span(steps, 2));
+        obs->get_step_numbers(slave, to_duration(duration), gsl::make_span(steps, 2));
         return success;
     } catch (...) {
         handle_current_exception();
@@ -524,11 +524,11 @@ int cse_observer_get_step_numbers(
     cse_step_number steps[])
 {
     try {
-        const auto timeSeriesProvider = std::dynamic_pointer_cast<cse::time_series_provider>(observer->cpp_observer);
-        if (!timeSeriesProvider) {
-            throw std::invalid_argument("Invalid observer! The provided observer must be either a time_series_observer or a membuffer_observer.");
+        const auto obs = std::dynamic_pointer_cast<cse::time_series_provider>(observer->cpp_observer);
+        if (!obs) {
+            throw std::invalid_argument("Invalid observer! The provided observer must be a time_series_observer.");
         }
-        timeSeriesProvider->get_step_numbers(slave, to_time_point(begin), to_time_point(end),
+        obs->get_step_numbers(slave, to_time_point(begin), to_time_point(end),
             gsl::make_span(steps, 2));
         return success;
     } catch (...) {
@@ -537,17 +537,10 @@ int cse_observer_get_step_numbers(
     }
 }
 
-cse_observer* cse_membuffer_observer_create()
+cse_observer* cse_last_value_observer_create()
 {
     auto observer = std::make_unique<cse_observer>();
-    observer->cpp_observer = std::make_shared<cse::membuffer_observer>();
-    return observer.release();
-}
-
-cse_observer* cse_buffered_membuffer_observer_create(size_t bufferSize)
-{
-    auto observer = std::make_unique<cse_observer>();
-    observer->cpp_observer = std::make_shared<cse::membuffer_observer>(bufferSize);
+    observer->cpp_observer = std::make_shared<cse::last_value_observer>();
     return observer.release();
 }
 

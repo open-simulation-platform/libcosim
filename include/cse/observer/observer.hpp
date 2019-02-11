@@ -8,8 +8,6 @@
 #include <cse/execution.hpp>
 #include <cse/model.hpp>
 
-#include <boost/filesystem/path.hpp>
-
 #include <string>
 #include <string_view>
 
