@@ -1,9 +1,7 @@
 #include "mock_slave.hpp"
 
 #include "cse/algorithm.hpp"
-#include "cse/async_slave.hpp"
-#include "cse/execution.hpp"
-#include "cse/log.hpp"
+#include "cse/manipulator.hpp"
 #include "cse/observer/time_series_observer.hpp"
 
 #include <exception>
@@ -20,9 +18,6 @@ int main()
         constexpr cse::time_point startTime = cse::to_time_point(0.0);
         constexpr cse::time_point endTime = cse::to_time_point(1.0);
         constexpr cse::duration stepSize = cse::to_duration(0.1);
-
-        cse::log::set_global_output_level(cse::log::level::trace);
-
         auto execution = cse::execution(startTime, std::make_unique<cse::fixed_step_algorithm>(stepSize));
 
         auto observer = std::make_shared<cse::time_series_observer>();
@@ -41,40 +36,10 @@ int main()
         observer->start_observing(cse::variable_id{simIndex, cse::variable_type::integer, 0});
         observer->start_observing(cse::variable_id{simIndex, cse::variable_type::integer, 1});
 
-        auto realTrigger1 = cse::scenario::time_trigger{cse::to_time_point(0.5)};
-        auto realManipulator1 = cse::scenario::real_input_manipulator{[](double original) { return original + 1.001; }};
-        auto realAction1 = cse::scenario::variable_action{simIndex, 1, realManipulator1};
-        auto realEvent1 = cse::scenario::event{42, realTrigger1, realAction1};
-
-        auto realTrigger2 = cse::scenario::time_trigger{cse::to_time_point(0.2)};
-        auto realManipulator2 = cse::scenario::real_output_manipulator{[](double /*original*/) { return -1.0; }};
-        auto realAction2 = cse::scenario::variable_action{simIndex, 0, realManipulator2};
-        auto realEvent2 = cse::scenario::event{123, realTrigger2, realAction2};
-
-        auto realTrigger3 = cse::scenario::time_trigger{cse::to_time_point(0.3)};
-        auto realManipulator3 = cse::scenario::real_output_manipulator{nullptr};
-        auto realAction3 = cse::scenario::variable_action{simIndex, 0, realManipulator3};
-        auto realEvent3 = cse::scenario::event{234, realTrigger3, realAction3};
-
-        auto intTrigger1 = cse::scenario::time_trigger{cse::to_time_point(0.65)};
-        auto intManipulator1 = cse::scenario::integer_input_manipulator{[](int /*original*/) { return 2; }};
-        auto intAction1 = cse::scenario::variable_action{simIndex, 1, intManipulator1};
-        auto intEvent1 = cse::scenario::event{456, intTrigger1, intAction1};
-
-        auto intTrigger2 = cse::scenario::time_trigger{cse::to_time_point(0.8)};
-        auto intManipulator2 = cse::scenario::integer_output_manipulator{[](int /*original*/) { return 5; }};
-        auto intAction2 = cse::scenario::variable_action{simIndex, 0, intManipulator2};
-        auto intEvent2 = cse::scenario::event{789, intTrigger2, intAction2};
-
-        auto events = std::vector<cse::scenario::event>();
-        events.push_back(realEvent1);
-        events.push_back(realEvent2);
-        events.push_back(realEvent3);
-        events.push_back(intEvent1);
-        events.push_back(intEvent2);
-        auto scenario = cse::scenario::scenario{events};
-
-        scenarioManager->load_scenario(scenario, startTime);
+        const auto testDataDir = std::getenv("TEST_DATA_DIR");
+        REQUIRE(testDataDir);
+        boost::filesystem::path jsonPath = boost::filesystem::path(testDataDir) / "scenarios" / "scenario1.json";
+        scenarioManager->load_scenario(jsonPath, startTime);
 
         auto simResult = execution.simulate_until(endTime);
         REQUIRE(simResult.get());
@@ -107,7 +72,6 @@ int main()
             REQUIRE(intInputValues[i] == expectedIntInputs[i]);
             REQUIRE(intOutputValues[i] == expectedIntOutputs[i]);
         }
-
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;

@@ -6,6 +6,7 @@ set(tests
     "time_series_observer_test"
     "trend_buffer_test"
     "scenario_manager_test"
+    "scenario_parser_test"
 )
 set(unittests
     "async_slave_unittest"

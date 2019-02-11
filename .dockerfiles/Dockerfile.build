@@ -1,15 +1,19 @@
 FROM ubuntu:18.04
 
-RUN apt-get update && apt-get install -y \
-  build-essential \
-  cmake \
-  doxygen \
-  git \
-  libboost-all-dev \
-  libevent-dev \
-  libzip-dev \
-  libmsgsl-dev \
-  && rm -rf /var/lib/apt/lists/*
+COPY sources-18.04-azure.list /etc/apt/sources.list
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    build-essential \
+    cmake \
+    doxygen \
+    git \
+    libboost-all-dev \
+    libevent-dev \
+    libzip-dev \
+    libmsgsl-dev \
+    nlohmann-json-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 # Installing FMI Library from prebuilt .deb packages
 WORKDIR /tmp/libfmi
