@@ -22,13 +22,16 @@ namespace cse {
 
         public:
 
-            remote_fmu(std::string fmuId, std::string host, unsigned int port, bool concurrent = true);
-
             std::shared_ptr<const cse::model_description> model_description() const;
 
             std::shared_ptr<cse::slave> instantiate_slave();
 
+            static remote_fmu from_url(const std::string &url, const std::string &host, unsigned int port, bool concurrent = false);
+
+            static remote_fmu from_guid(const std::string &guid, const std::string &host, unsigned int port, bool concurrent = false);
+
             ~remote_fmu();
+
 
         private:
 
@@ -36,6 +39,8 @@ namespace cse {
             std::shared_ptr<const cse::model_description> modelDescription_;
             std::shared_ptr<::fmuproxy::thrift::FmuServiceIf> client_;
             std::shared_ptr<apache::thrift::transport::TTransport> transport_;
+
+            remote_fmu(const ::fmuproxy::thrift::FmuId &fmuId, std::shared_ptr<apache::thrift::transport::TTransport> transport, std::shared_ptr<::fmuproxy::thrift::FmuServiceIf> client);
 
         };
 

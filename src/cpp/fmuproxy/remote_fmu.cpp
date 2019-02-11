@@ -23,23 +23,62 @@ namespace {
 
 }
 
-cse::fmuproxy::remote_fmu::remote_fmu(FmuId fmuId, std::string host, unsigned int port, bool concurrent): fmuId_(fmuId) {
+cse::fmuproxy::remote_fmu::remote_fmu(
+        const FmuId &fmuId,
+        std::shared_ptr<TTransport> transport,
+        std::shared_ptr<FmuServiceIf> client) : fmuId_(fmuId), client_(client), transport_(transport) {
+    modelDescription_ = getModelDescription(*client_, fmuId_);
+}
+
+
+cse::fmuproxy::remote_fmu
+cse::fmuproxy::remote_fmu::from_url(const std::string &url,
+                                    const std::string &host,
+                                    const unsigned int port,
+                                    const bool concurrent) {
     std::shared_ptr<TTransport> socket(new TSocketPool(host, port));
-    transport_ = std::make_shared<TFramedTransport>(socket);
-    std::shared_ptr<TProtocol> protocol(new TCompactProtocol(transport_));
+    std::shared_ptr<TTransport> transport(new TFramedTransport(socket));
+    std::shared_ptr<TProtocol> protocol(new TCompactProtocol(transport));
+    std::shared_ptr<::fmuproxy::thrift::FmuServiceIf> client;
     if (!concurrent) {
-        client_ = std::make_shared<FmuServiceClient>(protocol);
+        client = std::make_shared<FmuServiceClient>(protocol);
     } else {
-        client_ = std::make_shared<FmuServiceConcurrentClient>(protocol);
+        client = std::make_shared<FmuServiceConcurrentClient>(protocol);
     }
-    try  {
-        transport_->open();
-    } catch(TTransportException ex) {
+    try {
+        transport->open();
+    } catch (TTransportException &ex) {
         std::string msg = "Failed to connect to remote FMU @ " + host + ":" + std::to_string(port);
         CSE_PANIC_M(msg.c_str());
     }
-    modelDescription_ = getModelDescription(*client_, fmuId_);
+    std::string fmuId;
+    client->load(fmuId, url);
+    return cse::fmuproxy::remote_fmu(fmuId, transport, client);
 }
+
+cse::fmuproxy::remote_fmu
+cse::fmuproxy::remote_fmu::from_guid(const std::string &guid,
+                                     const std::string &host,
+                                     const unsigned int port,
+                                     const bool concurrent) {
+    std::shared_ptr<TTransport> socket(new TSocketPool(host, port));
+    std::shared_ptr<TTransport> transport(new TFramedTransport(socket));
+    std::shared_ptr<TProtocol> protocol(new TCompactProtocol(transport));
+    std::shared_ptr<::fmuproxy::thrift::FmuServiceIf> client;
+    if (!concurrent) {
+        client = std::make_shared<FmuServiceClient>(protocol);
+    } else {
+        client = std::make_shared<FmuServiceConcurrentClient>(protocol);
+    }
+    try {
+        transport->open();
+    } catch (TTransportException &ex) {
+        std::string msg = "Failed to connect to remote FMU @ " + host + ":" + std::to_string(port);
+        CSE_PANIC_M(msg.c_str());
+    }
+    return cse::fmuproxy::remote_fmu(guid, transport, client);
+}
+
 
 std::shared_ptr<const cse::model_description> cse::fmuproxy::remote_fmu::model_description() const {
     return modelDescription_;

@@ -3,6 +3,7 @@
 #include <string>
 #include <chrono>
 #include <thread>
+#include <utility>
 
 //must appear before other cse headers due to <winsock2.h> #include
 #include <cse/fmuproxy/remote_fmu.hpp>
@@ -70,15 +71,15 @@ void run_execution(remote_fmu &fmu) {
 
 }
 
-void run_threads(remote_fmu *fmu) {
+void run_threads(remote_fmu &fmu) {
 
-    auto elapsed = measure_time_sec([fmu] {
+    auto elapsed = measure_time_sec([&fmu] {
 
         cse::time_point t = cse::time_point();
         std::shared_ptr<cse::slave> slaves[NUM_FMUS];
 
         for (auto &i : slaves) {
-            auto slave = fmu->instantiate_slave();
+            auto slave = fmu.instantiate_slave();
             slave->setup(t, {}, {});
             slave->start_simulation();
             i = slave;
@@ -116,14 +117,13 @@ int main(int argc, char** argv) {
     auto fmuId = argv[1];
     auto host = argv[2];
     auto port = std::stoi(argv[3]);
-    remote_fmu fmu1(fmuId, host, port, /*concurrent*/false);
+    auto fmu1 = remote_fmu::from_guid(fmuId, host, port, /*concurrent*/false);
 
     run_serial(fmu1);
     run_execution(fmu1);
 
-    remote_fmu *fmu2 = new remote_fmu(fmuId, host, port, /*concurrent*/true);
+    auto fmu2 = remote_fmu::from_guid(fmuId, host, port, /*concurrent*/true);
     run_threads(fmu2);
-    delete fmu2;
 
     return 0;
 
