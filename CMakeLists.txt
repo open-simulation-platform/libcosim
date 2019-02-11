@@ -53,7 +53,7 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang
     endif()
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     add_compile_options("/W4")
-    add_compile_options("/wd4996" "/wd4245")
+    add_compile_options("/wd4996")
     if(CSECORE_TREAT_WARNINGS_AS_ERRORS)
         add_compile_options("/WX")
     endif()
@@ -67,6 +67,12 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
         # we are compiling in release mode. However, when we use Conan, this
         # should not be a problem, so we disable the warning.
         add_compile_options("/wd4251")
+    endif()
+    if (CSECORE_WITH_FMUPROXY)
+        #warning C4245: 'return': conversion from 'int' to 'SOCKET', signed/unsigned mismatch
+        add_compile_options("/wd4245")
+        #warning C4706: assignment within conditional expression
+        add_compile_options("/wd4706")
     endif()
     add_definitions("-D_SCL_SECURE_NO_WARNINGS" "-D_CRT_SECURE_NO_WARNINGS" "-DNOMINMAX")
 endif()
