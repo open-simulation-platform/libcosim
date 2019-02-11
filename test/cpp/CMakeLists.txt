@@ -35,9 +35,6 @@ foreach(test IN LISTS tests)
         DATA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../data"
     )
 endforeach()
-if (UNIX AND CSECORE_WITH_FMUPROXY)
-    target_link_libraries(cpp_fmuproxy_test PRIVATE pthread)
-endif()
 
 foreach(test IN LISTS unittests)
     add_test_executable(
