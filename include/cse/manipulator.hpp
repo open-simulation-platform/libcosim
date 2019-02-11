@@ -5,11 +5,11 @@
 #include <cse/model.hpp>
 #include <cse/scenario.hpp>
 
+#include <boost/filesystem/path.hpp>
+
 #include <map>
 #include <string>
 #include <unordered_map>
-
-#include <boost/filesystem/path.hpp>
 
 namespace cse
 {
