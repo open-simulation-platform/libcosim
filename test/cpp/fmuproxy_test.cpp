@@ -3,7 +3,6 @@
 #include <string>
 #include <chrono>
 #include <thread>
-#include <utility>
 
 //must appear before other cse headers due to <winsock2.h> #include
 #include <cse/fmuproxy/remote_fmu.hpp>
