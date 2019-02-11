@@ -4,8 +4,8 @@
  * DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
  *  @generated
  */
-#ifndef CSE_SERVICE_TYPES_HPP
-#define CSE_SERVICE_TYPES_HPP
+#ifndef CSE_FMUPROXY_SERVICE_TYPES_HPP
+#define CSE_FMUPROXY_SERVICE_TYPES_HPP
 
 #ifdef _WIN32
 //must be included before <windows.h>
