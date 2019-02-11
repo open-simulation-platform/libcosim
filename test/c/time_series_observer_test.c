@@ -61,9 +61,12 @@ int main()
 
     cse_observer_start_observing(observer, 0, CSE_INTEGER, index);
 
+    cse_manipulator* manipulator = cse_override_manipulator_create();
+    cse_execution_add_manipulator(execution, manipulator);
+
     for (int i = 0; i < 5; i++) {
-        cse_execution_slave_set_real(execution, 0, &index, 1, &inputRealSamples[i]);
-        cse_execution_slave_set_integer(execution, 0, &index, 1, &inputIntSamples[i]);
+        cse_manipulator_slave_set_real(manipulator, 0, &index, 1, &inputRealSamples[i]);
+        cse_manipulator_slave_set_integer(manipulator, 0, &index, 1, &inputIntSamples[i]);
         cse_execution_step(execution, 1);
     }
 
@@ -71,8 +74,8 @@ int main()
     cse_observer_start_observing(observer, 0, CSE_REAL, index);
 
     for (int i = 5; i < 10; i++) {
-        cse_execution_slave_set_real(execution, 0, &index, 1, &inputRealSamples[i]);
-        cse_execution_slave_set_integer(execution, 0, &index, 1, &inputIntSamples[i]);
+        cse_manipulator_slave_set_real(manipulator, 0, &index, 1, &inputRealSamples[i]);
+        cse_manipulator_slave_set_integer(manipulator, 0, &index, 1, &inputIntSamples[i]);
         cse_execution_step(execution, 1);
     }
 

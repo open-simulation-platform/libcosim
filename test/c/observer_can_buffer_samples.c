@@ -68,6 +68,19 @@ int main()
         return 1;
     }
 
+    cse_manipulator* manipulator = cse_override_manipulator_create();
+    if (!manipulator) {
+        print_last_error();
+        return 1;
+    }
+
+    rc = cse_execution_add_manipulator(execution, manipulator);
+    if (rc < 0) {
+        print_last_error();
+        cse_execution_destroy(execution);
+        return 1;
+    }
+
     double inputRealSamples[10] = {0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
     int inputIntSamples[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 
@@ -77,8 +90,8 @@ int main()
     cse_observer_start_observing(observer, slave_index, CSE_INTEGER, index);
 
     for (int i = 0; i < 10; i++) {
-        cse_execution_slave_set_real(execution, 0, &index, 1, &inputRealSamples[i]);
-        cse_execution_slave_set_integer(execution, 0, &index, 1, &inputIntSamples[i]);
+        cse_manipulator_slave_set_real(manipulator, 0, &index, 1, &inputRealSamples[i]);
+        cse_manipulator_slave_set_integer(manipulator, 0, &index, 1, &inputIntSamples[i]);
         cse_execution_step(execution, 1);
     }
 
