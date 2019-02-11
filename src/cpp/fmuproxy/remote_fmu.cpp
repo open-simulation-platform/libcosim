@@ -4,7 +4,7 @@
 #include <cse/fmuproxy/remote_slave.hpp>
 
 #include <thrift/transport/TSocketPool.h>
-#include <thrift/protocol/TCompactProtocol.h>
+#include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/transport/TTransportUtils.h>
 
 #include "cse/fmuproxy/fmuproxy_helper.hpp"
@@ -36,9 +36,9 @@ cse::fmuproxy::remote_fmu::from_url(const std::string &url,
                                     const std::string &host,
                                     const unsigned int port,
                                     const bool concurrent) {
-    std::shared_ptr<TTransport> socket(new TSocketPool(host, port));
+    std::shared_ptr<TTransport> socket(new TSocket(host, port));
     std::shared_ptr<TTransport> transport(new TFramedTransport(socket));
-    std::shared_ptr<TProtocol> protocol(new TCompactProtocol(transport));
+    std::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
     std::shared_ptr<::fmuproxy::thrift::FmuServiceIf> client;
     if (!concurrent) {
         client = std::make_shared<FmuServiceClient>(protocol);
@@ -61,9 +61,9 @@ cse::fmuproxy::remote_fmu::from_guid(const std::string &guid,
                                      const std::string &host,
                                      const unsigned int port,
                                      const bool concurrent) {
-    std::shared_ptr<TTransport> socket(new TSocketPool(host, port));
+    std::shared_ptr<TTransport> socket(new TSocket(host, port));
     std::shared_ptr<TTransport> transport(new TFramedTransport(socket));
-    std::shared_ptr<TProtocol> protocol(new TCompactProtocol(transport));
+    std::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
     std::shared_ptr<::fmuproxy::thrift::FmuServiceIf> client;
     if (!concurrent) {
         client = std::make_shared<FmuServiceClient>(protocol);
