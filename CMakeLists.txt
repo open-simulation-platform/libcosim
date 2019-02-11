@@ -74,7 +74,7 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
         #warning C4706: assignment within conditional expression
         add_compile_options("/wd4706")
     endif()
-    add_definitions("-D_SCL_SECURE_NO_WARNINGS" "-D_CRT_SECURE_NO_WARNINGS" "-DNOMINMAX")
+    add_definitions("-D_SCL_SECURE_NO_WARNINGS" "-D_CRT_SECURE_NO_WARNINGS")
 endif()
 
 # Automatically export all symbols in Windows DLLs.
