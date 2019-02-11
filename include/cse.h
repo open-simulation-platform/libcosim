@@ -655,6 +655,15 @@ int cse_execution_add_manipulator(
 /// Destroys a manipulator
 int cse_manipulator_destroy(cse_manipulator* manipulator);
 
+/// Creates a manipulator for running scenarios.
+cse_manipulator* cse_scenario_manager_create();
+
+/// Loads a scenario from file.
+int cse_execution_load_scenario(
+        cse_execution* execution,
+        cse_manipulator* manipulator,
+        const char* scenarioFile);
+
 #ifdef __cplusplus
 } // extern(C)
 #endif

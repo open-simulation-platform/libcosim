@@ -705,3 +705,29 @@ int cse_manipulator_slave_set_integer(
         return failure;
     }
 }
+
+cse_manipulator* cse_scenario_manager_create()
+{
+    auto manipulator = std::make_unique<cse_manipulator>();
+    manipulator->cpp_manipulator = std::make_shared<cse::scenario_manager>();
+    return manipulator.release();
+}
+
+int cse_execution_load_scenario(
+    cse_execution* execution,
+    cse_manipulator* manipulator,
+    const char* scenarioFile)
+{
+    try {
+        auto time = execution->cpp_execution->current_time();
+        const auto manager = std::dynamic_pointer_cast<cse::scenario_manager>(manipulator->cpp_manipulator);
+        if (!manager) {
+            throw std::invalid_argument("Invalid manipulator! The provided manipulator must be a scenario_manager.");
+        }
+        manager->load_scenario(scenarioFile, time);
+        return success;
+    } catch (...) {
+        handle_current_exception();
+        return failure;
+    }
+}
