@@ -26,7 +26,7 @@ namespace {
 cse::fmuproxy::remote_fmu::remote_fmu(
         const FmuId &fmuId,
         std::shared_ptr<TTransport> transport,
-        std::shared_ptr<FmuServiceIf> client) : fmuId_(fmuId), client_(client), transport_(transport) {
+        std::shared_ptr<FmuServiceIf> client) : fmuId_(fmuId), client_(std::move(client)), transport_(std::move(transport)) {
     modelDescription_ = getModelDescription(*client_, fmuId_);
 }
 
@@ -47,7 +47,7 @@ cse::fmuproxy::remote_fmu::from_url(const std::string &url,
     }
     try {
         transport->open();
-    } catch (TTransportException &ex) {
+    } catch (TTransportException) {
         std::string msg = "Failed to connect to remote FMU @ " + host + ":" + std::to_string(port);
         CSE_PANIC_M(msg.c_str());
     }
@@ -72,7 +72,7 @@ cse::fmuproxy::remote_fmu::from_guid(const std::string &guid,
     }
     try {
         transport->open();
-    } catch (TTransportException &ex) {
+    } catch (TTransportException) {
         std::string msg = "Failed to connect to remote FMU @ " + host + ":" + std::to_string(port);
         CSE_PANIC_M(msg.c_str());
     }
