@@ -2,12 +2,11 @@ set(tests
     "async_slave_mockup_test"
     "fixed_step_algorithm_test"
     "file_observer_logging_test"
-    "membuffer_observer_test"
-    "bounded_membuffer_observer_test"
     "ssp_parser_test"
     "time_series_observer_test"
     "trend_buffer_test"
     "scenario_manager_test"
+    "scenario_parser_test"
 )
 
 if(CSECORE_WITH_FMUPROXY)

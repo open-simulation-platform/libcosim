@@ -29,7 +29,7 @@ int main()
     cse_execution* execution = cse_execution_create(0, nanoStepSize);
     cse_slave* slave1 = cse_local_slave_create(fmuPath);
     cse_slave* slave2 = cse_local_slave_create(fmuPath);
-    cse_observer* observer = cse_membuffer_observer_create();
+    cse_observer* observer = cse_last_value_observer_create();
 
     cse_slave_index slaveIndex1 = cse_execution_add_slave(execution, slave1);
     cse_slave_index slaveIndex2 = cse_execution_add_slave(execution, slave2);
@@ -59,13 +59,16 @@ int main()
         return 1;
     }
 
+    cse_manipulator* manipulator = cse_override_manipulator_create();
+    cse_execution_add_manipulator(execution, manipulator);
+
     cse_variable_index realInVar = 0;
     const double realInVal = 5.0;
-    cse_execution_slave_set_real(execution, slaveIndex1, &realInVar, 1, &realInVal);
+    cse_manipulator_slave_set_real(manipulator, slaveIndex1, &realInVar, 1, &realInVal);
 
     cse_variable_index intInVar = 0;
     const int intInVal = 42;
-    cse_execution_slave_set_integer(execution, slaveIndex1, &intInVar, 1, &intInVal);
+    cse_manipulator_slave_set_integer(manipulator, slaveIndex1, &intInVar, 1, &intInVal);
 
     cse_execution_step(execution, 10);
 

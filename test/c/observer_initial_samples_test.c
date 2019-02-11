@@ -47,7 +47,7 @@ int main()
         return 1;
     }
 
-    cse_observer* observer = cse_membuffer_observer_create();
+    cse_observer* observer = cse_last_value_observer_create();
     if (!observer) {
         print_last_error();
         return 1;
@@ -67,6 +67,19 @@ int main()
         return 1;
     }
 
+    cse_manipulator* manipulator = cse_override_manipulator_create();
+    if (!manipulator) {
+        print_last_error();
+        return 1;
+    }
+
+    rc = cse_execution_add_manipulator(execution, manipulator);
+    if (rc < 0) {
+        print_last_error();
+        cse_execution_destroy(execution);
+        return 1;
+    }
+
     // ===== Getting real before step
 
     cse_variable_index realOutVar = 0;
@@ -79,7 +92,7 @@ int main()
     }
 
     double realVal = 1.2;
-    rc = cse_execution_slave_set_real(execution, 0, &realOutVar, 1, &realVal);
+    rc = cse_manipulator_slave_set_real(manipulator, 0, &realOutVar, 1, &realVal);
     if (rc < 0) {
         print_last_error();
         cse_execution_destroy(execution);

@@ -73,11 +73,6 @@ public:
         return index;
     }
 
-    std::shared_ptr<simulator> get_simulator(simulator_index index)
-    {
-        return std::shared_ptr<simulator>(simulators_.at(index));
-    }
-
     void add_observer(std::shared_ptr<observer> obs)
     {
         observers_.push_back(obs);
@@ -251,11 +246,6 @@ simulator_index execution::add_slave(
     std::string_view name)
 {
     return pimpl_->add_slave(std::move(slave), name);
-}
-
-std::shared_ptr<simulator> execution::get_simulator(simulator_index index)
-{
-    return pimpl_->get_simulator(index);
 }
 
 void execution::add_observer(std::shared_ptr<observer> obs)

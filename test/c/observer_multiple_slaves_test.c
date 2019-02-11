@@ -52,7 +52,7 @@ int main()
         return 1;
     }
 
-    cse_observer* observer = cse_membuffer_observer_create();
+    cse_observer* observer = cse_last_value_observer_create();
     if (!observer) {
         print_last_error();
         return 1;
@@ -78,9 +78,22 @@ int main()
         return 1;
     }
 
+    cse_manipulator* manipulator = cse_override_manipulator_create();
+    if (!manipulator) {
+        print_last_error();
+        return 1;
+    }
+
+    rc = cse_execution_add_manipulator(execution, manipulator);
+    if (rc < 0) {
+        print_last_error();
+        cse_execution_destroy(execution);
+        return 1;
+    }
+
     cse_variable_index realInVar = 0;
     const double realInVal = 5.0;
-    rc = cse_execution_slave_set_real(execution, slaveIndex1, &realInVar, 1, &realInVal);
+    rc = cse_manipulator_slave_set_real(manipulator, slaveIndex1, &realInVar, 1, &realInVal);
     if (rc < 0) {
         print_last_error();
         cse_execution_destroy(execution);
@@ -89,7 +102,7 @@ int main()
 
     cse_variable_index intInVar = 0;
     const int intInVal = 42;
-    rc = cse_execution_slave_set_integer(execution, slaveIndex1, &intInVar, 1, &intInVal);
+    rc = cse_manipulator_slave_set_integer(manipulator, slaveIndex1, &intInVar, 1, &intInVal);
     if (rc < 0) {
         print_last_error();
         cse_execution_destroy(execution);

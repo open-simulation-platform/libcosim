@@ -7,7 +7,7 @@
 #define CSE_OBSERVER_HPP
 
 #include <cse/observer/file_observer.hpp>
-#include <cse/observer/membuffer_observer.hpp>
+#include <cse/observer/last_value_observer.hpp>
 #include <cse/observer/observer.hpp>
 #include <cse/observer/time_series_observer.hpp>
 
