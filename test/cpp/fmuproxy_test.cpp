@@ -57,7 +57,7 @@ void run_execution(remote_fmu &fmu) {
     auto elapsed = measure_time_sec([&fmu, &execution] {
         for (int i = 0; i < NUM_FMUS; i++) {
             auto slave = fmu.instantiate_slave();
-            execution.add_slave(cse::make_pseudo_async(slave), std::string("slave") + std::to_string(i));
+            execution.add_slave(cse::make_background_thread_slave(slave), std::string("slave") + std::to_string(i));
         }
 
         for (int i = 0; i < numSteps; i++) {
@@ -66,7 +66,7 @@ void run_execution(remote_fmu &fmu) {
 
     });
 
-    std::cout << "[fibers] elapsed=" << elapsed << "s" << std::endl;
+    std::cout << "[execution] elapsed=" << elapsed << "s" << std::endl;
 
 }
 
@@ -116,12 +116,12 @@ int main(int argc, char** argv) {
     auto fmuId = argv[1];
     auto host = argv[2];
     auto port = std::stoi(argv[3]);
-    auto fmu1 = remote_fmu::from_guid(fmuId, host, port, /*concurrent*/false);
 
+    auto fmu1 = remote_fmu::from_guid(fmuId, host, port, /*concurrent*/false);
     run_serial(fmu1);
-    run_execution(fmu1);
 
     auto fmu2 = remote_fmu::from_guid(fmuId, host, port, /*concurrent*/true);
+    run_execution(fmu2);
     run_threads(fmu2);
 
     return 0;
