@@ -29,7 +29,7 @@ int main()
     cse_execution* execution = cse_execution_create(0, nanoStepSize);
     cse_slave* slave1 = cse_local_slave_create(fmuPath);
     cse_slave* slave2 = cse_local_slave_create(fmuPath);
-    cse_observer* observer = cse_membuffer_observer_create();
+    cse_observer* observer = cse_last_value_observer_create();
 
     cse_slave_index slaveIndex1 = cse_execution_add_slave(execution, slave1);
     cse_slave_index slaveIndex2 = cse_execution_add_slave(execution, slave2);

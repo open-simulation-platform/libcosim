@@ -4,7 +4,8 @@
 #include <cse/async_slave.hpp>
 #include <cse/execution.hpp>
 #include <cse/log.hpp>
-#include <cse/observer/membuffer_observer.hpp>
+#include <cse/observer/last_value_observer.hpp>
+#include <cse/observer/time_series_observer.hpp>
 
 #include <cmath>
 #include <exception>
@@ -35,11 +36,12 @@ int main()
         // Default should not be real time
         REQUIRE(!execution.is_real_time_simulation());
 
-        auto observer = std::make_shared<cse::membuffer_observer>();
+        auto observer = std::make_shared<cse::last_value_observer>();
         execution.add_observer(observer);
 
         const cse::variable_index realOutIndex = 0;
         const cse::variable_index realInIndex = 1;
+
 
         // Add slaves to it
         for (int i = 0; i < numSlaves; ++i) {
@@ -50,6 +52,10 @@ int main()
                 execution.connect_variables(cse::variable_id{i - 1, cse::variable_type::real, realOutIndex}, cse::variable_id{i, cse::variable_type::real, realInIndex});
             }
         }
+
+        auto observer2 = std::make_shared<cse::time_series_observer>();
+        execution.add_observer(observer2);
+        observer2->start_observing(cse::variable_id{9, cse::variable_type::real, realOutIndex});
 
         // Run simulation
         auto simResult = execution.simulate_until(midTime);
@@ -79,11 +85,11 @@ int main()
             }
         }
 
-        const int numSamples = 11;
+        const int numSamples = 10;
         double realValues[numSamples];
         cse::step_number steps[numSamples];
         cse::time_point timeValues[numSamples];
-        observer->get_real_samples(9, realOutIndex, 0, gsl::make_span(realValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(timeValues, numSamples));
+        observer2->get_real_samples(9, realOutIndex, 1, gsl::make_span(realValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(timeValues, numSamples));
         cse::step_number lastStep = -1;
         double lastValue = -1.0;
         for (int k = 0; k < numSamples; k++) {

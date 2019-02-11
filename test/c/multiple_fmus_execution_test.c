@@ -52,13 +52,13 @@ int main()
         return 1;
     }
 
-    cse_observer* observer1 = cse_membuffer_observer_create();
+    cse_observer* observer1 = cse_last_value_observer_create();
     if (!observer1) {
         print_last_error();
         return 1;
     }
 
-    cse_observer* observer2 = cse_membuffer_observer_create();
+    cse_observer* observer2 = cse_last_value_observer_create();
     if (!observer2) {
         print_last_error();
         return 1;

@@ -574,11 +574,8 @@ int cse_execution_connect_integer_variables(
     cse_variable_index inputVariableIndex);
 
 
-/// Creates an observer which buffers up to 10000 values for all variables in memory.
-cse_observer* cse_membuffer_observer_create();
-
-/// Creates an observer which buffers up to `bufferSize` values for all variables in memory.
-cse_observer* cse_buffered_membuffer_observer_create(size_t bufferSize);
+/// Creates an observer which stores the last observed value for all variables.
+cse_observer* cse_last_value_observer_create();
 
 /**
  * Creates an observer which logs variable values to file in csv format.

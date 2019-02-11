@@ -48,7 +48,7 @@ int main()
         return 1;
     }
 
-    cse_observer* observer = cse_membuffer_observer_create();
+    cse_observer* observer = cse_last_value_observer_create();
     if (!observer) {
         print_last_error();
         return 1;
