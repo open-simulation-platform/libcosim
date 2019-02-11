@@ -21,7 +21,7 @@ class CSECoreConan(ConanFile):
         "gsl_microsoft/1.0.0@bincrafters/stable",
         "libevent/2.0.22@bincrafters/stable",
         "libzip/1.5.1@bincrafters/stable",
-        "jsonformoderncpp/3.5.0@vthiery/stable"
+        "jsonformoderncpp/3.5.0@vthiery/stable",
         "thrift/0.12.0@helmesjo/stable"
         )
     options = {"ci": [True, False]}
