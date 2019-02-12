@@ -272,14 +272,12 @@ public:
      *
      *  \param currentT
      *      The starting point of the time step.
-     *  \param maxDeltaT
-     *      The maximum length of the time step (optional).
      *
      *  \returns
      *      The actual time step length, which must be less than or equal
      *      to `maxDeltaT`, if specified.
      */
-    virtual duration do_step(time_point currentT, std::optional<duration> maxDeltaT) = 0;
+    virtual duration do_step(time_point currentT) = 0;
 
     virtual ~algorithm() noexcept = default;
 };
@@ -321,7 +319,48 @@ public:
     void disconnect_variable(variable_id input) override;
     void setup(time_point startTime, std::optional<time_point> stopTime) override;
     void initialize() override;
-    duration do_step(time_point currentT, std::optional<duration> maxDeltaT) override;
+    duration do_step(time_point currentT) override;
+
+private:
+    class impl;
+    std::unique_ptr<impl> pimpl_;
+};
+
+
+/**
+ *  A fixed-stepsize co-simulation algorithm.
+ *
+ *  This is the simplest possible implementation of `algorithm`. All
+ *  simulators are advanced in parallel with the same, constant
+ *  communication interval at each step.
+ */
+class multi_fixed_step_algorithm : public algorithm
+{
+public:
+
+    explicit multi_fixed_step_algorithm(duration baseStepSize);
+
+    ~multi_fixed_step_algorithm() noexcept;
+
+    multi_fixed_step_algorithm(const multi_fixed_step_algorithm&) = delete;
+    multi_fixed_step_algorithm& operator=(const multi_fixed_step_algorithm&) = delete;
+
+    multi_fixed_step_algorithm(multi_fixed_step_algorithm&&) noexcept;
+    multi_fixed_step_algorithm& operator=(multi_fixed_step_algorithm&&) noexcept;
+
+    // `algorithm` methods
+    void add_simulator(simulator_index i, simulator* s) override;
+    void remove_simulator(simulator_index i) override;
+    void connect_variables(
+        variable_id output,
+        variable_id input,
+        bool inputAlreadyConnected) override;
+    void disconnect_variable(variable_id input) override;
+    void setup(time_point startTime, std::optional<time_point> stopTime) override;
+    void initialize() override;
+    duration do_step(time_point currentT) override;
+
+    void set_simulator_stepsize_multiplier(simulator_index i, int multiplier);
 
 private:
     class impl;

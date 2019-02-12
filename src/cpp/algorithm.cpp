@@ -95,13 +95,11 @@ public:
         }
     }
 
-    duration do_step(time_point currentT, std::optional<duration> maxDeltaT)
+    duration do_step(time_point currentT)
     {
-        const auto currentStepSize = maxDeltaT ? std::min(stepSize_, *maxDeltaT)
-                                               : stepSize_;
-        step_simulators(currentT, currentStepSize);
+        step_simulators(currentT, stepSize_);
         transfer_variables();
-        return currentStepSize;
+        return stepSize_;
     }
 
 private:
@@ -311,10 +309,9 @@ void fixed_step_algorithm::initialize()
 
 
 duration fixed_step_algorithm::do_step(
-    time_point currentT,
-    std::optional<duration> maxDeltaT)
+    time_point currentT)
 {
-    return pimpl_->do_step(currentT, maxDeltaT);
+    return pimpl_->do_step(currentT);
 }
 
 
