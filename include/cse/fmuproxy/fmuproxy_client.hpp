@@ -1,15 +1,8 @@
 
-
 #ifndef CSE_FMUPROXY_FMUPROXYCLIENT_HPP
 #define CSE_FMUPROXY_FMUPROXYCLIENT_HPP
 
-#ifdef _WIN32
-//must be included before <windows.h>
-#include <winsock2.h>
-#endif
-
 #include <cse/fmuproxy/fmu_service.hpp>
-
 #include <cse/fmuproxy/remote_fmu.hpp>
 
 namespace cse {
