@@ -1,6 +1,6 @@
 
-#ifndef CSE_REMOTE_SLAVE_HPP
-#define CSE_REMOTE_SLAVE_HPP
+#ifndef CSE_FMUPROXY_REMOTE_SLAVE_HPP
+#define CSE_FMUPROXY_REMOTE_SLAVE_HPP
 
 #include <string>
 
