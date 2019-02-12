@@ -124,20 +124,20 @@ void run_threads(remote_fmu &fmu) {
 int main(int argc, char** argv) {
 
     if (argc != 4) {
-        std::cerr << "Missing one or more program arguments: [fmuId:string host:string port:int]" << std::endl;
+        std::cerr << "Missing one or more program arguments: [url:string host:string port:int]" << std::endl;
         return 1;
     }
 
-    auto fmuId = argv[1];
+    auto url = argv[1];
     auto host = argv[2];
     auto port = std::stoi(argv[3]);
 
     fmuproxy_client client1(host, port, /*concurrent*/false);
-    auto fmu1 = client1.from_guid(fmuId);
+    auto fmu1 = client1.from_url(url);
     run_serial(fmu1);
 
     fmuproxy_client client2(host, port, /*concurrent*/true);
-    auto fmu2 = client2.from_guid(fmuId);
+    auto fmu2 = client2.from_url(url);
     run_execution(fmu2);
     run_threads(fmu2);
 
