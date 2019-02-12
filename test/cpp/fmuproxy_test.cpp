@@ -31,20 +31,26 @@ inline float measure_time_sec(function &&fun) {
 
 void run_serial(remote_fmu &fmu) {
 
-    auto elapsed = measure_time_sec([&fmu] {
-        for (int i = 0; i < NUM_FMUS; i++) {
-            cse::time_point t = cse::time_point();
-            auto slave = fmu.instantiate_slave();
-            slave->setup(t, {}, {});
-            slave->start_simulation();
+    cse::time_point t;
+    std::shared_ptr<cse::slave> slaves[NUM_FMUS];
+    for (auto &slave : slaves) {
+        slave = fmu.instantiate_slave();
+        slave->setup(t, {}, {});
+        slave->start_simulation();
+    }
 
-            for (int j = 0; j < numSteps; j++) {
+    auto elapsed = measure_time_sec([&t, &slaves] {
+        for (auto &slave : slaves) {
+            for (int i = 0; i < numSteps; i++) {
                 slave->do_step(t, stepSize);
                 t += stepSize;
             }
-
         }
     });
+
+    for (auto &slave : slaves) {
+        slave->end_simulation();
+    }
 
     std::cout << "[serial] elapsed=" << elapsed << "s" << std::endl;
 
@@ -55,22 +61,22 @@ void run_execution(remote_fmu &fmu) {
     auto execution = cse::execution(cse::time_point(),
                                     std::make_unique<cse::fixed_step_algorithm>(cse::to_duration(stepSize_s)));
 
-    auto elapsed = measure_time_sec([&fmu, &execution] {
-        std::shared_ptr<cse::slave> slaves[NUM_FMUS];
-        for (int i = 0; i < NUM_FMUS; i++) {
-            slaves[i] = fmu.instantiate_slave();
-            execution.add_slave( cse::make_background_thread_slave(slaves[i]), std::string("slave") + std::to_string(i));
-        }
+    std::shared_ptr<cse::slave> slaves[NUM_FMUS];
+    for (int i = 0; i < NUM_FMUS; i++) {
+        slaves[i] = fmu.instantiate_slave();
+        execution.add_slave( cse::make_background_thread_slave(slaves[i]), std::string("slave") + std::to_string(i));
+    }
 
-        for (int i = 0; i < numSteps; i++) {
+    execution.step({});
+    auto elapsed = measure_time_sec([&execution] {
+        for (int i = 0; i < numSteps-1; i++) {
             execution.step({});
         }
-
-        for (auto &slave : slaves) {
-            slave->end_simulation();
-        }
-
     });
+
+    for (auto &slave : slaves) {
+        slave->end_simulation();
+    }
 
     std::cout << "[execution] elapsed=" << elapsed << "s" << std::endl;
 
@@ -78,19 +84,18 @@ void run_execution(remote_fmu &fmu) {
 
 void run_threads(remote_fmu &fmu) {
 
-    auto elapsed = measure_time_sec([&fmu] {
+    cse::time_point t = cse::time_point();
+    std::shared_ptr<cse::slave> slaves[NUM_FMUS];
 
-        cse::time_point t = cse::time_point();
-        std::shared_ptr<cse::slave> slaves[NUM_FMUS];
+    for (auto &slave : slaves) {
+        slave = fmu.instantiate_slave();
+        slave->setup(t, {}, {});
+        slave->start_simulation();
+    }
 
-        for (auto &i : slaves) {
-            auto slave = fmu.instantiate_slave();
-            slave->setup(t, {}, {});
-            slave->start_simulation();
-            i = slave;
-        }
+    auto elapsed = measure_time_sec([&slaves, &t] {
 
-        for (int k = 0; k < numSteps; k++) {
+        for (int i = 0; i < numSteps; i++) {
             std::thread threads[NUM_FMUS];
             for (int j = 0; j < NUM_FMUS; j++) {
                 auto slave = slaves[j];
@@ -107,6 +112,10 @@ void run_threads(remote_fmu &fmu) {
         }
 
     });
+
+    for (auto &slave : slaves) {
+        slave->end_simulation();
+    }
 
     std::cout << "[threads] elapsed=" << elapsed << "s" << std::endl;
 
