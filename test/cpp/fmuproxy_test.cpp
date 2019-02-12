@@ -56,13 +56,18 @@ void run_execution(remote_fmu &fmu) {
                                     std::make_unique<cse::fixed_step_algorithm>(cse::to_duration(stepSize_s)));
 
     auto elapsed = measure_time_sec([&fmu, &execution] {
+        std::shared_ptr<cse::slave> slaves[NUM_FMUS];
         for (int i = 0; i < NUM_FMUS; i++) {
-            auto slave = fmu.instantiate_slave();
-            execution.add_slave(cse::make_background_thread_slave(slave), std::string("slave") + std::to_string(i));
+            slaves[i] = fmu.instantiate_slave();
+            execution.add_slave( cse::make_background_thread_slave(slaves[i]), std::string("slave") + std::to_string(i));
         }
 
         for (int i = 0; i < numSteps; i++) {
             execution.step({});
+        }
+
+        for (auto &slave : slaves) {
+            slave->end_simulation();
         }
 
     });
