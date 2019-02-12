@@ -5,6 +5,7 @@
 #include <thread>
 
 //must appear before other cse headers due to <winsock2.h> #include
+#include <cse/fmuproxy/fmuproxy_client.hpp>
 #include <cse/fmuproxy/remote_fmu.hpp>
 
 #include <cse/execution.hpp>
@@ -117,10 +118,12 @@ int main(int argc, char** argv) {
     auto host = argv[2];
     auto port = std::stoi(argv[3]);
 
-    auto fmu1 = remote_fmu::from_guid(fmuId, host, port, /*concurrent*/false);
+    fmuproxy_client client1(host, port, /*concurrent*/false);
+    auto fmu1 = client1.from_guid(fmuId);
     run_serial(fmu1);
 
-    auto fmu2 = remote_fmu::from_guid(fmuId, host, port, /*concurrent*/true);
+    fmuproxy_client client2(host, port, /*concurrent*/true);
+    auto fmu2 = client2.from_guid(fmuId);
     run_execution(fmu2);
     run_threads(fmu2);
 

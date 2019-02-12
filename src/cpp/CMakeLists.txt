@@ -77,6 +77,8 @@ if(CSECORE_WITH_FMUPROXY)
             "fmuproxy/remote_fmu.hpp"
             "fmuproxy/fmu_service.hpp"
             "fmuproxy/service_types.hpp"
+            "fmuproxy/fmuproxy_client.hpp"
+            "fmuproxy/thrift_state.hpp"
     )
 
     list(APPEND privateHeaders
@@ -88,6 +90,8 @@ if(CSECORE_WITH_FMUPROXY)
             "fmuproxy/service_types.cpp"
             "fmuproxy/remote_slave.cpp"
             "fmuproxy/remote_fmu.cpp"
+            "fmuproxy/fmuproxy_client.cpp"
+            "fmuproxy/thrift_state.cpp"
     )
 endif()
 
