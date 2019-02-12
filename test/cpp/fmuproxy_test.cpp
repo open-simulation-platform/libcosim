@@ -40,11 +40,12 @@ void run_serial(remote_fmu &fmu) {
     }
 
     auto elapsed = measure_time_sec([&t, &slaves] {
-        for (auto &slave : slaves) {
-            for (int i = 0; i < numSteps; i++) {
+        for (int i = 0; i < numSteps; i++) {
+            for (auto &slave : slaves) {
                 slave->do_step(t, stepSize);
-                t += stepSize;
+
             }
+            t += stepSize;
         }
     });
 
