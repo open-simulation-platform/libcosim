@@ -35,7 +35,7 @@ cse::fmuproxy::remote_fmu
 cse::fmuproxy::fmuproxy_client::from_url(const std::string &url) {
     FmuId fmuId;
     state_->client_->load(fmuId, url);
-    return from_url(fmuId);
+    return from_guid(fmuId);
 }
 
 cse::fmuproxy::remote_fmu
