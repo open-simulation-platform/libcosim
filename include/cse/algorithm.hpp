@@ -39,7 +39,6 @@ namespace cse
 class simulator : public observable
 {
 public:
-
     /**
      *  Exposes a variable for assignment with `set_xxx()`.
      *
@@ -81,36 +80,36 @@ public:
     virtual void set_string(variable_index index, std::string_view value) = 0;
 
     virtual void set_real_input_manipulator(
-            variable_index index,
-            std::function<double(double)> manipulator) = 0;
+        variable_index index,
+        std::function<double(double)> manipulator) = 0;
 
     virtual void set_integer_input_manipulator(
-            variable_index index,
-            std::function<int(int)> manipulator) = 0;
+        variable_index index,
+        std::function<int(int)> manipulator) = 0;
 
     virtual void set_boolean_input_manipulator(
-            variable_index index,
-            std::function<bool(bool)> manipulator) = 0;
+        variable_index index,
+        std::function<bool(bool)> manipulator) = 0;
 
     virtual void set_string_input_manipulator(
-            variable_index index,
-            std::function<std::string(std::string_view)> manipulator) = 0;
+        variable_index index,
+        std::function<std::string(std::string_view)> manipulator) = 0;
 
     virtual void set_real_output_manipulator(
-            variable_index index,
-            std::function<double(double)> manipulator) = 0;
+        variable_index index,
+        std::function<double(double)> manipulator) = 0;
 
     virtual void set_integer_output_manipulator(
-            variable_index index,
-            std::function<int(int)> manipulator) = 0;
+        variable_index index,
+        std::function<int(int)> manipulator) = 0;
 
     virtual void set_boolean_output_manipulator(
-            variable_index index,
-            std::function<bool(bool)> manipulator) = 0;
+        variable_index index,
+        std::function<bool(bool)> manipulator) = 0;
 
     virtual void set_string_output_manipulator(
-            variable_index index,
-            std::function<std::string(std::string_view)> manipulator) = 0;
+        variable_index index,
+        std::function<std::string(std::string_view)> manipulator) = 0;
 
     /**
      *  Performs pre-simulation setup and enters initialisation mode.
@@ -286,9 +285,9 @@ public:
 /**
  *  A fixed-stepsize co-simulation algorithm.
  *
- *  This is the simplest possible implementation of `algorithm`. All
- *  simulators are advanced in parallel with the same, constant
- *  communication interval at each step.
+ *  A simple implementation of `algorithm`. The simulation progresses
+ *  at a fixed base stepsize. Simulators are stepped in parallel at an optional
+ *  multiple of this base step size.
  */
 class fixed_step_algorithm : public algorithm
 {
@@ -296,10 +295,10 @@ public:
     /**
      *  Constructor.
      *
-     *  \param stepSize
-     *      The communication interval length.
+     *  \param baseStepSize
+     *      The base communication interval length.
      */
-    explicit fixed_step_algorithm(duration stepSize);
+    explicit fixed_step_algorithm(duration baseStepSize);
 
     ~fixed_step_algorithm() noexcept;
 
@@ -321,52 +320,25 @@ public:
     void initialize() override;
     duration do_step(time_point currentT) override;
 
-private:
-    class impl;
-    std::unique_ptr<impl> pimpl_;
-};
-
-
-/**
- *  A fixed-stepsize co-simulation algorithm.
- *
- *  This is the simplest possible implementation of `algorithm`. All
- *  simulators are advanced in parallel with the same, constant
- *  communication interval at each step.
- */
-class multi_fixed_step_algorithm : public algorithm
-{
-public:
-
-    explicit multi_fixed_step_algorithm(duration baseStepSize);
-
-    ~multi_fixed_step_algorithm() noexcept;
-
-    multi_fixed_step_algorithm(const multi_fixed_step_algorithm&) = delete;
-    multi_fixed_step_algorithm& operator=(const multi_fixed_step_algorithm&) = delete;
-
-    multi_fixed_step_algorithm(multi_fixed_step_algorithm&&) noexcept;
-    multi_fixed_step_algorithm& operator=(multi_fixed_step_algorithm&&) noexcept;
-
-    // `algorithm` methods
-    void add_simulator(simulator_index i, simulator* s) override;
-    void remove_simulator(simulator_index i) override;
-    void connect_variables(
-        variable_id output,
-        variable_id input,
-        bool inputAlreadyConnected) override;
-    void disconnect_variable(variable_id input) override;
-    void setup(time_point startTime, std::optional<time_point> stopTime) override;
-    void initialize() override;
-    duration do_step(time_point currentT) override;
-
-    void set_simulator_stepsize_multiplier(simulator_index i, int multiplier);
+    /**
+     * Sets step size decimation factor for a simulator.
+     *
+     * This will effectively set the simulator step size to a multiple
+     * of the algorithm's base step size. The default decimation factor is 1.
+     * Must be called *after* the simulator has been added to the algorithm with `add_simulator()`.
+     *
+     * \param simulator
+     *      The index of the simulator.
+     *
+     * \param factor
+     *      The stepsize decimation factor.
+     */
+    void set_stepsize_decimation_factor(simulator_index simulator, int factor);
 
 private:
     class impl;
     std::unique_ptr<impl> pimpl_;
 };
-
 
 } // namespace cse
 #endif // header guard

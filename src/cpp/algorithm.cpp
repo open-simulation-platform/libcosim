@@ -34,10 +34,10 @@ namespace cse
 class fixed_step_algorithm::impl
 {
 public:
-    explicit impl(duration stepSize)
-        : stepSize_(stepSize)
+    explicit impl(duration baseStepSize)
+        : baseStepSize_(baseStepSize)
     {
-        CSE_INPUT_CHECK(stepSize.count() > 0);
+        CSE_INPUT_CHECK(baseStepSize.count() > 0);
     }
 
     ~impl() noexcept = default;
@@ -51,7 +51,7 @@ public:
     void add_simulator(simulator_index i, simulator* s)
     {
         assert(simulators_.count(i) == 0);
-        simulators_[i] = s;
+        simulators_[i].sim = s;
     }
 
     void remove_simulator(simulator_index i)
@@ -66,18 +66,21 @@ public:
         bool inputAlreadyConnected)
     {
         if (inputAlreadyConnected) disconnect_variable(input);
-        simulators_[output.simulator]->expose_for_getting(output.type, output.index);
-        simulators_[input.simulator]->expose_for_setting(input.type, input.index);
-        connections_.push_back({output, input});
+        simulators_[output.simulator].sim->expose_for_getting(output.type, output.index);
+        simulators_[input.simulator].sim->expose_for_setting(input.type, input.index);
+        simulators_[output.simulator].outgoingConnections.push_back({output, input});
     }
 
     void disconnect_variable(variable_id input)
     {
-        const auto it = std::find_if(
-            connections_.begin(),
-            connections_.end(),
-            [input](const auto& c) { return c.input == input; });
-        connections_.erase(it);
+        for (auto& s : simulators_) {
+            auto conns = s.second.outgoingConnections;
+            const auto it = std::find_if(
+                conns.begin(),
+                conns.end(),
+                [input](const auto& c) { return c.input == input; });
+            conns.erase(it);
+        }
     }
 
     void setup(time_point startTime, std::optional<time_point> stopTime)
@@ -91,16 +94,55 @@ public:
         setup_simulators();
         for (std::size_t i = 0; i < simulators_.size(); ++i) {
             iterate_simulators();
-            transfer_variables();
+            for (const auto& s : simulators_) {
+                transfer_variables(s.second.outgoingConnections);
+            }
         }
     }
 
     duration do_step(time_point currentT)
     {
-        step_simulators(currentT, stepSize_);
-        transfer_variables();
-        return stepSize_;
+        for (auto& s : simulators_) {
+            auto& info = s.second;
+            if (stepCounter_ % info.decimationFactor == 0) {
+                info.stepResult = info.sim->do_step(currentT, baseStepSize_ * info.decimationFactor);
+            }
+        }
+
+        ++stepCounter_;
+
+        bool failed = false;
+        std::stringstream errMessages;
+        for (auto& s : simulators_) {
+            auto& info = s.second;
+            if (stepCounter_ % info.decimationFactor == 0) {
+                if (auto ep = info.stepResult.get_exception_ptr()) {
+                    errMessages
+                        << info.sim->name() << ": "
+                        << exception_ptr_msg(ep) << '\n';
+                    failed = true;
+                } else if (info.stepResult.get() != step_result::complete) {
+                    errMessages
+                        << info.sim->name() << ": "
+                        << "Step not complete" << '\n';
+                    failed = true;
+                }
+                transfer_variables(info.outgoingConnections);
+            }
+        }
+        if (failed) {
+            throw error(make_error_code(errc::simulation_error), errMessages.str());
+        }
+
+        return baseStepSize_;
     }
+
+    void set_stepsize_decimation_factor(cse::simulator_index i, int factor)
+    {
+        CSE_INPUT_CHECK(factor > 0);
+        simulators_.at(i).decimationFactor = factor;
+    }
+
 
 private:
     struct connection
@@ -109,15 +151,26 @@ private:
         variable_id input;
     };
 
+    struct simulator_info
+    {
+        simulator* sim;
+        int decimationFactor = 1;
+        boost::fibers::future<step_result> stepResult;
+        std::vector<connection> outgoingConnections;
+    };
+
     void disconnect_simulator_variables(simulator_index i)
     {
-        const auto newEnd = std::remove_if(
-            connections_.begin(),
-            connections_.end(),
-            [i](const auto& c) {
-                return c.output.simulator == i || c.input.simulator == i;
-            });
-        connections_.erase(newEnd, connections_.end());
+        for (auto& s : simulators_) {
+            auto conns = s.second.outgoingConnections;
+            const auto newEnd = std::remove_if(
+                conns.begin(),
+                conns.end(),
+                [i](const auto& c) {
+                    return c.input.simulator == i;
+                });
+            conns.erase(newEnd, conns.end());
+        }
     }
 
     template<typename F>
@@ -125,7 +178,7 @@ private:
     {
         std::unordered_map<simulator_index, boost::fibers::future<void>> results;
         for (const auto& s : simulators_) {
-            results.emplace(s.first, f(s.second));
+            results.emplace(s.first, f(s.second.sim));
         }
 
         bool failed = false;
@@ -135,7 +188,7 @@ private:
                 r.second.get();
             } catch (const std::exception& e) {
                 errMessages
-                    << simulators_.at(r.first)->name() << ": "
+                    << simulators_.at(r.first).sim->name() << ": "
                     << e.what() << '\n';
                 failed = true;
             }
@@ -159,36 +212,9 @@ private:
         });
     }
 
-    void step_simulators(time_point currentT, duration deltaT)
+    void transfer_variables(const std::vector<connection>& connections)
     {
-        std::unordered_map<simulator_index, boost::fibers::future<step_result>> results;
-        for (const auto& s : simulators_) {
-            results.emplace(s.first, s.second->do_step(currentT, deltaT));
-        }
-
-        bool failed = false;
-        std::stringstream errMessages;
-        for (auto& r : results) {
-            if (auto ep = r.second.get_exception_ptr()) {
-                errMessages
-                    << simulators_.at(r.first)->name() << ": "
-                    << exception_ptr_msg(ep) << '\n';
-                failed = true;
-            } else if (r.second.get() != step_result::complete) {
-                errMessages
-                    << simulators_.at(r.first)->name() << ": "
-                    << "Step not complete" << '\n';
-                failed = true;
-            }
-        }
-        if (failed) {
-            throw error(make_error_code(errc::simulation_error), errMessages.str());
-        }
-    }
-
-    void transfer_variables()
-    {
-        for (const auto& c : connections_) {
+        for (const auto& c : connections) {
             switch (c.input.type) {
                 case variable_type::real:
                     transfer_real(c.output, c.input);
@@ -208,42 +234,42 @@ private:
 
     void transfer_real(variable_id output, variable_id input)
     {
-        simulators_[input.simulator]->set_real(
+        simulators_[input.simulator].sim->set_real(
             input.index,
-            simulators_[output.simulator]->get_real(output.index));
+            simulators_[output.simulator].sim->get_real(output.index));
     }
 
     void transfer_integer(variable_id output, variable_id input)
     {
-        simulators_[input.simulator]->set_integer(
+        simulators_[input.simulator].sim->set_integer(
             input.index,
-            simulators_[output.simulator]->get_integer(output.index));
+            simulators_[output.simulator].sim->get_integer(output.index));
     }
 
     void transfer_boolean(variable_id output, variable_id input)
     {
-        simulators_[input.simulator]->set_boolean(
+        simulators_[input.simulator].sim->set_boolean(
             input.index,
-            simulators_[output.simulator]->get_boolean(output.index));
+            simulators_[output.simulator].sim->get_boolean(output.index));
     }
 
     void transfer_string(variable_id output, variable_id input)
     {
-        simulators_[input.simulator]->set_string(
+        simulators_[input.simulator].sim->set_string(
             input.index,
-            simulators_[output.simulator]->get_string(output.index));
+            simulators_[output.simulator].sim->get_string(output.index));
     }
 
-    const duration stepSize_;
+    const duration baseStepSize_;
     time_point startTime_;
     std::optional<time_point> stopTime_;
-    std::unordered_map<simulator_index, simulator*> simulators_;
-    std::vector<connection> connections_;
+    std::unordered_map<simulator_index, simulator_info> simulators_;
+    int64_t stepCounter_ = 0;
 };
 
 
-fixed_step_algorithm::fixed_step_algorithm(duration stepSize)
-    : pimpl_(std::make_unique<impl>(stepSize))
+fixed_step_algorithm::fixed_step_algorithm(duration baseStepSize)
+    : pimpl_(std::make_unique<impl>(baseStepSize))
 {
 }
 
@@ -312,6 +338,11 @@ duration fixed_step_algorithm::do_step(
     time_point currentT)
 {
     return pimpl_->do_step(currentT);
+}
+
+void fixed_step_algorithm::set_stepsize_decimation_factor(cse::simulator_index simulator, int factor)
+{
+    pimpl_->set_stepsize_decimation_factor(simulator, factor);
 }
 
 
