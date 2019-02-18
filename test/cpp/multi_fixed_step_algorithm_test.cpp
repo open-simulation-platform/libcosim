@@ -39,9 +39,12 @@ int main()
         const cse::variable_index realInIndex = 1;
 
         double v = 0.0;
-
         auto idx0 = execution.add_slave(cse::make_pseudo_async(std::make_unique<mock_slave>([&v](double /*x*/) { return ++v; })), "slave 0");
+
         auto idx1 = execution.add_slave(cse::make_pseudo_async(std::make_unique<mock_slave>()), "slave 1");
+
+        int i = 0;
+        auto idx2 = execution.add_slave(cse::make_pseudo_async(std::make_unique<mock_slave>(nullptr, [&i](int /*x*/) { return ++i + 1; })), "slave 2");
 
         execution.connect_variables(
             cse::variable_id{0, cse::variable_type::real, realOutIndex},
@@ -49,11 +52,13 @@ int main()
 
         algorithm->set_stepsize_decimation_factor(idx0, 1);
         algorithm->set_stepsize_decimation_factor(idx1, 2);
+        algorithm->set_stepsize_decimation_factor(idx2, 3);
 
         auto observer2 = std::make_shared<cse::time_series_observer>();
         execution.add_observer(observer2);
         observer2->start_observing(cse::variable_id{0, cse::variable_type::real, realOutIndex});
         observer2->start_observing(cse::variable_id{1, cse::variable_type::real, realOutIndex});
+        observer2->start_observing(cse::variable_id{2, cse::variable_type::integer, 0});
 
         // Run simulation
         auto simResult = execution.simulate_until(endTime);
@@ -73,10 +78,18 @@ int main()
         double expectedReals0[numSamples] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0};
         double expectedReals1[numSamples] = {1.0, 1.0, 2.0, 2.0, 4.0, 4.0, 6.0, 6.0, 8.0, 8.0};
 
+        int intValues[numSamples];
+        cse::step_number steps[numSamples];
+        cse::time_point timeValues[numSamples];
+        observer2->get_integer_samples(2, 0, 1, gsl::make_span(intValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(timeValues, numSamples));
+
+        // int expectedInts[numSamples] = {0, 0, 2, 2, 2, 3, 3, 3, 4, 4}; // this is what we actually expect
+        int expectedInts[numSamples] = {2, 2, 2, 3, 3, 3, 4, 4, 4, 5};
+
         for (int k = 0; k < numSamples; k++) {
-            //            std::cout << "Slave 0 actual: " << realValues0[k] << ", expected: " << expectedReals0[k] << ", diff: " << std::fabs(expectedReals0[k] - realValues0[k]) << std::endl;
             REQUIRE(std::fabs(expectedReals0[k] - realValues0[k]) < 1e-9);
             REQUIRE(std::fabs(expectedReals1[k] - realValues1[k]) < 1e-9);
+            REQUIRE(expectedInts[k] == intValues[k]);
         }
 
     } catch (const std::exception& e) {
