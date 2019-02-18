@@ -38,15 +38,14 @@ int main()
         const cse::variable_index realOutIndex = 0;
         const cse::variable_index realInIndex = 1;
 
-        auto idx0 = execution.add_slave(cse::make_pseudo_async(std::make_unique<mock_slave>()), "slave 1");
-        auto idx1 = execution.add_slave(cse::make_pseudo_async(std::make_unique<mock_slave>([](double x) { return x + 1.0; })), "slave 2");
+        double v = 0.0;
+
+        auto idx0 = execution.add_slave(cse::make_pseudo_async(std::make_unique<mock_slave>([&v](double /*x*/) { return ++v; })), "slave 0");
+        auto idx1 = execution.add_slave(cse::make_pseudo_async(std::make_unique<mock_slave>()), "slave 1");
 
         execution.connect_variables(
             cse::variable_id{0, cse::variable_type::real, realOutIndex},
             cse::variable_id{1, cse::variable_type::real, realInIndex});
-        execution.connect_variables(
-            cse::variable_id{1, cse::variable_type::real, realOutIndex},
-            cse::variable_id{0, cse::variable_type::real, realInIndex});
 
         algorithm->set_stepsize_decimation_factor(idx0, 1);
         algorithm->set_stepsize_decimation_factor(idx1, 2);
@@ -71,11 +70,18 @@ int main()
         cse::time_point timeValues1[numSamples];
         observer2->get_real_samples(1, realOutIndex, 1, gsl::make_span(realValues1, numSamples), gsl::make_span(steps1, numSamples), gsl::make_span(timeValues1, numSamples));
 
-        double expectedReals0[numSamples] = {1.0, 1.0, 2.0, 2.0, 2.0, 2.0, 3.0, 3.0, 3.0, 3.0};
-        double expectedReals1[numSamples] = {2.0, 2.0, 2.0, 2.0, 3.0, 3.0, 3.0, 3.0, 4.0, 4.0};
+        double expectedReals0[numSamples] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0};
+        double expectedReals1[numSamples] = {1.0, 1.0, 2.0, 2.0, 4.0, 4.0, 6.0, 6.0, 8.0, 8.0};
+
+        for (int i = 0; i < numSamples; ++i) {
+            std::cout << "Slave 0 actual: " << realValues0[i] << ", expected: " << expectedReals0[i] << ", diff: " << std::fabs(expectedReals0[i] - realValues0[i]) << std::endl;
+        }
+        for (int i = 0; i < numSamples; ++i) {
+            std::cout << "Slave 1 actual: " << realValues1[i] << ", expected: " << expectedReals1[i] << ", diff: " << std::fabs(expectedReals1[i] - realValues1[i]) << std::endl;
+        }
 
         for (int k = 0; k < numSamples; k++) {
-            std::cout << "Slave 0 actual: " << realValues0[k] << ", expected: " << expectedReals0[k] << ", diff: " << std::fabs(expectedReals0[k] - realValues0[k]) << std::endl;
+            //            std::cout << "Slave 0 actual: " << realValues0[k] << ", expected: " << expectedReals0[k] << ", diff: " << std::fabs(expectedReals0[k] - realValues0[k]) << std::endl;
             REQUIRE(std::fabs(expectedReals0[k] - realValues0[k]) < 1e-9);
             REQUIRE(std::fabs(expectedReals1[k] - realValues1[k]) < 1e-9);
         }
