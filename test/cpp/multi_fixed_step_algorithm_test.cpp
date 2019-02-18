@@ -75,7 +75,7 @@ int main()
         double expectedReals1[numSamples] = {2.0, 2.0, 2.0, 2.0, 3.0, 3.0, 3.0, 3.0, 4.0, 4.0};
 
         for (int k = 0; k < numSamples; k++) {
-//            std::cout << "Slave 0: " << realValues0[k] << ", Slave 1: " << realValues1[k] << std::endl;
+            std::cout << "Slave 0 actual: " << realValues0[k] << ", expected: " << expectedReals0[k] << ", diff: " << std::fabs(expectedReals0[k] - realValues0[k]) << std::endl;
             REQUIRE(std::fabs(expectedReals0[k] - realValues0[k]) < 1e-9);
             REQUIRE(std::fabs(expectedReals1[k] - realValues1[k]) < 1e-9);
         }
