@@ -35,19 +35,14 @@ to every `conan` command hereafter:
 
     -s build_type=Debug -s compiler.libcxx=libstdc++11
 
-### Step 2: Prepare the FMI Library package for Conan
+Most of our dependencies are available in the default Conan repository
+(`conan-public`).  For the rest, we add the OSP Conan repository as a remote:
 
-At the time of writing, there is no prebuilt Conan package available for [FMI
-Library], nor are there any package repositories that host the recipe.  So for
-this one package, we need to do the package creation ourselves.
-
-Clone/download [kyllingstad/conan-fmilibrary] from GitHub and run the following
-command from the topmost directory (the one that contains `conanfile.py`):
-
-    conan create . kyllingstad/testing
+    conan remote add osp https://osp-conan.azurewebsites.net/artifactory/api/conan/conan-local
+    conan user -p "Open Simulation Platform" -r osp osp
 
 
-### Step 3: Prepare build system
+### Step 2: Prepare build system
 
 Now, we will create a directory to hold the build system and generated files,
 use Conan to acquire dependencies, and run CMake to generate the build system.
@@ -91,7 +86,7 @@ some things worth noting about what we just did:
     whether to build in debug or release mode has to be made at generation time,
     using the `CMAKE_BUILD_TYPE` variable.
 
-### Step 4: Build and test
+### Step 3: Build and test
 
 When CMake generates IDE project files, as is the case for the Visual Studio
 generator, the software can of course be built, and tests run, from within the
