@@ -144,17 +144,14 @@ public:
     boost::fibers::future<bool> simulate_until(std::optional<time_point> targetTime);
 
     /**
-     *  Advance the co-simulation forward one single step.
-     *
-     *  \param maxDeltaT
-     *      The maximum duration of the step (optional).
+     *  Advance the co-simulation forward one single step
      *
      *  \returns
      *      The actual duration of the step.
      *      `current_time()` may be called to determine the actual time after
      *      the step completed.
      */
-    duration step(std::optional<duration> maxDeltaT);
+    duration step();
 
     /// Stops the co-simulation temporarily.
     void stop_simulation();

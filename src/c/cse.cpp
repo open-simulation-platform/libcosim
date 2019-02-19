@@ -255,7 +255,7 @@ cse_slave_index cse_execution_add_slave(
 
 void cse_execution_step(cse_execution* execution)
 {
-    execution->cpp_execution->step(std::nullopt);
+    execution->cpp_execution->step();
 }
 
 int cse_execution_step(cse_execution* execution, size_t numSteps)
