@@ -535,16 +535,22 @@ void background_thread_slave_backend(
 class background_thread_slave_frontend : public async_slave
 {
 public:
-    background_thread_slave_frontend(
-        std::shared_ptr<request_channel> requestChannel,
-        std::shared_ptr<reply_channel> replyChannel)
-        : requestChannel_(requestChannel)
-        , replyChannel_(replyChannel)
-        , state_(slave_state::created)
+    background_thread_slave_frontend(std::shared_ptr<slave> slave)
+        : state_(slave_state::created)
+        , requestChannel_(std::make_shared<request_channel>())
+        , replyChannel_(std::make_shared<reply_channel>())
+        , backendThread_(background_thread_slave_backend, slave, requestChannel_, replyChannel_)
     {
     }
 
-    ~background_thread_slave_frontend() = default;
+    ~background_thread_slave_frontend() noexcept
+    {
+        requestChannel_->put(end_simulation_request{});
+        // There may or may not be a reply, depending on whether the backend
+        // has already terminated. We don't care anyway, just wait for the
+        // thread.
+        backendThread_.join();
+    }
 
     // Disable copy and move, since we leak `this` references.
     background_thread_slave_frontend(background_thread_slave_frontend&&) = delete;
@@ -705,9 +711,10 @@ public:
     }
 
 private:
+    slave_state state_;
     std::shared_ptr<request_channel> requestChannel_;
     std::shared_ptr<reply_channel> replyChannel_;
-    slave_state state_;
+    std::thread backendThread_;
 
     boost::container::vector<double> realBuffer_;
     boost::container::vector<int> integerBuffer_;
@@ -721,10 +728,7 @@ private:
 std::shared_ptr<async_slave> make_background_thread_slave(std::shared_ptr<slave> slave)
 {
     CSE_INPUT_CHECK(slave);
-    auto req = std::make_shared<request_channel>();
-    auto rep = std::make_shared<reply_channel>();
-    std::thread(background_thread_slave_backend, slave, req, rep).detach();
-    return std::make_shared<background_thread_slave_frontend>(req, rep);
+    return std::make_shared<background_thread_slave_frontend>(slave);
 }
 
 
