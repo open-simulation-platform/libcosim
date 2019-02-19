@@ -36,9 +36,15 @@ void last_value_observer::step_complete(
     duration /*lastStepSize*/,
     time_point /*currentTime*/)
 {
-    for (const auto& valueProvider : valueProviders_) {
-        valueProvider.second->observe();
-    }
+}
+
+void last_value_observer::simulator_step_complete(
+    simulator_index index,
+    step_number /*lastStep*/,
+    duration /*lastStepSize*/,
+    time_point /*currentTime*/)
+{
+    valueProviders_.at(index)->observe();
 }
 
 void last_value_observer::get_real(

@@ -133,10 +133,13 @@ public:
         for (const auto& man : manipulators_) {
             man->step_commencing(currentTime_);
         }
-        const auto stepSize = algorithm_->do_step(currentTime_);
+        const auto [stepSize, finished] = algorithm_->do_step(currentTime_);
         currentTime_ += stepSize;
         ++lastStep_;
         for (const auto& obs : observers_) {
+            for (const auto& index : finished) {
+                obs->simulator_step_complete(index, lastStep_, stepSize, currentTime_);
+            }
             obs->step_complete(lastStep_, stepSize, currentTime_);
         }
         return stepSize;

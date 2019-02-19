@@ -100,7 +100,7 @@ public:
         }
     }
 
-    duration do_step(time_point currentT)
+    std::pair<duration, std::unordered_set<simulator_index>> do_step(time_point currentT)
     {
         for (auto& s : simulators_) {
             auto& info = s.second;
@@ -111,10 +111,10 @@ public:
 
         ++stepCounter_;
 
+        std::unordered_set<simulator_index> finished;
         bool failed = false;
         std::stringstream errMessages;
-        for (auto& s : simulators_) {
-            auto& info = s.second;
+        for (auto& [idx, info] : simulators_) {
             if (stepCounter_ % info.decimationFactor == 0) {
                 if (auto ep = info.stepResult.get_exception_ptr()) {
                     errMessages
@@ -127,6 +127,7 @@ public:
                         << "Step not complete" << '\n';
                     failed = true;
                 }
+                finished.insert(idx);
                 transfer_variables(info.outgoingConnections);
             }
         }
@@ -134,7 +135,7 @@ public:
             throw error(make_error_code(errc::simulation_error), errMessages.str());
         }
 
-        return baseStepSize_;
+        return std::pair(baseStepSize_, std::move(finished));
     }
 
     void set_stepsize_decimation_factor(cse::simulator_index i, int factor)
@@ -334,7 +335,7 @@ void fixed_step_algorithm::initialize()
 }
 
 
-duration fixed_step_algorithm::do_step(
+std::pair<duration, std::unordered_set<simulator_index>> fixed_step_algorithm::do_step(
     time_point currentT)
 {
     return pimpl_->do_step(currentT);

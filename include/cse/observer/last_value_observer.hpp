@@ -25,7 +25,6 @@ class slave_value_provider;
 class last_value_observer : public last_value_provider
 {
 public:
-
     last_value_observer();
 
     void simulator_added(simulator_index, observable*, time_point) override;
@@ -37,6 +36,12 @@ public:
     void variable_disconnected(variable_id input, time_point) override;
 
     void step_complete(
+        step_number lastStep,
+        duration lastStepSize,
+        time_point currentTime) override;
+
+    void simulator_step_complete(
+        simulator_index index,
         step_number lastStep,
         duration lastStepSize,
         time_point currentTime) override;

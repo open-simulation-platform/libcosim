@@ -16,6 +16,8 @@
 #include <memory>
 #include <optional>
 #include <string_view>
+#include <unordered_set>
+#include <utility>
 
 
 namespace cse
@@ -276,7 +278,7 @@ public:
      *      The actual time step length, which must be less than or equal
      *      to `maxDeltaT`, if specified.
      */
-    virtual duration do_step(time_point currentT) = 0;
+    virtual std::pair<duration, std::unordered_set<simulator_index>> do_step(time_point currentT) = 0;
 
     virtual ~algorithm() noexcept = default;
 };
@@ -318,7 +320,7 @@ public:
     void disconnect_variable(variable_id input) override;
     void setup(time_point startTime, std::optional<time_point> stopTime) override;
     void initialize() override;
-    duration do_step(time_point currentT) override;
+    std::pair<duration, std::unordered_set<simulator_index>> do_step(time_point currentT) override;
 
     /**
      * Sets step size decimation factor for a simulator.
