@@ -26,20 +26,24 @@ of course you can always build and install dependencies manually.
 
 ### Step 1: Configure Conan
 
+First, add the OSP Conan repository as a remote and configure the username and
+password to access it:
+
+    conan remote add osp https://osp-conan.azurewebsites.net/artifactory/api/conan/conan-local
+    conan user -p "Open Simulation Platform" -r osp osp
+
 As we will build the library using the *debug* configuration in this guide (as
 opposed to *release*), we must use the Conan setting `build_type=Debug`.  For
 GCC, we also need to set `compiler.libcxx=libstdc++11`, because the library
 makes heavy use of C++11/14/17 features.  You can either change these settings
-in your [Conan profile], or you must remember to append the following switches
-to every `conan` command hereafter:
+in your [Conan profile], or you can specify them using the `--settings` switch
+when running `conan install` later. To do the former, add one or both of the
+following lines to the appropriate profile(s):
 
-    -s build_type=Debug -s compiler.libcxx=libstdc++11
+    build_type=Debug
+    compiler.libcxx=libstdc++11
 
-Most of our dependencies are available in the default Conan repository
-(`conan-public`).  For the rest, we add the OSP Conan repository as a remote:
-
-    conan remote add osp https://osp-conan.azurewebsites.net/artifactory/api/conan/conan-local
-    conan user -p "Open Simulation Platform" -r osp osp
+Again, the second line should only be added if you are compiling with GCC.
 
 
 ### Step 2: Prepare build system
@@ -61,13 +65,17 @@ Then, acquire dependencies with Conan:
 
     conan install .. --build=missing
 
+(You may also have to append `--settings build_type=Debug` and possibly
+`--settings compiler.libcxx=libstdc++11` to this command; see Step 1 for more
+information.)
+
 Now, we can run CMake to generate the build system.  (If you have not installed
 Doxygen at this point, append `-DCSECORE_BUILD_APIDOC=OFF` to the next command
 to disable API documentation generation.)
 
 For **Visual Studio**, enter:
 
-    cmake .. -DCSECORE_USING_CONAN=TRUE -G "Visual Studio 15 2017 Win64"
+    cmake .. -DCSECORE_USING_CONAN=TRUE -A x64
 
 For **GCC**, run:
 
@@ -76,7 +84,7 @@ For **GCC**, run:
 At this point, we are ready to build and test the software.  But first, here are
 some things worth noting about what we just did:
 
-  * The `-G` (generator) switch we used for Visual Studio ensures that we build
+  * The `-A` (architecture) switch we used for Visual Studio ensures that we build
     in 64-bit mode, which is the default for Conan, but not for Visual Studio.
   * In addition to generating build files for MSBuild, CMake generates solution
     files for the Visual Studio IDE.  Open the `csecore.sln` file with VS if you
