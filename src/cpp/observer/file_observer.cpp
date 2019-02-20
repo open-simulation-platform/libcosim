@@ -225,11 +225,13 @@ void file_observer::variable_disconnected(variable_id /*input*/, time_point /*cu
 {
 }
 
-void file_observer::step_complete(step_number lastStep, duration /*lastStepSize*/, time_point currentTime)
+void file_observer::step_complete(step_number /*lastStep*/, duration /*lastStepSize*/, time_point /*currentTime*/)
 {
-    for (const auto& valueWriter : valueWriters_) {
-        valueWriter.second->observe(lastStep, currentTime);
-    }
+}
+
+void file_observer::simulator_step_complete(simulator_index index, step_number lastStep, duration /*lastStepSize*/, time_point currentTime)
+{
+    valueWriters_.at(index)->observe(lastStep, currentTime);
 }
 
 boost::filesystem::path file_observer::get_log_path()

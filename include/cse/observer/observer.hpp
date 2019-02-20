@@ -97,6 +97,13 @@ public:
         duration lastStepSize,
         time_point currentTime) = 0;
 
+    /// A simulator time step is complete, and a communication point was reached.
+    virtual void simulator_step_complete(
+        simulator_index index,
+        step_number lastStep,
+        duration lastStepSize,
+        time_point currentTime) = 0;
+
     virtual ~observer() noexcept {}
 };
 
