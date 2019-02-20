@@ -47,8 +47,8 @@ public:
     ~scenario_manager() noexcept override;
 
 private:
-    std::map<int, scenario::event> remainingEvents_;
-    std::map<int, scenario::event> executedEvents_;
+    std::unordered_map<int, scenario::event> remainingEvents_;
+    std::unordered_map<int, scenario::event> executedEvents_;
 
     scenario::scenario scenario_;
     time_point startTime_;

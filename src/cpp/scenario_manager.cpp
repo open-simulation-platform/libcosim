@@ -31,16 +31,14 @@ void scenario_manager::load_scenario(scenario::scenario s, time_point currentTim
     remainingEvents_.clear();
     executedEvents_.clear();
     for (const auto& event : scenario_.events) {
-        if (remainingEvents_.count(event.id)) {
-            BOOST_LOG_SEV(log::logger(), log::level::warning)
-                << "Replacing existing event with id " << event.id << " in scenario";
-        }
-        remainingEvents_[event.id] = event;
+        const auto index = static_cast<int>(remainingEvents_.size());
+        remainingEvents_[index] = event;
     }
     startTime_ = currentTime;
 }
 
-void scenario_manager::load_scenario(boost::filesystem::path scenarioFile, time_point currentTime) {
+void scenario_manager::load_scenario(boost::filesystem::path scenarioFile, time_point currentTime)
+{
     auto scenario = parse_scenario(scenarioFile, simulators_);
     load_scenario(scenario, currentTime);
 }
@@ -53,14 +51,14 @@ void scenario_manager::step_commencing(time_point currentTime)
     }
 
     auto executedEvents = std::map<int, scenario::event>();
-    for (const auto& [id, event] : remainingEvents_) {
+    for (const auto& [index, event] : remainingEvents_) {
         if (maybe_run_event(currentTime, event)) {
-            executedEvents[id] = event;
+            executedEvents[index] = event;
         }
     }
-    for (const auto& [id, event] : executedEvents) {
-        remainingEvents_.erase(id);
-        executedEvents_[id] = event;
+    for (const auto& [index, event] : executedEvents) {
+        remainingEvents_.erase(index);
+        executedEvents_[index] = event;
     }
 }
 

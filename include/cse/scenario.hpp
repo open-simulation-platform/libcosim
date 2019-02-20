@@ -54,6 +54,7 @@ struct string_input_manipulator
 {
     std::function<std::string(std::string_view)> f;
 };
+
 struct string_output_manipulator
 {
     std::function<std::string(std::string_view)> f;
@@ -77,7 +78,6 @@ struct variable_action
 
 struct event
 {
-    int id;
     time_trigger trigger;
     variable_action action;
 };

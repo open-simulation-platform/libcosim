@@ -142,7 +142,6 @@ scenario::scenario parse_scenario(boost::filesystem::path& scenarioFile, const s
     std::vector<scenario::event> events;
 
     for (auto& event : j.at("events")) {
-        auto id = event.at("id").get<int>();
         auto trigger = event.at("trigger");
         auto time = trigger.at("time");
         auto triggerTime = time.get<double>();
@@ -155,7 +154,7 @@ scenario::scenario parse_scenario(boost::filesystem::path& scenarioFile, const s
         variable_index varIndex = find_variable_index(simulator->model_description().variables, varName, type, causality);
 
         scenario::variable_action a = generate_action(event, index, type, causality, varIndex);
-        events.emplace_back(scenario::event{id, tr, a});
+        events.emplace_back(scenario::event{tr, a});
     }
 
     return scenario::scenario{events};
