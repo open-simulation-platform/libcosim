@@ -185,10 +185,9 @@ scenario::scenario parse_scenario(boost::filesystem::path& scenarioFile, const s
     defaults defaultOpts = parse_defaults(j);
 
     for (auto& event : j.at("events")) {
-        auto trigger = event.at("trigger");
-        auto time = trigger.at("time");
-        auto triggerTime = time.get<double>();
-        scenario::time_trigger tr{to_time_point(triggerTime)};
+        auto trigger = event.at("time");
+        auto triggerTime = trigger.get<double>();
+        auto time = to_time_point(triggerTime);
 
         const auto& [index, simulator] = find_simulator(simulators, specified_or_default(event, "model", defaultOpts.model));
         variable_type type = find_variable_type(specified_or_default(event, "type", defaultOpts.type));
@@ -198,7 +197,7 @@ scenario::scenario parse_scenario(boost::filesystem::path& scenarioFile, const s
 
         auto mode = specified_or_default(event, "action", defaultOpts.action);
         scenario::variable_action a = generate_action(event, mode, index, type, causality, varIndex);
-        events.emplace_back(scenario::event{tr, a});
+        events.emplace_back(scenario::event{time, a});
     }
 
     return scenario::scenario{events};

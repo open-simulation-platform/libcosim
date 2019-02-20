@@ -117,7 +117,7 @@ void scenario_manager::execute_action(simulator* sim, const scenario::variable_a
 
 bool scenario_manager::maybe_run_event(time_point currentTime, const scenario::event& e)
 {
-    if (currentTime >= e.trigger.trigger_point + startTime_.time_since_epoch()) {
+    if (currentTime >= e.time + startTime_.time_since_epoch()) {
         execute_action(simulators_[e.action.simulator], e.action);
         return true;
     }

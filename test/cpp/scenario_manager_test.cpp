@@ -41,30 +41,25 @@ int main()
         observer->start_observing(cse::variable_id{simIndex, cse::variable_type::integer, 0});
         observer->start_observing(cse::variable_id{simIndex, cse::variable_type::integer, 1});
 
-        auto realTrigger1 = cse::scenario::time_trigger{cse::to_time_point(0.5)};
         auto realManipulator1 = cse::scenario::real_input_manipulator{[](double original) { return original + 1.001; }};
         auto realAction1 = cse::scenario::variable_action{simIndex, 1, realManipulator1};
-        auto realEvent1 = cse::scenario::event{realTrigger1, realAction1};
+        auto realEvent1 = cse::scenario::event{cse::to_time_point(0.5), realAction1};
 
-        auto realTrigger2 = cse::scenario::time_trigger{cse::to_time_point(0.2)};
         auto realManipulator2 = cse::scenario::real_output_manipulator{[](double /*original*/) { return -1.0; }};
         auto realAction2 = cse::scenario::variable_action{simIndex, 0, realManipulator2};
-        auto realEvent2 = cse::scenario::event{realTrigger2, realAction2};
+        auto realEvent2 = cse::scenario::event{cse::to_time_point(0.2), realAction2};
 
-        auto realTrigger3 = cse::scenario::time_trigger{cse::to_time_point(0.3)};
         auto realManipulator3 = cse::scenario::real_output_manipulator{nullptr};
         auto realAction3 = cse::scenario::variable_action{simIndex, 0, realManipulator3};
-        auto realEvent3 = cse::scenario::event{realTrigger3, realAction3};
+        auto realEvent3 = cse::scenario::event{cse::to_time_point(0.3), realAction3};
 
-        auto intTrigger1 = cse::scenario::time_trigger{cse::to_time_point(0.65)};
         auto intManipulator1 = cse::scenario::integer_input_manipulator{[](int /*original*/) { return 2; }};
         auto intAction1 = cse::scenario::variable_action{simIndex, 1, intManipulator1};
-        auto intEvent1 = cse::scenario::event{intTrigger1, intAction1};
+        auto intEvent1 = cse::scenario::event{cse::to_time_point(0.65), intAction1};
 
-        auto intTrigger2 = cse::scenario::time_trigger{cse::to_time_point(0.8)};
         auto intManipulator2 = cse::scenario::integer_output_manipulator{[](int /*original*/) { return 5; }};
         auto intAction2 = cse::scenario::variable_action{simIndex, 0, intManipulator2};
-        auto intEvent2 = cse::scenario::event{intTrigger2, intAction2};
+        auto intEvent2 = cse::scenario::event{cse::to_time_point(0.8), intAction2};
 
         auto events = std::vector<cse::scenario::event>();
         events.push_back(realEvent1);
