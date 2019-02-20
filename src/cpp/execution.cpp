@@ -124,7 +124,7 @@ public:
         return !stopped_;
     }
 
-    duration step(std::optional<duration> maxDeltaT)
+    duration step()
     {
         if (!initialized_) {
             algorithm_->initialize();
@@ -133,10 +133,13 @@ public:
         for (const auto& man : manipulators_) {
             man->step_commencing(currentTime_);
         }
-        const auto stepSize = algorithm_->do_step(currentTime_, maxDeltaT);
+        const auto [stepSize, finished] = algorithm_->do_step(currentTime_);
         currentTime_ += stepSize;
         ++lastStep_;
         for (const auto& obs : observers_) {
+            for (const auto& index : finished) {
+                obs->simulator_step_complete(index, lastStep_, stepSize, currentTime_);
+            }
             obs->step_complete(lastStep_, stepSize, currentTime_);
         }
         return stepSize;
@@ -149,8 +152,7 @@ public:
             timer_.start(currentTime_);
             duration stepSize;
             do {
-                auto maxDeltaT = max_delta_t(endTime, currentTime_);
-                stepSize = step(maxDeltaT);
+                stepSize = step();
                 timer_.sleep(currentTime_);
             } while (!stopped_ && !timed_out(endTime, currentTime_, stepSize));
             return !stopped_;
@@ -199,14 +201,6 @@ private:
                 << " and name " << simulators_.at(variable.simulator)->name();
             throw std::out_of_range(oss.str());
         }
-    }
-
-    static std::optional<duration> max_delta_t(std::optional<time_point> endTime, time_point currentTime)
-    {
-        if (endTime) {
-            return *endTime - currentTime;
-        }
-        return {};
     }
 
     static bool timed_out(std::optional<time_point> endTime, time_point currentTime, duration stepSize)
@@ -273,9 +267,9 @@ boost::fibers::future<bool> execution::simulate_until(std::optional<time_point> 
     return pimpl_->simulate_until(endTime);
 }
 
-duration execution::step(std::optional<duration> maxDeltaT)
+duration execution::step()
 {
-    return pimpl_->step(maxDeltaT);
+    return pimpl_->step();
 }
 
 bool execution::is_running() const noexcept

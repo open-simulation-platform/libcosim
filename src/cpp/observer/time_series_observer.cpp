@@ -221,13 +221,19 @@ void time_series_observer::variable_disconnected(variable_id /*input*/, time_poi
 }
 
 void time_series_observer::step_complete(
+    step_number /*lastStep*/,
+    duration /*lastStepSize*/,
+    time_point /*currentTime*/)
+{
+}
+
+void time_series_observer::simulator_step_complete(
+    simulator_index index,
     step_number lastStep,
     duration /*lastStepSize*/,
     time_point currentTime)
 {
-    for (const auto& slaveObserver : slaveObservers_) {
-        slaveObserver.second->observe(lastStep, currentTime);
-    }
+    slaveObservers_.at(index)->observe(lastStep, currentTime);
 }
 
 void time_series_observer::start_observing(variable_id id)

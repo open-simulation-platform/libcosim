@@ -49,6 +49,12 @@ public:
         duration lastStepSize,
         time_point currentTime) override;
 
+    void simulator_step_complete(
+            simulator_index index,
+            step_number lastStep,
+            duration lastStepSize,
+            time_point currentTime) override;
+
     /**
      * Start observing a variable.
      *
