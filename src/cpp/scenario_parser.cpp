@@ -5,6 +5,7 @@
 
 #include <functional>
 #include <iostream>
+#include <optional>
 #include <stdexcept>
 #include <string>
 
@@ -113,9 +114,8 @@ cse::scenario::variable_action get_integer_action(const std::function<int(int)>&
     }
 }
 
-cse::scenario::variable_action generate_action(const nlohmann::json& event, cse::simulator_index sim, cse::variable_type type, cse::variable_causality causality, cse::variable_index var)
+cse::scenario::variable_action generate_action(const nlohmann::json& event, std::string mode, cse::simulator_index sim, cse::variable_type type, cse::variable_causality causality, cse::variable_index var)
 {
-    auto mode = event.at("action");
     switch (type) {
         case cse::variable_type::real: {
             auto f = generate_manipulator<double>(mode, event);
@@ -130,6 +130,48 @@ cse::scenario::variable_action generate_action(const nlohmann::json& event, cse:
     }
 }
 
+struct defaults
+{
+    std::optional<std::string> model;
+    std::optional<std::string> variable;
+    std::optional<std::string> causality;
+    std::optional<std::string> type;
+    std::optional<std::string> action;
+};
+
+std::optional<std::string> parse_element(const nlohmann::json& j, std::string name)
+{
+    if (j.count(name)) {
+        return j.at(name).get<std::string>();
+    } else {
+        return std::nullopt;
+    }
+}
+
+defaults parse_defaults(const nlohmann::json& scenario)
+{
+    if (scenario.count("defaults")) {
+        auto j = scenario.at("defaults");
+        return defaults{
+            parse_element(j, "model"),
+            parse_element(j, "variable"),
+            parse_element(j, "causality"),
+            parse_element(j, "type"),
+            parse_element(j, "action")};
+    }
+    return defaults{};
+}
+
+std::string specified_or_default(const nlohmann::json& j, std::string name, std::optional<std::string> defaultOption)
+{
+    if (j.count(name)) {
+        return j.at(name).get<std::string>();
+    } else if (defaultOption.has_value()) {
+        return *defaultOption;
+    }
+    throw std::invalid_argument("Option is not specified explicitly nor in defaults");
+}
+
 } // namespace
 
 
@@ -140,6 +182,7 @@ scenario::scenario parse_scenario(boost::filesystem::path& scenarioFile, const s
     i >> j;
 
     std::vector<scenario::event> events;
+    defaults defaultOpts = parse_defaults(j);
 
     for (auto& event : j.at("events")) {
         auto trigger = event.at("trigger");
@@ -147,13 +190,14 @@ scenario::scenario parse_scenario(boost::filesystem::path& scenarioFile, const s
         auto triggerTime = time.get<double>();
         scenario::time_trigger tr{to_time_point(triggerTime)};
 
-        const auto& [index, simulator] = find_simulator(simulators, event.at("model"));
-        variable_type type = find_variable_type(event.at("type"));
-        variable_causality causality = find_causality(event.at("causality"));
-        auto varName = event.at("variable").get<std::string>();
+        const auto& [index, simulator] = find_simulator(simulators, specified_or_default(event, "model", defaultOpts.model));
+        variable_type type = find_variable_type(specified_or_default(event, "type", defaultOpts.type));
+        variable_causality causality = find_causality(specified_or_default(event, "causality", defaultOpts.causality));
+        auto varName = specified_or_default(event, "variable", defaultOpts.variable);
         variable_index varIndex = find_variable_index(simulator->model_description().variables, varName, type, causality);
 
-        scenario::variable_action a = generate_action(event, index, type, causality, varIndex);
+        auto mode = specified_or_default(event, "action", defaultOpts.action);
+        scenario::variable_action a = generate_action(event, mode, index, type, causality, varIndex);
         events.emplace_back(scenario::event{tr, a});
     }
 
