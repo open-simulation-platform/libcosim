@@ -11,40 +11,37 @@
 
 namespace {
 
-    inline cse::variable_causality convert(const fmuproxy::thrift::Causality::type &c) {
-        switch (c) {
-            case fmuproxy::thrift::Causality::type::INPUT_CAUSALITY:
-                return cse::variable_causality::input;
-            case fmuproxy::thrift::Causality::type::OUTPUT_CAUSALITY:
-                return cse::variable_causality::output;
-            case fmuproxy::thrift::Causality::type::PARAMETER_CAUSALITY:
-                return cse::variable_causality::parameter;
-            case fmuproxy::thrift::Causality::type::CALCULATED_PARAMETER_CAUSALITY:
-                return cse::variable_causality::calculated_parameter;
-            case fmuproxy::thrift::Causality::type::LOCAL_CAUSALITY:
-            case fmuproxy::thrift::Causality::type::INDEPENDENT_CAUSALITY:
-            case fmuproxy::thrift::Causality::type::UNKNOWN_CAUSALITY:
-                return cse::variable_causality::local;
-            default:
-                CSE_PANIC();
+    inline cse::variable_causality parse_causality(const std::string &c) {
+        if (c.compare("input") == 0) {
+            return cse::variable_causality::input;
+        } else if (c.compare("output") == 0) {
+            return cse::variable_causality::output;
+        } else if (c.compare("parameter") == 0) {
+            return cse::variable_causality::parameter;
+        } else if (c.compare("calculated_parameter") == 0) {
+            return cse::variable_causality::calculated_parameter;
+        } else if (c.compare("local") == 0 || c.compare("independent") == 0 || c.compare("unknown") == 0) {
+            return cse::variable_causality::local;
+        } else {
+            const auto err = "Failed to parse causality: '" + c + "'";
+            CSE_PANIC_M(err.c_str());
         }
     }
 
-    inline cse::variable_variability convert(const fmuproxy::thrift::Variability::type &v) {
-        switch (v) {
-            case fmuproxy::thrift::Variability::type::CONSTANT_VARIABILITY:
-                return cse::variable_variability::constant;
-            case fmuproxy::thrift::Variability::type::DISCRETE_VARIABILITY:
-                return cse::variable_variability::discrete;
-            case fmuproxy::thrift::Variability::type::FIXED_VARIABILITY:
-                return cse::variable_variability::fixed;
-            case fmuproxy::thrift::Variability::type::TUNABLE_VARIABILITY:
-                return cse::variable_variability::tunable;
-            case fmuproxy::thrift::Variability::type::CONTINUOUS_VARIABILITY:
-            case fmuproxy::thrift::Variability::type::UNKNOWN_VARIABILITY:
-                return cse::variable_variability::continuous;
-            default:
-                CSE_PANIC();
+    inline cse::variable_variability parse_variability(const std::string &v) {
+        if (v.compare("constant") == 0) {
+            return cse::variable_variability::constant;
+        } else if (v.compare("discrete") == 0) {
+            return cse::variable_variability::discrete;
+        } else if (v.compare("fixed") == 0) {
+            return cse::variable_variability::fixed;
+        } else if (v.compare("tunable") == 0) {
+            return cse::variable_variability::tunable;
+        } else if (v.compare("continuous") == 0 || v.compare("unknown") == 0) {
+            return cse::variable_variability::continuous;
+        } else {
+            const auto err = "Failed to parse variability: '" + v + "'";
+            CSE_PANIC_M(err.c_str());
         }
     }
 
@@ -58,7 +55,8 @@ namespace {
         } else if (v.attribute.__isset.booleanAttribute) {
             return cse::variable_type::boolean;
         } else {
-            CSE_PANIC();
+            const auto err = "Failed to get type of variable: '" + v.name + "'";
+            CSE_PANIC_M(err.c_str());
         }
     }
 
@@ -66,8 +64,8 @@ namespace {
         cse::variable_description var;
         var.name = v.name;
         var.index = (cse::variable_index) v.valueReference;
-        var.causality = convert(v.causality);
-        var.variability = convert(v.variability);
+        var.causality = parse_causality(v.causality);
+        var.variability = parse_variability(v.variability);
         var.type = getType(v);
         return var;
     }
@@ -81,7 +79,6 @@ namespace {
     }
 
     inline std::shared_ptr<cse::model_description> convert(fmuproxy::thrift::ModelDescription &md) {
-
         auto modelDescription = std::make_shared<cse::model_description>();
         modelDescription->name = md.modelName;
         modelDescription->author = md.author;
@@ -90,7 +87,6 @@ namespace {
         modelDescription->description = md.description;
         modelDescription->variables = convert(md.modelVariables);
         return modelDescription;
-
     }
 
 }
