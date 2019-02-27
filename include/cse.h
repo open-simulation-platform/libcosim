@@ -664,6 +664,8 @@ int cse_execution_load_scenario(
         cse_manipulator* manipulator,
         const char* scenarioFile);
 
+int cse_scenario_is_running(cse_manipulator* manipulator);
+
 #ifdef __cplusplus
 } // extern(C)
 #endif
