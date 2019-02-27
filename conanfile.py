@@ -46,7 +46,7 @@ class CSECoreConan(ConanFile):
         cmake.parallel = False # Needed to keep stable build on Jenkins Windows Node
         cmake.definitions["CSECORE_USING_CONAN"] = "ON"
         if self.settings.build_type == "Debug":
-            cmake.definitions["CSCSECORE_BUILD_PRIVATE_APIDOC"] = "ON"
+            cmake.definitions["CSECORE_BUILD_PRIVATE_APIDOC"] = "ON"
         if self.options.fmuproxy:
             cmake.definitions["CSECORE_WITH_FMUPROXY"] = "ON"
         cmake.configure()
