@@ -68,10 +68,10 @@ void run_execution(remote_fmu &fmu) {
         execution.add_slave( cse::make_background_thread_slave(slaves[i]), std::string("slave") + std::to_string(i));
     }
 
-    execution.step({});
+    execution.step();
     auto elapsed = measure_time_sec([&execution] {
         for (int i = 0; i < numSteps-1; i++) {
-            execution.step({});
+            execution.step();
         }
     });
 
