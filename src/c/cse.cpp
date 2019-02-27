@@ -745,3 +745,18 @@ int cse_scenario_is_running(cse_manipulator* manipulator)
         return failure;
     }
 }
+
+int cse_scenario_abort(cse_manipulator* manipulator)
+{
+    try {
+        const auto manager = std::dynamic_pointer_cast<cse::scenario_manager>(manipulator->cpp_manipulator);
+        if (!manager) {
+            throw std::invalid_argument("Invalid manipulator! The provided manipulator must be a scenario_manager.");
+        }
+        manager->abort_scenario();
+        return success;
+    } catch (...) {
+        handle_current_exception();
+        return failure;
+    }
+}

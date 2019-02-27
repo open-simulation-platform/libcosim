@@ -49,6 +49,8 @@ public:
 
     bool is_scenario_running();
 
+    void abort_scenario();
+
     ~scenario_manager() noexcept override;
 
 private:

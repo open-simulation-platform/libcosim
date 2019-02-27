@@ -93,6 +93,13 @@ public:
         return state.running;
     }
 
+    void abort_scenario()
+    {
+        state.running = false;
+        state.remainingEvents.clear();
+        state.executedEvents.clear();
+    }
+
 private:
     struct scenario_state
     {
@@ -193,6 +200,11 @@ void scenario_manager::simulator_removed(simulator_index index, time_point)
 bool scenario_manager::is_scenario_running()
 {
     return pimpl_->is_scenario_running();
+}
+
+void scenario_manager::abort_scenario()
+{
+    pimpl_->abort_scenario();
 }
 
 scenario_manager::~scenario_manager() noexcept = default;
