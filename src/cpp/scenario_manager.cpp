@@ -28,10 +28,16 @@ class scenario_manager::impl
 {
 
 public:
-    impl()
-    {}
+    impl() = default;
+    ~impl() noexcept = default;
 
-    void load_scenario(scenario::scenario s, time_point currentTime)
+    impl(const impl&) = delete;
+    impl& operator=(const impl&) = delete;
+
+    impl(impl&&) = delete;
+    impl& operator=(impl&&) = delete;
+
+    void load_scenario(const scenario::scenario& s, time_point currentTime)
     {
         state = scenario_state{};
         state.startTime = currentTime;
@@ -46,7 +52,7 @@ public:
         BOOST_LOG_SEV(log::logger(), log::level::info) << "Successfully loaded scenario";
     }
 
-    void load_scenario(boost::filesystem::path scenarioFile, time_point currentTime)
+    void load_scenario(const boost::filesystem::path& scenarioFile, time_point currentTime)
     {
         BOOST_LOG_SEV(log::logger(), log::level::info) << "Loading scenario from " << scenarioFile;
         auto scenario = parse_scenario(scenarioFile, simulators_);
@@ -165,22 +171,24 @@ private:
     std::unordered_map<simulator_index, simulator*> simulators_;
 };
 
+scenario_manager::~scenario_manager() noexcept = default;
+scenario_manager::scenario_manager(scenario_manager&& other) noexcept = default;
+scenario_manager& scenario_manager::operator=(scenario_manager&& other) noexcept = default;
 
 scenario_manager::scenario_manager()
     : pimpl_(std::make_unique<impl>())
 {
 }
 
-void scenario_manager::load_scenario(scenario::scenario s, time_point currentTime)
+void scenario_manager::load_scenario(const scenario::scenario& s, time_point currentTime)
 {
     pimpl_->load_scenario(s, currentTime);
 }
 
-void scenario_manager::load_scenario(boost::filesystem::path scenarioFile, time_point currentTime)
+void scenario_manager::load_scenario(const boost::filesystem::path& scenarioFile, time_point currentTime)
 {
     pimpl_->load_scenario(scenarioFile, currentTime);
 }
-
 
 void scenario_manager::step_commencing(time_point currentTime)
 {
@@ -206,8 +214,5 @@ void scenario_manager::abort_scenario()
 {
     pimpl_->abort_scenario();
 }
-
-scenario_manager::~scenario_manager() noexcept = default;
-
 
 } // namespace cse

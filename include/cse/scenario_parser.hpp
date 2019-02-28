@@ -8,7 +8,7 @@
 
 namespace cse
 {
-scenario::scenario parse_scenario(boost::filesystem::path& scenarioFile, const std::unordered_map<simulator_index, simulator*>& simulators);
+scenario::scenario parse_scenario(const boost::filesystem::path& scenarioFile, const std::unordered_map<simulator_index, simulator*>& simulators);
 }
 
 #endif //CSECORE_SCENARIO_PARSER_H

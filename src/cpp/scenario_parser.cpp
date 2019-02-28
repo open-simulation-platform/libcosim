@@ -114,7 +114,7 @@ cse::scenario::variable_action get_integer_action(const std::function<int(int)>&
     }
 }
 
-cse::scenario::variable_action generate_action(const nlohmann::json& event, std::string mode, cse::simulator_index sim, cse::variable_type type, cse::variable_causality causality, cse::variable_index var)
+cse::scenario::variable_action generate_action(const nlohmann::json& event, const std::string& mode, cse::simulator_index sim, cse::variable_type type, cse::variable_causality causality, cse::variable_index var)
 {
     switch (type) {
         case cse::variable_type::real: {
@@ -139,7 +139,7 @@ struct defaults
     std::optional<std::string> action;
 };
 
-std::optional<std::string> parse_element(const nlohmann::json& j, std::string name)
+std::optional<std::string> parse_element(const nlohmann::json& j, const std::string& name)
 {
     if (j.count(name)) {
         return j.at(name).get<std::string>();
@@ -162,7 +162,7 @@ defaults parse_defaults(const nlohmann::json& scenario)
     return defaults{};
 }
 
-std::string specified_or_default(const nlohmann::json& j, std::string name, std::optional<std::string> defaultOption)
+std::string specified_or_default(const nlohmann::json& j, const std::string& name, std::optional<std::string> defaultOption)
 {
     if (j.count(name)) {
         return j.at(name).get<std::string>();
@@ -175,7 +175,7 @@ std::string specified_or_default(const nlohmann::json& j, std::string name, std:
 } // namespace
 
 
-scenario::scenario parse_scenario(boost::filesystem::path& scenarioFile, const std::unordered_map<simulator_index, simulator*>& simulators)
+scenario::scenario parse_scenario(const boost::filesystem::path& scenarioFile, const std::unordered_map<simulator_index, simulator*>& simulators)
 {
     boost::filesystem::ifstream i(scenarioFile);
     nlohmann::json j;

@@ -7,7 +7,6 @@
 
 #include <boost/filesystem/path.hpp>
 
-#include <map>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -43,15 +42,21 @@ public:
 
     scenario_manager();
 
-    void load_scenario(scenario::scenario s, time_point currentTime);
+    scenario_manager(const scenario_manager&) = delete;
+    scenario_manager& operator=(const scenario_manager&) = delete;
 
-    void load_scenario(boost::filesystem::path scenarioFile, time_point currentTime);
+    scenario_manager(scenario_manager&&) noexcept;
+    scenario_manager& operator=(scenario_manager&&) noexcept;
+
+    ~scenario_manager() noexcept override;
+
+    void load_scenario(const scenario::scenario& s, time_point currentTime);
+
+    void load_scenario(const boost::filesystem::path& scenarioFile, time_point currentTime);
 
     bool is_scenario_running();
 
     void abort_scenario();
-
-    ~scenario_manager() noexcept override;
 
 private:
     class impl;
