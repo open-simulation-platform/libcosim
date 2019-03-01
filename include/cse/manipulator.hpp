@@ -7,7 +7,7 @@
 
 #include <boost/filesystem/path.hpp>
 
-#include <map>
+#include <memory>
 #include <string>
 #include <unordered_map>
 
@@ -40,22 +40,27 @@ public:
     void step_commencing(
         time_point currentTime) override;
 
-    void load_scenario(scenario::scenario s, time_point currentTime);
+    scenario_manager();
 
-    void load_scenario(boost::filesystem::path scenarioFile, time_point currentTime);
+    scenario_manager(const scenario_manager&) = delete;
+    scenario_manager& operator=(const scenario_manager&) = delete;
+
+    scenario_manager(scenario_manager&&) noexcept;
+    scenario_manager& operator=(scenario_manager&&) noexcept;
 
     ~scenario_manager() noexcept override;
 
+    void load_scenario(const scenario::scenario& s, time_point currentTime);
+
+    void load_scenario(const boost::filesystem::path& scenarioFile, time_point currentTime);
+
+    bool is_scenario_running();
+
+    void abort_scenario();
+
 private:
-    std::map<int, scenario::event> remainingEvents_;
-    std::map<int, scenario::event> executedEvents_;
-
-    scenario::scenario scenario_;
-    time_point startTime_;
-    std::unordered_map<simulator_index, simulator*> simulators_;
-
-    void execute_action(simulator* sim, const scenario::variable_action& a);
-    bool maybe_run_event(time_point currentTime, const scenario::event& e);
+    class impl;
+    std::unique_ptr<impl> pimpl_;
 };
 
 class override_manipulator : public manipulator
