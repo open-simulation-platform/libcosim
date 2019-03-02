@@ -1,3 +1,7 @@
+#include <cstdio>
+#include <string>
+
+#include <boost/filesystem.hpp>
 
 #include <cse/error.hpp>
 #include <cse/fmuproxy/fmuproxy_client.hpp>
@@ -11,6 +15,26 @@ using namespace fmuproxy::thrift;
 using namespace apache::thrift::transport;
 using namespace apache::thrift::protocol;
 
+namespace fs = boost::filesystem;
+
+namespace {
+
+    void readData(std::string const &fileName, std::string &data) {
+
+        FILE *file = fopen(fileName.c_str(), "rb");
+        if (file == NULL) return;
+        fseek(file, 0, SEEK_END);
+        long int size = ftell(file);
+        fclose(file);
+        file = fopen(fileName.c_str(), "rb");
+
+        data.resize(size);
+        fread(data.data(), sizeof(unsigned char), size, file);
+        fclose(file);
+
+    }
+
+}
 
 cse::fmuproxy::fmuproxy_client::fmuproxy_client(const std::string &host, const unsigned int port, const bool concurrent) {
     std::shared_ptr<TTransport> socket(new TSocket(host, port));
@@ -34,7 +58,20 @@ cse::fmuproxy::fmuproxy_client::fmuproxy_client(const std::string &host, const u
 cse::fmuproxy::remote_fmu
 cse::fmuproxy::fmuproxy_client::from_url(const std::string &url) {
     FmuId fmuId;
-    state_->client_->load(fmuId, url);
+    state_->client_->loadFromUrl(fmuId, url);
+    return from_guid(fmuId);
+}
+
+cse::fmuproxy::remote_fmu
+cse::fmuproxy::fmuproxy_client::from_file(const std::string &file) {
+
+    const auto name = fs::path (file).stem().string();
+
+    std::string data;
+    readData(file, data);
+
+    FmuId fmuId;
+    state_->client_->loadFromFile(fmuId, name, data);
     return from_guid(fmuId);
 }
 

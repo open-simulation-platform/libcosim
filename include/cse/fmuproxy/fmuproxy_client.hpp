@@ -19,6 +19,8 @@ namespace cse {
 
             remote_fmu from_url(const std::string &url);
 
+            remote_fmu from_file(const std::string &file);
+
             remote_fmu from_guid(const std::string &guid);
 
         private:
