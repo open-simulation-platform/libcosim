@@ -588,7 +588,7 @@ int cse_observer_start_observing(cse_observer* observer, cse_slave_index slave, 
         if (!timeSeriesObserver) {
             throw std::invalid_argument("Invalid observer! The provided observer must be a time_series_observer.");
         }
-        const auto variableId = cse::variable_id{slave, to_variable_type(type), index};
+        const auto variableId = cse::variable_id {slave, to_variable_type(type), index};
         timeSeriesObserver->start_observing(variableId);
         return success;
     } catch (...) {
@@ -603,7 +603,7 @@ int cse_observer_stop_observing(cse_observer* observer, cse_slave_index slave, c
         if (!timeSeriesObserver) {
             throw std::invalid_argument("Invalid observer! The provided observer must be a time_series_observer.");
         }
-        const auto variableId = cse::variable_id{slave, to_variable_type(type), index};
+        const auto variableId = cse::variable_id {slave, to_variable_type(type), index};
         timeSeriesObserver->stop_observing(variableId);
         return success;
     } catch (...) {
@@ -699,6 +699,61 @@ int cse_manipulator_slave_set_integer(
         for (size_t i = 0; i < nv; i++) {
             man->override_integer_variable(slaveIndex, variables[i], values[i]);
         }
+        return success;
+    } catch (...) {
+        handle_current_exception();
+        return failure;
+    }
+}
+
+cse_manipulator* cse_scenario_manager_create()
+{
+    auto manipulator = std::make_unique<cse_manipulator>();
+    manipulator->cpp_manipulator = std::make_shared<cse::scenario_manager>();
+    return manipulator.release();
+}
+
+int cse_execution_load_scenario(
+    cse_execution* execution,
+    cse_manipulator* manipulator,
+    const char* scenarioFile)
+{
+    try {
+        auto time = execution->cpp_execution->current_time();
+        const auto manager = std::dynamic_pointer_cast<cse::scenario_manager>(manipulator->cpp_manipulator);
+        if (!manager) {
+            throw std::invalid_argument("Invalid manipulator! The provided manipulator must be a scenario_manager.");
+        }
+        manager->load_scenario(scenarioFile, time);
+        return success;
+    } catch (...) {
+        handle_current_exception();
+        return failure;
+    }
+}
+
+int cse_scenario_is_running(cse_manipulator* manipulator)
+{
+    try {
+        const auto manager = std::dynamic_pointer_cast<cse::scenario_manager>(manipulator->cpp_manipulator);
+        if (!manager) {
+            throw std::invalid_argument("Invalid manipulator! The provided manipulator must be a scenario_manager.");
+        }
+        return manager->is_scenario_running();
+    } catch (...) {
+        handle_current_exception();
+        return failure;
+    }
+}
+
+int cse_scenario_abort(cse_manipulator* manipulator)
+{
+    try {
+        const auto manager = std::dynamic_pointer_cast<cse::scenario_manager>(manipulator->cpp_manipulator);
+        if (!manager) {
+            throw std::invalid_argument("Invalid manipulator! The provided manipulator must be a scenario_manager.");
+        }
+        manager->abort_scenario();
         return success;
     } catch (...) {
         handle_current_exception();

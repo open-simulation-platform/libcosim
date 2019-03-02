@@ -15,11 +15,6 @@ namespace cse
 namespace scenario
 {
 
-struct time_trigger
-{
-    time_point trigger_point;
-};
-
 struct real_input_manipulator
 {
     std::function<double(double)> f;
@@ -54,6 +49,7 @@ struct string_input_manipulator
 {
     std::function<std::string(std::string_view)> f;
 };
+
 struct string_output_manipulator
 {
     std::function<std::string(std::string_view)> f;
@@ -77,8 +73,7 @@ struct variable_action
 
 struct event
 {
-    int id;
-    time_trigger trigger;
+    time_point time;
     variable_action action;
 };
 
