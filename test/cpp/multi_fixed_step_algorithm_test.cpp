@@ -37,6 +37,7 @@ int main()
 
         const cse::variable_index realOutIndex = 0;
         const cse::variable_index realInIndex = 1;
+        const cse::variable_index integerOutIndex = 0;
 
         double v = 0.0;
         auto idx0 = execution.add_slave(cse::make_pseudo_async(std::make_unique<mock_slave>([&v](double /*x*/) { return ++v; })), "slave 0");
@@ -47,8 +48,8 @@ int main()
         auto idx2 = execution.add_slave(cse::make_pseudo_async(std::make_unique<mock_slave>(nullptr, [&i](int /*x*/) { return ++i + 1; })), "slave 2");
 
         execution.connect_variables(
-            cse::variable_id {0, cse::variable_type::real, realOutIndex},
-            cse::variable_id {1, cse::variable_type::real, realInIndex});
+            cse::variable_id {idx0, cse::variable_type::real, realOutIndex},
+            cse::variable_id {idx1, cse::variable_type::real, realInIndex});
 
         algorithm->set_stepsize_decimation_factor(idx0, 1);
         algorithm->set_stepsize_decimation_factor(idx1, 2);
@@ -56,9 +57,9 @@ int main()
 
         auto observer2 = std::make_shared<cse::time_series_observer>();
         execution.add_observer(observer2);
-        observer2->start_observing(cse::variable_id {0, cse::variable_type::real, realOutIndex});
-        observer2->start_observing(cse::variable_id {1, cse::variable_type::real, realOutIndex});
-        observer2->start_observing(cse::variable_id {2, cse::variable_type::integer, 0});
+        observer2->start_observing(cse::variable_id {idx0, cse::variable_type::real, realOutIndex});
+        observer2->start_observing(cse::variable_id {idx1, cse::variable_type::real, realOutIndex});
+        observer2->start_observing(cse::variable_id {idx2, cse::variable_type::integer, integerOutIndex});
 
         // Run simulation
         auto simResult = execution.simulate_until(endTime);
@@ -68,12 +69,12 @@ int main()
         double realValues0[numSamples];
         cse::step_number steps0[numSamples];
         cse::time_point timeValues0[numSamples];
-        observer2->get_real_samples(0, realOutIndex, 1, gsl::make_span(realValues0, numSamples), gsl::make_span(steps0, numSamples), gsl::make_span(timeValues0, numSamples));
+        observer2->get_real_samples(idx0, realOutIndex, 1, gsl::make_span(realValues0, numSamples), gsl::make_span(steps0, numSamples), gsl::make_span(timeValues0, numSamples));
 
         double realValues1[numSamples];
         cse::step_number steps1[numSamples];
         cse::time_point timeValues1[numSamples];
-        observer2->get_real_samples(1, realOutIndex, 1, gsl::make_span(realValues1, numSamples), gsl::make_span(steps1, numSamples), gsl::make_span(timeValues1, numSamples));
+        observer2->get_real_samples(idx1, realOutIndex, 1, gsl::make_span(realValues1, numSamples), gsl::make_span(steps1, numSamples), gsl::make_span(timeValues1, numSamples));
 
         double expectedReals0[] = {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0};
         double expectedReals1[] = {1.0, 2.0, 4.0, 6.0, 8.0};
@@ -81,7 +82,7 @@ int main()
         int intValues[numSamples];
         cse::step_number steps[numSamples];
         cse::time_point timeValues[numSamples];
-        observer2->get_integer_samples(2, 0, 1, gsl::make_span(intValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(timeValues, numSamples));
+        observer2->get_integer_samples(idx2, integerOutIndex, 1, gsl::make_span(intValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(timeValues, numSamples));
 
         // int expectedInts[numSamples] = {0, 0, 2, 2, 2, 3, 3, 3, 4, 4}; // this is what we actually expect
         int expectedInts[] = {2, 3,  4};
