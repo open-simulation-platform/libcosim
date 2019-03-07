@@ -175,28 +175,28 @@ private:
     {
         std::visit(
             visitor(
-                [=](scenario::real_input_manipulator m) {
+                [=](scenario::real_input_manipulator /*m*/) {
                     sim->set_real_input_manipulator(a.variable, nullptr);
                 },
-                [=](scenario::real_output_manipulator m) {
+                [=](scenario::real_output_manipulator /*m*/) {
                     sim->set_real_output_manipulator(a.variable, nullptr);
                 },
-                [=](scenario::integer_input_manipulator m) {
+                [=](scenario::integer_input_manipulator /*m*/) {
                     sim->set_integer_input_manipulator(a.variable, nullptr);
                 },
-                [=](scenario::integer_output_manipulator m) {
+                [=](scenario::integer_output_manipulator /*m*/) {
                     sim->set_integer_output_manipulator(a.variable, nullptr);
                 },
-                [=](scenario::boolean_input_manipulator m) {
+                [=](scenario::boolean_input_manipulator /*m*/) {
                     sim->set_boolean_input_manipulator(a.variable, nullptr);
                 },
-                [=](scenario::boolean_output_manipulator m) {
+                [=](scenario::boolean_output_manipulator /*m*/) {
                     sim->set_boolean_output_manipulator(a.variable, nullptr);
                 },
-                [=](scenario::string_input_manipulator m) {
+                [=](scenario::string_input_manipulator /*m*/) {
                     sim->set_string_input_manipulator(a.variable, nullptr);
                 },
-                [=](scenario::string_output_manipulator m) {
+                [=](scenario::string_output_manipulator /*m*/) {
                     sim->set_string_output_manipulator(a.variable, nullptr);
                 }),
             a.manipulator);
