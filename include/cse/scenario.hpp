@@ -80,6 +80,7 @@ struct event
 struct scenario
 {
     std::vector<event> events;
+    std::optional<time_point> end;
 };
 
 } // namespace scenario

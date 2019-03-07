@@ -172,6 +172,15 @@ std::string specified_or_default(const nlohmann::json& j, const std::string& nam
     throw std::invalid_argument("Option is not specified explicitly nor in defaults");
 }
 
+std::optional<cse::time_point> parse_end_time(const nlohmann::json& j)
+{
+    if (j.count("end")) {
+        auto endTime = j.at("end").get<double>();
+        return to_time_point(endTime);
+    }
+    return std::nullopt;
+}
+
 } // namespace
 
 
@@ -200,6 +209,7 @@ scenario::scenario parse_scenario(const boost::filesystem::path& scenarioFile, c
         events.emplace_back(scenario::event{time, a});
     }
 
-    return scenario::scenario{events};
+    auto end = parse_end_time(j);
+    return scenario::scenario{events, end};
 }
 } // namespace cse
