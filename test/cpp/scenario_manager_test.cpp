@@ -67,7 +67,10 @@ int main()
         events.push_back(realEvent3);
         events.push_back(intEvent1);
         events.push_back(intEvent2);
-        auto scenario = cse::scenario::scenario{events};
+
+        auto end = cse::to_time_point(0.9);
+
+        auto scenario = cse::scenario::scenario{events, end};
 
         scenarioManager->load_scenario(scenario, startTime);
 
@@ -91,10 +94,10 @@ int main()
         samplesRead = observer->get_integer_samples(simIndex, 0, 1, gsl::make_span(intOutputValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
         REQUIRE(samplesRead == 10);
 
-        double expectedRealInputs[] = {0.0, 0.0, 0.0, 0.0, 0.0, 1.001, 1.001, 1.001, 1.001, 1.001};
-        double expectedRealOutputs[] = {1.234, 1.234, -1.0, 1.234, 1.234, 2.235, 2.235, 2.235, 2.235, 2.235};
-        int expectedIntInputs[] = {0, 0, 0, 0, 0, 0, 0, 2, 2, 2};
-        int expectedIntOutputs[] = {2, 2, 2, 2, 2, 2, 2, 4, 5, 5};
+        double expectedRealInputs[] = {0.0, 0.0, 0.0, 0.0, 0.0, 1.001, 1.001, 1.001, 1.001, 0.0};
+        double expectedRealOutputs[] = {1.234, 1.234, -1.0, 1.234, 1.234, 2.235, 2.235, 2.235, 2.235, 1.234};
+        int expectedIntInputs[] = {0, 0, 0, 0, 0, 0, 0, 2, 2, 0};
+        int expectedIntOutputs[] = {2, 2, 2, 2, 2, 2, 2, 4, 5, 2};
 
         for (size_t i = 0; i < samplesRead; i++) {
             REQUIRE(std::fabs(realInputValues[i] - expectedRealInputs[i]) < 1.0e-9);

@@ -42,7 +42,6 @@ public:
         state = scenario_state{};
         state.startTime = currentTime;
 
-
         for (const auto& event : s.events) {
             const auto index = static_cast<int>(state.remainingEvents.size());
             state.remainingEvents[index] = event;
@@ -66,14 +65,17 @@ public:
             return;
         }
 
-        if (state.remainingEvents.empty()) {
+        const auto relativeTime = currentTime - state.startTime.time_since_epoch();
+
+        bool timedOut = state.endTime ? *state.endTime > relativeTime : true;
+        if (state.remainingEvents.empty() && timedOut) {
             state.running = false;
+            cleanup(state.executedEvents);
             return;
         }
 
         auto executedEvents = std::map<int, scenario::event>();
         for (const auto& [index, event] : state.remainingEvents) {
-            const auto relativeTime = currentTime - state.startTime.time_since_epoch();
             if (maybe_run_event(relativeTime, event)) {
                 executedEvents[index] = event;
             }
@@ -102,6 +104,7 @@ public:
     void abort_scenario()
     {
         state.running = false;
+        cleanup(state.executedEvents);
         state.remainingEvents.clear();
         state.executedEvents.clear();
     }
@@ -112,6 +115,7 @@ private:
         std::unordered_map<int, scenario::event> remainingEvents;
         std::unordered_map<int, scenario::event> executedEvents;
         time_point startTime;
+        std::optional<time_point> endTime;
         bool running = false;
     };
 
@@ -165,6 +169,45 @@ private:
             return true;
         }
         return false;
+    }
+
+    void cleanup_action(simulator* sim, const scenario::variable_action& a)
+    {
+        std::visit(
+            visitor(
+                [=](scenario::real_input_manipulator /*m*/) {
+                    sim->set_real_input_manipulator(a.variable, nullptr);
+                },
+                [=](scenario::real_output_manipulator /*m*/) {
+                    sim->set_real_output_manipulator(a.variable, nullptr);
+                },
+                [=](scenario::integer_input_manipulator /*m*/) {
+                    sim->set_integer_input_manipulator(a.variable, nullptr);
+                },
+                [=](scenario::integer_output_manipulator /*m*/) {
+                    sim->set_integer_output_manipulator(a.variable, nullptr);
+                },
+                [=](scenario::boolean_input_manipulator /*m*/) {
+                    sim->set_boolean_input_manipulator(a.variable, nullptr);
+                },
+                [=](scenario::boolean_output_manipulator /*m*/) {
+                    sim->set_boolean_output_manipulator(a.variable, nullptr);
+                },
+                [=](scenario::string_input_manipulator /*m*/) {
+                    sim->set_string_input_manipulator(a.variable, nullptr);
+                },
+                [=](scenario::string_output_manipulator /*m*/) {
+                    sim->set_string_output_manipulator(a.variable, nullptr);
+                }),
+            a.manipulator);
+    }
+
+    void cleanup(std::unordered_map<int, scenario::event> executedEvents)
+    {
+        for(const auto& entry : executedEvents) {
+            auto e = entry.second;
+            cleanup_action(simulators_[e.action.simulator], e.action);
+        }
     }
 
     scenario_state state;
