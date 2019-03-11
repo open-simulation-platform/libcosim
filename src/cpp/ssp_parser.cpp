@@ -26,19 +26,19 @@ class ssp_parser
 {
 
 public:
-    ssp_parser(boost::filesystem::path xmlPath);
+    explicit ssp_parser(const boost::filesystem::path &xmlPath);
     ~ssp_parser() noexcept;
 
     struct DefaultExperiment
     {
-        double startTime;
-        double stopTime;
+        double startTime = 0.0;
+        double stopTime = std::numeric_limits<double>::infinity();
     };
 
     struct SimulationInformation
     {
         std::string description;
-        double stepSize;
+        double stepSize = 0.1;
     };
 
     const SimulationInformation& get_simulation_information() const;
@@ -88,7 +88,7 @@ private:
     std::vector<Connection> connections_;
 };
 
-ssp_parser::ssp_parser(boost::filesystem::path xmlPath)
+ssp_parser::ssp_parser(const boost::filesystem::path& xmlPath)
     : xmlPath_(xmlPath)
 {
     // Root node
@@ -102,18 +102,27 @@ ssp_parser::ssp_parser(boost::filesystem::path xmlPath)
     systemDescription_.name = get_attribute<std::string>(tmpTree, "name");
     systemDescription_.version = get_attribute<std::string>(tmpTree, "version");
 
-    const auto& defaultExperiment = tmpTree.get_child("ssd:DefaultExperiment");
-    defaultExperiment_.startTime = get_attribute<double>(defaultExperiment, "startTime");
-    defaultExperiment_.stopTime = get_attribute<double>(defaultExperiment, "stopTime");
+    if (const auto& defaultExperiment = tmpTree.get_child_optional("ssd:DefaultExperiment")) {
+        defaultExperiment_.startTime = get_attribute<double>(*defaultExperiment, "startTime");
+        defaultExperiment_.stopTime = get_attribute<double>(*defaultExperiment, "stopTime");
+    }
+
 
     tmpTree = pt_.get_child(path + ".ssd:System");
     systemDescription_.systemName = get_attribute<std::string>(tmpTree, "name");
     systemDescription_.systemDescription = get_attribute<std::string>(tmpTree, "description");
 
-    for (const auto& infos : tmpTree.get_child("ssd:SimulationInformation")) {
-        if (infos.first == "ssd:FixedStepMaster") {
-            simulationInformation_.description = get_attribute<std::string>(infos.second, "description");
-            simulationInformation_.stepSize = get_attribute<double>(infos.second, "stepSize");
+    if(const auto& annotations = tmpTree.get_child_optional("ssd:Annotations")) {
+        for (const auto& annotation : *annotations) {
+            const auto& annotationType = get_attribute<std::string>(annotation.second, "type");
+            if (annotationType == "org.open-simulation-platform") {
+                for (const auto& infos : annotation.second.get_child("osp:SimulationInformation")) {
+                    if (infos.first == "osp:FixedStepMaster") {
+                        simulationInformation_.description = get_attribute<std::string>(infos.second, "description");
+                        simulationInformation_.stepSize = get_attribute<double>(infos.second, "stepSize");
+                    }
+                }
+            }
         }
     }
 
@@ -194,7 +203,7 @@ std::pair<execution, simulator_map> load_ssp(const boost::filesystem::path& sspD
         auto slave = fmu->instantiate_slave(component.name);
         simulator_index index = slaves[component.name].index = execution.add_slave(cse::make_background_thread_slave(slave), component.name);
 
-        simulatorMap[component.name] = simulator_map_entry{index, component.source};
+        simulatorMap[component.name] = simulator_map_entry {index, component.source};
 
         for (const auto& v : fmu->model_description()->variables) {
             slaves[component.name].variables[v.name] = v;
