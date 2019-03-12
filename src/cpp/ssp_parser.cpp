@@ -26,7 +26,7 @@ class ssp_parser
 {
 
 public:
-    explicit ssp_parser(const boost::filesystem::path &xmlPath);
+    explicit ssp_parser(const boost::filesystem::path& xmlPath);
     ~ssp_parser() noexcept;
 
     struct DefaultExperiment
@@ -102,7 +102,7 @@ ssp_parser::ssp_parser(const boost::filesystem::path& xmlPath)
     systemDescription_.name = get_attribute<std::string>(tmpTree, "name");
     systemDescription_.version = get_attribute<std::string>(tmpTree, "version");
 
-    if (const auto& defaultExperiment = tmpTree.get_child_optional("ssd:DefaultExperiment")) {
+    if (const auto defaultExperiment = tmpTree.get_child_optional("ssd:DefaultExperiment")) {
         defaultExperiment_.startTime = get_attribute<double>(*defaultExperiment, "startTime");
         defaultExperiment_.stopTime = get_attribute<double>(*defaultExperiment, "stopTime");
     }
@@ -112,7 +112,7 @@ ssp_parser::ssp_parser(const boost::filesystem::path& xmlPath)
     systemDescription_.systemName = get_attribute<std::string>(tmpTree, "name");
     systemDescription_.systemDescription = get_attribute<std::string>(tmpTree, "description");
 
-    if(const auto& annotations = tmpTree.get_child_optional("ssd:Annotations")) {
+    if (const auto annotations = tmpTree.get_child_optional("ssd:Annotations")) {
         for (const auto& annotation : *annotations) {
             const auto& annotationType = get_attribute<std::string>(annotation.second, "type");
             if (annotationType == "org.open-simulation-platform") {
