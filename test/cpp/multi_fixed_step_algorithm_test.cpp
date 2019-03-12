@@ -100,6 +100,9 @@ int main()
         execution.connect_variables(
             cse::variable_id {idx1, cse::variable_type::integer, integerOutIndex},
             cse::variable_id {idx2, cse::variable_type::integer, integerInIndex});
+        execution.connect_variables(
+            cse::variable_id {idx2, cse::variable_type::integer, integerOutIndex},
+            cse::variable_id {idx1, cse::variable_type::integer, integerInIndex});
 
         algorithm->set_stepsize_decimation_factor(idx0, 1);
         algorithm->set_stepsize_decimation_factor(idx1, 2);
@@ -157,6 +160,11 @@ int main()
         for (auto t: setRealLog1) std::cout << t.time_since_epoch().count() / 1000000.0  << std::endl;
         REQUIRE(setRealLog1.size() == 5);
         REQUIRE(std::equal(setRealLog1.begin(), setRealLog1.end(), expectedSetRealTimes1));
+
+        const cse::time_point expectedSetIntTimes1[] = {startTime, startTime + 6 * stepSize};
+        const auto& setIntLog1 = slave2->get_set_integer_log();
+        REQUIRE(setIntLog1.size() == 2);
+        REQUIRE(std::equal(setIntLog1.begin(), setIntLog1.end(), expectedSetIntTimes1));
 
         const cse::time_point expectedSetIntTimes2[] = {startTime, startTime + 6 * stepSize};
         const auto& setIntLog2 = slave2->get_set_integer_log();
