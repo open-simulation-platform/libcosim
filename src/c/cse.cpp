@@ -588,7 +588,7 @@ int cse_observer_start_observing(cse_observer* observer, cse_slave_index slave, 
         if (!timeSeriesObserver) {
             throw std::invalid_argument("Invalid observer! The provided observer must be a time_series_observer.");
         }
-        const auto variableId = cse::variable_id {slave, to_variable_type(type), index};
+        const auto variableId = cse::variable_id{slave, to_variable_type(type), index};
         timeSeriesObserver->start_observing(variableId);
         return success;
     } catch (...) {
@@ -603,7 +603,7 @@ int cse_observer_stop_observing(cse_observer* observer, cse_slave_index slave, c
         if (!timeSeriesObserver) {
             throw std::invalid_argument("Invalid observer! The provided observer must be a time_series_observer.");
         }
-        const auto variableId = cse::variable_id {slave, to_variable_type(type), index};
+        const auto variableId = cse::variable_id{slave, to_variable_type(type), index};
         timeSeriesObserver->stop_observing(variableId);
         return success;
     } catch (...) {
@@ -698,6 +698,48 @@ int cse_manipulator_slave_set_integer(
         }
         for (size_t i = 0; i < nv; i++) {
             man->override_integer_variable(slaveIndex, variables[i], values[i]);
+        }
+        return success;
+    } catch (...) {
+        handle_current_exception();
+        return failure;
+    }
+}
+
+int cse_manipulator_slave_reset_real(
+    cse_manipulator* manipulator,
+    cse_slave_index slaveIndex,
+    const cse_variable_index variables[],
+    size_t nv)
+{
+    try {
+        const auto man = std::dynamic_pointer_cast<cse::override_manipulator>(manipulator->cpp_manipulator);
+        if (!man) {
+            throw std::invalid_argument("Invalid manipulator!");
+        }
+        for (size_t i = 0; i < nv; i++) {
+            man->reset_real_variable(slaveIndex, variables[i]);
+        }
+        return success;
+    } catch (...) {
+        handle_current_exception();
+        return failure;
+    }
+}
+
+int cse_manipulator_slave_reset_integer(
+    cse_manipulator* manipulator,
+    cse_slave_index slaveIndex,
+    const cse_variable_index variables[],
+    size_t nv)
+{
+    try {
+        const auto man = std::dynamic_pointer_cast<cse::override_manipulator>(manipulator->cpp_manipulator);
+        if (!man) {
+            throw std::invalid_argument("Invalid manipulator!");
+        }
+        for (size_t i = 0; i < nv; i++) {
+            man->reset_integer_variable(slaveIndex, variables[i]);
         }
         return success;
     } catch (...) {

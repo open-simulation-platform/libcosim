@@ -362,6 +362,28 @@ int cse_manipulator_slave_set_real(
     const double values[]);
 
 /**
+ *  Resets any previously overridden values of real variables for one slave.
+ *
+ *  \param [in] manipulator
+ *      The manipulator.
+ *  \param [in] slaveIndex
+ *      The slave.
+ *  \param [in] variables
+ *      A pointer to an array of length `nv` that contains the (slave-specific)
+ *      indices of variables to reset.
+ *  \param [in] nv
+ *      The length of the `variables` array.
+ *
+ *  \returns
+ *      0 on success and -1 on error.
+ */
+int cse_manipulator_slave_reset_real(
+    cse_manipulator* manipulator,
+    cse_slave_index slaveIndex,
+    const cse_variable_index variables[],
+    size_t nv);
+
+/**
  *  Retrieves the values of real variables for one slave.
  *
  *  \param [in] observer
@@ -437,6 +459,28 @@ int cse_manipulator_slave_set_integer(
     const cse_variable_index variables[],
     size_t nv,
     const int values[]);
+
+/**
+ *  Resets the values of any previously overridden integer variables for one slave.
+ *
+ *  \param [in] manipulator
+ *      The manipulator.
+ *  \param [in] slaveIndex
+ *      The slave.
+ *  \param [in] variables
+ *      A pointer to an array of length `nv` that contains the (slave-specific)
+ *      indices of variables to reset.
+ *  \param [in] nv
+ *      The length of the `variables` array.
+ *
+ *  \returns
+ *      0 on success and -1 on error.
+ */
+int cse_manipulator_slave_reset_integer(
+    cse_manipulator* manipulator,
+    cse_slave_index slaveIndex,
+    const cse_variable_index variables[],
+    size_t nv);
 
 /**
  *  Retrieves the values of integer variables for one slave.
@@ -660,9 +704,9 @@ cse_manipulator* cse_scenario_manager_create();
 
 /// Loads and executes a scenario from file.
 int cse_execution_load_scenario(
-        cse_execution* execution,
-        cse_manipulator* manipulator,
-        const char* scenarioFile);
+    cse_execution* execution,
+    cse_manipulator* manipulator,
+    const char* scenarioFile);
 
 /// Checks if a scenario is running
 int cse_scenario_is_running(cse_manipulator* manipulator);
