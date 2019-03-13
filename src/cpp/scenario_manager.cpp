@@ -179,28 +179,28 @@ private:
     {
         std::visit(
             visitor(
-                [=](scenario::real_manipulator m) {
+                [=](scenario::real_manipulator /*m*/) {
                     if (a.is_input) {
                         sim->set_real_input_manipulator(a.variable, nullptr);
                     } else {
                         sim->set_real_output_manipulator(a.variable, nullptr);
                     }
                 },
-                [=](scenario::integer_manipulator m) {
+                [=](scenario::integer_manipulator /*m*/) {
                     if (a.is_input) {
                         sim->set_integer_input_manipulator(a.variable, nullptr);
                     } else {
                         sim->set_integer_output_manipulator(a.variable, nullptr);
                     }
                 },
-                [=](scenario::boolean_manipulator m) {
+                [=](scenario::boolean_manipulator /*m*/) {
                     if (a.is_input) {
                         sim->set_boolean_input_manipulator(a.variable, nullptr);
                     } else {
                         sim->set_boolean_output_manipulator(a.variable, nullptr);
                     }
                 },
-                [=](scenario::string_manipulator m) {
+                [=](scenario::string_manipulator /*m*/) {
                     if (a.is_input) {
                         sim->set_string_input_manipulator(a.variable, nullptr);
                     } else {
@@ -210,7 +210,7 @@ private:
             a.manipulator);
     }
 
-    void cleanup(std::unordered_map<int, scenario::event> executedEvents)
+    void cleanup(const std::unordered_map<int, scenario::event>& executedEvents)
     {
         for (const auto& entry : executedEvents) {
             auto e = entry.second;
