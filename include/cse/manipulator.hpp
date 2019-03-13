@@ -84,7 +84,7 @@ public:
     ~override_manipulator() noexcept override;
 
 private:
-    void override_manipulator::add_action(
+    void add_action(
         simulator_index index,
         variable_index variable,
         variable_type type,
