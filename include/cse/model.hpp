@@ -14,6 +14,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <variant>
 
 
 namespace cse
@@ -278,6 +279,9 @@ struct variable_description
 
     /// The variable's variability.
     variable_variability variability;
+
+    /// The variable's start value.
+    std::variant<double, int, bool, std::string_view> start;
 };
 
 
