@@ -212,7 +212,7 @@ private:
 
     void cleanup(std::unordered_map<int, scenario::event> executedEvents)
     {
-        for(const auto& entry : executedEvents) {
+        for (const auto& entry : executedEvents) {
             auto e = entry.second;
             cleanup_action(simulators_[e.action.simulator], e.action);
         }
@@ -231,27 +231,37 @@ scenario_manager::scenario_manager()
 {
 }
 
-void scenario_manager::load_scenario(const scenario::scenario& s, time_point currentTime)
+void scenario_manager::load_scenario(
+    const scenario::scenario& s,
+    time_point currentTime)
 {
     pimpl_->load_scenario(s, currentTime);
 }
 
-void scenario_manager::load_scenario(const boost::filesystem::path& scenarioFile, time_point currentTime)
+void scenario_manager::load_scenario(
+    const boost::filesystem::path& scenarioFile,
+    time_point currentTime)
 {
     pimpl_->load_scenario(scenarioFile, currentTime);
 }
 
-void scenario_manager::step_commencing(time_point currentTime)
+void scenario_manager::step_commencing(
+    time_point currentTime)
 {
     pimpl_->step_commencing(currentTime);
 }
 
-void scenario_manager::simulator_added(simulator_index index, simulator* sim, time_point /*currentTime*/)
+void scenario_manager::simulator_added(
+    simulator_index index,
+    simulator* sim,
+    time_point /*currentTime*/)
 {
     pimpl_->simulator_added(index, sim);
 }
 
-void scenario_manager::simulator_removed(simulator_index index, time_point)
+void scenario_manager::simulator_removed(
+    simulator_index index,
+    time_point)
 {
     pimpl_->simulator_removed(index);
 }
