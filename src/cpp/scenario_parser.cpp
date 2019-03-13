@@ -58,6 +58,21 @@ cse::variable_causality find_causality(const nlohmann::json& j)
     throw std::invalid_argument("Can't process unknown variable type");
 }
 
+bool is_input(cse::variable_causality causality)
+{
+    switch (causality) {
+        case input:
+        case parameter:
+            return true;
+        case calculated_parameter:
+        case output:
+            return false;
+        default:
+            throw std::invalid_argument(
+                "No support for manipulating a variable with this causality");
+    }
+}
+
 cse::variable_index find_variable_index(const std::vector<variable_description>& variables,
     const std::string& name,
     const cse::variable_type type,
@@ -86,44 +101,16 @@ std::function<T(T)> generate_manipulator(const std::string& kind, const nlohmann
     throw std::invalid_argument("Can't process unknown modifier kind");
 }
 
-cse::scenario::variable_action get_real_action(const std::function<double(double)>& f, cse::variable_causality causality, cse::simulator_index sim, cse::variable_index variable)
-{
-    switch (causality) {
-        case input:
-        case parameter:
-            return cse::scenario::variable_action{sim, variable, cse::scenario::real_input_manipulator{f}};
-        case calculated_parameter:
-        case output:
-            return cse::scenario::variable_action{sim, variable, cse::scenario::real_output_manipulator{f}};
-        default:
-            throw std::invalid_argument("No support for manipulating a variable with this causality");
-    }
-}
-
-cse::scenario::variable_action get_integer_action(const std::function<int(int)>& f, cse::variable_causality causality, cse::simulator_index sim, cse::variable_index variable)
-{
-    switch (causality) {
-        case input:
-        case parameter:
-            return cse::scenario::variable_action{sim, variable, cse::scenario::integer_input_manipulator{f}};
-        case calculated_parameter:
-        case output:
-            return cse::scenario::variable_action{sim, variable, cse::scenario::integer_output_manipulator{f}};
-        default:
-            throw std::invalid_argument("No support for manipulating a variable with this causality");
-    }
-}
-
-cse::scenario::variable_action generate_action(const nlohmann::json& event, const std::string& mode, cse::simulator_index sim, cse::variable_type type, cse::variable_causality causality, cse::variable_index var)
+cse::scenario::variable_action generate_action(const nlohmann::json& event, const std::string& mode, cse::simulator_index sim, cse::variable_type type, bool isInput, cse::variable_index var)
 {
     switch (type) {
         case cse::variable_type::real: {
             auto f = generate_manipulator<double>(mode, event);
-            return get_real_action(f, causality, sim, var);
+            return cse::scenario::variable_action{sim, var, cse::scenario::real_manipulator{f}, isInput};
         }
         case cse::variable_type::integer: {
             auto f = generate_manipulator<int>(mode, event);
-            return get_integer_action(f, causality, sim, var);
+            return cse::scenario::variable_action{sim, var, cse::scenario::integer_manipulator{f}, isInput};
         }
         default:
             throw std::invalid_argument("No support for this variable type");
@@ -205,7 +192,8 @@ scenario::scenario parse_scenario(const boost::filesystem::path& scenarioFile, c
         variable_index varIndex = find_variable_index(simulator->model_description().variables, varName, type, causality);
 
         auto mode = specified_or_default(event, "action", defaultOpts.action);
-        scenario::variable_action a = generate_action(event, mode, index, type, causality, varIndex);
+        bool isInput = is_input(causality);
+        scenario::variable_action a = generate_action(event, mode, index, type, isInput, varIndex);
         events.emplace_back(scenario::event{time, a});
     }
 

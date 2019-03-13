@@ -84,8 +84,11 @@ public:
     ~override_manipulator() noexcept override;
 
 private:
-    template<typename I, typename O, typename M, typename N>
-    void add_action(simulator_index index, variable_index variable, variable_type type, std::function<O(I)> f);
+    void override_manipulator::add_action(
+        simulator_index index,
+        variable_index variable,
+        variable_type type,
+        const scenario::manipulators& m);
 
     std::unordered_map<simulator_index, simulator*> simulators_;
     std::vector<scenario::variable_action> actions_;
