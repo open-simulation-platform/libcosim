@@ -9,12 +9,13 @@
 #include <cstdint>
 #include <iterator>
 #include <limits>
+#include <optional>
 #include <ostream>
 #include <ratio>
 #include <string>
 #include <utility>
-#include <vector>
 #include <variant>
+#include <vector>
 
 
 namespace cse
@@ -281,7 +282,7 @@ struct variable_description
     variable_variability variability;
 
     /// The variable's start value.
-    std::variant<double, int, bool, std::string_view> start;
+    std::optional<std::variant<double, int, bool, std::string>> start;
 };
 
 
