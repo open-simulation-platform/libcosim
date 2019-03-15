@@ -110,23 +110,21 @@ variable_variability to_variable_variability(fmi2_variability_enu_t v)
 
 std::optional<std::variant<double, int, bool, std::string>> fmi1_to_start_value(fmi1_import_variable_t* fmiVariable, variable_type type)
 {
-    if (fmi1_import_get_variable_has_start(fmiVariable)) {
-        switch (type) {
-            case variable_type::real:
-                return fmi1_import_get_real_variable_start(fmi1_import_get_variable_as_real(fmiVariable));
-            case variable_type::integer:
-                return fmi1_import_get_integer_variable_start(fmi1_import_get_variable_as_integer(fmiVariable));
-            case variable_type::boolean:
-                return fmi1_import_get_boolean_variable_start(fmi1_import_get_variable_as_boolean(fmiVariable)) ? true : false;
-            case variable_type::string: {
-                return std::string(fmi1_import_get_string_variable_start(fmi1_import_get_variable_as_string(fmiVariable)));
-            }
-
-            default:
-                CSE_PANIC();
-        }
+    if (!fmi1_import_get_variable_has_start(fmiVariable)) {
+        return std::nullopt;
     }
-    return std::nullopt;
+    switch (type) {
+        case variable_type::real:
+            return fmi1_import_get_real_variable_start(fmi1_import_get_variable_as_real(fmiVariable));
+        case variable_type::integer:
+            return fmi1_import_get_integer_variable_start(fmi1_import_get_variable_as_integer(fmiVariable));
+        case variable_type::boolean:
+            return fmi1_import_get_boolean_variable_start(fmi1_import_get_variable_as_boolean(fmiVariable)) ? true : false;
+        case variable_type::string:
+            return std::string(fmi1_import_get_string_variable_start(fmi1_import_get_variable_as_string(fmiVariable)));
+        default:
+            CSE_PANIC();
+    }
 }
 
 
@@ -144,23 +142,24 @@ variable_description to_variable_description(fmi1_import_variable_t* fmiVariable
         fmi1_to_start_value(fmiVariable, type)};
 }
 
+
 std::optional<std::variant<double, int, bool, std::string>> fmi2_to_start_value(fmi2_import_variable_t* fmiVariable, variable_type type)
 {
-    if (fmi2_import_get_variable_has_start(fmiVariable)) {
-        switch (type) {
-            case variable_type::real:
-                return fmi2_import_get_real_variable_start(fmi2_import_get_variable_as_real(fmiVariable));
-            case variable_type::integer:
-                return fmi2_import_get_integer_variable_start(fmi2_import_get_variable_as_integer(fmiVariable));
-            case variable_type::boolean:
-                return fmi2_import_get_boolean_variable_start(fmi2_import_get_variable_as_boolean(fmiVariable)) ? true : false;
-            case variable_type::string:
-                return std::string(fmi2_import_get_string_variable_start(fmi2_import_get_variable_as_string(fmiVariable)));
-            default:
-                CSE_PANIC();
-        }
+    if (!fmi2_import_get_variable_has_start(fmiVariable)) {
+        return std::nullopt;
     }
-    return std::nullopt;
+    switch (type) {
+        case variable_type::real:
+            return fmi2_import_get_real_variable_start(fmi2_import_get_variable_as_real(fmiVariable));
+        case variable_type::integer:
+            return fmi2_import_get_integer_variable_start(fmi2_import_get_variable_as_integer(fmiVariable));
+        case variable_type::boolean:
+            return fmi2_import_get_boolean_variable_start(fmi2_import_get_variable_as_boolean(fmiVariable)) ? true : false;
+        case variable_type::string:
+            return std::string(fmi2_import_get_string_variable_start(fmi2_import_get_variable_as_string(fmiVariable)));
+        default:
+            CSE_PANIC();
+    }
 }
 
 
