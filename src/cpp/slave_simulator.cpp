@@ -83,12 +83,9 @@ template<typename T>
 class set_variable_cache
 {
 public:
-    void expose(variable_index i)
+    void expose(variable_index i, T startValue)
     {
-        // TODO: Here, exposed_variable::lastValue will be initialised with
-        // the value T().  We ought to use the start value from the model
-        // description instead.
-        exposedVariables_.emplace(i, exposed_variable());
+        exposedVariables_.emplace(i, exposed_variable{startValue, -1});
     }
 
     void set_value(variable_index i, typename var_view_type<T>::type v)
@@ -128,7 +125,7 @@ public:
             it->second.arrayIndex = indexes_.size();
             assert(indexes_.size() == values_.size());
             indexes_.emplace_back(i);
-            values_.emplace_back();
+            values_.emplace_back(it->second.lastValue);
         }
         if (m) {
             manipulators_[i] = m;
@@ -193,6 +190,14 @@ void copy_contents(Src&& src, Tgt&& tgt)
 {
     assert(static_cast<std::size_t>(src.size()) <= static_cast<std::size_t>(tgt.size()));
     std::copy(src.data(), src.data() + src.size(), tgt.data());
+}
+
+template<typename T>
+T get_start_value(variable_description vd)
+{
+    if (!vd.start) return T();
+
+    return std::get<T>(*vd.start);
 }
 } // namespace
 
@@ -270,18 +275,19 @@ public:
 
     void expose_for_setting(variable_type type, variable_index index)
     {
+        const auto vd = find_variable_description(index, type);
         switch (type) {
             case variable_type::real:
-                realSetCache_.expose(index);
+                realSetCache_.expose(index, get_start_value<double>(vd));
                 break;
             case variable_type::integer:
-                integerSetCache_.expose(index);
+                integerSetCache_.expose(index, get_start_value<int>(vd));
                 break;
             case variable_type::boolean:
-                booleanSetCache_.expose(index);
+                booleanSetCache_.expose(index, get_start_value<bool>(vd));
                 break;
             case variable_type::string:
-                stringSetCache_.expose(index);
+                stringSetCache_.expose(index, get_start_value<std::string>(vd));
                 break;
         }
     }
@@ -436,6 +442,20 @@ private:
         integerGetCache_.run_manipulators();
         booleanGetCache_.run_manipulators();
         stringGetCache_.run_manipulators();
+    }
+
+    variable_description find_variable_description(variable_index index, variable_type type)
+    {
+        for (const auto& vd : modelDescription_.variables) {
+            if (vd.type == type && vd.index == index) {
+                return vd;
+            }
+        }
+        std::ostringstream oss;
+        oss << "Variable with index " << index
+            << " and type " << type
+            << " not found in model desciption.";
+        throw std::out_of_range(oss.str());
     }
 
 private:
