@@ -129,11 +129,14 @@ public:
                     failed = true;
                 }
                 finished.insert(idx);
-                transfer_variables(info.outgoingConnections);
             }
         }
         if (failed) {
             throw error(make_error_code(errc::simulation_error), errMessages.str());
+        }
+
+        for (auto idx : finished) {
+            transfer_variables(simulators_.at(idx).outgoingConnections);
         }
 
         return std::pair(baseStepSize_, std::move(finished));
