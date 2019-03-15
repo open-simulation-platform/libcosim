@@ -49,14 +49,14 @@ public:
         cse::model_description md;
         md.name = "mock_slave";
         md.uuid = "09b7ee06-fc07-4ad0-86f1-cd183fbae519";
-        md.variables.push_back(cse::variable_description{"realOut", 0, cse::variable_type::real, cse::variable_causality::output, cse::variable_variability::discrete});
-        md.variables.push_back(cse::variable_description{"realIn", 1, cse::variable_type::real, cse::variable_causality::input, cse::variable_variability::discrete});
-        md.variables.push_back(cse::variable_description{"intOut", 0, cse::variable_type::integer, cse::variable_causality::output, cse::variable_variability::discrete});
-        md.variables.push_back(cse::variable_description{"intIn", 1, cse::variable_type::integer, cse::variable_causality::input, cse::variable_variability::discrete});
-        md.variables.push_back(cse::variable_description{"stringOut", 0, cse::variable_type::string, cse::variable_causality::output, cse::variable_variability::discrete});
-        md.variables.push_back(cse::variable_description{"stringIn", 1, cse::variable_type::string, cse::variable_causality::input, cse::variable_variability::discrete});
-        md.variables.push_back(cse::variable_description{"booleanOut", 0, cse::variable_type::boolean, cse::variable_causality::output, cse::variable_variability::discrete});
-        md.variables.push_back(cse::variable_description{"booleanIn", 1, cse::variable_type::boolean, cse::variable_causality::input, cse::variable_variability::discrete});
+        md.variables.push_back(cse::variable_description{"realOut", 0, cse::variable_type::real, cse::variable_causality::output, cse::variable_variability::discrete, 0.0});
+        md.variables.push_back(cse::variable_description{"realIn", 1, cse::variable_type::real, cse::variable_causality::input, cse::variable_variability::discrete, 1.0});
+        md.variables.push_back(cse::variable_description{"intOut", 0, cse::variable_type::integer, cse::variable_causality::output, cse::variable_variability::discrete, std::nullopt});
+        md.variables.push_back(cse::variable_description{"intIn", 1, cse::variable_type::integer, cse::variable_causality::input, cse::variable_variability::discrete, 1});
+        md.variables.push_back(cse::variable_description{"stringOut", 0, cse::variable_type::string, cse::variable_causality::output, cse::variable_variability::discrete, std::string("hello")});
+        md.variables.push_back(cse::variable_description{"stringIn", 1, cse::variable_type::string, cse::variable_causality::input, cse::variable_variability::discrete, std::nullopt});
+        md.variables.push_back(cse::variable_description{"booleanOut", 0, cse::variable_type::boolean, cse::variable_causality::output, cse::variable_variability::discrete, false});
+        md.variables.push_back(cse::variable_description{"booleanIn", 1, cse::variable_type::boolean, cse::variable_causality::input, cse::variable_variability::discrete, true});
         return md;
     }
 

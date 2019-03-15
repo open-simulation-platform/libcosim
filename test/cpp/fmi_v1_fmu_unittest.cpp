@@ -56,10 +56,19 @@ void run_tests(std::shared_ptr<fmi::fmu> fmu)
             BOOST_TEST(v.type == variable_type::real);
             BOOST_TEST(v.variability == variable_variability::discrete);
             BOOST_TEST(v.causality == variable_causality::input);
+            double start = std::get<double>(*v.start);
+            BOOST_TEST(start == 0.0);
         } else if (v.name == "stringOut") {
             BOOST_TEST(v.type == variable_type::string);
             BOOST_TEST(v.variability == variable_variability::discrete);
             BOOST_TEST(v.causality == variable_causality::output);
+            BOOST_TEST(!v.start.has_value());
+        } else if (v.name == "booleanIn") {
+            BOOST_TEST(v.type == variable_type::boolean);
+            BOOST_TEST(v.variability == variable_variability::discrete);
+            BOOST_TEST(v.causality == variable_causality::input);
+            bool start = std::get<bool>(*v.start);
+            BOOST_TEST(start == false);
         }
     }
 
