@@ -15,60 +15,38 @@ namespace cse
 namespace scenario
 {
 
-struct real_input_manipulator
+struct real_manipulator
 {
     std::function<double(double)> f;
 };
 
-struct real_output_manipulator
-{
-    std::function<double(double)> f;
-};
-
-struct integer_input_manipulator
+struct integer_manipulator
 {
     std::function<int(int)> f;
 };
 
-struct integer_output_manipulator
-{
-    std::function<int(int)> f;
-};
-
-struct boolean_input_manipulator
+struct boolean_manipulator
 {
     std::function<bool(bool)> f;
 };
 
-struct boolean_output_manipulator
-{
-    std::function<bool(bool)> f;
-};
-
-struct string_input_manipulator
+struct string_manipulator
 {
     std::function<std::string(std::string_view)> f;
 };
 
-struct string_output_manipulator
-{
-    std::function<std::string(std::string_view)> f;
-};
+using manipulators = std::variant<
+    real_manipulator,
+    integer_manipulator,
+    boolean_manipulator,
+    string_manipulator>;
 
 struct variable_action
 {
     simulator_index simulator;
     variable_index variable;
-    std::variant<
-        real_input_manipulator,
-        real_output_manipulator,
-        integer_input_manipulator,
-        integer_output_manipulator,
-        boolean_input_manipulator,
-        boolean_output_manipulator,
-        string_input_manipulator,
-        string_output_manipulator>
-        manipulator;
+    manipulators manipulator;
+    bool is_input;
 };
 
 struct event

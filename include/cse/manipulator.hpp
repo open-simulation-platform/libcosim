@@ -75,12 +75,24 @@ public:
     void override_real_variable(simulator_index, variable_index, double value);
     void override_integer_variable(simulator_index, variable_index, int value);
     void override_boolean_variable(simulator_index, variable_index, bool value);
-    void override_string_variable(simulator_index, variable_index, std::string value);
+    void override_string_variable(simulator_index, variable_index, const std::string& value);
+    void reset_real_variable(simulator_index, variable_index);
+    void reset_integer_variable(simulator_index, variable_index);
+    void reset_boolean_variable(simulator_index, variable_index);
+    void reset_string_variable(simulator_index, variable_index);
 
     ~override_manipulator() noexcept override;
 
 private:
+    void add_action(
+        simulator_index index,
+        variable_index variable,
+        variable_type type,
+        const scenario::manipulators& m);
+
     std::unordered_map<simulator_index, simulator*> simulators_;
+    std::vector<scenario::variable_action> actions_;
+    std::mutex lock_;
 };
 
 } // namespace cse

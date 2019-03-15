@@ -123,37 +123,41 @@ private:
     {
         std::visit(
             visitor(
-                [=](scenario::real_input_manipulator m) {
-                    sim->expose_for_setting(variable_type::real, a.variable);
-                    sim->set_real_input_manipulator(a.variable, m.f);
+                [=](scenario::real_manipulator m) {
+                    if (a.is_input) {
+                        sim->expose_for_setting(variable_type::real, a.variable);
+                        sim->set_real_input_manipulator(a.variable, m.f);
+                    } else {
+                        sim->expose_for_getting(variable_type::real, a.variable);
+                        sim->set_real_output_manipulator(a.variable, m.f);
+                    }
                 },
-                [=](scenario::real_output_manipulator m) {
-                    sim->expose_for_getting(variable_type::real, a.variable);
-                    sim->set_real_output_manipulator(a.variable, m.f);
+                [=](scenario::integer_manipulator m) {
+                    if (a.is_input) {
+                        sim->expose_for_setting(variable_type::integer, a.variable);
+                        sim->set_integer_input_manipulator(a.variable, m.f);
+                    } else {
+                        sim->expose_for_getting(variable_type::integer, a.variable);
+                        sim->set_integer_output_manipulator(a.variable, m.f);
+                    }
                 },
-                [=](scenario::integer_input_manipulator m) {
-                    sim->expose_for_setting(variable_type::integer, a.variable);
-                    sim->set_integer_input_manipulator(a.variable, m.f);
+                [=](scenario::boolean_manipulator m) {
+                    if (a.is_input) {
+                        sim->expose_for_setting(variable_type::boolean, a.variable);
+                        sim->set_boolean_input_manipulator(a.variable, m.f);
+                    } else {
+                        sim->expose_for_getting(variable_type::boolean, a.variable);
+                        sim->set_boolean_output_manipulator(a.variable, m.f);
+                    }
                 },
-                [=](scenario::integer_output_manipulator m) {
-                    sim->expose_for_getting(variable_type::integer, a.variable);
-                    sim->set_integer_output_manipulator(a.variable, m.f);
-                },
-                [=](scenario::boolean_input_manipulator m) {
-                    sim->expose_for_setting(variable_type::boolean, a.variable);
-                    sim->set_boolean_input_manipulator(a.variable, m.f);
-                },
-                [=](scenario::boolean_output_manipulator m) {
-                    sim->expose_for_getting(variable_type::boolean, a.variable);
-                    sim->set_boolean_output_manipulator(a.variable, m.f);
-                },
-                [=](scenario::string_input_manipulator m) {
-                    sim->expose_for_setting(variable_type::string, a.variable);
-                    sim->set_string_input_manipulator(a.variable, m.f);
-                },
-                [=](scenario::string_output_manipulator m) {
-                    sim->expose_for_getting(variable_type::string, a.variable);
-                    sim->set_string_output_manipulator(a.variable, m.f);
+                [=](scenario::string_manipulator m) {
+                    if (a.is_input) {
+                        sim->expose_for_setting(variable_type::string, a.variable);
+                        sim->set_string_input_manipulator(a.variable, m.f);
+                    } else {
+                        sim->expose_for_getting(variable_type::string, a.variable);
+                        sim->set_string_output_manipulator(a.variable, m.f);
+                    }
                 }),
             a.manipulator);
     }
@@ -175,36 +179,40 @@ private:
     {
         std::visit(
             visitor(
-                [=](scenario::real_input_manipulator /*m*/) {
-                    sim->set_real_input_manipulator(a.variable, nullptr);
+                [=](scenario::real_manipulator /*m*/) {
+                    if (a.is_input) {
+                        sim->set_real_input_manipulator(a.variable, nullptr);
+                    } else {
+                        sim->set_real_output_manipulator(a.variable, nullptr);
+                    }
                 },
-                [=](scenario::real_output_manipulator /*m*/) {
-                    sim->set_real_output_manipulator(a.variable, nullptr);
+                [=](scenario::integer_manipulator /*m*/) {
+                    if (a.is_input) {
+                        sim->set_integer_input_manipulator(a.variable, nullptr);
+                    } else {
+                        sim->set_integer_output_manipulator(a.variable, nullptr);
+                    }
                 },
-                [=](scenario::integer_input_manipulator /*m*/) {
-                    sim->set_integer_input_manipulator(a.variable, nullptr);
+                [=](scenario::boolean_manipulator /*m*/) {
+                    if (a.is_input) {
+                        sim->set_boolean_input_manipulator(a.variable, nullptr);
+                    } else {
+                        sim->set_boolean_output_manipulator(a.variable, nullptr);
+                    }
                 },
-                [=](scenario::integer_output_manipulator /*m*/) {
-                    sim->set_integer_output_manipulator(a.variable, nullptr);
-                },
-                [=](scenario::boolean_input_manipulator /*m*/) {
-                    sim->set_boolean_input_manipulator(a.variable, nullptr);
-                },
-                [=](scenario::boolean_output_manipulator /*m*/) {
-                    sim->set_boolean_output_manipulator(a.variable, nullptr);
-                },
-                [=](scenario::string_input_manipulator /*m*/) {
-                    sim->set_string_input_manipulator(a.variable, nullptr);
-                },
-                [=](scenario::string_output_manipulator /*m*/) {
-                    sim->set_string_output_manipulator(a.variable, nullptr);
+                [=](scenario::string_manipulator /*m*/) {
+                    if (a.is_input) {
+                        sim->set_string_input_manipulator(a.variable, nullptr);
+                    } else {
+                        sim->set_string_output_manipulator(a.variable, nullptr);
+                    }
                 }),
             a.manipulator);
     }
 
-    void cleanup(std::unordered_map<int, scenario::event> executedEvents)
+    void cleanup(const std::unordered_map<int, scenario::event>& executedEvents)
     {
-        for(const auto& entry : executedEvents) {
+        for (const auto& entry : executedEvents) {
             auto e = entry.second;
             cleanup_action(simulators_[e.action.simulator], e.action);
         }
@@ -223,27 +231,37 @@ scenario_manager::scenario_manager()
 {
 }
 
-void scenario_manager::load_scenario(const scenario::scenario& s, time_point currentTime)
+void scenario_manager::load_scenario(
+    const scenario::scenario& s,
+    time_point currentTime)
 {
     pimpl_->load_scenario(s, currentTime);
 }
 
-void scenario_manager::load_scenario(const boost::filesystem::path& scenarioFile, time_point currentTime)
+void scenario_manager::load_scenario(
+    const boost::filesystem::path& scenarioFile,
+    time_point currentTime)
 {
     pimpl_->load_scenario(scenarioFile, currentTime);
 }
 
-void scenario_manager::step_commencing(time_point currentTime)
+void scenario_manager::step_commencing(
+    time_point currentTime)
 {
     pimpl_->step_commencing(currentTime);
 }
 
-void scenario_manager::simulator_added(simulator_index index, simulator* sim, time_point /*currentTime*/)
+void scenario_manager::simulator_added(
+    simulator_index index,
+    simulator* sim,
+    time_point /*currentTime*/)
 {
     pimpl_->simulator_added(index, sim);
 }
 
-void scenario_manager::simulator_removed(simulator_index index, time_point)
+void scenario_manager::simulator_removed(
+    simulator_index index,
+    time_point)
 {
     pimpl_->simulator_removed(index);
 }
