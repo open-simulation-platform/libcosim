@@ -177,6 +177,9 @@ private:
 
     void cleanup_action(simulator* sim, const scenario::variable_action& a)
     {
+        BOOST_LOG_SEV(log::logger(), log::level::info)
+            << "Resetting variable for simulator " << a.simulator
+            << ", variable " << a.variable;
         std::visit(
             visitor(
                 [=](scenario::real_manipulator /*m*/) {
@@ -212,6 +215,8 @@ private:
 
     void cleanup(const std::unordered_map<int, scenario::event>& executedEvents)
     {
+        BOOST_LOG_SEV(log::logger(), log::level::info)
+            << "Scenario finished, performing cleanup";
         for (const auto& entry : executedEvents) {
             auto e = entry.second;
             cleanup_action(simulators_[e.action.simulator], e.action);
