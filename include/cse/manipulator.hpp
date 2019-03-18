@@ -1,3 +1,8 @@
+/**
+ *  \file
+ *  \brief Defines the `manipulator` interface.
+ */
+
 #ifndef CSECORE_MANIPULATOR_H
 #define CSECORE_MANIPULATOR_H
 
@@ -40,6 +45,7 @@ public:
     void step_commencing(
         time_point currentTime) override;
 
+    /// Constructor.
     scenario_manager();
 
     scenario_manager(const scenario_manager&) = delete;
@@ -50,12 +56,26 @@ public:
 
     ~scenario_manager() noexcept override;
 
+    /**
+     * Load a scenario for execution.
+     *
+     * @param s The in-memory constructed scenario.
+     * @param currentTime The time point at which the scenario will start.
+     */
     void load_scenario(const scenario::scenario& s, time_point currentTime);
 
+    /**
+     * Load a scenario for execution.
+     *
+     * @param scenarioFile The path to a proprietary `json` file defining the scenario.
+     * @param currentTime The time point at which the scenario will start.
+     */
     void load_scenario(const boost::filesystem::path& scenarioFile, time_point currentTime);
 
+    /// Return if a scenario is running.
     bool is_scenario_running();
 
+    /// Abort the execution of a running scenario.
     void abort_scenario();
 
 private:
@@ -72,13 +92,21 @@ public:
 
     void step_commencing(time_point currentTime) override;
 
+    /// Override the value of a variable with type `real`
     void override_real_variable(simulator_index, variable_index, double value);
+    /// Override the value of a variable with type `integer`
     void override_integer_variable(simulator_index, variable_index, int value);
+    /// Override the value of a variable with type `boolean`
     void override_boolean_variable(simulator_index, variable_index, bool value);
+    /// Override the value of a variable with type `string`
     void override_string_variable(simulator_index, variable_index, const std::string& value);
+    /// Reset override of a variable with type `real`
     void reset_real_variable(simulator_index, variable_index);
+    /// Reset override of a variable with type `integer`
     void reset_integer_variable(simulator_index, variable_index);
+    /// Reset override of a variable with type `boolean`
     void reset_boolean_variable(simulator_index, variable_index);
+    /// Reset override of a variable with type `string`
     void reset_string_variable(simulator_index, variable_index);
 
     ~override_manipulator() noexcept override;
