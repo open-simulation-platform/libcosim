@@ -196,7 +196,6 @@ template<typename T>
 T get_start_value(variable_description vd)
 {
     if (!vd.start) return T();
-
     return std::get<T>(*vd.start);
 }
 } // namespace
@@ -446,16 +445,18 @@ private:
 
     variable_description find_variable_description(variable_index index, variable_type type)
     {
-        for (const auto& vd : modelDescription_.variables) {
-            if (vd.type == type && vd.index == index) {
-                return vd;
-            }
+        auto it = std::find_if(
+            modelDescription_.variables.begin(),
+            modelDescription_.variables.end(),
+            [type, index](const auto& vd) { return vd.type == type && vd.index == index; });
+        if (it == modelDescription_.variables.end()) {
+            std::ostringstream oss;
+            oss << "Variable with index " << index
+                << " and type " << type
+                << " not found in model desciption.";
+            throw std::out_of_range(oss.str());
         }
-        std::ostringstream oss;
-        oss << "Variable with index " << index
-            << " and type " << type
-            << " not found in model desciption.";
-        throw std::out_of_range(oss.str());
+        return *it;
     }
 
 private:
