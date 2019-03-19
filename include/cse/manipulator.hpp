@@ -19,6 +19,13 @@
 namespace cse
 {
 
+/**
+ *  An interface for manipulators.
+ *
+ *  The methods in this interface represent various events that the manipulator
+ *  may react to in some way. It may manipulate the slaves' variable values
+ *  through the `simulator` interface at any time.
+ */
 class manipulator
 {
 public:
@@ -35,6 +42,9 @@ public:
     virtual ~manipulator() noexcept {}
 };
 
+/**
+ *  A manipulator implementation handling execution and control of scenarios.
+ */
 class scenario_manager : public manipulator
 {
 public:
@@ -59,16 +69,22 @@ public:
     /**
      * Load a scenario for execution.
      *
-     * @param s The in-memory constructed scenario.
-     * @param currentTime The time point at which the scenario will start.
+     * \param s
+     *  The in-memory constructed scenario.
+     * \param currentTime
+     *  The time point at which the scenario will start. The scenario's events
+     *  will be executed relative to this time point.
      */
     void load_scenario(const scenario::scenario& s, time_point currentTime);
 
     /**
      * Load a scenario for execution.
      *
-     * @param scenarioFile The path to a proprietary `json` file defining the scenario.
-     * @param currentTime The time point at which the scenario will start.
+     * \param scenarioFile
+     *  The path to a proprietary `json` file defining the scenario.
+     * \param currentTime
+     *  The time point at which the scenario will start. The scenario's events
+     *  will be executed relative to this time point.
      */
     void load_scenario(const boost::filesystem::path& scenarioFile, time_point currentTime);
 
@@ -83,6 +99,9 @@ private:
     std::unique_ptr<impl> pimpl_;
 };
 
+/**
+ *  A manipulator implementation handling overrides of variable values.
+ */
 class override_manipulator : public manipulator
 {
 public:
@@ -116,7 +135,11 @@ private:
         simulator_index index,
         variable_index variable,
         variable_type type,
-        const scenario::manipulators& m);
+        const std::variant<
+            scenario::real_manipulator,
+            scenario::integer_manipulator,
+            scenario::boolean_manipulator,
+            scenario::string_manipulator>& m);
 
     std::unordered_map<simulator_index, simulator*> simulators_;
     std::vector<scenario::variable_action> actions_;

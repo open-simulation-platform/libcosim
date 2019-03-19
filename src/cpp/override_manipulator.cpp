@@ -115,7 +115,11 @@ void override_manipulator::add_action(
     simulator_index index,
     variable_index variable,
     variable_type type,
-    const scenario::manipulators& m)
+    const std::variant<
+        scenario::real_manipulator,
+        scenario::integer_manipulator,
+        scenario::boolean_manipulator,
+        scenario::string_manipulator>& m)
 {
     auto sim = simulators_.at(index);
     auto causality = find_variable_causality(sim->model_description().variables, type, variable);
