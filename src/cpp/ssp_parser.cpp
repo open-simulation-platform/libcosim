@@ -38,7 +38,7 @@ public:
     struct SimulationInformation
     {
         std::string description;
-        double stepSize = 0.1;
+        double stepSize;
     };
 
     const SimulationInformation& get_simulation_information() const;
