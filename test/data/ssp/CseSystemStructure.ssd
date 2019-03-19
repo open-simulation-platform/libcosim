@@ -1,43 +1,53 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ssd:SystemStructureDescription name="cse-example" version="Draft20180219">
-	<ssd:System name="cse-instance" description="An example of how to use Core Simulation Environment">
+<ssd:SystemStructureDescription name="cse-example" version="1.0"
+                                xmlns:ssd="http://ssp-standard.org/SSP1/SystemStructureDescription"
+                                xmlns:ssc="http://ssp-standard.org/SSP1/SystemStructureCommon">
 
-		<ssd:SimulationInformation>
-			<ssd:FixedStepMaster description="FixedStepAlgorithm" stepSize="1e-1" />
-		</ssd:SimulationInformation>
+    <ssd:System name="cse-instance" description="An example of how to use Core Simulation Environment">
 
-		<ssd:Elements>
-			<ssd:Component name="FMU1" source="FMU1.fmu">
-				<ssd:Connectors>
-					<ssd:Connector name="Out" kind="ouput" type="Real"/>
-				</ssd:Connectors>
-			</ssd:Component>
-			<ssd:Component name="FMU2" source="FMU2.fmu">
-				<ssd:Connectors>
-					<ssd:Connector name="Out" kind="output" type="Real"/>
-				</ssd:Connectors>
-			</ssd:Component>
-			<ssd:Component name="FMU3" source="FMU3.fmu">
-				<ssd:Annotations>
-					<ssc:Annotation type="org.open-simulation-platform">
-						<osp:Connectors>
-							<osp:SumConnector name="sum_of_connections" />
-						</osp:Connectors>
-					</ssc:Annotation>
-				</ssd:Annotations>
-			</ssd:Component>
-		</ssd:Elements>
+        <ssd:Annotations>
+            <ssc:Annotation type="org.open-simulation-platform">
+                <osp:SimulationInformation>
+                    <osp:FixedStepMaster description="FixedStepAlgorithm" stepSize="1e-1"/>
+                </osp:SimulationInformation>
+            </ssc:Annotation>
+        </ssd:Annotations>
 
-		<ssd:Annotations>
-			<ssc:Annotation type="org.open-simulation-platform">
-				<osp:Connections>
-					<osp:SumConnection endElement="FMU3" connector="sum_of_connections">
-						<osp:SumSource startElement="FMU1" Connector="Out" />
-						<osp:SumSource startElement="FMU2" connector="Out" />
-					</osp:SumConnection>
-				</osp:Connections>
-			</ssc:Annotation>
-		</ssd:Annotations>
+        <ssd:Elements>
+            <ssd:Component name="FMU1" source="FMU1.fmu">
+                <ssd:Connectors>
+                    <ssd:Connector name="Out" kind="output">
+                        <ssc:Real/>
+                    </ssd:Connector>
+                </ssd:Connectors>
+            </ssd:Component>
 
-	</ssd:System>
+            <ssd:Component name="FMU2" source="FMU2.fmu">
+                <ssd:Connectors>
+                    <ssd:Connector name="out" kind="output">
+                        <ssc:Real/>
+                    </ssd:Connector>
+                </ssd:Connectors>
+            </ssd:Component>
+            <ssd:Component name="FMU3" source="FMU3.fmu">
+                <ssd:Connectors>
+                    <ssd:Connector name="sum_input" kind="input">
+                        <ssc:Real/>
+                    </ssd:Connector>
+                </ssd:Connectors>
+            </ssd:Component>
+        </ssd:Elements>
+
+        <ssd:Annotations>
+            <Annotation type="org.open-simulation-platform">
+                <osp:Connections>
+                    <osp:SumConnection endElement="FMU3" connector="sum_of_connections">
+                        <osp:SumSource startElement="FMU1" Connector="Out"/>
+                        <osp:SumSource startElement="FMU2" connector="Out"/>
+                    </osp:SumConnection>
+                </osp:Connections>
+            </Annotation>
+        </ssd:Annotations>
+
+    </ssd:System>
 </ssd:SystemStructureDescription>
