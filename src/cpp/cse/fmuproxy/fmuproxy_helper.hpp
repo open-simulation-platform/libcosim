@@ -20,7 +20,8 @@ namespace {
             return cse::variable_causality::parameter;
         } else if (c.compare("calculated_parameter") == 0) {
             return cse::variable_causality::calculated_parameter;
-        } else if (c.compare("local") == 0 || c.compare("independent") == 0 || c.compare("unknown") == 0) {
+        } else if (c.compare("local") == 0
+                   || c.compare("independent") == 0 || c.compare("unknown") == 0 || c.compare("") == 0) {
             return cse::variable_causality::local;
         } else {
             const auto err = "Failed to parse causality: '" + c + "'";
@@ -37,7 +38,7 @@ namespace {
             return cse::variable_variability::fixed;
         } else if (v.compare("tunable") == 0) {
             return cse::variable_variability::tunable;
-        } else if (v.compare("continuous") == 0 || v.compare("unknown") == 0) {
+        } else if (v.compare("continuous") == 0 || v.compare("unknown") == 0 || v.compare("") == 0) {
             return cse::variable_variability::continuous;
         } else {
             const auto err = "Failed to parse variability: '" + v + "'";
@@ -45,7 +46,7 @@ namespace {
         }
     }
 
-    inline cse::variable_type getType(const fmuproxy::thrift::ScalarVariable &v) {
+    inline cse::variable_type get_type(const fmuproxy::thrift::ScalarVariable &v) {
         if (v.attribute.__isset.integerAttribute) {
             return cse::variable_type::integer;
         } else if (v.attribute.__isset.realAttribute) {
@@ -66,7 +67,7 @@ namespace {
         var.index = (cse::variable_index) v.valueReference;
         var.causality = parse_causality(v.causality);
         var.variability = parse_variability(v.variability);
-        var.type = getType(v);
+        var.type = get_type(v);
         return var;
     }
 
