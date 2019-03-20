@@ -18,7 +18,7 @@ int main()
 {
     try {
         constexpr cse::time_point startTime = cse::to_time_point(0.0);
-        constexpr cse::time_point endTime = cse::to_time_point(1.0);
+        constexpr cse::time_point endTime = cse::to_time_point(1.1);
         constexpr cse::duration stepSize = cse::to_duration(0.1);
 
         cse::log::set_global_output_level(cse::log::level::trace);
@@ -71,7 +71,7 @@ int main()
         events.push_back(intEvent1);
         events.push_back(intEvent2);
 
-        auto end = cse::to_time_point(0.9);
+        auto end = cse::to_time_point(1.0);
 
         auto scenario = cse::scenario::scenario{events, end};
 
@@ -80,7 +80,7 @@ int main()
         auto simResult = execution.simulate_until(endTime);
         REQUIRE(simResult.get());
 
-        const int numSamples = 10;
+        const int numSamples = 11;
         double realInputValues[numSamples];
         double realOutputValues[numSamples];
         int intInputValues[numSamples];
@@ -89,18 +89,18 @@ int main()
         cse::time_point times[numSamples];
 
         size_t samplesRead = observer->get_real_samples(simIndex, 1, 1, gsl::make_span(realInputValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
-        REQUIRE(samplesRead == 10);
+        REQUIRE(samplesRead == 11);
         samplesRead = observer->get_real_samples(simIndex, 0, 1, gsl::make_span(realOutputValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
-        REQUIRE(samplesRead == 10);
+        REQUIRE(samplesRead == 11);
         samplesRead = observer->get_integer_samples(simIndex, 1, 1, gsl::make_span(intInputValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
-        REQUIRE(samplesRead == 10);
+        REQUIRE(samplesRead == 11);
         samplesRead = observer->get_integer_samples(simIndex, 0, 1, gsl::make_span(intOutputValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
-        REQUIRE(samplesRead == 10);
+        REQUIRE(samplesRead == 11);
 
-        double expectedRealInputs[] = {0.0, 0.0, 0.0, 0.0, 0.0, 2.001, 2.001, 2.001, 2.001, 1.0};
-        double expectedRealOutputs[] = {1.234, 1.234, -1.0, 1.234, 1.234, 3.235, 3.235, 3.235, 3.235, 2.234};
-        int expectedIntInputs[] = {0, 0, 0, 0, 0, 0, 0, 2, 2, 1};
-        int expectedIntOutputs[] = {2, 2, 2, 2, 2, 2, 2, 4, 5, 3};
+        double expectedRealInputs[] = {0.0, 0.0, 0.0, 0.0, 0.0, 2.001, 2.001, 2.001, 2.001, 2.001, 1.0};
+        double expectedRealOutputs[] = {1.234, 1.234, -1.0, 1.234, 1.234, 3.235, 3.235, 3.235, 3.235, 3.235, 2.234};
+        int expectedIntInputs[] = {0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 1};
+        int expectedIntOutputs[] = {2, 2, 2, 2, 2, 2, 2, 4, 5, 5, 3};
 
         for (size_t i = 0; i < samplesRead; i++) {
             REQUIRE(std::fabs(realInputValues[i] - expectedRealInputs[i]) < 1.0e-9);

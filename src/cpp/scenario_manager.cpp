@@ -41,6 +41,7 @@ public:
     {
         state = scenario_state{};
         state.startTime = currentTime;
+        state.endTime = s.end;
 
         for (const auto& event : s.events) {
             const auto index = static_cast<int>(state.remainingEvents.size());
@@ -67,8 +68,12 @@ public:
 
         const auto relativeTime = currentTime - state.startTime.time_since_epoch();
 
-        bool timedOut = state.endTime ? *state.endTime > relativeTime : true;
+        bool timedOut = state.endTime ? relativeTime >= *state.endTime : true;
         if (state.remainingEvents.empty() && timedOut) {
+            BOOST_LOG_SEV(log::logger(), log::level::info)
+                << "Scenario finished at relative time "
+                << to_double_time_point(relativeTime)
+                << ", performing cleanup";
             state.running = false;
             cleanup(state.executedEvents);
             return;
@@ -103,6 +108,8 @@ public:
 
     void abort_scenario()
     {
+        BOOST_LOG_SEV(log::logger(), log::level::info)
+            << "Scenario aborted, performing cleanup";
         state.running = false;
         cleanup(state.executedEvents);
         state.remainingEvents.clear();
@@ -215,8 +222,6 @@ private:
 
     void cleanup(const std::unordered_map<int, scenario::event>& executedEvents)
     {
-        BOOST_LOG_SEV(log::logger(), log::level::info)
-            << "Scenario finished, performing cleanup";
         for (const auto& entry : executedEvents) {
             auto e = entry.second;
             cleanup_action(simulators_[e.action.simulator], e.action);
