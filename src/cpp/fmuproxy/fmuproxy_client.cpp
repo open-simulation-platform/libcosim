@@ -19,7 +19,7 @@ namespace fs = boost::filesystem;
 namespace
 {
 
-void readData(std::string const& fileName, std::string& data)
+void read_data(std::string const &fileName, std::string &data)
 {
 
     FILE* file = fopen(fileName.c_str(), "rb");
@@ -28,9 +28,13 @@ void readData(std::string const& fileName, std::string& data)
     long int size = ftell(file);
     fclose(file);
     file = fopen(fileName.c_str(), "rb");
-
-    data.resize(size);
+#if defined(__GNUC__)
+    size_t read __attribute__((unused)) = fread(data.data(), sizeof(unsigned char), size, file);
+#else
     fread(data.data(), sizeof(unsigned char), size, file);
+#endif
+    data.resize(size);
+
     fclose(file);
 }
 
@@ -49,7 +53,7 @@ cse::fmuproxy::fmuproxy_client::fmuproxy_client(const std::string& host, const u
     }
     try {
         transport->open();
-    } catch (TTransportException) {
+    } catch (TTransportException&) {
         std::string msg = "Failed to connect to remote FMU @ " + host + ":" + std::to_string(port);
         CSE_PANIC_M(msg.c_str());
     }
@@ -71,7 +75,7 @@ cse::fmuproxy::fmuproxy_client::from_file(const std::string& file)
     const auto name = fs::path(file).stem().string();
 
     std::string data;
-    readData(file, data);
+    read_data(file, data);
 
     FmuId fmuId;
     state_->client_->loadFromFile(fmuId, name, data);
