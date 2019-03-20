@@ -5,33 +5,33 @@
 #include <cse/fmuproxy/fmu_service.hpp>
 #include <cse/fmuproxy/remote_fmu.hpp>
 
-namespace cse {
+namespace cse
+{
 
-    namespace fmuproxy {
+namespace fmuproxy
+{
 
-        class fmuproxy_client {
+class fmuproxy_client
+{
 
-        public:
+public:
+    fmuproxy_client(const std::string& host,
+        unsigned int port,
+        bool concurrent = false);
 
-            fmuproxy_client(const std::string &host,
-                            unsigned int port,
-                            bool concurrent = false);
+    remote_fmu from_url(const std::string& url);
 
-            remote_fmu from_url(const std::string &url);
+    remote_fmu from_file(const std::string& file);
 
-            remote_fmu from_file(const std::string &file);
+    remote_fmu from_guid(const std::string& guid);
 
-            remote_fmu from_guid(const std::string &guid);
+private:
+    std::shared_ptr<thrift_state> state_;
+};
 
-        private:
+} // namespace fmuproxy
 
-            std::shared_ptr<thrift_state> state_;
-
-        };
-
-    }
-
-}
+} // namespace cse
 
 
 #endif

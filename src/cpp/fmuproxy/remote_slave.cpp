@@ -3,17 +3,23 @@
 #include <cse/fmuproxy/fmuproxy_helper.hpp>
 #include <cse/fmuproxy/remote_slave.hpp>
 
-cse::fmuproxy::remote_slave::remote_slave(const std::string &instanceId,
-                                          std::shared_ptr<::fmuproxy::thrift::FmuServiceIf> client,
-                                          std::shared_ptr<const cse::model_description> modelDescription)
-        : terminated_(false), instanceId_(instanceId), client_(client), modelDescription_(modelDescription) {}
+cse::fmuproxy::remote_slave::remote_slave(const std::string& instanceId,
+    std::shared_ptr<::fmuproxy::thrift::FmuServiceIf> client,
+    std::shared_ptr<const cse::model_description> modelDescription)
+    : terminated_(false)
+    , instanceId_(instanceId)
+    , client_(client)
+    , modelDescription_(modelDescription)
+{}
 
-cse::model_description cse::fmuproxy::remote_slave::model_description() const {
+cse::model_description cse::fmuproxy::remote_slave::model_description() const
+{
     return *modelDescription_;
 }
 
 void cse::fmuproxy::remote_slave::setup(cse::time_point startTime, std::optional<cse::time_point> stopTime,
-                                        std::optional<double> relativeTolerance) {
+    std::optional<double> relativeTolerance)
+{
 
     startTime_ = startTime;
 
@@ -30,17 +36,18 @@ void cse::fmuproxy::remote_slave::setup(cse::time_point startTime, std::optional
     if (status != ::fmuproxy::thrift::Status::OK_STATUS) {
         CSE_PANIC();
     }
-
 }
 
-void cse::fmuproxy::remote_slave::start_simulation() {
+void cse::fmuproxy::remote_slave::start_simulation()
+{
     auto status = client_->exitInitializationMode(instanceId_);
     if (status != ::fmuproxy::thrift::Status::OK_STATUS) {
         CSE_PANIC();
     }
 }
 
-void cse::fmuproxy::remote_slave::end_simulation() {
+void cse::fmuproxy::remote_slave::end_simulation()
+{
     if (!terminated_) {
         auto status = client_->terminate(instanceId_);
         if (status != ::fmuproxy::thrift::Status::OK_STATUS) {
@@ -50,7 +57,8 @@ void cse::fmuproxy::remote_slave::end_simulation() {
     }
 }
 
-cse::step_result cse::fmuproxy::remote_slave::do_step(cse::time_point, cse::duration deltaT) {
+cse::step_result cse::fmuproxy::remote_slave::do_step(cse::time_point, cse::duration deltaT)
+{
 
     double dt = to_double_duration(deltaT, startTime_);
 
@@ -63,7 +71,8 @@ cse::step_result cse::fmuproxy::remote_slave::do_step(cse::time_point, cse::dura
 }
 
 void cse::fmuproxy::remote_slave::get_real_variables(gsl::span<const cse::variable_index> variables,
-                                                     gsl::span<double> values) const {
+    gsl::span<double> values) const
+{
     CSE_INPUT_CHECK(variables.size() == values.size());
     if (variables.empty()) return;
     ::fmuproxy::thrift::RealRead read;
@@ -78,7 +87,8 @@ void cse::fmuproxy::remote_slave::get_real_variables(gsl::span<const cse::variab
 }
 
 void cse::fmuproxy::remote_slave::get_integer_variables(gsl::span<const cse::variable_index> variables,
-                                                        gsl::span<int> values) const {
+    gsl::span<int> values) const
+{
     CSE_INPUT_CHECK(variables.size() == values.size());
     if (variables.empty()) return;
     ::fmuproxy::thrift::IntegerRead read;
@@ -93,7 +103,8 @@ void cse::fmuproxy::remote_slave::get_integer_variables(gsl::span<const cse::var
 }
 
 void cse::fmuproxy::remote_slave::get_boolean_variables(gsl::span<const cse::variable_index> variables,
-                                                        gsl::span<bool> values) const {
+    gsl::span<bool> values) const
+{
     CSE_INPUT_CHECK(variables.size() == values.size());
     if (variables.empty()) return;
     ::fmuproxy::thrift::BooleanRead read;
@@ -108,7 +119,8 @@ void cse::fmuproxy::remote_slave::get_boolean_variables(gsl::span<const cse::var
 }
 
 void cse::fmuproxy::remote_slave::get_string_variables(gsl::span<const cse::variable_index> variables,
-                                                       gsl::span<std::string> values) const {
+    gsl::span<std::string> values) const
+{
     CSE_INPUT_CHECK(variables.size() == values.size());
     if (variables.empty()) return;
     ::fmuproxy::thrift::StringRead read;
@@ -120,7 +132,8 @@ void cse::fmuproxy::remote_slave::get_string_variables(gsl::span<const cse::vari
 }
 
 void cse::fmuproxy::remote_slave::set_real_variables(gsl::span<const cse::variable_index> variables,
-                                                     gsl::span<const double> values) {
+    gsl::span<const double> values)
+{
     CSE_INPUT_CHECK(variables.size() == values.size());
     if (variables.empty()) return;
     ::fmuproxy::thrift::ValueReferences vr(variables.begin(), variables.end());
@@ -131,7 +144,8 @@ void cse::fmuproxy::remote_slave::set_real_variables(gsl::span<const cse::variab
 }
 
 void cse::fmuproxy::remote_slave::set_integer_variables(gsl::span<const cse::variable_index> variables,
-                                                        gsl::span<const int> values) {
+    gsl::span<const int> values)
+{
     CSE_INPUT_CHECK(variables.size() == values.size());
     if (variables.empty()) return;
     ::fmuproxy::thrift::ValueReferences vr(variables.begin(), variables.end());
@@ -142,7 +156,8 @@ void cse::fmuproxy::remote_slave::set_integer_variables(gsl::span<const cse::var
 }
 
 void cse::fmuproxy::remote_slave::set_boolean_variables(gsl::span<const cse::variable_index> variables,
-                                                        gsl::span<const bool> values) {
+    gsl::span<const bool> values)
+{
     CSE_INPUT_CHECK(variables.size() == values.size());
     if (variables.empty()) return;
     ::fmuproxy::thrift::ValueReferences vr(variables.begin(), variables.end());
@@ -153,7 +168,8 @@ void cse::fmuproxy::remote_slave::set_boolean_variables(gsl::span<const cse::var
 }
 
 void cse::fmuproxy::remote_slave::set_string_variables(gsl::span<const cse::variable_index> variables,
-                                                       gsl::span<const std::string> values) {
+    gsl::span<const std::string> values)
+{
     CSE_INPUT_CHECK(variables.size() == values.size());
     if (variables.empty()) return;
     ::fmuproxy::thrift::ValueReferences vr(variables.begin(), variables.end());
@@ -163,6 +179,7 @@ void cse::fmuproxy::remote_slave::set_string_variables(gsl::span<const cse::vari
     }
 }
 
-cse::fmuproxy::remote_slave::~remote_slave() {
+cse::fmuproxy::remote_slave::~remote_slave()
+{
     end_simulation();
 }

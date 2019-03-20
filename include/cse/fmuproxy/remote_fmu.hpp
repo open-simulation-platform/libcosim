@@ -4,48 +4,47 @@
 
 #ifdef _WIN32
 //must be included before <windows.h>
-#include <winsock2.h>
+#    include <winsock2.h>
 #endif
 
-#include <string>
-#include <memory>
-
-#include <cse/model.hpp>
 #include <cse/async_slave.hpp>
-
-#include <cse/fmuproxy/thrift_state.hpp>
 #include <cse/fmuproxy/fmu_service.hpp>
+#include <cse/fmuproxy/thrift_state.hpp>
+#include <cse/model.hpp>
 
-namespace cse {
+#include <memory>
+#include <string>
 
-    namespace fmuproxy {
+namespace cse
+{
 
-        class fmuproxy_client;
+namespace fmuproxy
+{
 
-        class remote_fmu {
+class fmuproxy_client;
 
-            friend class fmuproxy_client;
+class remote_fmu
+{
 
-        public:
+    friend class fmuproxy_client;
 
-            std::shared_ptr<const cse::model_description> model_description() const;
+public:
+    std::shared_ptr<const cse::model_description> model_description() const;
 
-            std::shared_ptr<cse::slave> instantiate_slave();
+    std::shared_ptr<cse::slave> instantiate_slave();
 
 
-        private:
+private:
+    const std::string fmuId_;
+    std::shared_ptr<thrift_state> state_;
+    std::shared_ptr<const cse::model_description> modelDescription_;
 
-            const std::string fmuId_;
-            std::shared_ptr<thrift_state> state_;
-            std::shared_ptr<const cse::model_description> modelDescription_;
+    remote_fmu(const ::fmuproxy::thrift::FmuId& fmuId,
+        std::shared_ptr<thrift_state> state);
+};
 
-            remote_fmu(const ::fmuproxy::thrift::FmuId &fmuId,
-                       std::shared_ptr<thrift_state> state);
+} // namespace fmuproxy
 
-        };
-
-    }
-
-}
+} // namespace cse
 
 #endif
