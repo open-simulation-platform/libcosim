@@ -468,6 +468,38 @@ int64_t cse_observer_slave_get_real_samples(
     }
 }
 
+int64_t cse_observer_slave_get_real_synchronized_series(
+    cse_observer* observer,
+    cse_slave_index slave1,
+    cse_variable_index variableIndex1,
+    cse_slave_index slave2,
+    cse_variable_index variableIndex2,
+    cse_step_number fromStep,
+    size_t nSamples,
+    double values1[],
+    double values2[])
+{
+    try {
+        std::vector<cse::time_point> timePoints(nSamples);
+        const auto obs = std::dynamic_pointer_cast<cse::time_series_provider>(observer->cpp_observer);
+        if (!obs) {
+            throw std::invalid_argument("Invalid observer! The provided observer must be a time_series_observer.");
+        }
+        size_t samplesRead = obs->get_synchronized_real_series(
+            slave1,
+            variableIndex1,
+            slave2,
+            variableIndex2,
+            fromStep,
+            gsl::make_span(values1, nSamples),
+            gsl::make_span(values2, nSamples));
+        return samplesRead;
+    } catch (...) {
+        handle_current_exception();
+        return failure;
+    }
+}
+
 int64_t cse_observer_slave_get_integer_samples(
     cse_observer* observer,
     cse_slave_index slave,
