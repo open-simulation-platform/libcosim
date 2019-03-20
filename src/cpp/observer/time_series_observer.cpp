@@ -186,8 +186,7 @@ public:
     const std::map<step_number, double> get_real_samples_map(variable_index idx)
     {
         std::lock_guard<std::mutex> lock(lock_);
-        auto copy = realSamples_.at(idx);
-        return copy;
+        return realSamples_.at(idx);
     }
 
 private:
