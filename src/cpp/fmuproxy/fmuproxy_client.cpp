@@ -45,11 +45,11 @@ cse::fmuproxy::fmuproxy_client::fmuproxy_client(const std::string& host, const u
     std::shared_ptr<TTransport> socket(new TSocket(host, port));
     std::shared_ptr<TTransport> transport(new TFramedTransport(socket));
     std::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
-    std::shared_ptr<::fmuproxy::thrift::FmuServiceIf> client;
+    std::shared_ptr<::fmuproxy::thrift::fmu_service_if> client;
     if (!concurrent) {
-        client = std::make_shared<FmuServiceClient>(protocol);
+        client = std::make_shared<fmu_service_client>(protocol);
     } else {
-        client = std::make_shared<FmuServiceConcurrentClient>(protocol);
+        client = std::make_shared<fmu_service_concurrent_client>(protocol);
     }
     try {
         transport->open();
@@ -64,7 +64,7 @@ cse::fmuproxy::remote_fmu
 cse::fmuproxy::fmuproxy_client::from_url(const std::string& url)
 {
     FmuId fmuId;
-    state_->client_->loadFromUrl(fmuId, url);
+    state_->client_->load_from_url(fmuId, url);
     return from_guid(fmuId);
 }
 
@@ -78,7 +78,7 @@ cse::fmuproxy::fmuproxy_client::from_file(const std::string& file)
     read_data(file, data);
 
     FmuId fmuId;
-    state_->client_->loadFromFile(fmuId, name, data);
+    state_->client_->load_from_file(fmuId, name, data);
     return from_guid(fmuId);
 }
 

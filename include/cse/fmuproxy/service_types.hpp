@@ -4,8 +4,8 @@
  * DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
  *  @generated
  */
-#ifndef CSE_FMUPROXY_SERVICE_TYPES_HPP
-#define CSE_FMUPROXY_SERVICE_TYPES_HPP
+#ifndef service_TYPES_H
+#define service_TYPES_H
 
 #include <iosfwd>
 
@@ -101,12 +101,6 @@ class NoSuchInstanceException;
 class NoSuchVariableException;
 
 class UnsupportedOperationException;
-
-class GetFmuStateResult;
-
-class SerializeFmuStateResult;
-
-class DeSerializeFmuStateResult;
 
 class DirectionalDerivativeResult;
 
@@ -375,12 +369,12 @@ void swap(EnumerationAttribute &a, EnumerationAttribute &b);
 std::ostream& operator<<(std::ostream& out, const EnumerationAttribute& obj);
 
 typedef struct _ScalarVariableAttribute__isset {
-  _ScalarVariableAttribute__isset() : integerAttribute(false), realAttribute(false), stringAttribute(false), booleanAttribute(false), enumerationAttribute(false) {}
-  bool integerAttribute :1;
-  bool realAttribute :1;
-  bool stringAttribute :1;
-  bool booleanAttribute :1;
-  bool enumerationAttribute :1;
+  _ScalarVariableAttribute__isset() : integer_attribute(false), real_attribute(false), string_attribute(false), boolean_attribute(false), enumeration_attribute(false) {}
+  bool integer_attribute :1;
+  bool real_attribute :1;
+  bool string_attribute :1;
+  bool boolean_attribute :1;
+  bool enumeration_attribute :1;
 } _ScalarVariableAttribute__isset;
 
 class ScalarVariableAttribute : public virtual ::apache::thrift::TBase {
@@ -392,45 +386,45 @@ class ScalarVariableAttribute : public virtual ::apache::thrift::TBase {
   }
 
   virtual ~ScalarVariableAttribute() noexcept;
-  IntegerAttribute integerAttribute;
-  RealAttribute realAttribute;
-  StringAttribute stringAttribute;
-  BooleanAttribute booleanAttribute;
-  EnumerationAttribute enumerationAttribute;
+  IntegerAttribute integer_attribute;
+  RealAttribute real_attribute;
+  StringAttribute string_attribute;
+  BooleanAttribute boolean_attribute;
+  EnumerationAttribute enumeration_attribute;
 
   _ScalarVariableAttribute__isset __isset;
 
-  void __set_integerAttribute(const IntegerAttribute& val);
+  void __set_integer_attribute(const IntegerAttribute& val);
 
-  void __set_realAttribute(const RealAttribute& val);
+  void __set_real_attribute(const RealAttribute& val);
 
-  void __set_stringAttribute(const StringAttribute& val);
+  void __set_string_attribute(const StringAttribute& val);
 
-  void __set_booleanAttribute(const BooleanAttribute& val);
+  void __set_boolean_attribute(const BooleanAttribute& val);
 
-  void __set_enumerationAttribute(const EnumerationAttribute& val);
+  void __set_enumeration_attribute(const EnumerationAttribute& val);
 
   bool operator == (const ScalarVariableAttribute & rhs) const
   {
-    if (__isset.integerAttribute != rhs.__isset.integerAttribute)
+    if (__isset.integer_attribute != rhs.__isset.integer_attribute)
       return false;
-    else if (__isset.integerAttribute && !(integerAttribute == rhs.integerAttribute))
+    else if (__isset.integer_attribute && !(integer_attribute == rhs.integer_attribute))
       return false;
-    if (__isset.realAttribute != rhs.__isset.realAttribute)
+    if (__isset.real_attribute != rhs.__isset.real_attribute)
       return false;
-    else if (__isset.realAttribute && !(realAttribute == rhs.realAttribute))
+    else if (__isset.real_attribute && !(real_attribute == rhs.real_attribute))
       return false;
-    if (__isset.stringAttribute != rhs.__isset.stringAttribute)
+    if (__isset.string_attribute != rhs.__isset.string_attribute)
       return false;
-    else if (__isset.stringAttribute && !(stringAttribute == rhs.stringAttribute))
+    else if (__isset.string_attribute && !(string_attribute == rhs.string_attribute))
       return false;
-    if (__isset.booleanAttribute != rhs.__isset.booleanAttribute)
+    if (__isset.boolean_attribute != rhs.__isset.boolean_attribute)
       return false;
-    else if (__isset.booleanAttribute && !(booleanAttribute == rhs.booleanAttribute))
+    else if (__isset.boolean_attribute && !(boolean_attribute == rhs.boolean_attribute))
       return false;
-    if (__isset.enumerationAttribute != rhs.__isset.enumerationAttribute)
+    if (__isset.enumeration_attribute != rhs.__isset.enumeration_attribute)
       return false;
-    else if (__isset.enumerationAttribute && !(enumerationAttribute == rhs.enumerationAttribute))
+    else if (__isset.enumeration_attribute && !(enumeration_attribute == rhs.enumeration_attribute))
       return false;
     return true;
   }
@@ -451,9 +445,9 @@ void swap(ScalarVariableAttribute &a, ScalarVariableAttribute &b);
 std::ostream& operator<<(std::ostream& out, const ScalarVariableAttribute& obj);
 
 typedef struct _ScalarVariable__isset {
-  _ScalarVariable__isset() : name(false), valueReference(false), description(false), initial(false), causality(false), variability(false), attribute(false) {}
+  _ScalarVariable__isset() : name(false), value_reference(false), description(false), initial(false), causality(false), variability(false), attribute(false) {}
   bool name :1;
-  bool valueReference :1;
+  bool value_reference :1;
   bool description :1;
   bool initial :1;
   bool causality :1;
@@ -466,12 +460,12 @@ class ScalarVariable : public virtual ::apache::thrift::TBase {
 
   ScalarVariable(const ScalarVariable&);
   ScalarVariable& operator=(const ScalarVariable&);
-  ScalarVariable() : name(), valueReference(0), description(), initial(), causality(), variability() {
+  ScalarVariable() : name(), value_reference(0), description(), initial(), causality(), variability() {
   }
 
   virtual ~ScalarVariable() noexcept;
   std::string name;
-  ValueReference valueReference;
+  ValueReference value_reference;
   std::string description;
   std::string initial;
   std::string causality;
@@ -482,7 +476,7 @@ class ScalarVariable : public virtual ::apache::thrift::TBase {
 
   void __set_name(const std::string& val);
 
-  void __set_valueReference(const ValueReference val);
+  void __set_value_reference(const ValueReference val);
 
   void __set_description(const std::string& val);
 
@@ -498,7 +492,7 @@ class ScalarVariable : public virtual ::apache::thrift::TBase {
   {
     if (!(name == rhs.name))
       return false;
-    if (!(valueReference == rhs.valueReference))
+    if (!(value_reference == rhs.value_reference))
       return false;
     if (__isset.description != rhs.__isset.description)
       return false;
@@ -537,10 +531,10 @@ void swap(ScalarVariable &a, ScalarVariable &b);
 std::ostream& operator<<(std::ostream& out, const ScalarVariable& obj);
 
 typedef struct _Unknown__isset {
-  _Unknown__isset() : index(false), dependencies(false), dependenciesKind(false) {}
+  _Unknown__isset() : index(false), dependencies(false), dependencies_kind(false) {}
   bool index :1;
   bool dependencies :1;
-  bool dependenciesKind :1;
+  bool dependencies_kind :1;
 } _Unknown__isset;
 
 class Unknown : public virtual ::apache::thrift::TBase {
@@ -554,7 +548,7 @@ class Unknown : public virtual ::apache::thrift::TBase {
   virtual ~Unknown() noexcept;
   int32_t index;
   std::vector<int32_t>  dependencies;
-  std::vector<std::string>  dependenciesKind;
+  std::vector<std::string>  dependencies_kind;
 
   _Unknown__isset __isset;
 
@@ -562,7 +556,7 @@ class Unknown : public virtual ::apache::thrift::TBase {
 
   void __set_dependencies(const std::vector<int32_t> & val);
 
-  void __set_dependenciesKind(const std::vector<std::string> & val);
+  void __set_dependencies_kind(const std::vector<std::string> & val);
 
   bool operator == (const Unknown & rhs) const
   {
@@ -570,7 +564,7 @@ class Unknown : public virtual ::apache::thrift::TBase {
       return false;
     if (!(dependencies == rhs.dependencies))
       return false;
-    if (!(dependenciesKind == rhs.dependenciesKind))
+    if (!(dependencies_kind == rhs.dependencies_kind))
       return false;
     return true;
   }
@@ -591,10 +585,10 @@ void swap(Unknown &a, Unknown &b);
 std::ostream& operator<<(std::ostream& out, const Unknown& obj);
 
 typedef struct _ModelStructure__isset {
-  _ModelStructure__isset() : outputs(false), derivatives(false), initialUnknowns(false) {}
+  _ModelStructure__isset() : outputs(false), derivatives(false), initial_unknowns(false) {}
   bool outputs :1;
   bool derivatives :1;
-  bool initialUnknowns :1;
+  bool initial_unknowns :1;
 } _ModelStructure__isset;
 
 class ModelStructure : public virtual ::apache::thrift::TBase {
@@ -608,7 +602,7 @@ class ModelStructure : public virtual ::apache::thrift::TBase {
   virtual ~ModelStructure() noexcept;
   std::vector<Unknown>  outputs;
   std::vector<Unknown>  derivatives;
-  std::vector<Unknown>  initialUnknowns;
+  std::vector<Unknown>  initial_unknowns;
 
   _ModelStructure__isset __isset;
 
@@ -616,7 +610,7 @@ class ModelStructure : public virtual ::apache::thrift::TBase {
 
   void __set_derivatives(const std::vector<Unknown> & val);
 
-  void __set_initialUnknowns(const std::vector<Unknown> & val);
+  void __set_initial_unknowns(const std::vector<Unknown> & val);
 
   bool operator == (const ModelStructure & rhs) const
   {
@@ -624,7 +618,7 @@ class ModelStructure : public virtual ::apache::thrift::TBase {
       return false;
     if (!(derivatives == rhs.derivatives))
       return false;
-    if (!(initialUnknowns == rhs.initialUnknowns))
+    if (!(initial_unknowns == rhs.initial_unknowns))
       return false;
     return true;
   }
@@ -705,9 +699,9 @@ void swap(DefaultExperiment &a, DefaultExperiment &b);
 std::ostream& operator<<(std::ostream& out, const DefaultExperiment& obj);
 
 typedef struct _StepResult__isset {
-  _StepResult__isset() : status(false), simulationTime(false) {}
+  _StepResult__isset() : status(false), simulation_time(false) {}
   bool status :1;
-  bool simulationTime :1;
+  bool simulation_time :1;
 } _StepResult__isset;
 
 class StepResult : public virtual ::apache::thrift::TBase {
@@ -715,24 +709,24 @@ class StepResult : public virtual ::apache::thrift::TBase {
 
   StepResult(const StepResult&);
   StepResult& operator=(const StepResult&);
-  StepResult() : status((Status::type)0), simulationTime(0) {
+  StepResult() : status((Status::type)0), simulation_time(0) {
   }
 
   virtual ~StepResult() noexcept;
   Status::type status;
-  double simulationTime;
+  double simulation_time;
 
   _StepResult__isset __isset;
 
   void __set_status(const Status::type val);
 
-  void __set_simulationTime(const double val);
+  void __set_simulation_time(const double val);
 
   bool operator == (const StepResult & rhs) const
   {
     if (!(status == rhs.status))
       return false;
-    if (!(simulationTime == rhs.simulationTime))
+    if (!(simulation_time == rhs.simulation_time))
       return false;
     return true;
   }
@@ -993,21 +987,21 @@ void swap(Solver &a, Solver &b);
 std::ostream& operator<<(std::ostream& out, const Solver& obj);
 
 typedef struct _ModelDescription__isset {
-  _ModelDescription__isset() : guid(false), fmiVersion(false), modelName(false), license(false), copyright(false), author(false), version(false), description(false), generationTool(false), generationDateAndTime(false), defaultExperiment(false), variableNamingConvention(false), modelVariables(false), modelStructure(false) {}
+  _ModelDescription__isset() : guid(false), fmi_version(false), modelName(false), license(false), copyright(false), author(false), version(false), description(false), generation_tool(false), generation_date_and_time(false), default_experiment(false), variable_naming_convention(false), model_variables(false), model_structure(false) {}
   bool guid :1;
-  bool fmiVersion :1;
+  bool fmi_version :1;
   bool modelName :1;
   bool license :1;
   bool copyright :1;
   bool author :1;
   bool version :1;
   bool description :1;
-  bool generationTool :1;
-  bool generationDateAndTime :1;
-  bool defaultExperiment :1;
-  bool variableNamingConvention :1;
-  bool modelVariables :1;
-  bool modelStructure :1;
+  bool generation_tool :1;
+  bool generation_date_and_time :1;
+  bool default_experiment :1;
+  bool variable_naming_convention :1;
+  bool model_variables :1;
+  bool model_structure :1;
 } _ModelDescription__isset;
 
 class ModelDescription : public virtual ::apache::thrift::TBase {
@@ -1015,30 +1009,30 @@ class ModelDescription : public virtual ::apache::thrift::TBase {
 
   ModelDescription(const ModelDescription&);
   ModelDescription& operator=(const ModelDescription&);
-  ModelDescription() : guid(), fmiVersion(), modelName(), license(), copyright(), author(), version(), description(), generationTool(), generationDateAndTime(), variableNamingConvention() {
+  ModelDescription() : guid(), fmi_version(), modelName(), license(), copyright(), author(), version(), description(), generation_tool(), generation_date_and_time(), variable_naming_convention() {
   }
 
   virtual ~ModelDescription() noexcept;
   std::string guid;
-  std::string fmiVersion;
+  std::string fmi_version;
   std::string modelName;
   std::string license;
   std::string copyright;
   std::string author;
   std::string version;
   std::string description;
-  std::string generationTool;
-  std::string generationDateAndTime;
-  DefaultExperiment defaultExperiment;
-  std::string variableNamingConvention;
-  ModelVariables modelVariables;
-  ModelStructure modelStructure;
+  std::string generation_tool;
+  std::string generation_date_and_time;
+  DefaultExperiment default_experiment;
+  std::string variable_naming_convention;
+  ModelVariables model_variables;
+  ModelStructure model_structure;
 
   _ModelDescription__isset __isset;
 
   void __set_guid(const std::string& val);
 
-  void __set_fmiVersion(const std::string& val);
+  void __set_fmi_version(const std::string& val);
 
   void __set_modelName(const std::string& val);
 
@@ -1052,23 +1046,23 @@ class ModelDescription : public virtual ::apache::thrift::TBase {
 
   void __set_description(const std::string& val);
 
-  void __set_generationTool(const std::string& val);
+  void __set_generation_tool(const std::string& val);
 
-  void __set_generationDateAndTime(const std::string& val);
+  void __set_generation_date_and_time(const std::string& val);
 
-  void __set_defaultExperiment(const DefaultExperiment& val);
+  void __set_default_experiment(const DefaultExperiment& val);
 
-  void __set_variableNamingConvention(const std::string& val);
+  void __set_variable_naming_convention(const std::string& val);
 
-  void __set_modelVariables(const ModelVariables& val);
+  void __set_model_variables(const ModelVariables& val);
 
-  void __set_modelStructure(const ModelStructure& val);
+  void __set_model_structure(const ModelStructure& val);
 
   bool operator == (const ModelDescription & rhs) const
   {
     if (!(guid == rhs.guid))
       return false;
-    if (!(fmiVersion == rhs.fmiVersion))
+    if (!(fmi_version == rhs.fmi_version))
       return false;
     if (!(modelName == rhs.modelName))
       return false;
@@ -1092,25 +1086,25 @@ class ModelDescription : public virtual ::apache::thrift::TBase {
       return false;
     else if (__isset.description && !(description == rhs.description))
       return false;
-    if (__isset.generationTool != rhs.__isset.generationTool)
+    if (__isset.generation_tool != rhs.__isset.generation_tool)
       return false;
-    else if (__isset.generationTool && !(generationTool == rhs.generationTool))
+    else if (__isset.generation_tool && !(generation_tool == rhs.generation_tool))
       return false;
-    if (__isset.generationDateAndTime != rhs.__isset.generationDateAndTime)
+    if (__isset.generation_date_and_time != rhs.__isset.generation_date_and_time)
       return false;
-    else if (__isset.generationDateAndTime && !(generationDateAndTime == rhs.generationDateAndTime))
+    else if (__isset.generation_date_and_time && !(generation_date_and_time == rhs.generation_date_and_time))
       return false;
-    if (__isset.defaultExperiment != rhs.__isset.defaultExperiment)
+    if (__isset.default_experiment != rhs.__isset.default_experiment)
       return false;
-    else if (__isset.defaultExperiment && !(defaultExperiment == rhs.defaultExperiment))
+    else if (__isset.default_experiment && !(default_experiment == rhs.default_experiment))
       return false;
-    if (__isset.variableNamingConvention != rhs.__isset.variableNamingConvention)
+    if (__isset.variable_naming_convention != rhs.__isset.variable_naming_convention)
       return false;
-    else if (__isset.variableNamingConvention && !(variableNamingConvention == rhs.variableNamingConvention))
+    else if (__isset.variable_naming_convention && !(variable_naming_convention == rhs.variable_naming_convention))
       return false;
-    if (!(modelVariables == rhs.modelVariables))
+    if (!(model_variables == rhs.model_variables))
       return false;
-    if (!(modelStructure == rhs.modelStructure))
+    if (!(model_structure == rhs.model_structure))
       return false;
     return true;
   }
@@ -1131,14 +1125,14 @@ void swap(ModelDescription &a, ModelDescription &b);
 std::ostream& operator<<(std::ostream& out, const ModelDescription& obj);
 
 typedef struct _CoSimulationAttributes__isset {
-  _CoSimulationAttributes__isset() : modelIdentifier(false), canGetAndSetFMUstate(false), canSerializeFMUstate(false), providesDirectionalDerivative(false), canHandleVariableCommunicationStepSize(false), canInterpolateInputs(false), maxOutputDerivativeOrder(false) {}
-  bool modelIdentifier :1;
-  bool canGetAndSetFMUstate :1;
-  bool canSerializeFMUstate :1;
-  bool providesDirectionalDerivative :1;
-  bool canHandleVariableCommunicationStepSize :1;
-  bool canInterpolateInputs :1;
-  bool maxOutputDerivativeOrder :1;
+  _CoSimulationAttributes__isset() : model_identifier(false), can_get_and_set_fmu_state(false), can_serialize_fmu_state(false), provides_directional_derivative(false), can_handle_variable_communication_step_size(false), can_interpolate_inputs(false), max_output_derivative_order(false) {}
+  bool model_identifier :1;
+  bool can_get_and_set_fmu_state :1;
+  bool can_serialize_fmu_state :1;
+  bool provides_directional_derivative :1;
+  bool can_handle_variable_communication_step_size :1;
+  bool can_interpolate_inputs :1;
+  bool max_output_derivative_order :1;
 } _CoSimulationAttributes__isset;
 
 class CoSimulationAttributes : public virtual ::apache::thrift::TBase {
@@ -1146,49 +1140,49 @@ class CoSimulationAttributes : public virtual ::apache::thrift::TBase {
 
   CoSimulationAttributes(const CoSimulationAttributes&);
   CoSimulationAttributes& operator=(const CoSimulationAttributes&);
-  CoSimulationAttributes() : modelIdentifier(), canGetAndSetFMUstate(0), canSerializeFMUstate(0), providesDirectionalDerivative(0), canHandleVariableCommunicationStepSize(0), canInterpolateInputs(0), maxOutputDerivativeOrder(0) {
+  CoSimulationAttributes() : model_identifier(), can_get_and_set_fmu_state(0), can_serialize_fmu_state(0), provides_directional_derivative(0), can_handle_variable_communication_step_size(0), can_interpolate_inputs(0), max_output_derivative_order(0) {
   }
 
   virtual ~CoSimulationAttributes() noexcept;
-  std::string modelIdentifier;
-  bool canGetAndSetFMUstate;
-  bool canSerializeFMUstate;
-  bool providesDirectionalDerivative;
-  bool canHandleVariableCommunicationStepSize;
-  bool canInterpolateInputs;
-  int32_t maxOutputDerivativeOrder;
+  std::string model_identifier;
+  bool can_get_and_set_fmu_state;
+  bool can_serialize_fmu_state;
+  bool provides_directional_derivative;
+  bool can_handle_variable_communication_step_size;
+  bool can_interpolate_inputs;
+  int32_t max_output_derivative_order;
 
   _CoSimulationAttributes__isset __isset;
 
-  void __set_modelIdentifier(const std::string& val);
+  void __set_model_identifier(const std::string& val);
 
-  void __set_canGetAndSetFMUstate(const bool val);
+  void __set_can_get_and_set_fmu_state(const bool val);
 
-  void __set_canSerializeFMUstate(const bool val);
+  void __set_can_serialize_fmu_state(const bool val);
 
-  void __set_providesDirectionalDerivative(const bool val);
+  void __set_provides_directional_derivative(const bool val);
 
-  void __set_canHandleVariableCommunicationStepSize(const bool val);
+  void __set_can_handle_variable_communication_step_size(const bool val);
 
-  void __set_canInterpolateInputs(const bool val);
+  void __set_can_interpolate_inputs(const bool val);
 
-  void __set_maxOutputDerivativeOrder(const int32_t val);
+  void __set_max_output_derivative_order(const int32_t val);
 
   bool operator == (const CoSimulationAttributes & rhs) const
   {
-    if (!(modelIdentifier == rhs.modelIdentifier))
+    if (!(model_identifier == rhs.model_identifier))
       return false;
-    if (!(canGetAndSetFMUstate == rhs.canGetAndSetFMUstate))
+    if (!(can_get_and_set_fmu_state == rhs.can_get_and_set_fmu_state))
       return false;
-    if (!(canSerializeFMUstate == rhs.canSerializeFMUstate))
+    if (!(can_serialize_fmu_state == rhs.can_serialize_fmu_state))
       return false;
-    if (!(providesDirectionalDerivative == rhs.providesDirectionalDerivative))
+    if (!(provides_directional_derivative == rhs.provides_directional_derivative))
       return false;
-    if (!(canHandleVariableCommunicationStepSize == rhs.canHandleVariableCommunicationStepSize))
+    if (!(can_handle_variable_communication_step_size == rhs.can_handle_variable_communication_step_size))
       return false;
-    if (!(canInterpolateInputs == rhs.canInterpolateInputs))
+    if (!(can_interpolate_inputs == rhs.can_interpolate_inputs))
       return false;
-    if (!(maxOutputDerivativeOrder == rhs.maxOutputDerivativeOrder))
+    if (!(max_output_derivative_order == rhs.max_output_derivative_order))
       return false;
     return true;
   }
@@ -1384,153 +1378,9 @@ void swap(UnsupportedOperationException &a, UnsupportedOperationException &b);
 
 std::ostream& operator<<(std::ostream& out, const UnsupportedOperationException& obj);
 
-typedef struct _GetFmuStateResult__isset {
-  _GetFmuStateResult__isset() : state(false), status(false) {}
-  bool state :1;
-  bool status :1;
-} _GetFmuStateResult__isset;
-
-class GetFmuStateResult : public virtual ::apache::thrift::TBase {
- public:
-
-  GetFmuStateResult(const GetFmuStateResult&);
-  GetFmuStateResult& operator=(const GetFmuStateResult&);
-  GetFmuStateResult() : state(0), status((Status::type)0) {
-  }
-
-  virtual ~GetFmuStateResult() noexcept;
-  FmuState state;
-  Status::type status;
-
-  _GetFmuStateResult__isset __isset;
-
-  void __set_state(const FmuState val);
-
-  void __set_status(const Status::type val);
-
-  bool operator == (const GetFmuStateResult & rhs) const
-  {
-    if (!(state == rhs.state))
-      return false;
-    if (!(status == rhs.status))
-      return false;
-    return true;
-  }
-  bool operator != (const GetFmuStateResult &rhs) const {
-    return !(*this == rhs);
-  }
-
-  bool operator < (const GetFmuStateResult & ) const;
-
-  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
-  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
-
-  virtual void printTo(std::ostream& out) const;
-};
-
-void swap(GetFmuStateResult &a, GetFmuStateResult &b);
-
-std::ostream& operator<<(std::ostream& out, const GetFmuStateResult& obj);
-
-typedef struct _SerializeFmuStateResult__isset {
-  _SerializeFmuStateResult__isset() : state(false), status(false) {}
-  bool state :1;
-  bool status :1;
-} _SerializeFmuStateResult__isset;
-
-class SerializeFmuStateResult : public virtual ::apache::thrift::TBase {
- public:
-
-  SerializeFmuStateResult(const SerializeFmuStateResult&);
-  SerializeFmuStateResult& operator=(const SerializeFmuStateResult&);
-  SerializeFmuStateResult() : state(), status((Status::type)0) {
-  }
-
-  virtual ~SerializeFmuStateResult() noexcept;
-  std::string state;
-  Status::type status;
-
-  _SerializeFmuStateResult__isset __isset;
-
-  void __set_state(const std::string& val);
-
-  void __set_status(const Status::type val);
-
-  bool operator == (const SerializeFmuStateResult & rhs) const
-  {
-    if (!(state == rhs.state))
-      return false;
-    if (!(status == rhs.status))
-      return false;
-    return true;
-  }
-  bool operator != (const SerializeFmuStateResult &rhs) const {
-    return !(*this == rhs);
-  }
-
-  bool operator < (const SerializeFmuStateResult & ) const;
-
-  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
-  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
-
-  virtual void printTo(std::ostream& out) const;
-};
-
-void swap(SerializeFmuStateResult &a, SerializeFmuStateResult &b);
-
-std::ostream& operator<<(std::ostream& out, const SerializeFmuStateResult& obj);
-
-typedef struct _DeSerializeFmuStateResult__isset {
-  _DeSerializeFmuStateResult__isset() : state(false), status(false) {}
-  bool state :1;
-  bool status :1;
-} _DeSerializeFmuStateResult__isset;
-
-class DeSerializeFmuStateResult : public virtual ::apache::thrift::TBase {
- public:
-
-  DeSerializeFmuStateResult(const DeSerializeFmuStateResult&);
-  DeSerializeFmuStateResult& operator=(const DeSerializeFmuStateResult&);
-  DeSerializeFmuStateResult() : state(0), status((Status::type)0) {
-  }
-
-  virtual ~DeSerializeFmuStateResult() noexcept;
-  FmuState state;
-  Status::type status;
-
-  _DeSerializeFmuStateResult__isset __isset;
-
-  void __set_state(const FmuState val);
-
-  void __set_status(const Status::type val);
-
-  bool operator == (const DeSerializeFmuStateResult & rhs) const
-  {
-    if (!(state == rhs.state))
-      return false;
-    if (!(status == rhs.status))
-      return false;
-    return true;
-  }
-  bool operator != (const DeSerializeFmuStateResult &rhs) const {
-    return !(*this == rhs);
-  }
-
-  bool operator < (const DeSerializeFmuStateResult & ) const;
-
-  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
-  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
-
-  virtual void printTo(std::ostream& out) const;
-};
-
-void swap(DeSerializeFmuStateResult &a, DeSerializeFmuStateResult &b);
-
-std::ostream& operator<<(std::ostream& out, const DeSerializeFmuStateResult& obj);
-
 typedef struct _DirectionalDerivativeResult__isset {
-  _DirectionalDerivativeResult__isset() : dvUnknownRef(false), status(false) {}
-  bool dvUnknownRef :1;
+  _DirectionalDerivativeResult__isset() : dv_unknown_ref(false), status(false) {}
+  bool dv_unknown_ref :1;
   bool status :1;
 } _DirectionalDerivativeResult__isset;
 
@@ -1543,18 +1393,18 @@ class DirectionalDerivativeResult : public virtual ::apache::thrift::TBase {
   }
 
   virtual ~DirectionalDerivativeResult() noexcept;
-  DirectionalDerivative dvUnknownRef;
+  DirectionalDerivative dv_unknown_ref;
   Status::type status;
 
   _DirectionalDerivativeResult__isset __isset;
 
-  void __set_dvUnknownRef(const DirectionalDerivative& val);
+  void __set_dv_unknown_ref(const DirectionalDerivative& val);
 
   void __set_status(const Status::type val);
 
   bool operator == (const DirectionalDerivativeResult & rhs) const
   {
-    if (!(dvUnknownRef == rhs.dvUnknownRef))
+    if (!(dv_unknown_ref == rhs.dv_unknown_ref))
       return false;
     if (!(status == rhs.status))
       return false;

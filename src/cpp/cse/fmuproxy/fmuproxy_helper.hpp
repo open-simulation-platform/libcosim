@@ -47,13 +47,13 @@ namespace {
     }
 
     inline cse::variable_type get_type(const fmuproxy::thrift::ScalarVariable &v) {
-        if (v.attribute.__isset.integerAttribute) {
+        if (v.attribute.__isset.integer_attribute) {
             return cse::variable_type::integer;
-        } else if (v.attribute.__isset.realAttribute) {
+        } else if (v.attribute.__isset.real_attribute) {
             return cse::variable_type::real;
-        } else if (v.attribute.__isset.stringAttribute) {
+        } else if (v.attribute.__isset.string_attribute) {
             return cse::variable_type::string;
-        } else if (v.attribute.__isset.booleanAttribute) {
+        } else if (v.attribute.__isset.boolean_attribute) {
             return cse::variable_type::boolean;
         } else {
             const auto err = "Failed to get type of variable: '" + v.name + "'";
@@ -64,7 +64,7 @@ namespace {
     inline cse::variable_description convert(const fmuproxy::thrift::ScalarVariable &v) {
         cse::variable_description var;
         var.name = v.name;
-        var.index = (cse::variable_index) v.valueReference;
+        var.index = (cse::variable_index) v.value_reference;
         var.causality = parse_causality(v.causality);
         var.variability = parse_variability(v.variability);
         var.type = get_type(v);
@@ -86,7 +86,7 @@ namespace {
         modelDescription->uuid = md.guid;
         modelDescription->version = md.version;
         modelDescription->description = md.description;
-        modelDescription->variables = convert(md.modelVariables);
+        modelDescription->variables = convert(md.model_variables);
         return modelDescription;
     }
 

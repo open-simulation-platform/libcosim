@@ -686,29 +686,29 @@ ScalarVariableAttribute::~ScalarVariableAttribute() noexcept {
 }
 
 
-void ScalarVariableAttribute::__set_integerAttribute(const IntegerAttribute& val) {
-  this->integerAttribute = val;
-__isset.integerAttribute = true;
+void ScalarVariableAttribute::__set_integer_attribute(const IntegerAttribute& val) {
+  this->integer_attribute = val;
+__isset.integer_attribute = true;
 }
 
-void ScalarVariableAttribute::__set_realAttribute(const RealAttribute& val) {
-  this->realAttribute = val;
-__isset.realAttribute = true;
+void ScalarVariableAttribute::__set_real_attribute(const RealAttribute& val) {
+  this->real_attribute = val;
+__isset.real_attribute = true;
 }
 
-void ScalarVariableAttribute::__set_stringAttribute(const StringAttribute& val) {
-  this->stringAttribute = val;
-__isset.stringAttribute = true;
+void ScalarVariableAttribute::__set_string_attribute(const StringAttribute& val) {
+  this->string_attribute = val;
+__isset.string_attribute = true;
 }
 
-void ScalarVariableAttribute::__set_booleanAttribute(const BooleanAttribute& val) {
-  this->booleanAttribute = val;
-__isset.booleanAttribute = true;
+void ScalarVariableAttribute::__set_boolean_attribute(const BooleanAttribute& val) {
+  this->boolean_attribute = val;
+__isset.boolean_attribute = true;
 }
 
-void ScalarVariableAttribute::__set_enumerationAttribute(const EnumerationAttribute& val) {
-  this->enumerationAttribute = val;
-__isset.enumerationAttribute = true;
+void ScalarVariableAttribute::__set_enumeration_attribute(const EnumerationAttribute& val) {
+  this->enumeration_attribute = val;
+__isset.enumeration_attribute = true;
 }
 std::ostream& operator<<(std::ostream& out, const ScalarVariableAttribute& obj)
 {
@@ -740,40 +740,40 @@ uint32_t ScalarVariableAttribute::read(::apache::thrift::protocol::TProtocol* ip
     {
       case 1:
         if (ftype == ::apache::thrift::protocol::T_STRUCT) {
-          xfer += this->integerAttribute.read(iprot);
-          this->__isset.integerAttribute = true;
+          xfer += this->integer_attribute.read(iprot);
+          this->__isset.integer_attribute = true;
         } else {
           xfer += iprot->skip(ftype);
         }
         break;
       case 2:
         if (ftype == ::apache::thrift::protocol::T_STRUCT) {
-          xfer += this->realAttribute.read(iprot);
-          this->__isset.realAttribute = true;
+          xfer += this->real_attribute.read(iprot);
+          this->__isset.real_attribute = true;
         } else {
           xfer += iprot->skip(ftype);
         }
         break;
       case 3:
         if (ftype == ::apache::thrift::protocol::T_STRUCT) {
-          xfer += this->stringAttribute.read(iprot);
-          this->__isset.stringAttribute = true;
+          xfer += this->string_attribute.read(iprot);
+          this->__isset.string_attribute = true;
         } else {
           xfer += iprot->skip(ftype);
         }
         break;
       case 4:
         if (ftype == ::apache::thrift::protocol::T_STRUCT) {
-          xfer += this->booleanAttribute.read(iprot);
-          this->__isset.booleanAttribute = true;
+          xfer += this->boolean_attribute.read(iprot);
+          this->__isset.boolean_attribute = true;
         } else {
           xfer += iprot->skip(ftype);
         }
         break;
       case 5:
         if (ftype == ::apache::thrift::protocol::T_STRUCT) {
-          xfer += this->enumerationAttribute.read(iprot);
-          this->__isset.enumerationAttribute = true;
+          xfer += this->enumeration_attribute.read(iprot);
+          this->__isset.enumeration_attribute = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -795,29 +795,29 @@ uint32_t ScalarVariableAttribute::write(::apache::thrift::protocol::TProtocol* o
   ::apache::thrift::protocol::TOutputRecursionTracker tracker(*oprot);
   xfer += oprot->writeStructBegin("ScalarVariableAttribute");
 
-  if (this->__isset.integerAttribute) {
-    xfer += oprot->writeFieldBegin("integerAttribute", ::apache::thrift::protocol::T_STRUCT, 1);
-    xfer += this->integerAttribute.write(oprot);
+  if (this->__isset.integer_attribute) {
+    xfer += oprot->writeFieldBegin("integer_attribute", ::apache::thrift::protocol::T_STRUCT, 1);
+    xfer += this->integer_attribute.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
-  if (this->__isset.realAttribute) {
-    xfer += oprot->writeFieldBegin("realAttribute", ::apache::thrift::protocol::T_STRUCT, 2);
-    xfer += this->realAttribute.write(oprot);
+  if (this->__isset.real_attribute) {
+    xfer += oprot->writeFieldBegin("real_attribute", ::apache::thrift::protocol::T_STRUCT, 2);
+    xfer += this->real_attribute.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
-  if (this->__isset.stringAttribute) {
-    xfer += oprot->writeFieldBegin("stringAttribute", ::apache::thrift::protocol::T_STRUCT, 3);
-    xfer += this->stringAttribute.write(oprot);
+  if (this->__isset.string_attribute) {
+    xfer += oprot->writeFieldBegin("string_attribute", ::apache::thrift::protocol::T_STRUCT, 3);
+    xfer += this->string_attribute.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
-  if (this->__isset.booleanAttribute) {
-    xfer += oprot->writeFieldBegin("booleanAttribute", ::apache::thrift::protocol::T_STRUCT, 4);
-    xfer += this->booleanAttribute.write(oprot);
+  if (this->__isset.boolean_attribute) {
+    xfer += oprot->writeFieldBegin("boolean_attribute", ::apache::thrift::protocol::T_STRUCT, 4);
+    xfer += this->boolean_attribute.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
-  if (this->__isset.enumerationAttribute) {
-    xfer += oprot->writeFieldBegin("enumerationAttribute", ::apache::thrift::protocol::T_STRUCT, 5);
-    xfer += this->enumerationAttribute.write(oprot);
+  if (this->__isset.enumeration_attribute) {
+    xfer += oprot->writeFieldBegin("enumeration_attribute", ::apache::thrift::protocol::T_STRUCT, 5);
+    xfer += this->enumeration_attribute.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
   xfer += oprot->writeFieldStop();
@@ -827,39 +827,39 @@ uint32_t ScalarVariableAttribute::write(::apache::thrift::protocol::TProtocol* o
 
 void swap(ScalarVariableAttribute &a, ScalarVariableAttribute &b) {
   using ::std::swap;
-  swap(a.integerAttribute, b.integerAttribute);
-  swap(a.realAttribute, b.realAttribute);
-  swap(a.stringAttribute, b.stringAttribute);
-  swap(a.booleanAttribute, b.booleanAttribute);
-  swap(a.enumerationAttribute, b.enumerationAttribute);
+  swap(a.integer_attribute, b.integer_attribute);
+  swap(a.real_attribute, b.real_attribute);
+  swap(a.string_attribute, b.string_attribute);
+  swap(a.boolean_attribute, b.boolean_attribute);
+  swap(a.enumeration_attribute, b.enumeration_attribute);
   swap(a.__isset, b.__isset);
 }
 
 ScalarVariableAttribute::ScalarVariableAttribute(const ScalarVariableAttribute& other10) {
-  integerAttribute = other10.integerAttribute;
-  realAttribute = other10.realAttribute;
-  stringAttribute = other10.stringAttribute;
-  booleanAttribute = other10.booleanAttribute;
-  enumerationAttribute = other10.enumerationAttribute;
+  integer_attribute = other10.integer_attribute;
+  real_attribute = other10.real_attribute;
+  string_attribute = other10.string_attribute;
+  boolean_attribute = other10.boolean_attribute;
+  enumeration_attribute = other10.enumeration_attribute;
   __isset = other10.__isset;
 }
 ScalarVariableAttribute& ScalarVariableAttribute::operator=(const ScalarVariableAttribute& other11) {
-  integerAttribute = other11.integerAttribute;
-  realAttribute = other11.realAttribute;
-  stringAttribute = other11.stringAttribute;
-  booleanAttribute = other11.booleanAttribute;
-  enumerationAttribute = other11.enumerationAttribute;
+  integer_attribute = other11.integer_attribute;
+  real_attribute = other11.real_attribute;
+  string_attribute = other11.string_attribute;
+  boolean_attribute = other11.boolean_attribute;
+  enumeration_attribute = other11.enumeration_attribute;
   __isset = other11.__isset;
   return *this;
 }
 void ScalarVariableAttribute::printTo(std::ostream& out) const {
   using ::apache::thrift::to_string;
   out << "ScalarVariableAttribute(";
-  out << "integerAttribute="; (__isset.integerAttribute ? (out << to_string(integerAttribute)) : (out << "<null>"));
-  out << ", " << "realAttribute="; (__isset.realAttribute ? (out << to_string(realAttribute)) : (out << "<null>"));
-  out << ", " << "stringAttribute="; (__isset.stringAttribute ? (out << to_string(stringAttribute)) : (out << "<null>"));
-  out << ", " << "booleanAttribute="; (__isset.booleanAttribute ? (out << to_string(booleanAttribute)) : (out << "<null>"));
-  out << ", " << "enumerationAttribute="; (__isset.enumerationAttribute ? (out << to_string(enumerationAttribute)) : (out << "<null>"));
+  out << "integer_attribute="; (__isset.integer_attribute ? (out << to_string(integer_attribute)) : (out << "<null>"));
+  out << ", " << "real_attribute="; (__isset.real_attribute ? (out << to_string(real_attribute)) : (out << "<null>"));
+  out << ", " << "string_attribute="; (__isset.string_attribute ? (out << to_string(string_attribute)) : (out << "<null>"));
+  out << ", " << "boolean_attribute="; (__isset.boolean_attribute ? (out << to_string(boolean_attribute)) : (out << "<null>"));
+  out << ", " << "enumeration_attribute="; (__isset.enumeration_attribute ? (out << to_string(enumeration_attribute)) : (out << "<null>"));
   out << ")";
 }
 
@@ -872,8 +872,8 @@ void ScalarVariable::__set_name(const std::string& val) {
   this->name = val;
 }
 
-void ScalarVariable::__set_valueReference(const ValueReference val) {
-  this->valueReference = val;
+void ScalarVariable::__set_value_reference(const ValueReference val) {
+  this->value_reference = val;
 }
 
 void ScalarVariable::__set_description(const std::string& val) {
@@ -937,8 +937,8 @@ uint32_t ScalarVariable::read(::apache::thrift::protocol::TProtocol* iprot) {
         break;
       case 2:
         if (ftype == ::apache::thrift::protocol::T_I64) {
-          xfer += iprot->readI64(this->valueReference);
-          this->__isset.valueReference = true;
+          xfer += iprot->readI64(this->value_reference);
+          this->__isset.value_reference = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -1004,8 +1004,8 @@ uint32_t ScalarVariable::write(::apache::thrift::protocol::TProtocol* oprot) con
   xfer += oprot->writeString(this->name);
   xfer += oprot->writeFieldEnd();
 
-  xfer += oprot->writeFieldBegin("valueReference", ::apache::thrift::protocol::T_I64, 2);
-  xfer += oprot->writeI64(this->valueReference);
+  xfer += oprot->writeFieldBegin("value_reference", ::apache::thrift::protocol::T_I64, 2);
+  xfer += oprot->writeI64(this->value_reference);
   xfer += oprot->writeFieldEnd();
 
   if (this->__isset.description) {
@@ -1040,7 +1040,7 @@ uint32_t ScalarVariable::write(::apache::thrift::protocol::TProtocol* oprot) con
 void swap(ScalarVariable &a, ScalarVariable &b) {
   using ::std::swap;
   swap(a.name, b.name);
-  swap(a.valueReference, b.valueReference);
+  swap(a.value_reference, b.value_reference);
   swap(a.description, b.description);
   swap(a.initial, b.initial);
   swap(a.causality, b.causality);
@@ -1051,7 +1051,7 @@ void swap(ScalarVariable &a, ScalarVariable &b) {
 
 ScalarVariable::ScalarVariable(const ScalarVariable& other12) {
   name = other12.name;
-  valueReference = other12.valueReference;
+  value_reference = other12.value_reference;
   description = other12.description;
   initial = other12.initial;
   causality = other12.causality;
@@ -1061,7 +1061,7 @@ ScalarVariable::ScalarVariable(const ScalarVariable& other12) {
 }
 ScalarVariable& ScalarVariable::operator=(const ScalarVariable& other13) {
   name = other13.name;
-  valueReference = other13.valueReference;
+  value_reference = other13.value_reference;
   description = other13.description;
   initial = other13.initial;
   causality = other13.causality;
@@ -1074,7 +1074,7 @@ void ScalarVariable::printTo(std::ostream& out) const {
   using ::apache::thrift::to_string;
   out << "ScalarVariable(";
   out << "name=" << to_string(name);
-  out << ", " << "valueReference=" << to_string(valueReference);
+  out << ", " << "value_reference=" << to_string(value_reference);
   out << ", " << "description="; (__isset.description ? (out << to_string(description)) : (out << "<null>"));
   out << ", " << "initial="; (__isset.initial ? (out << to_string(initial)) : (out << "<null>"));
   out << ", " << "causality="; (__isset.causality ? (out << to_string(causality)) : (out << "<null>"));
@@ -1096,8 +1096,8 @@ void Unknown::__set_dependencies(const std::vector<int32_t> & val) {
   this->dependencies = val;
 }
 
-void Unknown::__set_dependenciesKind(const std::vector<std::string> & val) {
-  this->dependenciesKind = val;
+void Unknown::__set_dependencies_kind(const std::vector<std::string> & val) {
+  this->dependencies_kind = val;
 }
 std::ostream& operator<<(std::ostream& out, const Unknown& obj)
 {
@@ -1158,19 +1158,19 @@ uint32_t Unknown::read(::apache::thrift::protocol::TProtocol* iprot) {
       case 3:
         if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
-            this->dependenciesKind.clear();
+            this->dependencies_kind.clear();
             uint32_t _size19;
             ::apache::thrift::protocol::TType _etype22;
             xfer += iprot->readListBegin(_etype22, _size19);
-            this->dependenciesKind.resize(_size19);
+            this->dependencies_kind.resize(_size19);
             uint32_t _i23;
             for (_i23 = 0; _i23 < _size19; ++_i23)
             {
-              xfer += iprot->readString(this->dependenciesKind[_i23]);
+              xfer += iprot->readString(this->dependencies_kind[_i23]);
             }
             xfer += iprot->readListEnd();
           }
-          this->__isset.dependenciesKind = true;
+          this->__isset.dependencies_kind = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -1208,11 +1208,11 @@ uint32_t Unknown::write(::apache::thrift::protocol::TProtocol* oprot) const {
   }
   xfer += oprot->writeFieldEnd();
 
-  xfer += oprot->writeFieldBegin("dependenciesKind", ::apache::thrift::protocol::T_LIST, 3);
+  xfer += oprot->writeFieldBegin("dependencies_kind", ::apache::thrift::protocol::T_LIST, 3);
   {
-    xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRING, static_cast<uint32_t>(this->dependenciesKind.size()));
+    xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRING, static_cast<uint32_t>(this->dependencies_kind.size()));
     std::vector<std::string> ::const_iterator _iter25;
-    for (_iter25 = this->dependenciesKind.begin(); _iter25 != this->dependenciesKind.end(); ++_iter25)
+    for (_iter25 = this->dependencies_kind.begin(); _iter25 != this->dependencies_kind.end(); ++_iter25)
     {
       xfer += oprot->writeString((*_iter25));
     }
@@ -1229,20 +1229,20 @@ void swap(Unknown &a, Unknown &b) {
   using ::std::swap;
   swap(a.index, b.index);
   swap(a.dependencies, b.dependencies);
-  swap(a.dependenciesKind, b.dependenciesKind);
+  swap(a.dependencies_kind, b.dependencies_kind);
   swap(a.__isset, b.__isset);
 }
 
 Unknown::Unknown(const Unknown& other26) {
   index = other26.index;
   dependencies = other26.dependencies;
-  dependenciesKind = other26.dependenciesKind;
+  dependencies_kind = other26.dependencies_kind;
   __isset = other26.__isset;
 }
 Unknown& Unknown::operator=(const Unknown& other27) {
   index = other27.index;
   dependencies = other27.dependencies;
-  dependenciesKind = other27.dependenciesKind;
+  dependencies_kind = other27.dependencies_kind;
   __isset = other27.__isset;
   return *this;
 }
@@ -1251,7 +1251,7 @@ void Unknown::printTo(std::ostream& out) const {
   out << "Unknown(";
   out << "index=" << to_string(index);
   out << ", " << "dependencies=" << to_string(dependencies);
-  out << ", " << "dependenciesKind=" << to_string(dependenciesKind);
+  out << ", " << "dependencies_kind=" << to_string(dependencies_kind);
   out << ")";
 }
 
@@ -1268,8 +1268,8 @@ void ModelStructure::__set_derivatives(const std::vector<Unknown> & val) {
   this->derivatives = val;
 }
 
-void ModelStructure::__set_initialUnknowns(const std::vector<Unknown> & val) {
-  this->initialUnknowns = val;
+void ModelStructure::__set_initial_unknowns(const std::vector<Unknown> & val) {
+  this->initial_unknowns = val;
 }
 std::ostream& operator<<(std::ostream& out, const ModelStructure& obj)
 {
@@ -1342,19 +1342,19 @@ uint32_t ModelStructure::read(::apache::thrift::protocol::TProtocol* iprot) {
       case 3:
         if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
-            this->initialUnknowns.clear();
+            this->initial_unknowns.clear();
             uint32_t _size38;
             ::apache::thrift::protocol::TType _etype41;
             xfer += iprot->readListBegin(_etype41, _size38);
-            this->initialUnknowns.resize(_size38);
+            this->initial_unknowns.resize(_size38);
             uint32_t _i42;
             for (_i42 = 0; _i42 < _size38; ++_i42)
             {
-              xfer += this->initialUnknowns[_i42].read(iprot);
+              xfer += this->initial_unknowns[_i42].read(iprot);
             }
             xfer += iprot->readListEnd();
           }
-          this->__isset.initialUnknowns = true;
+          this->__isset.initial_unknowns = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -1400,11 +1400,11 @@ uint32_t ModelStructure::write(::apache::thrift::protocol::TProtocol* oprot) con
   }
   xfer += oprot->writeFieldEnd();
 
-  xfer += oprot->writeFieldBegin("initialUnknowns", ::apache::thrift::protocol::T_LIST, 3);
+  xfer += oprot->writeFieldBegin("initial_unknowns", ::apache::thrift::protocol::T_LIST, 3);
   {
-    xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRUCT, static_cast<uint32_t>(this->initialUnknowns.size()));
+    xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRUCT, static_cast<uint32_t>(this->initial_unknowns.size()));
     std::vector<Unknown> ::const_iterator _iter45;
-    for (_iter45 = this->initialUnknowns.begin(); _iter45 != this->initialUnknowns.end(); ++_iter45)
+    for (_iter45 = this->initial_unknowns.begin(); _iter45 != this->initial_unknowns.end(); ++_iter45)
     {
       xfer += (*_iter45).write(oprot);
     }
@@ -1421,20 +1421,20 @@ void swap(ModelStructure &a, ModelStructure &b) {
   using ::std::swap;
   swap(a.outputs, b.outputs);
   swap(a.derivatives, b.derivatives);
-  swap(a.initialUnknowns, b.initialUnknowns);
+  swap(a.initial_unknowns, b.initial_unknowns);
   swap(a.__isset, b.__isset);
 }
 
 ModelStructure::ModelStructure(const ModelStructure& other46) {
   outputs = other46.outputs;
   derivatives = other46.derivatives;
-  initialUnknowns = other46.initialUnknowns;
+  initial_unknowns = other46.initial_unknowns;
   __isset = other46.__isset;
 }
 ModelStructure& ModelStructure::operator=(const ModelStructure& other47) {
   outputs = other47.outputs;
   derivatives = other47.derivatives;
-  initialUnknowns = other47.initialUnknowns;
+  initial_unknowns = other47.initial_unknowns;
   __isset = other47.__isset;
   return *this;
 }
@@ -1443,7 +1443,7 @@ void ModelStructure::printTo(std::ostream& out) const {
   out << "ModelStructure(";
   out << "outputs=" << to_string(outputs);
   out << ", " << "derivatives=" << to_string(derivatives);
-  out << ", " << "initialUnknowns=" << to_string(initialUnknowns);
+  out << ", " << "initial_unknowns=" << to_string(initial_unknowns);
   out << ")";
 }
 
@@ -1608,8 +1608,8 @@ void StepResult::__set_status(const Status::type val) {
   this->status = val;
 }
 
-void StepResult::__set_simulationTime(const double val) {
-  this->simulationTime = val;
+void StepResult::__set_simulation_time(const double val) {
+  this->simulation_time = val;
 }
 std::ostream& operator<<(std::ostream& out, const StepResult& obj)
 {
@@ -1651,8 +1651,8 @@ uint32_t StepResult::read(::apache::thrift::protocol::TProtocol* iprot) {
         break;
       case 2:
         if (ftype == ::apache::thrift::protocol::T_DOUBLE) {
-          xfer += iprot->readDouble(this->simulationTime);
-          this->__isset.simulationTime = true;
+          xfer += iprot->readDouble(this->simulation_time);
+          this->__isset.simulation_time = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -1678,8 +1678,8 @@ uint32_t StepResult::write(::apache::thrift::protocol::TProtocol* oprot) const {
   xfer += oprot->writeI32((int32_t)this->status);
   xfer += oprot->writeFieldEnd();
 
-  xfer += oprot->writeFieldBegin("simulationTime", ::apache::thrift::protocol::T_DOUBLE, 2);
-  xfer += oprot->writeDouble(this->simulationTime);
+  xfer += oprot->writeFieldBegin("simulation_time", ::apache::thrift::protocol::T_DOUBLE, 2);
+  xfer += oprot->writeDouble(this->simulation_time);
   xfer += oprot->writeFieldEnd();
 
   xfer += oprot->writeFieldStop();
@@ -1690,18 +1690,18 @@ uint32_t StepResult::write(::apache::thrift::protocol::TProtocol* oprot) const {
 void swap(StepResult &a, StepResult &b) {
   using ::std::swap;
   swap(a.status, b.status);
-  swap(a.simulationTime, b.simulationTime);
+  swap(a.simulation_time, b.simulation_time);
   swap(a.__isset, b.__isset);
 }
 
 StepResult::StepResult(const StepResult& other51) {
   status = other51.status;
-  simulationTime = other51.simulationTime;
+  simulation_time = other51.simulation_time;
   __isset = other51.__isset;
 }
 StepResult& StepResult::operator=(const StepResult& other52) {
   status = other52.status;
-  simulationTime = other52.simulationTime;
+  simulation_time = other52.simulation_time;
   __isset = other52.__isset;
   return *this;
 }
@@ -1709,7 +1709,7 @@ void StepResult::printTo(std::ostream& out) const {
   using ::apache::thrift::to_string;
   out << "StepResult(";
   out << "status=" << to_string(status);
-  out << ", " << "simulationTime=" << to_string(simulationTime);
+  out << ", " << "simulation_time=" << to_string(simulation_time);
   out << ")";
 }
 
@@ -2370,8 +2370,8 @@ void ModelDescription::__set_guid(const std::string& val) {
   this->guid = val;
 }
 
-void ModelDescription::__set_fmiVersion(const std::string& val) {
-  this->fmiVersion = val;
+void ModelDescription::__set_fmi_version(const std::string& val) {
+  this->fmi_version = val;
 }
 
 void ModelDescription::__set_modelName(const std::string& val) {
@@ -2403,32 +2403,32 @@ void ModelDescription::__set_description(const std::string& val) {
 __isset.description = true;
 }
 
-void ModelDescription::__set_generationTool(const std::string& val) {
-  this->generationTool = val;
-__isset.generationTool = true;
+void ModelDescription::__set_generation_tool(const std::string& val) {
+  this->generation_tool = val;
+__isset.generation_tool = true;
 }
 
-void ModelDescription::__set_generationDateAndTime(const std::string& val) {
-  this->generationDateAndTime = val;
-__isset.generationDateAndTime = true;
+void ModelDescription::__set_generation_date_and_time(const std::string& val) {
+  this->generation_date_and_time = val;
+__isset.generation_date_and_time = true;
 }
 
-void ModelDescription::__set_defaultExperiment(const DefaultExperiment& val) {
-  this->defaultExperiment = val;
-__isset.defaultExperiment = true;
+void ModelDescription::__set_default_experiment(const DefaultExperiment& val) {
+  this->default_experiment = val;
+__isset.default_experiment = true;
 }
 
-void ModelDescription::__set_variableNamingConvention(const std::string& val) {
-  this->variableNamingConvention = val;
-__isset.variableNamingConvention = true;
+void ModelDescription::__set_variable_naming_convention(const std::string& val) {
+  this->variable_naming_convention = val;
+__isset.variable_naming_convention = true;
 }
 
-void ModelDescription::__set_modelVariables(const ModelVariables& val) {
-  this->modelVariables = val;
+void ModelDescription::__set_model_variables(const ModelVariables& val) {
+  this->model_variables = val;
 }
 
-void ModelDescription::__set_modelStructure(const ModelStructure& val) {
-  this->modelStructure = val;
+void ModelDescription::__set_model_structure(const ModelStructure& val) {
+  this->model_structure = val;
 }
 std::ostream& operator<<(std::ostream& out, const ModelDescription& obj)
 {
@@ -2468,8 +2468,8 @@ uint32_t ModelDescription::read(::apache::thrift::protocol::TProtocol* iprot) {
         break;
       case 2:
         if (ftype == ::apache::thrift::protocol::T_STRING) {
-          xfer += iprot->readString(this->fmiVersion);
-          this->__isset.fmiVersion = true;
+          xfer += iprot->readString(this->fmi_version);
+          this->__isset.fmi_version = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -2524,32 +2524,32 @@ uint32_t ModelDescription::read(::apache::thrift::protocol::TProtocol* iprot) {
         break;
       case 9:
         if (ftype == ::apache::thrift::protocol::T_STRING) {
-          xfer += iprot->readString(this->generationTool);
-          this->__isset.generationTool = true;
+          xfer += iprot->readString(this->generation_tool);
+          this->__isset.generation_tool = true;
         } else {
           xfer += iprot->skip(ftype);
         }
         break;
       case 10:
         if (ftype == ::apache::thrift::protocol::T_STRING) {
-          xfer += iprot->readString(this->generationDateAndTime);
-          this->__isset.generationDateAndTime = true;
+          xfer += iprot->readString(this->generation_date_and_time);
+          this->__isset.generation_date_and_time = true;
         } else {
           xfer += iprot->skip(ftype);
         }
         break;
       case 11:
         if (ftype == ::apache::thrift::protocol::T_STRUCT) {
-          xfer += this->defaultExperiment.read(iprot);
-          this->__isset.defaultExperiment = true;
+          xfer += this->default_experiment.read(iprot);
+          this->__isset.default_experiment = true;
         } else {
           xfer += iprot->skip(ftype);
         }
         break;
       case 12:
         if (ftype == ::apache::thrift::protocol::T_STRING) {
-          xfer += iprot->readString(this->variableNamingConvention);
-          this->__isset.variableNamingConvention = true;
+          xfer += iprot->readString(this->variable_naming_convention);
+          this->__isset.variable_naming_convention = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -2557,27 +2557,27 @@ uint32_t ModelDescription::read(::apache::thrift::protocol::TProtocol* iprot) {
       case 13:
         if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
-            this->modelVariables.clear();
+            this->model_variables.clear();
             uint32_t _size91;
             ::apache::thrift::protocol::TType _etype94;
             xfer += iprot->readListBegin(_etype94, _size91);
-            this->modelVariables.resize(_size91);
+            this->model_variables.resize(_size91);
             uint32_t _i95;
             for (_i95 = 0; _i95 < _size91; ++_i95)
             {
-              xfer += this->modelVariables[_i95].read(iprot);
+              xfer += this->model_variables[_i95].read(iprot);
             }
             xfer += iprot->readListEnd();
           }
-          this->__isset.modelVariables = true;
+          this->__isset.model_variables = true;
         } else {
           xfer += iprot->skip(ftype);
         }
         break;
       case 14:
         if (ftype == ::apache::thrift::protocol::T_STRUCT) {
-          xfer += this->modelStructure.read(iprot);
-          this->__isset.modelStructure = true;
+          xfer += this->model_structure.read(iprot);
+          this->__isset.model_structure = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -2603,8 +2603,8 @@ uint32_t ModelDescription::write(::apache::thrift::protocol::TProtocol* oprot) c
   xfer += oprot->writeString(this->guid);
   xfer += oprot->writeFieldEnd();
 
-  xfer += oprot->writeFieldBegin("fmiVersion", ::apache::thrift::protocol::T_STRING, 2);
-  xfer += oprot->writeString(this->fmiVersion);
+  xfer += oprot->writeFieldBegin("fmi_version", ::apache::thrift::protocol::T_STRING, 2);
+  xfer += oprot->writeString(this->fmi_version);
   xfer += oprot->writeFieldEnd();
 
   xfer += oprot->writeFieldBegin("modelName", ::apache::thrift::protocol::T_STRING, 3);
@@ -2636,31 +2636,31 @@ uint32_t ModelDescription::write(::apache::thrift::protocol::TProtocol* oprot) c
     xfer += oprot->writeString(this->description);
     xfer += oprot->writeFieldEnd();
   }
-  if (this->__isset.generationTool) {
-    xfer += oprot->writeFieldBegin("generationTool", ::apache::thrift::protocol::T_STRING, 9);
-    xfer += oprot->writeString(this->generationTool);
+  if (this->__isset.generation_tool) {
+    xfer += oprot->writeFieldBegin("generation_tool", ::apache::thrift::protocol::T_STRING, 9);
+    xfer += oprot->writeString(this->generation_tool);
     xfer += oprot->writeFieldEnd();
   }
-  if (this->__isset.generationDateAndTime) {
-    xfer += oprot->writeFieldBegin("generationDateAndTime", ::apache::thrift::protocol::T_STRING, 10);
-    xfer += oprot->writeString(this->generationDateAndTime);
+  if (this->__isset.generation_date_and_time) {
+    xfer += oprot->writeFieldBegin("generation_date_and_time", ::apache::thrift::protocol::T_STRING, 10);
+    xfer += oprot->writeString(this->generation_date_and_time);
     xfer += oprot->writeFieldEnd();
   }
-  if (this->__isset.defaultExperiment) {
-    xfer += oprot->writeFieldBegin("defaultExperiment", ::apache::thrift::protocol::T_STRUCT, 11);
-    xfer += this->defaultExperiment.write(oprot);
+  if (this->__isset.default_experiment) {
+    xfer += oprot->writeFieldBegin("default_experiment", ::apache::thrift::protocol::T_STRUCT, 11);
+    xfer += this->default_experiment.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
-  if (this->__isset.variableNamingConvention) {
-    xfer += oprot->writeFieldBegin("variableNamingConvention", ::apache::thrift::protocol::T_STRING, 12);
-    xfer += oprot->writeString(this->variableNamingConvention);
+  if (this->__isset.variable_naming_convention) {
+    xfer += oprot->writeFieldBegin("variable_naming_convention", ::apache::thrift::protocol::T_STRING, 12);
+    xfer += oprot->writeString(this->variable_naming_convention);
     xfer += oprot->writeFieldEnd();
   }
-  xfer += oprot->writeFieldBegin("modelVariables", ::apache::thrift::protocol::T_LIST, 13);
+  xfer += oprot->writeFieldBegin("model_variables", ::apache::thrift::protocol::T_LIST, 13);
   {
-    xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRUCT, static_cast<uint32_t>(this->modelVariables.size()));
+    xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRUCT, static_cast<uint32_t>(this->model_variables.size()));
     std::vector<ScalarVariable> ::const_iterator _iter96;
-    for (_iter96 = this->modelVariables.begin(); _iter96 != this->modelVariables.end(); ++_iter96)
+    for (_iter96 = this->model_variables.begin(); _iter96 != this->model_variables.end(); ++_iter96)
     {
       xfer += (*_iter96).write(oprot);
     }
@@ -2668,8 +2668,8 @@ uint32_t ModelDescription::write(::apache::thrift::protocol::TProtocol* oprot) c
   }
   xfer += oprot->writeFieldEnd();
 
-  xfer += oprot->writeFieldBegin("modelStructure", ::apache::thrift::protocol::T_STRUCT, 14);
-  xfer += this->modelStructure.write(oprot);
+  xfer += oprot->writeFieldBegin("model_structure", ::apache::thrift::protocol::T_STRUCT, 14);
+  xfer += this->model_structure.write(oprot);
   xfer += oprot->writeFieldEnd();
 
   xfer += oprot->writeFieldStop();
@@ -2680,54 +2680,54 @@ uint32_t ModelDescription::write(::apache::thrift::protocol::TProtocol* oprot) c
 void swap(ModelDescription &a, ModelDescription &b) {
   using ::std::swap;
   swap(a.guid, b.guid);
-  swap(a.fmiVersion, b.fmiVersion);
+  swap(a.fmi_version, b.fmi_version);
   swap(a.modelName, b.modelName);
   swap(a.license, b.license);
   swap(a.copyright, b.copyright);
   swap(a.author, b.author);
   swap(a.version, b.version);
   swap(a.description, b.description);
-  swap(a.generationTool, b.generationTool);
-  swap(a.generationDateAndTime, b.generationDateAndTime);
-  swap(a.defaultExperiment, b.defaultExperiment);
-  swap(a.variableNamingConvention, b.variableNamingConvention);
-  swap(a.modelVariables, b.modelVariables);
-  swap(a.modelStructure, b.modelStructure);
+  swap(a.generation_tool, b.generation_tool);
+  swap(a.generation_date_and_time, b.generation_date_and_time);
+  swap(a.default_experiment, b.default_experiment);
+  swap(a.variable_naming_convention, b.variable_naming_convention);
+  swap(a.model_variables, b.model_variables);
+  swap(a.model_structure, b.model_structure);
   swap(a.__isset, b.__isset);
 }
 
 ModelDescription::ModelDescription(const ModelDescription& other97) {
   guid = other97.guid;
-  fmiVersion = other97.fmiVersion;
+  fmi_version = other97.fmi_version;
   modelName = other97.modelName;
   license = other97.license;
   copyright = other97.copyright;
   author = other97.author;
   version = other97.version;
   description = other97.description;
-  generationTool = other97.generationTool;
-  generationDateAndTime = other97.generationDateAndTime;
-  defaultExperiment = other97.defaultExperiment;
-  variableNamingConvention = other97.variableNamingConvention;
-  modelVariables = other97.modelVariables;
-  modelStructure = other97.modelStructure;
+  generation_tool = other97.generation_tool;
+  generation_date_and_time = other97.generation_date_and_time;
+  default_experiment = other97.default_experiment;
+  variable_naming_convention = other97.variable_naming_convention;
+  model_variables = other97.model_variables;
+  model_structure = other97.model_structure;
   __isset = other97.__isset;
 }
 ModelDescription& ModelDescription::operator=(const ModelDescription& other98) {
   guid = other98.guid;
-  fmiVersion = other98.fmiVersion;
+  fmi_version = other98.fmi_version;
   modelName = other98.modelName;
   license = other98.license;
   copyright = other98.copyright;
   author = other98.author;
   version = other98.version;
   description = other98.description;
-  generationTool = other98.generationTool;
-  generationDateAndTime = other98.generationDateAndTime;
-  defaultExperiment = other98.defaultExperiment;
-  variableNamingConvention = other98.variableNamingConvention;
-  modelVariables = other98.modelVariables;
-  modelStructure = other98.modelStructure;
+  generation_tool = other98.generation_tool;
+  generation_date_and_time = other98.generation_date_and_time;
+  default_experiment = other98.default_experiment;
+  variable_naming_convention = other98.variable_naming_convention;
+  model_variables = other98.model_variables;
+  model_structure = other98.model_structure;
   __isset = other98.__isset;
   return *this;
 }
@@ -2735,19 +2735,19 @@ void ModelDescription::printTo(std::ostream& out) const {
   using ::apache::thrift::to_string;
   out << "ModelDescription(";
   out << "guid=" << to_string(guid);
-  out << ", " << "fmiVersion=" << to_string(fmiVersion);
+  out << ", " << "fmi_version=" << to_string(fmi_version);
   out << ", " << "modelName=" << to_string(modelName);
   out << ", " << "license="; (__isset.license ? (out << to_string(license)) : (out << "<null>"));
   out << ", " << "copyright="; (__isset.copyright ? (out << to_string(copyright)) : (out << "<null>"));
   out << ", " << "author="; (__isset.author ? (out << to_string(author)) : (out << "<null>"));
   out << ", " << "version="; (__isset.version ? (out << to_string(version)) : (out << "<null>"));
   out << ", " << "description="; (__isset.description ? (out << to_string(description)) : (out << "<null>"));
-  out << ", " << "generationTool="; (__isset.generationTool ? (out << to_string(generationTool)) : (out << "<null>"));
-  out << ", " << "generationDateAndTime="; (__isset.generationDateAndTime ? (out << to_string(generationDateAndTime)) : (out << "<null>"));
-  out << ", " << "defaultExperiment="; (__isset.defaultExperiment ? (out << to_string(defaultExperiment)) : (out << "<null>"));
-  out << ", " << "variableNamingConvention="; (__isset.variableNamingConvention ? (out << to_string(variableNamingConvention)) : (out << "<null>"));
-  out << ", " << "modelVariables=" << to_string(modelVariables);
-  out << ", " << "modelStructure=" << to_string(modelStructure);
+  out << ", " << "generation_tool="; (__isset.generation_tool ? (out << to_string(generation_tool)) : (out << "<null>"));
+  out << ", " << "generation_date_and_time="; (__isset.generation_date_and_time ? (out << to_string(generation_date_and_time)) : (out << "<null>"));
+  out << ", " << "default_experiment="; (__isset.default_experiment ? (out << to_string(default_experiment)) : (out << "<null>"));
+  out << ", " << "variable_naming_convention="; (__isset.variable_naming_convention ? (out << to_string(variable_naming_convention)) : (out << "<null>"));
+  out << ", " << "model_variables=" << to_string(model_variables);
+  out << ", " << "model_structure=" << to_string(model_structure);
   out << ")";
 }
 
@@ -2756,32 +2756,32 @@ CoSimulationAttributes::~CoSimulationAttributes() noexcept {
 }
 
 
-void CoSimulationAttributes::__set_modelIdentifier(const std::string& val) {
-  this->modelIdentifier = val;
+void CoSimulationAttributes::__set_model_identifier(const std::string& val) {
+  this->model_identifier = val;
 }
 
-void CoSimulationAttributes::__set_canGetAndSetFMUstate(const bool val) {
-  this->canGetAndSetFMUstate = val;
+void CoSimulationAttributes::__set_can_get_and_set_fmu_state(const bool val) {
+  this->can_get_and_set_fmu_state = val;
 }
 
-void CoSimulationAttributes::__set_canSerializeFMUstate(const bool val) {
-  this->canSerializeFMUstate = val;
+void CoSimulationAttributes::__set_can_serialize_fmu_state(const bool val) {
+  this->can_serialize_fmu_state = val;
 }
 
-void CoSimulationAttributes::__set_providesDirectionalDerivative(const bool val) {
-  this->providesDirectionalDerivative = val;
+void CoSimulationAttributes::__set_provides_directional_derivative(const bool val) {
+  this->provides_directional_derivative = val;
 }
 
-void CoSimulationAttributes::__set_canHandleVariableCommunicationStepSize(const bool val) {
-  this->canHandleVariableCommunicationStepSize = val;
+void CoSimulationAttributes::__set_can_handle_variable_communication_step_size(const bool val) {
+  this->can_handle_variable_communication_step_size = val;
 }
 
-void CoSimulationAttributes::__set_canInterpolateInputs(const bool val) {
-  this->canInterpolateInputs = val;
+void CoSimulationAttributes::__set_can_interpolate_inputs(const bool val) {
+  this->can_interpolate_inputs = val;
 }
 
-void CoSimulationAttributes::__set_maxOutputDerivativeOrder(const int32_t val) {
-  this->maxOutputDerivativeOrder = val;
+void CoSimulationAttributes::__set_max_output_derivative_order(const int32_t val) {
+  this->max_output_derivative_order = val;
 }
 std::ostream& operator<<(std::ostream& out, const CoSimulationAttributes& obj)
 {
@@ -2813,56 +2813,56 @@ uint32_t CoSimulationAttributes::read(::apache::thrift::protocol::TProtocol* ipr
     {
       case 1:
         if (ftype == ::apache::thrift::protocol::T_STRING) {
-          xfer += iprot->readString(this->modelIdentifier);
-          this->__isset.modelIdentifier = true;
+          xfer += iprot->readString(this->model_identifier);
+          this->__isset.model_identifier = true;
         } else {
           xfer += iprot->skip(ftype);
         }
         break;
       case 2:
         if (ftype == ::apache::thrift::protocol::T_BOOL) {
-          xfer += iprot->readBool(this->canGetAndSetFMUstate);
-          this->__isset.canGetAndSetFMUstate = true;
+          xfer += iprot->readBool(this->can_get_and_set_fmu_state);
+          this->__isset.can_get_and_set_fmu_state = true;
         } else {
           xfer += iprot->skip(ftype);
         }
         break;
       case 3:
         if (ftype == ::apache::thrift::protocol::T_BOOL) {
-          xfer += iprot->readBool(this->canSerializeFMUstate);
-          this->__isset.canSerializeFMUstate = true;
+          xfer += iprot->readBool(this->can_serialize_fmu_state);
+          this->__isset.can_serialize_fmu_state = true;
         } else {
           xfer += iprot->skip(ftype);
         }
         break;
       case 4:
         if (ftype == ::apache::thrift::protocol::T_BOOL) {
-          xfer += iprot->readBool(this->providesDirectionalDerivative);
-          this->__isset.providesDirectionalDerivative = true;
+          xfer += iprot->readBool(this->provides_directional_derivative);
+          this->__isset.provides_directional_derivative = true;
         } else {
           xfer += iprot->skip(ftype);
         }
         break;
       case 5:
         if (ftype == ::apache::thrift::protocol::T_BOOL) {
-          xfer += iprot->readBool(this->canHandleVariableCommunicationStepSize);
-          this->__isset.canHandleVariableCommunicationStepSize = true;
+          xfer += iprot->readBool(this->can_handle_variable_communication_step_size);
+          this->__isset.can_handle_variable_communication_step_size = true;
         } else {
           xfer += iprot->skip(ftype);
         }
         break;
       case 6:
         if (ftype == ::apache::thrift::protocol::T_BOOL) {
-          xfer += iprot->readBool(this->canInterpolateInputs);
-          this->__isset.canInterpolateInputs = true;
+          xfer += iprot->readBool(this->can_interpolate_inputs);
+          this->__isset.can_interpolate_inputs = true;
         } else {
           xfer += iprot->skip(ftype);
         }
         break;
       case 7:
         if (ftype == ::apache::thrift::protocol::T_I32) {
-          xfer += iprot->readI32(this->maxOutputDerivativeOrder);
-          this->__isset.maxOutputDerivativeOrder = true;
+          xfer += iprot->readI32(this->max_output_derivative_order);
+          this->__isset.max_output_derivative_order = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -2884,32 +2884,32 @@ uint32_t CoSimulationAttributes::write(::apache::thrift::protocol::TProtocol* op
   ::apache::thrift::protocol::TOutputRecursionTracker tracker(*oprot);
   xfer += oprot->writeStructBegin("CoSimulationAttributes");
 
-  xfer += oprot->writeFieldBegin("modelIdentifier", ::apache::thrift::protocol::T_STRING, 1);
-  xfer += oprot->writeString(this->modelIdentifier);
+  xfer += oprot->writeFieldBegin("model_identifier", ::apache::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeString(this->model_identifier);
   xfer += oprot->writeFieldEnd();
 
-  xfer += oprot->writeFieldBegin("canGetAndSetFMUstate", ::apache::thrift::protocol::T_BOOL, 2);
-  xfer += oprot->writeBool(this->canGetAndSetFMUstate);
+  xfer += oprot->writeFieldBegin("can_get_and_set_fmu_state", ::apache::thrift::protocol::T_BOOL, 2);
+  xfer += oprot->writeBool(this->can_get_and_set_fmu_state);
   xfer += oprot->writeFieldEnd();
 
-  xfer += oprot->writeFieldBegin("canSerializeFMUstate", ::apache::thrift::protocol::T_BOOL, 3);
-  xfer += oprot->writeBool(this->canSerializeFMUstate);
+  xfer += oprot->writeFieldBegin("can_serialize_fmu_state", ::apache::thrift::protocol::T_BOOL, 3);
+  xfer += oprot->writeBool(this->can_serialize_fmu_state);
   xfer += oprot->writeFieldEnd();
 
-  xfer += oprot->writeFieldBegin("providesDirectionalDerivative", ::apache::thrift::protocol::T_BOOL, 4);
-  xfer += oprot->writeBool(this->providesDirectionalDerivative);
+  xfer += oprot->writeFieldBegin("provides_directional_derivative", ::apache::thrift::protocol::T_BOOL, 4);
+  xfer += oprot->writeBool(this->provides_directional_derivative);
   xfer += oprot->writeFieldEnd();
 
-  xfer += oprot->writeFieldBegin("canHandleVariableCommunicationStepSize", ::apache::thrift::protocol::T_BOOL, 5);
-  xfer += oprot->writeBool(this->canHandleVariableCommunicationStepSize);
+  xfer += oprot->writeFieldBegin("can_handle_variable_communication_step_size", ::apache::thrift::protocol::T_BOOL, 5);
+  xfer += oprot->writeBool(this->can_handle_variable_communication_step_size);
   xfer += oprot->writeFieldEnd();
 
-  xfer += oprot->writeFieldBegin("canInterpolateInputs", ::apache::thrift::protocol::T_BOOL, 6);
-  xfer += oprot->writeBool(this->canInterpolateInputs);
+  xfer += oprot->writeFieldBegin("can_interpolate_inputs", ::apache::thrift::protocol::T_BOOL, 6);
+  xfer += oprot->writeBool(this->can_interpolate_inputs);
   xfer += oprot->writeFieldEnd();
 
-  xfer += oprot->writeFieldBegin("maxOutputDerivativeOrder", ::apache::thrift::protocol::T_I32, 7);
-  xfer += oprot->writeI32(this->maxOutputDerivativeOrder);
+  xfer += oprot->writeFieldBegin("max_output_derivative_order", ::apache::thrift::protocol::T_I32, 7);
+  xfer += oprot->writeI32(this->max_output_derivative_order);
   xfer += oprot->writeFieldEnd();
 
   xfer += oprot->writeFieldStop();
@@ -2919,47 +2919,47 @@ uint32_t CoSimulationAttributes::write(::apache::thrift::protocol::TProtocol* op
 
 void swap(CoSimulationAttributes &a, CoSimulationAttributes &b) {
   using ::std::swap;
-  swap(a.modelIdentifier, b.modelIdentifier);
-  swap(a.canGetAndSetFMUstate, b.canGetAndSetFMUstate);
-  swap(a.canSerializeFMUstate, b.canSerializeFMUstate);
-  swap(a.providesDirectionalDerivative, b.providesDirectionalDerivative);
-  swap(a.canHandleVariableCommunicationStepSize, b.canHandleVariableCommunicationStepSize);
-  swap(a.canInterpolateInputs, b.canInterpolateInputs);
-  swap(a.maxOutputDerivativeOrder, b.maxOutputDerivativeOrder);
+  swap(a.model_identifier, b.model_identifier);
+  swap(a.can_get_and_set_fmu_state, b.can_get_and_set_fmu_state);
+  swap(a.can_serialize_fmu_state, b.can_serialize_fmu_state);
+  swap(a.provides_directional_derivative, b.provides_directional_derivative);
+  swap(a.can_handle_variable_communication_step_size, b.can_handle_variable_communication_step_size);
+  swap(a.can_interpolate_inputs, b.can_interpolate_inputs);
+  swap(a.max_output_derivative_order, b.max_output_derivative_order);
   swap(a.__isset, b.__isset);
 }
 
 CoSimulationAttributes::CoSimulationAttributes(const CoSimulationAttributes& other99) {
-  modelIdentifier = other99.modelIdentifier;
-  canGetAndSetFMUstate = other99.canGetAndSetFMUstate;
-  canSerializeFMUstate = other99.canSerializeFMUstate;
-  providesDirectionalDerivative = other99.providesDirectionalDerivative;
-  canHandleVariableCommunicationStepSize = other99.canHandleVariableCommunicationStepSize;
-  canInterpolateInputs = other99.canInterpolateInputs;
-  maxOutputDerivativeOrder = other99.maxOutputDerivativeOrder;
+  model_identifier = other99.model_identifier;
+  can_get_and_set_fmu_state = other99.can_get_and_set_fmu_state;
+  can_serialize_fmu_state = other99.can_serialize_fmu_state;
+  provides_directional_derivative = other99.provides_directional_derivative;
+  can_handle_variable_communication_step_size = other99.can_handle_variable_communication_step_size;
+  can_interpolate_inputs = other99.can_interpolate_inputs;
+  max_output_derivative_order = other99.max_output_derivative_order;
   __isset = other99.__isset;
 }
 CoSimulationAttributes& CoSimulationAttributes::operator=(const CoSimulationAttributes& other100) {
-  modelIdentifier = other100.modelIdentifier;
-  canGetAndSetFMUstate = other100.canGetAndSetFMUstate;
-  canSerializeFMUstate = other100.canSerializeFMUstate;
-  providesDirectionalDerivative = other100.providesDirectionalDerivative;
-  canHandleVariableCommunicationStepSize = other100.canHandleVariableCommunicationStepSize;
-  canInterpolateInputs = other100.canInterpolateInputs;
-  maxOutputDerivativeOrder = other100.maxOutputDerivativeOrder;
+  model_identifier = other100.model_identifier;
+  can_get_and_set_fmu_state = other100.can_get_and_set_fmu_state;
+  can_serialize_fmu_state = other100.can_serialize_fmu_state;
+  provides_directional_derivative = other100.provides_directional_derivative;
+  can_handle_variable_communication_step_size = other100.can_handle_variable_communication_step_size;
+  can_interpolate_inputs = other100.can_interpolate_inputs;
+  max_output_derivative_order = other100.max_output_derivative_order;
   __isset = other100.__isset;
   return *this;
 }
 void CoSimulationAttributes::printTo(std::ostream& out) const {
   using ::apache::thrift::to_string;
   out << "CoSimulationAttributes(";
-  out << "modelIdentifier=" << to_string(modelIdentifier);
-  out << ", " << "canGetAndSetFMUstate=" << to_string(canGetAndSetFMUstate);
-  out << ", " << "canSerializeFMUstate=" << to_string(canSerializeFMUstate);
-  out << ", " << "providesDirectionalDerivative=" << to_string(providesDirectionalDerivative);
-  out << ", " << "canHandleVariableCommunicationStepSize=" << to_string(canHandleVariableCommunicationStepSize);
-  out << ", " << "canInterpolateInputs=" << to_string(canInterpolateInputs);
-  out << ", " << "maxOutputDerivativeOrder=" << to_string(maxOutputDerivativeOrder);
+  out << "model_identifier=" << to_string(model_identifier);
+  out << ", " << "can_get_and_set_fmu_state=" << to_string(can_get_and_set_fmu_state);
+  out << ", " << "can_serialize_fmu_state=" << to_string(can_serialize_fmu_state);
+  out << ", " << "provides_directional_derivative=" << to_string(provides_directional_derivative);
+  out << ", " << "can_handle_variable_communication_step_size=" << to_string(can_handle_variable_communication_step_size);
+  out << ", " << "can_interpolate_inputs=" << to_string(can_interpolate_inputs);
+  out << ", " << "max_output_derivative_order=" << to_string(max_output_derivative_order);
   out << ")";
 }
 
@@ -3376,354 +3376,12 @@ const char* UnsupportedOperationException::what() const noexcept {
 }
 
 
-GetFmuStateResult::~GetFmuStateResult() noexcept {
-}
-
-
-void GetFmuStateResult::__set_state(const FmuState val) {
-  this->state = val;
-}
-
-void GetFmuStateResult::__set_status(const Status::type val) {
-  this->status = val;
-}
-std::ostream& operator<<(std::ostream& out, const GetFmuStateResult& obj)
-{
-  obj.printTo(out);
-  return out;
-}
-
-
-uint32_t GetFmuStateResult::read(::apache::thrift::protocol::TProtocol* iprot) {
-
-  ::apache::thrift::protocol::TInputRecursionTracker tracker(*iprot);
-  uint32_t xfer = 0;
-  std::string fname;
-  ::apache::thrift::protocol::TType ftype;
-  int16_t fid;
-
-  xfer += iprot->readStructBegin(fname);
-
-  using ::apache::thrift::protocol::TProtocolException;
-
-
-  while (true)
-  {
-    xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == ::apache::thrift::protocol::T_STOP) {
-      break;
-    }
-    switch (fid)
-    {
-      case 1:
-        if (ftype == ::apache::thrift::protocol::T_I64) {
-          xfer += iprot->readI64(this->state);
-          this->__isset.state = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      case 2:
-        if (ftype == ::apache::thrift::protocol::T_I32) {
-          int32_t ecast109;
-          xfer += iprot->readI32(ecast109);
-          this->status = (Status::type)ecast109;
-          this->__isset.status = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      default:
-        xfer += iprot->skip(ftype);
-        break;
-    }
-    xfer += iprot->readFieldEnd();
-  }
-
-  xfer += iprot->readStructEnd();
-
-  return xfer;
-}
-
-uint32_t GetFmuStateResult::write(::apache::thrift::protocol::TProtocol* oprot) const {
-  uint32_t xfer = 0;
-  ::apache::thrift::protocol::TOutputRecursionTracker tracker(*oprot);
-  xfer += oprot->writeStructBegin("GetFmuStateResult");
-
-  xfer += oprot->writeFieldBegin("state", ::apache::thrift::protocol::T_I64, 1);
-  xfer += oprot->writeI64(this->state);
-  xfer += oprot->writeFieldEnd();
-
-  xfer += oprot->writeFieldBegin("status", ::apache::thrift::protocol::T_I32, 2);
-  xfer += oprot->writeI32((int32_t)this->status);
-  xfer += oprot->writeFieldEnd();
-
-  xfer += oprot->writeFieldStop();
-  xfer += oprot->writeStructEnd();
-  return xfer;
-}
-
-void swap(GetFmuStateResult &a, GetFmuStateResult &b) {
-  using ::std::swap;
-  swap(a.state, b.state);
-  swap(a.status, b.status);
-  swap(a.__isset, b.__isset);
-}
-
-GetFmuStateResult::GetFmuStateResult(const GetFmuStateResult& other110) {
-  state = other110.state;
-  status = other110.status;
-  __isset = other110.__isset;
-}
-GetFmuStateResult& GetFmuStateResult::operator=(const GetFmuStateResult& other111) {
-  state = other111.state;
-  status = other111.status;
-  __isset = other111.__isset;
-  return *this;
-}
-void GetFmuStateResult::printTo(std::ostream& out) const {
-  using ::apache::thrift::to_string;
-  out << "GetFmuStateResult(";
-  out << "state=" << to_string(state);
-  out << ", " << "status=" << to_string(status);
-  out << ")";
-}
-
-
-SerializeFmuStateResult::~SerializeFmuStateResult() noexcept {
-}
-
-
-void SerializeFmuStateResult::__set_state(const std::string& val) {
-  this->state = val;
-}
-
-void SerializeFmuStateResult::__set_status(const Status::type val) {
-  this->status = val;
-}
-std::ostream& operator<<(std::ostream& out, const SerializeFmuStateResult& obj)
-{
-  obj.printTo(out);
-  return out;
-}
-
-
-uint32_t SerializeFmuStateResult::read(::apache::thrift::protocol::TProtocol* iprot) {
-
-  ::apache::thrift::protocol::TInputRecursionTracker tracker(*iprot);
-  uint32_t xfer = 0;
-  std::string fname;
-  ::apache::thrift::protocol::TType ftype;
-  int16_t fid;
-
-  xfer += iprot->readStructBegin(fname);
-
-  using ::apache::thrift::protocol::TProtocolException;
-
-
-  while (true)
-  {
-    xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == ::apache::thrift::protocol::T_STOP) {
-      break;
-    }
-    switch (fid)
-    {
-      case 1:
-        if (ftype == ::apache::thrift::protocol::T_STRING) {
-          xfer += iprot->readBinary(this->state);
-          this->__isset.state = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      case 2:
-        if (ftype == ::apache::thrift::protocol::T_I32) {
-          int32_t ecast112;
-          xfer += iprot->readI32(ecast112);
-          this->status = (Status::type)ecast112;
-          this->__isset.status = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      default:
-        xfer += iprot->skip(ftype);
-        break;
-    }
-    xfer += iprot->readFieldEnd();
-  }
-
-  xfer += iprot->readStructEnd();
-
-  return xfer;
-}
-
-uint32_t SerializeFmuStateResult::write(::apache::thrift::protocol::TProtocol* oprot) const {
-  uint32_t xfer = 0;
-  ::apache::thrift::protocol::TOutputRecursionTracker tracker(*oprot);
-  xfer += oprot->writeStructBegin("SerializeFmuStateResult");
-
-  xfer += oprot->writeFieldBegin("state", ::apache::thrift::protocol::T_STRING, 1);
-  xfer += oprot->writeBinary(this->state);
-  xfer += oprot->writeFieldEnd();
-
-  xfer += oprot->writeFieldBegin("status", ::apache::thrift::protocol::T_I32, 2);
-  xfer += oprot->writeI32((int32_t)this->status);
-  xfer += oprot->writeFieldEnd();
-
-  xfer += oprot->writeFieldStop();
-  xfer += oprot->writeStructEnd();
-  return xfer;
-}
-
-void swap(SerializeFmuStateResult &a, SerializeFmuStateResult &b) {
-  using ::std::swap;
-  swap(a.state, b.state);
-  swap(a.status, b.status);
-  swap(a.__isset, b.__isset);
-}
-
-SerializeFmuStateResult::SerializeFmuStateResult(const SerializeFmuStateResult& other113) {
-  state = other113.state;
-  status = other113.status;
-  __isset = other113.__isset;
-}
-SerializeFmuStateResult& SerializeFmuStateResult::operator=(const SerializeFmuStateResult& other114) {
-  state = other114.state;
-  status = other114.status;
-  __isset = other114.__isset;
-  return *this;
-}
-void SerializeFmuStateResult::printTo(std::ostream& out) const {
-  using ::apache::thrift::to_string;
-  out << "SerializeFmuStateResult(";
-  out << "state=" << to_string(state);
-  out << ", " << "status=" << to_string(status);
-  out << ")";
-}
-
-
-DeSerializeFmuStateResult::~DeSerializeFmuStateResult() noexcept {
-}
-
-
-void DeSerializeFmuStateResult::__set_state(const FmuState val) {
-  this->state = val;
-}
-
-void DeSerializeFmuStateResult::__set_status(const Status::type val) {
-  this->status = val;
-}
-std::ostream& operator<<(std::ostream& out, const DeSerializeFmuStateResult& obj)
-{
-  obj.printTo(out);
-  return out;
-}
-
-
-uint32_t DeSerializeFmuStateResult::read(::apache::thrift::protocol::TProtocol* iprot) {
-
-  ::apache::thrift::protocol::TInputRecursionTracker tracker(*iprot);
-  uint32_t xfer = 0;
-  std::string fname;
-  ::apache::thrift::protocol::TType ftype;
-  int16_t fid;
-
-  xfer += iprot->readStructBegin(fname);
-
-  using ::apache::thrift::protocol::TProtocolException;
-
-
-  while (true)
-  {
-    xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == ::apache::thrift::protocol::T_STOP) {
-      break;
-    }
-    switch (fid)
-    {
-      case 1:
-        if (ftype == ::apache::thrift::protocol::T_I64) {
-          xfer += iprot->readI64(this->state);
-          this->__isset.state = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      case 2:
-        if (ftype == ::apache::thrift::protocol::T_I32) {
-          int32_t ecast115;
-          xfer += iprot->readI32(ecast115);
-          this->status = (Status::type)ecast115;
-          this->__isset.status = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      default:
-        xfer += iprot->skip(ftype);
-        break;
-    }
-    xfer += iprot->readFieldEnd();
-  }
-
-  xfer += iprot->readStructEnd();
-
-  return xfer;
-}
-
-uint32_t DeSerializeFmuStateResult::write(::apache::thrift::protocol::TProtocol* oprot) const {
-  uint32_t xfer = 0;
-  ::apache::thrift::protocol::TOutputRecursionTracker tracker(*oprot);
-  xfer += oprot->writeStructBegin("DeSerializeFmuStateResult");
-
-  xfer += oprot->writeFieldBegin("state", ::apache::thrift::protocol::T_I64, 1);
-  xfer += oprot->writeI64(this->state);
-  xfer += oprot->writeFieldEnd();
-
-  xfer += oprot->writeFieldBegin("status", ::apache::thrift::protocol::T_I32, 2);
-  xfer += oprot->writeI32((int32_t)this->status);
-  xfer += oprot->writeFieldEnd();
-
-  xfer += oprot->writeFieldStop();
-  xfer += oprot->writeStructEnd();
-  return xfer;
-}
-
-void swap(DeSerializeFmuStateResult &a, DeSerializeFmuStateResult &b) {
-  using ::std::swap;
-  swap(a.state, b.state);
-  swap(a.status, b.status);
-  swap(a.__isset, b.__isset);
-}
-
-DeSerializeFmuStateResult::DeSerializeFmuStateResult(const DeSerializeFmuStateResult& other116) {
-  state = other116.state;
-  status = other116.status;
-  __isset = other116.__isset;
-}
-DeSerializeFmuStateResult& DeSerializeFmuStateResult::operator=(const DeSerializeFmuStateResult& other117) {
-  state = other117.state;
-  status = other117.status;
-  __isset = other117.__isset;
-  return *this;
-}
-void DeSerializeFmuStateResult::printTo(std::ostream& out) const {
-  using ::apache::thrift::to_string;
-  out << "DeSerializeFmuStateResult(";
-  out << "state=" << to_string(state);
-  out << ", " << "status=" << to_string(status);
-  out << ")";
-}
-
-
 DirectionalDerivativeResult::~DirectionalDerivativeResult() noexcept {
 }
 
 
-void DirectionalDerivativeResult::__set_dvUnknownRef(const DirectionalDerivative& val) {
-  this->dvUnknownRef = val;
+void DirectionalDerivativeResult::__set_dv_unknown_ref(const DirectionalDerivative& val) {
+  this->dv_unknown_ref = val;
 }
 
 void DirectionalDerivativeResult::__set_status(const Status::type val) {
@@ -3760,28 +3418,28 @@ uint32_t DirectionalDerivativeResult::read(::apache::thrift::protocol::TProtocol
       case 1:
         if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
-            this->dvUnknownRef.clear();
-            uint32_t _size118;
-            ::apache::thrift::protocol::TType _etype121;
-            xfer += iprot->readListBegin(_etype121, _size118);
-            this->dvUnknownRef.resize(_size118);
-            uint32_t _i122;
-            for (_i122 = 0; _i122 < _size118; ++_i122)
+            this->dv_unknown_ref.clear();
+            uint32_t _size109;
+            ::apache::thrift::protocol::TType _etype112;
+            xfer += iprot->readListBegin(_etype112, _size109);
+            this->dv_unknown_ref.resize(_size109);
+            uint32_t _i113;
+            for (_i113 = 0; _i113 < _size109; ++_i113)
             {
-              xfer += iprot->readDouble(this->dvUnknownRef[_i122]);
+              xfer += iprot->readDouble(this->dv_unknown_ref[_i113]);
             }
             xfer += iprot->readListEnd();
           }
-          this->__isset.dvUnknownRef = true;
+          this->__isset.dv_unknown_ref = true;
         } else {
           xfer += iprot->skip(ftype);
         }
         break;
       case 2:
         if (ftype == ::apache::thrift::protocol::T_I32) {
-          int32_t ecast123;
-          xfer += iprot->readI32(ecast123);
-          this->status = (Status::type)ecast123;
+          int32_t ecast114;
+          xfer += iprot->readI32(ecast114);
+          this->status = (Status::type)ecast114;
           this->__isset.status = true;
         } else {
           xfer += iprot->skip(ftype);
@@ -3804,13 +3462,13 @@ uint32_t DirectionalDerivativeResult::write(::apache::thrift::protocol::TProtoco
   ::apache::thrift::protocol::TOutputRecursionTracker tracker(*oprot);
   xfer += oprot->writeStructBegin("DirectionalDerivativeResult");
 
-  xfer += oprot->writeFieldBegin("dvUnknownRef", ::apache::thrift::protocol::T_LIST, 1);
+  xfer += oprot->writeFieldBegin("dv_unknown_ref", ::apache::thrift::protocol::T_LIST, 1);
   {
-    xfer += oprot->writeListBegin(::apache::thrift::protocol::T_DOUBLE, static_cast<uint32_t>(this->dvUnknownRef.size()));
-    std::vector<double> ::const_iterator _iter124;
-    for (_iter124 = this->dvUnknownRef.begin(); _iter124 != this->dvUnknownRef.end(); ++_iter124)
+    xfer += oprot->writeListBegin(::apache::thrift::protocol::T_DOUBLE, static_cast<uint32_t>(this->dv_unknown_ref.size()));
+    std::vector<double> ::const_iterator _iter115;
+    for (_iter115 = this->dv_unknown_ref.begin(); _iter115 != this->dv_unknown_ref.end(); ++_iter115)
     {
-      xfer += oprot->writeDouble((*_iter124));
+      xfer += oprot->writeDouble((*_iter115));
     }
     xfer += oprot->writeListEnd();
   }
@@ -3827,26 +3485,26 @@ uint32_t DirectionalDerivativeResult::write(::apache::thrift::protocol::TProtoco
 
 void swap(DirectionalDerivativeResult &a, DirectionalDerivativeResult &b) {
   using ::std::swap;
-  swap(a.dvUnknownRef, b.dvUnknownRef);
+  swap(a.dv_unknown_ref, b.dv_unknown_ref);
   swap(a.status, b.status);
   swap(a.__isset, b.__isset);
 }
 
-DirectionalDerivativeResult::DirectionalDerivativeResult(const DirectionalDerivativeResult& other125) {
-  dvUnknownRef = other125.dvUnknownRef;
-  status = other125.status;
-  __isset = other125.__isset;
+DirectionalDerivativeResult::DirectionalDerivativeResult(const DirectionalDerivativeResult& other116) {
+  dv_unknown_ref = other116.dv_unknown_ref;
+  status = other116.status;
+  __isset = other116.__isset;
 }
-DirectionalDerivativeResult& DirectionalDerivativeResult::operator=(const DirectionalDerivativeResult& other126) {
-  dvUnknownRef = other126.dvUnknownRef;
-  status = other126.status;
-  __isset = other126.__isset;
+DirectionalDerivativeResult& DirectionalDerivativeResult::operator=(const DirectionalDerivativeResult& other117) {
+  dv_unknown_ref = other117.dv_unknown_ref;
+  status = other117.status;
+  __isset = other117.__isset;
   return *this;
 }
 void DirectionalDerivativeResult::printTo(std::ostream& out) const {
   using ::apache::thrift::to_string;
   out << "DirectionalDerivativeResult(";
-  out << "dvUnknownRef=" << to_string(dvUnknownRef);
+  out << "dv_unknown_ref=" << to_string(dv_unknown_ref);
   out << ", " << "status=" << to_string(status);
   out << ")";
 }
