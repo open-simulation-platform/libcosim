@@ -16,7 +16,9 @@ namespace cse
 namespace
 {
 
-std::pair<cse::simulator_index, cse::simulator*> find_simulator(const std::unordered_map<simulator_index, simulator*>& simulators, const std::string& model)
+std::pair<cse::simulator_index, cse::simulator*> find_simulator(
+    const std::unordered_map<simulator_index, simulator*>& simulators,
+    const std::string& model)
 {
     for (const auto& [idx, simulator] : simulators) {
         if (simulator->name() == model) {
@@ -58,7 +60,23 @@ cse::variable_causality find_causality(const nlohmann::json& j)
     throw std::invalid_argument("Can't process unknown variable type");
 }
 
-cse::variable_index find_variable_index(const std::vector<variable_description>& variables,
+bool is_input(cse::variable_causality causality)
+{
+    switch (causality) {
+        case input:
+        case parameter:
+            return true;
+        case calculated_parameter:
+        case output:
+            return false;
+        default:
+            throw std::invalid_argument(
+                "No support for manipulating a variable with this causality");
+    }
+}
+
+cse::variable_index find_variable_index(
+    const std::vector<variable_description>& variables,
     const std::string& name,
     const cse::variable_type type,
     const cse::variable_causality causality)
@@ -72,7 +90,9 @@ cse::variable_index find_variable_index(const std::vector<variable_description>&
 }
 
 template<typename T>
-std::function<T(T)> generate_manipulator(const std::string& kind, const nlohmann::json& event)
+std::function<T(T)> generate_manipulator(
+    const std::string& kind,
+    const nlohmann::json& event)
 {
     if ("reset" == kind) {
         return nullptr;
@@ -86,44 +106,24 @@ std::function<T(T)> generate_manipulator(const std::string& kind, const nlohmann
     throw std::invalid_argument("Can't process unknown modifier kind");
 }
 
-cse::scenario::variable_action get_real_action(const std::function<double(double)>& f, cse::variable_causality causality, cse::simulator_index sim, cse::variable_index variable)
-{
-    switch (causality) {
-        case input:
-        case parameter:
-            return cse::scenario::variable_action{sim, variable, cse::scenario::real_input_manipulator{f}};
-        case calculated_parameter:
-        case output:
-            return cse::scenario::variable_action{sim, variable, cse::scenario::real_output_manipulator{f}};
-        default:
-            throw std::invalid_argument("No support for manipulating a variable with this causality");
-    }
-}
-
-cse::scenario::variable_action get_integer_action(const std::function<int(int)>& f, cse::variable_causality causality, cse::simulator_index sim, cse::variable_index variable)
-{
-    switch (causality) {
-        case input:
-        case parameter:
-            return cse::scenario::variable_action{sim, variable, cse::scenario::integer_input_manipulator{f}};
-        case calculated_parameter:
-        case output:
-            return cse::scenario::variable_action{sim, variable, cse::scenario::integer_output_manipulator{f}};
-        default:
-            throw std::invalid_argument("No support for manipulating a variable with this causality");
-    }
-}
-
-cse::scenario::variable_action generate_action(const nlohmann::json& event, const std::string& mode, cse::simulator_index sim, cse::variable_type type, cse::variable_causality causality, cse::variable_index var)
+cse::scenario::variable_action generate_action(
+    const nlohmann::json& event,
+    const std::string& mode,
+    cse::simulator_index sim,
+    cse::variable_type type,
+    bool isInput,
+    cse::variable_index var)
 {
     switch (type) {
         case cse::variable_type::real: {
             auto f = generate_manipulator<double>(mode, event);
-            return get_real_action(f, causality, sim, var);
+            return cse::scenario::variable_action{
+                sim, var, cse::scenario::real_manipulator{f}, isInput};
         }
         case cse::variable_type::integer: {
             auto f = generate_manipulator<int>(mode, event);
-            return get_integer_action(f, causality, sim, var);
+            return cse::scenario::variable_action{
+                sim, var, cse::scenario::integer_manipulator{f}, isInput};
         }
         default:
             throw std::invalid_argument("No support for this variable type");
@@ -139,7 +139,9 @@ struct defaults
     std::optional<std::string> action;
 };
 
-std::optional<std::string> parse_element(const nlohmann::json& j, const std::string& name)
+std::optional<std::string> parse_element(
+    const nlohmann::json& j,
+    const std::string& name)
 {
     if (j.count(name)) {
         return j.at(name).get<std::string>();
@@ -162,7 +164,10 @@ defaults parse_defaults(const nlohmann::json& scenario)
     return defaults{};
 }
 
-std::string specified_or_default(const nlohmann::json& j, const std::string& name, std::optional<std::string> defaultOption)
+std::string specified_or_default(
+    const nlohmann::json& j,
+    const std::string& name,
+    std::optional<std::string> defaultOption)
 {
     if (j.count(name)) {
         return j.at(name).get<std::string>();
@@ -172,10 +177,22 @@ std::string specified_or_default(const nlohmann::json& j, const std::string& nam
     throw std::invalid_argument("Option is not specified explicitly nor in defaults");
 }
 
+std::optional<cse::time_point> parse_end_time(const nlohmann::json& j)
+{
+    if (j.count("end")) {
+        auto endTime = j.at("end").get<double>();
+        return to_time_point(endTime);
+    }
+    return std::nullopt;
+}
+
 } // namespace
 
 
-scenario::scenario parse_scenario(const boost::filesystem::path& scenarioFile, const std::unordered_map<simulator_index, simulator*>& simulators)
+scenario::scenario parse_scenario(
+    const boost::filesystem::path& scenarioFile,
+    const std::unordered_map<simulator_index,
+        simulator*>& simulators)
 {
     boost::filesystem::ifstream i(scenarioFile);
     nlohmann::json j;
@@ -189,17 +206,24 @@ scenario::scenario parse_scenario(const boost::filesystem::path& scenarioFile, c
         auto triggerTime = trigger.get<double>();
         auto time = to_time_point(triggerTime);
 
-        const auto& [index, simulator] = find_simulator(simulators, specified_or_default(event, "model", defaultOpts.model));
-        variable_type type = find_variable_type(specified_or_default(event, "type", defaultOpts.type));
-        variable_causality causality = find_causality(specified_or_default(event, "causality", defaultOpts.causality));
-        auto varName = specified_or_default(event, "variable", defaultOpts.variable);
-        variable_index varIndex = find_variable_index(simulator->model_description().variables, varName, type, causality);
+        const auto& [index, simulator] =
+            find_simulator(simulators, specified_or_default(event, "model", defaultOpts.model));
+        variable_type type =
+            find_variable_type(specified_or_default(event, "type", defaultOpts.type));
+        variable_causality causality =
+            find_causality(specified_or_default(event, "causality", defaultOpts.causality));
+        auto varName =
+            specified_or_default(event, "variable", defaultOpts.variable);
+        variable_index varIndex =
+            find_variable_index(simulator->model_description().variables, varName, type, causality);
 
         auto mode = specified_or_default(event, "action", defaultOpts.action);
-        scenario::variable_action a = generate_action(event, mode, index, type, causality, varIndex);
+        bool isInput = is_input(causality);
+        scenario::variable_action a = generate_action(event, mode, index, type, isInput, varIndex);
         events.emplace_back(scenario::event{time, a});
     }
 
-    return scenario::scenario{events};
+    auto end = parse_end_time(j);
+    return scenario::scenario{events, end};
 }
 } // namespace cse

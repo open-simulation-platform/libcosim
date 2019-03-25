@@ -8,6 +8,7 @@ set(tests
     "trend_buffer_test"
     "scenario_manager_test"
     "scenario_parser_test"
+    "synchronized_xy_series_test"
 )
 
 if(CSECORE_WITH_FMUPROXY)
@@ -42,7 +43,7 @@ foreach(test IN LISTS unittests)
         "cpp_${test}"
         FOLDER "C++ unit tests"
         SOURCES "${test}.cpp"
-        DEPENDENCIES csecorecpp "Boost::unit_test_framework"
+        DEPENDENCIES csecorecpp "Boost::unit_test_framework" "Boost::timer"
         DATA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../data"
     )
     target_include_directories("cpp_${test}" PRIVATE "$<TARGET_PROPERTY:csecorecpp,SOURCE_DIR>")

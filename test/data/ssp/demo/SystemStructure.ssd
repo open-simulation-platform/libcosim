@@ -1,14 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ssd:SystemStructureDescription name="simple-cse-example" version="Draft20180219">
+<ssd:SystemStructureDescription name="simple-cse-example" version="1.0"
+                                xmlns:ssd="http://ssp-standard.org/SSP1/SystemStructureDescription"
+                                xmlns:ssc="http://ssp-standard.org/SSP1/SystemStructureCommon">
   <!-- This is a comment -->
-  <ssd:DefaultExperiment startTime="0.0" stopTime="2e-4"/>
+
   <!-- This is a comment -->
   <ssd:System name="cse-instance" description="An example of how to use Core Simulation Environment">
     <!-- This is a comment -->
-    <ssd:SimulationInformation>
-      <!-- This is a comment -->
-      <ssd:FixedStepMaster description="FixedStepAlgorithm" stepSize="1e-4" />
-    </ssd:SimulationInformation>
+    <ssd:Annotations>
+      <ssc:Annotation type="org.open-simulation-platform">
+        <osp:SimulationInformation>
+          <osp:FixedStepMaster description="FixedStepAlgorithm" stepSize="1e-4"/>
+        </osp:SimulationInformation>
+      </ssc:Annotation>
+    </ssd:Annotations>
 
     <ssd:Elements>
       <!-- This is a comment -->
@@ -16,26 +21,49 @@
         <!-- This is a comment -->
         <ssd:Connectors>
           <!-- Seems to match nicely with our consept of "expose" -->
-          <ssd:Connector name="p_Crane.e[1]" kind="output" type="Real"/>
-          <ssd:Connector name="p_Crane.e[2]" kind="output" type="Real"/>
-          <ssd:Connector name="p_Crane.e[3]" kind="output" type="Real"/>
-          <ssd:Connector name="p_Crane.f[1]" kind="input" type="Real"/>
+          <ssd:Connector name="p_Crane.e[1]" kind="output">
+            <ssc:Real/>
+          </ssd:Connector>
+          <ssd:Connector name="p_Crane.e[2]" kind="output">
+            <ssc:Real/>
+          </ssd:Connector>
+          <ssd:Connector name="p_Crane.e[3]" kind="output">
+            <ssc:Real/>
+          </ssd:Connector>
+          <ssd:Connector name="p_Crane.f[1]" kind="input">
+            <ssc:Real/>
+          </ssd:Connector>
           <!-- This is a comment -->
-          <ssd:Connector name="p_Crane.f[2]" kind="input" type="Real"/>
-          <ssd:Connector name="p_Crane.f[3]" kind="input" type="Real"/>
+          <ssd:Connector name="p_Crane.f[2]" kind="input">
+            <ssc:Real/>
+          </ssd:Connector>
+          <ssd:Connector name="p_Crane.f[3]" kind="input">
+            <ssc:Real/>
+          </ssd:Connector>
         </ssd:Connectors>
       </ssd:Component>
       <ssd:Component name="KnuckleBoomCrane" source="KnuckleBoomCrane.fmu">
         <!-- This is a comment -->
         <ssd:Connectors>
           <!-- This is a comment -->
-          <ssd:Connector name="p_Crane.e[1]" kind="input" type="Real"/>
-          <ssd:Connector name="p_Crane.e[2]" kind="input" type="Real"/>
-          <ssd:Connector name="p_Crane.e[3]" kind="input" type="Real"/>
-          <ssd:Connector name="p_Crane.f[1]" kind="output" type="Real"/>
+          <ssd:Connector name="p_Crane.e[1]" kind="input">
+        <ssc:Real/></ssd:Connector>
+          <ssd:Connector name="p_Crane.e[2]" kind="input">
+            <ssc:Real/>
+          </ssd:Connector>
+          <ssd:Connector name="p_Crane.e[3]" kind="input">
+            <ssc:Real/>
+          </ssd:Connector>
+          <ssd:Connector name="p_Crane.f[1]" kind="output">
+            <ssc:Real/>
+          </ssd:Connector>
           <!-- This is a comment -->
-          <ssd:Connector name="p_Crane.f[2]" kind="output" type="Real"/>
-          <ssd:Connector name="p_Crane.f[3]" kind="output" type="Real"/>
+          <ssd:Connector name="p_Crane.f[2]" kind="output">
+            <ssc:Real/>
+          </ssd:Connector>
+          <ssd:Connector name="p_Crane.f[3]" kind="output">
+            <ssc:Real/>
+          </ssd:Connector>
           <!-- This is a comment -->
         </ssd:Connectors>
       </ssd:Component>
@@ -56,4 +84,7 @@
     </ssd:Connections>
 
   </ssd:System>
+
+  <ssd:DefaultExperiment startTime="0.0" stopTime="2e-4"/>
+
 </ssd:SystemStructureDescription>

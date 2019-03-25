@@ -9,10 +9,12 @@
 #include <cstdint>
 #include <iterator>
 #include <limits>
+#include <optional>
 #include <ostream>
 #include <ratio>
 #include <string>
 #include <utility>
+#include <variant>
 #include <vector>
 
 
@@ -278,6 +280,9 @@ struct variable_description
 
     /// The variable's variability.
     variable_variability variability;
+
+    /// The variable's start value.
+    std::optional<std::variant<double, int, bool, std::string>> start;
 };
 
 

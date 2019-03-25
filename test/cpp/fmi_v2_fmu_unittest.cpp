@@ -41,6 +41,8 @@ BOOST_AUTO_TEST_CASE(v2_fmu)
             foundValve = true;
             BOOST_TEST(v.variability == variable_variability::continuous);
             BOOST_TEST(v.causality == variable_causality::output);
+            double start = std::get<double>(*v.start);
+            BOOST_TEST(start == 0.0);
             const auto varID = v.index;
             double varVal = -1.0;
             instance->get_real_variables(gsl::make_span(&varID, 1), gsl::make_span(&varVal, 1));
@@ -49,6 +51,8 @@ BOOST_AUTO_TEST_CASE(v2_fmu)
             foundMinlevel = true;
             BOOST_TEST(v.variability == variable_variability::fixed);
             BOOST_TEST(v.causality == variable_causality::parameter);
+            double start = std::get<double>(*v.start);
+            BOOST_TEST(start == 1.0);
             const auto varID = v.index;
             double varVal = -1.0;
             instance->get_real_variables(gsl::make_span(&varID, 1), gsl::make_span(&varVal, 1));

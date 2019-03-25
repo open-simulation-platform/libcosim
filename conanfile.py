@@ -5,7 +5,7 @@ from conans import ConanFile, CMake
 
 class CSECoreConan(ConanFile):
     name = "cse-core"
-    version = "0.1.0"
+    version = "0.2.0"
     author = "osp"
     scm = {
         "type": "git",
@@ -60,4 +60,6 @@ class CSECoreConan(ConanFile):
 
     def package(self):
         cmake = self.configure_cmake()
+        self.run('cmake --build %s --target install-doc' % (self.build_folder))
         cmake.install()
+        

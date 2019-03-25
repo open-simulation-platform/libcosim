@@ -7,6 +7,7 @@
 #include "cse/exception.hpp"
 
 #include <algorithm>
+#include <numeric>
 #include <sstream>
 #include <unordered_map>
 #include <vector>
@@ -128,11 +129,14 @@ public:
                     failed = true;
                 }
                 finished.insert(idx);
-                transfer_variables(info.outgoingConnections);
             }
         }
         if (failed) {
             throw error(make_error_code(errc::simulation_error), errMessages.str());
+        }
+
+        for (auto idx : finished) {
+            transfer_variables(simulators_.at(idx).outgoingConnections);
         }
 
         return std::pair(baseStepSize_, std::move(finished));
@@ -216,19 +220,23 @@ private:
     void transfer_variables(const std::vector<connection>& connections)
     {
         for (const auto& c : connections) {
-            switch (c.input.type) {
-                case variable_type::real:
-                    transfer_real(c.output, c.input);
-                    break;
-                case variable_type::integer:
-                    transfer_integer(c.output, c.input);
-                    break;
-                case variable_type::boolean:
-                    transfer_boolean(c.output, c.input);
-                    break;
-                case variable_type::string:
-                    transfer_string(c.output, c.input);
-                    break;
+            const auto odf = simulators_[c.output.simulator].decimationFactor;
+            const auto idf = simulators_[c.input.simulator].decimationFactor;
+            if (stepCounter_ % std::lcm(odf, idf) == 0) {
+                switch (c.input.type) {
+                    case variable_type::real:
+                        transfer_real(c.output, c.input);
+                        break;
+                    case variable_type::integer:
+                        transfer_integer(c.output, c.input);
+                        break;
+                    case variable_type::boolean:
+                        transfer_boolean(c.output, c.input);
+                        break;
+                    case variable_type::string:
+                        transfer_string(c.output, c.input);
+                        break;
+                }
             }
         }
     }

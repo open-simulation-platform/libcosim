@@ -37,5 +37,6 @@
       "causality": "output",
       "value": 5
     }
-  ]
+  ],
+  "end": 1.0
 }

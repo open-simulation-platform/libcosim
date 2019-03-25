@@ -81,34 +81,74 @@ public:
      */
     virtual void set_string(variable_index index, std::string_view value) = 0;
 
+    /**
+     *  Sets a manipulator for the value of a real input variable.
+     *
+     *  The variable must previously have been exposed with `expose_for_setting()`.
+     */
     virtual void set_real_input_manipulator(
         variable_index index,
         std::function<double(double)> manipulator) = 0;
 
+    /**
+     *  Sets a manipulator for the value of an integer input variable.
+     *
+     *  The variable must previously have been exposed with `expose_for_setting()`.
+     */
     virtual void set_integer_input_manipulator(
         variable_index index,
         std::function<int(int)> manipulator) = 0;
 
+    /**
+     *  Sets a manipulator for the value of a boolean input variable.
+     *
+     *  The variable must previously have been exposed with `expose_for_setting()`.
+     */
     virtual void set_boolean_input_manipulator(
         variable_index index,
         std::function<bool(bool)> manipulator) = 0;
 
+    /**
+     *  Sets a manipulator for the value of a string input variable.
+     *
+     *  The variable must previously have been exposed with `expose_for_setting()`.
+     */
     virtual void set_string_input_manipulator(
         variable_index index,
         std::function<std::string(std::string_view)> manipulator) = 0;
 
+    /**
+     *  Sets a manipulator for the value of a real output variable.
+     *
+     *  The variable must previously have been exposed with `expose_for_setting()`.
+     */
     virtual void set_real_output_manipulator(
         variable_index index,
         std::function<double(double)> manipulator) = 0;
 
+    /**
+     *  Sets a manipulator for the value of an integer output variable.
+     *
+     *  The variable must previously have been exposed with `expose_for_setting()`.
+     */
     virtual void set_integer_output_manipulator(
         variable_index index,
         std::function<int(int)> manipulator) = 0;
 
+    /**
+     *  Sets a manipulator for the value of a boolean output variable.
+     *
+     *  The variable must previously have been exposed with `expose_for_setting()`.
+     */
     virtual void set_boolean_output_manipulator(
         variable_index index,
         std::function<bool(bool)> manipulator) = 0;
 
+    /**
+     *  Sets a manipulator for the value of a string output variable.
+     *
+     *  The variable must previously have been exposed with `expose_for_setting()`.
+     */
     virtual void set_string_output_manipulator(
         variable_index index,
         std::function<std::string(std::string_view)> manipulator) = 0;

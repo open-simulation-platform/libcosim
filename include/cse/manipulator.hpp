@@ -1,3 +1,8 @@
+/**
+ *  \file
+ *  \brief Defines the `manipulator` interface.
+ */
+
 #ifndef CSECORE_MANIPULATOR_H
 #define CSECORE_MANIPULATOR_H
 
@@ -14,6 +19,13 @@
 namespace cse
 {
 
+/**
+ *  An interface for manipulators.
+ *
+ *  The methods in this interface represent various events that the manipulator
+ *  may react to in some way. It may manipulate the slaves' variable values
+ *  through the `simulator` interface at any time.
+ */
 class manipulator
 {
 public:
@@ -30,6 +42,9 @@ public:
     virtual ~manipulator() noexcept {}
 };
 
+/**
+ *  A manipulator implementation handling execution and control of scenarios.
+ */
 class scenario_manager : public manipulator
 {
 public:
@@ -40,6 +55,7 @@ public:
     void step_commencing(
         time_point currentTime) override;
 
+    /// Constructor.
     scenario_manager();
 
     scenario_manager(const scenario_manager&) = delete;
@@ -50,12 +66,32 @@ public:
 
     ~scenario_manager() noexcept override;
 
+    /**
+     * Load a scenario for execution.
+     *
+     * \param s
+     *  The in-memory constructed scenario.
+     * \param currentTime
+     *  The time point at which the scenario will start. The scenario's events
+     *  will be executed relative to this time point.
+     */
     void load_scenario(const scenario::scenario& s, time_point currentTime);
 
+    /**
+     * Load a scenario for execution.
+     *
+     * \param scenarioFile
+     *  The path to a proprietary `json` file defining the scenario.
+     * \param currentTime
+     *  The time point at which the scenario will start. The scenario's events
+     *  will be executed relative to this time point.
+     */
     void load_scenario(const boost::filesystem::path& scenarioFile, time_point currentTime);
 
+    /// Return if a scenario is running.
     bool is_scenario_running();
 
+    /// Abort the execution of a running scenario.
     void abort_scenario();
 
 private:
@@ -63,6 +99,9 @@ private:
     std::unique_ptr<impl> pimpl_;
 };
 
+/**
+ *  A manipulator implementation handling overrides of variable values.
+ */
 class override_manipulator : public manipulator
 {
 public:
@@ -72,15 +111,39 @@ public:
 
     void step_commencing(time_point currentTime) override;
 
+    /// Override the value of a variable with type `real`
     void override_real_variable(simulator_index, variable_index, double value);
+    /// Override the value of a variable with type `integer`
     void override_integer_variable(simulator_index, variable_index, int value);
+    /// Override the value of a variable with type `boolean`
     void override_boolean_variable(simulator_index, variable_index, bool value);
-    void override_string_variable(simulator_index, variable_index, std::string value);
+    /// Override the value of a variable with type `string`
+    void override_string_variable(simulator_index, variable_index, const std::string& value);
+    /// Reset override of a variable with type `real`
+    void reset_real_variable(simulator_index, variable_index);
+    /// Reset override of a variable with type `integer`
+    void reset_integer_variable(simulator_index, variable_index);
+    /// Reset override of a variable with type `boolean`
+    void reset_boolean_variable(simulator_index, variable_index);
+    /// Reset override of a variable with type `string`
+    void reset_string_variable(simulator_index, variable_index);
 
     ~override_manipulator() noexcept override;
 
 private:
+    void add_action(
+        simulator_index index,
+        variable_index variable,
+        variable_type type,
+        const std::variant<
+            scenario::real_manipulator,
+            scenario::integer_manipulator,
+            scenario::boolean_manipulator,
+            scenario::string_manipulator>& m);
+
     std::unordered_map<simulator_index, simulator*> simulators_;
+    std::vector<scenario::variable_action> actions_;
+    std::mutex lock_;
 };
 
 } // namespace cse

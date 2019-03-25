@@ -21,14 +21,16 @@ struct var_view_type
 {
     using type = T;
 };
+
 template<>
 struct var_view_type<std::string>
 {
     using type = std::string_view;
 };
 
+
 template<typename T>
-struct exposed_vars
+struct get_variable_cache
 {
     std::vector<variable_index> indexes;
     boost::container::vector<T> originalValues;
@@ -59,19 +61,6 @@ struct exposed_vars
         }
     }
 
-    void set(variable_index i, typename var_view_type<T>::type v)
-    {
-        const auto it = indexMapping.find(i);
-        if (it != indexMapping.end()) {
-            originalValues[it->second] = v;
-        } else {
-            std::ostringstream oss;
-            oss << "variable_index " << i
-                << " not found in exposed variables. Variables must be exposed before calling set()";
-            throw std::out_of_range(oss.str());
-        }
-    }
-
     void set_manipulator(variable_index i, std::function<T(T)> m)
     {
         manipulators[indexMapping[i]] = m;
@@ -89,12 +78,125 @@ struct exposed_vars
     }
 };
 
+
+template<typename T>
+class set_variable_cache
+{
+public:
+    void expose(variable_index i, T startValue)
+    {
+        exposedVariables_.emplace(i, exposed_variable{startValue, -1});
+    }
+
+    void set_value(variable_index i, typename var_view_type<T>::type v)
+    {
+        assert(!hasRunManipulators_);
+        const auto it = exposedVariables_.find(i);
+        if (it == exposedVariables_.end()) {
+            std::ostringstream oss;
+            oss << "variable_index " << i
+                << " not found in exposed variables. Variables must be exposed before calling set()";
+            throw std::out_of_range(oss.str());
+        }
+        it->second.lastValue = v;
+        if (it->second.arrayIndex < 0) {
+            it->second.arrayIndex = indexes_.size();
+            assert(indexes_.size() == values_.size());
+            indexes_.emplace_back(i);
+            values_.emplace_back(v);
+        } else {
+            assert(indexes_[it->second.arrayIndex] == i);
+            values_[it->second.arrayIndex] = v;
+        }
+    }
+
+    void set_manipulator(variable_index i, std::function<T(T)> m)
+    {
+        assert(!hasRunManipulators_);
+        const auto it = exposedVariables_.find(i);
+        if (it == exposedVariables_.end()) {
+            std::ostringstream oss;
+            oss << "variable_index " << i
+                << " not found in exposed variables. Variables must be exposed before calling set_manipulator()";
+            throw std::out_of_range(oss.str());
+        }
+        if (it->second.arrayIndex < 0) {
+            // Ensure that the simulator receives an updated value.
+            it->second.arrayIndex = indexes_.size();
+            assert(indexes_.size() == values_.size());
+            indexes_.emplace_back(i);
+            values_.emplace_back(it->second.lastValue);
+        }
+        if (m) {
+            manipulators_[i] = m;
+        } else {
+            manipulators_.erase(i);
+        }
+    }
+
+    std::pair<gsl::span<variable_index>, gsl::span<const T>> manipulate_and_get()
+    {
+        if (!hasRunManipulators_) {
+            assert(indexes_.size() == values_.size());
+            for (std::size_t i = 0; i < indexes_.size(); ++i) {
+                const auto iterator = manipulators_.find(indexes_[i]);
+                if (iterator != manipulators_.end()) {
+                    values_[i] = iterator->second(values_[i]);
+                }
+            }
+            hasRunManipulators_ = true;
+        }
+        return std::pair(gsl::make_span(indexes_), gsl::make_span(values_));
+    }
+
+    void reset()
+    {
+        for (auto index : indexes_) {
+            exposedVariables_.at(index).arrayIndex = -1;
+        }
+        indexes_.clear();
+        values_.clear();
+        hasRunManipulators_ = false;
+    }
+
+private:
+    struct exposed_variable
+    {
+        // The last set value of the variable.
+        T lastValue = T();
+
+        // The variable's index in the `indexes_` and `values_` arrays, or
+        // -1 if it hasn't been added to them yet.
+        std::ptrdiff_t arrayIndex = -1;
+    };
+
+    std::unordered_map<variable_index, exposed_variable> exposedVariables_;
+
+    // The manipulators associated with certain variables, and a flag that
+    // specifies whether they have been run on the values currently in
+    // `values_`.
+    std::unordered_map<variable_index, std::function<T(T)>> manipulators_;
+    bool hasRunManipulators_ = false;
+
+    // The indexes and values of the variables that will be set next.
+    std::vector<variable_index> indexes_;
+    boost::container::vector<T> values_;
+};
+
+
 // Copies the contents of a contiguous-storage container or span into another.
 template<typename Src, typename Tgt>
 void copy_contents(Src&& src, Tgt&& tgt)
 {
     assert(static_cast<std::size_t>(src.size()) <= static_cast<std::size_t>(tgt.size()));
     std::copy(src.data(), src.data() + src.size(), tgt.data());
+}
+
+template<typename T>
+T get_start_value(variable_description vd)
+{
+    if (!vd.start) return T();
+    return std::get<T>(*vd.start);
 }
 } // namespace
 
@@ -172,40 +274,41 @@ public:
 
     void expose_for_setting(variable_type type, variable_index index)
     {
+        const auto vd = find_variable_description(index, type);
         switch (type) {
             case variable_type::real:
-                realSetCache_.expose(index);
+                realSetCache_.expose(index, get_start_value<double>(vd));
                 break;
             case variable_type::integer:
-                integerSetCache_.expose(index);
+                integerSetCache_.expose(index, get_start_value<int>(vd));
                 break;
             case variable_type::boolean:
-                booleanSetCache_.expose(index);
+                booleanSetCache_.expose(index, get_start_value<bool>(vd));
                 break;
             case variable_type::string:
-                stringSetCache_.expose(index);
+                stringSetCache_.expose(index, get_start_value<std::string>(vd));
                 break;
         }
     }
 
     void set_real(variable_index index, double value)
     {
-        realSetCache_.set(index, value);
+        realSetCache_.set_value(index, value);
     }
 
     void set_integer(variable_index index, int value)
     {
-        integerSetCache_.set(index, value);
+        integerSetCache_.set_value(index, value);
     }
 
     void set_boolean(variable_index index, bool value)
     {
-        booleanSetCache_.set(index, value);
+        booleanSetCache_.set_value(index, value);
     }
 
     void set_string(variable_index index, std::string_view value)
     {
-        stringSetCache_.set(index, value);
+        stringSetCache_.set_value(index, value);
     }
 
     void set_real_input_manipulator(
@@ -302,20 +405,24 @@ public:
 private:
     void set_variables()
     {
-        realSetCache_.run_manipulators();
-        integerSetCache_.run_manipulators();
-        booleanSetCache_.run_manipulators();
-        stringSetCache_.run_manipulators();
+        const auto [realIndexes, realValues] = realSetCache_.manipulate_and_get();
+        const auto [integerIndexes, integerValues] = integerSetCache_.manipulate_and_get();
+        const auto [booleanIndexes, booleanValues] = booleanSetCache_.manipulate_and_get();
+        const auto [stringIndexes, stringValues] = stringSetCache_.manipulate_and_get();
         slave_->set_variables(
-                  gsl::make_span(realSetCache_.indexes),
-                  gsl::make_span(realSetCache_.manipulatedValues),
-                  gsl::make_span(integerSetCache_.indexes),
-                  gsl::make_span(integerSetCache_.manipulatedValues),
-                  gsl::make_span(booleanSetCache_.indexes),
-                  gsl::make_span(booleanSetCache_.manipulatedValues),
-                  gsl::make_span(stringSetCache_.indexes),
-                  gsl::make_span(stringSetCache_.manipulatedValues))
+                  gsl::make_span(realIndexes),
+                  gsl::make_span(realValues),
+                  gsl::make_span(integerIndexes),
+                  gsl::make_span(integerValues),
+                  gsl::make_span(booleanIndexes),
+                  gsl::make_span(booleanValues),
+                  gsl::make_span(stringIndexes),
+                  gsl::make_span(stringValues))
             .get();
+        realSetCache_.reset();
+        integerSetCache_.reset();
+        booleanSetCache_.reset();
+        stringSetCache_.reset();
     }
 
     void get_variables()
@@ -336,20 +443,36 @@ private:
         stringGetCache_.run_manipulators();
     }
 
+    variable_description find_variable_description(variable_index index, variable_type type)
+    {
+        auto it = std::find_if(
+            modelDescription_.variables.begin(),
+            modelDescription_.variables.end(),
+            [type, index](const auto& vd) { return vd.type == type && vd.index == index; });
+        if (it == modelDescription_.variables.end()) {
+            std::ostringstream oss;
+            oss << "Variable with index " << index
+                << " and type " << type
+                << " not found in model desciption.";
+            throw std::out_of_range(oss.str());
+        }
+        return *it;
+    }
+
 private:
     std::shared_ptr<async_slave> slave_;
     std::string name_;
     cse::model_description modelDescription_;
 
-    exposed_vars<double> realGetCache_;
-    exposed_vars<int> integerGetCache_;
-    exposed_vars<bool> booleanGetCache_;
-    exposed_vars<std::string> stringGetCache_;
+    get_variable_cache<double> realGetCache_;
+    get_variable_cache<int> integerGetCache_;
+    get_variable_cache<bool> booleanGetCache_;
+    get_variable_cache<std::string> stringGetCache_;
 
-    exposed_vars<double> realSetCache_;
-    exposed_vars<int> integerSetCache_;
-    exposed_vars<bool> booleanSetCache_;
-    exposed_vars<std::string> stringSetCache_;
+    set_variable_cache<double> realSetCache_;
+    set_variable_cache<int> integerSetCache_;
+    set_variable_cache<bool> booleanSetCache_;
+    set_variable_cache<std::string> stringSetCache_;
 };
 
 
