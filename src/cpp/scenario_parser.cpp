@@ -71,7 +71,7 @@ bool is_input(cse::variable_causality causality)
             return false;
         default:
             throw std::invalid_argument(
-                "No support for manipulating a variable with this causality");
+                "No support for modifying a variable with this causality");
     }
 }
 
@@ -90,7 +90,7 @@ cse::variable_index find_variable_index(
 }
 
 template<typename T>
-std::function<T(T)> generate_manipulator(
+std::function<T(T)> generate_modifier(
     const std::string& kind,
     const nlohmann::json& event)
 {
@@ -116,14 +116,14 @@ cse::scenario::variable_action generate_action(
 {
     switch (type) {
         case cse::variable_type::real: {
-            auto f = generate_manipulator<double>(mode, event);
+            auto f = generate_modifier<double>(mode, event);
             return cse::scenario::variable_action{
-                sim, var, cse::scenario::real_manipulator{f}, isInput};
+                sim, var, cse::scenario::real_modifier{f}, isInput};
         }
         case cse::variable_type::integer: {
-            auto f = generate_manipulator<int>(mode, event);
+            auto f = generate_modifier<int>(mode, event);
             return cse::scenario::variable_action{
-                sim, var, cse::scenario::integer_manipulator{f}, isInput};
+                sim, var, cse::scenario::integer_modifier{f}, isInput};
         }
         default:
             throw std::invalid_argument("No support for this variable type");
