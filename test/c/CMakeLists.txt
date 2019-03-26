@@ -1,6 +1,7 @@
 set(tests
     "single_fmu_execution_test"
     "multiple_fmus_execution_test"
+    "load_config_and_teardown_test"
     "observer_initial_samples_test"
     "observer_can_buffer_samples"
     "observer_multiple_slaves_test"

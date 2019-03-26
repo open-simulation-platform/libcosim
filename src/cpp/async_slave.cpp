@@ -377,6 +377,9 @@ struct start_simulation_request
 struct end_simulation_request
 {
 };
+struct shutdown_request
+{
+};
 struct do_step_request
 {
     time_point currentT;
@@ -416,6 +419,7 @@ using request_type = std::variant<
     setup_request,
     start_simulation_request,
     end_simulation_request,
+    shutdown_request,
     do_step_request,
     get_variables_request,
     set_variables_request>;
@@ -496,6 +500,9 @@ void background_thread_slave_backend(
                     [=](end_simulation_request) {
                         slave->end_simulation();
                         replyChannel->put(void_reply());
+                    },
+                    [=](shutdown_request) {
+                        replyChannel->put(void_reply());
                         throw shutdown_background_thread();
                     },
                     [=](const do_step_request& r) {
@@ -545,7 +552,7 @@ public:
 
     ~background_thread_slave_frontend() noexcept
     {
-        requestChannel_->put(end_simulation_request{});
+        requestChannel_->put(shutdown_request{});
         // There may or may not be a reply, depending on whether the backend
         // has already terminated. We don't care anyway, just wait for the
         // thread.
