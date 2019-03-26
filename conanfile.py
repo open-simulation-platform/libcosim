@@ -5,7 +5,7 @@ from conans import ConanFile, CMake
 
 class CSECoreConan(ConanFile):
     name = "cse-core"
-    version = "0.1.0"
+    version = "0.3.0"
     author = "osp"
     scm = {
         "type": "git",

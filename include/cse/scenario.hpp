@@ -16,28 +16,28 @@ namespace scenario
 {
 
 /// The modification of the value of a variable with type `real`.
-struct real_manipulator
+struct real_modifier
 {
     /// A function which may be called any number of times. Can be `nullptr`.
     std::function<double(double)> f;
 };
 
 /// The modification of the value of a variable with type `integer`.
-struct integer_manipulator
+struct integer_modifier
 {
     /// A function which may be called any number of times. Can be `nullptr`.
     std::function<int(int)> f;
 };
 
 /// The modification of the value of a variable with type `boolean`.
-struct boolean_manipulator
+struct boolean_modifier
 {
     /// A function which may be called any number of times. Can be `nullptr`.
     std::function<bool(bool)> f;
 };
 
 /// The modification of the value of a variable with type `string`.
-struct string_manipulator
+struct string_modifier
 {
     /// A function which may be called any number of times. Can be `nullptr`.
     std::function<std::string(std::string_view)> f;
@@ -52,11 +52,11 @@ struct variable_action
     variable_index variable;
     /// The modification to be done to the variable's value.
     std::variant<
-        real_manipulator,
-        integer_manipulator,
-        boolean_manipulator,
-        string_manipulator>
-        manipulator;
+        real_modifier,
+        integer_modifier,
+        boolean_modifier,
+        string_modifier>
+        modifier;
     /**
      * Flag which should be set to `true` if the variable is an *input* to the
      * slave (i.e. causality input or parameter), or `false` if the variable is

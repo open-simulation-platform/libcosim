@@ -8,6 +8,7 @@ set(tests
     "trend_buffer_test"
     "scenario_manager_test"
     "scenario_parser_test"
+    "synchronized_xy_series_test"
 )
 set(unittests
     "async_slave_unittest"

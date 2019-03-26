@@ -443,6 +443,33 @@ int64_t cse_observer_slave_get_real_samples(
     cse_time_point times[]);
 
 /**
+ * Retrieves two time-synchronized series of observed values for two real variables.
+ *
+ * \param [in] observer the observer
+ * \param [in] slave1 index of the first slave
+ * \param [in] variableIndex1 the first variable index
+ * \param [in] slave2 index of the second slave
+ * \param [in] variableIndex2 the second variable index
+ * \param [in] fromStep the step number to start from
+ * \param [in] nSamples the number of samples to read
+ * \param [out] values1 the first series of observed values
+ * \param [out] values2 the second series of observed values
+ *
+ * \returns
+ *      The number of samples actually read, which may be smaller than `nSamples`.
+ */
+int64_t cse_observer_slave_get_real_synchronized_series(
+    cse_observer* observer,
+    cse_slave_index slave1,
+    cse_variable_index variableIndex1,
+    cse_slave_index slave2,
+    cse_variable_index variableIndex2,
+    cse_step_number fromStep,
+    size_t nSamples,
+    double values1[],
+    double values2[]);
+
+/**
  *  Sets the values of integer variables for one slave.
  *
  *  \param [in] manipulator

@@ -50,10 +50,10 @@ public:
         time_point currentTime) override;
 
     void simulator_step_complete(
-            simulator_index index,
-            step_number lastStep,
-            duration lastStepSize,
-            time_point currentTime) override;
+        simulator_index index,
+        step_number lastStep,
+        duration lastStepSize,
+        time_point currentTime) override;
 
     /**
      * Start observing a variable.
@@ -96,6 +96,15 @@ public:
         time_point tBegin,
         time_point tEnd,
         gsl::span<step_number> steps) override;
+
+    std::size_t get_synchronized_real_series(
+        simulator_index sim1,
+        variable_index variableIndex1,
+        simulator_index sim2,
+        variable_index variableIndex2,
+        step_number fromStep,
+        gsl::span<double> values1,
+        gsl::span<double> values2) override;
 
     ~time_series_observer() noexcept override;
 

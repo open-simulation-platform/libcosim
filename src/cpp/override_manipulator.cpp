@@ -41,7 +41,7 @@ bool is_input(cse::variable_causality causality)
             return false;
         default:
             throw std::invalid_argument(
-                "No support for manipulating a variable with this causality");
+                "No support for modifying a variable with this causality");
     }
 }
 
@@ -69,43 +69,43 @@ void override_manipulator::step_commencing(time_point /*currentTime*/)
             auto sim = simulators_.at(a.simulator);
             std::visit(
                 visitor(
-                    [=](scenario::real_manipulator m) {
+                    [=](scenario::real_modifier m) {
                         if (a.is_input) {
                             sim->expose_for_setting(variable_type::real, a.variable);
-                            sim->set_real_input_manipulator(a.variable, m.f);
+                            sim->set_real_input_modifier(a.variable, m.f);
                         } else {
                             sim->expose_for_getting(variable_type::real, a.variable);
-                            sim->set_real_output_manipulator(a.variable, m.f);
+                            sim->set_real_output_modifier(a.variable, m.f);
                         }
                     },
-                    [=](scenario::integer_manipulator m) {
+                    [=](scenario::integer_modifier m) {
                         if (a.is_input) {
                             sim->expose_for_setting(variable_type::integer, a.variable);
-                            sim->set_integer_input_manipulator(a.variable, m.f);
+                            sim->set_integer_input_modifier(a.variable, m.f);
                         } else {
                             sim->expose_for_getting(variable_type::integer, a.variable);
-                            sim->set_integer_output_manipulator(a.variable, m.f);
+                            sim->set_integer_output_modifier(a.variable, m.f);
                         }
                     },
-                    [=](scenario::boolean_manipulator m) {
+                    [=](scenario::boolean_modifier m) {
                         if (a.is_input) {
                             sim->expose_for_setting(variable_type::boolean, a.variable);
-                            sim->set_boolean_input_manipulator(a.variable, m.f);
+                            sim->set_boolean_input_modifier(a.variable, m.f);
                         } else {
                             sim->expose_for_getting(variable_type::boolean, a.variable);
-                            sim->set_boolean_output_manipulator(a.variable, m.f);
+                            sim->set_boolean_output_modifier(a.variable, m.f);
                         }
                     },
-                    [=](scenario::string_manipulator m) {
+                    [=](scenario::string_modifier m) {
                         if (a.is_input) {
                             sim->expose_for_setting(variable_type::string, a.variable);
-                            sim->set_string_input_manipulator(a.variable, m.f);
+                            sim->set_string_input_modifier(a.variable, m.f);
                         } else {
                             sim->expose_for_getting(variable_type::string, a.variable);
-                            sim->set_string_output_manipulator(a.variable, m.f);
+                            sim->set_string_output_modifier(a.variable, m.f);
                         }
                     }),
-                a.manipulator);
+                a.modifier);
         }
         actions_.clear();
     }
@@ -116,10 +116,10 @@ void override_manipulator::add_action(
     variable_index variable,
     variable_type type,
     const std::variant<
-        scenario::real_manipulator,
-        scenario::integer_manipulator,
-        scenario::boolean_manipulator,
-        scenario::string_manipulator>& m)
+        scenario::real_modifier,
+        scenario::integer_modifier,
+        scenario::boolean_modifier,
+        scenario::string_modifier>& m)
 {
     auto sim = simulators_.at(index);
     auto causality = find_variable_causality(sim->model_description().variables, type, variable);
@@ -135,7 +135,7 @@ void override_manipulator::override_real_variable(
     double value)
 {
     auto f = [value](double /*original*/) { return value; };
-    add_action(index, variable, variable_type::real, scenario::real_manipulator{f});
+    add_action(index, variable, variable_type::real, scenario::real_modifier{f});
 }
 
 void override_manipulator::override_integer_variable(
@@ -144,7 +144,7 @@ void override_manipulator::override_integer_variable(
     int value)
 {
     auto f = [value](int /*original*/) { return value; };
-    add_action(index, variable, variable_type::integer, scenario::integer_manipulator{f});
+    add_action(index, variable, variable_type::integer, scenario::integer_modifier{f});
 }
 
 void override_manipulator::override_boolean_variable(
@@ -153,7 +153,7 @@ void override_manipulator::override_boolean_variable(
     bool value)
 {
     auto f = [value](bool /*original*/) { return value; };
-    add_action(index, variable, variable_type::boolean, scenario::boolean_manipulator{f});
+    add_action(index, variable, variable_type::boolean, scenario::boolean_modifier{f});
 }
 
 void override_manipulator::override_string_variable(
@@ -162,35 +162,35 @@ void override_manipulator::override_string_variable(
     const std::string& value)
 {
     auto f = [value](std::string_view /*original*/) { return value; };
-    add_action(index, variable, variable_type::string, scenario::string_manipulator{f});
+    add_action(index, variable, variable_type::string, scenario::string_modifier{f});
 }
 
 void override_manipulator::reset_real_variable(
     simulator_index index,
     variable_index variable)
 {
-    add_action(index, variable, variable_type::real, scenario::real_manipulator{nullptr});
+    add_action(index, variable, variable_type::real, scenario::real_modifier{nullptr});
 }
 
 void override_manipulator::reset_integer_variable(
     simulator_index index,
     variable_index variable)
 {
-    add_action(index, variable, variable_type::integer, scenario::integer_manipulator{nullptr});
+    add_action(index, variable, variable_type::integer, scenario::integer_modifier{nullptr});
 }
 
 void override_manipulator::reset_boolean_variable(
     simulator_index index,
     variable_index variable)
 {
-    add_action(index, variable, variable_type::boolean, scenario::boolean_manipulator{nullptr});
+    add_action(index, variable, variable_type::boolean, scenario::boolean_modifier{nullptr});
 }
 
 void override_manipulator::reset_string_variable(
     simulator_index index,
     variable_index variable)
 {
-    add_action(index, variable, variable_type::string, scenario::string_manipulator{nullptr});
+    add_action(index, variable, variable_type::string, scenario::string_modifier{nullptr});
 }
 
 override_manipulator::~override_manipulator() = default;

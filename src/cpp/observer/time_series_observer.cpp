@@ -183,6 +183,12 @@ public:
         steps[1] = lastStep;
     }
 
+    const std::map<step_number, double> get_real_samples_map(variable_index idx)
+    {
+        std::lock_guard<std::mutex> lock(lock_);
+        return realSamples_.at(idx);
+    }
+
 private:
     std::map<variable_index, std::map<step_number, double>> realSamples_;
     std::map<variable_index, std::map<step_number, int>> intSamples_;
@@ -287,6 +293,41 @@ void time_series_observer::get_step_numbers(
     gsl::span<step_number> steps)
 {
     slaveObservers_.at(sim)->get_step_numbers(tBegin, tEnd, steps);
+}
+
+std::size_t time_series_observer::get_synchronized_real_series(
+    simulator_index sim1,
+    variable_index variableIndex1,
+    simulator_index sim2,
+    variable_index variableIndex2,
+    step_number fromStep,
+    gsl::span<double> values1,
+    gsl::span<double> values2)
+{
+    CSE_INPUT_CHECK(values1.size() == values2.size());
+
+    const auto realSamples1 = slaveObservers_.at(sim1)->get_real_samples_map(variableIndex1);
+    const auto realSamples2 = slaveObservers_.at(sim2)->get_real_samples_map(variableIndex2);
+
+    if (realSamples1.empty() || realSamples2.empty()) {
+        throw std::out_of_range("Samples for both variables not recorded yet!");
+    }
+    auto lastStep1 = realSamples1.rbegin()->first;
+    auto lastStep2 = realSamples2.rbegin()->first;
+
+    size_t samplesRead = 0;
+    for (auto step = fromStep; step < fromStep + static_cast<step_number>(values1.size()); step++) {
+        auto sample1 = realSamples1.find(step);
+        auto sample2 = realSamples2.find(step);
+        if (sample1 != realSamples1.end() && sample2 != realSamples2.end()) {
+            values1[samplesRead] = sample1->second;
+            values2[samplesRead] = sample2->second;
+            samplesRead++;
+        } else if (lastStep1 < step || lastStep2 < step) {
+            break;
+        }
+    }
+    return samplesRead;
 }
 
 time_series_observer::~time_series_observer() noexcept = default;
