@@ -84,5 +84,7 @@ int main()
     Sleep(100);
     cse_execution_stop(execution);
 
+    cse_execution_destroy(execution);
+
     return 0;
 }

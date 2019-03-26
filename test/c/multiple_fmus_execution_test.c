@@ -27,6 +27,7 @@ int main()
         return 1;
     }
 
+    int exitCode = 0;
     char fmuPath[1024];
     int rc = snprintf(fmuPath, sizeof fmuPath, "%s/fmi1/identity.fmu", dataDir);
     if (rc < 0) {
@@ -212,11 +213,21 @@ int main()
         return 1;
     }
 
-    rc = cse_execution_destroy(execution);
-    if (rc < 0) {
-        print_last_error();
-        return 1;
-    }
+    goto Lcleanup;
 
-    return 0;
+//  Lerror:
+//    print_last_error();
+//
+//  Lfailure:
+//    exitCode = 1;
+
+  Lcleanup:
+    cse_manipulator_destroy(manipulator);
+    cse_observer_destroy(observer1);
+    cse_observer_destroy(observer2);
+    cse_local_slave_destroy(slave2);
+    cse_local_slave_destroy(slave1);
+    cse_execution_destroy(execution);
+
+    return exitCode;
 }
