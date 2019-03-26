@@ -34,8 +34,8 @@ struct get_variable_cache
 {
     std::vector<variable_index> indexes;
     boost::container::vector<T> originalValues;
-    boost::container::vector<T> manipulatedValues;
-    std::vector<std::function<T(T)>> manipulators;
+    boost::container::vector<T> modifiedValues;
+    std::vector<std::function<T(T)>> modifiers;
     std::unordered_map<variable_index, std::size_t> indexMapping;
 
     void expose(variable_index i)
@@ -43,8 +43,8 @@ struct get_variable_cache
         if (indexMapping.count(i)) return;
         indexes.push_back(i);
         originalValues.push_back(T()); // TODO: Use start value from model description
-        manipulatedValues.push_back(T());
-        manipulators.emplace_back();
+        modifiedValues.push_back(T());
+        modifiers.emplace_back();
         indexMapping[i] = indexes.size() - 1;
     }
 
@@ -52,7 +52,7 @@ struct get_variable_cache
     {
         const auto it = indexMapping.find(i);
         if (it != indexMapping.end()) {
-            return manipulatedValues[it->second];
+            return modifiedValues[it->second];
         } else {
             std::ostringstream oss;
             oss << "variable_index " << i
@@ -61,18 +61,18 @@ struct get_variable_cache
         }
     }
 
-    void set_manipulator(variable_index i, std::function<T(T)> m)
+    void set_modifier(variable_index i, std::function<T(T)> m)
     {
-        manipulators[indexMapping[i]] = m;
+        modifiers[indexMapping[i]] = m;
     }
 
-    void run_manipulators()
+    void run_modifiers()
     {
         for (std::size_t i = 0; i < originalValues.size(); ++i) {
-            if (manipulators[i]) {
-                manipulatedValues[i] = manipulators[i](originalValues[i]);
+            if (modifiers[i]) {
+                modifiedValues[i] = modifiers[i](originalValues[i]);
             } else {
-                manipulatedValues[i] = originalValues[i];
+                modifiedValues[i] = originalValues[i];
             }
         }
     }
@@ -90,7 +90,7 @@ public:
 
     void set_value(variable_index i, typename var_view_type<T>::type v)
     {
-        assert(!hasRunManipulators_);
+        assert(!hasRunModifiers_);
         const auto it = exposedVariables_.find(i);
         if (it == exposedVariables_.end()) {
             std::ostringstream oss;
@@ -110,14 +110,14 @@ public:
         }
     }
 
-    void set_manipulator(variable_index i, std::function<T(T)> m)
+    void set_modifier(variable_index i, std::function<T(T)> m)
     {
-        assert(!hasRunManipulators_);
+        assert(!hasRunModifiers_);
         const auto it = exposedVariables_.find(i);
         if (it == exposedVariables_.end()) {
             std::ostringstream oss;
             oss << "variable_index " << i
-                << " not found in exposed variables. Variables must be exposed before calling set_manipulator()";
+                << " not found in exposed variables. Variables must be exposed before calling set_modifier()";
             throw std::out_of_range(oss.str());
         }
         if (it->second.arrayIndex < 0) {
@@ -128,23 +128,23 @@ public:
             values_.emplace_back(it->second.lastValue);
         }
         if (m) {
-            manipulators_[i] = m;
+            modifiers_[i] = m;
         } else {
-            manipulators_.erase(i);
+            modifiers_.erase(i);
         }
     }
 
-    std::pair<gsl::span<variable_index>, gsl::span<const T>> manipulate_and_get()
+    std::pair<gsl::span<variable_index>, gsl::span<const T>> modify_and_get()
     {
-        if (!hasRunManipulators_) {
+        if (!hasRunModifiers_) {
             assert(indexes_.size() == values_.size());
             for (std::size_t i = 0; i < indexes_.size(); ++i) {
-                const auto iterator = manipulators_.find(indexes_[i]);
-                if (iterator != manipulators_.end()) {
+                const auto iterator = modifiers_.find(indexes_[i]);
+                if (iterator != modifiers_.end()) {
                     values_[i] = iterator->second(values_[i]);
                 }
             }
-            hasRunManipulators_ = true;
+            hasRunModifiers_ = true;
         }
         return std::pair(gsl::make_span(indexes_), gsl::make_span(values_));
     }
@@ -156,7 +156,7 @@ public:
         }
         indexes_.clear();
         values_.clear();
-        hasRunManipulators_ = false;
+        hasRunModifiers_ = false;
     }
 
 private:
@@ -172,11 +172,11 @@ private:
 
     std::unordered_map<variable_index, exposed_variable> exposedVariables_;
 
-    // The manipulators associated with certain variables, and a flag that
+    // The modifiers associated with certain variables, and a flag that
     // specifies whether they have been run on the values currently in
     // `values_`.
-    std::unordered_map<variable_index, std::function<T(T)>> manipulators_;
-    bool hasRunManipulators_ = false;
+    std::unordered_map<variable_index, std::function<T(T)>> modifiers_;
+    bool hasRunModifiers_ = false;
 
     // The indexes and values of the variables that will be set next.
     std::vector<variable_index> indexes_;
@@ -311,60 +311,60 @@ public:
         stringSetCache_.set_value(index, value);
     }
 
-    void set_real_input_manipulator(
+    void set_real_input_modifier(
         variable_index index,
-        std::function<double(double)> manipulator)
+        std::function<double(double)> modifier)
     {
-        realSetCache_.set_manipulator(index, manipulator);
+        realSetCache_.set_modifier(index, modifier);
     }
 
-    void set_integer_input_manipulator(
+    void set_integer_input_modifier(
         variable_index index,
-        std::function<int(int)> manipulator)
+        std::function<int(int)> modifier)
     {
-        integerSetCache_.set_manipulator(index, manipulator);
+        integerSetCache_.set_modifier(index, modifier);
     }
 
-    void set_boolean_input_manipulator(
+    void set_boolean_input_modifier(
         variable_index index,
-        std::function<bool(bool)> manipulator)
+        std::function<bool(bool)> modifier)
     {
-        booleanSetCache_.set_manipulator(index, manipulator);
+        booleanSetCache_.set_modifier(index, modifier);
     }
 
-    void set_string_input_manipulator(
+    void set_string_input_modifier(
         variable_index index,
-        std::function<std::string(std::string_view)> manipulator)
+        std::function<std::string(std::string_view)> modifier)
     {
-        stringSetCache_.set_manipulator(index, manipulator);
+        stringSetCache_.set_modifier(index, modifier);
     }
 
-    void set_real_output_manipulator(
+    void set_real_output_modifier(
         variable_index index,
-        std::function<double(double)> manipulator)
+        std::function<double(double)> modifier)
     {
-        realGetCache_.set_manipulator(index, manipulator);
+        realGetCache_.set_modifier(index, modifier);
     }
 
-    void set_integer_output_manipulator(
+    void set_integer_output_modifier(
         variable_index index,
-        std::function<int(int)> manipulator)
+        std::function<int(int)> modifier)
     {
-        integerGetCache_.set_manipulator(index, manipulator);
+        integerGetCache_.set_modifier(index, modifier);
     }
 
-    void set_boolean_output_manipulator(
+    void set_boolean_output_modifier(
         variable_index index,
-        std::function<bool(bool)> manipulator)
+        std::function<bool(bool)> modifier)
     {
-        booleanGetCache_.set_manipulator(index, manipulator);
+        booleanGetCache_.set_modifier(index, modifier);
     }
 
-    void set_string_output_manipulator(
+    void set_string_output_modifier(
         variable_index index,
-        std::function<std::string(std::string_view)> manipulator)
+        std::function<std::string(std::string_view)> modifier)
     {
-        stringGetCache_.set_manipulator(index, manipulator);
+        stringGetCache_.set_modifier(index, modifier);
     }
 
     boost::fibers::future<void> setup(
@@ -405,10 +405,10 @@ public:
 private:
     void set_variables()
     {
-        const auto [realIndexes, realValues] = realSetCache_.manipulate_and_get();
-        const auto [integerIndexes, integerValues] = integerSetCache_.manipulate_and_get();
-        const auto [booleanIndexes, booleanValues] = booleanSetCache_.manipulate_and_get();
-        const auto [stringIndexes, stringValues] = stringSetCache_.manipulate_and_get();
+        const auto [realIndexes, realValues] = realSetCache_.modify_and_get();
+        const auto [integerIndexes, integerValues] = integerSetCache_.modify_and_get();
+        const auto [booleanIndexes, booleanValues] = booleanSetCache_.modify_and_get();
+        const auto [stringIndexes, stringValues] = stringSetCache_.modify_and_get();
         slave_->set_variables(
                   gsl::make_span(realIndexes),
                   gsl::make_span(realValues),
@@ -437,10 +437,10 @@ private:
         copy_contents(values.integer, integerGetCache_.originalValues);
         copy_contents(values.boolean, booleanGetCache_.originalValues);
         copy_contents(values.string, stringGetCache_.originalValues);
-        realGetCache_.run_manipulators();
-        integerGetCache_.run_manipulators();
-        booleanGetCache_.run_manipulators();
-        stringGetCache_.run_manipulators();
+        realGetCache_.run_modifiers();
+        integerGetCache_.run_modifiers();
+        booleanGetCache_.run_modifiers();
+        stringGetCache_.run_modifiers();
     }
 
     variable_description find_variable_description(variable_index index, variable_type type)
@@ -562,60 +562,60 @@ void slave_simulator::set_string(variable_index index, std::string_view value)
     pimpl_->set_string(index, value);
 }
 
-void slave_simulator::set_real_input_manipulator(
+void slave_simulator::set_real_input_modifier(
     variable_index index,
-    std::function<double(double)> manipulator)
+    std::function<double(double)> modifier)
 {
-    pimpl_->set_real_input_manipulator(index, manipulator);
+    pimpl_->set_real_input_modifier(index, modifier);
 }
 
-void slave_simulator::set_integer_input_manipulator(
+void slave_simulator::set_integer_input_modifier(
     variable_index index,
-    std::function<int(int)> manipulator)
+    std::function<int(int)> modifier)
 {
-    pimpl_->set_integer_input_manipulator(index, manipulator);
+    pimpl_->set_integer_input_modifier(index, modifier);
 }
 
-void slave_simulator::set_boolean_input_manipulator(
+void slave_simulator::set_boolean_input_modifier(
     variable_index index,
-    std::function<bool(bool)> manipulator)
+    std::function<bool(bool)> modifier)
 {
-    pimpl_->set_boolean_input_manipulator(index, manipulator);
+    pimpl_->set_boolean_input_modifier(index, modifier);
 }
 
-void slave_simulator::set_string_input_manipulator(
+void slave_simulator::set_string_input_modifier(
     variable_index index,
-    std::function<std::string(std::string_view)> manipulator)
+    std::function<std::string(std::string_view)> modifier)
 {
-    pimpl_->set_string_input_manipulator(index, manipulator);
+    pimpl_->set_string_input_modifier(index, modifier);
 }
 
-void slave_simulator::set_real_output_manipulator(
+void slave_simulator::set_real_output_modifier(
     variable_index index,
-    std::function<double(double)> manipulator)
+    std::function<double(double)> modifier)
 {
-    pimpl_->set_real_output_manipulator(index, manipulator);
+    pimpl_->set_real_output_modifier(index, modifier);
 }
 
-void slave_simulator::set_integer_output_manipulator(
+void slave_simulator::set_integer_output_modifier(
     variable_index index,
-    std::function<int(int)> manipulator)
+    std::function<int(int)> modifier)
 {
-    pimpl_->set_integer_output_manipulator(index, manipulator);
+    pimpl_->set_integer_output_modifier(index, modifier);
 }
 
-void slave_simulator::set_boolean_output_manipulator(
+void slave_simulator::set_boolean_output_modifier(
     variable_index index,
-    std::function<bool(bool)> manipulator)
+    std::function<bool(bool)> modifier)
 {
-    pimpl_->set_boolean_output_manipulator(index, manipulator);
+    pimpl_->set_boolean_output_modifier(index, modifier);
 }
 
-void slave_simulator::set_string_output_manipulator(
+void slave_simulator::set_string_output_modifier(
     variable_index index,
-    std::function<std::string(std::string_view)> manipulator)
+    std::function<std::string(std::string_view)> modifier)
 {
-    pimpl_->set_string_output_manipulator(index, manipulator);
+    pimpl_->set_string_output_modifier(index, modifier);
 }
 
 boost::fibers::future<void> slave_simulator::setup(

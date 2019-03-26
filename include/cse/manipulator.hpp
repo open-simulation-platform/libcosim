@@ -23,7 +23,7 @@ namespace cse
  *  An interface for manipulators.
  *
  *  The methods in this interface represent various events that the manipulator
- *  may react to in some way. It may manipulate the slaves' variable values
+ *  may react to in some way. It may modify the slaves' variable values
  *  through the `simulator` interface at any time.
  */
 class manipulator
@@ -136,10 +136,10 @@ private:
         variable_index variable,
         variable_type type,
         const std::variant<
-            scenario::real_manipulator,
-            scenario::integer_manipulator,
-            scenario::boolean_manipulator,
-            scenario::string_manipulator>& m);
+            scenario::real_modifier,
+            scenario::integer_modifier,
+            scenario::boolean_modifier,
+            scenario::string_modifier>& m);
 
     std::unordered_map<simulator_index, simulator*> simulators_;
     std::vector<scenario::variable_action> actions_;
