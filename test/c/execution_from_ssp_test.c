@@ -22,44 +22,38 @@ void print_last_error()
 
 int main()
 {
+    int exitCode = 0;
+    cse_execution* execution = NULL;
+    cse_observer* observer = NULL;
+
     const char* dataDir = getenv("TEST_DATA_DIR");
     if (!dataDir) {
         fprintf(stderr, "Environment variable TEST_DATA_DIR not set\n");
-        return 1;
+        goto Lfailure;
     }
 
     char sspDir[1024];
     int rc = snprintf(sspDir, sizeof sspDir, "%s/ssp/demo", dataDir);
     if (rc < 0) {
         perror(NULL);
-        return 1;
+        goto Lfailure;
     }
 
-    cse_execution* execution = cse_ssp_execution_create(sspDir, 0);
-    if (!execution) {
-        print_last_error();
-        return 1;
-    }
+    execution = cse_ssp_execution_create(sspDir, 0);
+    if (!execution) { goto Lerror; }
 
-    cse_observer* observer = cse_last_value_observer_create();
+    observer = cse_last_value_observer_create();
+    if (!observer) { goto Lerror; }
     cse_execution_add_observer(execution, observer);
 
     rc = cse_execution_step(execution, 3);
-    if (rc < 0) {
-        print_last_error();
-        cse_execution_destroy(execution);
-        return 1;
-    }
+    if (rc < 0) { goto Lerror; }
 
     size_t numSlaves = cse_execution_get_num_slaves(execution);
 
     cse_slave_info infos[2];
     rc = cse_execution_get_slave_infos(execution, &infos[0], numSlaves);
-    if (rc < 0) {
-        print_last_error();
-        cse_execution_destroy(execution);
-        return 1;
-    }
+    if (rc < 0) { goto Lerror; }
 
     for (size_t i = 0; i < numSlaves; i++) {
         if (0 == strncmp(infos[i].name, "KnuckleBoomCrane", SLAVE_NAME_MAX_SIZE)) {
@@ -68,14 +62,11 @@ int main()
             cse_variable_index varIndex = 2;
             rc = cse_observer_slave_get_real(observer, slaveIndex, &varIndex, 1, &value);
             if (rc < 0) {
-                print_last_error();
-                cse_execution_destroy(execution);
-                return 1;
+                goto Lerror;
             }
             if (value != 0.05) {
                 fprintf(stderr, "Expected value 0.05, got %f\n", value);
-                cse_execution_destroy(execution);
-                return 1;
+                goto Lfailure;
             }
         }
     }
@@ -84,5 +75,16 @@ int main()
     Sleep(100);
     cse_execution_stop(execution);
 
-    return 0;
+    goto Lcleanup;
+
+Lerror:
+    print_last_error();
+
+Lfailure:
+    exitCode = 1;
+
+Lcleanup:
+    cse_observer_destroy(observer);
+    cse_execution_destroy(execution);
+    return exitCode;
 }
