@@ -23,6 +23,7 @@ set(publicHeaders
     "observer/last_value_provider.hpp"
     "observer/time_series_observer.hpp"
     "observer/time_series_provider.hpp"
+    "orchestration.hpp"
     "slave.hpp"
     "timer.hpp"
     "scenario.hpp"
