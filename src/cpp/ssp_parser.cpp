@@ -181,9 +181,16 @@ struct slave_info
 
 } // namespace
 
-std::pair<execution, simulator_map> load_ssp(const boost::filesystem::path& sspDir, cse::time_point startTime)
+std::pair<execution, simulator_map> load_ssp(cse::model_uri_resolver& resolver, const boost::filesystem::path& sspDir, cse::time_point startTime)
 {
     simulator_map simulatorMap;
+    std::string baseUri = "file://";
+
+    #ifdef _WIN32
+        baseUri += "/";
+    #endif 
+
+    baseUri += sspDir.string();
 
     const auto parser = cse::ssp_parser(sspDir / "SystemStructure.ssd");
 
@@ -199,13 +206,14 @@ std::pair<execution, simulator_map> load_ssp(const boost::filesystem::path& sspD
     std::map<std::string, slave_info> slaves;
     auto importer = cse::fmi::importer::create();
     for (const auto& component : elements) {
-        auto fmu = importer->import(sspDir / component.source);
-        auto slave = fmu->instantiate_slave(component.name);
-        simulator_index index = slaves[component.name].index = execution.add_slave(cse::make_background_thread_slave(slave), component.name);
+        //auto fmu = importer->import(sspDir / component.source);
+        auto model = resolver.lookup_model(baseUri, component.source);
+        auto slave = model->instantiate(component.name);
+        simulator_index index = slaves[component.name].index = execution.add_slave(slave, component.name);
 
-        simulatorMap[component.name] = simulator_map_entry {index, component.source};
+        simulatorMap[component.name] = simulator_map_entry{index, component.source};
 
-        for (const auto& v : fmu->model_description()->variables) {
+        for (const auto& v : model->description()->variables) {
             slaves[component.name].variables[v.name] = v;
         }
     }

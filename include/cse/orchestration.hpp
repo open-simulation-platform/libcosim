@@ -28,10 +28,19 @@ public:
         subResolvers_.push_back(sr);
     }
 
-    std::shared_ptr<Resource> resolve(std::string_view uri)
+    std::shared_ptr<Resource> resolve(std::string_view baseUri, std::string_view uri)
     {
+        std::string _uri;
+        
+        if ((uri.find(':') == std::string_view::npos) || uri[0] == '.')
+        {
+            _uri = std::string(baseUri) + "/" + std::string(uri); 
+        } else {
+            _uri = std::string(uri); 
+        }
+
         for (auto sr : subResolvers_) {
-            auto r = ((*sr).*resolveFun)(uri);
+            auto r = ((*sr).*resolveFun)(_uri);
             if (r) return r;
         }
         throw std::runtime_error(
@@ -119,10 +128,10 @@ public:
      *  or throws an exception if URI resolution failed.
      */
     std::shared_ptr<model> lookup_model(
-        std::string_view, //baseUri,
+        std::string_view baseUri,
         std::string_view uri)
     {
-        return resolver_.resolve(uri);
+        return resolver_.resolve(baseUri, uri);
     }
 
 private:
@@ -203,9 +212,9 @@ public:
      *  Returns an `async_slave` object for the slave referred to by `uri`,
      *  or throws an exception if URI resolution failed.
      */
-    std::shared_ptr<async_slave> connect_to_slave(std::string_view uri)
+    std::shared_ptr<async_slave> connect_to_slave(std::string_view baseUri, std::string_view uri)
     {
-        return resolver_.resolve(uri);
+        return resolver_.resolve(baseUri, uri);
     }
 
 private:

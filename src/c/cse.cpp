@@ -8,6 +8,7 @@
 #include <cse/manipulator.hpp>
 #include <cse/model.hpp>
 #include <cse/observer.hpp>
+#include <cse/orchestration.hpp>
 #include <cse/ssp_parser.hpp>
 
 #include <atomic>
@@ -159,7 +160,10 @@ cse_execution* cse_ssp_execution_create(const char* sspDir, cse_time_point start
         cse::log::set_global_output_level(cse::log::level::info);
         auto execution = std::make_unique<cse_execution>();
 
-        auto sim = cse::load_ssp(sspDir, to_time_point(startTime));
+        cse::model_uri_resolver resolver;
+        resolver.add_sub_resolver(std::make_shared<cse::file_uri_sub_resolver>());
+
+        auto sim = cse::load_ssp(resolver, sspDir, to_time_point(startTime));
 
         execution->cpp_execution = std::make_unique<cse::execution>(std::move(sim.first));
         execution->simulators = std::move(sim.second);
