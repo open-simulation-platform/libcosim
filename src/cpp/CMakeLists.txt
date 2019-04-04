@@ -5,7 +5,6 @@ set(publicHeaders
     "algorithm.hpp"
     "async_slave.hpp"
     "config.hpp"
-    "event_loop.hpp"
     "exception.hpp"
     "execution.hpp"
     "ssp_parser.hpp"
@@ -14,7 +13,6 @@ set(publicHeaders
     "fmi/v1/fmu.hpp"
     "fmi/v2/fmu.hpp"
     "lib_info.hpp"
-    "libevent.hpp"
     "log.hpp"
     "model.hpp"
     "observer.hpp"
@@ -45,7 +43,6 @@ set(privateHeaders
 set(sources
     "algorithm.cpp"
     "async_slave.cpp"
-    "event_loop.cpp"
     "exception.cpp"
     "execution.cpp"
     "ssp_parser.cpp"
@@ -62,7 +59,6 @@ set(sources
     "error.cpp"
     "fmi/glue.cpp"
     "fmi/windows.cpp"
-    "libevent.cpp"
     "log.cpp"
     "observer/slave_value_provider.cpp"
     "slave_simulator.cpp"
@@ -95,7 +91,6 @@ target_link_libraries(csecorecpp
     PUBLIC
         ${FMILibrary_LIBRARIES}
         libzip::libzip
-        libevent2::core
         Boost::boost
         Boost::date_time
         Boost::fiber

@@ -14,7 +14,6 @@ set(unittests
     "async_slave_unittest"
     "fmi_v1_fmu_unittest"
     "fmi_v2_fmu_unittest"
-    "libevent_unittest"
     "model_unittest"
     "utility_concurrency_unittest"
     "utility_filesystem_unittest"
