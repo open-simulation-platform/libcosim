@@ -236,5 +236,8 @@ private:
     std::shared_ptr<fmi::importer> importer_;
 };
 
+
+std::shared_ptr<model_uri_resolver> default_model_uri_resolver();
+
 } // namespace cse
 #endif // header guard

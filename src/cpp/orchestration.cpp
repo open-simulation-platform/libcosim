@@ -49,4 +49,11 @@ std::shared_ptr<model> file_uri_sub_resolver::lookup_model(std::string_view uri)
 }
 
 
+std::shared_ptr<model_uri_resolver> default_model_uri_resolver()
+{
+    auto resolver = std::make_shared<model_uri_resolver>();
+    resolver->add_sub_resolver(std::make_shared<file_uri_sub_resolver>());
+    return resolver;
+}
+
 } // namespace cse

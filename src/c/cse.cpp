@@ -160,10 +160,8 @@ cse_execution* cse_ssp_execution_create(const char* sspDir, cse_time_point start
         cse::log::set_global_output_level(cse::log::level::info);
         auto execution = std::make_unique<cse_execution>();
 
-        cse::model_uri_resolver resolver;
-        resolver.add_sub_resolver(std::make_shared<cse::file_uri_sub_resolver>());
-
-        auto sim = cse::load_ssp(resolver, sspDir, to_time_point(startTime));
+        auto resolver = cse::default_model_uri_resolver();
+        auto sim = cse::load_ssp(*resolver, sspDir, to_time_point(startTime));
 
         execution->cpp_execution = std::make_unique<cse::execution>(std::move(sim.first));
         execution->simulators = std::move(sim.second);
