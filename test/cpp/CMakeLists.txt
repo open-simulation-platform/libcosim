@@ -16,6 +16,7 @@ set(unittests
     "fmi_v2_fmu_unittest"
     "libevent_unittest"
     "model_unittest"
+    "orchestration_unittest"
     "utility_concurrency_unittest"
     "utility_filesystem_unittest"
     "utility_uuid_unittest"

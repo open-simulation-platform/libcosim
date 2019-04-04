@@ -56,6 +56,7 @@ set(sources
     "observer/file_observer.cpp"
     "observer/last_value_observer.cpp"
     "observer/time_series_observer.cpp"
+    "orchestration.cpp"
     "scenario_manager.cpp"
     "scenario_parser.cpp"
     "override_manipulator.cpp"

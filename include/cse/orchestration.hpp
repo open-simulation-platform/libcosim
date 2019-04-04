@@ -2,6 +2,7 @@
 #define CSE_ORCHESTRATION_HPP
 
 #include <cse/async_slave.hpp>
+#include <cse/fmi/importer.hpp>
 #include <cse/model.hpp>
 
 #include <memory>
@@ -13,33 +14,34 @@ namespace cse
 {
 namespace detail
 {
-    // Generic implementation of both model_uri_resolver and slave_uri_resolver.
-    // Nevermind this for now, look further down first.
-    template<
-        typename Resource,
-        typename SubResolver,
-        std::shared_ptr<Resource>(SubResolver::* resolveFun)(std::string_view)>
-    class generic_uri_resolver
+// Generic implementation of both model_uri_resolver and slave_uri_resolver.
+// Nevermind this for now, look further down first.
+template<
+    typename Resource,
+    typename SubResolver,
+    std::shared_ptr<Resource> (SubResolver::*resolveFun)(std::string_view)>
+class generic_uri_resolver
+{
+public:
+    void add_sub_resolver(std::shared_ptr<SubResolver> sr)
     {
-    public:
-        void add_sub_resolver(std::shared_ptr<SubResolver> sr)
-        {
-            subResolvers_.push_back(sr);
-        }
+        subResolvers_.push_back(sr);
+    }
 
-        std::shared_ptr<Resource> resolve(std::string_view uri)
-        {
-            for (auto sr: subResolvers_) {
-                auto r = ((*sr).*resolveFun)(uri);
-                if (r) return r;
-            }
-            return nullptr;
+    std::shared_ptr<Resource> resolve(std::string_view uri)
+    {
+        for (auto sr : subResolvers_) {
+            auto r = ((*sr).*resolveFun)(uri);
+            if (r) return r;
         }
+        throw std::runtime_error(
+            std::string("No resolvers available to handle URI: ") + std::string(uri));
+    }
 
-    private:
-        std::vector<std::shared_ptr<SubResolver>> subResolvers_;
-    };
-}
+private:
+    std::vector<std::shared_ptr<SubResolver>> subResolvers_;
+};
+} // namespace detail
 
 
 /**
@@ -59,7 +61,7 @@ public:
     virtual std::shared_ptr<const model_description> description() const noexcept = 0;
 
     /// Instantiates a slave.
-    virtual std::shared_ptr<async_slave> instantiate() = 0;
+    virtual std::shared_ptr<async_slave> instantiate(std::string_view name) = 0;
 };
 
 
@@ -106,6 +108,9 @@ public:
     /**
      *  Tries to resolve the given URI.
      *
+     *  If `uri` is relative, it will be interpreted relative to
+     *  `baseUri`.  Otherwise, `baseUri` is ignored.
+     *
      *  The URI will be passed to each of the sub-resolvers in turn,
      *  in the order they were added, until one of them succeeds
      *  (or throws).
@@ -113,7 +118,9 @@ public:
      *  Returns a `model` object for the model referred to by `uri`,
      *  or throws an exception if URI resolution failed.
      */
-    std::shared_ptr<model> lookup_model(std::string_view uri)
+    std::shared_ptr<model> lookup_model(
+        std::string_view, //baseUri,
+        std::string_view uri)
     {
         return resolver_.resolve(uri);
     }
@@ -142,7 +149,7 @@ public:
     };
 
     /// Returns a list of all models in this directory.
-    gsl::span<model_info> models() const noexcept;
+    virtual gsl::span<model_info> models() const noexcept = 0;
 };
 
 
@@ -207,5 +214,18 @@ private:
 };
 
 
-}
+class file_uri_sub_resolver : public model_uri_sub_resolver
+{
+public:
+    file_uri_sub_resolver();
+
+//    ~file_uri_sub_resolver() noexcept ov;
+
+    std::shared_ptr<model> lookup_model(std::string_view uri) override;
+
+private:
+    std::shared_ptr<fmi::importer> importer_;
+};
+
+} // namespace cse
 #endif // header guard
