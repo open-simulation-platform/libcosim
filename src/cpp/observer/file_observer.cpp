@@ -5,6 +5,7 @@
 #include <boost/date_time/local_time/local_time.hpp>
 #include <boost/filesystem/fstream.hpp>
 #include <boost/filesystem/operations.hpp>
+#include <boost/property_tree/xml_parser.hpp>
 
 #include <codecvt>
 #include <locale>
@@ -180,11 +181,20 @@ private:
     size_t limit_ = 10;
 };
 
-file_observer::file_observer(boost::filesystem::path logDir, bool binary, size_t limit)
+file_observer::file_observer(boost::filesystem::path& logDir, bool binary, size_t limit)
     : logDir_(logDir)
     , binary_(binary)
     , limit_(limit)
 {
+}
+
+file_observer::file_observer(boost::filesystem::path& configPath, boost::filesystem::path& logDir, bool binary, size_t limit)
+    : configPath_(configPath)
+    , logDir_(logDir)
+    , binary_(binary)
+    , limit_(limit)
+{
+    parse_config();
 }
 
 std::string format_time(boost::posix_time::ptime now)
@@ -237,6 +247,24 @@ void file_observer::simulator_step_complete(simulator_index index, step_number l
 boost::filesystem::path file_observer::get_log_path()
 {
     return logPath_;
+}
+
+template<typename T>
+T get_attribute(const boost::property_tree::ptree& tree, const std::string& key)
+{
+    return tree.get<T>("<xmlattr>." + key);
+}
+
+void file_observer::parse_config()
+{
+    boost::property_tree::ptree tmpTree;
+
+    boost::property_tree::read_xml(configPath_.string(), ptree_,
+        boost::property_tree::xml_parser::no_comments | boost::property_tree::xml_parser::trim_whitespace);
+
+    for (const auto& [key, val] : ptree_.get_child("slave")) {
+        std::cout << key << " --- " << std::endl;
+    }
 }
 
 file_observer::~file_observer()

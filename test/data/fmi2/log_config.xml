@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<slave>
+    <module name="InnerWall">
+        <signal name="T_room1"/>
+        <signal name="T_room2"/>
+    </module>
+    <module name="Room1">
+        <signal name="h_InnerWall"/>
+    </module>
+    <module name="Room2"/>
+</slave>
