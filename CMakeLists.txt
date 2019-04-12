@@ -132,6 +132,7 @@ endif()
 
 add_subdirectory("src/cpp")
 add_subdirectory("src/c")
+add_subdirectory("src/pdu-generator")
 if(CSECORE_BUILD_TESTS)
     enable_testing()
     add_subdirectory("test/cpp")

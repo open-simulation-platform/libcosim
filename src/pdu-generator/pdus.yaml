@@ -1,0 +1,16 @@
+pdus:
+  - name: stc_do_step
+    class: stc
+    type_id: 0x07
+    fields:
+      - name: steps
+        type: uint32
+  - name: inf_log
+    class: inf
+    type_id: 0x82
+    fields:
+      - name: log_category
+        type: uint8
+      - name: log_max_num
+        type: uint8
+        
