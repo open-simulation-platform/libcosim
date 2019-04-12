@@ -7,28 +7,16 @@
 # installation prefix, i.e. the directory that contains the "bin", "lib" and
 # "include" subdirectories.
 #
-# The script searches for both static and shared/dynamic libraries, and creates
-# IMPORTED targets named "fmilib::static" and "fmilib::shared", respectively.  These
-# targets will have several of their IMPORTED_* and INTERFACE_* properties set,
-# making explicit use of commands like include_directories() superfluous in most
-# cases.
+# The script searches for both static and shared/dynamic libraries, and
+# creates IMPORTED targets named FMILibrary::static and FMILibrary::shared,
+# respectively.  These targets will have several of their IMPORTED_* and
+# INTERFACE_* properties set, making explicit use of commands like
+# include_directories() superfluous in most cases.  The target
+# FMILibrary::FMILibrary will be an alias for either FMILibrary::static or
+# FMILibrary::shared depending on whether the variable FMILibrary_USE_SHARED_LIB
+# is FALSE or TRUE, respectively.
 #
-# If the variable FMILibrary_USE_SHARED_LIB is set to TRUE, FMILibrary_LIBRARIES will
-# contain the name of the IMPORTED target "fmilib::shared". Otherwise, it will
-# contain "fmilib::static".
-#
-# After the script has completed, the variable FMILibrary_FOUND will contain whether
-# the package was found or not.  If it was, then the following variables will
-# also be set:
-#
-#    FMILibrary_INCLUDE_DIRS    - The directory that contains the header files.
-#    FMILibrary_LIBRARIES       - The name of an IMPORTED target.
-#
-#    FMILibrary_DLL             - Path to dynamic library (Windows only).
-#    FMILibrary_LIBRARY         - Path to static library.
-#    FMILibrary_SHARED_LIBRARY  - Path to shared/import library.
-#
-cmake_minimum_required (VERSION 2.8.11)
+cmake_minimum_required (VERSION 3.9)
 
 # Find static library, and use its path prefix to provide a HINTS option to the
 # other find_*() commands.
@@ -97,8 +85,8 @@ unset (_FMILibrary_hints)
 
 # Create the IMPORTED targets.
 if (FMILibrary_LIBRARY)
-    add_library ("fmilib::static" STATIC IMPORTED)
-    set_target_properties ("fmilib::static" PROPERTIES
+    add_library ("FMILibrary::static" STATIC IMPORTED)
+    set_target_properties ("FMILibrary::static" PROPERTIES
         IMPORTED_LINK_INTERFACE_LANGUAGES "C"
         IMPORTED_LINK_INTERFACE_LIBRARIES "${CMAKE_DL_LIBS}"
         IMPORTED_LOCATION "${FMILibrary_LIBRARY}"
@@ -107,43 +95,38 @@ if (FMILibrary_LIBRARY)
 endif ()
 
 if (FMILibrary_SHARED_LIBRARY)
-    add_library ("fmilib::shared" SHARED IMPORTED)
-    set_target_properties ("fmilib::shared" PROPERTIES
+    add_library ("FMILibrary::shared" SHARED IMPORTED)
+    set_target_properties ("FMILibrary::shared" PROPERTIES
         IMPORTED_LINK_INTERFACE_LANGUAGES "C"
         INTERFACE_INCLUDE_DIRECTORIES "${FMILibrary_INCLUDE_DIRS}")
     if (WIN32)
-        set_target_properties ("fmilib::shared" PROPERTIES
+        set_target_properties ("FMILibrary::shared" PROPERTIES
             IMPORTED_IMPLIB "${FMILibrary_SHARED_LIBRARY}")
         if (FMILibrary_DLL)
-            set_target_properties ("fmilib::shared" PROPERTIES
+            set_target_properties ("FMILibrary::shared" PROPERTIES
                 IMPORTED_LOCATION "${FMILibrary_DLL}")
         endif ()
     else () # not WIN32
-        set_target_properties ("fmilib::shared" PROPERTIES
+        set_target_properties ("FMILibrary::shared" PROPERTIES
             IMPORTED_LOCATION "${FMILibrary_SHARED_LIBRARY}")
     endif ()
 endif ()
 
-# Set the FMILibrary_LIBRARIES variable.
-unset (FMILibrary_LIBRARIES)
-if (FMILibrary_USE_SHARED_LIB)
-    if (FMILibrary_SHARED_LIBRARY)
-        set (FMILibrary_LIBRARIES "fmilib::shared")
-    endif ()
-else ()
-    if (FMILibrary_LIBRARY)
-        set (FMILibrary_LIBRARIES "fmilib::static")
-    endif ()
-endif ()
-
-# Debug print-out.
-if (FMILibrary_PRINT_VARS)
-    message ("FMILibrary find script variables:")
-    message ("  FMILibrary_INCLUDE_DIRS   = ${FMILibrary_INCLUDE_DIRS}")
-    message ("  FMILibrary_LIBRARIES      = ${FMILibrary_LIBRARIES}")
-    message ("  FMILibrary_DLL            = ${FMILibrary_DLL}")
-    message ("  FMILibrary_LIBRARY        = ${FMILibrary_LIBRARY}")
-    message ("  FMILibrary_SHARED_LIBRARY = ${FMILibrary_SHARED_LIBRARY}")
+# Create the main target.
+if (FMILibrary_USE_SHARED_LIB AND FMILibrary_SHARED_LIBRARY)
+    add_library ("FMILibrary::FMILibrary" INTERFACE IMPORTED)
+    set_property (
+        TARGET "FMILibrary::FMILibrary"
+        APPEND
+        PROPERTY INTERFACE_LINK_LIBRARIES "FMILibrary::shared")
+    set (FMILibrary_LIBRARIES "FMILibrary::FMILibrary")
+elseif ((NOT FMILibrary_USE_SHARED_LIB) AND FMILibrary_LIBRARY)
+    add_library ("FMILibrary::FMILibrary" INTERFACE IMPORTED)
+    set_property (
+        TARGET "FMILibrary::FMILibrary"
+        APPEND
+        PROPERTY INTERFACE_LINK_LIBRARIES "FMILibrary::static")
+    set (FMILibrary_LIBRARIES "FMILibrary::FMILibrary")
 endif ()
 
 # Standard find_package stuff.

@@ -13,12 +13,25 @@ option(CSECORE_BUILD_PRIVATE_APIDOC "Build private API documentation" OFF)
 option(CSECORE_STANDALONE_INSTALLATION "Whether to build for a standalone installation (Linux only; sets a relative RPATH)" OFF)
 option(CSECORE_USING_CONAN "Whether Conan is used for package management" OFF)
 
+if(CSECORE_USING_CONAN)
+    set(supportedConanGenerators "cmake" "cmake_find_package_multi")
+    set(CSECORE_CONAN_GENERATOR "cmake" CACHE STRING
+        "Which Conan generator was used to generate the CMake configuration files. Supported generators are: ${supportedConanGenerators}")
+    if(NOT (CSECORE_CONAN_GENERATOR IN_LIST supportedConanGenerators))
+        message(FATAL_ERROR "Unsupported value of CSECORE_CONAN_GENERATOR: ${CSECORE_CONAN_GENERATOR}")
+    endif()
+endif()
+
 # ==============================================================================
 # Global internal configuration
 # ==============================================================================
 
 # Our custom CMake scripts go in the cmake/ subdirectory.
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_SOURCE_DIR}/cmake")
+if((NOT CSECORE_USING_CONAN) OR
+        (NOT CSECORE_CONAN_GENERATOR STREQUAL "cmake_find_package_multi"))
+    list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_SOURCE_DIR}/cmake/find-modules")
+endif()
 
 # Use a common output directory for all targets.
 # The main purpose of this is to ensure that the DLLs and test executables
@@ -97,24 +110,45 @@ set(CSECORE_EXPORT_TARGET "${PROJECT_NAME}-targets")
 # ==============================================================================
 
 if(CSECORE_USING_CONAN)
-    if(EXISTS ${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-        include("${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")
-        conan_basic_setup(NO_OUTPUT_DIRS)
-    else()
-        message(FATAL_ERROR "The file conanbuildinfo.cmake doesn't exist, you have to run conan install first")
+    if (CSECORE_CONAN_GENERATOR STREQUAL "cmake")
+        if(EXISTS ${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+            include("${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")
+            conan_basic_setup(NO_OUTPUT_DIRS)
+        else()
+            message(FATAL_ERROR "The file conanbuildinfo.cmake doesn't exist, you have to run conan install first")
+        endif()
+    elseif(CSECORE_CONAN_GENERATOR STREQUAL "cmake_find_package_multi")
+        list(INSERT CMAKE_PREFIX_PATH 0 "${CMAKE_BINARY_DIR}")
     endif()
 endif()
 
-set(Boost_components date_time fiber filesystem log)
+set(boostComponents date_time fiber filesystem log)
 if (CSECORE_BUILD_TESTS)
-    list(APPEND Boost_components timer unit_test_framework)
+    list(APPEND boostComponents timer unit_test_framework)
 endif()
 
-find_package(GSL REQUIRED)
-find_package(Boost REQUIRED COMPONENTS ${Boost_components})
-find_package(FMILibrary REQUIRED)
-find_package(LIBZIP REQUIRED)
-find_package(nlohmann_json REQUIRED)
+if(CSECORE_USING_CONAN AND CSECORE_CONAN_GENERATOR STREQUAL "cmake_find_package_multi")
+    find_package(bzip2 REQUIRED NO_MODULE)
+    find_package(zlib REQUIRED NO_MODULE)
+    find_package(OpenSSL REQUIRED NO_MODULE)
+
+    find_package(gsl_microsoft REQUIRED NO_MODULE)
+    find_package(boost REQUIRED NO_MODULE)
+    find_package(FMILibrary REQUIRED NO_MODULE)
+    find_package(libzip REQUIRED NO_MODULE)
+    find_package(jsonformoderncpp REQUIRED NO_MODULE)
+
+    foreach(comp boost ${boostComponents})
+        add_library("Boost::${comp}" INTERFACE IMPORTED GLOBAL)
+        target_link_libraries("Boost::${comp}" INTERFACE "boost::boost")
+    endforeach()
+else()
+    find_package(gsl_microsoft REQUIRED)
+    find_package(Boost REQUIRED COMPONENTS ${boostComponents})
+    find_package(FMILibrary REQUIRED)
+    find_package(libzip REQUIRED)
+    find_package(jsonformoderncpp REQUIRED)
+endif()
 
 # ==============================================================================
 # Targets
