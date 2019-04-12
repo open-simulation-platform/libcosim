@@ -89,16 +89,16 @@ target_include_directories(csecorecpp
 )
 target_link_libraries(csecorecpp
     PUBLIC
-        ${FMILibrary_LIBRARIES}
+        FMILibrary::FMILibrary
         libzip::libzip
         Boost::boost
         Boost::date_time
         Boost::fiber
         Boost::filesystem
         Boost::log
-        gsl
+        gsl_microsoft::gsl_microsoft
     PRIVATE
-        nlohmann_json
+        jsonformoderncpp::jsonformoderncpp
     )
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_link_libraries(csecorecpp INTERFACE "atomic")
