@@ -182,6 +182,14 @@ typedef struct cse_slave_s cse_slave;
  */
 cse_slave* cse_local_slave_create(const char* fmuPath);
 
+/**
+ *  Destroys a local slave.
+ *
+ *  \returns
+ *       0 on success and -1 on error.
+ */
+int cse_local_slave_destroy(cse_slave* slave);
+
 
 /**
  *  Loads a co-simulation FMU, instantiates a slave based on it, and adds it

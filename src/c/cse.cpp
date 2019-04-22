@@ -239,6 +239,18 @@ cse_slave* cse_local_slave_create(const char* fmuPath)
     }
 }
 
+int cse_local_slave_destroy(cse_slave* slave)
+{
+    try {
+        if (!slave) return success;
+        const auto owned = std::unique_ptr<cse_slave>(slave);
+        return success;
+    } catch (...) {
+        handle_current_exception();
+        return failure;
+    }
+}
+
 cse_slave_index cse_execution_add_slave(
     cse_execution* execution,
     cse_slave* slave)

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.9)
-project("csecore" VERSION "0.2.0")
+project("csecore" VERSION "0.3.0")
 
 # ==============================================================================
 # Build settings
@@ -121,7 +121,6 @@ find_package(GSL REQUIRED)
 find_package(Boost REQUIRED COMPONENTS ${Boost_components})
 find_package(FMILibrary REQUIRED)
 find_package(LIBZIP REQUIRED)
-find_package(Libevent2 REQUIRED)
 find_package(nlohmann_json REQUIRED)
 if(CSECORE_WITH_FMUPROXY)
     find_package(Thrift REQUIRED)

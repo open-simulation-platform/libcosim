@@ -5,7 +5,7 @@ from conans import ConanFile, CMake
 
 class CSECoreConan(ConanFile):
     name = "cse-core"
-    version = "0.2.0"
+    version = "0.3.0"
     author = "osp"
     scm = {
         "type": "git",
@@ -18,7 +18,6 @@ class CSECoreConan(ConanFile):
         "boost/1.66.0@conan/stable",
         "FMILibrary/2.0.3@kyllingstad/testing",
         "gsl_microsoft/1.0.0@bincrafters/stable",
-        "libevent/2.0.22@bincrafters/stable",
         "libzip/1.5.1@bincrafters/stable",
         "jsonformoderncpp/3.5.0@vthiery/stable"
         )
@@ -27,10 +26,9 @@ class CSECoreConan(ConanFile):
     default_options = (
         "fmuproxy=False",
         "boost:shared=True",
-        "libevent:with_openssl=False",
         "libzip:shared=True"
         )
-    
+
     def imports(self):
         binDir = os.path.join("output", str(self.settings.build_type).lower(), "bin")
         self.copy("*.dll", dst=binDir, keep_path=False)
@@ -62,4 +60,4 @@ class CSECoreConan(ConanFile):
         cmake = self.configure_cmake()
         self.run('cmake --build %s --target install-doc' % (self.build_folder))
         cmake.install()
-        
+
