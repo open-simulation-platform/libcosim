@@ -10,7 +10,7 @@
 find_path(THRIFT_INCLUDE_DIR NAMES thrift/Thrift.h)
 mark_as_advanced(THRIFT_INCLUDE_DIR)
 
-find_library(THRIFT_LIBRARY NAMES thrift thriftmd)
+find_library(THRIFT_LIBRARY NAMES thrift thriftmd thriftmdd)
 mark_as_advanced(THRIFT_LIBRARY)
 
 include(FindPackageHandleStandardArgs)
