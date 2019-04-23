@@ -33,31 +33,18 @@ int main()
 
         cse::log::set_global_output_level(cse::log::level::debug);
 
-        // Set up the execution
+        // Set up the execution and add observer
         auto execution = cse::execution(startTime, std::make_unique<cse::fixed_step_algorithm>(stepSize));
-
-        // Set up and add file observers of csv and binary format to the execution
-        auto csv_observer = std::make_shared<cse::file_observer>(configPath, csvPath, false, 50);
-        //auto bin_observer = std::make_shared<cse::file_observer>(binPath, true, 50);
+        auto csv_observer = std::make_shared<cse::file_observer>(configPath, csvPath, false);
         execution.add_observer(csv_observer);
-        //execution.add_observer(bin_observer);
 
         // Add a slave to the execution and connect variables
         execution.add_slave(
             cse::make_pseudo_async(std::make_unique<mock_slave>([](double x) { return x + 1.234; })), "slave uno");
-        execution.add_slave(
-            cse::make_pseudo_async(std::make_unique<mock_slave>([](double x) { return x + 1.234; },
-                [](int y) { return y - 4; },
-                [](bool z) { return !z; })),
-            "slave dos");
 
         // Run the simulation
         auto simResult = execution.simulate_until(endTime);
         REQUIRE(simResult.get());
-
-        // Print the log paths
-        std::cout << "CSV file: " << csv_observer->get_log_path() << std::endl;
-        //std::cout << "BIN file: " << bin_observer->get_log_path() << std::endl;
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;

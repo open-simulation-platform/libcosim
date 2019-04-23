@@ -188,11 +188,10 @@ file_observer::file_observer(boost::filesystem::path& logDir, bool binary, size_
 {
 }
 
-file_observer::file_observer(boost::filesystem::path& configPath, boost::filesystem::path& logDir, bool binary, size_t limit)
+file_observer::file_observer(boost::filesystem::path& configPath, boost::filesystem::path& logDir, bool binary)
     : configPath_(configPath)
     , logDir_(logDir)
     , binary_(binary)
-    , limit_(limit)
 {
     parse_config();
 }
@@ -249,22 +248,19 @@ boost::filesystem::path file_observer::get_log_path()
     return logPath_;
 }
 
-template<typename T>
-T get_attribute(const boost::property_tree::ptree& tree, const std::string& key)
+boost::filesystem::path file_observer::get_config_path()
 {
-    return tree.get<T>("<xmlattr>." + key);
+    return configPath_;
 }
 
 void file_observer::parse_config()
 {
-    boost::property_tree::ptree tmpTree;
+    std::string s_path = configPath_.string();
+    const char* c_path = s_path.c_str();
 
-    boost::property_tree::read_xml(configPath_.string(), ptree_,
-        boost::property_tree::xml_parser::no_comments | boost::property_tree::xml_parser::trim_whitespace);
+    xmlDoc_.LoadFile(c_path);
 
-    for (const auto& [key, val] : ptree_.get_child("slave")) {
-        std::cout << key << " --- " << std::endl;
-    }
+
 }
 
 file_observer::~file_observer()

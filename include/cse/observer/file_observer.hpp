@@ -8,7 +8,7 @@
 #include <cse/observer/observer.hpp>
 
 #include <boost/filesystem/path.hpp>
-#include <boost/property_tree/ptree.hpp>
+#include <tinyxml2.h>
 
 #include <memory>
 #include <unordered_map>
@@ -26,7 +26,7 @@ class file_observer : public observer
 public:
     file_observer(boost::filesystem::path& logDir, bool binary, size_t limit);
 
-    file_observer(boost::filesystem::path& configPath, boost::filesystem::path& logDir, bool binary, size_t limit);
+    file_observer(boost::filesystem::path& configPath, boost::filesystem::path& logDir, bool binary);
 
     void simulator_added(simulator_index, observable*, time_point) override;
 
@@ -48,6 +48,7 @@ public:
         time_point currentTime) override;
 
     boost::filesystem::path get_log_path();
+    boost::filesystem::path get_config_path();
 
     ~file_observer();
 
@@ -56,7 +57,7 @@ private:
 
     class slave_value_writer;
     std::unordered_map<simulator_index, std::unique_ptr<slave_value_writer>> valueWriters_;
-    boost::property_tree::ptree ptree_;
+    tinyxml2::XMLDocument xmlDoc_;
     boost::filesystem::path logDir_;
     boost::filesystem::path logPath_;
     boost::filesystem::path configPath_;

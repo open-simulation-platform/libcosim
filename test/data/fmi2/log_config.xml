@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<slave>
+<slave name="fmi2" rate="20">
     <module name="InnerWall">
         <signal name="T_room1"/>
         <signal name="T_room2"/>
