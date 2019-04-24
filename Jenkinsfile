@@ -125,7 +125,7 @@ pipeline {
                         }
                         stage('Build Release') {
                             steps {
-                                dir('release-build') {
+                                dir('release-build-fmuproxy') {
                                     bat 'conan install ../cse-core -s build_type=Release -o fmuproxy=True -b missing'
                                     bat 'conan package ../cse-core -pf package/windows/release'
                                 }
@@ -265,7 +265,7 @@ pipeline {
                         }
                         stage('Build Release') {
                             steps {
-                                dir('release-build-conan') {
+                                dir('release-build-conan-fmuproxy') {
                                     sh 'conan install ../cse-core -s compiler.libcxx=libstdc++11 -s build_type=Release -o fmuproxy=True -b missing'
                                     sh 'conan package ../cse-core -pf package/linux/release'
                                 }
