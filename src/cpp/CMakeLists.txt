@@ -68,6 +68,29 @@ set(sources
     "utility/zip.cpp"
 )
 
+if(CSECORE_WITH_FMUPROXY)
+    list(APPEND publicHeaders
+            "fmuproxy/remote_fmu.hpp"
+            "fmuproxy/fmu_service.hpp"
+            "fmuproxy/service_types.hpp"
+            "fmuproxy/fmuproxy_client.hpp"
+            "fmuproxy/thrift_state.hpp"
+    )
+
+    list(APPEND privateHeaders
+            "fmuproxy/fmuproxy_helper.hpp"
+            "fmuproxy/remote_slave.hpp"
+    )
+    list(APPEND sources
+            "fmuproxy/fmu_service.cpp"
+            "fmuproxy/service_types.cpp"
+            "fmuproxy/remote_slave.cpp"
+            "fmuproxy/remote_fmu.cpp"
+            "fmuproxy/fmuproxy_client.cpp"
+            "fmuproxy/thrift_state.cpp"
+    )
+endif()
+
 set(publicHeadersFull)
 foreach(h IN LISTS publicHeaders)
     list(APPEND publicHeadersFull "${publicHeaderDir}/${h}")
@@ -100,6 +123,14 @@ target_link_libraries(csecorecpp
     PRIVATE
         nlohmann_json
     )
+
+if(CSECORE_WITH_FMUPROXY)
+    target_link_libraries(csecorecpp
+        PUBLIC
+            thrift::thrift
+        )
+endif()
+
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_link_libraries(csecorecpp INTERFACE "atomic")
 endif()
