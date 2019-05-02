@@ -114,6 +114,7 @@ target_link_libraries(csecorecpp
     PUBLIC
         ${FMILibrary_LIBRARIES}
         libzip::libzip
+        bcrypt
         Boost::boost
         Boost::date_time
         Boost::fiber

@@ -156,6 +156,7 @@ public:
                 timer_.sleep(currentTime_);
             } while (!stopped_ && !timed_out(endTime, currentTime_, stepSize));
             return !stopped_;
+#pragma warning(suppress: 4100)
         });
     }
 

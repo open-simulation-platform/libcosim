@@ -381,6 +381,7 @@ public:
             return boost::fibers::async([=]() {
                 set_variables();
                 get_variables();
+#pragma warning(suppress: 4100)
             });
         // clang-format on
     }
@@ -398,6 +399,7 @@ public:
                 const auto result = slave_->do_step(currentT, deltaT).get();
                 get_variables();
                 return result;
+#pragma warning(suppress: 4100)
             });
         // clang-format on
     }

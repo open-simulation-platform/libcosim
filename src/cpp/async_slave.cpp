@@ -117,6 +117,7 @@ auto big_stack_async(F&& f)
         boost::fibers::launch::post,
         std::allocator_arg,
         boost::fibers::fixedsize_stack(stackSize),
+#pragma warning(suppress: 4100)
         std::forward<F>(f));
 }
 

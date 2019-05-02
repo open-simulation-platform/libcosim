@@ -15,7 +15,7 @@ class CSECoreConan(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
     generators = "cmake", "virtualrunenv"
     requires = (
-        "boost/1.69.0@conan/stable",
+        "boost/1.67.0@conan/stable",
         "FMILibrary/2.0.3@kyllingstad/testing",
         "gsl_microsoft/1.0.0@bincrafters/stable",
         "libzip/1.5.1@bincrafters/stable",
