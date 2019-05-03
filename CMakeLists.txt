@@ -88,6 +88,7 @@ set(CSECORE_HEADER_INSTALL_DIR "include")
 if(WIN32)
     set(CSECORE_CMAKE_INSTALL_DIR "cmake")
     set(CSECORE_DOC_INSTALL_DIR   "doc")
+    add_definitions(-D_WIN32_WINNT=0x0601) # Needed by Boost::Asio
 else()
     set(CSECORE_CMAKE_INSTALL_DIR "share/${PROJECT_NAME}/cmake")
     set(CSECORE_DOC_INSTALL_DIR   "share/doc/${PROJECT_NAME}")

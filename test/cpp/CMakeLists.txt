@@ -1,5 +1,6 @@
 set(tests
     "async_slave_mockup_test"
+    "dcp_slave_test"
     "fixed_step_algorithm_test"
     "file_observer_logging_test"
     "multi_fixed_step_algorithm_test"
