@@ -76,8 +76,8 @@ if(CSECORE_WITH_FMUPROXY)
             "fmuproxy/service_types.hpp"
             "fmuproxy/thrift_state.hpp"
             "fmuproxy/fmu_service.hpp"
-            "fmuproxy/fmuproxy_client.hpp"
-            "fmuproxy/fmuproxy_sub_resolver.hpp"
+            "fmuproxy/client.hpp"
+            "fmuproxy/uri_resolver.hpp"
     )
     list(APPEND privateHeaders
             "fmuproxy/fmuproxy_helper.hpp"
@@ -89,8 +89,8 @@ if(CSECORE_WITH_FMUPROXY)
             "fmuproxy/service_types.cpp"
             "fmuproxy/thrift_state.cpp"
             "fmuproxy/fmu_service.cpp"
-            "fmuproxy/fmuproxy_client.cpp"
-            "fmuproxy/fmuproxy_sub_resolver.cpp"
+            "fmuproxy/client.cpp"
+            "fmuproxy/uri_resolver.cpp"
     )
 endif()
 

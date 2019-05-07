@@ -1,5 +1,5 @@
 #include <cse/error.hpp>
-#include <cse/fmuproxy/fmuproxy_client.hpp>
+#include <cse/fmuproxy/client.hpp>
 #include <cse/fmuproxy/thrift_state.hpp>
 
 #include <boost/filesystem.hpp>
@@ -40,7 +40,7 @@ void read_data(const std::string &fileName, std::string &data)
 
 } // namespace
 
-cse::fmuproxy::fmuproxy_client::fmuproxy_client(const std::string& host, const unsigned int port, const bool concurrent)
+cse::fmuproxy::client::client(const std::string& host, const unsigned int port, const bool concurrent)
 {
     std::shared_ptr<TTransport> socket(new TSocket(host, port));
     std::shared_ptr<TTransport> transport(new TFramedTransport(socket));
@@ -61,7 +61,7 @@ cse::fmuproxy::fmuproxy_client::fmuproxy_client(const std::string& host, const u
 }
 
 std::shared_ptr<cse::fmuproxy::remote_fmu>
-cse::fmuproxy::fmuproxy_client::from_url(const std::string& url)
+cse::fmuproxy::client::from_url(const std::string& url)
 {
     FmuId fmuId;
     state_->client_->load_from_url(fmuId, url);
@@ -69,7 +69,7 @@ cse::fmuproxy::fmuproxy_client::from_url(const std::string& url)
 }
 
 std::shared_ptr<cse::fmuproxy::remote_fmu>
-cse::fmuproxy::fmuproxy_client::from_file(const std::string& file)
+cse::fmuproxy::client::from_file(const std::string& file)
 {
 
     const auto name = fs::path(file).stem().string();
@@ -83,7 +83,7 @@ cse::fmuproxy::fmuproxy_client::from_file(const std::string& file)
 }
 
 std::shared_ptr<cse::fmuproxy::remote_fmu>
-cse::fmuproxy::fmuproxy_client::from_guid(const std::string& guid)
+cse::fmuproxy::client::from_guid(const std::string& guid)
 {
     return std::make_shared<cse::fmuproxy::remote_fmu>(guid, state_);
 }

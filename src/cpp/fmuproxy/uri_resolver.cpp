@@ -1,8 +1,8 @@
 
 #include <cse/error.hpp>
-#include <cse/fmuproxy/fmuproxy_client.hpp>
-#include <cse/fmuproxy/fmuproxy_sub_resolver.hpp>
+#include <cse/fmuproxy/client.hpp>
 #include <cse/fmuproxy/remote_fmu.hpp>
+#include <cse/fmuproxy/uri_resolver.hpp>
 
 #include <string>
 
@@ -24,7 +24,7 @@ std::shared_ptr<cse::model> cse::fmuproxy::fmuproxy_sub_resolver::lookup_model(s
     unsigned int port = std::stoi(uri.substr(colon + 1, question).data());
 
     uri = uri.substr(question + 1); //skip host:port?
-    auto client = cse::fmuproxy::fmuproxy_client(host, port, true);
+    auto client = cse::fmuproxy::client(host, port, true);
     if (uri.substr(0, 5) == "guid=") {
         auto guid = std::string(uri.substr(5));
         return client.from_guid(guid);
