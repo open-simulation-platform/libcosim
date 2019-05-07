@@ -43,7 +43,6 @@ void run_serial(remote_fmu &fmu) {
         for (int i = 0; i < numSteps; i++) {
             for (auto &slave : slaves) {
                 slave->do_step(t, stepSize);
-
             }
             t += stepSize;
         }
@@ -62,10 +61,9 @@ void run_execution(remote_fmu &fmu) {
     auto execution = cse::execution(cse::time_point(),
                                     std::make_unique<cse::fixed_step_algorithm>(cse::to_duration(stepSize_s)));
 
-    std::shared_ptr<cse::slave> slaves[NUM_FMUS];
     for (int i = 0; i < NUM_FMUS; i++) {
-        slaves[i] = fmu.instantiate_slave();
-        execution.add_slave( cse::make_background_thread_slave(slaves[i]), std::string("slave") + std::to_string(i));
+        auto slave = fmu.instantiate();
+        execution.add_slave( slave, std::string("slave_") + std::to_string(i));
     }
 
     execution.step();
@@ -74,10 +72,6 @@ void run_execution(remote_fmu &fmu) {
             execution.step();
         }
     });
-
-    for (auto &slave : slaves) {
-        slave->end_simulation();
-    }
 
     std::cout << "[execution] elapsed=" << elapsed << "s" << std::endl;
 
