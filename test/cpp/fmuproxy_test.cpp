@@ -129,12 +129,12 @@ int main(int argc, char** argv) {
 
     fmuproxy_client client1(host, port, /*concurrent*/false);
     auto fmu1 = client1.from_url(url);
-    run_serial(fmu1);
+    run_serial(*fmu1);
 
     fmuproxy_client client2(host, port, /*concurrent*/true);
     auto fmu2 = client2.from_url(url);
-    run_execution(fmu2);
-    run_threads(fmu2);
+    run_execution(*fmu2);
+    run_threads(*fmu2);
 
     return 0;
 

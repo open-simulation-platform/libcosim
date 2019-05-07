@@ -41,4 +41,3 @@ std::shared_ptr<cse::async_slave> cse::fmuproxy::remote_fmu::instantiate(std::st
 {
     return cse::make_background_thread_slave(instantiate_slave());
 }
-

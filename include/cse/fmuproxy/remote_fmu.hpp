@@ -23,12 +23,15 @@ namespace fmuproxy
 
 class fmuproxy_client;
 
-class remote_fmu : cse::model
+class remote_fmu : public cse::model
 {
 
     friend class fmuproxy_client;
 
 public:
+    remote_fmu(const ::fmuproxy::thrift::FmuId& fmuId,
+        std::shared_ptr<thrift_state> state);
+
     std::shared_ptr<const cse::model_description> description() const noexcept override;
 
     std::shared_ptr<cse::slave> instantiate_slave();
@@ -40,9 +43,6 @@ private:
     const std::string fmuId_;
     std::shared_ptr<thrift_state> state_;
     std::shared_ptr<const cse::model_description> modelDescription_;
-
-    remote_fmu(const ::fmuproxy::thrift::FmuId& fmuId,
-        std::shared_ptr<thrift_state> state);
 };
 
 } // namespace fmuproxy

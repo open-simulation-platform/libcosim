@@ -19,7 +19,7 @@ namespace fs = boost::filesystem;
 namespace
 {
 
-void read_data(std::string const &fileName, std::string &data)
+void read_data(const std::string &fileName, std::string &data)
 {
 
     FILE* file = fopen(fileName.c_str(), "rb");
@@ -60,7 +60,7 @@ cse::fmuproxy::fmuproxy_client::fmuproxy_client(const std::string& host, const u
     state_ = std::make_shared<thrift_state>(client, transport);
 }
 
-cse::fmuproxy::remote_fmu
+std::shared_ptr<cse::fmuproxy::remote_fmu>
 cse::fmuproxy::fmuproxy_client::from_url(const std::string& url)
 {
     FmuId fmuId;
@@ -68,7 +68,7 @@ cse::fmuproxy::fmuproxy_client::from_url(const std::string& url)
     return from_guid(fmuId);
 }
 
-cse::fmuproxy::remote_fmu
+std::shared_ptr<cse::fmuproxy::remote_fmu>
 cse::fmuproxy::fmuproxy_client::from_file(const std::string& file)
 {
 
@@ -82,8 +82,8 @@ cse::fmuproxy::fmuproxy_client::from_file(const std::string& file)
     return from_guid(fmuId);
 }
 
-cse::fmuproxy::remote_fmu
+std::shared_ptr<cse::fmuproxy::remote_fmu>
 cse::fmuproxy::fmuproxy_client::from_guid(const std::string& guid)
 {
-    return cse::fmuproxy::remote_fmu(guid, state_);
+    return std::make_shared<cse::fmuproxy::remote_fmu>(guid, state_);
 }

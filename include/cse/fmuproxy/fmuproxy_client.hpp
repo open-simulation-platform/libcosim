@@ -5,6 +5,8 @@
 #include <cse/fmuproxy/fmu_service.hpp>
 #include <cse/fmuproxy/remote_fmu.hpp>
 
+#include <memory>
+
 namespace cse
 {
 
@@ -19,11 +21,11 @@ public:
         unsigned int port,
         bool concurrent = false);
 
-    remote_fmu from_url(const std::string& url);
+    std::shared_ptr<remote_fmu> from_url(const std::string& url);
 
-    remote_fmu from_file(const std::string& file);
+    std::shared_ptr<remote_fmu> from_file(const std::string& file);
 
-    remote_fmu from_guid(const std::string& guid);
+    std::shared_ptr<remote_fmu> from_guid(const std::string& guid);
 
 private:
     std::shared_ptr<thrift_state> state_;
