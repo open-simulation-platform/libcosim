@@ -10,11 +10,15 @@ set(tests
     "scenario_parser_test"
     "synchronized_xy_series_test"
 )
+
+if(CSECORE_WITH_FMUPROXY)
+    list(APPEND tests "fmuproxy_test")
+endif()
+
 set(unittests
     "async_slave_unittest"
     "fmi_v1_fmu_unittest"
     "fmi_v2_fmu_unittest"
-    "libevent_unittest"
     "model_unittest"
     "orchestration_unittest"
     "utility_concurrency_unittest"

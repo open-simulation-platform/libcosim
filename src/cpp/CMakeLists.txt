@@ -5,7 +5,6 @@ set(publicHeaders
     "algorithm.hpp"
     "async_slave.hpp"
     "config.hpp"
-    "event_loop.hpp"
     "exception.hpp"
     "execution.hpp"
     "ssp_parser.hpp"
@@ -14,7 +13,6 @@ set(publicHeaders
     "fmi/v1/fmu.hpp"
     "fmi/v2/fmu.hpp"
     "lib_info.hpp"
-    "libevent.hpp"
     "log.hpp"
     "model.hpp"
     "observer.hpp"
@@ -46,7 +44,6 @@ set(privateHeaders
 set(sources
     "algorithm.cpp"
     "async_slave.cpp"
-    "event_loop.cpp"
     "exception.cpp"
     "execution.cpp"
     "ssp_parser.cpp"
@@ -64,7 +61,6 @@ set(sources
     "error.cpp"
     "fmi/glue.cpp"
     "fmi/windows.cpp"
-    "libevent.cpp"
     "log.cpp"
     "observer/slave_value_provider.cpp"
     "slave_simulator.cpp"
@@ -73,6 +69,29 @@ set(sources
     "utility/uuid.cpp"
     "utility/zip.cpp"
 )
+
+if(CSECORE_WITH_FMUPROXY)
+    list(APPEND publicHeaders
+            "fmuproxy/remote_fmu.hpp"
+            "fmuproxy/fmu_service.hpp"
+            "fmuproxy/service_types.hpp"
+            "fmuproxy/fmuproxy_client.hpp"
+            "fmuproxy/thrift_state.hpp"
+    )
+
+    list(APPEND privateHeaders
+            "fmuproxy/fmuproxy_helper.hpp"
+            "fmuproxy/remote_slave.hpp"
+    )
+    list(APPEND sources
+            "fmuproxy/fmu_service.cpp"
+            "fmuproxy/service_types.cpp"
+            "fmuproxy/remote_slave.cpp"
+            "fmuproxy/remote_fmu.cpp"
+            "fmuproxy/fmuproxy_client.cpp"
+            "fmuproxy/thrift_state.cpp"
+    )
+endif()
 
 set(publicHeadersFull)
 foreach(h IN LISTS publicHeaders)
@@ -97,7 +116,6 @@ target_link_libraries(csecorecpp
     PUBLIC
         ${FMILibrary_LIBRARIES}
         libzip::libzip
-        libevent2::core
         Boost::boost
         Boost::date_time
         Boost::fiber
@@ -107,6 +125,14 @@ target_link_libraries(csecorecpp
     PRIVATE
         nlohmann_json
     )
+
+if(CSECORE_WITH_FMUPROXY)
+    target_link_libraries(csecorecpp
+        PUBLIC
+            thrift::thrift
+        )
+endif()
+
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_link_libraries(csecorecpp INTERFACE "atomic")
 endif()

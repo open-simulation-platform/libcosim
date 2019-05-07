@@ -18,21 +18,26 @@ class CSECoreConan(ConanFile):
         "boost/1.66.0@conan/stable",
         "FMILibrary/2.0.3@kyllingstad/testing",
         "gsl_microsoft/1.0.0@bincrafters/stable",
-        "libevent/2.0.22@bincrafters/stable",
         "libzip/1.5.1@bincrafters/stable",
         "jsonformoderncpp/3.5.0@vthiery/stable"
         )
-    
+
+    options = {"fmuproxy": [True, False]}
     default_options = (
+        "fmuproxy=False",
         "boost:shared=True",
-        "libevent:with_openssl=False",
         "libzip:shared=True"
         )
-    
+
     def imports(self):
         binDir = os.path.join("output", str(self.settings.build_type).lower(), "bin")
         self.copy("*.dll", dst=binDir, keep_path=False)
         self.copy("*.pdb", dst=binDir, keep_path=False)
+
+    def requirements(self):
+        if self.options.fmuproxy:
+            self.requires("OpenSSL/1.0.2o@conan/stable")
+            self.requires("thrift/0.12.0@helmesjo/stable")
 
     def configure_cmake(self):
         cmake = CMake(self)
@@ -40,6 +45,8 @@ class CSECoreConan(ConanFile):
         cmake.definitions["CSECORE_USING_CONAN"] = "ON"
         if self.settings.build_type == "Debug":
             cmake.definitions["CSECORE_BUILD_PRIVATE_APIDOC"] = "ON"
+        if self.options.fmuproxy:
+            cmake.definitions["CSECORE_WITH_FMUPROXY"] = "ON"
         cmake.configure()
         return cmake
 
@@ -53,4 +60,4 @@ class CSECoreConan(ConanFile):
         cmake = self.configure_cmake()
         self.run('cmake --build %s --target install-doc' % (self.build_folder))
         cmake.install()
-        
+

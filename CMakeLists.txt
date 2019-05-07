@@ -12,6 +12,7 @@ option(CSECORE_BUILD_APIDOC "Build API documentation" ON)
 option(CSECORE_BUILD_PRIVATE_APIDOC "Build private API documentation" OFF)
 option(CSECORE_STANDALONE_INSTALLATION "Whether to build for a standalone installation (Linux only; sets a relative RPATH)" OFF)
 option(CSECORE_USING_CONAN "Whether Conan is used for package management" OFF)
+option(CSECORE_WITH_FMUPROXY "Whether or not to build with fmuproxy integration" OFF)
 
 # ==============================================================================
 # Global internal configuration
@@ -67,6 +68,12 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
         # should not be a problem, so we disable the warning.
         add_compile_options("/wd4251")
     endif()
+    if (CSECORE_WITH_FMUPROXY)
+        #warning C4245: 'return': conversion from 'int' to 'SOCKET', signed/unsigned mismatch
+        add_compile_options("/wd4245")
+        #warning C4706: assignment within conditional expression
+        add_compile_options("/wd4706")
+    endif()
     add_definitions("-D_SCL_SECURE_NO_WARNINGS" "-D_CRT_SECURE_NO_WARNINGS")
 endif()
 
@@ -114,8 +121,10 @@ find_package(GSL REQUIRED)
 find_package(Boost REQUIRED COMPONENTS ${Boost_components})
 find_package(FMILibrary REQUIRED)
 find_package(LIBZIP REQUIRED)
-find_package(Libevent2 REQUIRED)
 find_package(nlohmann_json REQUIRED)
+if(CSECORE_WITH_FMUPROXY)
+    find_package(Thrift REQUIRED)
+endif()
 
 # ==============================================================================
 # Targets
