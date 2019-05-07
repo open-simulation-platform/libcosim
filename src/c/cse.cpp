@@ -591,7 +591,19 @@ cse_observer* cse_last_value_observer_create()
 cse_observer* cse_file_observer_create(const char* logDir)
 {
     auto observer = std::make_unique<cse_observer>();
-    observer->cpp_observer = std::make_shared<cse::file_observer>(logDir, false, 100);
+    auto logPath = boost::filesystem::path(logDir);
+    observer->cpp_observer = std::make_shared<cse::file_observer>(logPath, 100);
+    return observer.release();
+}
+
+cse_observer* cse_file_observer_create_from_cfg(const char* logDir, const char* cfgDir)
+{
+    std::cout << "Registering log observer with logPath: " << logDir << ", cfgPath " << cfgDir << std::endl;
+
+    auto observer = std::make_unique<cse_observer>();
+    auto logPath = boost::filesystem::path(logDir);
+    auto cfgPath = boost::filesystem::path(cfgDir);
+    observer->cpp_observer = std::make_shared<cse::file_observer>(logPath, cfgPath);
     return observer.release();
 }
 

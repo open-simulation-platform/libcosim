@@ -5,13 +5,14 @@
 #ifndef CSE_OBSERVER_FILE_OBSERVER_HPP
 #define CSE_OBSERVER_FILE_OBSERVER_HPP
 
-#include <cse/observer/observer.hpp>
-
-#include <boost/filesystem/path.hpp>
-#include <tinyxml2.h>
-
 #include <memory>
 #include <unordered_map>
+
+#include <cse/observer/observer.hpp>
+#include <cse/algorithm.hpp>
+
+#include <boost/filesystem/path.hpp>
+#include <boost/property_tree/ptree.hpp>
 
 
 namespace cse
@@ -24,11 +25,11 @@ namespace cse
 class file_observer : public observer
 {
 public:
-    file_observer(boost::filesystem::path& logDir, bool binary, size_t limit);
+    file_observer(boost::filesystem::path& logDir, size_t limit);
 
-    file_observer(boost::filesystem::path& configPath, boost::filesystem::path& logDir, bool binary);
+    file_observer(boost::filesystem::path& configPath, boost::filesystem::path& logDir);
 
-    void simulator_added(simulator_index, observable*, time_point) override;
+    void simulator_added(simulator_index, observable*, time_point);
 
     void simulator_removed(simulator_index, time_point) override;
 
@@ -57,11 +58,13 @@ private:
 
     class slave_value_writer;
     std::unordered_map<simulator_index, std::unique_ptr<slave_value_writer>> valueWriters_;
-    tinyxml2::XMLDocument xmlDoc_;
+    std::unordered_map<simulator_index, simulator*> simulators_;
+    boost::property_tree::ptree ptree_;
     boost::filesystem::path logDir_;
     boost::filesystem::path logPath_;
     boost::filesystem::path configPath_;
     bool binary_;
+    bool logFromConfig_ = false;
     size_t limit_;
 };
 

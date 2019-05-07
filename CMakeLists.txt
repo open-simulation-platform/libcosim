@@ -115,7 +115,6 @@ find_package(Boost REQUIRED COMPONENTS ${Boost_components})
 find_package(FMILibrary REQUIRED)
 find_package(LIBZIP REQUIRED)
 find_package(nlohmann_json REQUIRED)
-find_package(tinyxml2 REQUIRED)
 
 # ==============================================================================
 # Targets

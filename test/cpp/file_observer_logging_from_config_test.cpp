@@ -26,7 +26,7 @@ int main()
 
         const auto testDataDir = std::getenv("TEST_DATA_DIR");
         REQUIRE(testDataDir);
-        boost::filesystem::path configPath = boost::filesystem::path(testDataDir) / "fmi2" / "log_config.xml";
+        boost::filesystem::path configPath = boost::filesystem::path(testDataDir) / "LogConfig.xml";
 
         const auto logPath = boost::filesystem::current_path() / "logs";
         boost::filesystem::path csvPath = boost::filesystem::path(logPath);
@@ -35,12 +35,15 @@ int main()
 
         // Set up the execution and add observer
         auto execution = cse::execution(startTime, std::make_unique<cse::fixed_step_algorithm>(stepSize));
-        auto csv_observer = std::make_shared<cse::file_observer>(configPath, csvPath, false);
+        auto csv_observer = std::make_shared<cse::file_observer>(configPath, csvPath);
         execution.add_observer(csv_observer);
 
         // Add a slave to the execution and connect variables
         execution.add_slave(
-            cse::make_pseudo_async(std::make_unique<mock_slave>([](double x) { return x + 1.234; })), "slave uno");
+            cse::make_pseudo_async(std::make_unique<mock_slave>(
+                [](double x) { return x + 1.234; },
+                [](int x) { return x + 1; })),
+            "slave");
 
         // Run the simulation
         auto simResult = execution.simulate_until(endTime);

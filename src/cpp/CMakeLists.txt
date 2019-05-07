@@ -97,7 +97,6 @@ target_link_libraries(csecorecpp
         Boost::filesystem
         Boost::log
         gsl
-        tinyxml2
     PRIVATE
         nlohmann_json
     )
