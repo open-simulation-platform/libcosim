@@ -11,26 +11,6 @@
 //fmu-proxy://127.0.0.1:9090?url=http://example.com/my_model.fmu
 //fmu-proxy://127.0.0.1:9090?file=models/my_model.fmu
 
-namespace
-{
-
-bool url_fmu(const std::string_view uri)
-{
-    return uri.find("url") < uri.length();
-}
-
-bool guid_fmu(const std::string_view uri)
-{
-    return uri.find("guid") < uri.length();
-}
-
-bool file_fmu(const std::string_view uri)
-{
-    return uri.find("file") < uri.length();
-}
-
-} // namespace
-
 std::shared_ptr<cse::model> cse::fmuproxy::fmuproxy_sub_resolver::lookup_model(std::string_view uri)
 {
 
