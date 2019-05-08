@@ -1,5 +1,8 @@
 #define BOOST_TEST_MODULE orchestration.hpp unittests
 #include <cse/orchestration.hpp>
+#ifdef WITH_FMUPROXY
+#include <cse/fmuproxy/uri_resolver.hpp>
+#endif
 
 #include <boost/test/unit_test.hpp>
 
@@ -44,3 +47,22 @@ BOOST_AUTO_TEST_CASE(file_uri_sub_resolver_relative_path_test)
 
     BOOST_TEST(model->description()->name == "Clock");
 }
+
+#ifdef WITH_FMUPROXY
+
+BOOST_AUTO_TEST_CASE(fmuproxy_uri_sub_resolver_test)
+{
+    const auto testDataDir = std::getenv("TEST_DATA_DIR");
+    BOOST_TEST_REQUIRE(!!testDataDir);
+
+    std::string uri = "fmu-proxy://localhost:9090?file=" + std::string(testDataDir) + "/fmi2/Clock.fmu";
+
+    cse::model_uri_resolver resolver;
+    resolver.add_sub_resolver(std::make_shared<cse::fmuproxy::fmuproxy_uri_sub_resolver>());
+
+    auto model = resolver.lookup_model("", uri);
+
+    BOOST_TEST(model->description()->name == "Clock");
+}
+
+#endif
