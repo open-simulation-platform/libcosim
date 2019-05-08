@@ -23,17 +23,18 @@ void read_data(const std::string &fileName, std::string &data)
 {
 
     FILE* file = fopen(fileName.c_str(), "rb");
-    if (file == NULL) return;
+    if (file == nullptr) return;
     fseek(file, 0, SEEK_END);
     long int size = ftell(file);
     fclose(file);
+
     file = fopen(fileName.c_str(), "rb");
+    data.resize(size);
 #if defined(__GNUC__)
     size_t read __attribute__((unused)) = fread(data.data(), sizeof(unsigned char), size, file);
 #else
     fread(data.data(), sizeof(unsigned char), size, file);
 #endif
-    data.resize(size);
 
     fclose(file);
 }
