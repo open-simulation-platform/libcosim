@@ -36,7 +36,6 @@ public:
         , limit_(limit)
         , loggableVariables_(std::move(loggableVariables))
     {
-        std::cout << "Initializing with log config" << std::endl;
         initialize_config(currentTime);
     }
 
@@ -397,8 +396,7 @@ std::array<std::vector<variable_description>, 4> file_observer::parse_config()
                         break;
                 }
 
-                std::cout << "Logging signal: " << name << ", " << type << ", "
-                          << ", " << causality << std::endl;
+                std::cout << "Logging signal: " << name << ", " << type << ", " << causality << std::endl;
             }
         }
     }
