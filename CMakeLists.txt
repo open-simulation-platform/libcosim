@@ -73,6 +73,7 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
         add_compile_options("/wd4245")
         #warning C4706: assignment within conditional expression
         add_compile_options("/wd4706")
+        add_compile_definitions("WITH_FMUPROXY")
     endif()
     add_definitions("-D_SCL_SECURE_NO_WARNINGS" "-D_CRT_SECURE_NO_WARNINGS")
 endif()
