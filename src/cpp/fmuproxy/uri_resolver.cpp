@@ -14,27 +14,28 @@
 std::shared_ptr<cse::model> cse::fmuproxy::fmuproxy_uri_sub_resolver::lookup_model(std::string_view uri)
 {
 
-    if (uri.substr(0, 8) != "fmu-proxy://") return nullptr;
+    if (uri.substr(0, 12) != "fmu-proxy://") return nullptr;
 
-    uri = uri.substr(12); //skip fmu-proxy://
+    uri = uri.substr(12); //skip "fmu-proxy://"
     auto colon = uri.find(":");
+    std::string host = std::string(uri.substr(0, colon));
+
+    uri = uri.substr(colon+1); //skip "host:"
     auto question = uri.find("?");
+    unsigned int port = std::stoi(std::string(uri.substr(0, question)));
 
-    std::string host = uri.substr(12, colon).data();
-    unsigned int port = std::stoi(uri.substr(colon + 1, question).data());
-
-    uri = uri.substr(question + 1); //skip host:port?
-    auto client = cse::fmuproxy::client(host, port, true);
+    uri = uri.substr(question + 1); //skip "host:port?"
+    auto client = cse::fmuproxy::client(host, port);
     if (uri.substr(0, 5) == "guid=") {
         auto guid = std::string(uri.substr(5));
         return client.from_guid(guid);
     } else if (uri.substr(0, 5) == "file=") {
         auto file = std::string(uri.substr(5));
-        return client.from_guid(file);
+        return client.from_file(file);
     } else if (uri.substr(0, 4) == "url=") {
         auto url = std::string(uri.substr(4));
         return client.from_url(url);
     } else {
-        CSE_PANIC();
+        return nullptr;
     }
 }
