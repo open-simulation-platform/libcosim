@@ -29,7 +29,7 @@ public:
 
     file_observer(boost::filesystem::path& configPath, boost::filesystem::path& logDir);
 
-    void simulator_added(simulator_index, observable*, time_point);
+    void simulator_added(simulator_index, observable*, time_point) override;
 
     void simulator_removed(simulator_index, time_point) override;
 
@@ -54,7 +54,7 @@ public:
     ~file_observer();
 
 private:
-    void parse_config();
+    std::array<std::vector<variable_description>, 4> parse_config();
 
     class slave_value_writer;
     std::unordered_map<simulator_index, std::unique_ptr<slave_value_writer>> valueWriters_;
@@ -63,7 +63,6 @@ private:
     boost::filesystem::path logDir_;
     boost::filesystem::path logPath_;
     boost::filesystem::path configPath_;
-    bool binary_;
     bool logFromConfig_ = false;
     size_t limit_;
 };

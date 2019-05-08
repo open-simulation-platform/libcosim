@@ -306,6 +306,16 @@ struct model_description
 
     /// Variable descriptions.
     std::vector<variable_description> variables;
+
+    // Getter for returning a variable description.
+    variable_description find_variable(std::string& variable_name, variable_type type, variable_causality causality) {
+        for (const auto& variable : variables) {
+            if (variable.name == variable_name && variable.type == type && variable.causality == causality) {
+                return variable;
+            }
+        }
+        throw std::invalid_argument("Can't find variable descriptor");
+    }
 };
 
 

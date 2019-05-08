@@ -7,6 +7,7 @@
 #include <boost/filesystem/operations.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 
+#include <algorithm>
 #include <codecvt>
 #include <locale>
 #include <map>
@@ -14,86 +15,29 @@
 #include <sstream>
 #include <vector>
 
-
 namespace cse
 {
 
 class file_observer::slave_value_writer
 {
 public:
-    slave_value_writer(observable* observable, boost::filesystem::path logPath, size_t limit, time_point currentTime)
+    slave_value_writer(observable* observable, boost::filesystem::path& logPath, size_t limit, time_point currentTime)
         : observable_(observable)
+        , logPath_(logPath)
         , limit_(limit)
     {
-        boost::filesystem::create_directories(logPath.parent_path());
+        initialize_default(currentTime);
+    }
 
-        fsw_.open(logPath, std::ios_base::out | std::ios_base::app);
-
-        if (fsw_.fail()) {
-            throw std::runtime_error("Failed to open file stream for logging");
-        }
-
-        // Create CSV header row
-        std::vector<variable_description> intVars;
-        std::vector<variable_description> realVars;
-        std::vector<variable_description> strVars;
-        std::vector<variable_description> boolVars;
-
-        for (const auto& vd : observable->model_description().variables) {
-            if (vd.causality != variable_causality::local) {
-                switch (vd.type) {
-                    case variable_type::real:
-                        realVars.push_back(vd);
-                        break;
-                    case variable_type::integer:
-                        intVars.push_back(vd);
-                        break;
-                    case variable_type::string:
-                        strVars.push_back(vd);
-                        break;
-                    case variable_type::boolean:
-                        boolVars.push_back(vd);
-                        break;
-                }
-            }
-        }
-
-        ss_ << "Time,StepCount,";
-
-        for (const auto& vd : realVars) {
-            ss_ << vd.name << " [" << vd.index << " " << vd.type << " " << vd.causality << "],";
-        }
-        for (const auto& vd : intVars) {
-            ss_ << vd.name << " [" << vd.index << " " << vd.type << " " << vd.causality << "],";
-        }
-        for (const auto& vd : boolVars) {
-            ss_ << vd.name << " [" << vd.index << " " << vd.type << " " << vd.causality << "],";
-        }
-        for (const auto& vd : strVars) {
-            ss_ << vd.name << " [" << vd.index << " " << vd.type << " " << vd.causality << "],";
-        }
-
-        ss_ << std::endl;
-
-        if (fsw_.is_open()) {
-            fsw_ << ss_.rdbuf();
-        }
-
-        // Expose variables & group indexes, ignore local variables
-        for (const auto& vd : observable->model_description().variables) {
-            if (vd.causality != variable_causality::local) {
-
-                observable->expose_for_getting(vd.type, vd.index);
-                if (vd.type == variable_type::real) {
-                    realIndexes_.push_back(vd.index);
-                }
-                if (vd.type == variable_type::integer) {
-                    intIndexes_.push_back(vd.index);
-                }
-            }
-        }
-
-        observe(0, currentTime);
+    explicit slave_value_writer(observable* observable, boost::filesystem::path& logPath, size_t limit, time_point currentTime,
+        std::array<std::vector<variable_description>, 4> loggableVariables)
+        : observable_(observable)
+        , logPath_(logPath)
+        , limit_(limit)
+        , loggableVariables_(std::move(loggableVariables))
+    {
+        std::cout << "Initializing with log config" << std::endl;
+        initialize_config(currentTime);
     }
 
     void observe(step_number timeStep, time_point currentTime)
@@ -123,19 +67,109 @@ public:
         }
     }
 
-
 private:
     template<typename T>
     void write(const std::vector<T>& values)
     {
         if (fsw_.is_open()) {
-            fsw_.write((char*)&values[0], values.size() * sizeof(T));
-
             for (auto it = values.begin(); it != values.end(); ++it) {
                 if (it != values.begin()) ss_ << ",";
                 ss_ << *it;
             }
             ss_ << ",";
+        }
+    }
+
+    void initialize_default(time_point currentTime)
+    {
+        for (const auto& vd : observable_->model_description().variables) {
+            if (vd.causality != variable_causality::local) {
+
+                observable_->expose_for_getting(vd.type, vd.index);
+
+                if (vd.type == variable_type::real) {
+                    realIndexes_.push_back(vd.index);
+                }
+                if (vd.type == variable_type::integer) {
+                    intIndexes_.push_back(vd.index);
+                }
+
+                switch (vd.type) {
+                    case variable_type::real:
+                        realVars_.push_back(vd);
+                        break;
+                    case variable_type::integer:
+                        intVars_.push_back(vd);
+                        break;
+                    case variable_type::string:
+                        stringVars_.push_back(vd);
+                        break;
+                    case variable_type::boolean:
+                        boolVars_.push_back(vd);
+                        break;
+                }
+            }
+        }
+
+        write_header();
+
+        observe(0, currentTime);
+    }
+
+    void initialize_config(time_point currentTime)
+    {
+        std::vector<variable_index> reals;
+        std::vector<variable_index> ints;
+
+        for (const auto& variable : std::get<0>(loggableVariables_)) {
+            if (variable.causality != variable_causality::local) {
+                realIndexes_.push_back(variable.index);
+                observable_->expose_for_getting(variable_type::real, variable.index);
+                realVars_.push_back(variable);
+            }
+        }
+
+        for (const auto& variable : std::get<1>(loggableVariables_)) {
+            if (variable.causality != variable_causality::local) {
+                intIndexes_.push_back(variable.index);
+                observable_->expose_for_getting(variable_type::integer, variable.index);
+                intVars_.push_back(variable);
+            }
+        }
+
+        write_header();
+
+        observe(0, currentTime);
+    }
+
+    void write_header()
+    {
+        boost::filesystem::create_directories(logPath_.parent_path());
+        fsw_.open(logPath_, std::ios_base::out | std::ios_base::app);
+
+        if (fsw_.fail()) {
+            throw std::runtime_error("Failed to open file stream for logging");
+        }
+
+        ss_ << "Time,StepCount,";
+
+        for (const auto& vd : realVars_) {
+            ss_ << vd.name << " [" << vd.index << " " << vd.type << " " << vd.causality << "],";
+        }
+        for (const auto& vd : intVars_) {
+            ss_ << vd.name << " [" << vd.index << " " << vd.type << " " << vd.causality << "],";
+        }
+        for (const auto& vd : boolVars_) {
+            ss_ << vd.name << " [" << vd.index << " " << vd.type << " " << vd.causality << "],";
+        }
+        for (const auto& vd : stringVars_) {
+            ss_ << vd.name << " [" << vd.index << " " << vd.type << " " << vd.causality << "],";
+        }
+
+        ss_ << std::endl;
+
+        if (fsw_.is_open()) {
+            fsw_ << ss_.rdbuf();
         }
     }
 
@@ -165,7 +199,13 @@ private:
     std::vector<variable_index> realIndexes_;
     std::vector<variable_index> intIndexes_;
     std::map<step_number, double> timeSamples_;
+    std::array<std::vector<variable_description>, 4> loggableVariables_;
+    std::vector<variable_description> realVars_;
+    std::vector<variable_description> intVars_;
+    std::vector<variable_description> boolVars_;
+    std::vector<variable_description> stringVars_;
     observable* observable_;
+    boost::filesystem::path logPath_;
     boost::filesystem::ofstream fsw_;
     std::stringstream ss_;
     size_t counter_ = 0;
@@ -202,15 +242,19 @@ void file_observer::simulator_added(simulator_index index, observable* simulator
 {
     auto time_str = format_time(boost::posix_time::second_clock::local_time());
 
-    auto name = simulator->model_description().name.append("_").append(std::to_string(index)).append("__");
-    auto extension = time_str.append(binary_ ? ".bin" : ".csv");
+    auto name = simulator->model_description().name.append("_").append(std::to_string(index)).append("_");
+    auto extension = time_str.append(".csv");
     auto filename = name.append(extension);
 
-    simulators_[index] = (cse::simulator*)simulator;
-    if (logFromConfig_) parse_config();
-
     logPath_ = logDir_ / filename;
-    valueWriters_[index] = std::make_unique<slave_value_writer>(simulator, logPath_, binary_, limit_, currentTime);
+    simulators_[index] = (cse::simulator*)simulator;
+
+    if (logFromConfig_) {
+        valueWriters_[index] = std::make_unique<slave_value_writer>(simulator, logPath_, limit_, currentTime,
+            parse_config());
+    } else {
+        valueWriters_[index] = std::make_unique<slave_value_writer>(simulator, logPath_, limit_, currentTime);
+    }
 }
 
 void file_observer::simulator_removed(simulator_index index, time_point /*currentTime*/)
@@ -251,31 +295,6 @@ T get_attribute(const boost::property_tree::ptree& tree, const std::string& key)
     return tree.get<T>("<xmlattr>." + key);
 }
 
-struct Signal
-{
-    std::string name;
-    std::string type;
-    std::string causality;
-    cse::variable_index variable_index;
-};
-
-struct Model
-{
-    std::string name;
-    std::vector<Signal> signals;
-};
-
-struct Slave
-{
-    std::string name;
-    size_t rate = 100;
-    std::vector<Model> models;
-};
-
-Slave slave_;
-std::vector<Model> models_;
-std::vector<Signal> signals_;
-
 std::pair<cse::simulator_index, cse::simulator*> find_simulator(
     const std::unordered_map<simulator_index, simulator*>& simulators,
     const std::string& model)
@@ -288,7 +307,7 @@ std::pair<cse::simulator_index, cse::simulator*> find_simulator(
     throw std::invalid_argument("Can't find model with this name");
 }
 
-cse::variable_type find_variable_type(std::string& typestr)
+cse::variable_type find_type(std::string& typestr)
 {
     if (typestr == "real") {
         return variable_type::real;
@@ -332,48 +351,59 @@ cse::variable_index find_variable_index(
     throw std::invalid_argument("Can't find variable index");
 }
 
-void file_observer::parse_config()
+std::array<std::vector<variable_description>, 4> file_observer::parse_config()
 {
     std::cout << "Load config from " << configPath_.string() << std::endl;
 
-    std::string path = "slave";
+    std::vector<variable_description> loggableRealVariables;
+    std::vector<variable_description> loggableIntVariables;
+    std::vector<variable_description> loggableBoolVariables;
+    std::vector<variable_description> loggableStringVariables;
 
     boost::property_tree::ptree tmpTree;
     boost::property_tree::read_xml(configPath_.string(), ptree_,
         boost::property_tree::xml_parser::no_comments | boost::property_tree::xml_parser::trim_whitespace);
 
+    std::string path = "slave";
     tmpTree = ptree_.get_child(path);
 
-    slave_.name = get_attribute<std::string>(tmpTree, "name");
-    slave_.rate = get_attribute<size_t>(tmpTree, "rate");
+    auto slave = get_attribute<std::string>(tmpTree, "name");
+    //auto rate = get_attribute<size_t>(tmpTree, "rate");
 
-    std::cout << slave_.name << " " << slave_.rate << std::endl;
-
-    const auto& [index, simulator] = find_simulator(simulators_, slave_.name);
+    const auto& [sim_index, simulator] = find_simulator(simulators_, slave);
 
     for (const auto& [module_block_name, module] : ptree_.get_child(path + ".models")) {
-        auto m = slave_.models.emplace_back();
-
-        if (module_block_name == "model") {
-            m.name = get_attribute<std::string>(module, "name");
-        }
-
         for (const auto& [signal_block_name, signal] : module) {
-            auto s = m.signals.emplace_back();
-
             if (signal_block_name == "signal") {
-                s.name = get_attribute<std::string>(signal, "name");
-                s.type = get_attribute<std::string>(signal, "type");
-                s.causality = get_attribute<std::string>(signal, "causality");
+                auto name = get_attribute<std::string>(signal, "name");
+                auto type = get_attribute<std::string>(signal, "type");
+                auto causality = get_attribute<std::string>(signal, "causality");
 
-                cse::variable_type type = find_variable_type(s.type);
-                cse::variable_causality causality = find_causality(s.causality);
-                s.variable_index = find_variable_index(simulator->model_description().variables, s.name, type, causality);
+                auto variable = simulator->model_description().find_variable(
+                    name, find_type(type), find_causality(causality));
 
-                std::cout << s.name << " parsed with index " << s.variable_index << " from module " << m.name << std::endl;
+                switch (find_type(type)) {
+                    case variable_type::real:
+                        loggableRealVariables.push_back(variable);
+                        break;
+                    case variable_type::integer:
+                        loggableIntVariables.push_back(variable);
+                        break;
+                    case variable_type::boolean:
+                        loggableBoolVariables.push_back(variable);
+                        break;
+                    case variable_type::string:
+                        loggableStringVariables.push_back(variable);
+                        break;
+                }
+
+                std::cout << "Logging signal: " << name << ", " << type << ", "
+                          << ", " << causality << std::endl;
             }
         }
     }
+
+    return std::array<std::vector<variable_description>, 4>{loggableRealVariables, loggableIntVariables, loggableBoolVariables, loggableStringVariables};
 }
 
 file_observer::~file_observer()
