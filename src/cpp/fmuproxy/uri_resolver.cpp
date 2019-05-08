@@ -11,7 +11,7 @@
 //fmu-proxy://127.0.0.1:9090?url=http://example.com/my_model.fmu
 //fmu-proxy://127.0.0.1:9090?file=models/my_model.fmu
 
-std::shared_ptr<cse::model> cse::fmuproxy::fmuproxy_sub_resolver::lookup_model(std::string_view uri)
+std::shared_ptr<cse::model> cse::fmuproxy::fmuproxy_uri_sub_resolver::lookup_model(std::string_view uri)
 {
 
     if (uri.substr(0, 8) != "fmu-proxy://") return nullptr;

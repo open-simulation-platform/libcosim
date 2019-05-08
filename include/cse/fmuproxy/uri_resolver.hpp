@@ -10,7 +10,7 @@ namespace cse
 namespace fmuproxy
 {
 
-class fmuproxy_sub_resolver : public model_uri_sub_resolver
+class fmuproxy_uri_sub_resolver : public model_uri_sub_resolver
 {
 
 public:
