@@ -7,6 +7,7 @@
 
 #include <memory>
 #include <unordered_map>
+#include <xtgmath.h>
 
 #include <cse/observer/observer.hpp>
 #include <cse/algorithm.hpp>
@@ -65,6 +66,7 @@ private:
     boost::filesystem::path configPath_;
     bool logFromConfig_ = false;
     size_t limit_;
+    int rate_;
 };
 
 

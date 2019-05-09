@@ -1,4 +1,4 @@
-<slave name="slave" rate="20">
+<slave name="slave" rate="5" limit="20">
     <models>
         <model name="mock_slave">
             <signal name="realOut" type="real" causality="output"/>

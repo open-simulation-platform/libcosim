@@ -29,11 +29,12 @@ public:
         initialize_default(currentTime);
     }
 
-    explicit slave_value_writer(observable* observable, boost::filesystem::path& logPath, size_t limit, time_point currentTime,
+    explicit slave_value_writer(observable* observable, boost::filesystem::path& logPath, size_t limit, int rate, time_point currentTime,
         std::array<std::vector<variable_description>, 4> loggableVariables)
         : observable_(observable)
         , logPath_(logPath)
         , limit_(limit)
+        , rate_(rate)
         , loggableVariables_(std::move(loggableVariables))
     {
         initialize_config(currentTime);
@@ -41,20 +42,22 @@ public:
 
     void observe(step_number timeStep, time_point currentTime)
     {
-        realSamples_[timeStep].reserve(realIndexes_.size());
-        intSamples_[timeStep].reserve(intIndexes_.size());
+        if (++counter_ % rate_ == 0) {
+            realSamples_[timeStep].reserve(realIndexes_.size());
+            intSamples_[timeStep].reserve(intIndexes_.size());
 
-        for (const auto idx : realIndexes_) {
-            realSamples_[timeStep].push_back(observable_->get_real(idx));
-        }
-        for (const auto idx : intIndexes_) {
-            intSamples_[timeStep].push_back(observable_->get_integer(idx));
-        }
-        timeSamples_[timeStep] = to_double_time_point(currentTime);
+            for (const auto idx : realIndexes_) {
+                realSamples_[timeStep].push_back(observable_->get_real(idx));
+            }
+            for (const auto idx : intIndexes_) {
+                intSamples_[timeStep].push_back(observable_->get_integer(idx));
+            }
+            timeSamples_[timeStep] = to_double_time_point(currentTime);
 
-        if (++counter_ >= limit_) {
-            persist();
-            counter_ = 0;
+            if (counter_ >= limit_) {
+                persist();
+                counter_ = 0;
+            }
         }
     }
 
@@ -79,6 +82,7 @@ private:
         }
     }
 
+    /** Default constructor initialization, all variables are logged. */
     void initialize_default(time_point currentTime)
     {
         for (const auto& vd : observable_->model_description().variables) {
@@ -111,15 +115,12 @@ private:
         }
 
         write_header();
-
         observe(0, currentTime);
     }
 
+    /** External config initialization, only configured variables are logged. */
     void initialize_config(time_point currentTime)
     {
-        std::vector<variable_index> reals;
-        std::vector<variable_index> ints;
-
         for (const auto& variable : std::get<0>(loggableVariables_)) {
             if (variable.causality != variable_causality::local) {
                 realIndexes_.push_back(variable.index);
@@ -137,7 +138,6 @@ private:
         }
 
         write_header();
-
         observe(0, currentTime);
     }
 
@@ -209,6 +209,7 @@ private:
     std::stringstream ss_;
     size_t counter_ = 0;
     size_t limit_ = 10;
+    int rate_ = 1;
 };
 
 file_observer::file_observer(boost::filesystem::path& logDir, size_t limit)
@@ -249,7 +250,7 @@ void file_observer::simulator_added(simulator_index index, observable* simulator
     simulators_[index] = (cse::simulator*)simulator;
 
     if (logFromConfig_) {
-        valueWriters_[index] = std::make_unique<slave_value_writer>(simulator, logPath_, limit_, currentTime,
+        valueWriters_[index] = std::make_unique<slave_value_writer>(simulator, logPath_, limit_, rate_, currentTime,
             parse_config());
     } else {
         valueWriters_[index] = std::make_unique<slave_value_writer>(simulator, logPath_, limit_, currentTime);
@@ -367,7 +368,8 @@ std::array<std::vector<variable_description>, 4> file_observer::parse_config()
     tmpTree = ptree_.get_child(path);
 
     auto slave = get_attribute<std::string>(tmpTree, "name");
-    //auto rate = get_attribute<size_t>(tmpTree, "rate");
+    rate_ = get_attribute<int>(tmpTree, "rate");
+    limit_ = get_attribute<size_t>(tmpTree, "limit");
 
     const auto& [sim_index, simulator] = find_simulator(simulators_, slave);
 
