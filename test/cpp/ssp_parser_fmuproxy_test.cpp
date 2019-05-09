@@ -1,3 +1,4 @@
+#include <cse/fmuproxy/uri_resolver.hpp>
 #include <cse/log.hpp>
 #include <cse/ssp_parser.hpp>
 
@@ -5,7 +6,6 @@
 
 #include <cstdlib>
 #include <exception>
-#include <cse/fmuproxy/uri_resolver.hpp>
 
 #define REQUIRE(test) \
     if (!(test)) throw std::runtime_error("Requirement not satisfied: " #test)
