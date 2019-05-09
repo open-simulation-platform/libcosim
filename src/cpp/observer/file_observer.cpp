@@ -371,7 +371,13 @@ std::array<std::vector<variable_description>, 4> file_observer::parse_config()
     rate_ = get_attribute<int>(tmpTree, "rate");
     limit_ = get_attribute<size_t>(tmpTree, "limit");
 
+    std::cout << "Attempting parse of " << configPath_.string() << ", slave name " << slave << std::endl;
+
     const auto& [sim_index, simulator] = find_simulator(simulators_, slave);
+
+    if (ptree_.get_child_optional(path + ".models")) {
+        std::cout << "Models found" << std::endl;
+    }
 
     for (const auto& [module_block_name, module] : ptree_.get_child(path + ".models")) {
         for (const auto& [signal_block_name, signal] : module) {
