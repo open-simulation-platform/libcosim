@@ -27,6 +27,7 @@ set(publicHeaders
     "scenario.hpp"
     "scenario_parser.hpp"
     "manipulator.hpp"
+    "uri.hpp"
 )
 set(privateHeaders
     "error.hpp"
@@ -57,6 +58,7 @@ set(sources
     "scenario_manager.cpp"
     "scenario_parser.cpp"
     "override_manipulator.cpp"
+    "uri.cpp"
 
     "error.cpp"
     "fmi/glue.cpp"
