@@ -13,6 +13,7 @@ set(tests
 
 if(CSECORE_WITH_FMUPROXY)
     list(APPEND tests "fmuproxy_test")
+    list(APPEND tests "ssp_parser_fmuproxy_test")
 endif()
 
 set(unittests

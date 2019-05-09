@@ -38,7 +38,6 @@ public:
 
     std::shared_ptr<cse::async_slave> instantiate(std::string_view name = "") override;
 
-
 private:
     const std::string fmuId_;
     std::shared_ptr<thrift_state> state_;

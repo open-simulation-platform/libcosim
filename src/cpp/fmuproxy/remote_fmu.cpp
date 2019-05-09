@@ -12,7 +12,6 @@ using namespace fmuproxy::thrift;
 using namespace apache::thrift::transport;
 using namespace apache::thrift::protocol;
 
-
 cse::fmuproxy::remote_fmu::remote_fmu(
     const FmuId& fmuId,
     std::shared_ptr<thrift_state> state)
@@ -33,8 +32,7 @@ std::shared_ptr<cse::slave> cse::fmuproxy::remote_fmu::instantiate_slave()
 {
     InstanceId instanceId;
     state_->client_->create_instance_from_cs(instanceId, fmuId_);
-    std::shared_ptr<cse::slave> slave(new cse::fmuproxy::remote_slave(instanceId, state_->client_, modelDescription_));
-    return slave;
+    return std::make_shared<cse::fmuproxy::remote_slave>(instanceId, state_, modelDescription_);
 }
 
 std::shared_ptr<cse::async_slave> cse::fmuproxy::remote_fmu::instantiate(std::string_view)

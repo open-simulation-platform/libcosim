@@ -19,7 +19,7 @@ namespace fs = boost::filesystem;
 namespace
 {
 
-void read_data(const std::string &fileName, std::string &data)
+void read_data(const std::string& fileName, std::string& data)
 {
 
     FILE* file = fopen(fileName.c_str(), "rb");

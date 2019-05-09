@@ -20,7 +20,7 @@ std::shared_ptr<cse::model> cse::fmuproxy::fmuproxy_uri_sub_resolver::lookup_mod
     auto colon = uri.find(":");
     std::string host = std::string(uri.substr(0, colon));
 
-    uri = uri.substr(colon+1); //skip "host:"
+    uri = uri.substr(colon + 1); //skip "host:"
     auto question = uri.find("?");
     unsigned int port = std::stoi(std::string(uri.substr(0, question)));
 

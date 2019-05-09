@@ -204,7 +204,7 @@ std::pair<execution, simulator_map> load_ssp(cse::model_uri_resolver& resolver, 
         std::make_unique<cse::fixed_step_algorithm>(stepSize));
 
     std::map<std::string, slave_info> slaves;
-    auto importer = cse::fmi::importer::create();
+//    auto importer = cse::fmi::importer::create();
     for (const auto& component : elements) {
         //auto fmu = importer->import(sspDir / component.source);
         auto model = resolver.lookup_model(baseUri, component.source);

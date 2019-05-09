@@ -31,12 +31,13 @@ public:
     std::shared_ptr<Resource> resolve(std::string_view baseUri, std::string_view uri)
     {
         std::string _uri;
-        
-        if ((uri.find(':') == std::string_view::npos) || uri[0] == '.')
-        {
-            _uri = std::string(baseUri) + "/" + std::string(uri); 
+        auto npos = std::string_view::npos;
+        if ((uri.find(':') == npos) || uri[0] == '.') {
+            _uri = std::string(baseUri) + "/" + std::string(uri);
+        } else if (uri.find("fmu-proxy") != npos && uri.find("?file=") != npos) {
+            _uri = std::string(uri).insert(uri.find("=") + 1, std::string(baseUri.substr(8)) + "/");
         } else {
-            _uri = std::string(uri); 
+            _uri = std::string(uri);
         }
 
         for (auto sr : subResolvers_) {
@@ -228,7 +229,7 @@ class file_uri_sub_resolver : public model_uri_sub_resolver
 public:
     file_uri_sub_resolver();
 
-//    ~file_uri_sub_resolver() noexcept ov;
+    //    ~file_uri_sub_resolver() noexcept ov;
 
     std::shared_ptr<model> lookup_model(std::string_view uri) override;
 
