@@ -4,6 +4,41 @@
 
 namespace cse
 {
+
+// Defaulted constructor, move and destructor.
+model_uri_resolver::model_uri_resolver() noexcept = default;
+model_uri_resolver::model_uri_resolver(model_uri_resolver&&) noexcept = default;
+model_uri_resolver& model_uri_resolver::operator=(model_uri_resolver&&) noexcept = default;
+model_uri_resolver::~model_uri_resolver() noexcept = default;
+
+
+void model_uri_resolver::add_sub_resolver(std::shared_ptr<model_uri_sub_resolver> sr)
+{
+    subResolvers_.push_back(sr);
+}
+
+
+std::shared_ptr<model> model_uri_resolver::lookup_model(
+    std::string_view baseUri,
+    std::string_view uri)
+{
+    std::string _uri;
+
+    if ((uri.find(':') == std::string_view::npos) || uri[0] == '.')
+    {
+        _uri = std::string(baseUri) + "/" + std::string(uri);
+    } else {
+        _uri = std::string(uri);
+    }
+
+    for (auto sr : subResolvers_) {
+        if (auto r = sr->lookup_model(_uri)) return r;
+    }
+    throw std::runtime_error(
+        std::string("No resolvers available to handle URI: ") + std::string(uri));
+}
+
+
 namespace
 {
 class fmu_model : public model
