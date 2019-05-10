@@ -137,6 +137,6 @@ BOOST_AUTO_TEST_CASE(file_uri)
 #ifdef _WIN32
     BOOST_TEST(make_file_uri("\\foo\\bar") == "file:///foo/bar");
     BOOST_TEST(make_file_uri("/foo/bar") == "file:///foo/bar");
-    BOOST_TEST(make_file_uri("c:\\foo\\bar") == "file:///c:/foo:bar"));
+    BOOST_TEST(make_file_uri("c:\\foo\\bar") == "file:///c:/foo:bar");
 #endif
 }
