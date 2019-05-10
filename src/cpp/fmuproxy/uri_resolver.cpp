@@ -11,29 +11,50 @@
 //fmu-proxy://127.0.0.1:9090?url=http://example.com/my_model.fmu
 //fmu-proxy://127.0.0.1:9090?file=models/my_model.fmu
 
-std::shared_ptr<cse::model> cse::fmuproxy::fmuproxy_uri_sub_resolver::lookup_model(std::string_view uri)
+namespace
 {
 
-    if (uri.substr(0, 12) != "fmu-proxy://") return nullptr;
+std::pair<std::string, unsigned int> parse_authority(std::string_view auth)
+{
+    auto colon = auth.find(":");
+    auto host = std::string(auth.substr(0, colon));
+    auto port = std::stoi(std::string(auth.substr(colon + 1)));
+    return {host, port};
+}
 
-    uri = uri.substr(12); //skip "fmu-proxy://"
-    auto colon = uri.find(":");
-    std::string host = std::string(uri.substr(0, colon));
+} // namespace
 
-    uri = uri.substr(colon + 1); //skip "host:"
-    auto question = uri.find("?");
-    unsigned int port = std::stoi(std::string(uri.substr(0, question)));
+std::shared_ptr<cse::model> cse::fmuproxy::fmuproxy_uri_sub_resolver::lookup_model(const cse::uri& baseUri, const cse::uri& modelUriReference)
+{
 
-    uri = uri.substr(question + 1); //skip "host:port?"
-    auto client = cse::fmuproxy::client(host, port);
-    if (uri.substr(0, 5) == "guid=") {
-        auto guid = std::string(uri.substr(5));
+    auto query = modelUriReference.query();
+    if (query && query->find("file=") < query->size()) {
+        auto newQuery = "file=" + std::string(baseUri.path().substr(1, baseUri.path().size())) + "/" + std::string(query->substr(5));
+        return model_uri_sub_resolver::lookup_model(baseUri, uri(modelUriReference.scheme(), modelUriReference.authority(), modelUriReference.path(), newQuery, modelUriReference.fragment()));
+    }
+    return model_uri_sub_resolver::lookup_model(baseUri, modelUriReference);
+}
+
+std::shared_ptr<cse::model> cse::fmuproxy::fmuproxy_uri_sub_resolver::lookup_model(const cse::uri& modelUri)
+{
+
+    assert(modelUri.scheme().has_value());
+    if (*modelUri.scheme() != "fmu-proxy") return nullptr;
+    if (!modelUri.authority().has_value()) return nullptr;
+    if (!modelUri.query().has_value()) return nullptr;
+
+    auto query = *modelUri.query();
+    auto auth = parse_authority(*modelUri.authority());
+    auto client = cse::fmuproxy::client(auth.first, auth.second);
+
+    if (query.substr(0, 5) == "guid=") {
+        auto guid = std::string(query.substr(5));
         return client.from_guid(guid);
-    } else if (uri.substr(0, 5) == "file=") {
-        auto file = std::string(uri.substr(5));
+    } else if (query.substr(0, 5) == "file=") {
+        auto file = std::string(query.substr(5));
         return client.from_file(file);
-    } else if (uri.substr(0, 4) == "url=") {
-        auto url = std::string(uri.substr(4));
+    } else if (query.substr(0, 4) == "url=") {
+        auto url = std::string(query.substr(4));
         return client.from_url(url);
     } else {
         return nullptr;

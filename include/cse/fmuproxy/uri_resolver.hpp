@@ -14,7 +14,9 @@ class fmuproxy_uri_sub_resolver : public model_uri_sub_resolver
 {
 
 public:
-    std::shared_ptr<model> lookup_model(std::string_view uri) override;
+    std::shared_ptr<model> lookup_model(const uri& baseUri, const uri& modelUriReference) override;
+
+    std::shared_ptr<model> lookup_model(const cse::uri &uri) override;
 };
 
 } // namespace fmuproxy
