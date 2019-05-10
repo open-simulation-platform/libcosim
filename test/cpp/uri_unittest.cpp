@@ -129,3 +129,14 @@ BOOST_AUTO_TEST_CASE(uri_resolution)
 
     BOOST_TEST(resolve_reference(baseURI, "http:g") == "http:g");
 }
+
+
+BOOST_AUTO_TEST_CASE(file_uri)
+{
+    BOOST_TEST(make_file_uri("/foo/bar") == "file:///foo/bar");
+#ifdef _WIN32
+    BOOST_TEST(make_file_uri("\\foo\\bar") == "file:///foo/bar");
+    BOOST_TEST(make_file_uri("/foo/bar") == "file:///foo/bar");
+    BOOST_TEST(make_file_uri("c:\\foo\\bar") == "file:///c:/foo:bar"));
+#endif
+}

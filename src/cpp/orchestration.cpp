@@ -1,9 +1,28 @@
 #include "cse/orchestration.hpp"
 
+#include "cse/error.hpp"
 #include "cse/fmi/fmu.hpp"
+#include "cse/log/logger.hpp"
+
 
 namespace cse
 {
+
+// =============================================================================
+// class model_uri_sub_resolver
+// =============================================================================
+
+std::shared_ptr<model> model_uri_sub_resolver::lookup_model(
+    const uri& baseUri,
+    const uri& modelUriReference)
+{
+    return lookup_model(resolve_reference(baseUri, modelUriReference));
+}
+
+
+// =============================================================================
+// class model_uri_resolver
+// =============================================================================
 
 // Defaulted constructor, move and destructor.
 model_uri_resolver::model_uri_resolver() noexcept = default;
@@ -19,25 +38,33 @@ void model_uri_resolver::add_sub_resolver(std::shared_ptr<model_uri_sub_resolver
 
 
 std::shared_ptr<model> model_uri_resolver::lookup_model(
-    std::string_view baseUri,
-    std::string_view uri)
+    const uri& baseUri,
+    const uri& modelUriReference)
 {
-    std::string _uri;
-
-    if ((uri.find(':') == std::string_view::npos) || uri[0] == '.')
-    {
-        _uri = std::string(baseUri) + "/" + std::string(uri);
-    } else {
-        _uri = std::string(uri);
-    }
-
+    CSE_INPUT_CHECK(baseUri.scheme().has_value() ||
+        modelUriReference.scheme().has_value());
     for (auto sr : subResolvers_) {
-        if (auto r = sr->lookup_model(_uri)) return r;
+        if (auto r = sr->lookup_model(baseUri, modelUriReference)) return r;
     }
     throw std::runtime_error(
-        std::string("No resolvers available to handle URI: ") + std::string(uri));
+        "No resolvers available to handle URI: " + std::string(modelUriReference.view()));
 }
 
+
+std::shared_ptr<model> model_uri_resolver::lookup_model(const uri& modelUri)
+{
+    CSE_INPUT_CHECK(modelUri.scheme().has_value());
+    for (auto sr : subResolvers_) {
+        if (auto r = sr->lookup_model(modelUri)) return r;
+    }
+    throw std::runtime_error(
+        "No resolvers available to handle URI: " + std::string(modelUri.view()));
+}
+
+
+// =============================================================================
+// class file_uri_sub_resolver
+// =============================================================================
 
 namespace
 {
@@ -70,19 +97,27 @@ file_uri_sub_resolver::file_uri_sub_resolver()
 }
 
 
-std::shared_ptr<model> file_uri_sub_resolver::lookup_model(std::string_view uri)
+std::shared_ptr<model> file_uri_sub_resolver::lookup_model(const uri& modelUri)
 {
-    if (uri.substr(0, 8) != "file:///") return nullptr;
-    #ifdef _WIN32
-        const auto path = uri.substr(8);
-    #else
-        const auto path = uri.substr(7);
-    #endif
-    auto fmu = importer_->import(boost::filesystem::path(std::string(path)));
-
+    assert(modelUri.scheme().has_value());
+    if (*modelUri.scheme() != "file") return nullptr;
+    if (modelUri.authority().has_value() &&
+        !(modelUri.authority()->empty() || *modelUri.authority() == "localhost")) {
+        return nullptr;
+    }
+    if (modelUri.query().has_value() || modelUri.fragment().has_value()) {
+        BOOST_LOG_SEV(log::logger(), log::level::warning)
+            << "Query and/or fragment component(s) in a file:// URI were ignored: "
+            << modelUri;
+    }
+    auto fmu = importer_->import(boost::filesystem::path(std::string(modelUri.path())));
     return std::make_shared<fmu_model>(fmu);
 }
 
+
+// =============================================================================
+// misc
+// =============================================================================
 
 std::shared_ptr<model_uri_resolver> default_model_uri_resolver()
 {

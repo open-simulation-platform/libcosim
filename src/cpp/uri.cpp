@@ -291,4 +291,24 @@ uri resolve_reference(const uri& base, const uri& reference)
     return uri(scheme, authority, path, query, fragment);
 }
 
+
+// =============================================================================
+// misc
+// =============================================================================
+
+uri make_file_uri(const boost::filesystem::path& path)
+{
+#ifdef _WIN32
+    if (path.empty()) return uri("file", std::string_view(), std::string_view());
+    const auto firstChar = path.native().front();
+    if (firstChar == '/' || firstChar == '\\') {
+        return uri("file", std::string_view(), path.generic_string());
+    } else {
+        return uri("file", std::string_view(), '/' + path.generic_string());
+    }
+#else
+    return uri("file", std::string_view(), path.native());
+#endif
+}
+
 } // namespace cse

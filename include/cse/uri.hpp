@@ -5,6 +5,8 @@
 #ifndef CSE_URI_HPP
 #define CSE_URI_HPP
 
+#include <boost/filesystem.hpp>
+
 #include <optional>
 #include <ostream>
 #include <string>
@@ -46,7 +48,6 @@ public:
     /*implicit*/ uri(std::string_view string)
         : uri(std::string(string))
     {}
-
     /*implicit*/ uri(const char* string)
         : uri(std::string(string))
     {}
@@ -58,8 +59,8 @@ public:
      *  Beyond that, no validation is performed. (That is, no hostname lookup,
      *  no scheme-specific validation, and so on).
      *
-     *  Passing an empty `path` and null for all other components is equivalent
-     *  to calling the default constructor.
+     *  Passing an empty `path` and `std::nullopt` for all other components is
+     *  equivalent to calling the default constructor.
      *
      *  \throws std::invalid_argument
      *      if any of the components have an invalid value.
@@ -160,6 +161,7 @@ inline bool operator==(const uri& a, const uri& b) noexcept
     return a.view() == b.view();
 }
 
+
 /// Compares two URI references for inequality.
 inline bool operator!=(const uri& a, const uri& b) noexcept
 {
@@ -188,6 +190,10 @@ inline std::ostream& operator<<(std::ostream& stream, const uri& u)
  *      if `base` is not absolute.
  */
 uri resolve_reference(const uri& base, const uri& reference);
+
+
+/// Makes a `file` URI based on a local filesystem path.
+uri make_file_uri(const boost::filesystem::path& path);
 
 
 } // namespace cse
