@@ -155,7 +155,7 @@ uri::uri(
     if (fragment) {
         data_ += '#';
         data_ += *fragment;
-        fragment_ = view.substr(0, fragment->size());
+        fragment_ = view.substr(1, fragment->size());
         view.remove_prefix(1 + fragment->size());
     }
 }

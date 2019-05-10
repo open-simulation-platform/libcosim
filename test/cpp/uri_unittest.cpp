@@ -33,7 +33,17 @@ BOOST_AUTO_TEST_CASE(uri_parser)
     BOOST_TEST(!httpURI.empty());
 
     const auto httpURI2 = uri("http", "user@example.com:1234", "/foo/bar", "q=uux", "frag");
-    BOOST_TEST(httpURI2 == httpURI);
+    BOOST_TEST(httpURI2.view() == "http://user@example.com:1234/foo/bar?q=uux#frag");
+    BOOST_REQUIRE(httpURI2.scheme().has_value());
+    BOOST_TEST(*httpURI2.scheme() == "http");
+    BOOST_REQUIRE(httpURI2.authority().has_value());
+    BOOST_TEST(*httpURI2.authority() == "user@example.com:1234");
+    BOOST_TEST(httpURI2.path() == "/foo/bar");
+    BOOST_REQUIRE(httpURI2.query().has_value());
+    BOOST_TEST(*httpURI2.query() == "q=uux");
+    BOOST_REQUIRE(httpURI2.fragment().has_value());
+    BOOST_TEST(*httpURI2.fragment() == "frag");
+    BOOST_TEST(!httpURI2.empty());
 
     const auto fileURI = uri("file:///foo/bar#frag?q=uux");
     BOOST_TEST(fileURI.view() == "file:///foo/bar#frag?q=uux");
