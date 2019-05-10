@@ -149,13 +149,13 @@ uri::uri(
     if (query) {
         data_ += '?';
         data_ += *query;
-        query_ = view.substr(0, query->size());
+        query_ = view.substr(1, query->size());
         view.remove_prefix(1 + query->size());
     }
     if (fragment) {
         data_ += '#';
         data_ += *fragment;
-        fragment_ = view.substr(0, fragment->size());
+        fragment_ = view.substr(1, fragment->size());
         view.remove_prefix(1 + fragment->size());
     }
 }
