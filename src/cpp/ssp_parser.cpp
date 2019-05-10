@@ -181,18 +181,16 @@ struct slave_info
 
 } // namespace
 
-std::pair<execution, simulator_map> load_ssp(cse::model_uri_resolver& resolver, const boost::filesystem::path& sspDir, cse::time_point startTime)
+
+std::pair<execution, simulator_map> load_ssp(
+    cse::model_uri_resolver& resolver,
+    const boost::filesystem::path& sspDir,
+    cse::time_point startTime)
 {
     simulator_map simulatorMap;
-    std::string baseUri = "file://";
-
-    #ifdef _WIN32
-        baseUri += "/";
-    #endif 
-
-    baseUri += sspDir.string();
-
-    const auto parser = cse::ssp_parser(sspDir / "SystemStructure.ssd");
+    const auto ssdPath = sspDir / "SystemStructure.ssd";
+    const auto baseURI = make_file_uri(ssdPath);
+    const auto parser = ssp_parser(ssdPath);
 
     const auto& simInfo = parser.get_simulation_information();
     const cse::duration stepSize = cse::to_duration(simInfo.stepSize);
@@ -206,8 +204,7 @@ std::pair<execution, simulator_map> load_ssp(cse::model_uri_resolver& resolver, 
     std::map<std::string, slave_info> slaves;
 //    auto importer = cse::fmi::importer::create();
     for (const auto& component : elements) {
-        //auto fmu = importer->import(sspDir / component.source);
-        auto model = resolver.lookup_model(baseUri, component.source);
+        auto model = resolver.lookup_model(baseURI, component.source);
         auto slave = model->instantiate(component.name);
         simulator_index index = slaves[component.name].index = execution.add_slave(slave, component.name);
 

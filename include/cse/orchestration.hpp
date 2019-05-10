@@ -1,9 +1,14 @@
+/**
+ *  \file
+ *  \brief  Interfaces for orchestration of remote as well as local simulations.
+ */
 #ifndef CSE_ORCHESTRATION_HPP
 #define CSE_ORCHESTRATION_HPP
 
 #include <cse/async_slave.hpp>
 #include <cse/fmi/importer.hpp>
 #include <cse/model.hpp>
+#include <cse/uri.hpp>
 
 #include <memory>
 #include <string_view>
@@ -12,56 +17,9 @@
 
 namespace cse
 {
-namespace detail
-{
-// Generic implementation of both model_uri_resolver and slave_uri_resolver.
-// Nevermind this for now, look further down first.
-template<
-    typename Resource,
-    typename SubResolver,
-    std::shared_ptr<Resource> (SubResolver::*resolveFun)(std::string_view)>
-class generic_uri_resolver
-{
-public:
-    void add_sub_resolver(std::shared_ptr<SubResolver> sr)
-    {
-        subResolvers_.push_back(sr);
-    }
-
-    std::shared_ptr<Resource> resolve(std::string_view baseUri, std::string_view uri)
-    {
-        std::string _uri;
-        auto npos = std::string_view::npos;
-        if ((uri.find(':') == npos) || uri[0] == '.') {
-            _uri = std::string(baseUri) + "/" + std::string(uri);
-        } else if (uri.find("fmu-proxy") != npos && uri.find("?file=") != npos) {
-            _uri = std::string(uri).insert(uri.find("=") + 1, std::string(baseUri.substr(8)) + "/");
-        } else {
-            _uri = std::string(uri);
-        }
-
-        for (auto sr : subResolvers_) {
-            auto r = ((*sr).*resolveFun)(_uri);
-            if (r) return r;
-        }
-        throw std::runtime_error(
-            std::string("No resolvers available to handle URI: ") + std::string(uri));
-    }
-
-private:
-    std::vector<std::shared_ptr<SubResolver>> subResolvers_;
-};
-} // namespace detail
 
 
-/**
- *  A model, i.e., a blueprint from which slaves can be instantiated.
- *
- *  \todo
- *      Find a better name for this. This basically represents what
- *      we would call an FMU, but I think we should try to find a
- *      non-FMI-specific term for it.
- */
+/// A model, i.e., a blueprint from which slaves can be instantiated.
 class model
 {
 public:
@@ -92,153 +50,134 @@ public:
     virtual ~model_uri_sub_resolver() noexcept = default;
 
     /**
-     *  Tries to resolve the given URI.
+     *  Tries to resolve a model URI relative to some base URI.
      *
-     *  Returns a `model` object for the model referred to by `uri`, or
-     *  null if this resolver is not designed to handle the given URI.
+     *  Returns a `model` object for the model referred to by the resulting
+     *  URI, or null if this resolver is not designed to handle such URIs.
      *  May also throw an exception if the URI would normally be handled,
      *  but the address resolution failed (e.g. due to I/O error).
+     *
+     *  \note
+     *      The default implementation of this function resolves
+     *      `modelUriReference` relative to `baseUri` in an RFC 3986
+     *      compliant manner using `cse::resolve_uri_reference()` and
+     *      forwards to `lookup_model(const uri&)`.  Specific sub-resolvers
+     *      may override it to use non-standard resolution mechanisms.
+     *
+     *  \param [in] baseUri
+     *      An (absolute) base URI.
+     *  \param [in] modelUriReference
+     *      A model URI reference that will be resolved relative to `baseUri`.
      */
-    virtual std::shared_ptr<model> lookup_model(std::string_view uri) = 0;
+    virtual std::shared_ptr<model> lookup_model(
+        const uri& baseUri,
+        const uri& modelUriReference);
+
+    /**
+     *  Tries to resolve a model URI.
+     *
+     *  Returns a `model` object for the model referred to by `modelUri`,
+     *  or null if this resolver is not designed to handle such URIs.
+     *  May also throw an exception if the URI would normally be handled,
+     *  but the address resolution failed (e.g. due to I/O error).
+     *
+     *  \param [in] modelUri
+     *      An (absolute) model URI.
+     */
+    virtual std::shared_ptr<model> lookup_model(const uri& modelUri) = 0;
 };
 
 
 /**
- *  Groups resolvers for multiple model URI schemes into one.
+ *  A generic model URI resolver.
+ *
+ *  This class groups resolvers for multiple model URI schemes into one.
+ *  Use `default_model_uri_resolver()` to create one which handles all
+ *  schemes that have built-in support in CSE.
+ *
+ *  A custom URI resolver can be created by starting with a default-constructed
+ *  object and adding scheme-specific resolvers using `add_sub_resolver()`.
  */
 class model_uri_resolver
 {
 public:
+    /// Constructs an empty URI resolver.
+    model_uri_resolver() noexcept;
+
+    model_uri_resolver(model_uri_resolver&&) noexcept;
+    model_uri_resolver& operator=(model_uri_resolver&&) noexcept;
+
+    model_uri_resolver(const model_uri_resolver&) = delete;
+    model_uri_resolver& operator=(const model_uri_resolver&) = delete;
+
+    ~model_uri_resolver() noexcept;
+
     /// Adds a sub-resolver.
-    void add_sub_resolver(std::shared_ptr<model_uri_sub_resolver> sr)
-    {
-        resolver_.add_sub_resolver(sr);
-    }
+    void add_sub_resolver(std::shared_ptr<model_uri_sub_resolver> sr);
 
     /**
-     *  Tries to resolve the given URI.
+     *  Tries to resolve a model URI reference relative to some base URI.
      *
-     *  If `uri` is relative, it will be interpreted relative to
-     *  `baseUri`.  Otherwise, `baseUri` is ignored.
+     *  The URIs will be passed to each of the sub-resolvers in turn,
+     *  in the order they were added, until one of them succeeds (or throws).
      *
-     *  The URI will be passed to each of the sub-resolvers in turn,
-     *  in the order they were added, until one of them succeeds
-     *  (or throws).
+     *  \param [in] baseUri
+     *      An (absolute) base URI.
+     *  \param [in] modelUriReference
+     *      A model URI reference that will be resolved relative to `baseUri`.
      *
-     *  Returns a `model` object for the model referred to by `uri`,
-     *  or throws an exception if URI resolution failed.
+     *  \returns
+     *      The model referred to by `modelUriReference`.
+     *
+     *  \throws std::invalid_argument
+     *      if neither of `baseUri` or `modelUriReference` are absolute.
+     *  \throws std::runtime_error
+     *      if URI resolution failed.
      */
     std::shared_ptr<model> lookup_model(
-        std::string_view baseUri,
-        std::string_view uri)
-    {
-        return resolver_.resolve(baseUri, uri);
-    }
-
-private:
-    detail::generic_uri_resolver<model, model_uri_sub_resolver, &model_uri_sub_resolver::lookup_model>
-        resolver_;
-};
-
-
-/**
- *  An interface for model directory/database/discovery services.
- *
- *  Examples include an object that keeps track of normal FMU files in some
- *  directory on the disk, or an object which communicates with an FMU-proxy
- *  discovery service.
- */
-class model_directory
-{
-public:
-    /// Contains the name and URI of a single model.
-    struct model_info
-    {
-        std::string name;
-        std::string uri;
-    };
-
-    /// Returns a list of all models in this directory.
-    virtual gsl::span<model_info> models() const noexcept = 0;
-};
-
-
-/**
- *  An interface for classes that resolve slave URIs of one or more specific
- *  URI schemes.
- *
- *  Examples could be a resolver which handles URIs for in-process slaves,
- *  e.g. `cse-inproc://thruster-3`, or a DCP URI resolver which handles
- *  URIs like `dcp-slave://10.0.0.52:9054`.
- *
- *  Client code will normally not use this directly to resolve URIs, but rather
- *  as one of many sub-resolvers in a `slave_uri_resolver`.
- */
-class slave_uri_sub_resolver
-{
-public:
-    virtual ~slave_uri_sub_resolver() noexcept = default;
+        const uri& baseUri,
+        const uri& modelUriReference);
 
     /**
-     *  Tries to resolve the given URI.
-     *
-     *  Returns an `async_slave` object for the slave referred to by `uri`, or
-     *  null if this resolver is not designed to handle the given URI.
-     *  May also throw an exception if the URI would normally be handled,
-     *  but the address resolution failed (e.g. due to I/O error).
-     */
-    virtual std::shared_ptr<async_slave> connect_to_slave(std::string_view uri) = 0;
-};
-
-
-/**
- *  Groups resolvers for multiple slave URI schemes into one.
- */
-class slave_uri_resolver
-{
-public:
-    /// Adds a sub-resolver.
-    void add_sub_resolver(std::shared_ptr<slave_uri_sub_resolver> sr)
-    {
-        resolver_.add_sub_resolver(sr);
-    }
-
-    /**
-     *  Tries to resolve the given URI.
+     *  Tries to resolve the given model URI.
      *
      *  The URI will be passed to each of the sub-resolvers in turn,
-     *  in the order they were added, until one of them succeeds
-     *  (or throws).
+     *  in the order they were added, until one of them succeeds (or throws).
      *
-     *  Returns an `async_slave` object for the slave referred to by `uri`,
-     *  or throws an exception if URI resolution failed.
+     *  \param [in] modelUri
+     *      An (absolute) model URI.
+     *
+     *  \returns
+     *      The model referred to by `modelUri`.
+     *
+     *  \throws std::invalid_argument
+     *      if `modelUri` is not absolute.
+     *  \throws std::runtime_error
+     *      if URI resolution failed.
      */
-    std::shared_ptr<async_slave> connect_to_slave(std::string_view baseUri, std::string_view uri)
-    {
-        return resolver_.resolve(baseUri, uri);
-    }
+    std::shared_ptr<model> lookup_model(const uri& modelUri);
 
 private:
-    detail::generic_uri_resolver<async_slave, slave_uri_sub_resolver, &slave_uri_sub_resolver::connect_to_slave>
-        resolver_;
+    std::vector<std::shared_ptr<model_uri_sub_resolver>> subResolvers_;
 };
 
 
+/// A resolver for `file://` model URIs.
 class file_uri_sub_resolver : public model_uri_sub_resolver
 {
 public:
     file_uri_sub_resolver();
 
-    //    ~file_uri_sub_resolver() noexcept ov;
-
-    std::shared_ptr<model> lookup_model(std::string_view uri) override;
+    std::shared_ptr<model> lookup_model(const uri& modelUri) override;
 
 private:
     std::shared_ptr<fmi::importer> importer_;
 };
 
 
+/// Returns a resolver for all URI schemes supported natively by CSE.
 std::shared_ptr<model_uri_resolver> default_model_uri_resolver();
+
 
 } // namespace cse
 #endif // header guard
