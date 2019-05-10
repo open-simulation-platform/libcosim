@@ -2,7 +2,6 @@
 
 #include "cse/algorithm.hpp"
 #include "cse/fmi/fmu.hpp"
-#include "cse/fmi/importer.hpp"
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
@@ -202,7 +201,6 @@ std::pair<execution, simulator_map> load_ssp(
         std::make_unique<cse::fixed_step_algorithm>(stepSize));
 
     std::map<std::string, slave_info> slaves;
-    auto importer = cse::fmi::importer::create();
     for (const auto& component : elements) {
         auto model = resolver.lookup_model(baseURI, component.source);
         auto slave = model->instantiate(component.name);
