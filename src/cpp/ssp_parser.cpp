@@ -181,7 +181,7 @@ struct slave_info
 
 } // namespace
 
-std::pair<execution, simulator_map> load_ssp(const boost::filesystem::path& sspDir, cse::time_point startTime)
+std::pair<execution, simulator_map> load_ssp(const boost::filesystem::path& sspDir, cse::time_point startTime, std::shared_ptr<cse::observer> observer)
 {
     simulator_map simulatorMap;
 
@@ -195,6 +195,8 @@ std::pair<execution, simulator_map> load_ssp(const boost::filesystem::path& sspD
     auto execution = cse::execution(
         startTime,
         std::make_unique<cse::fixed_step_algorithm>(stepSize));
+
+    if (observer != nullptr) execution.add_observer(observer);
 
     std::map<std::string, slave_info> slaves;
     auto importer = cse::fmi::importer::create();

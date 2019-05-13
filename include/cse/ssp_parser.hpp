@@ -4,12 +4,13 @@
 
 #include <cse/execution.hpp>
 #include <cse/model.hpp>
+#include <cse/observer.hpp>
 
 #include <boost/filesystem/path.hpp>
 
 #include <map>
+#include <memory>
 #include <string>
-
 
 namespace cse
 {
@@ -23,7 +24,7 @@ struct simulator_map_entry
 
 using simulator_map = std::map<std::string, simulator_map_entry>;
 
-std::pair<execution, simulator_map> load_ssp(const boost::filesystem::path& sspDir, cse::time_point startTime);
+std::pair<execution, simulator_map> load_ssp(const boost::filesystem::path& sspDir, cse::time_point startTime, std::shared_ptr<cse::observer> observer = nullptr);
 
 } // namespace cse
 
