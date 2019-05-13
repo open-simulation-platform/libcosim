@@ -21,12 +21,12 @@ namespace cse
 namespace fmuproxy
 {
 
-class client;
+class fmuproxy_client;
 
 class remote_fmu : public cse::model
 {
 
-    friend class client;
+    friend class fmuproxy_client;
 
 public:
     remote_fmu(const ::fmuproxy::thrift::FmuId& fmuId,

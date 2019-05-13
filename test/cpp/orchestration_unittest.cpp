@@ -1,7 +1,7 @@
 #define BOOST_TEST_MODULE orchestration.hpp unittests
 #include <cse/orchestration.hpp>
 #ifdef WITH_FMUPROXY
-#include <cse/fmuproxy/uri_resolver.hpp>
+#    include <cse/fmuproxy/fmuproxy_uri_sub_resolver.hpp>
 #endif
 
 #include <boost/filesystem.hpp>

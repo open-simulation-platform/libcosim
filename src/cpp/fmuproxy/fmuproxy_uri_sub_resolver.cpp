@@ -1,8 +1,8 @@
 
 #include <cse/error.hpp>
-#include <cse/fmuproxy/client.hpp>
+#include <cse/fmuproxy/fmuproxy_client.hpp>
+#include <cse/fmuproxy/fmuproxy_uri_sub_resolver.hpp>
 #include <cse/fmuproxy/remote_fmu.hpp>
-#include <cse/fmuproxy/uri_resolver.hpp>
 
 #include <string>
 
@@ -45,7 +45,7 @@ std::shared_ptr<cse::model> cse::fmuproxy::fmuproxy_uri_sub_resolver::lookup_mod
 
     auto query = *modelUri.query();
     auto auth = parse_authority(*modelUri.authority());
-    auto client = cse::fmuproxy::client(auth.first, auth.second);
+    auto client = cse::fmuproxy::fmuproxy_client(auth.first, auth.second);
 
     if (query.substr(0, 5) == "guid=") {
         auto guid = std::string(query.substr(5));

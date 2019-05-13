@@ -14,13 +14,13 @@ namespace fmuproxy
 {
 
 class remote_fmu;
-class client;
+class fmuproxy_client;
 
 class thrift_state
 {
 
     friend class remote_fmu;
-    friend class client;
+    friend class fmuproxy_client;
 
 public:
     thrift_state(std::shared_ptr<::fmuproxy::thrift::fmu_service_if> client_,

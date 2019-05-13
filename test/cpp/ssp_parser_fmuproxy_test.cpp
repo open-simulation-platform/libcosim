@@ -1,4 +1,4 @@
-#include <cse/fmuproxy/uri_resolver.hpp>
+#include <cse/fmuproxy/fmuproxy_uri_sub_resolver.hpp>
 #include <cse/log.hpp>
 #include <cse/ssp_parser.hpp>
 

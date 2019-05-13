@@ -13,11 +13,11 @@ namespace cse
 namespace fmuproxy
 {
 
-class client
+class fmuproxy_client
 {
 
 public:
-    client(const std::string& host,
+    fmuproxy_client(const std::string& host,
         unsigned int port,
         bool concurrent = false);
 
