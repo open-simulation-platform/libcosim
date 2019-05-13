@@ -192,8 +192,92 @@ inline std::ostream& operator<<(std::ostream& stream, const uri& u)
 uri resolve_reference(const uri& base, const uri& reference);
 
 
-/// Makes a `file` URI based on a local filesystem path.
-uri make_file_uri(const boost::filesystem::path& path);
+/**
+ *  Percent-encodes a string.
+ *
+ *  All characters will be encoded, with the exception of those that are
+ *  classified as "unreserved characters" in
+ *  [RFC 3986](https://tools.ietf.org/html/rfc3986) and those in `exceptions`.
+ *
+ *  \param [in] string
+ *      The string to encode.
+ *  \param [in] exceptions
+ *      A string containing additional characters that are *not* to be encoded,
+ *      e.g. if they have a special meaning in a particular URI scheme.
+ *
+ *  \returns
+ *      A new, percent-encoded string.
+ */
+std::string percent_encode(std::string_view string, const char* exceptions = nullptr);
+
+
+/**
+ *  Decodes a percent-encoded string.
+ *
+ *  \param [in] encoded
+ *      A percent-encoded string.
+ *
+ *  \returns
+ *      A new, decoded string.
+ */
+std::string percent_decode(std::string_view encoded);
+
+
+/**
+ *  Composes a percent-encoded URI from (unencoded) components.
+ *
+ *  This will percent-encode each component according to some rules that work
+ *  with many URI schemes, but not necessarily all.  The characters that are
+ *  left unencoded (beyond the "unreserved character set") are specified in
+ *  the parameter descriptions below.
+ *
+ *  \param [in] scheme
+ *      The URI scheme component. Un-encoded characters: `+`
+ *  \param [in] authority
+ *      The authority component. Un-encoded characters: `@:+`
+ *  \param [in] path
+ *      The path component. Un-encoded characters: `/+`
+ *  \param [in] query
+ *      The query component. Un-encoded characters: `=&;/:+`
+ *  \param [in] fragment
+ *      The fragment component. Un-encoded characters: (none)
+ *
+ *  \returns
+ *      The composed and encoded URI.
+ */
+uri percent_encode_uri(
+    std::optional<std::string_view> scheme,
+    std::optional<std::string_view> authority,
+    std::string_view path,
+    std::optional<std::string_view> query = std::nullopt,
+    std::optional<std::string_view> fragment = std::nullopt);
+
+
+/**
+ *  Converts a local filesystem path to a `file` URI.
+ *
+ *  \param [in] path
+ *      A path that either satisfies `path.has_root_directory()` or is empty.
+ *
+ *  \returns
+ *      The URI that corresponds to `path`.  The general format will be
+ *      `file:///<os-dependent path>`, except when `path` is empty, in which
+ *      case the function returns `file:`.
+ */
+uri path_to_file_uri(const boost::filesystem::path& path);
+
+
+/**
+ *  Converts a `file` URI to a local filesystem path.
+ *
+ *  \param [in] fileUri
+ *      An URI where the scheme component is equal to `file` and the `authority`
+ *      component is either empty or equel to `localhost` (but not undefined).
+ *
+ *  \returns
+ *      The path that corresponds to `fileUri`.
+ */
+boost::filesystem::path file_uri_to_path(const uri& fileUri);
 
 
 } // namespace cse
