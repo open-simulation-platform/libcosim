@@ -96,6 +96,14 @@ std::optional<std::string_view> consume_fragment(std::string_view& input)
     return ret;
 }
 
+bool all_chars_satisfy(bool (*is_valid_char)(char), std::string_view string)
+{
+    for (auto c : string) {
+        if (!is_valid_char(c)) return false;
+    }
+    return true;
+}
+
 } // namespace
 
 
@@ -122,8 +130,12 @@ uri::uri(
     std::optional<std::string_view> query,
     std::optional<std::string_view> fragment)
 {
-    CSE_INPUT_CHECK(!scheme || !scheme->empty());
+    CSE_INPUT_CHECK(!scheme ||
+        (!scheme->empty() && all_chars_satisfy(is_scheme_char, *scheme)));
+    CSE_INPUT_CHECK(!authority || all_chars_satisfy(is_authority_char, *authority));
     CSE_INPUT_CHECK(!authority || path.empty() || path.front() == '/');
+    CSE_INPUT_CHECK(all_chars_satisfy(is_path_char, path));
+    CSE_INPUT_CHECK(!query || all_chars_satisfy(is_query_char, path));
     data_.reserve(
         (scheme ? scheme->size() + 1 : 0) +
         (authority ? authority->size() + 2 : 0) +
