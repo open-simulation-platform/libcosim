@@ -394,12 +394,13 @@ uri percent_encode_uri(
     std::optional<std::string_view> query,
     std::optional<std::string_view> fragment)
 {
-    return uri(
-        scheme ? percent_encode(*scheme, "+") : std::string(),
-        authority ? percent_encode(*authority, "@:+") : std::string(),
-        percent_encode(path, "/+"),
-        query ? percent_encode(*query, "=&;/:+") : std::string(),
-        fragment ? percent_encode(*fragment) : std::string());
+    std::string s, a, p, q, f; // buffers to hold the encoded components
+    if (scheme) scheme = s = percent_encode(*scheme, "+");
+    if (authority) authority = a = percent_encode(*authority, "@:+");
+    path = p = percent_encode(path, "/+");
+    if (query) query = q = percent_encode(*query, "=&;/:+");
+    if (fragment) fragment = f = percent_encode(*fragment);
+    return uri(scheme, authority, path, query, fragment);
 }
 
 
