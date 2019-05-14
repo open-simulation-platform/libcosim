@@ -55,7 +55,7 @@ public:
     ~file_observer();
 
 private:
-    std::array<std::vector<variable_description>, 4> parse_config();
+    std::array<std::vector<variable_description>, 4> parse_config(std::string simulatorName);
 
     class slave_value_writer;
     std::unordered_map<simulator_index, std::unique_ptr<slave_value_writer>> valueWriters_;

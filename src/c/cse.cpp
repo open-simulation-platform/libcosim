@@ -224,6 +224,8 @@ struct cse_slave_s
 cse_slave* cse_local_slave_create(const char* fmuPath)
 {
     try {
+        std::cout << "Importing slave " << fmuPath << std::endl;
+
         const auto importer = cse::fmi::importer::create();
         const auto fmu = importer->import(fmuPath);
         auto slave = std::make_unique<cse_slave>();

@@ -29,7 +29,7 @@ public:
         initialize_default(currentTime);
     }
 
-    explicit slave_value_writer(observable* observable, boost::filesystem::path& logPath, size_t limit, int rate, time_point currentTime,
+    slave_value_writer(observable* observable, boost::filesystem::path& logPath, size_t limit, int rate, time_point currentTime,
         std::array<std::vector<variable_description>, 4> loggableVariables)
         : observable_(observable)
         , logPath_(logPath)
@@ -121,6 +121,8 @@ private:
     /** External config initialization, only configured variables are logged. */
     void initialize_config(time_point currentTime)
     {
+        std::cout << "OBSERVER: Init value writer" << std::endl;
+
         for (const auto& variable : std::get<0>(loggableVariables_)) {
             if (variable.causality != variable_causality::local) {
                 realIndexes_.push_back(variable.index);
@@ -223,6 +225,8 @@ file_observer::file_observer(boost::filesystem::path& configPath, boost::filesys
     , logDir_(logDir)
     , logFromConfig_(true)
 {
+    boost::property_tree::read_xml(configPath_.string(), ptree_,
+        boost::property_tree::xml_parser::no_comments | boost::property_tree::xml_parser::trim_whitespace);
 }
 
 std::string format_time(boost::posix_time::ptime now)
@@ -238,22 +242,28 @@ std::string format_time(boost::posix_time::ptime now)
     return converter.to_bytes(wss.str());
 }
 
-void file_observer::simulator_added(simulator_index index, observable* simulator, time_point currentTime)
+void file_observer::simulator_added(simulator_index index, observable* obs, time_point currentTime)
 {
     auto time_str = format_time(boost::posix_time::second_clock::local_time());
 
-    auto name = simulator->model_description().name.append("_").append(std::to_string(index)).append("_");
+    auto name = obs->model_description().name.append("_").append(std::to_string(index)).append("_");
     auto extension = time_str.append(".csv");
     auto filename = name.append(extension);
 
     logPath_ = logDir_ / filename;
-    simulators_[index] = (cse::simulator*)simulator;
+
+    auto simulator = dynamic_cast<cse::simulator*>(obs);
+    if (simulator) {
+        std::cout << "OBSERVER: Adding simulator " << simulator->name() << std::endl;
+        simulators_[index] = simulator;
+    }
 
     if (logFromConfig_) {
-        valueWriters_[index] = std::make_unique<slave_value_writer>(simulator, logPath_, limit_, rate_, currentTime,
-            parse_config());
+        std::cout << "OBSERVER: Make value writer for logging" << std::endl;
+        valueWriters_[index] = std::make_unique<slave_value_writer>(obs, logPath_, limit_, rate_, currentTime,
+            parse_config(simulator->name()));
     } else {
-        valueWriters_[index] = std::make_unique<slave_value_writer>(simulator, logPath_, limit_, currentTime);
+        valueWriters_[index] = std::make_unique<slave_value_writer>(obs, logPath_, limit_, currentTime);
     }
 }
 
@@ -304,7 +314,7 @@ std::pair<cse::simulator_index, cse::simulator*> find_simulator(
             return std::make_pair(idx, simulator);
         }
     }
-    throw std::invalid_argument("Can't find model with this name");
+    throw std::invalid_argument("Can't find model: " + model);
 }
 
 cse::variable_type find_type(std::string& typestr)
@@ -351,40 +361,35 @@ cse::variable_index find_variable_index(
     throw std::invalid_argument("Can't find variable index");
 }
 
-std::array<std::vector<variable_description>, 4> file_observer::parse_config()
+std::array<std::vector<variable_description>, 4> file_observer::parse_config(std::string simulatorName)
 {
-    std::cout << "Load config from " << configPath_.string() << std::endl;
-
+    std::cout << "OBSERVER: Parsing config" << std::endl;
     std::vector<variable_description> loggableRealVariables;
     std::vector<variable_description> loggableIntVariables;
     std::vector<variable_description> loggableBoolVariables;
     std::vector<variable_description> loggableStringVariables;
 
-    boost::property_tree::ptree tmpTree;
-    boost::property_tree::read_xml(configPath_.string(), ptree_,
-        boost::property_tree::xml_parser::no_comments | boost::property_tree::xml_parser::trim_whitespace);
+    for (const auto& [model_block_name, model] : ptree_.get_child("models")) {
 
-    std::string path = "slave";
-    tmpTree = ptree_.get_child(path);
+        auto model_name = get_attribute<std::string>(model, "name");
 
-    auto slave = get_attribute<std::string>(tmpTree, "name");
-    rate_ = get_attribute<int>(tmpTree, "rate");
-    limit_ = get_attribute<size_t>(tmpTree, "limit");
+        if (model_name != simulatorName) continue;
 
-    std::cout << "Attempting parse of " << configPath_.string() << ", slave name " << slave << std::endl;
+        rate_ = get_attribute<int>(model, "rate");
+        limit_ = get_attribute<size_t>(model, "limit");
 
-    const auto& [sim_index, simulator] = find_simulator(simulators_, slave);
+        std::cout << "OBSERVER: Parsing model " << model_name << std::endl;
 
-    if (ptree_.get_child_optional(path + ".models")) {
-        std::cout << "Models found" << std::endl;
-    }
+        const auto& [sim_index, simulator] = find_simulator(simulators_, model_name);
 
-    for (const auto& [module_block_name, module] : ptree_.get_child(path + ".models")) {
-        for (const auto& [signal_block_name, signal] : module) {
+        for (const auto& [signal_block_name, signal] : model) {
             if (signal_block_name == "signal") {
+
                 auto name = get_attribute<std::string>(signal, "name");
                 auto type = get_attribute<std::string>(signal, "type");
                 auto causality = get_attribute<std::string>(signal, "causality");
+
+                std::cout << "OBSERVER: Parsing signal " << name << std::endl;
 
                 auto variable = simulator->model_description().find_variable(
                     name, find_type(type), find_causality(causality));
@@ -403,8 +408,6 @@ std::array<std::vector<variable_description>, 4> file_observer::parse_config()
                         loggableStringVariables.push_back(variable);
                         break;
                 }
-
-                std::cout << "Logging signal: " << name << ", " << type << ", " << causality << std::endl;
             }
         }
     }
