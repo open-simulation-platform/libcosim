@@ -30,12 +30,16 @@ public:
     }
 
     slave_value_writer(observable* observable, boost::filesystem::path& logPath, size_t limit, int rate, time_point currentTime,
-        std::array<std::vector<variable_description>, 4> loggableVariables)
+        std::vector<variable_description>& realVars, std::vector<variable_description>& intVars,
+        std::vector<variable_description>& boolVars, std::vector<variable_description>& strVars)
         : observable_(observable)
         , logPath_(logPath)
         , limit_(limit)
         , rate_(rate)
-        , loggableVariables_(std::move(loggableVariables))
+        , loggableRealVariables_(realVars)
+        , loggableIntVariables_(intVars)
+        , loggableBoolVariables_(boolVars)
+        , loggableStringVariables_(strVars)
     {
         initialize_config(currentTime);
     }
@@ -123,7 +127,7 @@ private:
     {
         std::cout << "OBSERVER: Init value writer" << std::endl;
 
-        for (const auto& variable : std::get<0>(loggableVariables_)) {
+        for (const auto& variable : loggableRealVariables_) {
             if (variable.causality != variable_causality::local) {
                 realIndexes_.push_back(variable.index);
                 observable_->expose_for_getting(variable_type::real, variable.index);
@@ -131,7 +135,7 @@ private:
             }
         }
 
-        for (const auto& variable : std::get<1>(loggableVariables_)) {
+        for (const auto& variable : loggableIntVariables_) {
             if (variable.causality != variable_causality::local) {
                 intIndexes_.push_back(variable.index);
                 observable_->expose_for_getting(variable_type::integer, variable.index);
@@ -200,7 +204,10 @@ private:
     std::vector<variable_index> realIndexes_;
     std::vector<variable_index> intIndexes_;
     std::map<step_number, double> timeSamples_;
-    std::array<std::vector<variable_description>, 4> loggableVariables_;
+    std::vector<variable_description> loggableRealVariables_;
+    std::vector<variable_description> loggableIntVariables_;
+    std::vector<variable_description> loggableBoolVariables_;
+    std::vector<variable_description> loggableStringVariables_;
     std::vector<variable_description> realVars_;
     std::vector<variable_description> intVars_;
     std::vector<variable_description> boolVars_;
@@ -238,30 +245,31 @@ std::string format_time(boost::posix_time::ptime now)
     wss << now;
 
     std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
-
     return converter.to_bytes(wss.str());
 }
 
 void file_observer::simulator_added(simulator_index index, observable* obs, time_point currentTime)
 {
     auto time_str = format_time(boost::posix_time::second_clock::local_time());
+    auto simulator = dynamic_cast<cse::simulator*>(obs);
 
-    auto name = obs->model_description().name.append("_").append(std::to_string(index)).append("_");
+    auto name = simulator->name().append("_").append(std::to_string(index)).append("_");
     auto extension = time_str.append(".csv");
     auto filename = name.append(extension);
 
     logPath_ = logDir_ / filename;
 
-    auto simulator = dynamic_cast<cse::simulator*>(obs);
     if (simulator) {
         std::cout << "OBSERVER: Adding simulator " << simulator->name() << std::endl;
         simulators_[index] = simulator;
     }
 
     if (logFromConfig_) {
-        std::cout << "OBSERVER: Make value writer for logging" << std::endl;
-        valueWriters_[index] = std::make_unique<slave_value_writer>(obs, logPath_, limit_, rate_, currentTime,
-            parse_config(simulator->name()));
+        if (parse_config(simulator->name())) {
+            std::cout << "OBSERVER: Make value writer for logging for " << simulator->name() << std::endl;
+            valueWriters_[index] = std::make_unique<slave_value_writer>(obs, logPath_, limit_, rate_, currentTime,
+                loggableRealVariables_, loggableIntVariables_, loggableBoolVariables_, loggableStringVariables_);
+        }
     } else {
         valueWriters_[index] = std::make_unique<slave_value_writer>(obs, logPath_, limit_, currentTime);
     }
@@ -286,7 +294,9 @@ void file_observer::step_complete(step_number /*lastStep*/, duration /*lastStepS
 
 void file_observer::simulator_step_complete(simulator_index index, step_number lastStep, duration /*lastStepSize*/, time_point currentTime)
 {
-    valueWriters_.at(index)->observe(lastStep, currentTime);
+    if (valueWriters_.find(index) != valueWriters_.end()) {
+        valueWriters_.at(index)->observe(lastStep, currentTime);
+    }
 }
 
 boost::filesystem::path file_observer::get_log_path()
@@ -361,24 +371,15 @@ cse::variable_index find_variable_index(
     throw std::invalid_argument("Can't find variable index");
 }
 
-std::array<std::vector<variable_description>, 4> file_observer::parse_config(std::string simulatorName)
+bool file_observer::parse_config(std::string simulatorName)
 {
-    std::cout << "OBSERVER: Parsing config" << std::endl;
-    std::vector<variable_description> loggableRealVariables;
-    std::vector<variable_description> loggableIntVariables;
-    std::vector<variable_description> loggableBoolVariables;
-    std::vector<variable_description> loggableStringVariables;
-
     for (const auto& [model_block_name, model] : ptree_.get_child("models")) {
-
         auto model_name = get_attribute<std::string>(model, "name");
 
-        if (model_name != simulatorName) continue;
+        if (model_name != simulatorName) return false;
 
         rate_ = get_attribute<int>(model, "rate");
         limit_ = get_attribute<size_t>(model, "limit");
-
-        std::cout << "OBSERVER: Parsing model " << model_name << std::endl;
 
         const auto& [sim_index, simulator] = find_simulator(simulators_, model_name);
 
@@ -396,23 +397,23 @@ std::array<std::vector<variable_description>, 4> file_observer::parse_config(std
 
                 switch (find_type(type)) {
                     case variable_type::real:
-                        loggableRealVariables.push_back(variable);
+                        loggableRealVariables_.push_back(variable);
                         break;
                     case variable_type::integer:
-                        loggableIntVariables.push_back(variable);
+                        loggableIntVariables_.push_back(variable);
                         break;
                     case variable_type::boolean:
-                        loggableBoolVariables.push_back(variable);
+                        loggableBoolVariables_.push_back(variable);
                         break;
                     case variable_type::string:
-                        loggableStringVariables.push_back(variable);
+                        loggableStringVariables_.push_back(variable);
                         break;
                 }
             }
         }
     }
 
-    return std::array<std::vector<variable_description>, 4>{loggableRealVariables, loggableIntVariables, loggableBoolVariables, loggableStringVariables};
+    return true;
 }
 
 file_observer::~file_observer()

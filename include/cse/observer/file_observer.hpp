@@ -55,11 +55,15 @@ public:
     ~file_observer();
 
 private:
-    std::array<std::vector<variable_description>, 4> parse_config(std::string simulatorName);
+    bool parse_config(std::string simulatorName);
 
     class slave_value_writer;
     std::unordered_map<simulator_index, std::unique_ptr<slave_value_writer>> valueWriters_;
     std::unordered_map<simulator_index, simulator*> simulators_;
+    std::vector<variable_description> loggableRealVariables_;
+    std::vector<variable_description> loggableIntVariables_;
+    std::vector<variable_description> loggableBoolVariables_;
+    std::vector<variable_description> loggableStringVariables_;
     boost::property_tree::ptree ptree_;
     boost::filesystem::path logDir_;
     boost::filesystem::path logPath_;

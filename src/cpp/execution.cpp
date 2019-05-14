@@ -64,8 +64,6 @@ public:
         simulators_.push_back(std::make_unique<slave_simulator>(slave, name));
         algorithm_->add_simulator(index, simulators_.back().get());
 
-        std::cout << "EXECUTION: Adding simulator " << simulators_.back().get()->model_description().name << std::endl;
-
         for (const auto& obs : observers_) {
             obs->simulator_added(index, simulators_.back().get(), currentTime_);
         }
@@ -78,9 +76,7 @@ public:
     void add_observer(std::shared_ptr<observer> obs)
     {
         observers_.push_back(obs);
-        std::cout << "EXECUTION: simulaotrs_.size() is " << simulators_.size() << std::endl;
         for (std::size_t i = 0; i < simulators_.size(); ++i) {
-            std::cout << "EXECUTION: Adding observer to simulator " << i << std::endl;
             obs->simulator_added(
                 static_cast<simulator_index>(i),
                 simulators_[i].get(),
