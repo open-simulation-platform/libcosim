@@ -188,7 +188,7 @@ std::pair<execution, simulator_map> load_ssp(
 {
     simulator_map simulatorMap;
     const auto ssdPath = sspDir / "SystemStructure.ssd";
-    const auto baseURI = make_file_uri(sspDir);
+    const auto baseURI = path_to_file_uri(ssdPath);
     const auto parser = ssp_parser(ssdPath);
 
     const auto& simInfo = parser.get_simulation_information();

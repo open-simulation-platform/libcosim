@@ -110,7 +110,7 @@ std::shared_ptr<model> file_uri_sub_resolver::lookup_model(const uri& modelUri)
             << "Query and/or fragment component(s) in a file:// URI were ignored: "
             << modelUri;
     }
-    auto fmu = importer_->import(boost::filesystem::path(std::string(modelUri.path())));
+    auto fmu = importer_->import(file_uri_to_path(modelUri));
     return std::make_shared<fmu_model>(fmu);
 }
 

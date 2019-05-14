@@ -4,7 +4,14 @@
 
 #include <cassert>
 #include <cctype>
+#include <iomanip>
+#include <sstream>
 #include <stdexcept>
+
+#ifdef _WIN32
+#    include <shlwapi.h>
+#    include <wininet.h>
+#endif
 
 
 namespace cse
@@ -96,6 +103,14 @@ std::optional<std::string_view> consume_fragment(std::string_view& input)
     return ret;
 }
 
+bool all_chars_satisfy(bool (*is_valid_char)(char), std::string_view string)
+{
+    for (auto c : string) {
+        if (!is_valid_char(c)) return false;
+    }
+    return true;
+}
+
 } // namespace
 
 
@@ -122,8 +137,12 @@ uri::uri(
     std::optional<std::string_view> query,
     std::optional<std::string_view> fragment)
 {
-    CSE_INPUT_CHECK(!scheme || !scheme->empty());
+    CSE_INPUT_CHECK(!scheme ||
+        (!scheme->empty() && all_chars_satisfy(is_scheme_char, *scheme)));
+    CSE_INPUT_CHECK(!authority || all_chars_satisfy(is_authority_char, *authority));
     CSE_INPUT_CHECK(!authority || path.empty() || path.front() == '/');
+    CSE_INPUT_CHECK(all_chars_satisfy(is_path_char, path));
+    CSE_INPUT_CHECK(!query || all_chars_satisfy(is_query_char, path));
     data_.reserve(
         (scheme ? scheme->size() + 1 : 0) +
         (authority ? authority->size() + 2 : 0) +
@@ -293,22 +312,165 @@ uri resolve_reference(const uri& base, const uri& reference)
 
 
 // =============================================================================
-// misc
+// functions
 // =============================================================================
 
-uri make_file_uri(const boost::filesystem::path& path)
+
+namespace
 {
-#ifdef _WIN32
-    if (path.empty()) return uri("file", std::string_view(), std::string_view());
-    const auto firstChar = path.native().front();
-    if (firstChar == '/' || firstChar == '\\') {
-        return uri("file", std::string_view(), path.generic_string());
-    } else {
-        return uri("file", std::string_view(), '/' + path.generic_string());
+bool is_unreserved(char c) noexcept
+{
+    return ('A' <= c && c <= 'Z') || ('a' <= c && c <= 'z') ||
+        ('0' <= c && c <= '9') ||
+        c == '-' || c == '_' || c == '.' || c == '~';
+}
+
+bool is_in_cstring(char c, const char* s)
+{
+    if (s == nullptr) return false;
+    while (*s != '\0' && *s != c) ++s;
+    return *s != '\0';
+}
+} // namespace
+
+std::string percent_encode(std::string_view string, const char* exceptions)
+{
+    std::ostringstream encoded;
+    encoded.fill('0');
+    encoded << std::hex << std::uppercase;
+    for (const char c : string) {
+        if (is_unreserved(c) || is_in_cstring(c, exceptions)) {
+            encoded << c;
+        } else {
+            encoded
+                << '%'
+                << std::setw(2)
+                << static_cast<int>(static_cast<unsigned char>(c));
+        }
     }
+    return encoded.str();
+}
+
+
+namespace
+{
+int hex_to_int(char hex)
+{
+    if (hex >= '0' && hex <= '9') {
+        return hex - '0';
+    } else if (hex >= 'A' && hex <= 'F') {
+        return hex + 10 - 'A';
+    } else if (hex >= 'a' && hex <= 'f') {
+        return hex + 10 - 'a';
+    } else {
+        throw std::domain_error(std::string("Not a hexadecimal digit: ") + hex);
+    }
+}
+} // namespace
+
+std::string percent_decode(std::string_view encoded)
+{
+    std::string decoded;
+    while (!encoded.empty()) {
+        const auto i = encoded.find('%');
+        if (i > encoded.size() - 3) {
+            decoded += encoded;
+            encoded.remove_prefix(encoded.size());
+        } else {
+            decoded += encoded.substr(0, i);
+            decoded += static_cast<char>(
+                (hex_to_int(encoded[i + 1]) << 4) | hex_to_int(encoded[i + 2]));
+            encoded.remove_prefix(i + 3);
+        }
+    }
+    return decoded;
+}
+
+
+uri percent_encode_uri(
+    std::optional<std::string_view> scheme,
+    std::optional<std::string_view> authority,
+    std::string_view path,
+    std::optional<std::string_view> query,
+    std::optional<std::string_view> fragment)
+{
+    std::string s, a, p, q, f; // buffers to hold the encoded components
+    if (scheme) scheme = s = percent_encode(*scheme, "+");
+    if (authority) authority = a = percent_encode(*authority, "@:+");
+    path = p = percent_encode(path, "/+");
+    if (query) query = q = percent_encode(*query, "=&;/:+");
+    if (fragment) fragment = f = percent_encode(*fragment);
+    return uri(scheme, authority, path, query, fragment);
+}
+
+
+uri path_to_file_uri(const boost::filesystem::path& path)
+{
+    CSE_INPUT_CHECK(path.empty() || path.has_root_directory());
+
+#ifdef _WIN32
+    // Windows has some special rules for file URIs; better use the built-in
+    // functions.
+    wchar_t buffer16[INTERNET_MAX_URL_LENGTH];
+    DWORD size16 = INTERNET_MAX_URL_LENGTH;
+    const auto rc = UrlCreateFromPathW(path.c_str(), buffer16, &size16, 0);
+    assert(rc != S_FALSE); // If `path` contains an URL, something is fishy.
+    if (rc != S_OK && rc != S_FALSE) {
+        throw std::system_error(rc, std::system_category());
+    }
+
+    char buffer8[2 * INTERNET_MAX_URL_LENGTH];
+    const auto size8 = WideCharToMultiByte(
+        CP_UTF8, WC_ERR_INVALID_CHARS,
+        buffer16, size16,
+        buffer8, sizeof buffer8,
+        NULL, NULL);
+    if (size8 <= 0) {
+        throw std::system_error(GetLastError(), std::system_category());
+    }
+    return uri(std::string(buffer8, size8));
+
 #else
-    return uri("file", std::string_view(), path.native());
+    if (path.empty()) {
+        return uri("file:");
+    } else {
+        return percent_encode_uri("file", std::string_view(), path.string());
+    }
 #endif
 }
+
+
+boost::filesystem::path file_uri_to_path(const uri& fileUri)
+{
+    CSE_INPUT_CHECK(fileUri.scheme() && *fileUri.scheme() == "file");
+    CSE_INPUT_CHECK(fileUri.authority() &&
+        (fileUri.authority()->empty() || *fileUri.authority() == "localhost"));
+
+#ifdef _WIN32
+    // Windows has some special rules for file URIs; better use the built-in
+    // functions.
+    wchar_t urlBuffer[INTERNET_MAX_URL_LENGTH];
+    const auto urlSize = MultiByteToWideChar(
+        CP_UTF8, MB_ERR_INVALID_CHARS,
+        fileUri.view().data(), static_cast<int>(fileUri.view().size()),
+        urlBuffer, INTERNET_MAX_URL_LENGTH);
+    if (urlSize <= 0) {
+        throw std::system_error(GetLastError(), std::system_category());
+    }
+    urlBuffer[urlSize] = '\0';
+
+    wchar_t pathBuffer[MAX_PATH];
+    DWORD pathSize = MAX_PATH;
+    const auto rc = PathCreateFromUrlW(urlBuffer, pathBuffer, &pathSize, 0);
+    if (rc != S_OK) {
+        throw std::system_error(rc, std::system_category());
+    }
+    return boost::filesystem::path(pathBuffer, pathBuffer + pathSize);
+
+#else
+    return boost::filesystem::path(percent_decode(fileUri.path()));
+#endif
+}
+
 
 } // namespace cse
