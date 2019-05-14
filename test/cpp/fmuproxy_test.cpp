@@ -5,10 +5,12 @@
 #include <thread>
 
 //must appear before other cse headers due to <winsock2.h> #include
-#include <cse/algorithm.hpp>
-#include <cse/execution.hpp>
 #include <cse/fmuproxy/fmuproxy_client.hpp>
 #include <cse/fmuproxy/remote_fmu.hpp>
+//
+#include <cse/algorithm.hpp>
+#include <cse/execution.hpp>
+
 
 using namespace cse;
 using namespace cse::fmuproxy;
