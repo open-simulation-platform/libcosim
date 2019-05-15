@@ -38,12 +38,18 @@ int main()
         auto csv_observer = std::make_shared<cse::file_observer>(configPath, csvPath);
         execution.add_observer(csv_observer);
 
-        // Add a slave to the execution and connect variables
+        // Add two slaves to the execution and connect variables
         execution.add_slave(
             cse::make_pseudo_async(std::make_unique<mock_slave>(
                 [](double x) { return x + 1.234; },
                 [](int x) { return x + 1; })),
             "slave");
+
+        execution.add_slave(
+                cse::make_pseudo_async(std::make_unique<mock_slave>(
+                        [](double x) { return x + 1.234; },
+                        [](int x) { return x + 1; })),
+                "slave2");
 
         // Run the simulation
         auto simResult = execution.simulate_until(endTime);

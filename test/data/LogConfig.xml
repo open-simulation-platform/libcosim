@@ -3,4 +3,8 @@
         <signal name="realOut" type="real" causality="output"/>
         <signal name="intOut" type="integer" causality="output"/>
     </model>
+    <model name="slave2">
+        <signal name="realOut" type="real" causality="output"/>
+        <signal name="intOut" type="integer" causality="output"/>
+    </model>
 </models>

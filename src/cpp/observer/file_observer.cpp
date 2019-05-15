@@ -125,8 +125,6 @@ private:
     /** External config initialization, only configured variables are logged. */
     void initialize_config(time_point currentTime)
     {
-        std::cout << "OBSERVER: Init value writer" << std::endl;
-
         for (const auto& variable : loggableRealVariables_) {
             if (variable.causality != variable_causality::local) {
                 realIndexes_.push_back(variable.index);
@@ -248,6 +246,18 @@ std::string format_time(boost::posix_time::ptime now)
     return converter.to_bytes(wss.str());
 }
 
+template<typename T>
+T get_attribute(const boost::property_tree::ptree& tree, const std::string& key)
+{
+    return tree.get<T>("<xmlattr>." + key);
+}
+
+template<typename T>
+T get_attribute(const boost::property_tree::ptree& tree, const std::string& key, T& defaultValue)
+{
+    return tree.get<T>("<xmlattr>." + key, defaultValue);
+}
+
 void file_observer::simulator_added(simulator_index index, observable* obs, time_point currentTime)
 {
     auto time_str = format_time(boost::posix_time::second_clock::local_time());
@@ -265,11 +275,24 @@ void file_observer::simulator_added(simulator_index index, observable* obs, time
     }
 
     if (logFromConfig_) {
-        if (parse_config(simulator->name())) {
-            std::cout << "OBSERVER: Make value writer for logging for " << simulator->name() << std::endl;
+        // Read all configured model names from the XML. If simulator name is not in the list, terminate.
+        std::vector<std::string> modelNames;
+        for (const auto& [model_block_name, model] : ptree_.get_child("models")) {
+            modelNames.push_back(get_attribute<std::string>(model, "name"));
+        }
+        if (std::find(modelNames.begin(), modelNames.end(), simulator->name()) != modelNames.end()) {
+            parse_config(simulator->name());
+
             valueWriters_[index] = std::make_unique<slave_value_writer>(obs, logPath_, limit_, rate_, currentTime,
                 loggableRealVariables_, loggableIntVariables_, loggableBoolVariables_, loggableStringVariables_);
-        }
+
+            loggableRealVariables_.clear();
+            loggableIntVariables_.clear();
+            loggableBoolVariables_.clear();
+            loggableStringVariables_.clear();
+        } else
+            return;
+
     } else {
         valueWriters_[index] = std::make_unique<slave_value_writer>(obs, logPath_, limit_, currentTime);
     }
@@ -307,12 +330,6 @@ boost::filesystem::path file_observer::get_log_path()
 boost::filesystem::path file_observer::get_config_path()
 {
     return configPath_;
-}
-
-template<typename T>
-T get_attribute(const boost::property_tree::ptree& tree, const std::string& key)
-{
-    return tree.get<T>("<xmlattr>." + key);
 }
 
 std::pair<cse::simulator_index, cse::simulator*> find_simulator(
@@ -371,15 +388,15 @@ cse::variable_index find_variable_index(
     throw std::invalid_argument("Can't find variable index");
 }
 
-bool file_observer::parse_config(std::string simulatorName)
+void file_observer::parse_config(std::string simulatorName)
 {
     for (const auto& [model_block_name, model] : ptree_.get_child("models")) {
         auto model_name = get_attribute<std::string>(model, "name");
 
-        if (model_name != simulatorName) return false;
+        if (model_name != simulatorName) continue;
 
-        rate_ = get_attribute<int>(model, "rate");
-        limit_ = get_attribute<size_t>(model, "limit");
+        rate_ = get_attribute(model, "rate", defaultRate_);
+        limit_ = get_attribute(model, "limit", defaultLimit_);
 
         const auto& [sim_index, simulator] = find_simulator(simulators_, model_name);
 
@@ -389,8 +406,6 @@ bool file_observer::parse_config(std::string simulatorName)
                 auto name = get_attribute<std::string>(signal, "name");
                 auto type = get_attribute<std::string>(signal, "type");
                 auto causality = get_attribute<std::string>(signal, "causality");
-
-                std::cout << "OBSERVER: Parsing signal " << name << std::endl;
 
                 auto variable = simulator->model_description().find_variable(
                     name, find_type(type), find_causality(causality));
@@ -412,8 +427,6 @@ bool file_observer::parse_config(std::string simulatorName)
             }
         }
     }
-
-    return true;
 }
 
 file_observer::~file_observer()

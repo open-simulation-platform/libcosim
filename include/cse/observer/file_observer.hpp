@@ -55,7 +55,7 @@ public:
     ~file_observer();
 
 private:
-    bool parse_config(std::string simulatorName);
+    void parse_config(std::string simulatorName);
 
     class slave_value_writer;
     std::unordered_map<simulator_index, std::unique_ptr<slave_value_writer>> valueWriters_;
@@ -70,7 +70,9 @@ private:
     boost::filesystem::path configPath_;
     bool logFromConfig_ = false;
     size_t limit_;
+    size_t defaultLimit_ = 10;
     int rate_;
+    int defaultRate_ = 1;
 };
 
 
