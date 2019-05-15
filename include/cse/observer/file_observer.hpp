@@ -7,7 +7,6 @@
 
 #include <memory>
 #include <unordered_map>
-#include <xtgmath.h>
 
 #include <cse/observer/observer.hpp>
 #include <cse/algorithm.hpp>
