@@ -270,7 +270,6 @@ void file_observer::simulator_added(simulator_index index, observable* obs, time
     logPath_ = logDir_ / filename;
 
     if (simulator) {
-        std::cout << "OBSERVER: Adding simulator " << simulator->name() << std::endl;
         simulators_[index] = simulator;
     }
 
