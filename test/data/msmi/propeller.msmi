@@ -1,0 +1,37 @@
+plug {
+	type: force
+	name: "force1"
+	variables {
+		"F_x",
+		"F_y",
+		"F_z"
+	}
+}
+
+plug {
+	type: position
+	name: "pos1"
+	variables {
+		"x",
+		"y",
+		"z"
+	}
+}
+
+socket {
+	type: force
+	name: "force2"
+	variables {
+		"F_x",
+		"F_y",
+		"F_z"
+	}
+}
+
+
+bond {
+	name: "james"
+	plug: "force1"
+	plug: "position1"
+	socket: "pos1"
+}
