@@ -19,7 +19,7 @@
 #include <cstring>
 #include <new>
 #include <sstream>
-
+#include <string>
 
 namespace cse
 {
@@ -184,7 +184,10 @@ std::string sanitise_path(const std::string& str)
             sanitised << c;
         }
     }
-    return sanitised.str();
+    auto sanitised_string = sanitised.str();
+    sanitised_string.erase(std::remove(sanitised_string.begin(), sanitised_string.end(), '{'), sanitised_string.end());
+    sanitised_string.erase(std::remove(sanitised_string.begin(), sanitised_string.end(), '}'), sanitised_string.end());
+    return sanitised_string;
 }
 } // namespace
 
