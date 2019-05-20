@@ -311,6 +311,39 @@ typedef struct
     cse_slave_index index;
 } cse_slave_info;
 
+
+typedef enum
+{
+    CSE_VARIABLE_CAUSALITY_INPUT,
+    CSE_VARIABLE_CAUSALITY_PARAMETER,
+    CSE_VARIABLE_CAUSALITY_OUTPUT,
+    CSE_VARIABLE_CAUSALITY_CALCULATEDPARAMETER,
+    CSE_VARIABLE_CAUSALITY_LOCAL,
+    CSE_VARIABLE_CAUSALITY_INDEPENDENT
+} cse_variable_causality;
+
+typedef enum
+{
+    CSE_VARIABLE_VARIABILITY_CONSTANT,
+    CSE_VARIABLE_VARIABILITY_FIXED,
+    CSE_VARIABLE_VARIABILITY_TUNABLE,
+    CSE_VARIABLE_VARIABILITY_DISCRETE,
+    CSE_VARIABLE_VARIABILITY_CONTINUOUS
+} cse_variable_variability;
+
+typedef struct
+{
+    char name[SLAVE_NAME_MAX_SIZE];
+    cse_variable_index index;
+    cse_variable_type type;
+    cse_variable_causality causality;
+    cse_variable_variability variability;
+} cse_variable_description;
+
+size_t cse_slave_get_num_variables(cse_execution* execution, cse_slave_index slave);
+
+int cse_slave_get_variables(cse_execution* execution, cse_variable_description variables[], size_t numVariables);
+
 /// Returns the number of slaves which have been added to an execution.
 size_t cse_execution_get_num_slaves(cse_execution* execution);
 
