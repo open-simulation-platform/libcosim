@@ -290,7 +290,7 @@ int cse_slave_get_variables(cse_execution* execution, cse_slave_index slave, cse
         for (const auto& entry : execution->simulators) {
             if (entry.second.index == slave) {
                 auto vars = entry.second.modelDescription.variables;
-                for (auto var = 0; var < numVariables; var++) {
+                for (size_t var = 0; var < numVariables; var++) {
                     translate_variable_description(vars.at(var), variables[var]);
                 }
                 return success;
