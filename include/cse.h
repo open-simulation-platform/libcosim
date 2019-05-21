@@ -32,14 +32,6 @@ typedef int cse_slave_index;
 /// Step number
 typedef long long cse_step_number;
 
-typedef enum
-{
-    CSE_REAL,
-    CSE_INTEGER,
-    CSE_STRING,
-    CSE_BOOLEAN,
-} cse_variable_type;
-
 /// Error codes.
 typedef enum
 {
@@ -311,6 +303,13 @@ typedef struct
     cse_slave_index index;
 } cse_slave_info;
 
+typedef enum
+{
+    CSE_REAL,
+    CSE_INTEGER,
+    CSE_STRING,
+    CSE_BOOLEAN,
+} cse_variable_type;
 
 typedef enum
 {
@@ -342,7 +341,7 @@ typedef struct
 
 size_t cse_slave_get_num_variables(cse_execution* execution, cse_slave_index slave);
 
-int cse_slave_get_variables(cse_execution* execution, cse_variable_description variables[], size_t numVariables);
+int cse_slave_get_variables(cse_execution* execution,  cse_slave_index slave, cse_variable_description variables[], size_t numVariables);
 
 /// Returns the number of slaves which have been added to an execution.
 size_t cse_execution_get_num_slaves(cse_execution* execution);

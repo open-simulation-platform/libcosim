@@ -213,6 +213,72 @@ int cse_execution_get_slave_infos(cse_execution* execution, cse_slave_info infos
     }
 }
 
+size_t cse_slave_get_num_variables(cse_execution* execution, cse_slave_index slave)
+{
+    for (const auto& entry : execution->simulators) {
+        if (entry.second.index == slave) {
+            return entry.second.modelDescription.variables.size();
+        }
+    }
+    return 0;
+}
+
+cse_variable_causality to_variable_causality(const cse::variable_causality& vc)
+{
+    switch (vc) {
+        case cse::variable_causality::input:
+            return CSE_VARIABLE_CAUSALITY_INPUT;
+        case cse::variable_causality::output:
+            return CSE_VARIABLE_CAUSALITY_OUTPUT;
+        case cse::variable_causality::parameter:
+            return CSE_VARIABLE_CAUSALITY_PARAMETER;
+        case cse::variable_causality::calculated_parameter:
+            return CSE_VARIABLE_CAUSALITY_CALCULATEDPARAMETER;
+            case cse::variable_causality::local:
+            return CSE_VARIABLE_CAUSALITY_LOCAL;
+        default:
+            throw std::invalid_argument("Invalid variable causality!");
+    }
+}
+
+cse_variable_type to_variable_type(const cse::variable_type& vt)
+{
+    switch (vt) {
+        case cse::variable_type::real:
+            return CSE_REAL;
+        case cse::variable_type::integer:
+            return CSE_INTEGER;
+        case cse::variable_type::boolean:
+            return CSE_BOOLEAN;
+        case cse::variable_type::string:
+            return CSE_STRING;
+        default:
+            throw std::invalid_argument("Invalid variable type!");
+    }
+}
+
+void translate_variable_description(const cse::variable_description& vd, cse_variable_description& cvd)
+{
+    std::strncpy(cvd.name, vd.name.c_str(), SLAVE_NAME_MAX_SIZE);
+    cvd.index = vd.index;
+    cvd.type = to_variable_type(vd.type);
+    cvd.causality = to_variable_causality(vd.causality);
+}
+
+int cse_slave_get_variables(cse_execution* execution, cse_slave_index slave, cse_variable_description variables[], size_t numVariables)
+{
+    for (const auto& entry : execution->simulators) {
+        if (entry.second.index == slave) {
+            auto vars = entry.second.modelDescription.variables;
+            for (auto var = 0; var < numVariables; var++) {
+                translate_variable_description(vars.at(var), variables[var]);
+            }
+        }
+    }
+    return failure;
+}
+
+
 struct cse_slave_s
 {
     std::string address;
