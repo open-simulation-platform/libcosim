@@ -292,23 +292,12 @@ int cse_execution_get_status(
 /// Max number of characters used for slave name and source.
 #define SLAVE_NAME_MAX_SIZE 1024
 
-/// A struct containing information about a slave which has been added to an execution.
-typedef struct
-{
-    /// The slave instance name.
-    char name[SLAVE_NAME_MAX_SIZE];
-    /// The slave source (FMU file name).
-    char source[SLAVE_NAME_MAX_SIZE];
-    /// The slave's unique index in the exeuction.
-    cse_slave_index index;
-} cse_slave_info;
-
 typedef enum
 {
-    CSE_REAL,
-    CSE_INTEGER,
-    CSE_STRING,
-    CSE_BOOLEAN,
+    CSE_VARIABLE_TYPE_REAL,
+    CSE_VARIABLE_TYPE_INTEGER,
+    CSE_VARIABLE_TYPE_STRING,
+    CSE_VARIABLE_TYPE_BOOLEAN,
 } cse_variable_type;
 
 typedef enum
@@ -332,16 +321,49 @@ typedef enum
 
 typedef struct
 {
+    /// The name of the variable.
     char name[SLAVE_NAME_MAX_SIZE];
+    /// The variable index.
     cse_variable_index index;
+    /// The variable type.
     cse_variable_type type;
+    /// The variable causality.
     cse_variable_causality causality;
+    /// The variable variability.
     cse_variable_variability variability;
 } cse_variable_description;
 
+/// Returns the number of variables for a slave which has been added to an execution.
 size_t cse_slave_get_num_variables(cse_execution* execution, cse_slave_index slave);
 
+/**
+ *  Returns variable metadata for a slave.
+ *
+ *  \param [in] execution
+ *      The execution which the slave has been added to.
+ *  \param [in] slave
+ *      The index of the slave.
+ *  \param [out] variables
+ *      A pointer to an array of length `numVariables` which will be filled with actual `cse_variable_description` values.
+ *  \param [in] numVariables
+ *      The length of the `variables` array.
+ *
+ *  \returns
+ *      0 on success and -1 on error.
+ */
 int cse_slave_get_variables(cse_execution* execution,  cse_slave_index slave, cse_variable_description variables[], size_t numVariables);
+
+/// A struct containing information about a slave which has been added to an execution.
+typedef struct
+{
+    /// The slave instance name.
+    char name[SLAVE_NAME_MAX_SIZE];
+    /// The slave source (FMU file name).
+    char source[SLAVE_NAME_MAX_SIZE];
+    /// The slave's unique index in the exeuction.
+    cse_slave_index index;
+} cse_slave_info;
+
 
 /// Returns the number of slaves which have been added to an execution.
 size_t cse_execution_get_num_slaves(cse_execution* execution);
