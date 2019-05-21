@@ -213,7 +213,7 @@ private:
     observable* observable_;
     boost::filesystem::path logPath_;
     size_t limit_ = 10;
-    int rate_ = 1;
+    int rate;
     boost::filesystem::ofstream fsw_;
     std::stringstream ss_;
     size_t counter_ = 0;
@@ -276,7 +276,9 @@ void file_observer::simulator_added(simulator_index index, observable* obs, time
     if (logFromConfig_) {
         // Read all configured model names from the XML. If simulator name is not in the list, terminate.
         std::vector<std::string> modelNames;
-        for (const auto& [model_block_name, model] : ptree_.get_child("models")) {
+        for (const auto& [model_key, model] : ptree_.get_child("models")) {
+            (void)model_key; // Ugly GCC 7.3 adaptation
+
             modelNames.push_back(get_attribute<std::string>(model, "name"));
         }
         if (std::find(modelNames.begin(), modelNames.end(), simulator->name()) != modelNames.end()) {

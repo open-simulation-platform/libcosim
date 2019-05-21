@@ -64,9 +64,9 @@ private:
     std::vector<variable_description> loggableBoolVariables_;
     std::vector<variable_description> loggableStringVariables_;
     boost::property_tree::ptree ptree_;
+    boost::filesystem::path configPath_;
     boost::filesystem::path logDir_;
     boost::filesystem::path logPath_;
-    boost::filesystem::path configPath_;
     bool logFromConfig_ = false;
     size_t limit_;
     size_t defaultLimit_ = 10;
