@@ -202,10 +202,6 @@ private:
     std::vector<variable_index> realIndexes_;
     std::vector<variable_index> intIndexes_;
     std::map<step_number, double> timeSamples_;
-    std::vector<variable_description> loggableRealVariables_;
-    std::vector<variable_description> loggableIntVariables_;
-    std::vector<variable_description> loggableBoolVariables_;
-    std::vector<variable_description> loggableStringVariables_;
     std::vector<variable_description> realVars_;
     std::vector<variable_description> intVars_;
     std::vector<variable_description> boolVars_;
@@ -213,7 +209,11 @@ private:
     observable* observable_;
     boost::filesystem::path logPath_;
     size_t limit_ = 10;
-    int rate;
+    int rate_;
+    std::vector<variable_description> loggableRealVariables_;
+    std::vector<variable_description> loggableIntVariables_;
+    std::vector<variable_description> loggableBoolVariables_;
+    std::vector<variable_description> loggableStringVariables_;
     boost::filesystem::ofstream fsw_;
     std::stringstream ss_;
     size_t counter_ = 0;
