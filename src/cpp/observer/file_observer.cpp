@@ -212,11 +212,11 @@ private:
     std::vector<variable_description> stringVars_;
     observable* observable_;
     boost::filesystem::path logPath_;
+    size_t limit_ = 10;
+    int rate_ = 1;
     boost::filesystem::ofstream fsw_;
     std::stringstream ss_;
     size_t counter_ = 0;
-    size_t limit_ = 10;
-    int rate_ = 1;
 };
 
 file_observer::file_observer(boost::filesystem::path& logDir, size_t limit)
@@ -389,15 +389,17 @@ cse::variable_index find_variable_index(
 
 void file_observer::parse_config(std::string simulatorName)
 {
-    for (const auto& [model_block_name, model] : ptree_.get_child("models")) {
-        auto model_name = get_attribute<std::string>(model, "name");
+    for (const auto& [model_key, model] : ptree_.get_child("models")) {
+        (void)model_key; // Ugly GCC 7.3 adaptation
 
+        auto model_name = get_attribute<std::string>(model, "name");
         if (model_name != simulatorName) continue;
 
         rate_ = get_attribute(model, "rate", defaultRate_);
         limit_ = get_attribute(model, "limit", defaultLimit_);
 
         const auto& [sim_index, simulator] = find_simulator(simulators_, model_name);
+        (void)sim_index; // Ugly GCC 7.3 adaptation
 
         for (const auto& [signal_block_name, signal] : model) {
             if (signal_block_name == "signal") {
