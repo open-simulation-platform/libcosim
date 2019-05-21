@@ -209,7 +209,7 @@ private:
     observable* observable_;
     boost::filesystem::path logPath_;
     size_t limit_ = 10;
-    int rate_;
+    int rate_ = 1;
     std::vector<variable_description> loggableRealVariables_;
     std::vector<variable_description> loggableIntVariables_;
     std::vector<variable_description> loggableBoolVariables_;
