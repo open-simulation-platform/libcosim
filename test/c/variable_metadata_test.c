@@ -3,6 +3,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #ifdef _WINDOWS
 #    include <windows.h>
@@ -52,7 +53,7 @@ int main()
 
     size_t nVar = cse_slave_get_num_variables(execution, slaveIndex);
     if (nVar != 8) {
-        fprintf(stderr, "Expected 8 variables, got %lli\n", nVar);
+        fprintf(stderr, "Expected 8 variables, got %zu\n", nVar);
         goto Lfailure;
     }
 
