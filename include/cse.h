@@ -292,6 +292,7 @@ int cse_execution_get_status(
 /// Max number of characters used for slave name and source.
 #define SLAVE_NAME_MAX_SIZE 1024
 
+/// Variable types.
 typedef enum
 {
     CSE_VARIABLE_TYPE_REAL,
@@ -300,6 +301,7 @@ typedef enum
     CSE_VARIABLE_TYPE_BOOLEAN,
 } cse_variable_type;
 
+/// Variable causalities.
 typedef enum
 {
     CSE_VARIABLE_CAUSALITY_INPUT,
@@ -310,6 +312,7 @@ typedef enum
     CSE_VARIABLE_CAUSALITY_INDEPENDENT
 } cse_variable_causality;
 
+/// Variable variabilities.
 typedef enum
 {
     CSE_VARIABLE_VARIABILITY_CONSTANT,
@@ -319,6 +322,7 @@ typedef enum
     CSE_VARIABLE_VARIABILITY_CONTINUOUS
 } cse_variable_variability;
 
+/// A struct containing metadata for a variable.
 typedef struct
 {
     /// The name of the variable.
