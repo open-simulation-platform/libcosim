@@ -55,7 +55,7 @@ struct get_variable_cache
             return modifiedValues[it->second];
         } else {
             std::ostringstream oss;
-            oss << "variable_index " << i
+            oss << "Variable with index " << i
                 << " not found in exposed variables. Variables must be exposed before calling get()";
             throw std::out_of_range(oss.str());
         }
@@ -94,8 +94,8 @@ public:
         const auto it = exposedVariables_.find(i);
         if (it == exposedVariables_.end()) {
             std::ostringstream oss;
-            oss << "variable_index " << i
-                << " not found in exposed variables. Variables must be exposed before calling set()";
+            oss << "Variable with index " << i
+                << " not found in exposed variables. Variables must be exposed before calling set_value()";
             throw std::out_of_range(oss.str());
         }
         it->second.lastValue = v;
@@ -116,7 +116,7 @@ public:
         const auto it = exposedVariables_.find(i);
         if (it == exposedVariables_.end()) {
             std::ostringstream oss;
-            oss << "variable_index " << i
+            oss << "Variable with index " << i
                 << " not found in exposed variables. Variables must be exposed before calling set_modifier()";
             throw std::out_of_range(oss.str());
         }
@@ -453,7 +453,7 @@ private:
             std::ostringstream oss;
             oss << "Variable with index " << index
                 << " and type " << type
-                << " not found in model desciption.";
+                << " not found in model description for " << name_;
             throw std::out_of_range(oss.str());
         }
         return *it;
