@@ -54,6 +54,12 @@ public:
             for (const auto idx : intIndexes_) {
                 intSamples_[timeStep].push_back(observable_->get_integer(idx));
             }
+            for (const auto idx : boolIndexes_) {
+                boolSamples_[timeStep].push_back(observable_->get_boolean(idx));
+            }
+            for (const auto idx : stringIndexes_) {
+                stringSamples_[timeStep].push_back(observable_->get_string(idx));
+            }
             timeSamples_[timeStep] = to_double_time_point(currentTime);
 
             if (counter_ >= decimationFactor_) {
@@ -98,6 +104,12 @@ private:
                 if (vd.type == variable_type::integer) {
                     intIndexes_.push_back(vd.index);
                 }
+                if (vd.type == variable_type::boolean) {
+                    boolIndexes_.push_back(vd.index);
+                }
+                if (vd.type == variable_type::string) {
+                    stringIndexes_.push_back(vd.index);
+                }
 
                 switch (vd.type) {
                     case variable_type::real:
@@ -136,6 +148,22 @@ private:
                 intIndexes_.push_back(variable.index);
                 observable_->expose_for_getting(variable_type::integer, variable.index);
                 intVars_.push_back(variable);
+            }
+        }
+
+        for (const auto& variable : loggableBoolVariables_) {
+            if (variable.causality != variable_causality::local) {
+                boolIndexes_.push_back(variable.index);
+                observable_->expose_for_getting(variable_type::boolean, variable.index);
+                boolVars_.push_back(variable);
+            }
+        }
+
+        for (const auto& variable : loggableStringVariables_) {
+            if (variable.causality != variable_causality::local) {
+                stringIndexes_.push_back(variable.index);
+                observable_->expose_for_getting(variable_type::string, variable.index);
+                stringVars_.push_back(variable);
             }
         }
 
@@ -181,8 +209,12 @@ private:
 
         for (const auto& [stepCount, values] : realSamples_) {
             ss_ << timeSamples_[stepCount] << "," << stepCount << ",";
+
             write<double>(values);
             write<int>(intSamples_[stepCount]);
+            write<bool>(boolSamples_[stepCount]);
+            write<std::string_view>(stringSamples_[stepCount]);
+
             ss_ << std::endl;
         }
 
@@ -192,13 +224,19 @@ private:
 
         realSamples_.clear();
         intSamples_.clear();
+        boolSamples_.clear();
+        stringSamples_.clear();
         timeSamples_.clear();
     }
 
     std::map<step_number, std::vector<double>> realSamples_;
     std::map<step_number, std::vector<int>> intSamples_;
+    std::map<step_number, std::vector<bool>> boolSamples_;
+    std::map<step_number, std::vector<std::string_view>> stringSamples_;
     std::vector<variable_index> realIndexes_;
     std::vector<variable_index> intIndexes_;
+    std::vector<variable_index> boolIndexes_;
+    std::vector<variable_index> stringIndexes_;
     std::map<step_number, double> timeSamples_;
     std::vector<variable_description> realVars_;
     std::vector<variable_description> intVars_;
