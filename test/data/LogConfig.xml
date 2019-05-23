@@ -1,4 +1,4 @@
-<simulators>
+<!--simulators>
     <simulator name="slave" decimationFactor="20">
         <variable name="realOut" type="real" causality="output"/>
         <variable name="intOut" type="integer" causality="output"/>
@@ -8,7 +8,7 @@
         <variable name="realOut" type="real" causality="output"/>
         <variable name="intOut" type="integer" causality="output"/>
     </simulator>
-</simulators>
-<!--simulators>
-    <simulator name="slave"/>
 </simulators-->
+<simulators>
+    <simulator name="slave"/>
+</simulators>
