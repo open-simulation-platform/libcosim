@@ -337,8 +337,8 @@ typedef struct
     cse_variable_variability variability;
 } cse_variable_description;
 
-/// Returns the number of variables for a slave which has been added to an execution.
-size_t cse_slave_get_num_variables(cse_execution* execution, cse_slave_index slave);
+/// Returns the number of variables for a slave which has been added to an execution, or -1 on error.
+int cse_slave_get_num_variables(cse_execution* execution, cse_slave_index slave);
 
 /**
  *  Returns variable metadata for a slave.
@@ -353,7 +353,7 @@ size_t cse_slave_get_num_variables(cse_execution* execution, cse_slave_index sla
  *      The length of the `variables` array.
  *
  *  \returns
- *      0 on success and -1 on error.
+ *      The number of variables written to `variables` array or -1 on error.
  */
 int cse_slave_get_variables(cse_execution* execution,  cse_slave_index slave, cse_variable_description variables[], size_t numVariables);
 

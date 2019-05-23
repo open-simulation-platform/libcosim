@@ -1,3 +1,5 @@
+#define NOMINMAX
+
 #include <cse.h>
 #include <cse/algorithm.hpp>
 #include <cse/exception.hpp>
@@ -10,6 +12,7 @@
 #include <cse/observer.hpp>
 #include <cse/ssp_parser.hpp>
 
+#include <algorithm>
 #include <atomic>
 #include <cassert>
 #include <cerrno>
@@ -213,14 +216,15 @@ int cse_execution_get_slave_infos(cse_execution* execution, cse_slave_info infos
     }
 }
 
-size_t cse_slave_get_num_variables(cse_execution* execution, cse_slave_index slave)
+int cse_slave_get_num_variables(cse_execution* execution, cse_slave_index slave)
 {
     for (const auto& entry : execution->simulators) {
         if (entry.second.index == slave) {
-            return entry.second.modelDescription.variables.size();
+            return static_cast<int>(entry.second.description.variables.size());
         }
     }
-    return 0;
+    set_last_error(CSE_ERRC_OUT_OF_RANGE, "Invalid slave index");
+    return -1;
 }
 
 cse_variable_variability to_variable_variability(const cse::variable_variability& vv)
@@ -289,11 +293,12 @@ int cse_slave_get_variables(cse_execution* execution, cse_slave_index slave, cse
     try {
         for (const auto& entry : execution->simulators) {
             if (entry.second.index == slave) {
-                auto vars = entry.second.modelDescription.variables;
-                for (size_t var = 0; var < numVariables; var++) {
+                auto vars = entry.second.description.variables;
+                int var = 0;
+                for (; var < std::min(numVariables, vars.size()); var++) {
                     translate_variable_description(vars.at(var), variables[var]);
                 }
-                return success;
+                return var;
             }
         }
         std::ostringstream oss;
