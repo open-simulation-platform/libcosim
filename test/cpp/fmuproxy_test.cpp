@@ -20,7 +20,7 @@ const int NUM_FMUS = 25;
 
 const double stop = 1;
 const double stepSize_s = 1.0 / 100;
-const int numSteps = (int)(stop / stepSize_s);
+const int numSteps = static_cast<int>(stop / stepSize_s);
 const cse::duration stepSize = cse::to_duration(stepSize_s);
 
 template<typename function>
