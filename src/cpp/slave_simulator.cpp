@@ -1,5 +1,7 @@
 #include "cse/slave_simulator.hpp"
 
+#include "cse/error.hpp"
+
 #include <boost/container/vector.hpp>
 
 #include <algorithm>
@@ -249,6 +251,8 @@ public:
             case variable_type::string:
                 stringGetCache_.expose(index);
                 break;
+            case variable_type::enumeration:
+                CSE_PANIC();
         }
     }
 
@@ -288,6 +292,8 @@ public:
             case variable_type::string:
                 stringSetCache_.expose(index, get_start_value<std::string>(vd));
                 break;
+            case variable_type::enumeration:
+                CSE_PANIC();
         }
     }
 

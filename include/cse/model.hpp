@@ -163,7 +163,8 @@ enum class variable_type
     real,
     integer,
     boolean,
-    string
+    string,
+    enumeration
 };
 
 
@@ -197,6 +198,7 @@ constexpr const char* to_text(variable_type v)
         case variable_type::integer: return "integer";
         case variable_type::boolean: return "boolean";
         case variable_type::string: return "string";
+        case variable_type::enumeration: return "enumeration";
         default: return nullptr;
     }
 }

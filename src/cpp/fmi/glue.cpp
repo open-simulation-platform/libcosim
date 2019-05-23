@@ -19,10 +19,7 @@ variable_type to_variable_type(fmi1_base_type_enu_t t)
         case fmi1_base_type_int: return variable_type::integer;
         case fmi1_base_type_bool: return variable_type::boolean;
         case fmi1_base_type_str: return variable_type::string;
-        case fmi1_base_type_enum:
-            throw cse::error(
-                make_error_code(errc::unsupported_feature),
-                "FMI 1.0 enumeration variable types not supported yet");
+        case fmi1_base_type_enum: return variable_type::enumeration;
         default:
             CSE_PANIC();
     }
@@ -36,10 +33,7 @@ variable_type to_variable_type(fmi2_base_type_enu_t t)
         case fmi2_base_type_int: return variable_type::integer;
         case fmi2_base_type_bool: return variable_type::boolean;
         case fmi2_base_type_str: return variable_type::string;
-        case fmi2_base_type_enum:
-            throw cse::error(
-                make_error_code(errc::unsupported_feature),
-                "FMI 2.0 enumeration variable types not supported yet");
+        case fmi2_base_type_enum: return variable_type::enumeration;
         default:
             CSE_PANIC();
     }
@@ -122,6 +116,8 @@ std::optional<std::variant<double, int, bool, std::string>> fmi1_to_start_value(
             return fmi1_import_get_boolean_variable_start(fmi1_import_get_variable_as_boolean(fmiVariable)) ? true : false;
         case variable_type::string:
             return std::string(fmi1_import_get_string_variable_start(fmi1_import_get_variable_as_string(fmiVariable)));
+        case variable_type::enumeration:
+            return std::nullopt;
         default:
             CSE_PANIC();
     }
@@ -157,6 +153,8 @@ std::optional<std::variant<double, int, bool, std::string>> fmi2_to_start_value(
             return fmi2_import_get_boolean_variable_start(fmi2_import_get_variable_as_boolean(fmiVariable)) ? true : false;
         case variable_type::string:
             return std::string(fmi2_import_get_string_variable_start(fmi2_import_get_variable_as_string(fmiVariable)));
+        case variable_type::enumeration:
+            return std::nullopt;
         default:
             CSE_PANIC();
     }
