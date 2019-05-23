@@ -4,9 +4,12 @@
 #include <cse/fmuproxy/remote_fmu.hpp>
 #include <cse/fmuproxy/remote_slave.hpp>
 
+#pragma warning(push)
+#pragma warning(disable : 4245)
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/transport/TSocketPool.h>
 #include <thrift/transport/TTransportUtils.h>
+#pragma warning(pop)
 
 using namespace fmuproxy::thrift;
 using namespace apache::thrift::transport;

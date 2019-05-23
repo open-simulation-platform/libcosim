@@ -6,9 +6,13 @@
 
 #include <cstdio>
 #include <string>
+
+#pragma warning(push)
+#pragma warning(disable : 4245 4706)
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/transport/TSocketPool.h>
 #include <thrift/transport/TTransportUtils.h>
+#pragma warning(pop)
 
 using namespace fmuproxy::thrift;
 using namespace apache::thrift::transport;
