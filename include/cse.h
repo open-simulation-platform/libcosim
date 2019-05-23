@@ -731,6 +731,19 @@ cse_observer* cse_last_value_observer_create();
 cse_observer* cse_file_observer_create(const char* logDir);
 
 /**
+ * Creates an observer which logs variable values to file in csv format. Variables to be logged
+ * are specified in the supplied log config xml file.
+ *
+ * @param logDir
+ *      The directory where log files will be created.
+ * @param cfgDir
+ *      The path to the provided config xml file.
+ * \returns
+ *      The created observer.
+ */
+cse_observer* cse_file_observer_create_from_cfg(const char* logDir, const char* cfgPath);
+
+/**
  * Creates an observer which buffers variable values in memory.
  *
  * To start observing a variable, `cse_observer_start_observing()` must be called.

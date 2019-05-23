@@ -310,6 +310,12 @@ struct model_description
     std::vector<variable_description> variables;
 };
 
+/// Getter for returning a variable description.
+const variable_description find_variable(const model_description& description, const std::string& variable_name, variable_type type, variable_causality causality);
+
+/// Getter for returning all variable descriptions of the given datatype.
+const std::vector<variable_description> find_variables_of_type(const model_description& description, variable_type type);
+
 
 /// Possible outcomes of a subsimulator time step
 enum class step_result
