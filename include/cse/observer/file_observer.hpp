@@ -67,8 +67,8 @@ private:
     boost::filesystem::path logDir_;
     boost::filesystem::path logPath_;
     bool logFromConfig_ = false;
-    int decimationFactor_;
-    int defaultDecimationFactor_ = 1;
+    size_t decimationFactor_;
+    size_t defaultDecimationFactor_ = 1;
 };
 
 

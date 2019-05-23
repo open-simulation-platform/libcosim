@@ -28,7 +28,7 @@ public:
         initialize_default(currentTime);
     }
 
-    slave_value_writer(observable* observable, boost::filesystem::path& logPath, int decimationFactor, time_point currentTime,
+    slave_value_writer(observable* observable, boost::filesystem::path& logPath, size_t decimationFactor, time_point currentTime,
         std::vector<variable_description>& realVars, std::vector<variable_description>& intVars,
         std::vector<variable_description>& boolVars, std::vector<variable_description>& strVars)
         : observable_(observable)
@@ -244,7 +244,7 @@ private:
     std::vector<variable_description> stringVars_;
     observable* observable_;
     boost::filesystem::path logPath_;
-    int decimationFactor_ = 1;
+    size_t decimationFactor_ = 1;
     std::vector<variable_description> loggableRealVariables_;
     std::vector<variable_description> loggableIntVariables_;
     std::vector<variable_description> loggableBoolVariables_;
