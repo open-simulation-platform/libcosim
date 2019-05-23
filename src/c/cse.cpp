@@ -296,11 +296,11 @@ int cse_slave_get_variables(cse_execution* execution, cse_slave_index slave, cse
         for (const auto& entry : execution->simulators) {
             if (entry.second.index == slave) {
                 auto vars = entry.second.description.variables;
-                int var = 0;
+                size_t var = 0;
                 for (; var < std::min(numVariables, vars.size()); var++) {
                     translate_variable_description(vars.at(var), variables[var]);
                 }
-                return var;
+                return static_cast<int>(var);
             }
         }
 
