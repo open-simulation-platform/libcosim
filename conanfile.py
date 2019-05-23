@@ -22,7 +22,9 @@ class CSECoreConan(ConanFile):
         "jsonformoderncpp/3.5.0@vthiery/stable"
         )
 
+    options = {"fmuproxy": [True, False]}
     default_options = (
+        "fmuproxy=False",
         "boost:shared=True",
         "libzip:shared=True"
         )
@@ -32,12 +34,19 @@ class CSECoreConan(ConanFile):
         self.copy("*.dll", dst=binDir, keep_path=False)
         self.copy("*.pdb", dst=binDir, keep_path=False)
 
+    def requirements(self):
+        if self.options.fmuproxy:
+            self.requires("OpenSSL/1.0.2o@conan/stable")
+            self.requires("thrift/0.12.0@helmesjo/stable")
+
     def configure_cmake(self):
         cmake = CMake(self)
         cmake.parallel = False # Needed to keep stable build on Jenkins Windows Node
         cmake.definitions["CSECORE_USING_CONAN"] = "ON"
         if self.settings.build_type == "Debug":
             cmake.definitions["CSECORE_BUILD_PRIVATE_APIDOC"] = "ON"
+        if self.options.fmuproxy:
+            cmake.definitions["CSECORE_WITH_FMUPROXY"] = "ON"
         cmake.configure()
         return cmake
 
@@ -51,4 +60,4 @@ class CSECoreConan(ConanFile):
         cmake = self.configure_cmake()
         self.run('cmake --build %s --target install-doc' % (self.build_folder))
         cmake.install()
-        
+

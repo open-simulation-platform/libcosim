@@ -21,6 +21,7 @@ pipeline {
                         stage('Configure Conan') {
                             steps {
                                 sh 'conan remote add osp https://osp-conan.azurewebsites.net/artifactory/api/conan/conan-local --force'
+                                sh 'conan remote add helmesjo https://api.bintray.com/conan/helmesjo/public-conan --force'
                                 sh 'conan user -p $OSP_CONAN_CREDS_PSW -r osp $OSP_CONAN_CREDS_USR'
                             }
                         }
@@ -104,6 +105,34 @@ pipeline {
                         }
                     }
                 }
+                stage('Build on Windows with FMU-proxy support') {
+                    agent { label 'windows' }
+
+                    environment {
+                        CONAN_USER_HOME = "${env.BASE}\\conan-repositories\\${env.EXECUTOR_NUMBER}"
+                        CONAN_USER_HOME_SHORT = "${env.CONAN_USER_HOME}"
+                        OSP_CONAN_CREDS = credentials('jenkins-osp-conan-creds')
+                        CSE_CONAN_CHANNEL = "${env.BRANCH_NAME}".replaceAll("/", "_")
+                    }
+
+                    stages {
+                        stage('Configure Conan') {
+                            steps {
+                                sh 'conan remote add osp https://osp-conan.azurewebsites.net/artifactory/api/conan/conan-local --force'
+                                sh 'conan remote add helmesjo https://api.bintray.com/conan/helmesjo/public-conan --force'
+                                sh 'conan user -p $OSP_CONAN_CREDS_PSW -r osp $OSP_CONAN_CREDS_USR'
+                            }
+                        }
+                        stage('Build Release') {
+                            steps {
+                                dir('release-build-fmuproxy') {
+                                    bat 'conan install ../cse-core -s build_type=Release -o fmuproxy=True -b missing'
+                                    bat 'conan package ../cse-core -pf package/windows/release'
+                                }
+                            }
+                        }
+                    }
+                }
                 stage ( 'Build on Linux with Conan' ) {
                     agent { 
                         dockerfile {
@@ -125,6 +154,7 @@ pipeline {
                         stage('Configure Conan') {
                             steps {
                                 sh 'conan remote add osp https://osp-conan.azurewebsites.net/artifactory/api/conan/conan-local --force'
+                                sh 'conan remote add helmesjo https://api.bintray.com/conan/helmesjo/public-conan --force'
                                 sh 'conan user -p $OSP_CONAN_CREDS_PSW -r osp $OSP_CONAN_CREDS_USR'
                             }
                         }
@@ -175,7 +205,6 @@ pipeline {
                                 }
                             }
                         }
-                        
                         stage ('Test Release') {
                             steps {
                                 dir('release-build-conan') {
@@ -204,6 +233,41 @@ pipeline {
                                     dir('release-build-conan/Testing') {
                                         deleteDir();
                                     }
+                                }
+                            }
+                        }
+                    }
+                }
+                stage ( 'Build on Linux with Conan & FMU-proxy support' ) {
+                    agent {
+                        dockerfile {
+                            filename 'Dockerfile.conan-build'
+                            dir 'cse-core/.dockerfiles'
+                            label 'linux && docker'
+                            args '-v ${HOME}/jenkins_slave/conan-repositories/${EXECUTOR_NUMBER}:/conan_repo'
+                        }
+                    }
+
+                    environment {
+                        CONAN_USER_HOME = '/conan_repo'
+                        CONAN_USER_HOME_SHORT = 'None'
+                        OSP_CONAN_CREDS = credentials('jenkins-osp-conan-creds')
+                        CSE_CONAN_CHANNEL = "${env.BRANCH_NAME}".replaceAll("/", "_")
+                    }
+
+                    stages {
+                        stage('Configure Conan') {
+                            steps {
+                                sh 'conan remote add osp https://osp-conan.azurewebsites.net/artifactory/api/conan/conan-local --force'
+                                sh 'conan remote add helmesjo https://api.bintray.com/conan/helmesjo/public-conan --force'
+                                sh 'conan user -p $OSP_CONAN_CREDS_PSW -r osp $OSP_CONAN_CREDS_USR'
+                            }
+                        }
+                        stage('Build Release') {
+                            steps {
+                                dir('release-build-conan-fmuproxy') {
+                                    sh 'conan install ../cse-core -s compiler.libcxx=libstdc++11 -s build_type=Release -o fmuproxy=True -b missing'
+                                    sh 'conan package ../cse-core -pf package/linux/release'
                                 }
                             }
                         }

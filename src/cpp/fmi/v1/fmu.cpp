@@ -66,7 +66,14 @@ fmu::fmu(
     const auto varCount = fmi1_import_get_variable_list_size(varList);
     for (unsigned int i = 0; i < varCount; ++i) {
         const auto var = fmi1_import_get_variable(varList, i);
-        modelDescription_.variables.push_back(to_variable_description(var));
+        const auto vd = to_variable_description(var);
+        if (variable_type::enumeration != vd.type) {
+            modelDescription_.variables.push_back(vd);
+        } else {
+            BOOST_LOG_SEV(log::logger(), log::level::warning)
+                << "FMI 1.0 Enumeration variable type not supported, variable with name "
+                << vd.name << " will be ignored";
+        }
     }
 }
 

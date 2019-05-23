@@ -124,6 +124,8 @@ private:
                     case variable_type::boolean:
                         boolVars_.push_back(vd);
                         break;
+                    case variable_type::enumeration:
+                        CSE_PANIC();
                 }
             }
         }
