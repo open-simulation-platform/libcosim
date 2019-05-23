@@ -42,14 +42,15 @@ int main()
         execution.add_slave(
             cse::make_pseudo_async(std::make_unique<mock_slave>(
                 [](double x) { return x + 1.234; },
-                [](int x) { return x + 1; })),
+                [](int x) { return x + 1; },
+                [](bool x) {return x; })),
             "slave");
 
         execution.add_slave(
-                cse::make_pseudo_async(std::make_unique<mock_slave>(
-                        [](double x) { return x + 1.234; },
-                        [](int x) { return x + 1; })),
-                "slave2");
+            cse::make_pseudo_async(std::make_unique<mock_slave>(
+                [](double x) { return x + 1.234; },
+                [](int x) { return x + 1; })),
+            "slave2");
 
         // Run the simulation
         auto simResult = execution.simulate_until(endTime);

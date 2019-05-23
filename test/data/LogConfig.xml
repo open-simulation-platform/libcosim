@@ -1,13 +1,14 @@
-<!--models>
-    <model name="slave" rate="20" limit="10">
+<models>
+    <model name="slave" decimationFactor="20" limit="10">
         <signal name="realOut" type="real" causality="output"/>
         <signal name="intOut" type="integer" causality="output"/>
+        <signal name="boolOut" type="boolean" causality="output"/>
     </model>
     <model name="slave2">
         <signal name="realOut" type="real" causality="output"/>
         <signal name="intOut" type="integer" causality="output"/>
     </model>
-</models-->
-<models>
-    <model name="slave"/>
 </models>
+<!--models>
+    <model name="slave"/>
+</models-->

@@ -224,8 +224,6 @@ struct cse_slave_s
 cse_slave* cse_local_slave_create(const char* fmuPath)
 {
     try {
-        std::cout << "Importing slave " << fmuPath << std::endl;
-
         const auto importer = cse::fmi::importer::create();
         const auto fmu = importer->import(fmuPath);
         auto slave = std::make_unique<cse_slave>();
@@ -594,18 +592,16 @@ cse_observer* cse_file_observer_create(const char* logDir)
 {
     auto observer = std::make_unique<cse_observer>();
     auto logPath = boost::filesystem::path(logDir);
-    observer->cpp_observer = std::make_shared<cse::file_observer>(logPath, 100);
+    observer->cpp_observer = std::make_shared<cse::file_observer>(logPath);
     return observer.release();
 }
 
-cse_observer* cse_file_observer_create_from_cfg(const char* logDir, const char* cfgDir)
+cse_observer* cse_file_observer_create_from_cfg(const char* logDir, const char* cfgPath)
 {
-    std::cout << "Registering log observer with logPath: " << logDir << ", cfgPath " << cfgDir << std::endl;
-
     auto observer = std::make_unique<cse_observer>();
-    auto logPath = boost::filesystem::path(logDir);
-    auto cfgPath = boost::filesystem::path(cfgDir);
-    observer->cpp_observer = std::make_shared<cse::file_observer>(cfgPath, logPath);
+    auto boostLogDir = boost::filesystem::path(logDir);
+    auto boostCfgPath = boost::filesystem::path(cfgPath);
+    observer->cpp_observer = std::make_shared<cse::file_observer>(boostCfgPath, boostLogDir);
     return observer.release();
 }
 

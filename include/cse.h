@@ -683,7 +683,7 @@ cse_observer* cse_file_observer_create(const char* logDir);
  * \returns
  *      The created observer.
  */
-cse_observer* cse_file_observer_create_from_cfg(const char* logDir, const char* cfgDir);
+cse_observer* cse_file_observer_create_from_cfg(const char* logDir, const char* cfgPath);
 
 /**
  * Creates an observer which buffers variable values in memory.

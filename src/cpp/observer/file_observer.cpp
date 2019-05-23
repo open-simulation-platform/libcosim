@@ -21,21 +21,19 @@ namespace cse
 class file_observer::slave_value_writer
 {
 public:
-    slave_value_writer(observable* observable, boost::filesystem::path& logPath, size_t limit, time_point currentTime)
+    slave_value_writer(observable* observable, boost::filesystem::path& logPath, time_point currentTime)
         : observable_(observable)
         , logPath_(logPath)
-        , limit_(limit)
     {
         initialize_default(currentTime);
     }
 
-    slave_value_writer(observable* observable, boost::filesystem::path& logPath, size_t limit, int rate, time_point currentTime,
+    slave_value_writer(observable* observable, boost::filesystem::path& logPath, int decimationFactor, time_point currentTime,
         std::vector<variable_description>& realVars, std::vector<variable_description>& intVars,
         std::vector<variable_description>& boolVars, std::vector<variable_description>& strVars)
         : observable_(observable)
         , logPath_(logPath)
-        , limit_(limit)
-        , rate_(rate)
+        , decimationFactor_(decimationFactor)
         , loggableRealVariables_(realVars)
         , loggableIntVariables_(intVars)
         , loggableBoolVariables_(boolVars)
@@ -46,7 +44,7 @@ public:
 
     void observe(step_number timeStep, time_point currentTime)
     {
-        if (++counter_ % rate_ == 0) {
+        if (++counter_ % decimationFactor_ == 0) {
             realSamples_[timeStep].reserve(realIndexes_.size());
             intSamples_[timeStep].reserve(intIndexes_.size());
 
@@ -58,7 +56,7 @@ public:
             }
             timeSamples_[timeStep] = to_double_time_point(currentTime);
 
-            if (counter_ >= limit_) {
+            if (counter_ >= decimationFactor_) {
                 persist();
                 counter_ = 0;
             }
@@ -208,8 +206,7 @@ private:
     std::vector<variable_description> stringVars_;
     observable* observable_;
     boost::filesystem::path logPath_;
-    size_t limit_ = 10;
-    int rate_ = 1;
+    int decimationFactor_ = 1;
     std::vector<variable_description> loggableRealVariables_;
     std::vector<variable_description> loggableIntVariables_;
     std::vector<variable_description> loggableBoolVariables_;
@@ -219,13 +216,12 @@ private:
     size_t counter_ = 0;
 };
 
-file_observer::file_observer(boost::filesystem::path& logDir, size_t limit)
+file_observer::file_observer(const boost::filesystem::path& logDir)
     : logDir_(logDir)
-    , limit_(limit)
 {
 }
 
-file_observer::file_observer(boost::filesystem::path& configPath, boost::filesystem::path& logDir)
+file_observer::file_observer(const boost::filesystem::path& configPath, const boost::filesystem::path& logDir)
     : configPath_(configPath)
     , logDir_(logDir)
     , logFromConfig_(true)
@@ -234,6 +230,8 @@ file_observer::file_observer(boost::filesystem::path& configPath, boost::filesys
         boost::property_tree::xml_parser::no_comments | boost::property_tree::xml_parser::trim_whitespace);
 }
 
+namespace
+{
 std::string format_time(boost::posix_time::ptime now)
 {
     std::locale loc(std::wcout.getloc(), new boost::posix_time::wtime_facet(L"%Y%m%d_%H%M%S"));
@@ -245,6 +243,7 @@ std::string format_time(boost::posix_time::ptime now)
     std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
     return converter.to_bytes(wss.str());
 }
+} // namespace
 
 template<typename T>
 T get_attribute(const boost::property_tree::ptree& tree, const std::string& key)
@@ -284,7 +283,7 @@ void file_observer::simulator_added(simulator_index index, observable* obs, time
         if (std::find(modelNames.begin(), modelNames.end(), simulator->name()) != modelNames.end()) {
             parse_config(simulator->name());
 
-            valueWriters_[index] = std::make_unique<slave_value_writer>(obs, logPath_, limit_, rate_, currentTime,
+            valueWriters_[index] = std::make_unique<slave_value_writer>(obs, logPath_, decimationFactor_, currentTime,
                 loggableRealVariables_, loggableIntVariables_, loggableBoolVariables_, loggableStringVariables_);
 
             loggableRealVariables_.clear();
@@ -295,7 +294,7 @@ void file_observer::simulator_added(simulator_index index, observable* obs, time
             return;
 
     } else {
-        valueWriters_[index] = std::make_unique<slave_value_writer>(obs, logPath_, limit_, currentTime);
+        valueWriters_[index] = std::make_unique<slave_value_writer>(obs, logPath_, currentTime);
     }
 }
 
@@ -328,11 +327,6 @@ boost::filesystem::path file_observer::get_log_path()
     return logPath_;
 }
 
-boost::filesystem::path file_observer::get_config_path()
-{
-    return configPath_;
-}
-
 std::pair<cse::simulator_index, cse::simulator*> find_simulator(
     const std::unordered_map<simulator_index, simulator*>& simulators,
     const std::string& model)
@@ -345,7 +339,7 @@ std::pair<cse::simulator_index, cse::simulator*> find_simulator(
     throw std::invalid_argument("Can't find model: " + model);
 }
 
-cse::variable_type find_type(std::string& typestr)
+cse::variable_type find_type(const std::string& typestr)
 {
     if (typestr == "real") {
         return variable_type::real;
@@ -359,7 +353,7 @@ cse::variable_type find_type(std::string& typestr)
     throw std::invalid_argument("Can't process unknown variable type");
 }
 
-cse::variable_causality find_causality(std::string& caus)
+cse::variable_causality find_causality(const std::string& caus)
 {
     if (caus == "output") {
         return variable_causality::output;
@@ -389,7 +383,7 @@ cse::variable_index find_variable_index(
     throw std::invalid_argument("Can't find variable index");
 }
 
-void file_observer::parse_config(std::string simulatorName)
+void file_observer::parse_config(const std::string& simulatorName)
 {
     for (const auto& [model_key, model] : ptree_.get_child("models")) {
         (void)model_key; // Ugly GCC 7.3 adaptation
@@ -397,11 +391,19 @@ void file_observer::parse_config(std::string simulatorName)
         auto model_name = get_attribute<std::string>(model, "name");
         if (model_name != simulatorName) continue;
 
-        rate_ = get_attribute(model, "rate", defaultRate_);
-        limit_ = get_attribute(model, "limit", defaultLimit_);
+        decimationFactor_ = get_attribute(model, "decimationFactor", defaultDecimationFactor_);
 
         const auto& [sim_index, simulator] = find_simulator(simulators_, model_name);
         (void)sim_index; // Ugly GCC 7.3 adaptation
+
+        if (model.count("signal") == 0) {
+            loggableRealVariables_ = simulator->model_description().find_variables_of_type(variable_type::real);
+            loggableIntVariables_ = simulator->model_description().find_variables_of_type(variable_type::integer);
+            loggableBoolVariables_ = simulator->model_description().find_variables_of_type(variable_type::boolean);
+            loggableStringVariables_ = simulator->model_description().find_variables_of_type(variable_type::string);
+
+            continue;
+        }
 
         for (const auto& [signal_block_name, signal] : model) {
             if (signal_block_name == "signal") {
@@ -432,8 +434,7 @@ void file_observer::parse_config(std::string simulatorName)
     }
 }
 
-file_observer::~file_observer()
-{
-}
+file_observer::~file_observer() = default;
+
 
 } // namespace cse

@@ -19,8 +19,8 @@ class CSECoreConan(ConanFile):
         "FMILibrary/2.0.3@kyllingstad/testing",
         "gsl_microsoft/1.0.0@bincrafters/stable",
         "libzip/1.5.1@bincrafters/stable",
-        "jsonformoderncpp/3.5.0@vthiery/stable",
-        )
+        "jsonformoderncpp/3.5.0@vthiery/stable"
+    )
 
     default_options = (
         "boost:shared=True",

@@ -25,9 +25,9 @@ namespace cse
 class file_observer : public observer
 {
 public:
-    file_observer(boost::filesystem::path& logDir, size_t limit);
+    file_observer(const boost::filesystem::path& logDir);
 
-    file_observer(boost::filesystem::path& configPath, boost::filesystem::path& logDir);
+    file_observer(const boost::filesystem::path& configPath, const boost::filesystem::path& logDir);
 
     void simulator_added(simulator_index, observable*, time_point) override;
 
@@ -49,12 +49,11 @@ public:
         time_point currentTime) override;
 
     boost::filesystem::path get_log_path();
-    boost::filesystem::path get_config_path();
 
-    ~file_observer();
+    ~file_observer() override;
 
 private:
-    void parse_config(std::string simulatorName);
+    void parse_config(const std::string& simulatorName);
 
     class slave_value_writer;
     std::unordered_map<simulator_index, std::unique_ptr<slave_value_writer>> valueWriters_;
@@ -68,10 +67,8 @@ private:
     boost::filesystem::path logDir_;
     boost::filesystem::path logPath_;
     bool logFromConfig_ = false;
-    size_t limit_;
-    size_t defaultLimit_ = 10;
-    int rate_;
-    int defaultRate_ = 1;
+    int decimationFactor_;
+    int defaultDecimationFactor_ = 1;
 };
 
 
