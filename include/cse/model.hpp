@@ -163,7 +163,8 @@ enum class variable_type
     real,
     integer,
     boolean,
-    string
+    string,
+    enumeration
 };
 
 
