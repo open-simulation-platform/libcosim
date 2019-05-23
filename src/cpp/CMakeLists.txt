@@ -49,6 +49,7 @@ set(sources
     "fmi/importer.cpp"
     "fmi/v1/fmu.cpp"
     "fmi/v2/fmu.cpp"
+    "model.cpp"
     "observer/file_observer.cpp"
     "observer/last_value_observer.cpp"
     "observer/time_series_observer.cpp"

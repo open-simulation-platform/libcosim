@@ -306,31 +306,13 @@ struct model_description
 
     /// Variable descriptions.
     std::vector<variable_description> variables;
-
-    // Getter for returning a variable description.
-    const variable_description find_variable(const std::string& variable_name, variable_type type, variable_causality causality)
-    {
-        for (const auto& variable : variables) {
-            if (variable.name == variable_name && variable.type == type && variable.causality == causality) {
-                return variable;
-            }
-        }
-        throw std::invalid_argument("Can't find variable descriptor with name " + variable_name);
-    }
-
-    // Getter for returning all variable descriptions of the given datatype.
-    const std::vector<variable_description> find_variables_of_type(variable_type type)
-    {
-        std::vector<variable_description> vars;
-
-        for (const auto& variable : variables) {
-            if (variable.type == type) {
-                vars.push_back(variable);
-            }
-        }
-        return vars;
-    }
 };
+
+/// Getter for returning a variable description.
+const variable_description find_variable(const model_description& description, const std::string& variable_name, variable_type type, variable_causality causality);
+
+/// Getter for returning all variable descriptions of the given datatype.
+const std::vector<variable_description> find_variables_of_type(const model_description& description, variable_type type);
 
 
 /// Possible outcomes of a subsimulator time step

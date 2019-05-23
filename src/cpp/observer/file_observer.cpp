@@ -136,35 +136,27 @@ private:
     void initialize_config(time_point currentTime)
     {
         for (const auto& variable : loggableRealVariables_) {
-            if (variable.causality != variable_causality::local) {
-                realIndexes_.push_back(variable.index);
-                observable_->expose_for_getting(variable_type::real, variable.index);
-                realVars_.push_back(variable);
-            }
+            realIndexes_.push_back(variable.index);
+            observable_->expose_for_getting(variable_type::real, variable.index);
+            realVars_.push_back(variable);
         }
 
         for (const auto& variable : loggableIntVariables_) {
-            if (variable.causality != variable_causality::local) {
-                intIndexes_.push_back(variable.index);
-                observable_->expose_for_getting(variable_type::integer, variable.index);
-                intVars_.push_back(variable);
-            }
+            intIndexes_.push_back(variable.index);
+            observable_->expose_for_getting(variable_type::integer, variable.index);
+            intVars_.push_back(variable);
         }
 
         for (const auto& variable : loggableBoolVariables_) {
-            if (variable.causality != variable_causality::local) {
-                boolIndexes_.push_back(variable.index);
-                observable_->expose_for_getting(variable_type::boolean, variable.index);
-                boolVars_.push_back(variable);
-            }
+            boolIndexes_.push_back(variable.index);
+            observable_->expose_for_getting(variable_type::boolean, variable.index);
+            boolVars_.push_back(variable);
         }
 
         for (const auto& variable : loggableStringVariables_) {
-            if (variable.causality != variable_causality::local) {
-                stringIndexes_.push_back(variable.index);
-                observable_->expose_for_getting(variable_type::string, variable.index);
-                stringVars_.push_back(variable);
-            }
+            stringIndexes_.push_back(variable.index);
+            observable_->expose_for_getting(variable_type::string, variable.index);
+            stringVars_.push_back(variable);
         }
 
         write_header();
@@ -281,7 +273,7 @@ std::string format_time(boost::posix_time::ptime now)
     std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
     return converter.to_bytes(wss.str());
 }
-} // namespace
+
 
 template<typename T>
 T get_attribute(const boost::property_tree::ptree& tree, const std::string& key)
@@ -294,12 +286,11 @@ T get_attribute(const boost::property_tree::ptree& tree, const std::string& key,
 {
     return tree.get<T>("<xmlattr>." + key, defaultValue);
 }
+} // namespace
 
-void file_observer::simulator_added(simulator_index index, observable* obs, time_point currentTime)
+void file_observer::simulator_added(simulator_index index, observable* simulator, time_point currentTime)
 {
     auto time_str = format_time(boost::posix_time::second_clock::local_time());
-    auto simulator = dynamic_cast<cse::simulator*>(obs);
-
     auto name = simulator->name().append("_").append(std::to_string(index)).append("_");
     auto extension = time_str.append(".csv");
     auto filename = name.append(extension);
@@ -313,7 +304,7 @@ void file_observer::simulator_added(simulator_index index, observable* obs, time
     if (logFromConfig_) {
         // Read all configured model names from the XML. If simulator name is not in the list, terminate.
         std::vector<std::string> modelNames;
-        for (const auto& [model_key, model] : ptree_.get_child("models")) {
+        for (const auto& [model_key, model] : ptree_.get_child("simulators")) {
             (void)model_key; // Ugly GCC 7.3 adaptation
 
             modelNames.push_back(get_attribute<std::string>(model, "name"));
@@ -321,7 +312,7 @@ void file_observer::simulator_added(simulator_index index, observable* obs, time
         if (std::find(modelNames.begin(), modelNames.end(), simulator->name()) != modelNames.end()) {
             parse_config(simulator->name());
 
-            valueWriters_[index] = std::make_unique<slave_value_writer>(obs, logPath_, decimationFactor_, currentTime,
+            valueWriters_[index] = std::make_unique<slave_value_writer>(simulator, logPath_, decimationFactor_, currentTime,
                 loggableRealVariables_, loggableIntVariables_, loggableBoolVariables_, loggableStringVariables_);
 
             loggableRealVariables_.clear();
@@ -332,7 +323,7 @@ void file_observer::simulator_added(simulator_index index, observable* obs, time
             return;
 
     } else {
-        valueWriters_[index] = std::make_unique<slave_value_writer>(obs, logPath_, currentTime);
+        valueWriters_[index] = std::make_unique<slave_value_writer>(simulator, logPath_, currentTime);
     }
 }
 
@@ -365,8 +356,8 @@ boost::filesystem::path file_observer::get_log_path()
     return logPath_;
 }
 
-std::pair<cse::simulator_index, cse::simulator*> find_simulator(
-    const std::unordered_map<simulator_index, simulator*>& simulators,
+std::pair<cse::simulator_index, cse::observable*> find_simulator(
+    const std::unordered_map<simulator_index, observable*>& simulators,
     const std::string& model)
 {
     for (const auto& [idx, simulator] : simulators) {
@@ -423,48 +414,47 @@ cse::variable_index find_variable_index(
 
 void file_observer::parse_config(const std::string& simulatorName)
 {
-    for (const auto& [model_key, model] : ptree_.get_child("models")) {
-        (void)model_key; // Ugly GCC 7.3 adaptation
+    for (const auto& [simulatorElementName, simulatorElement] : ptree_.get_child("simulators")) {
+        (void)simulatorElementName; // Ugly GCC 7.3 adaptation
 
-        auto model_name = get_attribute<std::string>(model, "name");
-        if (model_name != simulatorName) continue;
+        auto modelName = get_attribute<std::string>(simulatorElement, "name");
+        if (modelName != simulatorName) continue;
 
-        decimationFactor_ = get_attribute(model, "decimationFactor", defaultDecimationFactor_);
+        decimationFactor_ = get_attribute(simulatorElement, "decimationFactor", defaultDecimationFactor_);
 
-        const auto& [sim_index, simulator] = find_simulator(simulators_, model_name);
-        (void)sim_index; // Ugly GCC 7.3 adaptation
+        const auto& [simulatorIndex, simulator] = find_simulator(simulators_, modelName);
+        (void)simulatorIndex; // Ugly GCC 7.3 adaptation
 
-        if (model.count("signal") == 0) {
-            loggableRealVariables_ = simulator->model_description().find_variables_of_type(variable_type::real);
-            loggableIntVariables_ = simulator->model_description().find_variables_of_type(variable_type::integer);
-            loggableBoolVariables_ = simulator->model_description().find_variables_of_type(variable_type::boolean);
-            loggableStringVariables_ = simulator->model_description().find_variables_of_type(variable_type::string);
+        if (simulatorElement.count("variable") == 0) {
+            loggableRealVariables_ = find_variables_of_type(simulator->model_description(), variable_type::real);
+            loggableIntVariables_ = find_variables_of_type(simulator->model_description(), variable_type::integer);
+            loggableBoolVariables_ = find_variables_of_type(simulator->model_description(), variable_type::boolean);
+            loggableStringVariables_ = find_variables_of_type(simulator->model_description(), variable_type::string);
 
             continue;
         }
 
-        for (const auto& [signal_block_name, signal] : model) {
-            if (signal_block_name == "signal") {
+        for (const auto& [variableElementName, variableElement] : simulatorElement) {
+            if (variableElementName == "variable") {
+                const auto name = get_attribute<std::string>(variableElement, "name");
+                const auto type = get_attribute<std::string>(variableElement, "type");
+                const auto causality = get_attribute<std::string>(variableElement, "causality");
 
-                auto name = get_attribute<std::string>(signal, "name");
-                auto type = get_attribute<std::string>(signal, "type");
-                auto causality = get_attribute<std::string>(signal, "causality");
-
-                auto variable = simulator->model_description().find_variable(
-                    name, find_type(type), find_causality(causality));
+                const auto variableDescription =
+                    find_variable(simulator->model_description(), name, find_type(type), find_causality(causality));
 
                 switch (find_type(type)) {
                     case variable_type::real:
-                        loggableRealVariables_.push_back(variable);
+                        loggableRealVariables_.push_back(variableDescription);
                         break;
                     case variable_type::integer:
-                        loggableIntVariables_.push_back(variable);
+                        loggableIntVariables_.push_back(variableDescription);
                         break;
                     case variable_type::boolean:
-                        loggableBoolVariables_.push_back(variable);
+                        loggableBoolVariables_.push_back(variableDescription);
                         break;
                     case variable_type::string:
-                        loggableStringVariables_.push_back(variable);
+                        loggableStringVariables_.push_back(variableDescription);
                         break;
                 }
             }

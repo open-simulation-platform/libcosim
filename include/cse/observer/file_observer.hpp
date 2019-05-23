@@ -5,14 +5,13 @@
 #ifndef CSE_OBSERVER_FILE_OBSERVER_HPP
 #define CSE_OBSERVER_FILE_OBSERVER_HPP
 
-#include <memory>
-#include <unordered_map>
-
 #include <cse/observer/observer.hpp>
-#include <cse/algorithm.hpp>
 
 #include <boost/filesystem/path.hpp>
 #include <boost/property_tree/ptree.hpp>
+
+#include <memory>
+#include <unordered_map>
 
 
 namespace cse
@@ -57,7 +56,7 @@ private:
 
     class slave_value_writer;
     std::unordered_map<simulator_index, std::unique_ptr<slave_value_writer>> valueWriters_;
-    std::unordered_map<simulator_index, simulator*> simulators_;
+    std::unordered_map<simulator_index, observable*> simulators_;
     std::vector<variable_description> loggableRealVariables_;
     std::vector<variable_description> loggableIntVariables_;
     std::vector<variable_description> loggableBoolVariables_;
