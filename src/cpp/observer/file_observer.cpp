@@ -458,6 +458,8 @@ void file_observer::parse_config(const std::string& simulatorName)
                     case variable_type::string:
                         loggableStringVariables_.push_back(variableDescription);
                         break;
+                    case variable_type::enumeration:
+                        CSE_PANIC();
                 }
             }
         }
