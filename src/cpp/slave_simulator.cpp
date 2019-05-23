@@ -251,6 +251,8 @@ public:
             case variable_type::string:
                 stringGetCache_.expose(index);
                 break;
+            case variable_type::enumeration:
+                CSE_PANIC();
         }
     }
 
