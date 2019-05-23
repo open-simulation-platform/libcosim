@@ -58,6 +58,8 @@ public:
                         case variable_type::boolean:
                             boolVars.push_back(vd);
                             break;
+                        case variable_type::enumeration:
+                            CSE_PANIC();
                     }
                 }
             }
