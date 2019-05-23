@@ -22,7 +22,7 @@ cse::fmuproxy::remote_fmu::remote_fmu(
     , state_(std::move(state))
 {
     ::fmuproxy::thrift::ModelDescription md = ModelDescription();
-    state_->client_->get_model_description(md, fmuId);
+    state_->client().get_model_description(md, fmuId);
     modelDescription_ = convert(md);
 }
 
@@ -34,7 +34,7 @@ std::shared_ptr<const cse::model_description> cse::fmuproxy::remote_fmu::descrip
 std::shared_ptr<cse::slave> cse::fmuproxy::remote_fmu::instantiate_slave()
 {
     InstanceId instanceId;
-    state_->client_->create_instance_from_cs(instanceId, fmuId_);
+    state_->client().create_instance_from_cs(instanceId, fmuId_);
     return std::make_shared<cse::fmuproxy::remote_slave>(instanceId, state_, modelDescription_);
 }
 

@@ -8,6 +8,14 @@ cse::fmuproxy::thrift_state::thrift_state(std::shared_ptr<::fmuproxy::thrift::fm
     , transport_(std::move(transport_))
 {}
 
+::fmuproxy::thrift::fmu_service_if& cse::fmuproxy::thrift_state::client()
+{
+    return *client_;
+}
+apache::thrift::transport::TTransport& cse::fmuproxy::thrift_state::transport()
+{
+    return *transport_;
+}
 
 cse::fmuproxy::thrift_state::~thrift_state()
 {
