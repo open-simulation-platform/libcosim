@@ -1,4 +1,6 @@
-#define NOMINMAX
+#if defined(_WIN32) && !defined(NOMINMAX)
+#    define NOMINMAX
+#endif
 
 #include <cse.h>
 #include <cse/algorithm.hpp>
@@ -301,6 +303,7 @@ int cse_slave_get_variables(cse_execution* execution, cse_slave_index slave, cse
                 return var;
             }
         }
+
         std::ostringstream oss;
         oss << "Slave with index " << slave
             << " was not found among loaded slaves.";
