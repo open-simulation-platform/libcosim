@@ -12,6 +12,7 @@ option(CSECORE_BUILD_APIDOC "Build API documentation" ON)
 option(CSECORE_BUILD_PRIVATE_APIDOC "Build private API documentation" OFF)
 option(CSECORE_STANDALONE_INSTALLATION "Whether to build for a standalone installation (Linux only; sets a relative RPATH)" OFF)
 option(CSECORE_USING_CONAN "Whether Conan is used for package management" OFF)
+option(CSECORE_WITH_FMUPROXY "Whether or not to build with fmuproxy integration" OFF)
 
 if(CSECORE_USING_CONAN)
     set(supportedConanGenerators "cmake" "cmake_find_package_multi")
@@ -80,6 +81,12 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
         # should not be a problem, so we disable the warning.
         add_compile_options("/wd4251")
     endif()
+    if (CSECORE_WITH_FMUPROXY)
+        #warning C4245: 'return': conversion from 'int' to 'SOCKET', signed/unsigned mismatch
+        add_compile_options("/wd4245")
+        #warning C4706: assignment within conditional expression
+        add_compile_options("/wd4706")
+    endif()
     add_definitions("-D_SCL_SECURE_NO_WARNINGS" "-D_CRT_SECURE_NO_WARNINGS")
 endif()
 
@@ -137,6 +144,9 @@ if(CSECORE_USING_CONAN AND CSECORE_CONAN_GENERATOR STREQUAL "cmake_find_package_
     find_package(FMILibrary REQUIRED NO_MODULE)
     find_package(libzip REQUIRED NO_MODULE)
     find_package(jsonformoderncpp REQUIRED NO_MODULE)
+    if(CSECORE_WITH_FMUPROXY)
+        find_package(thrift REQUIRED NO_MODULE)
+    endif()
 
     foreach(comp boost ${boostComponents})
         add_library("Boost::${comp}" INTERFACE IMPORTED GLOBAL)
@@ -148,6 +158,9 @@ else()
     find_package(FMILibrary REQUIRED)
     find_package(libzip REQUIRED)
     find_package(jsonformoderncpp REQUIRED)
+    if(CSECORE_WITH_FMUPROXY)
+        find_package(Thrift REQUIRED)
+    endif()
 endif()
 
 # ==============================================================================

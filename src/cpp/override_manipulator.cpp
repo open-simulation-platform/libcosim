@@ -1,5 +1,7 @@
 #include "cse/manipulator.hpp"
 
+#include <sstream>
+
 namespace cse
 {
 
@@ -27,7 +29,10 @@ cse::variable_causality find_variable_causality(
             return vd.causality;
         }
     }
-    throw std::invalid_argument("Can't find variable causality");
+    std::ostringstream oss;
+    oss << "Can't find variable with index: " << index
+        << " and type: " << to_text(type);
+    throw std::invalid_argument(oss.str());
 }
 
 bool is_input(cse::variable_causality causality)
@@ -40,8 +45,10 @@ bool is_input(cse::variable_causality causality)
         case output:
             return false;
         default:
-            throw std::invalid_argument(
-                "No support for modifying a variable with this causality");
+            std::ostringstream oss;
+            oss << "No support for modifying a variable with causality: "
+                << to_text(causality) << ".";
+            throw std::invalid_argument(oss.str());
     }
 }
 

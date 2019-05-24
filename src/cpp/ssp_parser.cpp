@@ -203,7 +203,7 @@ std::pair<execution, simulator_map> load_ssp(const boost::filesystem::path& sspD
         auto slave = fmu->instantiate_slave(component.name);
         simulator_index index = slaves[component.name].index = execution.add_slave(cse::make_background_thread_slave(slave), component.name);
 
-        simulatorMap[component.name] = simulator_map_entry {index, component.source};
+        simulatorMap[component.name] = simulator_map_entry{index, component.source, slave->model_description()};
 
         for (const auto& v : fmu->model_description()->variables) {
             slaves[component.name].variables[v.name] = v;

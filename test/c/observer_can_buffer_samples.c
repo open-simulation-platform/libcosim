@@ -69,9 +69,9 @@ int main()
 
     cse_variable_index index = 0;
 
-    rc = cse_observer_start_observing(observer, slaveIndex, CSE_REAL, index);
+    rc = cse_observer_start_observing(observer, slaveIndex, CSE_VARIABLE_TYPE_REAL, index);
     if (rc < 0) { goto Lerror; }
-    rc = cse_observer_start_observing(observer, slaveIndex, CSE_INTEGER, index);
+    rc = cse_observer_start_observing(observer, slaveIndex, CSE_VARIABLE_TYPE_INTEGER, index);
     if (rc < 0) { goto Lerror; }
 
     for (int i = 0; i < 10; i++) {

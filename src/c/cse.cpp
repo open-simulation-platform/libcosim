@@ -1,3 +1,7 @@
+#if defined(_WIN32) && !defined(NOMINMAX)
+#    define NOMINMAX
+#endif
+
 #include <cse.h>
 #include <cse/algorithm.hpp>
 #include <cse/exception.hpp>
@@ -10,6 +14,7 @@
 #include <cse/observer.hpp>
 #include <cse/ssp_parser.hpp>
 
+#include <algorithm>
 #include <atomic>
 #include <cassert>
 #include <cerrno>
@@ -213,6 +218,103 @@ int cse_execution_get_slave_infos(cse_execution* execution, cse_slave_info infos
     }
 }
 
+int cse_slave_get_num_variables(cse_execution* execution, cse_slave_index slave)
+{
+    for (const auto& entry : execution->simulators) {
+        if (entry.second.index == slave) {
+            return static_cast<int>(entry.second.description.variables.size());
+        }
+    }
+    set_last_error(CSE_ERRC_OUT_OF_RANGE, "Invalid slave index");
+    return -1;
+}
+
+cse_variable_variability to_variable_variability(const cse::variable_variability& vv)
+{
+    switch (vv) {
+        case cse::variable_variability::constant:
+            return CSE_VARIABLE_VARIABILITY_CONSTANT;
+        case cse::variable_variability::continuous:
+            return CSE_VARIABLE_VARIABILITY_CONTINUOUS;
+        case cse::variable_variability::discrete:
+            return CSE_VARIABLE_VARIABILITY_DISCRETE;
+        case cse::variable_variability::fixed:
+            return CSE_VARIABLE_VARIABILITY_FIXED;
+        case cse::variable_variability::tunable:
+            return CSE_VARIABLE_VARIABILITY_TUNABLE;
+        default:
+            throw std::invalid_argument("Invalid variable variability!");
+    }
+}
+
+cse_variable_causality to_variable_causality(const cse::variable_causality& vc)
+{
+    switch (vc) {
+        case cse::variable_causality::input:
+            return CSE_VARIABLE_CAUSALITY_INPUT;
+        case cse::variable_causality::output:
+            return CSE_VARIABLE_CAUSALITY_OUTPUT;
+        case cse::variable_causality::parameter:
+            return CSE_VARIABLE_CAUSALITY_PARAMETER;
+        case cse::variable_causality::calculated_parameter:
+            return CSE_VARIABLE_CAUSALITY_CALCULATEDPARAMETER;
+        case cse::variable_causality::local:
+            return CSE_VARIABLE_CAUSALITY_LOCAL;
+        default:
+            throw std::invalid_argument("Invalid variable causality!");
+    }
+}
+
+cse_variable_type to_c_variable_type(const cse::variable_type& vt)
+{
+    switch (vt) {
+        case cse::variable_type::real:
+            return CSE_VARIABLE_TYPE_REAL;
+        case cse::variable_type::integer:
+            return CSE_VARIABLE_TYPE_INTEGER;
+        case cse::variable_type::boolean:
+            return CSE_VARIABLE_TYPE_BOOLEAN;
+        case cse::variable_type::string:
+            return CSE_VARIABLE_TYPE_STRING;
+        default:
+            throw std::invalid_argument("Invalid variable type!");
+    }
+}
+
+void translate_variable_description(const cse::variable_description& vd, cse_variable_description& cvd)
+{
+    std::strncpy(cvd.name, vd.name.c_str(), SLAVE_NAME_MAX_SIZE);
+    cvd.index = vd.index;
+    cvd.type = to_c_variable_type(vd.type);
+    cvd.causality = to_variable_causality(vd.causality);
+    cvd.variability = to_variable_variability(vd.variability);
+}
+
+int cse_slave_get_variables(cse_execution* execution, cse_slave_index slave, cse_variable_description variables[], size_t numVariables)
+{
+    try {
+        for (const auto& entry : execution->simulators) {
+            if (entry.second.index == slave) {
+                auto vars = entry.second.description.variables;
+                size_t var = 0;
+                for (; var < std::min(numVariables, vars.size()); var++) {
+                    translate_variable_description(vars.at(var), variables[var]);
+                }
+                return static_cast<int>(var);
+            }
+        }
+
+        std::ostringstream oss;
+        oss << "Slave with index " << slave
+            << " was not found among loaded slaves.";
+        throw std::invalid_argument(oss.str());
+    } catch (...) {
+        handle_current_exception();
+        return failure;
+    }
+}
+
+
 struct cse_slave_s
 {
     std::string address;
@@ -257,7 +359,7 @@ cse_slave_index cse_execution_add_slave(
 {
     try {
         auto index = execution->cpp_execution->add_slave(cse::make_background_thread_slave(slave->instance), slave->name);
-        execution->simulators[slave->name] = cse::simulator_map_entry{index, slave->source};
+        execution->simulators[slave->name] = cse::simulator_map_entry{index, slave->source, slave->instance->model_description()};
         return index;
     } catch (...) {
         handle_current_exception();
@@ -591,7 +693,17 @@ cse_observer* cse_last_value_observer_create()
 cse_observer* cse_file_observer_create(const char* logDir)
 {
     auto observer = std::make_unique<cse_observer>();
-    observer->cpp_observer = std::make_shared<cse::file_observer>(logDir, false, 100);
+    auto logPath = boost::filesystem::path(logDir);
+    observer->cpp_observer = std::make_shared<cse::file_observer>(logPath);
+    return observer.release();
+}
+
+cse_observer* cse_file_observer_create_from_cfg(const char* logDir, const char* cfgPath)
+{
+    auto observer = std::make_unique<cse_observer>();
+    auto boostLogDir = boost::filesystem::path(logDir);
+    auto boostCfgPath = boost::filesystem::path(cfgPath);
+    observer->cpp_observer = std::make_shared<cse::file_observer>(boostCfgPath, boostLogDir);
     return observer.release();
 }
 
@@ -609,16 +721,16 @@ cse_observer* cse_buffered_time_series_observer_create(size_t bufferSize)
     return observer.release();
 }
 
-cse::variable_type to_variable_type(cse_variable_type type)
+cse::variable_type to_cpp_variable_type(cse_variable_type type)
 {
     switch (type) {
-        case CSE_REAL:
+        case CSE_VARIABLE_TYPE_REAL:
             return cse::variable_type::real;
-        case CSE_INTEGER:
+        case CSE_VARIABLE_TYPE_INTEGER:
             return cse::variable_type::integer;
-        case CSE_BOOLEAN:
+        case CSE_VARIABLE_TYPE_BOOLEAN:
             return cse::variable_type::boolean;
-        case CSE_STRING:
+        case CSE_VARIABLE_TYPE_STRING:
             return cse::variable_type::string;
         default:
             throw std::invalid_argument("Variable type not supported");
@@ -632,7 +744,7 @@ int cse_observer_start_observing(cse_observer* observer, cse_slave_index slave, 
         if (!timeSeriesObserver) {
             throw std::invalid_argument("Invalid observer! The provided observer must be a time_series_observer.");
         }
-        const auto variableId = cse::variable_id{slave, to_variable_type(type), index};
+        const auto variableId = cse::variable_id{slave, to_cpp_variable_type(type), index};
         timeSeriesObserver->start_observing(variableId);
         return success;
     } catch (...) {
@@ -647,7 +759,7 @@ int cse_observer_stop_observing(cse_observer* observer, cse_slave_index slave, c
         if (!timeSeriesObserver) {
             throw std::invalid_argument("Invalid observer! The provided observer must be a time_series_observer.");
         }
-        const auto variableId = cse::variable_id{slave, to_variable_type(type), index};
+        const auto variableId = cse::variable_id{slave, to_cpp_variable_type(type), index};
         timeSeriesObserver->stop_observing(variableId);
         return success;
     } catch (...) {
