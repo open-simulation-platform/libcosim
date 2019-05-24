@@ -65,24 +65,6 @@ void last_value_observer::get_integer(
     valueProviders_.at(sim)->get_int(variables, values);
 }
 
-void last_value_observer::get_boolean(
-    simulator_index sim,
-    gsl::span<const variable_index> variables,
-    gsl::span<bool> values)
-{
-    CSE_INPUT_CHECK(variables.size() == values.size());
-    valueProviders_.at(sim)->get_boolean(variables, values);
-}
-
-void last_value_observer::get_string(
-    simulator_index sim,
-    gsl::span<const variable_index> variables,
-    gsl::span<std::string> values)
-{
-    CSE_INPUT_CHECK(variables.size() == values.size());
-    valueProviders_.at(sim)->get_string(variables, values);
-}
-
 last_value_observer::~last_value_observer() noexcept = default;
 
 } // namespace cse

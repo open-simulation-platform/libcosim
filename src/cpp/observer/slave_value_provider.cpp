@@ -1,8 +1,6 @@
 #include "cse/observer/slave_value_provider.hpp"
 
 #include "cse/error.hpp"
-#include <cse/log.hpp>
-#include <cse/log/logger.hpp>
 
 #include <mutex>
 
@@ -34,22 +32,11 @@ slave_value_provider::slave_value_provider(observable* observable)
 {
     for (const auto& vd : observable->model_description().variables) {
         observable->expose_for_getting(vd.type, vd.index);
-        switch (vd.type) {
-            case cse::variable_type::real:
-                realSamples_[vd.index] = double();
-                break;
-            case cse::variable_type::integer:
-                intSamples_[vd.index] = int();
-                break;
-            case cse::variable_type::boolean:
-                boolSamples_[vd.index] = bool();
-                break;
-            case cse::variable_type::string:
-                stringSamples_[vd.index] = std::string();
-                break;
-            default:
-                BOOST_LOG_SEV(log::logger(), log::level::warning)
-                    << "Variable type " << vd.type << " not supported for observation";
+        if (vd.type == cse::variable_type::real) {
+            realSamples_[vd.index] = double();
+        }
+        if (vd.type == cse::variable_type::integer) {
+            intSamples_[vd.index] = int();
         }
     }
     observe();
@@ -67,12 +54,6 @@ void slave_value_provider::observe()
     for (auto& [idx, value] : intSamples_) {
         value = observable_->get_integer(idx);
     }
-    for (auto& [idx, value] : boolSamples_) {
-        value = observable_->get_boolean(idx);
-    }
-    for (auto& [idx, value] : stringSamples_) {
-        value = observable_->get_string(idx);
-    }
 }
 
 void slave_value_provider::get_real(gsl::span<const variable_index> variables, gsl::span<double> values)
@@ -85,18 +66,6 @@ void slave_value_provider::get_int(gsl::span<const variable_index> variables, gs
 {
     std::lock_guard<std::mutex> lock(lock_);
     get<int>(variables, intSamples_, values);
-}
-
-void slave_value_provider::get_boolean(gsl::span<const variable_index> variables, gsl::span<bool> values)
-{
-    std::lock_guard<std::mutex> lock(lock_);
-    get<bool>(variables, boolSamples_, values);
-}
-
-void slave_value_provider::get_string(gsl::span<const variable_index> variables, gsl::span<std::string> values)
-{
-    std::lock_guard<std::mutex> lock(lock_);
-    get<std::string>(variables, stringSamples_, values);
 }
 
 } // namespace cse

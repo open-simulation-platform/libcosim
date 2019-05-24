@@ -56,16 +56,6 @@ public:
         gsl::span<const variable_index> variables,
         gsl::span<int> values) override;
 
-    void get_boolean(
-        simulator_index sim,
-        gsl::span<const variable_index> variables,
-        gsl::span<bool> values) override;
-
-    void get_string(
-        simulator_index sim,
-        gsl::span<const variable_index> variables,
-        gsl::span<std::string> values) override;
-
     ~last_value_observer() noexcept override;
 
 private:
