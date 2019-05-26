@@ -29,7 +29,7 @@ std::shared_ptr<cse::model> cse::fmuproxy::fmuproxy_uri_sub_resolver::lookup_mod
 {
     const auto query = modelUriReference.query();
     if (query && query->find("file=") < query->size()) {
-        auto newQuery = "file=" + cse::file_uri_to_path(baseUri).parent_path().string() + "/" + std::string(query->substr(5));
+        const auto newQuery = "file=" + cse::file_uri_to_path(baseUri).parent_path().string() + "/" + std::string(query->substr(5));
         return model_uri_sub_resolver::lookup_model(baseUri, uri(modelUriReference.scheme(), modelUriReference.authority(), modelUriReference.path(), newQuery, modelUriReference.fragment()));
     }
     return model_uri_sub_resolver::lookup_model(baseUri, modelUriReference);
@@ -39,21 +39,21 @@ std::shared_ptr<cse::model> cse::fmuproxy::fmuproxy_uri_sub_resolver::lookup_mod
 {
     assert(modelUri.scheme().has_value());
     if (*modelUri.scheme() != "fmu-proxy") return nullptr;
-    if (!modelUri.authority().has_value()) return nullptr;
-    if (!modelUri.query().has_value()) return nullptr;
+    CSE_INPUT_CHECK(modelUri.authority());
+    CSE_INPUT_CHECK(modelUri.query());
 
     const auto query = *modelUri.query();
     const auto auth = parse_authority(*modelUri.authority());
     auto client = cse::fmuproxy::fmuproxy_client(auth.first, auth.second);
 
     if (query.substr(0, 5) == "guid=") {
-        auto guid = std::string(query.substr(5));
+        const auto guid = std::string(query.substr(5));
         return client.from_guid(guid);
     } else if (query.substr(0, 5) == "file=") {
-        auto file = std::string(query.substr(5));
+        const auto file = std::string(query.substr(5));
         return client.from_file(file);
     } else if (query.substr(0, 4) == "url=") {
-        auto url = std::string(query.substr(4));
+        const auto url = std::string(query.substr(4));
         return client.from_url(url);
     } else {
         return nullptr;
