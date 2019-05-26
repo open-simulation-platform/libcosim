@@ -26,15 +26,14 @@ const cse::duration stepSize = cse::to_duration(stepSize_s);
 template<typename function>
 inline float measure_time_sec(function&& fun)
 {
-    auto t_start = std::chrono::high_resolution_clock::now();
+    const auto t_start = std::chrono::high_resolution_clock::now();
     fun();
-    auto t_stop = std::chrono::high_resolution_clock::now();
+    const auto t_stop = std::chrono::high_resolution_clock::now();
     return std::chrono::duration<float>(t_stop - t_start).count();
 }
 
 void run_serial(remote_fmu& fmu)
 {
-
     cse::time_point t;
     std::shared_ptr<cse::slave> slaves[NUM_FMUS];
     for (auto& slave : slaves) {
@@ -61,7 +60,6 @@ void run_serial(remote_fmu& fmu)
 
 void run_execution(remote_fmu& fmu)
 {
-
     auto execution = cse::execution(cse::time_point(),
         std::make_unique<cse::fixed_step_algorithm>(cse::to_duration(stepSize_s)));
 
@@ -82,7 +80,6 @@ void run_execution(remote_fmu& fmu)
 
 void run_threads(remote_fmu& fmu)
 {
-
     cse::time_point t = cse::time_point();
     std::shared_ptr<cse::slave> slaves[NUM_FMUS];
 
@@ -118,15 +115,14 @@ void run_threads(remote_fmu& fmu)
 
 int main(int argc, char** argv)
 {
-
     if (argc != 4) {
         std::cerr << "Missing one or more program arguments: [url:string host:string port:int]" << std::endl;
         return 1;
     }
 
-    auto url = argv[1];
-    auto host = argv[2];
-    auto port = std::stoi(argv[3]);
+    const auto url = argv[1];
+    const auto host = argv[2];
+    const auto port = std::stoi(argv[3]);
 
     fmuproxy_client client1(host, port, /*concurrent*/ false);
     auto fmu1 = client1.from_url(url);

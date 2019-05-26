@@ -25,11 +25,10 @@ namespace
 
 void read_data(const std::string& fileName, std::string& data)
 {
-
     FILE* file = fopen(fileName.c_str(), "rb");
     if (file == nullptr) return;
     fseek(file, 0, SEEK_END);
-    long int size = ftell(file);
+    const auto size = ftell(file);
     fclose(file);
 
     file = fopen(fileName.c_str(), "rb");
@@ -39,7 +38,6 @@ void read_data(const std::string& fileName, std::string& data)
 #else
     fread(data.data(), sizeof(unsigned char), size, file);
 #endif
-
     fclose(file);
 }
 
@@ -76,7 +74,6 @@ cse::fmuproxy::fmuproxy_client::from_url(const std::string& url)
 std::shared_ptr<cse::fmuproxy::remote_fmu>
 cse::fmuproxy::fmuproxy_client::from_file(const std::string& file)
 {
-
     const auto name = fs::path(file).stem().string();
 
     std::string data;

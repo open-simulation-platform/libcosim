@@ -22,7 +22,6 @@ cse::model_description cse::fmuproxy::remote_slave::model_description() const
 void cse::fmuproxy::remote_slave::setup(cse::time_point startTime, std::optional<cse::time_point> stopTime,
     std::optional<double> relativeTolerance)
 {
-
     startTime_ = startTime;
 
     double start = to_double_time_point(startTime);
