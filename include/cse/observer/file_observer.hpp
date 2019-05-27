@@ -8,6 +8,7 @@
 #include <cse/observer/observer.hpp>
 
 #include <boost/filesystem/path.hpp>
+#include <boost/property_tree/ptree.hpp>
 
 #include <memory>
 #include <unordered_map>
@@ -23,7 +24,9 @@ namespace cse
 class file_observer : public observer
 {
 public:
-    file_observer(boost::filesystem::path logDir, bool binary, size_t limit);
+    file_observer(const boost::filesystem::path& logDir);
+
+    file_observer(const boost::filesystem::path& configPath, const boost::filesystem::path& logDir);
 
     void simulator_added(simulator_index, observable*, time_point) override;
 
@@ -46,15 +49,25 @@ public:
 
     boost::filesystem::path get_log_path();
 
-    ~file_observer();
+    ~file_observer() override;
 
 private:
+    void parse_config(const std::string& simulatorName);
+
     class slave_value_writer;
     std::unordered_map<simulator_index, std::unique_ptr<slave_value_writer>> valueWriters_;
+    std::unordered_map<simulator_index, observable*> simulators_;
+    std::vector<variable_description> loggableRealVariables_;
+    std::vector<variable_description> loggableIntVariables_;
+    std::vector<variable_description> loggableBoolVariables_;
+    std::vector<variable_description> loggableStringVariables_;
+    boost::property_tree::ptree ptree_;
+    boost::filesystem::path configPath_;
     boost::filesystem::path logDir_;
     boost::filesystem::path logPath_;
-    bool binary_;
-    size_t limit_;
+    bool logFromConfig_ = false;
+    size_t decimationFactor_;
+    size_t defaultDecimationFactor_ = 1;
 };
 
 

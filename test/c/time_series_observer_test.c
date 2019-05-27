@@ -63,7 +63,7 @@ int main()
 
     cse_variable_index index = 0;
 
-    rc = cse_observer_start_observing(observer, 0, CSE_INTEGER, index);
+    rc = cse_observer_start_observing(observer, 0, CSE_VARIABLE_TYPE_INTEGER, index);
     if (rc < 0) { goto Lerror; }
 
     manipulator = cse_override_manipulator_create();
@@ -81,9 +81,9 @@ int main()
         if (rc < 0) { goto Lerror; }
     }
 
-    rc = cse_observer_stop_observing(observer, 0, CSE_INTEGER, index);
+    rc = cse_observer_stop_observing(observer, 0, CSE_VARIABLE_TYPE_INTEGER, index);
     if (rc < 0) { goto Lerror; }
-    rc = cse_observer_start_observing(observer, 0, CSE_REAL, index);
+    rc = cse_observer_start_observing(observer, 0, CSE_VARIABLE_TYPE_REAL, index);
     if (rc < 0) { goto Lerror; }
 
     for (int i = 5; i < 10; i++) {

@@ -236,6 +236,8 @@ private:
                     case variable_type::string:
                         transfer_string(c.output, c.input);
                         break;
+                    case variable_type::enumeration:
+                        CSE_PANIC();
                 }
             }
         }

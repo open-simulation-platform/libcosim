@@ -6,6 +6,7 @@
 #include <functional>
 #include <iostream>
 #include <optional>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 
@@ -25,7 +26,9 @@ std::pair<cse::simulator_index, cse::simulator*> find_simulator(
             return std::make_pair(idx, simulator);
         }
     }
-    throw std::invalid_argument("Can't find model with this name");
+    std::ostringstream oss;
+    oss << "Can't find model with name: " << model;
+    throw std::invalid_argument(oss.str());
 }
 
 cse::variable_type find_variable_type(const nlohmann::json& j)
@@ -40,7 +43,9 @@ cse::variable_type find_variable_type(const nlohmann::json& j)
     } else if (typestr == "string") {
         return variable_type::string;
     }
-    throw std::invalid_argument("Can't process unknown variable type");
+    std::ostringstream oss;
+    oss << "Can't process unrecognized variable type: " << typestr;
+    throw std::invalid_argument(oss.str());
 }
 
 cse::variable_causality find_causality(const nlohmann::json& j)
@@ -57,7 +62,9 @@ cse::variable_causality find_causality(const nlohmann::json& j)
     } else if (caus == "local") {
         return variable_causality::local;
     }
-    throw std::invalid_argument("Can't process unknown variable type");
+    std::ostringstream oss;
+    oss << "Can't process unrecognized variable causality: " << caus;
+    throw std::invalid_argument(oss.str());
 }
 
 bool is_input(cse::variable_causality causality)
@@ -70,8 +77,10 @@ bool is_input(cse::variable_causality causality)
         case output:
             return false;
         default:
-            throw std::invalid_argument(
-                "No support for modifying a variable with this causality");
+            std::ostringstream oss;
+            oss << "No support for modifying a variable with causality: "
+                << to_text(causality);
+            throw std::invalid_argument(oss.str());
     }
 }
 
@@ -86,7 +95,11 @@ cse::variable_index find_variable_index(
             return vd.index;
         }
     }
-    throw std::invalid_argument("Can't find variable index");
+    std::ostringstream oss;
+    oss << "Cannot find variable with name " << name
+        << ", causality " << cse::to_text(causality)
+        << " and type " << cse::to_text(type);
+    throw std::invalid_argument(oss.str());
 }
 
 template<typename T>
@@ -103,7 +116,9 @@ std::function<T(T)> generate_modifier(
     } else if ("override" == kind) {
         return [value](T /*original*/) { return value; };
     }
-    throw std::invalid_argument("Can't process unknown modifier kind");
+    std::ostringstream oss;
+    oss << "Can't process unrecognized modifier kind: " << kind;
+    throw std::invalid_argument(oss.str());
 }
 
 cse::scenario::variable_action generate_action(
@@ -126,7 +141,9 @@ cse::scenario::variable_action generate_action(
                 sim, var, cse::scenario::integer_modifier{f}, isInput};
         }
         default:
-            throw std::invalid_argument("No support for this variable type");
+            std::ostringstream oss;
+            oss << "No scenario action support for variable type: " << to_text(type);
+            throw std::invalid_argument(oss.str());
     }
 }
 
@@ -174,7 +191,9 @@ std::string specified_or_default(
     } else if (defaultOption.has_value()) {
         return *defaultOption;
     }
-    throw std::invalid_argument("Option is not specified explicitly nor in defaults");
+    std::ostringstream oss;
+    oss << "Option is not specified explicitly nor in defaults: " << name;
+    throw std::invalid_argument(oss.str());
 }
 
 std::optional<cse::time_point> parse_end_time(const nlohmann::json& j)

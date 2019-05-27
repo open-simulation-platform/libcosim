@@ -106,7 +106,7 @@ void archive::open(const boost::filesystem::path& path)
         auto msgBuf = std::vector<char>(
             zip_error_to_str(nullptr, 0, errorCode, errnoVal) + 1);
         zip_error_to_str(msgBuf.data(), msgBuf.size(), errorCode, errno);
-        throw error(msgBuf.data());
+        throw error("Unzipping of file: '" + path.string() + "' failed with error: " + msgBuf.data());
     }
     m_archive = archive;
 }

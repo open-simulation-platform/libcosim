@@ -20,6 +20,7 @@ struct simulator_map_entry
 {
     simulator_index index;
     std::string source;
+    model_description description;
 };
 
 using simulator_map = std::map<std::string, simulator_map_entry>;
