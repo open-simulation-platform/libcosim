@@ -27,7 +27,7 @@ set(unittests
     "utility_zip_unittest"
 )
 
-include("AddTestExecutable")
+include("${CMAKE_SOURCE_DIR}/cmake/AddTestExecutable.cmake")
 foreach(test IN LISTS tests)
     add_test_executable(
         "cpp_${test}"

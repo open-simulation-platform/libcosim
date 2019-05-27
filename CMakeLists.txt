@@ -14,25 +14,12 @@ option(CSECORE_STANDALONE_INSTALLATION "Whether to build for a standalone instal
 option(CSECORE_USING_CONAN "Whether Conan is used for package management" OFF)
 option(CSECORE_WITH_FMUPROXY "Whether or not to build with fmuproxy integration" OFF)
 
-if(CSECORE_USING_CONAN)
-    set(supportedConanGenerators "cmake" "cmake_find_package_multi")
-    set(CSECORE_CONAN_GENERATOR "cmake" CACHE STRING
-        "Which Conan generator was used to generate the CMake configuration files. Supported generators are: ${supportedConanGenerators}")
-    if(NOT (CSECORE_CONAN_GENERATOR IN_LIST supportedConanGenerators))
-        message(FATAL_ERROR "Unsupported value of CSECORE_CONAN_GENERATOR: ${CSECORE_CONAN_GENERATOR}")
-    endif()
-endif()
+set(CSECORE_CONAN_GENERATOR "cmake" CACHE STRING
+    "Which Conan generator was used to generate the CMake configuration files. Only used if CSECORE_USING_CONAN is TRUE.")
 
 # ==============================================================================
 # Global internal configuration
 # ==============================================================================
-
-# Our custom CMake scripts go in the cmake/ subdirectory.
-list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_SOURCE_DIR}/cmake")
-if((NOT CSECORE_USING_CONAN) OR
-        (NOT CSECORE_CONAN_GENERATOR STREQUAL "cmake_find_package_multi"))
-    list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_SOURCE_DIR}/cmake/find-modules")
-endif()
 
 # Use a common output directory for all targets.
 # The main purpose of this is to ensure that the DLLs and test executables
@@ -81,7 +68,7 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
         # should not be a problem, so we disable the warning.
         add_compile_options("/wd4251")
     endif()
-    if (CSECORE_WITH_FMUPROXY)
+    if(CSECORE_WITH_FMUPROXY)
         #warning C4245: 'return': conversion from 'int' to 'SOCKET', signed/unsigned mismatch
         add_compile_options("/wd4245")
         #warning C4706: assignment within conditional expression
@@ -117,51 +104,55 @@ set(CSECORE_EXPORT_TARGET "${PROJECT_NAME}-targets")
 # ==============================================================================
 
 if(CSECORE_USING_CONAN)
-    if (CSECORE_CONAN_GENERATOR STREQUAL "cmake")
-        if(EXISTS ${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-            include("${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")
-            conan_basic_setup(NO_OUTPUT_DIRS)
-        else()
-            message(FATAL_ERROR "The file conanbuildinfo.cmake doesn't exist, you have to run conan install first")
-        endif()
+    if(CSECORE_CONAN_GENERATOR STREQUAL "cmake")
+        include("${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")
+        conan_basic_setup(NO_OUTPUT_DIRS)
     elseif(CSECORE_CONAN_GENERATOR STREQUAL "cmake_find_package_multi")
         list(INSERT CMAKE_PREFIX_PATH 0 "${CMAKE_BINARY_DIR}")
+    else()
+        message(FATAL_ERROR "Unknown or unsupported Conan generator: ${CSECORE_CONAN_GENERATOR}")
     endif()
 endif()
 
+# Enable home-made find-package modules if needed
+if((NOT CSECORE_USING_CONAN) OR
+        (NOT CSECORE_CONAN_GENERATOR STREQUAL "cmake_find_package_multi"))
+    list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_SOURCE_DIR}/cmake/find-modules")
+endif()
+
+include("${CMAKE_SOURCE_DIR}/cmake/FindPackageConfig.cmake")
+
+# cmake_find_package_multi-generated scripts require targets for dependencies,
+# but don't search for dependencies themselves.
+if(CSECORE_USING_CONAN AND CSECORE_CONAN_GENERATOR STREQUAL "cmake_find_package_multi")
+    find_package_config(bzip2)
+    find_package_config(zlib)
+    find_package_config(OpenSSL)
+endif()
+
+# cmake_find_package_multi doesn't generate Boost sub-library targets.
 set(boostComponents date_time fiber filesystem log)
-if (CSECORE_BUILD_TESTS)
+if(CSECORE_BUILD_TESTS)
     list(APPEND boostComponents timer unit_test_framework)
 endif()
-
 if(CSECORE_USING_CONAN AND CSECORE_CONAN_GENERATOR STREQUAL "cmake_find_package_multi")
-    find_package(bzip2 REQUIRED NO_MODULE)
-    find_package(zlib REQUIRED NO_MODULE)
-    find_package(OpenSSL REQUIRED NO_MODULE)
-
-    find_package(gsl_microsoft REQUIRED NO_MODULE)
-    find_package(boost REQUIRED NO_MODULE)
-    find_package(FMILibrary REQUIRED NO_MODULE)
-    find_package(libzip REQUIRED NO_MODULE)
-    find_package(jsonformoderncpp REQUIRED NO_MODULE)
-    if(CSECORE_WITH_FMUPROXY)
-        find_package(thrift REQUIRED NO_MODULE)
-    endif()
-
+    find_package_config(boost COMPONENTS ${boostComponents})
     foreach(comp boost ${boostComponents})
         add_library("Boost::${comp}" INTERFACE IMPORTED GLOBAL)
         target_link_libraries("Boost::${comp}" INTERFACE "boost::boost")
     endforeach()
 else()
-    find_package(gsl_microsoft REQUIRED)
-    find_package(Boost REQUIRED COMPONENTS ${boostComponents})
-    find_package(FMILibrary REQUIRED)
-    find_package(libzip REQUIRED)
-    find_package(jsonformoderncpp REQUIRED)
-    if(CSECORE_WITH_FMUPROXY)
-        find_package(Thrift REQUIRED)
-    endif()
+    find_package(Boost COMPONENTS ${boostComponents})
 endif()
+
+find_package_config(gsl_microsoft)
+find_package_config(FMILibrary)
+find_package_config(libzip)
+find_package_config(jsonformoderncpp)
+if(CSECORE_WITH_FMUPROXY)
+    find_package_config(thrift)
+endif()
+
 
 # ==============================================================================
 # Targets
