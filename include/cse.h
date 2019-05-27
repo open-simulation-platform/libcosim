@@ -6,6 +6,7 @@
 #ifndef CSE_H
 #define CSE_H
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -410,11 +411,11 @@ typedef struct cse_manipulator_s cse_manipulator;
  *      The slave.
  *  \param [in] variables
  *      A pointer to an array of length `nv` that contains the (slave-specific)
- *      indices of variables to retrieve.
+ *      indices of variables to set.
  *  \param [in] nv
  *      The length of the `variables` and `values` arrays.
  *  \param [out] values
- *      A pointer to an array of length `nv` which will be filled with the
+ *      A pointer to an array of length `nv` with the
  *      values of the variables specified in `variables`, in the same order.
  *
  *  \returns
@@ -428,12 +429,92 @@ int cse_manipulator_slave_set_real(
     const double values[]);
 
 /**
- *  Resets any previously overridden values of real variables for one slave.
+ *  Sets the values of integer variables for one slave.
  *
  *  \param [in] manipulator
  *      The manipulator.
  *  \param [in] slaveIndex
  *      The slave.
+ *  \param [in] variables
+ *      A pointer to an array of length `nv` that contains the (slave-specific)
+ *      indices of variables to set.
+ *  \param [in] nv
+ *      The length of the `variables` and `values` arrays.
+ *  \param [out] values
+ *      A pointer to an array of length `nv` with the
+ *      values of the variables specified in `variables`, in the same order.
+ *
+ *  \returns
+ *      0 on success and -1 on error.
+ */
+int cse_manipulator_slave_set_integer(
+    cse_manipulator* manipulator,
+    cse_slave_index slaveIndex,
+    const cse_variable_index variables[],
+    size_t nv,
+    const int values[]);
+
+/**
+ *  Sets the values of boolean variables for one slave.
+ *
+ *  \param [in] manipulator
+ *      The manipulator.
+ *  \param [in] slaveIndex
+ *      The slave.
+ *  \param [in] variables
+ *      A pointer to an array of length `nv` that contains the (slave-specific)
+ *      indices of variables to set.
+ *  \param [in] nv
+ *      The length of the `variables` and `values` arrays.
+ *  \param [out] values
+ *      A pointer to an array of length `nv` with the
+ *      values of the variables specified in `variables`, in the same order.
+ *
+ *  \returns
+ *      0 on success and -1 on error.
+ */
+int cse_manipulator_slave_set_boolean(
+    cse_manipulator* manipulator,
+    cse_slave_index slaveIndex,
+    const cse_variable_index variables[],
+    size_t nv,
+    const bool values[]);
+
+/**
+ *  Sets the values of string variables for one slave.
+ *
+ *  \param [in] manipulator
+ *      The manipulator.
+ *  \param [in] slaveIndex
+ *      The slave.
+ *  \param [in] variables
+ *      A pointer to an array of length `nv` that contains the (slave-specific)
+ *      indices of variables to set.
+ *  \param [in] nv
+ *      The length of the `variables` and `values` arrays.
+ *  \param [out] values
+ *      A pointer to an array of length `nv` with the
+ *      values of the variables specified in `variables`, in the same order.
+ *
+ *  \returns
+ *      0 on success and -1 on error.
+ */
+int cse_manipulator_slave_set_string(
+    cse_manipulator* manipulator,
+    cse_slave_index slaveIndex,
+    const cse_variable_index variables[],
+    size_t nv,
+    const char* values[]);
+
+/**
+ *  Resets any previously overridden variable values of a certain type for one slave.
+ *
+ *  \param [in] manipulator
+ *      The manipulator.
+ *  \param [in] slaveIndex
+ *      The slave.
+ *  \param [in] type
+ *      The variable type.
  *  \param [in] variables
  *      A pointer to an array of length `nv` that contains the (slave-specific)
  *      indices of variables to reset.
@@ -443,9 +524,10 @@ int cse_manipulator_slave_set_real(
  *  \returns
  *      0 on success and -1 on error.
  */
-int cse_manipulator_slave_reset_real(
+int cse_manipulator_slave_reset(
     cse_manipulator* manipulator,
     cse_slave_index slaveIndex,
+    cse_variable_type type,
     const cse_variable_index variables[],
     size_t nv);
 
@@ -476,6 +558,91 @@ int cse_observer_slave_get_real(
     double values[]);
 
 /**
+ *  Retrieves the values of integer variables for one slave.
+ *
+ *  \param [in] observer
+ *      The observer.
+ *  \param [in] slave
+ *      The slave index.
+ *  \param [in] variables
+ *      A pointer to an array of length `nv` that contains the (slave-specific)
+ *      indices of variables to retrieve.
+ *  \param [in] nv
+ *      The length of the `variables` and `values` arrays.
+ *  \param [out] values
+ *      A pointer to an array of length `nv` which will be filled with the
+ *      values of the variables specified in `variables`, in the same order.
+ *
+ *  \returns
+ *      0 on success and -1 on error.
+ */
+int cse_observer_slave_get_integer(
+    cse_observer* observer,
+    cse_slave_index slave,
+    const cse_variable_index variables[],
+    size_t nv,
+    int values[]);
+
+/**
+ *  Retrieves the values of boolean variables for one slave.
+ *
+ *  \param [in] observer
+ *      The observer.
+ *  \param [in] slave
+ *      The slave index.
+ *  \param [in] variables
+ *      A pointer to an array of length `nv` that contains the (slave-specific)
+ *      indices of variables to retrieve.
+ *  \param [in] nv
+ *      The length of the `variables` and `values` arrays.
+ *  \param [out] values
+ *      A pointer to an array of length `nv` which will be filled with the
+ *      values of the variables specified in `variables`, in the same order.
+ *
+ *  \returns
+ *      0 on success and -1 on error.
+ */
+int cse_observer_slave_get_boolean(
+    cse_observer* observer,
+    cse_slave_index slave,
+    const cse_variable_index variables[],
+    size_t nv,
+    bool values[]);
+
+/// A struct used for retrieving string variable values with `cse_observer_slave_get_string()`
+typedef struct
+{
+    /// The variable value
+    char value[SLAVE_NAME_MAX_SIZE];
+} cse_string_value;
+
+/**
+ *  Retrieves the values of string variables for one slave.
+ *
+ *  \param [in] observer
+ *      The observer.
+ *  \param [in] slave
+ *      The slave index.
+ *  \param [in] variables
+ *      A pointer to an array of length `nv` that contains the (slave-specific)
+ *      indices of variables to retrieve.
+ *  \param [in] nv
+ *      The length of the `variables` and `values` arrays.
+ *  \param [out] values
+ *      A pointer to an array of length `nv` which will be filled with the
+ *      values of the variables specified in `variables`, in the same order.
+ *
+ *  \returns
+ *      0 on success and -1 on error.
+ */
+int cse_observer_slave_get_string(
+    cse_observer* observer,
+    cse_slave_index slave,
+    const cse_variable_index variables[],
+    size_t nv,
+    cse_string_value values[]);
+
+/**
  * Retrieves a series of observed values, step numbers and times for a real variable.
  *
  * \param [in] observer the observer
@@ -497,6 +664,31 @@ int64_t cse_observer_slave_get_real_samples(
     cse_step_number fromStep,
     size_t nSamples,
     double values[],
+    cse_step_number steps[],
+    cse_time_point times[]);
+
+/**
+ * Retrieves a series of observed values, step numbers and times for an integer variable.
+ *
+ * \param [in] observer the observer
+ * \param [in] slave index of the slave
+ * \param [in] variableIndex the variable index
+ * \param [in] fromStep the step number to start from
+ * \param [in] nSamples the number of samples to read
+ * \param [out] values the series of observed values
+ * \param [out] steps the corresponding step numbers
+ * \param [out] times the corresponding simulation times
+ *
+ * \returns
+ *      The number of samples actually read, which may be smaller than `nSamples`.
+ */
+int64_t cse_observer_slave_get_integer_samples(
+    cse_observer* observer,
+    cse_slave_index slave,
+    cse_variable_index variableIndex,
+    cse_step_number fromStep,
+    size_t nSamples,
+    int values[],
     cse_step_number steps[],
     cse_time_point times[]);
 
@@ -526,105 +718,6 @@ int64_t cse_observer_slave_get_real_synchronized_series(
     size_t nSamples,
     double values1[],
     double values2[]);
-
-/**
- *  Sets the values of integer variables for one slave.
- *
- *  \param [in] manipulator
- *      The manipulator.
- *  \param [in] slaveIndex
- *      The slave.
- *  \param [in] variables
- *      A pointer to an array of length `nv` that contains the (slave-specific)
- *      indices of variables to set.
- *  \param [in] nv
- *      The length of the `variables` and `values` arrays.
- *  \param [out] values
- *      A pointer to an array of length `nv` which will be filled with the
- *      values of the variables specified in `variables`, in the same order.
- *
- *  \returns
- *      0 on success and -1 on error.
- */
-int cse_manipulator_slave_set_integer(
-    cse_manipulator* manipulator,
-    cse_slave_index slaveIndex,
-    const cse_variable_index variables[],
-    size_t nv,
-    const int values[]);
-
-/**
- *  Resets the values of any previously overridden integer variables for one slave.
- *
- *  \param [in] manipulator
- *      The manipulator.
- *  \param [in] slaveIndex
- *      The slave.
- *  \param [in] variables
- *      A pointer to an array of length `nv` that contains the (slave-specific)
- *      indices of variables to reset.
- *  \param [in] nv
- *      The length of the `variables` array.
- *
- *  \returns
- *      0 on success and -1 on error.
- */
-int cse_manipulator_slave_reset_integer(
-    cse_manipulator* manipulator,
-    cse_slave_index slaveIndex,
-    const cse_variable_index variables[],
-    size_t nv);
-
-/**
- *  Retrieves the values of integer variables for one slave.
- *
- *  \param [in] observer
- *      The observer.
- *  \param [in] slave
- *      The slave index.
- *  \param [in] variables
- *      A pointer to an array of length `nv` that contains the (slave-specific)
- *      indices of variables to retrieve.
- *  \param [in] nv
- *      The length of the `variables` and `values` arrays.
- *  \param [out] values
- *      A pointer to an array of length `nv` which will be filled with the
- *      values of the variables specified in `variables`, in the same order.
- *
- *  \returns
- *      0 on success and -1 on error.
- */
-int cse_observer_slave_get_integer(
-    cse_observer* observer,
-    cse_slave_index slave,
-    const cse_variable_index variables[],
-    size_t nv,
-    int values[]);
-
-/**
- * Retrieves a series of observed values, step numbers and times for an integer variable.
- *
- * \param [in] observer the observer
- * \param [in] slave index of the slave
- * \param [in] variableIndex the variable index
- * \param [in] fromStep the step number to start from
- * \param [in] nSamples the number of samples to read
- * \param [out] values the series of observed values
- * \param [out] steps the corresponding step numbers
- * \param [out] times the corresponding simulation times
- *
- * \returns
- *      The number of samples actually read, which may be smaller than `nSamples`.
- */
-int64_t cse_observer_slave_get_integer_samples(
-    cse_observer* observer,
-    cse_slave_index slave,
-    cse_variable_index variableIndex,
-    cse_step_number fromStep,
-    size_t nSamples,
-    int values[],
-    cse_step_number steps[],
-    cse_time_point times[]);
 
 /**
  * Retrieves the step numbers for a range given by a duration.

@@ -1,8 +1,6 @@
 #include "cse/observer/slave_value_provider.hpp"
 
 #include "cse/error.hpp"
-#include <cse/log.hpp>
-#include <cse/log/logger.hpp>
 
 #include <mutex>
 
@@ -48,8 +46,7 @@ slave_value_provider::slave_value_provider(observable* observable)
                 stringSamples_[vd.index] = std::string();
                 break;
             default:
-                BOOST_LOG_SEV(log::logger(), log::level::warning)
-                    << "Variable type " << vd.type << " not supported for observation";
+                CSE_PANIC();
         }
     }
     observe();

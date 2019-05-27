@@ -119,14 +119,8 @@ public:
     void override_boolean_variable(simulator_index, variable_index, bool value);
     /// Override the value of a variable with type `string`
     void override_string_variable(simulator_index, variable_index, const std::string& value);
-    /// Reset override of a variable with type `real`
-    void reset_real_variable(simulator_index, variable_index);
-    /// Reset override of a variable with type `integer`
-    void reset_integer_variable(simulator_index, variable_index);
-    /// Reset override of a variable with type `boolean`
-    void reset_boolean_variable(simulator_index, variable_index);
-    /// Reset override of a variable with type `string`
-    void reset_string_variable(simulator_index, variable_index);
+    /// Reset override of a variable
+    void reset_variable(simulator_index, variable_type, variable_index);
 
     ~override_manipulator() noexcept override;
 
