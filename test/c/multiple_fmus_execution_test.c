@@ -3,6 +3,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #ifdef _WINDOWS
 #    include <windows.h>
@@ -93,7 +94,7 @@ int main()
     if (rc < 0) { goto Lerror; }
 
     cse_variable_index strInVar = 0;
-    const char * strInVal = "foo";
+    const char* strInVal = "foo";
     rc = cse_manipulator_slave_set_string(manipulator, slave_index1, &strInVar, 1, &strInVal);
     if (rc < 0) { goto Lerror; }
 
