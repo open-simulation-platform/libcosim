@@ -1,13 +1,15 @@
 #!/bin/bash
 #
-# This script performs the following operations:
+# This script performs the following operations on version-tracked files within
+# the current working directory and its subdirectories:
+#
 #  - Fixes file permissions
 #  - Ensures that all text files end with a newline
 #  - Runs clang-format on all source files
 #
 set -o errexit -o nounset -o pipefail
 
-# Regex to select files to run clang-format on
+# Regex to select files for clang-format
 readonly clangFormattableFiles='.(h|c|hpp|cpp)$'
 
 # Per-file corrections
@@ -27,4 +29,4 @@ done
 
 # Apply clang-format to all relevant source files
 echo "running clang-format"
-clang-format -i -style=file $(git ls-files | egrep "$clangFormattableFiles")
+git ls-files | egrep "$clangFormattableFiles" | xargs -r clang-format -i -style=file
