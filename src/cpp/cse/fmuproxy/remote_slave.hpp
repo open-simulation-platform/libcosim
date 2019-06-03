@@ -38,8 +38,7 @@ public:
 
     void get_integer_variables(gsl::span<const variable_index> variables, gsl::span<int> values) const override;
 
-    void
-    get_boolean_variables(gsl::span<const variable_index> variables, gsl::span<bool> values) const override;
+    void get_boolean_variables(gsl::span<const variable_index> variables, gsl::span<bool> values) const override;
 
     void get_string_variables(gsl::span<const variable_index> variables,
         gsl::span<std::string> values) const override;
@@ -48,8 +47,7 @@ public:
 
     void set_integer_variables(gsl::span<const variable_index> variables, gsl::span<const int> values) override;
 
-    void
-    set_boolean_variables(gsl::span<const variable_index> variables, gsl::span<const bool> values) override;
+    void set_boolean_variables(gsl::span<const variable_index> variables, gsl::span<const bool> values) override;
 
     void set_string_variables(gsl::span<const variable_index> variables,
         gsl::span<const std::string> values) override;

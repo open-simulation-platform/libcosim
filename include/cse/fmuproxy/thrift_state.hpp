@@ -26,7 +26,6 @@ public:
     thrift_state(std::shared_ptr<::fmuproxy::thrift::fmu_service_if> client_,
         std::shared_ptr<apache::thrift::transport::TTransport> transport_);
 
-
     ::fmuproxy::thrift::fmu_service_if& client();
 
     apache::thrift::transport::TTransport& transport();
