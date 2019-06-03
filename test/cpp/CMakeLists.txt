@@ -2,6 +2,7 @@ set(tests
     "async_slave_mockup_test"
     "fixed_step_algorithm_test"
     "file_observer_logging_test"
+    "file_observer_logging_from_config_test"
     "multi_fixed_step_algorithm_test"
     "ssp_parser_test"
     "time_series_observer_test"
