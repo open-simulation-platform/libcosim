@@ -8,14 +8,16 @@
 #include <string>
 
 #ifdef _MSC_VER
-    #pragma warning(push)
-    #pragma warning(disable : 4245 4706)
+#pragma warning(push)
+#pragma warning(disable : 4245 4706)
 #endif
+
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/transport/TSocketPool.h>
 #include <thrift/transport/TTransportUtils.h>
+
 #ifdef _MSC_VER
-    #pragma warning(pop)
+#pragma warning(pop)
 #endif
 
 using namespace fmuproxy::thrift;
@@ -24,31 +26,29 @@ using namespace apache::thrift::protocol;
 
 namespace fs = boost::filesystem;
 
-namespace
-{
+namespace {
 
-void read_data(const std::string& fileName, std::string& data)
-{
-    FILE* file = fopen(fileName.c_str(), "rb");
-    if (file == nullptr) return;
-    fseek(file, 0, SEEK_END);
-    const auto size = ftell(file);
-    fclose(file);
+    void read_data(const std::string &fileName, std::string &data) {
+        FILE *file = fopen(fileName.c_str(), "rb");
+        if (file == nullptr) return;
+        fseek(file, 0, SEEK_END);
+        const auto size = ftell(file);
+        fclose(file);
 
-    file = fopen(fileName.c_str(), "rb");
-    data.resize(size);
+        file = fopen(fileName.c_str(), "rb");
+        data.resize(size);
 #if defined(__GNUC__)
-    size_t read __attribute__((unused)) = fread(data.data(), sizeof(unsigned char), size, file);
+        size_t read __attribute__((unused)) = fread(data.data(), sizeof(unsigned char), size, file);
 #else
-    fread(data.data(), sizeof(unsigned char), size, file);
+        fread(data.data(), sizeof(unsigned char), size, file);
 #endif
-    fclose(file);
-}
+        fclose(file);
+    }
 
 } // namespace
 
-cse::fmuproxy::fmuproxy_client::fmuproxy_client(const std::string& host, const unsigned int port, const bool concurrent)
-{
+cse::fmuproxy::fmuproxy_client::fmuproxy_client(const std::string &host, const unsigned int port,
+                                                const bool concurrent) {
     std::shared_ptr<TTransport> socket(new TSocket(host, port));
     std::shared_ptr<TTransport> transport(new TFramedTransport(socket));
     std::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
@@ -60,7 +60,7 @@ cse::fmuproxy::fmuproxy_client::fmuproxy_client(const std::string& host, const u
     }
     try {
         transport->open();
-    } catch (TTransportException&) {
+    } catch (TTransportException &) {
         std::string msg = "Failed to connect to remote FMU @ " + host + ":" + std::to_string(port);
         CSE_PANIC_M(msg.c_str());
     }
@@ -68,16 +68,14 @@ cse::fmuproxy::fmuproxy_client::fmuproxy_client(const std::string& host, const u
 }
 
 std::shared_ptr<cse::fmuproxy::remote_fmu>
-cse::fmuproxy::fmuproxy_client::from_url(const std::string& url)
-{
+cse::fmuproxy::fmuproxy_client::from_url(const std::string &url) {
     FmuId fmuId;
     state_->client_->load_from_url(fmuId, url);
     return from_guid(fmuId);
 }
 
 std::shared_ptr<cse::fmuproxy::remote_fmu>
-cse::fmuproxy::fmuproxy_client::from_file(const std::string& file)
-{
+cse::fmuproxy::fmuproxy_client::from_file(const std::string &file) {
     const auto name = fs::path(file).stem().string();
 
     std::string data;
@@ -89,7 +87,6 @@ cse::fmuproxy::fmuproxy_client::from_file(const std::string& file)
 }
 
 std::shared_ptr<cse::fmuproxy::remote_fmu>
-cse::fmuproxy::fmuproxy_client::from_guid(const std::string& guid)
-{
+cse::fmuproxy::fmuproxy_client::from_guid(const std::string &guid) {
     return std::make_shared<cse::fmuproxy::remote_fmu>(guid, state_);
 }
