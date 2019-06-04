@@ -7,9 +7,11 @@
 #ifdef _MSC_VER
     #pragma warning(push)
     #pragma warning(disable : 4245)
-    #include <thrift/protocol/TBinaryProtocol.h>
-    #include <thrift/transport/TSocketPool.h>
-    #include <thrift/transport/TTransportUtils.h>
+#endif
+#include <thrift/protocol/TBinaryProtocol.h>
+#include <thrift/transport/TSocketPool.h>
+#include <thrift/transport/TTransportUtils.h>
+#ifdef _MSC_VER
     #pragma warning(pop)
 #endif
 
