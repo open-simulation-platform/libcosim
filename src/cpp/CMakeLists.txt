@@ -21,11 +21,13 @@ set(publicHeaders
     "observer/last_value_provider.hpp"
     "observer/time_series_observer.hpp"
     "observer/time_series_provider.hpp"
+    "orchestration.hpp"
     "slave.hpp"
     "timer.hpp"
     "scenario.hpp"
     "scenario_parser.hpp"
     "manipulator.hpp"
+    "uri.hpp"
 )
 set(privateHeaders
     "error.hpp"
@@ -53,9 +55,11 @@ set(sources
     "observer/file_observer.cpp"
     "observer/last_value_observer.cpp"
     "observer/time_series_observer.cpp"
+    "orchestration.cpp"
     "scenario_manager.cpp"
     "scenario_parser.cpp"
     "override_manipulator.cpp"
+    "uri.cpp"
 
     "error.cpp"
     "fmi/glue.cpp"
