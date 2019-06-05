@@ -14,7 +14,10 @@ set(tests
 )
 
 if(CSECORE_WITH_FMUPROXY)
-    list(APPEND tests "fmuproxy_test")
+    list(APPEND tests
+            "fmuproxy_test"
+            "ssp_parser_fmuproxy_test"
+    )
 endif()
 
 set(unittests
@@ -22,6 +25,8 @@ set(unittests
     "fmi_v1_fmu_unittest"
     "fmi_v2_fmu_unittest"
     "model_unittest"
+    "orchestration_unittest"
+    "uri_unittest"
     "utility_concurrency_unittest"
     "utility_filesystem_unittest"
     "utility_uuid_unittest"

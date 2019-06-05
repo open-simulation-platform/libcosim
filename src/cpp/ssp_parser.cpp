@@ -2,7 +2,6 @@
 
 #include "cse/algorithm.hpp"
 #include "cse/fmi/fmu.hpp"
-#include "cse/fmi/importer.hpp"
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
@@ -181,11 +180,16 @@ struct slave_info
 
 } // namespace
 
-std::pair<execution, simulator_map> load_ssp(const boost::filesystem::path& sspDir, cse::time_point startTime)
+
+std::pair<execution, simulator_map> load_ssp(
+    cse::model_uri_resolver& resolver,
+    const boost::filesystem::path& sspDir,
+    cse::time_point startTime)
 {
     simulator_map simulatorMap;
-
-    const auto parser = cse::ssp_parser(sspDir / "SystemStructure.ssd");
+    const auto ssdPath = sspDir / "SystemStructure.ssd";
+    const auto baseURI = path_to_file_uri(ssdPath);
+    const auto parser = ssp_parser(ssdPath);
 
     const auto& simInfo = parser.get_simulation_information();
     const cse::duration stepSize = cse::to_duration(simInfo.stepSize);
@@ -197,15 +201,14 @@ std::pair<execution, simulator_map> load_ssp(const boost::filesystem::path& sspD
         std::make_unique<cse::fixed_step_algorithm>(stepSize));
 
     std::map<std::string, slave_info> slaves;
-    auto importer = cse::fmi::importer::create();
     for (const auto& component : elements) {
-        auto fmu = importer->import(sspDir / component.source);
-        auto slave = fmu->instantiate_slave(component.name);
-        simulator_index index = slaves[component.name].index = execution.add_slave(cse::make_background_thread_slave(slave), component.name);
+        auto model = resolver.lookup_model(baseURI, component.source);
+        auto slave = model->instantiate(component.name);
+        simulator_index index = slaves[component.name].index = execution.add_slave(slave, component.name);
 
-        simulatorMap[component.name] = simulator_map_entry{index, component.source, slave->model_description()};
+        simulatorMap[component.name] = simulator_map_entry {index, component.source, *model->description()};
 
-        for (const auto& v : fmu->model_description()->variables) {
+        for (const auto& v : model->description()->variables) {
             slaves[component.name].variables[v.name] = v;
         }
     }
