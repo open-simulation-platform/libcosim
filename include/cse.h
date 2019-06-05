@@ -243,7 +243,7 @@ int cse_execution_stop(cse_execution* execution);
 
 
 /// Enables real time simulation for an execution.
-int cse_execution_enable_real_time_simulation(cse_execution* execution);
+int cse_execution_enable_real_time_simulation(cse_execution* execution, int realTimeTarget);
 
 
 /// Disables real time simulation for an execution.

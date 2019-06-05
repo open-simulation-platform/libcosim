@@ -443,8 +443,9 @@ int cse_execution_get_status(cse_execution* execution, cse_execution_status* sta
     }
 }
 
-int cse_execution_enable_real_time_simulation(cse_execution* execution)
+int cse_execution_enable_real_time_simulation(cse_execution* execution, int realTimeTarget)
 {
+    (void)realTimeTarget;
     execution->cpp_execution->enable_real_time_simulation();
     return success;
 }

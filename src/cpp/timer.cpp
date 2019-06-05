@@ -11,6 +11,9 @@
 typedef std::chrono::steady_clock Time;
 constexpr std::chrono::microseconds MIN_SLEEP(100);
 
+using double_nanoseconds = std::chrono::duration<double, std::nano>;
+using nanoseconds = std::chrono::nanoseconds;
+
 namespace cse
 {
 
@@ -31,15 +34,18 @@ public:
         realTimeFactor_ = 1.0;
     }
 
-    void sleep(time_point currentTime)
+    void sleep(time_point currentTime, double realTimeFactor)
     {
         Time::time_point current = Time::now();
         update_real_time_factor(current, currentTime);
         lastSimulationTime_ = currentTime;
         if (realTimeSimulation_) {
             Time::duration elapsed = current - startTime_;
-            const duration expectedSimulationTime = currentTime - simulationStartTime_;
-            const auto expected = std::chrono::duration_cast<std::chrono::nanoseconds>(expectedSimulationTime);
+            const Time::duration actualSimulationTime = currentTime - simulationStartTime_;
+            const auto castedActualTime = std::chrono::duration_cast<nanoseconds>(actualSimulationTime);
+            const auto scaledActualTime = castedActualTime / realTimeFactor;
+            //const Time::duration expectedScaledSimulationTime = actualSimulationTime / realTimeFactor;
+            const auto expected = std::chrono::duration_cast<std::chrono::nanoseconds>(scaledActualTime);
             const std::chrono::nanoseconds totalSleep = expected - elapsed;
 
             if (totalSleep > MIN_SLEEP) {
@@ -123,7 +129,7 @@ void real_time_timer::start(time_point currentTime)
 
 void real_time_timer::sleep(time_point currentTime)
 {
-    pimpl_->sleep(currentTime);
+    pimpl_->sleep(currentTime, 65.7);
 }
 
 void real_time_timer::enable_real_time_simulation()
