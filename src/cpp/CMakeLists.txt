@@ -76,23 +76,24 @@ set(sources
 if(CSECORE_WITH_FMUPROXY)
     list(APPEND publicHeaders
             "fmuproxy/remote_fmu.hpp"
-            "fmuproxy/fmu_service.hpp"
             "fmuproxy/service_types.hpp"
-            "fmuproxy/fmuproxy_client.hpp"
             "fmuproxy/thrift_state.hpp"
+            "fmuproxy/fmu_service.hpp"
+            "fmuproxy/fmuproxy_client.hpp"
+            "fmuproxy/fmuproxy_uri_sub_resolver.hpp"
     )
-
     list(APPEND privateHeaders
             "fmuproxy/fmuproxy_helper.hpp"
             "fmuproxy/remote_slave.hpp"
     )
     list(APPEND sources
-            "fmuproxy/fmu_service.cpp"
-            "fmuproxy/service_types.cpp"
             "fmuproxy/remote_slave.cpp"
             "fmuproxy/remote_fmu.cpp"
-            "fmuproxy/fmuproxy_client.cpp"
+            "fmuproxy/service_types.cpp"
             "fmuproxy/thrift_state.cpp"
+            "fmuproxy/fmu_service.cpp"
+            "fmuproxy/fmuproxy_client.cpp"
+            "fmuproxy/fmuproxy_uri_sub_resolver.cpp"
     )
 endif()
 
@@ -130,6 +131,7 @@ target_link_libraries(csecorecpp
     )
 
 if(CSECORE_WITH_FMUPROXY)
+    target_compile_definitions(csecorecpp PRIVATE "HAS_FMUPROXY")
     target_link_libraries(csecorecpp
         PUBLIC
             thrift::thrift

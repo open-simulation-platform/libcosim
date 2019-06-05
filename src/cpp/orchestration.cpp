@@ -4,6 +4,9 @@
 #include "cse/fmi/fmu.hpp"
 #include "cse/log/logger.hpp"
 
+#ifdef HAS_FMUPROXY
+#    include <cse/fmuproxy/fmuproxy_uri_sub_resolver.hpp>
+#endif
 
 namespace cse
 {
@@ -123,6 +126,9 @@ std::shared_ptr<model_uri_resolver> default_model_uri_resolver()
 {
     auto resolver = std::make_shared<model_uri_resolver>();
     resolver->add_sub_resolver(std::make_shared<file_uri_sub_resolver>());
+#ifdef HAS_FMUPROXY
+    resolver->add_sub_resolver(std::make_shared<fmuproxy::fmuproxy_uri_sub_resolver>());
+#endif
     return resolver;
 }
 

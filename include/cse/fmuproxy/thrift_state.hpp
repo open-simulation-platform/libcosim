@@ -23,14 +23,18 @@ class thrift_state
     friend class fmuproxy_client;
 
 public:
-    thrift_state(const std::shared_ptr<::fmuproxy::thrift::fmu_service_if>& client_,
-        const std::shared_ptr<apache::thrift::transport::TTransport>& transport_);
+    thrift_state(std::shared_ptr<::fmuproxy::thrift::fmu_service_if> client_,
+        std::shared_ptr<apache::thrift::transport::TTransport> transport_);
+
+    ::fmuproxy::thrift::fmu_service_if& client();
+
+    apache::thrift::transport::TTransport& transport();
 
     ~thrift_state();
 
 private:
-    std::shared_ptr<::fmuproxy::thrift::fmu_service_if> client_;
-    std::shared_ptr<apache::thrift::transport::TTransport> transport_;
+    const std::shared_ptr<::fmuproxy::thrift::fmu_service_if> client_;
+    const std::shared_ptr<apache::thrift::transport::TTransport> transport_;
 };
 
 } // namespace fmuproxy
