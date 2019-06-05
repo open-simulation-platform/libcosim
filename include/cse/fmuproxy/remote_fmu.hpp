@@ -11,9 +11,9 @@
 #include <cse/fmuproxy/fmu_service.hpp>
 #include <cse/fmuproxy/thrift_state.hpp>
 #include <cse/model.hpp>
+#include <cse/orchestration.hpp>
 
 #include <memory>
-#include <string>
 
 namespace cse
 {
@@ -23,24 +23,25 @@ namespace fmuproxy
 
 class fmuproxy_client;
 
-class remote_fmu
+class remote_fmu : public cse::model
 {
 
     friend class fmuproxy_client;
 
 public:
-    std::shared_ptr<const cse::model_description> model_description() const;
+    remote_fmu(const ::fmuproxy::thrift::FmuId& fmuId,
+        std::shared_ptr<thrift_state> state);
+
+    std::shared_ptr<const cse::model_description> description() const noexcept override;
 
     std::shared_ptr<cse::slave> instantiate_slave();
 
+    std::shared_ptr<cse::async_slave> instantiate(std::string_view name = "") override;
 
 private:
     const std::string fmuId_;
     std::shared_ptr<thrift_state> state_;
     std::shared_ptr<const cse::model_description> modelDescription_;
-
-    remote_fmu(const ::fmuproxy::thrift::FmuId& fmuId,
-        std::shared_ptr<thrift_state> state);
 };
 
 } // namespace fmuproxy

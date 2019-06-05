@@ -68,12 +68,6 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
         # should not be a problem, so we disable the warning.
         add_compile_options("/wd4251")
     endif()
-    if (CSECORE_WITH_FMUPROXY)
-        #warning C4245: 'return': conversion from 'int' to 'SOCKET', signed/unsigned mismatch
-        add_compile_options("/wd4245")
-        #warning C4706: assignment within conditional expression
-        add_compile_options("/wd4706")
-    endif()
     add_definitions("-D_SCL_SECURE_NO_WARNINGS" "-D_CRT_SECURE_NO_WARNINGS")
 endif()
 
