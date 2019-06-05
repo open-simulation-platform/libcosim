@@ -1,9 +1,9 @@
 
-#include <cse/uri.hpp>
 #include <cse/error.hpp>
 #include <cse/fmuproxy/fmuproxy_client.hpp>
 #include <cse/fmuproxy/fmuproxy_uri_sub_resolver.hpp>
 #include <cse/fmuproxy/remote_fmu.hpp>
+#include <cse/uri.hpp>
 
 #include <string>
 
