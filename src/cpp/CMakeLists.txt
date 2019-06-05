@@ -131,6 +131,7 @@ target_link_libraries(csecorecpp
     )
 
 if(CSECORE_WITH_FMUPROXY)
+    target_compile_definitions(csecorecpp PRIVATE "HAS_FMUPROXY")
     target_link_libraries(csecorecpp
         PUBLIC
             thrift::thrift

@@ -4,8 +4,7 @@
 #include "cse/fmi/fmu.hpp"
 #include "cse/log/logger.hpp"
 
-#if __has_include(<cse/fmuproxy/fmuproxy_uri_sub_resolver.hpp>)
-#    define HAS_FMUPROXY
+#ifdef HAS_FMUPROXY
 #    include <cse/fmuproxy/fmuproxy_uri_sub_resolver.hpp>
 #endif
 
