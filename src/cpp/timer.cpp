@@ -31,22 +31,22 @@ public:
         startTime_ = Time::now();
         rtStartTime_ = startTime_;
         rtCounter_ = 0L;
-        realTimeFactor_ = 1.0;
+        measuredRealTimeFactor_ = 1.0;
+        customRealTimeFactor_ = 1.0;
     }
 
-    void sleep(time_point currentTime, double realTimeFactor)
+    void sleep(time_point currentTime)
     {
         Time::time_point current = Time::now();
         update_real_time_factor(current, currentTime);
         lastSimulationTime_ = currentTime;
         if (realTimeSimulation_) {
-            Time::duration elapsed = current - startTime_;
-            const Time::duration actualSimulationTime = currentTime - simulationStartTime_;
-            const auto castedActualTime = std::chrono::duration_cast<nanoseconds>(actualSimulationTime);
-            const auto scaledActualTime = castedActualTime / realTimeFactor;
-            //const Time::duration expectedScaledSimulationTime = actualSimulationTime / realTimeFactor;
+            const auto elapsed = current - startTime_;
+            const auto actualSimulationTime = currentTime - simulationStartTime_;
+            const auto actualSimulationTimeDouble = std::chrono::duration_cast<nanoseconds>(actualSimulationTime);
+            const auto scaledActualTime = actualSimulationTimeDouble / customRealTimeFactor_.load();
             const auto expected = std::chrono::duration_cast<std::chrono::nanoseconds>(scaledActualTime);
-            const std::chrono::nanoseconds totalSleep = expected - elapsed;
+            const auto totalSleep = expected - elapsed;
 
             if (totalSleep > MIN_SLEEP) {
                 BOOST_LOG_SEV(log::logger(), log::level::trace)
@@ -83,13 +83,19 @@ public:
 
     double get_real_time_factor()
     {
-        return realTimeFactor_;
+        return measuredRealTimeFactor_;
+    }
+
+    void set_real_time_factor(double realTimeFactor)
+    {
+        customRealTimeFactor_.store(realTimeFactor);
     }
 
 
 private:
     long rtCounter_ = 0L;
-    std::atomic<double> realTimeFactor_ = 1.0;
+    std::atomic<double> measuredRealTimeFactor_ = 1.0;
+    std::atomic<double> customRealTimeFactor_;
     std::atomic<bool> realTimeSimulation_ = false;
     Time::time_point startTime_;
     Time::time_point rtStartTime_;
@@ -106,7 +112,7 @@ private:
             const auto expected = std::chrono::duration_cast<std::chrono::nanoseconds>(expectedSimulationTime);
 
             Time::duration elapsed = currentTime - rtStartTime_;
-            realTimeFactor_ = expected.count() / (1.0 * elapsed.count());
+            measuredRealTimeFactor_ = expected.count() / (1.0 * elapsed.count());
             rtStartTime_ = currentTime;
             rtSimulationStartTime_ = currentSimulationTime;
             rtCounter_ = 0L;
@@ -129,7 +135,7 @@ void real_time_timer::start(time_point currentTime)
 
 void real_time_timer::sleep(time_point currentTime)
 {
-    pimpl_->sleep(currentTime, 65.7);
+    pimpl_->sleep(currentTime);
 }
 
 void real_time_timer::enable_real_time_simulation()
@@ -150,6 +156,10 @@ bool real_time_timer::is_real_time_simulation()
 double real_time_timer::get_real_time_factor()
 {
     return pimpl_->get_real_time_factor();
+}
+
+void real_time_timer::set_real_time_factor(double realTimeFactor) {
+    pimpl_->set_real_time_factor(realTimeFactor);
 }
 
 

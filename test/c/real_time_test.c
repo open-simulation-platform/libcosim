@@ -75,7 +75,7 @@ int main()
     rc = cse_execution_get_status(execution, &executionStatus);
     if (rc < 0) { goto Lerror; }
     if (!executionStatus.is_real_time_simulation) {
-        cse_execution_enable_real_time_simulation(execution, 1);
+        cse_execution_enable_real_time_simulation(execution, 1.0f);
     }
 
     rc = cse_execution_start(execution);

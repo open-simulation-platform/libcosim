@@ -443,10 +443,10 @@ int cse_execution_get_status(cse_execution* execution, cse_execution_status* sta
     }
 }
 
-int cse_execution_enable_real_time_simulation(cse_execution* execution, int realTimeTarget)
+int cse_execution_enable_real_time_simulation(cse_execution* execution, double realTimeFactor)
 {
-    (void)realTimeTarget;
     execution->cpp_execution->enable_real_time_simulation();
+    execution->cpp_execution->set_real_time_factor(realTimeFactor);
     return success;
 }
 

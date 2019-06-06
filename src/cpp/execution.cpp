@@ -184,6 +184,11 @@ public:
         return timer_.get_real_time_factor();
     }
 
+    void set_real_time_factor(double realTimeFactor)
+    {
+        timer_.set_real_time_factor(realTimeFactor);
+    }
+
 private:
     void validate_variable(variable_id variable, variable_causality causality)
     {
@@ -216,6 +221,7 @@ private:
     time_point currentTime_;
     bool initialized_;
     bool stopped_;
+    double realTimeFactor_ = 1.0;
 
     std::shared_ptr<algorithm> algorithm_;
     std::vector<std::shared_ptr<simulator>> simulators_;
@@ -300,6 +306,11 @@ bool execution::is_real_time_simulation()
 double execution::get_real_time_factor()
 {
     return pimpl_->get_real_time_factor();
+}
+
+void execution::set_real_time_factor(double realTimeFactor)
+{
+    pimpl_->set_real_time_factor(realTimeFactor);
 }
 
 

@@ -165,6 +165,9 @@ public:
     /// Disables real time simulation
     void disable_real_time_simulation();
 
+    /// Sets the custom real time factor for the simulation
+    void set_real_time_factor(double realTimeFactor);
+
     /// Returns if this is a real time simulation
     bool is_real_time_simulation();
 
