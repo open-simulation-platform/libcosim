@@ -609,13 +609,6 @@ int cse_observer_slave_get_boolean(
     size_t nv,
     bool values[]);
 
-/// A struct used for retrieving string variable values with `cse_observer_slave_get_string()`
-typedef struct
-{
-    /// The variable value
-    char value[SLAVE_NAME_MAX_SIZE];
-} cse_string_value;
-
 /**
  *  Retrieves the values of string variables for one slave.
  *
@@ -629,8 +622,9 @@ typedef struct
  *  \param [in] nv
  *      The length of the `variables` and `values` arrays.
  *  \param [out] values
- *      A pointer to an array of length `nv` which will be filled with the
- *      values of the variables specified in `variables`, in the same order.
+ *      A pointer to an array of length `nv` which will be filled with pointers
+ *      to the values of the variables specified in `variables`, in the same order.
+ *      The pointers are valid until the next call to `cse_observer_slave_get_string()`.
  *
  *  \returns
  *      0 on success and -1 on error.
@@ -640,7 +634,7 @@ int cse_observer_slave_get_string(
     cse_slave_index slave,
     const cse_variable_index variables[],
     size_t nv,
-    cse_string_value values[]);
+    const char* values[]);
 
 /**
  * Retrieves a series of observed values, step numbers and times for a real variable.

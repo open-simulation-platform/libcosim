@@ -575,22 +575,27 @@ int cse_observer_slave_get_boolean(
     }
 }
 
+// This holds string variable values.
+// Must only be used with `cse_observer_slave_get_string()`.
+thread_local std::vector<std::string> g_stringVariableBuffer;
+
 int cse_observer_slave_get_string(
     cse_observer* observer,
     cse_slave_index slave,
     const cse_variable_index variables[],
     size_t nv,
-    cse_string_value values[])
+    const char* values[])
 {
     try {
         const auto obs = std::dynamic_pointer_cast<cse::last_value_provider>(observer->cpp_observer);
         if (!obs) {
             throw std::invalid_argument("Invalid observer! The provided observer must be a last_value_observer.");
         }
-        std::vector<std::string> s(nv);
-        obs->get_string(slave, gsl::make_span(variables, nv), gsl::span<std::string>(s));
+        g_stringVariableBuffer.clear();
+        g_stringVariableBuffer.resize(nv);
+        obs->get_string(slave, gsl::make_span(variables, nv), gsl::span<std::string>(g_stringVariableBuffer));
         for (size_t i = 0; i < nv; i++) {
-            strncpy(values[i].value, s[i].c_str(), SLAVE_NAME_MAX_SIZE);
+            values[i] = g_stringVariableBuffer.at(i).c_str();
         }
         return success;
     } catch (...) {

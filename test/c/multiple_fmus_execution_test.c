@@ -153,12 +153,12 @@ int main()
     }
 
     cse_variable_index strOutVar = 0;
-    cse_string_value csv;
-    rc = cse_observer_slave_get_string(observer1, slave_index1, &strOutVar, 1, &csv);
+    const char* strOutVal;
+    rc = cse_observer_slave_get_string(observer1, slave_index1, &strOutVar, 1, &strOutVal);
     if (rc < 0) { goto Lerror; }
 
-    if (0 != strncmp(csv.value, "foo", SLAVE_NAME_MAX_SIZE)) {
-        fprintf(stderr, "Expected value foo, got %s\n", csv.value);
+    if (0 != strncmp(strOutVal, "foo", SLAVE_NAME_MAX_SIZE)) {
+        fprintf(stderr, "Expected value foo, got %s\n", strOutVal);
         goto Lfailure;
     }
 
