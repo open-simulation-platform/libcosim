@@ -20,8 +20,7 @@ namespace cse
 class real_time_timer::impl
 {
 public:
-    impl()
-    {}
+    impl() = default;
 
     void start(time_point currentTime)
     {
