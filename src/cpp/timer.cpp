@@ -6,7 +6,6 @@
 #include <atomic>
 #include <chrono>
 #include <thread>
-#include <iostream>
 
 typedef std::chrono::steady_clock Time;
 constexpr std::chrono::microseconds MIN_SLEEP(100);
