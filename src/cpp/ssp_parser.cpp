@@ -206,7 +206,7 @@ std::pair<execution, simulator_map> load_ssp(
         auto slave = model->instantiate(component.name);
         simulator_index index = slaves[component.name].index = execution.add_slave(slave, component.name);
 
-        simulatorMap[component.name] = simulator_map_entry {index, component.source, *model->description()};
+        simulatorMap[component.name] = simulator_map_entry{index, component.source, *model->description()};
 
         for (const auto& v : model->description()->variables) {
             slaves[component.name].variables[v.name] = v;

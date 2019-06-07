@@ -7,8 +7,8 @@
 
 #include <gsl/span>
 
-#include <unordered_map>
 #include <mutex>
+#include <unordered_map>
 #include <vector>
 
 namespace cse

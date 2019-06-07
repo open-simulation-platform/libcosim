@@ -1,6 +1,8 @@
 #define BOOST_TEST_MODULE uri.hpp unittests
 #include <cse/uri.hpp>
+
 #include <boost/test/unit_test.hpp>
+
 #include <stdexcept>
 
 using namespace cse;
@@ -151,8 +153,7 @@ BOOST_AUTO_TEST_CASE(percent_encoding)
     BOOST_CHECK_THROW(percent_decode("%G0"), std::domain_error);
     BOOST_CHECK_THROW(percent_decode("%0G"), std::domain_error);
 
-    BOOST_TEST(percent_encode_uri("http", "user name@10.0.0.1:passwd", "/foo/bar baz", "q1=foo bar&q2=baz;q3", "foo bar")
-        == "http://user%20name@10.0.0.1:passwd/foo/bar%20baz?q1=foo%20bar&q2=baz;q3#foo%20bar");
+    BOOST_TEST(percent_encode_uri("http", "user name@10.0.0.1:passwd", "/foo/bar baz", "q1=foo bar&q2=baz;q3", "foo bar") == "http://user%20name@10.0.0.1:passwd/foo/bar%20baz?q1=foo%20bar&q2=baz;q3#foo%20bar");
 }
 
 
