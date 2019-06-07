@@ -555,6 +555,55 @@ int cse_observer_slave_get_integer(
     }
 }
 
+int cse_observer_slave_get_boolean(
+    cse_observer* observer,
+    cse_slave_index slave,
+    const cse_variable_index variables[],
+    size_t nv,
+    bool values[])
+{
+    try {
+        const auto obs = std::dynamic_pointer_cast<cse::last_value_provider>(observer->cpp_observer);
+        if (!obs) {
+            throw std::invalid_argument("Invalid observer! The provided observer must be a last_value_observer.");
+        }
+        obs->get_boolean(slave, gsl::make_span(variables, nv), gsl::make_span(values, nv));
+        return success;
+    } catch (...) {
+        handle_current_exception();
+        return failure;
+    }
+}
+
+// This holds string variable values.
+// Must only be used with `cse_observer_slave_get_string()`.
+thread_local std::vector<std::string> g_stringVariableBuffer;
+
+int cse_observer_slave_get_string(
+    cse_observer* observer,
+    cse_slave_index slave,
+    const cse_variable_index variables[],
+    size_t nv,
+    const char* values[])
+{
+    try {
+        const auto obs = std::dynamic_pointer_cast<cse::last_value_provider>(observer->cpp_observer);
+        if (!obs) {
+            throw std::invalid_argument("Invalid observer! The provided observer must be a last_value_observer.");
+        }
+        g_stringVariableBuffer.clear();
+        g_stringVariableBuffer.resize(nv);
+        obs->get_string(slave, gsl::make_span(variables, nv), gsl::span<std::string>(g_stringVariableBuffer));
+        for (size_t i = 0; i < nv; i++) {
+            values[i] = g_stringVariableBuffer.at(i).c_str();
+        }
+        return success;
+    } catch (...) {
+        handle_current_exception();
+        return failure;
+    }
+}
+
 int64_t cse_observer_slave_get_real_samples(
     cse_observer* observer,
     cse_slave_index slave,
@@ -864,11 +913,12 @@ int cse_manipulator_slave_set_integer(
     }
 }
 
-int cse_manipulator_slave_reset_real(
+int cse_manipulator_slave_set_boolean(
     cse_manipulator* manipulator,
     cse_slave_index slaveIndex,
     const cse_variable_index variables[],
-    size_t nv)
+    size_t nv,
+    const bool values[])
 {
     try {
         const auto man = std::dynamic_pointer_cast<cse::override_manipulator>(manipulator->cpp_manipulator);
@@ -876,7 +926,7 @@ int cse_manipulator_slave_reset_real(
             throw std::invalid_argument("Invalid manipulator!");
         }
         for (size_t i = 0; i < nv; i++) {
-            man->reset_real_variable(slaveIndex, variables[i]);
+            man->override_boolean_variable(slaveIndex, variables[i], values[i]);
         }
         return success;
     } catch (...) {
@@ -885,9 +935,32 @@ int cse_manipulator_slave_reset_real(
     }
 }
 
-int cse_manipulator_slave_reset_integer(
+int cse_manipulator_slave_set_string(
     cse_manipulator* manipulator,
     cse_slave_index slaveIndex,
+    const cse_variable_index variables[],
+    size_t nv,
+    const char* values[])
+{
+    try {
+        const auto man = std::dynamic_pointer_cast<cse::override_manipulator>(manipulator->cpp_manipulator);
+        if (!man) {
+            throw std::invalid_argument("Invalid manipulator!");
+        }
+        for (size_t i = 0; i < nv; i++) {
+            man->override_string_variable(slaveIndex, variables[i], values[i]);
+        }
+        return success;
+    } catch (...) {
+        handle_current_exception();
+        return failure;
+    }
+}
+
+int cse_manipulator_slave_reset(
+    cse_manipulator* manipulator,
+    cse_slave_index slaveIndex,
+    cse_variable_type type,
     const cse_variable_index variables[],
     size_t nv)
 {
@@ -896,8 +969,9 @@ int cse_manipulator_slave_reset_integer(
         if (!man) {
             throw std::invalid_argument("Invalid manipulator!");
         }
+        cse::variable_type vt = to_cpp_variable_type(type);
         for (size_t i = 0; i < nv; i++) {
-            man->reset_integer_variable(slaveIndex, variables[i]);
+            man->reset_variable(slaveIndex, vt, variables[i]);
         }
         return success;
     } catch (...) {
