@@ -131,6 +131,37 @@ pipeline {
                                 }
                             }
                         }
+                        stage ('Test Release') {
+                            steps {
+                                dir('release-build') {
+                                    bat 'ctest -C Release -T Test --no-compress-output --test-output-size-passed 307200 || true'
+                                }
+                            }
+                            post {
+                                always{
+                                    xunit (
+                                        testTimeMargin: '30000',
+                                        thresholdMode: 1,
+                                        thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
+                                        tools: [ CTest(pattern: 'release-build/Testing/**/Test.xml') ]
+                                    )
+                                }
+                                success {
+                                    dir('release-build') {
+                                        sh "conan export-pkg ../cse-core osp/${CSE_CONAN_CHANNEL} -pf package/windows/release --force"
+                                        sh "conan upload cse-core/*@osp/${CSE_CONAN_CHANNEL} --all -r=osp --confirm"
+                                    }
+                                    dir('release-build/package') {
+                                        archiveArtifacts artifacts: '**',  fingerprint: true
+                                    }
+                                }
+                                cleanup {
+                                    dir('release-build/Testing') {
+                                        deleteDir();
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
                 stage ( 'Build on Linux with Conan' ) {
@@ -268,6 +299,37 @@ pipeline {
                                 dir('release-build-conan-fmuproxy') {
                                     sh 'conan install ../cse-core -s compiler.libcxx=libstdc++11 -s build_type=Release -o fmuproxy=True -b missing'
                                     sh 'conan package ../cse-core -pf package/linux/release'
+                                }
+                            }
+                        }
+                        stage ('Test Release') {
+                            steps {
+                                dir('release-build-conan') {
+                                    sh '. ./activate_run.sh && ctest -C Release -T Test --no-compress-output --test-output-size-passed 307200 || true'
+                                }
+                            }
+                            post {
+                                always{
+                                    xunit (
+                                        testTimeMargin: '30000',
+                                        thresholdMode: 1,
+                                        thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
+                                        tools: [ CTest(pattern: 'release-build-conan/Testing/**/Test.xml') ]
+                                    )
+                                }
+                                success {
+                                    dir('release-build-conan') {
+                                        sh "conan export-pkg ../cse-core osp/${CSE_CONAN_CHANNEL} -pf package/linux/release --force"
+                                        sh "conan upload cse-core/*@osp/${CSE_CONAN_CHANNEL} --all -r=osp --confirm"
+                                    }
+                                    dir('release-build-conan/package') {
+                                        archiveArtifacts artifacts: '**',  fingerprint: true
+                                    }
+                                }
+                                cleanup {
+                                    dir('release-build-conan/Testing') {
+                                        deleteDir();
+                                    }
                                 }
                             }
                         }
