@@ -133,7 +133,7 @@ pipeline {
                         }
                         stage ('Test Release') {
                             steps {
-                                dir('release-build') {
+                                dir('release-build-fmuproxy') {
                                     bat 'ctest -C Release -T Test --no-compress-output --test-output-size-passed 307200 || true'
                                 }
                             }
@@ -143,20 +143,20 @@ pipeline {
                                         testTimeMargin: '30000',
                                         thresholdMode: 1,
                                         thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
-                                        tools: [ CTest(pattern: 'release-build/Testing/**/Test.xml') ]
+                                        tools: [ CTest(pattern: 'release-build-fmuproxy/Testing/**/Test.xml') ]
                                     )
                                 }
                                 success {
-                                    dir('release-build') {
+                                    dir('release-build-fmuproxy') {
                                         sh "conan export-pkg ../cse-core osp/${CSE_CONAN_CHANNEL} -pf package/windows/release --force"
                                         sh "conan upload cse-core/*@osp/${CSE_CONAN_CHANNEL} --all -r=osp --confirm"
                                     }
-                                    dir('release-build/package') {
+                                    dir('release-build-fmuproxy/package') {
                                         archiveArtifacts artifacts: '**',  fingerprint: true
                                     }
                                 }
                                 cleanup {
-                                    dir('release-build/Testing') {
+                                    dir('release-build-fmuproxy/Testing') {
                                         deleteDir();
                                     }
                                 }
@@ -304,7 +304,7 @@ pipeline {
                         }
                         stage ('Test Release') {
                             steps {
-                                dir('release-build-conan') {
+                                dir('release-build-conan-fmuproxy') {
                                     sh '. ./activate_run.sh && ctest -C Release -T Test --no-compress-output --test-output-size-passed 307200 || true'
                                 }
                             }
@@ -314,20 +314,20 @@ pipeline {
                                         testTimeMargin: '30000',
                                         thresholdMode: 1,
                                         thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
-                                        tools: [ CTest(pattern: 'release-build-conan/Testing/**/Test.xml') ]
+                                        tools: [ CTest(pattern: 'release-build-conan-fmuproxy/Testing/**/Test.xml') ]
                                     )
                                 }
                                 success {
-                                    dir('release-build-conan') {
+                                    dir('release-build-conan-fmuproxy') {
                                         sh "conan export-pkg ../cse-core osp/${CSE_CONAN_CHANNEL} -pf package/linux/release --force"
                                         sh "conan upload cse-core/*@osp/${CSE_CONAN_CHANNEL} --all -r=osp --confirm"
                                     }
-                                    dir('release-build-conan/package') {
+                                    dir('release-build-conan-fmuproxy/package') {
                                         archiveArtifacts artifacts: '**',  fingerprint: true
                                     }
                                 }
                                 cleanup {
-                                    dir('release-build-conan/Testing') {
+                                    dir('release-build-conan-fmuproxy/Testing') {
                                         deleteDir();
                                     }
                                 }
