@@ -148,7 +148,7 @@ pipeline {
                                 }
                                 success {
                                     dir('release-build-fmuproxy') {
-                                        sh "conan export-pkg ../cse-core osp/${CSE_CONAN_CHANNEL} -pf package/windows/release --force"
+                                        sh "conan export-pkg ../cse-core osp/${CSE_CONAN_CHANNEL} -o fmuproxy=True -pf package/windows/release --force"
                                         sh "conan upload cse-core/*@osp/${CSE_CONAN_CHANNEL} --all -r=osp --confirm"
                                     }
                                     dir('release-build-fmuproxy/package') {
@@ -319,7 +319,7 @@ pipeline {
                                 }
                                 success {
                                     dir('release-build-conan-fmuproxy') {
-                                        sh "conan export-pkg ../cse-core osp/${CSE_CONAN_CHANNEL} -pf package/linux/release --force"
+                                        sh "conan export-pkg ../cse-core osp/${CSE_CONAN_CHANNEL} -o fmuproxy=True -pf package/linux/release --force"
                                         sh "conan upload cse-core/*@osp/${CSE_CONAN_CHANNEL} --all -r=osp --confirm"
                                     }
                                     dir('release-build-conan-fmuproxy/package') {
