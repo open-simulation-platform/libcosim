@@ -243,11 +243,14 @@ int cse_execution_stop(cse_execution* execution);
 
 
 /// Enables real time simulation for an execution.
-int cse_execution_enable_real_time_simulation(cse_execution* execution, double realTimeTarget);
+int cse_execution_enable_real_time_simulation(cse_execution* execution);
 
 
 /// Disables real time simulation for an execution.
 int cse_execution_disable_real_time_simulation(cse_execution* execution);
+
+/// Sets a custom real time factor.
+int cse_execution_set_custom_real_time_factor(cse_execution* execution, double realTimeFactor);
 
 
 /// Execution states.

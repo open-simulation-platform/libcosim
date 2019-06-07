@@ -7,35 +7,35 @@
 #ifdef _WINDOWS
 #    include <windows.h>
 #else
+
 #    include <sys/time.h>
 #    include <unistd.h>
+
 #    define Sleep(x) usleep((x)*1000)
 
-int64_t GetCurrentTime()
-{
+int64_t GetCurrentTime() {
     struct timeval tv;
     gettimeofday(&tv, NULL);
     return (int64_t)((tv.tv_sec) * 1000 + (tv.tv_usec) / 1000);
 }
+
 #endif
 
-void print_last_error()
-{
+void print_last_error() {
     fprintf(
-        stderr,
-        "Error code %d: %s\n",
-        cse_last_error_code(), cse_last_error_message());
+            stderr,
+            "Error code %d: %s\n",
+            cse_last_error_code(), cse_last_error_message());
 }
 
-int main()
-{
+int main() {
     int exitCode = 0;
 
-    cse_execution* execution = NULL;
-    cse_slave* slave1 = NULL;
-    cse_slave* slave2 = NULL;
+    cse_execution *execution = NULL;
+    cse_slave *slave1 = NULL;
+    cse_slave *slave2 = NULL;
 
-    const char* dataDir = getenv("TEST_DATA_DIR");
+    const char *dataDir = getenv("TEST_DATA_DIR");
     if (!dataDir) {
         fprintf(stderr, "Environment variable TEST_DATA_DIR not set\n");
         return 1;
@@ -99,7 +99,7 @@ int main()
     int64_t actualElapsed = (after1 - before1) + (after2 - before2);
     double elapsedS = actualElapsed * 1.0e-3;
 
-    int rounded = (int)(0.5 + elapsedS / stepSize);
+    int rounded = (int) (0.5 + elapsedS / stepSize);
     double elapsed = rounded * stepSize;
 
     rc = cse_execution_get_status(execution, &executionStatus);
@@ -113,13 +113,13 @@ int main()
 
     goto Lcleanup;
 
-Lerror:
+    Lerror:
     print_last_error();
 
-Lfailure:
+    Lfailure:
     exitCode = 1;
 
-Lcleanup:
+    Lcleanup:
     cse_local_slave_destroy(slave2);
     cse_local_slave_destroy(slave1);
     cse_execution_destroy(execution);

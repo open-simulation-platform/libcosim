@@ -6,7 +6,7 @@
 #include <atomic>
 #include <chrono>
 #include <thread>
-
+#include <iostream>
 
 typedef std::chrono::steady_clock Time;
 constexpr std::chrono::microseconds MIN_SLEEP(100);
@@ -88,14 +88,14 @@ public:
 
     void set_real_time_factor(double realTimeFactor)
     {
-        customRealTimeFactor_.store(realTimeFactor);
+        customRealTimeFactor_ = realTimeFactor;
     }
 
 
 private:
     long rtCounter_ = 0L;
     std::atomic<double> measuredRealTimeFactor_ = 1.0;
-    std::atomic<double> customRealTimeFactor_;
+    std::atomic<double> customRealTimeFactor_ = 1.0;
     std::atomic<bool> realTimeSimulation_ = false;
     Time::time_point startTime_;
     Time::time_point rtStartTime_;
