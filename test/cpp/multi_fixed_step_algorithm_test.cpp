@@ -95,14 +95,14 @@ int main()
         auto idx2 = execution.add_slave(cse::make_pseudo_async(slave2), "slave 2");
 
         execution.connect_variables(
-            cse::variable_id {idx0, cse::variable_type::real, realOutIndex},
-            cse::variable_id {idx1, cse::variable_type::real, realInIndex});
+            cse::variable_id{idx0, cse::variable_type::real, realOutIndex},
+            cse::variable_id{idx1, cse::variable_type::real, realInIndex});
         execution.connect_variables(
-            cse::variable_id {idx1, cse::variable_type::integer, integerOutIndex},
-            cse::variable_id {idx2, cse::variable_type::integer, integerInIndex});
+            cse::variable_id{idx1, cse::variable_type::integer, integerOutIndex},
+            cse::variable_id{idx2, cse::variable_type::integer, integerInIndex});
         execution.connect_variables(
-            cse::variable_id {idx2, cse::variable_type::integer, integerOutIndex},
-            cse::variable_id {idx1, cse::variable_type::integer, integerInIndex});
+            cse::variable_id{idx2, cse::variable_type::integer, integerOutIndex},
+            cse::variable_id{idx1, cse::variable_type::integer, integerInIndex});
 
         algorithm->set_stepsize_decimation_factor(idx0, 1);
         algorithm->set_stepsize_decimation_factor(idx1, 2);
@@ -110,9 +110,9 @@ int main()
 
         auto observer2 = std::make_shared<cse::time_series_observer>();
         execution.add_observer(observer2);
-        observer2->start_observing(cse::variable_id {idx0, cse::variable_type::real, realOutIndex});
-        observer2->start_observing(cse::variable_id {idx1, cse::variable_type::real, realOutIndex});
-        observer2->start_observing(cse::variable_id {idx2, cse::variable_type::integer, integerOutIndex});
+        observer2->start_observing(cse::variable_id{idx0, cse::variable_type::real, realOutIndex});
+        observer2->start_observing(cse::variable_id{idx1, cse::variable_type::real, realOutIndex});
+        observer2->start_observing(cse::variable_id{idx2, cse::variable_type::integer, integerOutIndex});
 
         // Run simulation
         auto simResult = execution.simulate_until(endTime);
@@ -157,7 +157,7 @@ int main()
             startTime + 6 * stepSize,
             startTime + 8 * stepSize};
         const auto& setRealLog1 = slave1->get_set_real_log();
-        for (auto t: setRealLog1) std::cout << t.time_since_epoch().count() / 1000000.0  << std::endl;
+        for (auto t : setRealLog1) std::cout << t.time_since_epoch().count() / 1000000.0 << std::endl;
         REQUIRE(setRealLog1.size() == 5);
         REQUIRE(std::equal(setRealLog1.begin(), setRealLog1.end(), expectedSetRealTimes1));
 

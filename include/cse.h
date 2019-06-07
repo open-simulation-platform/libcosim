@@ -356,7 +356,7 @@ int cse_slave_get_num_variables(cse_execution* execution, cse_slave_index slave)
  *  \returns
  *      The number of variables written to `variables` array or -1 on error.
  */
-int cse_slave_get_variables(cse_execution* execution,  cse_slave_index slave, cse_variable_description variables[], size_t numVariables);
+int cse_slave_get_variables(cse_execution* execution, cse_slave_index slave, cse_variable_description variables[], size_t numVariables);
 
 /// A struct containing information about a slave which has been added to an execution.
 typedef struct
