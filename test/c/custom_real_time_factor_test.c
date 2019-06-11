@@ -85,7 +85,7 @@ int main() {
     double rtf = executionStatus.real_time_factor;
     printf("The setpoint real time factor is %f\n", real_time_factor);
     printf("The measured real time factor is %f\n", rtf);
-    if (fabs(rtf - real_time_factor) > 1.0e-2) {
+    if (fabs(rtf - real_time_factor) > 1.0e-1) {
         fprintf(stderr, "Expected real time factor == %f, got %f\n", real_time_factor, rtf);
         goto Lfailure;
     }

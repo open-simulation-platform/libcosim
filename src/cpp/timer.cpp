@@ -42,7 +42,7 @@ public:
             const auto elapsed = current - startTime_;
             const auto actualSimulationTime = currentTime - simulationStartTime_;
             const auto actualSimulationTimeDouble = std::chrono::duration_cast<nanoseconds>(actualSimulationTime);
-            const auto scaledActualTime = actualSimulationTimeDouble / customRealTimeFactor_.load();
+            const auto scaledActualTime = actualSimulationTimeDouble / customRealTimeFactor_;
             const auto expected = std::chrono::duration_cast<std::chrono::nanoseconds>(scaledActualTime);
             const auto totalSleep = expected - elapsed;
 
@@ -93,8 +93,8 @@ public:
 private:
     long rtCounter_ = 0L;
     std::atomic<double> measuredRealTimeFactor_ = 1.0;
-    std::atomic<double> customRealTimeFactor_ = 1.0;
     std::atomic<bool> realTimeSimulation_ = false;
+    double customRealTimeFactor_;
     Time::time_point startTime_;
     Time::time_point rtStartTime_;
     time_point simulationStartTime_;
