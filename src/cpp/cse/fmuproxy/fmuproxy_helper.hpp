@@ -58,6 +58,8 @@ inline cse::variable_type get_type(const fmuproxy::thrift::ScalarVariable& v)
         return cse::variable_type::string;
     } else if (v.attribute.__isset.boolean_attribute) {
         return cse::variable_type::boolean;
+    } else if (v.attribute.__isset.enumeration_attribute) {
+        return cse::variable_type::enumeration;
     } else {
         const auto err = "Failed to get type of variable: '" + v.name + "'";
         CSE_PANIC_M(err.c_str());
