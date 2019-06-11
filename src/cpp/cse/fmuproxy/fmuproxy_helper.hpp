@@ -77,7 +77,7 @@ inline cse::variable_description convert(const fmuproxy::thrift::ScalarVariable&
 
 inline std::vector<cse::variable_description> convert(fmuproxy::thrift::ModelVariables& vars)
 {
-    std::vector<cse::variable_description> modelVariables(vars.size());
+    std::vector<cse::variable_description> modelVariables;
     for (const auto& v : vars) {
         modelVariables.push_back(convert(v));
     }
