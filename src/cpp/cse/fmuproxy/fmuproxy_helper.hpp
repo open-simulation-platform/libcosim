@@ -72,6 +72,19 @@ inline cse::variable_description convert(const fmuproxy::thrift::ScalarVariable&
     var.causality = parse_causality(v.causality);
     var.variability = parse_variability(v.variability);
     var.type = get_type(v);
+    if (v.attribute.__isset.integer_attribute) {
+        var.start = v.attribute.integer_attribute.start;
+    } else if (v.attribute.__isset.real_attribute) {
+        var.start = v.attribute.real_attribute.start;
+    } else if (v.attribute.__isset.string_attribute) {
+        var.start = v.attribute.string_attribute.start;
+    } else if (v.attribute.__isset.boolean_attribute) {
+        var.start = v.attribute.boolean_attribute.start;
+    } else if (v.attribute.__isset.enumeration_attribute) {
+        var.start = v.attribute.enumeration_attribute.start;
+    } else {
+        CSE_PANIC_M("Fatal: no variable attribute set!");
+    }
     return var;
 }
 
