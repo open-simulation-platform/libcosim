@@ -58,6 +58,8 @@ inline cse::variable_type get_type(const fmuproxy::thrift::ScalarVariable& v)
         return cse::variable_type::string;
     } else if (v.attribute.__isset.boolean_attribute) {
         return cse::variable_type::boolean;
+    } else if (v.attribute.__isset.enumeration_attribute) {
+        return cse::variable_type::enumeration;
     } else {
         const auto err = "Failed to get type of variable: '" + v.name + "'";
         CSE_PANIC_M(err.c_str());
@@ -72,12 +74,23 @@ inline cse::variable_description convert(const fmuproxy::thrift::ScalarVariable&
     var.causality = parse_causality(v.causality);
     var.variability = parse_variability(v.variability);
     var.type = get_type(v);
+    if (v.attribute.__isset.integer_attribute) {
+        var.start = v.attribute.integer_attribute.start;
+    } else if (v.attribute.__isset.real_attribute) {
+        var.start = v.attribute.real_attribute.start;
+    } else if (v.attribute.__isset.string_attribute) {
+        var.start = v.attribute.string_attribute.start;
+    } else if (v.attribute.__isset.boolean_attribute) {
+        var.start = v.attribute.boolean_attribute.start;
+    } else if (v.attribute.__isset.enumeration_attribute) {
+        var.start = v.attribute.enumeration_attribute.start;
+    }
     return var;
 }
 
 inline std::vector<cse::variable_description> convert(fmuproxy::thrift::ModelVariables& vars)
 {
-    std::vector<cse::variable_description> modelVariables(vars.size());
+    std::vector<cse::variable_description> modelVariables;
     for (const auto& v : vars) {
         modelVariables.push_back(convert(v));
     }
