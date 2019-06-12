@@ -434,7 +434,7 @@ int cse_execution_get_status(cse_execution* execution, cse_execution_status* sta
         status->error_code = execution->error_code;
         status->state = execution->state;
         status->current_time = to_integer_time_point(execution->cpp_execution->current_time());
-        status->real_time_factor = execution->cpp_execution->get_real_time_factor();
+        status->real_time_factor = execution->cpp_execution->get_measured_real_time_factor();
         status->is_real_time_simulation = execution->cpp_execution->is_real_time_simulation() ? 1 : 0;
         return success;
     } catch (...) {
@@ -456,7 +456,7 @@ int cse_execution_disable_real_time_simulation(cse_execution* execution)
 }
 
 int cse_execution_set_custom_real_time_factor(cse_execution* execution, double realTimeFactor) {
-    execution->cpp_execution->set_real_time_factor(realTimeFactor);
+    execution->cpp_execution->set_real_time_factor_target(realTimeFactor);
     return success;
 }
 

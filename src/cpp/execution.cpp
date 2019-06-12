@@ -179,14 +179,14 @@ public:
         return timer_.is_real_time_simulation();
     }
 
-    double get_real_time_factor()
+    double get_measured_real_time_factor()
     {
-        return timer_.get_real_time_factor();
+        return timer_.get_measured_real_time_factor();
     }
 
-    void set_real_time_factor(double realTimeFactor)
+    void set_real_time_factor_target(double realTimeFactor)
     {
-        timer_.set_real_time_factor(realTimeFactor);
+        timer_.set_real_time_factor_target(realTimeFactor);
     }
 
 private:
@@ -303,14 +303,14 @@ bool execution::is_real_time_simulation()
     return pimpl_->is_real_time_simulation();
 }
 
-double execution::get_real_time_factor()
+double execution::get_measured_real_time_factor()
 {
-    return pimpl_->get_real_time_factor();
+    return pimpl_->get_measured_real_time_factor();
 }
 
-void execution::set_real_time_factor(double realTimeFactor)
+void execution::set_real_time_factor_target(double realTimeFactor)
 {
-    pimpl_->set_real_time_factor(realTimeFactor);
+    pimpl_->set_real_time_factor_target(realTimeFactor);
 }
 
 

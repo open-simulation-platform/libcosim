@@ -166,13 +166,13 @@ public:
     void disable_real_time_simulation();
 
     /// Sets the custom real time factor for the simulation
-    void set_real_time_factor(double realTimeFactor);
+    void set_real_time_factor_target(double realTimeFactor);
 
     /// Returns if this is a real time simulation
     bool is_real_time_simulation();
 
     /// Returns the current real time factor
-    double get_real_time_factor();
+    double get_measured_real_time_factor();
 
 
 private:
