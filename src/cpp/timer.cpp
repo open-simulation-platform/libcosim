@@ -36,20 +36,20 @@ public:
         lastSimulationTime_ = currentTime;
         if (realTimeSimulation_) {
             const auto elapsed = current - startTime_;
-            const auto actualSimulationTime = currentTime - simulationStartTime_;
-            const auto totalSleep = actualSimulationTime / customRealTimeFactor_.load();
+            const auto expectedSimulationTime = (currentTime - simulationStartTime_) / realTimeFactorTarget_.load();
+            const auto simulationSleepTime = expectedSimulationTime - elapsed;
 
-            if (totalSleep > MIN_SLEEP) {
+            if (simulationSleepTime > MIN_SLEEP) {
                 BOOST_LOG_SEV(log::logger(), log::level::trace)
                     << "Real time timer sleeping for "
-                    << (std::chrono::duration_cast<std::chrono::milliseconds>(totalSleep)).count()
+                    << (std::chrono::duration_cast<std::chrono::milliseconds>(simulationSleepTime)).count()
                     << " ms";
 
-                std::this_thread::sleep_for(totalSleep);
+                std::this_thread::sleep_for(simulationSleepTime);
             } else {
                 BOOST_LOG_SEV(log::logger(), log::level::debug)
                     << "Real time timer NOT sleeping, calculated sleep time "
-                    << totalSleep.count() << " ns";
+                    << simulationSleepTime.count() << " ns";
             }
         }
     }
@@ -79,10 +79,10 @@ public:
 
     void set_real_time_factor_target(double realTimeFactor)
     {
-        assert(realTimeFactor > 0.0);
+        BOOST_ASSERT(realTimeFactor > 0.0);
 
         start(lastSimulationTime_);
-        customRealTimeFactor_.store(realTimeFactor);
+        realTimeFactorTarget_.store(realTimeFactor);
     }
 
 
@@ -90,7 +90,7 @@ private:
     long rtCounter_ = 0L;
     std::atomic<double> measuredRealTimeFactor_ = 1.0;
     std::atomic<bool> realTimeSimulation_ = false;
-    std::atomic<double> customRealTimeFactor_;
+    std::atomic<double> realTimeFactorTarget_ = 1.0;
     Time::time_point startTime_;
     Time::time_point rtStartTime_;
     time_point simulationStartTime_;
