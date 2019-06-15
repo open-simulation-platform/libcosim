@@ -333,8 +333,7 @@ void slave_instance::start_simulation()
         handle_,
         to_double_time_point(startTime_),
         stopTime_.has_value(),
-        stopTime_ ? to_double_time_point(*stopTime_)
-                  : std::numeric_limits<fmi1_real_t>::quiet_NaN());
+        stopTime_ ? to_double_time_point(*stopTime_): 0.0);
     if (rc != fmi1_status_ok && rc != fmi1_status_warning) {
         throw error(
             make_error_code(errc::model_error),
