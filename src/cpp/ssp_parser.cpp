@@ -15,16 +15,16 @@ namespace cse
 namespace
 {
 template<typename T>
-T get_attribute(const boost::property_tree::ptree& tree, const std::string& key)
+T get_attribute(const boost::property_tree::ptree& tree, const std::string& key, const std::optional<T> defaultValue = {})
 {
-    return tree.get<T>("<xmlattr>." + key);
+    return !defaultValue ? tree.get<T>("<xmlattr>." + key) : tree.get<T>("<xmlattr>." + key, *defaultValue);
 }
 
 template<typename T>
 std::optional<T> get_optional_attribute(const boost::property_tree::ptree& tree, const std::string& key)
 {
     const auto result = tree.get_optional<T>("<xmlattr>." + key);
-    return result ? *result : std::optional<T>(); // convert boost::optional to std::optional
+    return result ? *result : std::optional<T>();
 }
 
 
@@ -111,7 +111,7 @@ ssp_parser::ssp_parser(const boost::filesystem::path& xmlPath)
     systemDescription_.version = get_attribute<std::string>(tmpTree, "version");
 
     if (const auto defaultExperiment = tmpTree.get_child_optional("ssd:DefaultExperiment")) {
-        defaultExperiment_.startTime = get_attribute<double>(*defaultExperiment, "startTime");
+        defaultExperiment_.startTime = get_attribute<double>(*defaultExperiment, "startTime", 0.0);
         defaultExperiment_.stopTime = get_optional_attribute<double>(*defaultExperiment, "stopTime");
     }
 
