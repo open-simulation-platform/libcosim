@@ -20,6 +20,13 @@ T get_attribute(const boost::property_tree::ptree& tree, const std::string& key)
     return tree.get<T>("<xmlattr>." + key);
 }
 
+template<typename T>
+std::optional<T> get_optional_attribute(const boost::property_tree::ptree& tree, const std::string& key)
+{
+    const auto result = tree.get_optional<T>("<xmlattr>." + key);
+    return result ? *result : std::optional<T>(); // convert boost::optional to std::optional
+}
+
 
 class ssp_parser
 {
@@ -31,8 +38,10 @@ public:
     struct DefaultExperiment
     {
         double startTime = 0.0;
-        double stopTime = std::numeric_limits<double>::infinity();
+        std::optional<double> stopTime;
     };
+
+    const DefaultExperiment& get_default_experiment() const;
 
     struct SimulationInformation
     {
@@ -103,7 +112,7 @@ ssp_parser::ssp_parser(const boost::filesystem::path& xmlPath)
 
     if (const auto defaultExperiment = tmpTree.get_child_optional("ssd:DefaultExperiment")) {
         defaultExperiment_.startTime = get_attribute<double>(*defaultExperiment, "startTime");
-        defaultExperiment_.stopTime = get_attribute<double>(*defaultExperiment, "stopTime");
+        defaultExperiment_.stopTime = get_optional_attribute<double>(*defaultExperiment, "stopTime");
     }
 
 
@@ -171,6 +180,10 @@ const std::vector<ssp_parser::Connection>& ssp_parser::get_connections() const
     return connections_;
 }
 
+const ssp_parser::DefaultExperiment& ssp_parser::get_default_experiment() const
+{
+    return defaultExperiment_;
+}
 
 struct slave_info
 {
@@ -184,7 +197,7 @@ struct slave_info
 std::pair<execution, simulator_map> load_ssp(
     cse::model_uri_resolver& resolver,
     const boost::filesystem::path& sspDir,
-    cse::time_point startTime)
+    std::optional<cse::time_point> overrideStartTime)
 {
     simulator_map simulatorMap;
     const auto ssdPath = sspDir / "SystemStructure.ssd";
@@ -195,6 +208,8 @@ std::pair<execution, simulator_map> load_ssp(
     const cse::duration stepSize = cse::to_duration(simInfo.stepSize);
 
     auto elements = parser.get_elements();
+
+    const auto startTime = overrideStartTime ? *overrideStartTime : cse::to_time_point(parser.get_default_experiment().startTime);
 
     auto execution = cse::execution(
         startTime,
