@@ -133,7 +133,7 @@ std::shared_ptr<v2::slave_instance> fmu::instantiate_v2_slave(
     if (isSingleton && !instances_.empty()) {
         throw error(
             make_error_code(errc::unsupported_feature),
-            "FMU can only be instantiated once");
+            "FMU '" + modelDescription_.name + "' can only be instantiated once");
     }
     auto instance = std::shared_ptr<slave_instance>(
         new slave_instance(shared_from_this(), instanceName));
