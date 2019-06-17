@@ -9,8 +9,8 @@
 #include <boost/filesystem/path.hpp>
 
 #include <map>
-#include <string>
 #include <optional>
+#include <string>
 
 namespace cse
 {
