@@ -189,6 +189,11 @@ public:
         timer_.set_real_time_factor_target(realTimeFactor);
     }
 
+    double get_real_time_factor_target()
+    {
+        return timer_.get_real_time_factor_target();
+    }
+
 private:
     void validate_variable(variable_id variable, variable_causality causality)
     {
@@ -311,6 +316,10 @@ double execution::get_measured_real_time_factor()
 void execution::set_real_time_factor_target(double realTimeFactor)
 {
     pimpl_->set_real_time_factor_target(realTimeFactor);
+}
+
+double execution::get_real_time_factor_target() {
+    return pimpl_->get_real_time_factor_target();
 }
 
 

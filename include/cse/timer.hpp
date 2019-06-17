@@ -49,6 +49,9 @@ public:
     /// Sets a custom real time factor
     void set_real_time_factor_target(double realTimeFactor);
 
+    /// Returns the current real time factor target
+    double get_real_time_factor_target();
+
     /// Constructor
     real_time_timer();
     ~real_time_timer() noexcept;

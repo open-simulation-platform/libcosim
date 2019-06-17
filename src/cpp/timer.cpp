@@ -85,6 +85,11 @@ public:
         realTimeFactorTarget_.store(realTimeFactor);
     }
 
+    double get_real_time_factor_target()
+    {
+        return realTimeFactorTarget_.load();
+    }
+
 
 private:
     long rtCounter_ = 0L;
@@ -152,8 +157,14 @@ double real_time_timer::get_measured_real_time_factor()
     return pimpl_->get_measured_real_time_factor();
 }
 
-void real_time_timer::set_real_time_factor_target(double realTimeFactor) {
+void real_time_timer::set_real_time_factor_target(double realTimeFactor)
+{
     pimpl_->set_real_time_factor_target(realTimeFactor);
+}
+
+double real_time_timer::get_real_time_factor_target()
+{
+    return pimpl_->get_real_time_factor_target();
 }
 
 

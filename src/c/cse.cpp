@@ -435,6 +435,7 @@ int cse_execution_get_status(cse_execution* execution, cse_execution_status* sta
         status->state = execution->state;
         status->current_time = to_integer_time_point(execution->cpp_execution->current_time());
         status->real_time_factor = execution->cpp_execution->get_measured_real_time_factor();
+        status->real_time_factor_target = execution->cpp_execution->get_real_time_factor_target();
         status->is_real_time_simulation = execution->cpp_execution->is_real_time_simulation() ? 1 : 0;
         return success;
     } catch (...) {

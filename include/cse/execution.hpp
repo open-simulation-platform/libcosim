@@ -174,6 +174,9 @@ public:
     /// Returns the current real time factor
     double get_measured_real_time_factor();
 
+    /// Returns the current real time factor target
+    double get_real_time_factor_target();
+
 
 private:
     class impl;

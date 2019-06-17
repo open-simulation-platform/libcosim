@@ -272,6 +272,8 @@ typedef struct
     int error_code;
     /// Current real time factor.
     double real_time_factor;
+    /// Current real time factor target.
+    double real_time_factor_target;
     /// Executing towards real time target.
     int is_real_time_simulation;
 } cse_execution_status;
