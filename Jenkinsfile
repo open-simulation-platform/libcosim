@@ -153,6 +153,8 @@ pipeline {
                     stages {
                         stage('Configure Conan') {
                             steps {
+                                sh 'conan --version'
+                                sh 'cmake --version'
                                 sh 'conan remote add osp https://osp-conan.azurewebsites.net/artifactory/api/conan/conan-local --force'
                                 sh 'conan remote add helmesjo https://api.bintray.com/conan/helmesjo/public-conan --force'
                                 sh 'conan user -p $OSP_CONAN_CREDS_PSW -r osp $OSP_CONAN_CREDS_USR'
@@ -161,6 +163,7 @@ pipeline {
                         stage('Build Debug') {
                             steps {
                                 dir('debug-build-conan') {
+                                    sh 'pwd'
                                     sh 'conan install ../cse-core -s compiler.libcxx=libstdc++11 -s build_type=Debug -b missing'
                                     sh 'conan package ../cse-core -pf package/linux/debug'
                                 }
@@ -169,6 +172,7 @@ pipeline {
                         stage('Build Release') {
                             steps {
                                 dir('release-build-conan') {
+                                    sh 'pwd'
                                     sh 'conan install ../cse-core -s compiler.libcxx=libstdc++11 -s build_type=Release -b missing'
                                     sh 'conan package ../cse-core -pf package/linux/release'
                                 }
