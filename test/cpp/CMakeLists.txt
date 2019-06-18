@@ -12,13 +12,12 @@ set(tests
     "synchronized_xy_series_test"
 )
 
-#TODO: Enable fmu-proxy tests when supported on Jenkins
-#if(CSECORE_WITH_FMUPROXY)
-#    list(APPEND tests
-#            "fmuproxy_test"
-#            "ssp_parser_fmuproxy_test"
-#    )
-#endif()
+if(CSECORE_WITH_FMUPROXY AND CSECORE_TEST_FMUPROXY)
+    list(APPEND tests
+        "fmuproxy_test"
+        "ssp_parser_fmuproxy_test"
+    )
+endif()
 
 set(unittests
     "async_slave_unittest"
