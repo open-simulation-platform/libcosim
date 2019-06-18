@@ -9,6 +9,7 @@
 #include <boost/filesystem/path.hpp>
 
 #include <map>
+#include <optional>
 #include <string>
 
 
@@ -25,7 +26,7 @@ struct simulator_map_entry
 
 using simulator_map = std::map<std::string, simulator_map_entry>;
 
-std::pair<execution, simulator_map> load_ssp(cse::model_uri_resolver&, const boost::filesystem::path& sspDir, cse::time_point startTime);
+std::pair<execution, simulator_map> load_ssp(cse::model_uri_resolver&, const boost::filesystem::path& sspDir, std::optional<cse::time_point> overrideStartTime = {});
 
 } // namespace cse
 
