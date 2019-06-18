@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ssd:SystemStructureDescription name="simple-cse-example" version="1.0"
                                 xmlns:ssd="http://ssp-standard.org/SSP1/SystemStructureDescription"
-                                xmlns:ssc="http://ssp-standard.org/SSP1/SystemStructureCommon">
+                                xmlns:ssc="http://ssp-standard.org/SSP1/SystemStructureCommon"
+                                xmlns:ssv="http://ssp-standard.org/SSP1/SystemStructureParameterValues">
   <!-- This is a comment -->
 
   <!-- This is a comment -->
@@ -66,6 +67,22 @@
           </ssd:Connector>
           <!-- This is a comment -->
         </ssd:Connectors>
+          <ssd:ParameterBindings>
+              <ssd:ParameterBinding>
+                  <ssd:ParameterValues>
+                      <ssv:ParameterSet version="1.0" name="initialValues">
+                          <ssv:Parameters>
+                              <ssv:Parameter name="Spring_Joint.k">
+                                  <ssv:Real value="0.005" />
+                              </ssv:Parameter>
+                              <ssv:Parameter name="mt0_init">
+                                  <ssv:Real value="69" />
+                              </ssv:Parameter>
+                          </ssv:Parameters>
+                      </ssv:ParameterSet>
+                  </ssd:ParameterValues>
+              </ssd:ParameterBinding>
+          </ssd:ParameterBindings>
       </ssd:Component>
     </ssd:Elements>
 
@@ -84,7 +101,5 @@
     </ssd:Connections>
 
   </ssd:System>
-
   <ssd:DefaultExperiment startTime="0.0" stopTime="2e-4"/>
-
 </ssd:SystemStructureDescription>

@@ -384,22 +384,6 @@ cse::variable_type find_type(const std::string& typestr)
     throw std::invalid_argument("Can't process unknown variable type");
 }
 
-cse::variable_causality find_causality(const std::string& caus)
-{
-    if (caus == "output") {
-        return variable_causality::output;
-    } else if (caus == "input") {
-        return variable_causality::input;
-    } else if (caus == "parameter") {
-        return variable_causality::parameter;
-    } else if (caus == "calculatedParameter") {
-        return variable_causality::calculated_parameter;
-    } else if (caus == "local") {
-        return variable_causality::local;
-    }
-    throw std::invalid_argument("Can't process unknown variable type");
-}
-
 cse::variable_index find_variable_index(
     const std::vector<variable_description>& variables,
     const std::string& name,
@@ -443,7 +427,7 @@ void file_observer::parse_config(const std::string& simulatorName)
                 const auto causality = get_attribute<std::string>(variableElement, "causality");
 
                 const auto variableDescription =
-                    find_variable(simulator->model_description(), name, find_type(type), find_causality(causality));
+                    find_variable(simulator->model_description(), name);
 
                 switch (find_type(type)) {
                     case variable_type::real:
