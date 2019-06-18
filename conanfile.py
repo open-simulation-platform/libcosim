@@ -18,7 +18,7 @@ class CSECoreConan(ConanFile):
         "boost/1.66.0@conan/stable",
         "FMILibrary/2.0.3@kyllingstad/testing",
         "gsl_microsoft/1.0.0@bincrafters/stable",
-        "libzip/1.5.1@bincrafters/stable"
+        "libzip/1.5.1@bincrafters/stable",
         "yaml-cpp/0.6.2@bincrafters/stable"
         )
 
