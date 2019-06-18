@@ -41,16 +41,7 @@ public:
             const auto simulationSleepTime = expectedSimulationTime - elapsed;
 
             if (simulationSleepTime > MIN_SLEEP) {
-                BOOST_LOG_SEV(log::logger(), log::level::trace)
-                    << "Real time timer sleeping for "
-                    << (std::chrono::duration_cast<std::chrono::milliseconds>(simulationSleepTime)).count()
-                    << " ms";
-
                 std::this_thread::sleep_for(simulationSleepTime);
-            } else {
-                BOOST_LOG_SEV(log::logger(), log::level::debug)
-                    << "Real time timer NOT sleeping, calculated sleep time "
-                    << simulationSleepTime.count() << " ns";
             }
         }
     }
