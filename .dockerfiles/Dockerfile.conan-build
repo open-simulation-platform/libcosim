@@ -13,4 +13,4 @@ RUN apt-get update && \
     && rm -rf /var/lib/apt/lists/*
 
 # Install  Conan package manager and CMake
-RUN pip3 install conan cmake
+RUN pip3 install conan==1.16.1 cmake
