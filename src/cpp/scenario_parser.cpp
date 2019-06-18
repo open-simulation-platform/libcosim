@@ -1,7 +1,6 @@
 #include "cse/scenario_parser.hpp"
 
 #include <boost/filesystem/fstream.hpp>
-#include <nlohmann/json.hpp>
 
 #include <functional>
 #include <iostream>
@@ -10,6 +9,14 @@
 #include <stdexcept>
 #include <string>
 
+#ifdef _MSC_VER
+#    pragma warning(push)
+#    pragma warning(disable : 4127)
+#endif
+#include <yaml-cpp/yaml.h>
+#ifdef _MSC_VER
+#    pragma warning(pop)
+#endif
 
 namespace cse
 {
@@ -31,9 +38,8 @@ std::pair<cse::simulator_index, cse::simulator*> find_simulator(
     throw std::invalid_argument(oss.str());
 }
 
-cse::variable_type find_variable_type(const nlohmann::json& j)
+cse::variable_type find_variable_type(const std::string typestr)
 {
-    auto typestr = j.get<std::string>();
     if (typestr == "real") {
         return variable_type::real;
     } else if (typestr == "integer") {
@@ -48,9 +54,8 @@ cse::variable_type find_variable_type(const nlohmann::json& j)
     throw std::invalid_argument(oss.str());
 }
 
-cse::variable_causality find_causality(const nlohmann::json& j)
+cse::variable_causality find_causality(const std::string caus)
 {
-    auto caus = j.get<std::string>();
     if (caus == "output") {
         return variable_causality::output;
     } else if (caus == "input") {
@@ -105,12 +110,12 @@ cse::variable_index find_variable_index(
 template<typename T>
 std::function<T(T)> generate_modifier(
     const std::string& kind,
-    const nlohmann::json& event)
+    const YAML::Node& event)
 {
     if ("reset" == kind) {
         return nullptr;
     }
-    T value = event.at("value").get<T>();
+    T value = event["value"].as<T>();
     if ("bias" == kind) {
         return [value](T original) { return original + value; };
     } else if ("override" == kind) {
@@ -122,7 +127,7 @@ std::function<T(T)> generate_modifier(
 }
 
 cse::scenario::variable_action generate_action(
-    const nlohmann::json& event,
+    const YAML::Node& event,
     const std::string& mode,
     cse::simulator_index sim,
     cse::variable_type type,
@@ -157,20 +162,20 @@ struct defaults
 };
 
 std::optional<std::string> parse_element(
-    const nlohmann::json& j,
+    const YAML::Node& j,
     const std::string& name)
 {
-    if (j.count(name)) {
-        return j.at(name).get<std::string>();
+    if (j[name]) {
+        return j[name].as<std::string>();
     } else {
         return std::nullopt;
     }
 }
 
-defaults parse_defaults(const nlohmann::json& scenario)
+defaults parse_defaults(const YAML::Node& scenario)
 {
-    if (scenario.count("defaults")) {
-        auto j = scenario.at("defaults");
+    if (scenario["defaults"]) {
+        auto j = scenario["defaults"];
         return defaults{
             parse_element(j, "model"),
             parse_element(j, "variable"),
@@ -182,12 +187,12 @@ defaults parse_defaults(const nlohmann::json& scenario)
 }
 
 std::string specified_or_default(
-    const nlohmann::json& j,
+    const YAML::Node& j,
     const std::string& name,
     std::optional<std::string> defaultOption)
 {
-    if (j.count(name)) {
-        return j.at(name).get<std::string>();
+    if (j[name]) {
+        return j[name].as<std::string>();
     } else if (defaultOption.has_value()) {
         return *defaultOption;
     }
@@ -196,10 +201,10 @@ std::string specified_or_default(
     throw std::invalid_argument(oss.str());
 }
 
-std::optional<cse::time_point> parse_end_time(const nlohmann::json& j)
+std::optional<cse::time_point> parse_end_time(const YAML::Node& j)
 {
-    if (j.count("end")) {
-        auto endTime = j.at("end").get<double>();
+    if (j["end"]) {
+        auto endTime = j["end"].as<double>();
         return to_time_point(endTime);
     }
     return std::nullopt;
@@ -214,15 +219,14 @@ scenario::scenario parse_scenario(
         simulator*>& simulators)
 {
     boost::filesystem::ifstream i(scenarioFile);
-    nlohmann::json j;
-    i >> j;
+    YAML::Node j = YAML::Load(i);
 
     std::vector<scenario::event> events;
     defaults defaultOpts = parse_defaults(j);
 
-    for (auto& event : j.at("events")) {
-        auto trigger = event.at("time");
-        auto triggerTime = trigger.get<double>();
+    for (const auto& event : j["events"]) {
+        auto trigger = event["time"];
+        auto triggerTime = trigger.as<double>();
         auto time = to_time_point(triggerTime);
 
         const auto& [index, simulator] =

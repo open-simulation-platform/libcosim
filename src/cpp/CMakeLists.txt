@@ -127,7 +127,7 @@ target_link_libraries(csecorecpp
         Boost::log
         gsl
     PRIVATE
-        nlohmann_json
+        yaml-cpp
     )
 
 if(CSECORE_WITH_FMUPROXY)

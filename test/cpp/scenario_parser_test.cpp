@@ -38,7 +38,7 @@ int main()
 
         const auto testDataDir = std::getenv("TEST_DATA_DIR");
         REQUIRE(testDataDir);
-        boost::filesystem::path jsonPath = boost::filesystem::path(testDataDir) / "scenarios" / "scenario1.json";
+        boost::filesystem::path jsonPath = boost::filesystem::path(testDataDir) / "scenarios" / "scenario1.yml";
         scenarioManager->load_scenario(jsonPath, startTime);
 
         auto simResult = execution.simulate_until(endTime);
