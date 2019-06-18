@@ -6,6 +6,7 @@
 #include <atomic>
 #include <chrono>
 #include <thread>
+#include <cse/error.hpp>
 
 typedef std::chrono::steady_clock Time;
 constexpr std::chrono::microseconds MIN_SLEEP(100);
@@ -79,7 +80,7 @@ public:
 
     void set_real_time_factor_target(double realTimeFactor)
     {
-        BOOST_ASSERT(realTimeFactor > 0.0);
+        CSE_INPUT_CHECK(realTimeFactor > 0.0);
 
         start(lastSimulationTime_);
         realTimeFactorTarget_.store(realTimeFactor);

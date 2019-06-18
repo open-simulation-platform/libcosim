@@ -73,7 +73,7 @@ int main() {
 
     Sleep(1000);
 
-    rc = cse_execution_set_custom_real_time_factor(execution, real_time_factor);
+    rc = cse_execution_set_real_time_factor_target(execution, real_time_factor);
 
     Sleep(4000);
     rc = cse_execution_stop(execution);

@@ -446,19 +446,35 @@ int cse_execution_get_status(cse_execution* execution, cse_execution_status* sta
 
 int cse_execution_enable_real_time_simulation(cse_execution* execution)
 {
-    execution->cpp_execution->enable_real_time_simulation();
-    return success;
+    try {
+        execution->cpp_execution->enable_real_time_simulation();
+        return success;
+    } catch (...) {
+        handle_current_exception();
+        return failure;
+    }
 }
 
 int cse_execution_disable_real_time_simulation(cse_execution* execution)
 {
-    execution->cpp_execution->disable_real_time_simulation();
-    return success;
+    try {
+        execution->cpp_execution->disable_real_time_simulation();
+        return success;
+    } catch (...) {
+        handle_current_exception();
+        return failure;
+    }
 }
 
-int cse_execution_set_custom_real_time_factor(cse_execution* execution, double realTimeFactor) {
-    execution->cpp_execution->set_real_time_factor_target(realTimeFactor);
-    return success;
+int cse_execution_set_real_time_factor_target(cse_execution* execution, double realTimeFactor)
+{
+    try {
+        execution->cpp_execution->set_real_time_factor_target(realTimeFactor);
+        return success;
+    } catch (...) {
+        handle_current_exception();
+        return failure;
+    }
 }
 
 struct cse_observer_s
