@@ -360,59 +360,41 @@ boost::filesystem::path file_observer::get_log_path()
 
 std::pair<cse::simulator_index, cse::observable*> find_simulator(
     const std::unordered_map<simulator_index, observable*>& simulators,
-    const std::string& model)
+    const std::string& simulatorName)
 {
     for (const auto& [idx, simulator] : simulators) {
-        if (simulator->name() == model) {
+        if (simulator->name() == simulatorName) {
             return std::make_pair(idx, simulator);
         }
     }
-    throw std::invalid_argument("Can't find model: " + model);
+    throw std::invalid_argument("Can't find simulator with name: " + simulatorName);
 }
 
-cse::variable_type find_type(const std::string& typestr)
-{
-    if (typestr == "real") {
-        return variable_type::real;
-    } else if (typestr == "integer") {
-        return variable_type::integer;
-    } else if (typestr == "boolean") {
-        return variable_type::boolean;
-    } else if (typestr == "string") {
-        return variable_type::string;
-    }
-    throw std::invalid_argument("Can't process unknown variable type");
-}
-
-cse::variable_causality find_causality(const std::string& caus)
-{
-    if (caus == "output") {
-        return variable_causality::output;
-    } else if (caus == "input") {
-        return variable_causality::input;
-    } else if (caus == "parameter") {
-        return variable_causality::parameter;
-    } else if (caus == "calculatedParameter") {
-        return variable_causality::calculated_parameter;
-    } else if (caus == "local") {
-        return variable_causality::local;
-    }
-    throw std::invalid_argument("Can't process unknown variable type");
-}
-
-cse::variable_index find_variable_index(
+variable_index find_variable_index(
     const std::vector<variable_description>& variables,
-    const std::string& name,
-    const cse::variable_type type,
-    const cse::variable_causality causality)
+    const std::string& name)
 {
     for (const auto& vd : variables) {
-        if ((vd.name == name) && (vd.type == type) && (vd.causality == causality)) {
+        if (vd.name == name) {
             return vd.index;
         }
     }
-    throw std::invalid_argument("Can't find variable index");
+    throw std::invalid_argument("Can't find variable index with name " + name);
 }
+
+    const variable_type find_variable_type(const std::string& typestr)
+    {
+        if (typestr == "real") {
+            return variable_type::real;
+        } else if (typestr == "integer") {
+            return variable_type::integer;
+        } else if (typestr == "boolean") {
+            return variable_type::boolean;
+        } else if (typestr == "string") {
+            return variable_type::string;
+        }
+        throw std::invalid_argument("Can't process unknown variable of type " + typestr);
+    }
 
 void file_observer::parse_config(const std::string& simulatorName)
 {
@@ -443,9 +425,9 @@ void file_observer::parse_config(const std::string& simulatorName)
                 const auto causality = get_attribute<std::string>(variableElement, "causality");
 
                 const auto variableDescription =
-                    find_variable(simulator->model_description(), name, find_type(type), find_causality(causality));
+                    find_variable(simulator->model_description(), name);
 
-                switch (find_type(type)) {
+                switch (find_variable_type(type)) {
                     case variable_type::real:
                         loggableRealVariables_.push_back(variableDescription);
                         break;

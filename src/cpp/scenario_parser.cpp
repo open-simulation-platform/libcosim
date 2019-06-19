@@ -86,20 +86,15 @@ bool is_input(cse::variable_causality causality)
 
 cse::variable_index find_variable_index(
     const std::vector<variable_description>& variables,
-    const std::string& name,
-    const cse::variable_type type,
-    const cse::variable_causality causality)
+    const std::string& name)
 {
     for (const auto& vd : variables) {
-        if ((vd.name == name) && (vd.type == type) && (vd.causality == causality)) {
+        if (vd.name == name) {
             return vd.index;
         }
     }
-    std::ostringstream oss;
-    oss << "Cannot find variable with name " << name
-        << ", causality " << cse::to_text(causality)
-        << " and type " << cse::to_text(type);
-    throw std::invalid_argument(oss.str());
+
+    throw std::invalid_argument("Cannot find variable with name " + name);
 }
 
 template<typename T>
@@ -234,7 +229,7 @@ scenario::scenario parse_scenario(
         auto varName =
             specified_or_default(event, "variable", defaultOpts.variable);
         variable_index varIndex =
-            find_variable_index(simulator->model_description().variables, varName, type, causality);
+            find_variable_index(simulator->model_description().variables, varName);
 
         auto mode = specified_or_default(event, "action", defaultOpts.action);
         bool isInput = is_input(causality);
