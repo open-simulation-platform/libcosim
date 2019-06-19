@@ -13,12 +13,10 @@
     },
     {
       "time": 0.2,
-      "causality": "output",
       "value": -1.0
     },
     {
       "time": 0.3,
-      "causality": "output",
       "action": "reset"
     },
     {
