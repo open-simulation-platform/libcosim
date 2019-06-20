@@ -1,6 +1,12 @@
 pipeline {
     agent none
 
+    environment {
+        CONAN_USER_HOME_SHORT = 'None'
+        OSP_CONAN_CREDS = credentials('jenkins-osp-conan-creds')
+        CSE_CONAN_CHANNEL = "${env.BRANCH_NAME}".replaceAll("/", "_")
+    }
+
     options { checkoutToSubdirectory('cse-core') }
 
     stages {
@@ -11,12 +17,9 @@ pipeline {
                     agent { label 'windows' }
                     
                     environment {
-                        CONAN_USER_HOME = "${env.BASE}\\conan-repositories\\${env.EXECUTOR_NUMBER}"
-                        CONAN_USER_HOME_SHORT = "${env.CONAN_USER_HOME}"
-                        OSP_CONAN_CREDS = credentials('jenkins-osp-conan-creds')
-                        CSE_CONAN_CHANNEL = "${env.BRANCH_NAME}".replaceAll("/", "_")
+                        CONAN_USER_HOME = "${env.SLAVE_HOME}/conan-repositories/${env.EXECUTOR_NUMBER}"
                     }
-
+                    
                     stages {
                         stage('Configure Conan') {
                             steps {
@@ -109,10 +112,7 @@ pipeline {
                     agent { label 'windows' }
 
                     environment {
-                        CONAN_USER_HOME = "${env.BASE}\\conan-repositories\\${env.EXECUTOR_NUMBER}"
-                        CONAN_USER_HOME_SHORT = "${env.CONAN_USER_HOME}"
-                        OSP_CONAN_CREDS = credentials('jenkins-osp-conan-creds')
-                        CSE_CONAN_CHANNEL = "${env.BRANCH_NAME}".replaceAll("/", "_")
+                        CONAN_USER_HOME = "${env.SLAVE_HOME}/conan-repositories/${env.EXECUTOR_NUMBER}"
                     }
 
                     stages {
@@ -120,6 +120,7 @@ pipeline {
                             steps {
                                 sh 'conan remote add osp https://osp-conan.azurewebsites.net/artifactory/api/conan/conan-local --force'
                                 sh 'conan remote add helmesjo https://api.bintray.com/conan/helmesjo/public-conan --force'
+                                sh 'conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan --force'
                                 sh 'conan user -p $OSP_CONAN_CREDS_PSW -r osp $OSP_CONAN_CREDS_USR'
                             }
                         }
@@ -139,15 +140,12 @@ pipeline {
                             filename 'Dockerfile.conan-build'
                             dir 'cse-core/.dockerfiles'
                             label 'linux && docker'
-                            args '-v ${HOME}/jenkins_slave/conan-repositories/${EXECUTOR_NUMBER}:/conan_repo'
+                            args '-v ${SLAVE_HOME}/conan-repositories/${EXECUTOR_NUMBER}:/conan_repo'
                         }
                     }
 
                     environment {
                         CONAN_USER_HOME = '/conan_repo'
-                        CONAN_USER_HOME_SHORT = 'None'
-                        OSP_CONAN_CREDS = credentials('jenkins-osp-conan-creds')
-                        CSE_CONAN_CHANNEL = "${env.BRANCH_NAME}".replaceAll("/", "_")
                     }
                     
                     stages {
@@ -248,15 +246,12 @@ pipeline {
                             filename 'Dockerfile.conan-build'
                             dir 'cse-core/.dockerfiles'
                             label 'linux && docker'
-                            args '-v ${HOME}/jenkins_slave/conan-repositories/${EXECUTOR_NUMBER}:/conan_repo'
+                            args '-v ${SLAVE_HOME}/conan-repositories/${EXECUTOR_NUMBER}:/conan_repo'
                         }
                     }
 
                     environment {
                         CONAN_USER_HOME = '/conan_repo'
-                        CONAN_USER_HOME_SHORT = 'None'
-                        OSP_CONAN_CREDS = credentials('jenkins-osp-conan-creds')
-                        CSE_CONAN_CHANNEL = "${env.BRANCH_NAME}".replaceAll("/", "_")
                     }
 
                     stages {
@@ -264,6 +259,7 @@ pipeline {
                             steps {
                                 sh 'conan remote add osp https://osp-conan.azurewebsites.net/artifactory/api/conan/conan-local --force'
                                 sh 'conan remote add helmesjo https://api.bintray.com/conan/helmesjo/public-conan --force'
+                                sh 'conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan --force'
                                 sh 'conan user -p $OSP_CONAN_CREDS_PSW -r osp $OSP_CONAN_CREDS_USR'
                             }
                         }
@@ -298,7 +294,7 @@ pipeline {
                         }
                         stage('Build Release') {
                             steps {
-                                dir('release-build ') {
+                                dir('release-build') {
                                     sh 'cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../install/linux/release -DCSECORE_USING_CONAN=FALSE -DCSECORE_BUILD_PRIVATE_APIDOC=ON ../cse-core'
                                     sh 'cmake --build .'
                                     sh 'cmake --build . --target install'
