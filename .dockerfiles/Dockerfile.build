@@ -8,6 +8,7 @@ RUN apt-get update && \
     cmake \
     doxygen \
     git \
+    flex \
     libboost-all-dev \
     libevent-dev \
     libzip-dev \
