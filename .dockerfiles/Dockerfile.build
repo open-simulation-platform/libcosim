@@ -12,7 +12,7 @@ RUN apt-get update && \
     libevent-dev \
     libzip-dev \
     libmsgsl-dev \
-    nlohmann-json-dev \
+    libyaml-cpp-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Installing FMI Library from prebuilt .deb packages
