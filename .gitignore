@@ -1,5 +1,7 @@
 *.swp
 build/
+debug-build/
+release-build/
 
 # JetBrains CLion:
 .idea/
