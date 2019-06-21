@@ -250,6 +250,9 @@ int cse_execution_enable_real_time_simulation(cse_execution* execution);
 /// Disables real time simulation for an execution.
 int cse_execution_disable_real_time_simulation(cse_execution* execution);
 
+/// Sets a custom real time factor.
+int cse_execution_set_real_time_factor_target(cse_execution *execution, double realTimeFactor);
+
 
 /// Execution states.
 typedef enum
@@ -270,6 +273,8 @@ typedef struct
     int error_code;
     /// Current real time factor.
     double real_time_factor;
+    /// Current real time factor target.
+    double real_time_factor_target;
     /// Executing towards real time target.
     int is_real_time_simulation;
 } cse_execution_status;

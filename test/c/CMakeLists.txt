@@ -6,6 +6,7 @@ set(tests
     "observer_can_buffer_samples"
     "observer_multiple_slaves_test"
     "real_time_test"
+    "custom_real_time_factor_test"
     "connections_test"
     "execution_from_ssp_test"
     "time_series_observer_test"
