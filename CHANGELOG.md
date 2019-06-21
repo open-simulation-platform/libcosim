@@ -6,11 +6,11 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### [v0.3.0] – 2019-06-26 
 ##### Added
-* fmu-proxy integration
-* introducing`orchestration` interface for classes that resolve model URIs of one or more specific URI schemes 
-* logging configuration
-* observers can observe string and boolean variables
-* can set arbitraty real time factor
+* fmu-proxy integration ([PR#162](https://github.com/open-simulation-platform/cse-core/pull/162), [PR#239](https://github.com/open-simulation-platform/cse-core/pull/239))
+* introducing`orchestration` interface for classes that resolve model URIs of one or more specific URI schemes ([PR#233](https://github.com/open-simulation-platform/cse-core/pull/233)) 
+* logging configuration ([PR#247](https://github.com/open-simulation-platform/cse-core/pull/247))
+* observers can observe string and boolean variables ([PR#257](https://github.com/open-simulation-platform/cse-core/pull/257))
+* can set arbitraty real time factor ([PR#261](https://github.com/open-simulation-platform/cse-core/pull/261))
 * improved error reporting
    
 ##### Fixed
