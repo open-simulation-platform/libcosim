@@ -382,19 +382,19 @@ variable_index find_variable_index(
     throw std::invalid_argument("Can't find variable index with name " + name);
 }
 
-    const variable_type find_variable_type(const std::string& typestr)
-    {
-        if (typestr == "real") {
-            return variable_type::real;
-        } else if (typestr == "integer") {
-            return variable_type::integer;
-        } else if (typestr == "boolean") {
-            return variable_type::boolean;
-        } else if (typestr == "string") {
-            return variable_type::string;
-        }
-        throw std::invalid_argument("Can't process unknown variable of type " + typestr);
+variable_type find_variable_type(const std::string& typestr)
+{
+    if (typestr == "real") {
+        return variable_type::real;
+    } else if (typestr == "integer") {
+        return variable_type::integer;
+    } else if (typestr == "boolean") {
+        return variable_type::boolean;
+    } else if (typestr == "string") {
+        return variable_type::string;
     }
+    throw std::invalid_argument("Can't process unknown variable of type " + typestr);
+}
 
 void file_observer::parse_config(const std::string& simulatorName)
 {
