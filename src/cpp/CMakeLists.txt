@@ -5,6 +5,7 @@ set(publicHeaders
     "algorithm.hpp"
     "async_slave.hpp"
     "config.hpp"
+    "connection.hpp"
     "exception.hpp"
     "execution.hpp"
     "ssp_parser.hpp"

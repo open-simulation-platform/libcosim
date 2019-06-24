@@ -72,6 +72,11 @@ public:
         simulators_[output.simulator].outgoingConnections.push_back({output, input});
     }
 
+    void add_connection(const multi_connection& c)
+    {
+        connections_.push_back(c);
+    }
+
     void disconnect_variable(variable_id input)
     {
         for (auto& s : simulators_) {
@@ -106,6 +111,7 @@ public:
         for (auto& s : simulators_) {
             auto& info = s.second;
             if (stepCounter_ % info.decimationFactor == 0) {
+                transfer_destinations(s.first);
                 info.stepResult = info.sim->do_step(currentT, baseStepSize_ * info.decimationFactor);
             }
         }
@@ -137,6 +143,7 @@ public:
 
         for (auto idx : finished) {
             transfer_variables(simulators_.at(idx).outgoingConnections);
+            transfer_sources(idx);
         }
 
         return std::pair(baseStepSize_, std::move(finished));
@@ -217,6 +224,32 @@ private:
         });
     }
 
+    void transfer_sources(simulator_index i)
+    {
+        for (auto& c : connections_) {
+            for (const auto& id : c.get_sources()) {
+                if (id.simulator == i) {
+                    if (id.type == variable_type::real) {
+                        c.set_real_source_value(id, simulators_.at(i).sim->get_real(id.index));
+                    }
+                }
+            }
+        }
+    }
+
+    void transfer_destinations(simulator_index i)
+    {
+        for (auto& c : connections_) {
+            for (const auto& id : c.get_destinations()) {
+                if (id.simulator == i) {
+                    if (id.type == variable_type::real) {
+                        simulators_.at(i).sim->set_real(id.index, c.get_real_destination_value(id));
+                    }
+                }
+            }
+        }
+    }
+
     void transfer_variables(const std::vector<connection>& connections)
     {
         for (const auto& c : connections) {
@@ -276,6 +309,7 @@ private:
     std::optional<time_point> stopTime_;
     std::unordered_map<simulator_index, simulator_info> simulators_;
     int64_t stepCounter_ = 0;
+    std::vector<multi_connection> connections_;
 };
 
 
@@ -328,6 +362,11 @@ void fixed_step_algorithm::connect_variables(
 void fixed_step_algorithm::disconnect_variable(variable_id input)
 {
     pimpl_->disconnect_variable(input);
+}
+
+void fixed_step_algorithm::add_connection(const multi_connection& c)
+{
+    pimpl_->add_connection(c);
 }
 
 
