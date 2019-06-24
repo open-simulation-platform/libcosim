@@ -71,6 +71,11 @@ public:
         variable_index index,
         std::function<std::string(std::string_view)> modifier) override;
 
+    std::vector<variable_index> get_modified_real_indexes();
+    std::vector<variable_index> get_modified_integer_indexes();
+    std::vector<variable_index> get_modified_boolean_indexes();
+    std::vector<variable_index> get_modified_string_indexes();
+
     boost::fibers::future<void> setup(
         time_point startTime,
         std::optional<time_point> stopTime,

@@ -317,11 +317,21 @@ public:
         stringSetCache_.set_value(index, value);
     }
 
+    void set_modified_index(std::vector<variable_index>& modifiedIndexes, variable_index& index, bool modifier)
+    {
+        if (modifier) {
+            modifiedIndexes.push_back(index);
+        } else {
+            modifiedIndexes.erase(remove(modifiedIndexes.begin(), modifiedIndexes.end(), index), modifiedIndexes.end());
+        }
+    }
+
     void set_real_input_modifier(
         variable_index index,
         std::function<double(double)> modifier)
     {
         realSetCache_.set_modifier(index, modifier);
+        set_modified_index(modifiedRealIndexes_, index, modifier ? true : false);
     }
 
     void set_integer_input_modifier(
@@ -329,6 +339,7 @@ public:
         std::function<int(int)> modifier)
     {
         integerSetCache_.set_modifier(index, modifier);
+        set_modified_index(modifiedIntegerIndexes_, index, modifier ? true : false);
     }
 
     void set_boolean_input_modifier(
@@ -336,6 +347,7 @@ public:
         std::function<bool(bool)> modifier)
     {
         booleanSetCache_.set_modifier(index, modifier);
+        set_modified_index(modifiedBooleanIndexes_, index, modifier ? true : false);
     }
 
     void set_string_input_modifier(
@@ -343,6 +355,7 @@ public:
         std::function<std::string(std::string_view)> modifier)
     {
         stringSetCache_.set_modifier(index, modifier);
+        set_modified_index(modifiedStringIndexes_, index, modifier ? true : false);
     }
 
     void set_real_output_modifier(
@@ -350,6 +363,7 @@ public:
         std::function<double(double)> modifier)
     {
         realGetCache_.set_modifier(index, modifier);
+        set_modified_index(modifiedRealIndexes_, index, modifier ? true : false);
     }
 
     void set_integer_output_modifier(
@@ -357,6 +371,7 @@ public:
         std::function<int(int)> modifier)
     {
         integerGetCache_.set_modifier(index, modifier);
+        set_modified_index(modifiedIntegerIndexes_, index, modifier ? true : false);
     }
 
     void set_boolean_output_modifier(
@@ -364,6 +379,7 @@ public:
         std::function<bool(bool)> modifier)
     {
         booleanGetCache_.set_modifier(index, modifier);
+        set_modified_index(modifiedBooleanIndexes_, index, modifier ? true : false);
     }
 
     void set_string_output_modifier(
@@ -371,6 +387,27 @@ public:
         std::function<std::string(std::string_view)> modifier)
     {
         stringGetCache_.set_modifier(index, modifier);
+        set_modified_index(modifiedStringIndexes_, index, modifier ? true : false);
+    }
+
+    std::vector<variable_index> get_modified_real_indexes()
+    {
+        return modifiedRealIndexes_;
+    }
+
+    std::vector<variable_index> get_modified_integer_indexes()
+    {
+        return modifiedIntegerIndexes_;
+    }
+
+    std::vector<variable_index> get_modified_boolean_indexes()
+    {
+        return modifiedBooleanIndexes_;
+    }
+
+    std::vector<variable_index> get_modified_string_indexes()
+    {
+        return modifiedStringIndexes_;
     }
 
     boost::fibers::future<void> setup(
@@ -479,6 +516,11 @@ private:
     set_variable_cache<int> integerSetCache_;
     set_variable_cache<bool> booleanSetCache_;
     set_variable_cache<std::string> stringSetCache_;
+
+    std::vector<variable_index> modifiedRealIndexes_;
+    std::vector<variable_index> modifiedIntegerIndexes_;
+    std::vector<variable_index> modifiedBooleanIndexes_;
+    std::vector<variable_index> modifiedStringIndexes_;
 };
 
 
@@ -622,6 +664,26 @@ void slave_simulator::set_string_output_modifier(
     std::function<std::string(std::string_view)> modifier)
 {
     pimpl_->set_string_output_modifier(index, modifier);
+}
+
+std::vector<variable_index> slave_simulator::get_modified_real_indexes()
+{
+    return pimpl_->get_modified_real_indexes();
+}
+
+std::vector<variable_index> slave_simulator::get_modified_integer_indexes()
+{
+    return pimpl_->get_modified_integer_indexes();
+}
+
+std::vector<variable_index> slave_simulator::get_modified_boolean_indexes()
+{
+    return pimpl_->get_modified_boolean_indexes();
+}
+
+std::vector<variable_index> slave_simulator::get_modified_string_indexes()
+{
+    return pimpl_->get_modified_string_indexes();
 }
 
 boost::fibers::future<void> slave_simulator::setup(

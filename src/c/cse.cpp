@@ -316,6 +316,21 @@ int cse_slave_get_variables(cse_execution* execution, cse_slave_index slave, cse
     }
 }
 
+int cse_slave_get_modified_variables(cse_execution* execution, cse_slave_index slave,
+        cse_variable_description variables[], size_t numVariables)
+{
+    try {
+        for (const auto& sim : execution->simulators) {
+            if (sim.second.index == slave) {
+
+            }
+        }
+    } catch (...) {
+        handle_current_exception();
+        return failure;
+    }
+}
+
 
 struct cse_slave_s
 {
@@ -1028,6 +1043,22 @@ int cse_scenario_abort(cse_manipulator* manipulator)
             throw std::invalid_argument("Invalid manipulator! The provided manipulator must be a scenario_manager.");
         }
         manager->abort_scenario();
+        return success;
+    } catch (...) {
+        handle_current_exception();
+        return failure;
+    }
+}
+
+int cse_get_modified_variables(cse_execution* execution, cse_slave_index slave_index)
+{
+    try {
+        auto modified_vars = execution->cpp_execution->get_modified_variables();
+
+        for (const auto& [index, vars] : modified_vars) {
+            std::cout << "Number of modified variables for simulator " << index << ": " << vars.size() << std::endl;
+        }
+
         return success;
     } catch (...) {
         handle_current_exception();

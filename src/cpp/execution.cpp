@@ -184,6 +184,31 @@ public:
         return timer_.get_real_time_factor();
     }
 
+    std::map<simulator_index, std::vector<variable_index>> get_modified_variables()
+    {
+        std::map<simulator_index, std::vector<variable_index>> modifiedVariables;
+        auto index = 0;
+
+        for (const auto& simulator : simulators_) {
+            const auto sim = std::dynamic_pointer_cast<cse::slave_simulator>(simulator);
+            auto realIndexes = sim->get_modified_real_indexes();
+            auto intIndexes = sim->get_modified_integer_indexes();
+            auto boolIndexes = sim->get_modified_boolean_indexes();
+            auto stringIndexes = sim->get_modified_string_indexes();
+
+            std::vector<variable_index> indexes(realIndexes);
+            std::move(intIndexes.begin(), intIndexes.end(), std::back_inserter(indexes));
+            std::move(boolIndexes.begin(), boolIndexes.end(), std::back_inserter(indexes));
+            std::move(stringIndexes.begin(), stringIndexes.end(), std::back_inserter(indexes));
+
+            modifiedVariables.insert(std::make_pair(index, indexes));
+
+            index++;
+        }
+
+        return modifiedVariables;
+    }
+
 private:
     void validate_variable(variable_id variable, variable_causality causality)
     {
@@ -300,6 +325,11 @@ bool execution::is_real_time_simulation()
 double execution::get_real_time_factor()
 {
     return pimpl_->get_real_time_factor();
+}
+
+std::map<simulator_index, std::vector<variable_index>> execution::get_modified_variables()
+{
+    return pimpl_->get_modified_variables();
 }
 
 
