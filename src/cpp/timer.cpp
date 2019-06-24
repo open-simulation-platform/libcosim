@@ -6,7 +6,7 @@
 #include <atomic>
 #include <chrono>
 #include <thread>
-
+#include <cse/error.hpp>
 
 typedef std::chrono::steady_clock Time;
 constexpr std::chrono::microseconds MIN_SLEEP(100);
@@ -18,8 +18,7 @@ namespace cse
 class real_time_timer::impl
 {
 public:
-    impl()
-    {}
+    impl() = default;
 
     void start(time_point currentTime)
     {
@@ -28,7 +27,7 @@ public:
         startTime_ = Time::now();
         rtStartTime_ = startTime_;
         rtCounter_ = 0L;
-        realTimeFactor_ = 1.0;
+        measuredRealTimeFactor_ = 1.0;
     }
 
     void sleep(time_point currentTime)
@@ -37,22 +36,12 @@ public:
         update_real_time_factor(current, currentTime);
         lastSimulationTime_ = currentTime;
         if (realTimeSimulation_) {
-            Time::duration elapsed = current - startTime_;
-            const duration expectedSimulationTime = currentTime - simulationStartTime_;
-            const auto expected = std::chrono::duration_cast<std::chrono::nanoseconds>(expectedSimulationTime);
-            const std::chrono::nanoseconds totalSleep = expected - elapsed;
+            const auto elapsed = current - startTime_;
+            const auto expectedSimulationTime = (currentTime - simulationStartTime_) / realTimeFactorTarget_.load();
+            const auto simulationSleepTime = expectedSimulationTime - elapsed;
 
-            if (totalSleep > MIN_SLEEP) {
-                BOOST_LOG_SEV(log::logger(), log::level::trace)
-                    << "Real time timer sleeping for "
-                    << (std::chrono::duration_cast<std::chrono::milliseconds>(totalSleep)).count()
-                    << " ms";
-
-                std::this_thread::sleep_for(totalSleep);
-            } else {
-                BOOST_LOG_SEV(log::logger(), log::level::debug)
-                    << "Real time timer NOT sleeping, calculated sleep time "
-                    << totalSleep.count() << " ns";
+            if (simulationSleepTime > MIN_SLEEP) {
+                std::this_thread::sleep_for(simulationSleepTime);
             }
         }
     }
@@ -75,16 +64,30 @@ public:
         return realTimeSimulation_;
     }
 
-    double get_real_time_factor()
+    double get_measured_real_time_factor()
     {
-        return realTimeFactor_;
+        return measuredRealTimeFactor_;
+    }
+
+    void set_real_time_factor_target(double realTimeFactor)
+    {
+        CSE_INPUT_CHECK(realTimeFactor > 0.0);
+
+        start(lastSimulationTime_);
+        realTimeFactorTarget_.store(realTimeFactor);
+    }
+
+    double get_real_time_factor_target()
+    {
+        return realTimeFactorTarget_.load();
     }
 
 
 private:
     long rtCounter_ = 0L;
-    std::atomic<double> realTimeFactor_ = 1.0;
+    std::atomic<double> measuredRealTimeFactor_ = 1.0;
     std::atomic<bool> realTimeSimulation_ = false;
+    std::atomic<double> realTimeFactorTarget_ = 1.0;
     Time::time_point startTime_;
     Time::time_point rtStartTime_;
     time_point simulationStartTime_;
@@ -100,7 +103,7 @@ private:
             const auto expected = std::chrono::duration_cast<std::chrono::nanoseconds>(expectedSimulationTime);
 
             Time::duration elapsed = currentTime - rtStartTime_;
-            realTimeFactor_ = expected.count() / (1.0 * elapsed.count());
+            measuredRealTimeFactor_ = expected.count() / (1.0 * elapsed.count());
             rtStartTime_ = currentTime;
             rtSimulationStartTime_ = currentSimulationTime;
             rtCounter_ = 0L;
@@ -141,9 +144,19 @@ bool real_time_timer::is_real_time_simulation()
     return pimpl_->is_real_time_simulation();
 }
 
-double real_time_timer::get_real_time_factor()
+double real_time_timer::get_measured_real_time_factor()
 {
-    return pimpl_->get_real_time_factor();
+    return pimpl_->get_measured_real_time_factor();
+}
+
+void real_time_timer::set_real_time_factor_target(double realTimeFactor)
+{
+    pimpl_->set_real_time_factor_target(realTimeFactor);
+}
+
+double real_time_timer::get_real_time_factor_target()
+{
+    return pimpl_->get_real_time_factor_target();
 }
 
 

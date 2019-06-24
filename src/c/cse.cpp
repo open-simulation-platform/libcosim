@@ -451,7 +451,8 @@ int cse_execution_get_status(cse_execution* execution, cse_execution_status* sta
         status->error_code = execution->error_code;
         status->state = execution->state;
         status->current_time = to_integer_time_point(execution->cpp_execution->current_time());
-        status->real_time_factor = execution->cpp_execution->get_real_time_factor();
+        status->real_time_factor = execution->cpp_execution->get_measured_real_time_factor();
+        status->real_time_factor_target = execution->cpp_execution->get_real_time_factor_target();
         status->is_real_time_simulation = execution->cpp_execution->is_real_time_simulation() ? 1 : 0;
         return success;
     } catch (...) {
@@ -462,14 +463,35 @@ int cse_execution_get_status(cse_execution* execution, cse_execution_status* sta
 
 int cse_execution_enable_real_time_simulation(cse_execution* execution)
 {
-    execution->cpp_execution->enable_real_time_simulation();
-    return success;
+    try {
+        execution->cpp_execution->enable_real_time_simulation();
+        return success;
+    } catch (...) {
+        handle_current_exception();
+        return failure;
+    }
 }
 
 int cse_execution_disable_real_time_simulation(cse_execution* execution)
 {
-    execution->cpp_execution->disable_real_time_simulation();
-    return success;
+    try {
+        execution->cpp_execution->disable_real_time_simulation();
+        return success;
+    } catch (...) {
+        handle_current_exception();
+        return failure;
+    }
+}
+
+int cse_execution_set_real_time_factor_target(cse_execution* execution, double realTimeFactor)
+{
+    try {
+        execution->cpp_execution->set_real_time_factor_target(realTimeFactor);
+        return success;
+    } catch (...) {
+        handle_current_exception();
+        return failure;
+    }
 }
 
 struct cse_observer_s

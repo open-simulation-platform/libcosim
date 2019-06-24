@@ -179,9 +179,19 @@ public:
         return timer_.is_real_time_simulation();
     }
 
-    double get_real_time_factor()
+    double get_measured_real_time_factor()
     {
-        return timer_.get_real_time_factor();
+        return timer_.get_measured_real_time_factor();
+    }
+
+    void set_real_time_factor_target(double realTimeFactor)
+    {
+        timer_.set_real_time_factor_target(realTimeFactor);
+    }
+
+    double get_real_time_factor_target()
+    {
+        return timer_.get_real_time_factor_target();
     }
 
     std::map<simulator_index, std::vector<variable_index>> get_modified_variables()
@@ -241,6 +251,7 @@ private:
     time_point currentTime_;
     bool initialized_;
     bool stopped_;
+    double realTimeFactor_ = 1.0;
 
     std::shared_ptr<algorithm> algorithm_;
     std::vector<std::shared_ptr<simulator>> simulators_;
@@ -322,9 +333,18 @@ bool execution::is_real_time_simulation()
     return pimpl_->is_real_time_simulation();
 }
 
-double execution::get_real_time_factor()
+double execution::get_measured_real_time_factor()
 {
-    return pimpl_->get_real_time_factor();
+    return pimpl_->get_measured_real_time_factor();
+}
+
+void execution::set_real_time_factor_target(double realTimeFactor)
+{
+    pimpl_->set_real_time_factor_target(realTimeFactor);
+}
+
+double execution::get_real_time_factor_target() {
+    return pimpl_->get_real_time_factor_target();
 }
 
 std::map<simulator_index, std::vector<variable_index>> execution::get_modified_variables()
