@@ -14,8 +14,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 * improved error reporting
    
 ##### Fixed
-* Prevent crash when FMU GUIDs include curly brackets
-* Prevent crash when FMU includes enumerated variables
+* Prevent crash when FMU GUIDs include curly brackets ([#244](https://github.com/open-simulation-platform/cse-core/issues/244))
+* Prevent crash when FMU includes enumerated variables ([#246](https://github.com/open-simulation-platform/cse-core/issues/246))
 
 ### [v0.2.0] – 2019-03-21
 ##### Added
