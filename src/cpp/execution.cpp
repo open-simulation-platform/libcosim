@@ -184,11 +184,15 @@ public:
         return timer_.get_real_time_factor();
     }
 
-    std::map<simulator_index, std::vector<variable_index>> get_modified_variables()
+    std::map<simulator_index, std::vector<variable_id>> get_modified_variables()
     {
-        std::map<simulator_index, std::vector<variable_index>> modifiedVariables;
-        auto index = 0;
+        std::map<simulator_index, std::vector<variable_id>> modifiedVariables;
+        std::vector<variable_id> realIds;
+        std::vector<variable_id> intIds;
+        std::vector<variable_id> boolIds;
+        std::vector<variable_id> stringIds;
 
+        auto index = 0;
         for (const auto& simulator : simulators_) {
             const auto sim = std::dynamic_pointer_cast<cse::slave_simulator>(simulator);
             auto realIndexes = sim->get_modified_real_indexes();
@@ -196,10 +200,30 @@ public:
             auto boolIndexes = sim->get_modified_boolean_indexes();
             auto stringIndexes = sim->get_modified_string_indexes();
 
-            std::vector<variable_index> indexes(realIndexes);
-            std::move(intIndexes.begin(), intIndexes.end(), std::back_inserter(indexes));
-            std::move(boolIndexes.begin(), boolIndexes.end(), std::back_inserter(indexes));
-            std::move(stringIndexes.begin(), stringIndexes.end(), std::back_inserter(indexes));
+            for (const auto& varIndex : realIndexes) {
+                variable_id var = {index, variable_type::real, varIndex};
+                realIds.emplace_back(var);
+            }
+
+            for (const auto& varIndex : intIndexes) {
+                variable_id var = {index, variable_type::integer, varIndex};
+                intIds.emplace_back(var);
+            }
+
+            for (const auto& varIndex : boolIndexes) {
+                variable_id var = {index, variable_type::boolean, varIndex};
+                boolIds.emplace_back(var);
+            }
+
+            for (const auto& varIndex : stringIndexes) {
+                variable_id var = {index, variable_type::string, varIndex};
+                stringIds.emplace_back(var);
+            }
+
+            std::vector<variable_id> indexes(realIds);
+            std::move(intIds.begin(), intIds.end(), std::back_inserter(indexes));
+            std::move(boolIds.begin(), boolIds.end(), std::back_inserter(indexes));
+            std::move(stringIds.begin(), stringIds.end(), std::back_inserter(indexes));
 
             modifiedVariables.insert(std::make_pair(index, indexes));
 
@@ -327,7 +351,7 @@ double execution::get_real_time_factor()
     return pimpl_->get_real_time_factor();
 }
 
-std::map<simulator_index, std::vector<variable_index>> execution::get_modified_variables()
+std::map<simulator_index, std::vector<variable_id>> execution::get_modified_variables()
 {
     return pimpl_->get_modified_variables();
 }

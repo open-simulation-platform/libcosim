@@ -171,7 +171,7 @@ public:
     /// Returns the current real time factor
     double get_real_time_factor();
 
-    std::map<simulator_index, std::vector<variable_index>> get_modified_variables();
+    std::map<simulator_index, std::vector<variable_id>> get_modified_variables();
 
 
 private:
