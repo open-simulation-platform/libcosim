@@ -13,6 +13,7 @@ option(CSECORE_BUILD_PRIVATE_APIDOC "Build private API documentation" OFF)
 option(CSECORE_STANDALONE_INSTALLATION "Whether to build for a standalone installation (Linux only; sets a relative RPATH)" OFF)
 option(CSECORE_USING_CONAN "Whether Conan is used for package management" OFF)
 option(CSECORE_WITH_FMUPROXY "Whether or not to build with fmuproxy integration" OFF)
+option(CSECORE_TEST_FMUPROXY "Whether or not to run fmuproxy tests (only if CSECORE_WITH_FMUPROXY=ON)" ON)
 
 # ==============================================================================
 # Global internal configuration

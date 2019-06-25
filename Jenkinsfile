@@ -1,6 +1,12 @@
 pipeline {
     agent none
 
+    environment {
+        CONAN_USER_HOME_SHORT = 'None'
+        OSP_CONAN_CREDS = credentials('jenkins-osp-conan-creds')
+        CSE_CONAN_CHANNEL = "${env.BRANCH_NAME}".replaceAll("/", "_")
+    }
+
     options { checkoutToSubdirectory('cse-core') }
 
     stages {
@@ -11,12 +17,9 @@ pipeline {
                     agent { label 'windows' }
                     
                     environment {
-                        CONAN_USER_HOME = "${env.BASE}\\conan-repositories\\${env.EXECUTOR_NUMBER}"
-                        CONAN_USER_HOME_SHORT = "${env.CONAN_USER_HOME}"
-                        OSP_CONAN_CREDS = credentials('jenkins-osp-conan-creds')
-                        CSE_CONAN_CHANNEL = "${env.BRANCH_NAME}".replaceAll("/", "_")
+                        CONAN_USER_HOME = "${env.SLAVE_HOME}/conan-repositories/${env.EXECUTOR_NUMBER}"
                     }
-
+                    
                     stages {
                         stage('Configure Conan') {
                             steps {
@@ -109,10 +112,7 @@ pipeline {
                     agent { label 'windows' }
 
                     environment {
-                        CONAN_USER_HOME = "${env.BASE}\\conan-repositories\\${env.EXECUTOR_NUMBER}"
-                        CONAN_USER_HOME_SHORT = "${env.CONAN_USER_HOME}"
-                        OSP_CONAN_CREDS = credentials('jenkins-osp-conan-creds')
-                        CSE_CONAN_CHANNEL = "${env.BRANCH_NAME}".replaceAll("/", "_")
+                        CONAN_USER_HOME = "${env.SLAVE_HOME}/conan-repositories/${env.EXECUTOR_NUMBER}"
                     }
 
                     stages {
@@ -120,6 +120,7 @@ pipeline {
                             steps {
                                 sh 'conan remote add osp https://osp-conan.azurewebsites.net/artifactory/api/conan/conan-local --force'
                                 sh 'conan remote add helmesjo https://api.bintray.com/conan/helmesjo/public-conan --force'
+                                sh 'conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan --force'
                                 sh 'conan user -p $OSP_CONAN_CREDS_PSW -r osp $OSP_CONAN_CREDS_USR'
                             }
                         }
@@ -131,6 +132,37 @@ pipeline {
                                 }
                             }
                         }
+                        stage ('Test Release') {
+                            steps {
+                                dir('release-build-fmuproxy') {
+                                    bat 'ctest -C Release -T Test --no-compress-output --test-output-size-passed 307200 || true'
+                                }
+                            }
+                            post {
+                                always{
+                                    xunit (
+                                        testTimeMargin: '30000',
+                                        thresholdMode: 1,
+                                        thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
+                                        tools: [ CTest(pattern: 'release-build-fmuproxy/Testing/**/Test.xml') ]
+                                    )
+                                }
+                                success {
+                                    dir('release-build-fmuproxy') {
+                                        sh "conan export-pkg ../cse-core osp/${CSE_CONAN_CHANNEL} -pf package/windows/release --force"
+                                        sh "conan upload cse-core/*@osp/${CSE_CONAN_CHANNEL} --all -r=osp --confirm"
+                                    }
+                                    dir('release-build-fmuproxy/package') {
+                                        archiveArtifacts artifacts: '**',  fingerprint: true
+                                    }
+                                }
+                                cleanup {
+                                    dir('release-build-fmuproxy/Testing') {
+                                        deleteDir();
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
                 stage ( 'Build on Linux with Conan' ) {
@@ -139,15 +171,12 @@ pipeline {
                             filename 'Dockerfile.conan-build'
                             dir 'cse-core/.dockerfiles'
                             label 'linux && docker'
-                            args '-v ${HOME}/jenkins_slave/conan-repositories/${EXECUTOR_NUMBER}:/conan_repo'
+                            args '-v ${SLAVE_HOME}/conan-repositories/${EXECUTOR_NUMBER}:/conan_repo'
                         }
                     }
 
                     environment {
                         CONAN_USER_HOME = '/conan_repo'
-                        CONAN_USER_HOME_SHORT = 'None'
-                        OSP_CONAN_CREDS = credentials('jenkins-osp-conan-creds')
-                        CSE_CONAN_CHANNEL = "${env.BRANCH_NAME}".replaceAll("/", "_")
                     }
                     
                     stages {
@@ -244,15 +273,12 @@ pipeline {
                             filename 'Dockerfile.conan-build'
                             dir 'cse-core/.dockerfiles'
                             label 'linux && docker'
-                            args '-v ${HOME}/jenkins_slave/conan-repositories/${EXECUTOR_NUMBER}:/conan_repo'
+                            args '-v ${SLAVE_HOME}/conan-repositories/${EXECUTOR_NUMBER}:/conan_repo'
                         }
                     }
 
                     environment {
                         CONAN_USER_HOME = '/conan_repo'
-                        CONAN_USER_HOME_SHORT = 'None'
-                        OSP_CONAN_CREDS = credentials('jenkins-osp-conan-creds')
-                        CSE_CONAN_CHANNEL = "${env.BRANCH_NAME}".replaceAll("/", "_")
                     }
 
                     stages {
@@ -260,6 +286,7 @@ pipeline {
                             steps {
                                 sh 'conan remote add osp https://osp-conan.azurewebsites.net/artifactory/api/conan/conan-local --force'
                                 sh 'conan remote add helmesjo https://api.bintray.com/conan/helmesjo/public-conan --force'
+                                sh 'conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan --force'
                                 sh 'conan user -p $OSP_CONAN_CREDS_PSW -r osp $OSP_CONAN_CREDS_USR'
                             }
                         }
@@ -268,6 +295,37 @@ pipeline {
                                 dir('release-build-conan-fmuproxy') {
                                     sh 'conan install ../cse-core -s compiler.libcxx=libstdc++11 -s build_type=Release -o fmuproxy=True -b missing'
                                     sh 'conan package ../cse-core -pf package/linux/release'
+                                }
+                            }
+                        }
+                        stage ('Test Release') {
+                            steps {
+                                dir('release-build-conan-fmuproxy') {
+                                    sh '. ./activate_run.sh && ctest -C Release -T Test --no-compress-output --test-output-size-passed 307200 || true'
+                                }
+                            }
+                            post {
+                                always{
+                                    xunit (
+                                        testTimeMargin: '30000',
+                                        thresholdMode: 1,
+                                        thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
+                                        tools: [ CTest(pattern: 'release-build-conan-fmuproxy/Testing/**/Test.xml') ]
+                                    )
+                                }
+                                success {
+                                    dir('release-build-conan-fmuproxy') {
+                                        sh "conan export-pkg ../cse-core osp/${CSE_CONAN_CHANNEL} -pf package/linux/release --force"
+                                        sh "conan upload cse-core/*@osp/${CSE_CONAN_CHANNEL} --all -r=osp --confirm"
+                                    }
+                                    dir('release-build-conan-fmuproxy/package') {
+                                        archiveArtifacts artifacts: '**',  fingerprint: true
+                                    }
+                                }
+                                cleanup {
+                                    dir('release-build-conan-fmuproxy/Testing') {
+                                        deleteDir();
+                                    }
                                 }
                             }
                         }
@@ -294,7 +352,7 @@ pipeline {
                         }
                         stage('Build Release') {
                             steps {
-                                dir('release-build ') {
+                                dir('release-build') {
                                     sh 'cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../install/linux/release -DCSECORE_USING_CONAN=FALSE -DCSECORE_BUILD_PRIVATE_APIDOC=ON ../cse-core'
                                     sh 'cmake --build .'
                                     sh 'cmake --build . --target install'
