@@ -62,6 +62,7 @@ public:
 
     const std::vector<Connection>& get_variable_connections() const;
     const std::vector<Connection>& get_plug_socket_connections() const;
+    const std::vector<Connection>& get_bond_connections() const;
 
 private:
     SystemDescription systemDescription_;
@@ -69,6 +70,7 @@ private:
     std::vector<Simulator> simulators_;
     std::vector<Connection> variableConnections_;
     std::vector<Connection> plugSocketConnections_;
+    std::vector<Connection> bondConnections_;
 };
 
 cse_config_parser::cse_config_parser(const boost::filesystem::path& configPath)
@@ -101,11 +103,20 @@ cse_config_parser::cse_config_parser(const boost::filesystem::path& configPath)
     }
 
     if (j.count("plugSocketConnections")) {
-        for (const auto& plugSocketconnection : j.at("plugSocketConnections")) {
-            plugSocketConnections_.push_back({plugSocketconnection.at("sourceSimulator").get<std::string>(),
-                                              plugSocketconnection.at("plug").get<std::string>(),
-                                              plugSocketconnection.at("targetSimulator").get<std::string>(),
-                                              plugSocketconnection.at("socket").get<std::string>()});
+        for (const auto& plugSocketConnection : j.at("plugSocketConnections")) {
+            plugSocketConnections_.push_back({plugSocketConnection.at("sourceSimulator").get<std::string>(),
+                                              plugSocketConnection.at("plug").get<std::string>(),
+                                              plugSocketConnection.at("targetSimulator").get<std::string>(),
+                                              plugSocketConnection.at("socket").get<std::string>()});
+        }
+    }
+
+    if (j.count("bondConnections")) {
+        for (const auto &bondConnection : j.at("bondConnections")) {
+            bondConnections_.push_back({bondConnection.at("simulatorA").get<std::string>(),
+                                        bondConnection.at("bondA").get<std::string>(),
+                                        bondConnection.at("simulatorB").get<std::string>(),
+                                        bondConnection.at("bondB").get<std::string>()});
         }
     }
 }
@@ -130,6 +141,11 @@ const std::vector<cse_config_parser::Connection>&cse_config_parser::get_variable
 const std::vector<cse_config_parser::Connection>&cse_config_parser::get_plug_socket_connections() const
 {
     return plugSocketConnections_;
+}
+
+const std::vector<cse_config_parser::Connection>&cse_config_parser::get_bond_connections() const
+{
+    return bondConnections_;
 }
 
 std::vector<std::string> parse_string_vector(const nlohmann::json& element) {
@@ -199,6 +215,24 @@ struct extended_model_description
 
 } // namespace
 
+void connect_variables(
+    std::vector<cse_config_parser::Connection> variableConnections,
+    std::unordered_map<std::string, slave_info>& slaves,
+    cse::execution& execution) {
+
+    for (const auto& connection : variableConnections) {
+        cse::variable_id output = {slaves[connection.sourceSimulator].index,
+                                   slaves[connection.sourceSimulator].variables[connection.sourceConnector].type,
+                                   slaves[connection.sourceSimulator].variables[connection.sourceConnector].index};
+
+        cse::variable_id input = {slaves[connection.targetSimulator].index,
+                                  slaves[connection.targetSimulator].variables[connection.targetConnector].type,
+                                  slaves[connection.targetSimulator].variables[connection.targetConnector].index};
+
+
+        execution.connect_variables(output, input);
+    }
+}
 
 std::pair<execution, simulator_map> load_cse_config(
     cse::model_uri_resolver& resolver,
@@ -239,17 +273,19 @@ std::pair<execution, simulator_map> load_cse_config(
         emds.emplace(simulator.name, msmiFilePath);
     }
 
-    for (const auto& connection : parser.get_variable_connections()) {
-        cse::variable_id output = {slaves[connection.sourceSimulator].index,
-            slaves[connection.sourceSimulator].variables[connection.sourceConnector].type,
-            slaves[connection.sourceSimulator].variables[connection.sourceConnector].index};
+    connect_variables(parser.get_variable_connections(), slaves, execution);
 
-        cse::variable_id input = {slaves[connection.targetSimulator].index,
-            slaves[connection.targetSimulator].variables[connection.targetConnector].type,
-            slaves[connection.targetSimulator].variables[connection.targetConnector].index};
-
-        execution.connect_variables(output, input);
-    }
+//    for (const auto& connection : parser.get_variable_connections()) {
+//        cse::variable_id output = {slaves[connection.sourceSimulator].index,
+//            slaves[connection.sourceSimulator].variables[connection.sourceConnector].type,
+//            slaves[connection.sourceSimulator].variables[connection.sourceConnector].index};
+//
+//        cse::variable_id input = {slaves[connection.targetSimulator].index,
+//            slaves[connection.targetSimulator].variables[connection.targetConnector].type,
+//            slaves[connection.targetSimulator].variables[connection.targetConnector].index};
+//
+//        execution.connect_variables(output, input);
+//    }
 
     for (const auto& connection : parser.get_plug_socket_connections()) {
 
@@ -276,8 +312,6 @@ std::pair<execution, simulator_map> load_cse_config(
             execution.connect_variables(output, input);
         }
     }
-
-
 
     return std::make_pair(std::move(execution), std::move(simulatorMap));
 }
