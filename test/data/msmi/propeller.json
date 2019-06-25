@@ -1,0 +1,45 @@
+{
+    "plugs": [
+        {
+            "type": "force",
+            "name": "force1",
+            "variables": [
+                "F_x",
+                "F_y",
+                "F_z"
+            ]
+        },
+        {
+            "type": "position",
+            "name": "pos1",
+            "variables": [
+                "x",
+                "y",
+                "z"
+            ]
+        }
+    ],
+    "sockets": [
+        {
+            "type": "force",
+            "name": "force2",
+            "variables": [
+                "F_x",
+                "F_y",
+                "F_z"
+            ]
+        }
+    ],
+    "bonds": [
+        {
+            "name": "bond",
+            "plugs": [
+                "force1",
+                "position1"
+            ],
+            "sockets": [
+                "pos1"
+            ]
+        }
+    ]
+}

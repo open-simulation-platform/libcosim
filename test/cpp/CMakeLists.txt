@@ -1,5 +1,6 @@
 set(tests
     "async_slave_mockup_test"
+    "cse_config_parser_test"
     "fixed_step_algorithm_test"
     "file_observer_logging_test"
     "file_observer_logging_from_config_test"

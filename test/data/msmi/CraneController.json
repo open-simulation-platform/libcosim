@@ -1,0 +1,47 @@
+{
+    "sockets": [
+        {
+            "type": "flow",
+            "name": "fpeed",
+            "variables": [
+                "p_Crane.f[1]",
+                "p_Crane.f[2]",
+                "p_Crane.f[3]"
+            ]
+        },
+        {
+            "type": "abstract",
+            "name": "Act_Limits",
+            "variables": [
+                "Act_Limits[1]",
+                "Act_Limits[2]",
+                "Act_Limits[3]"
+            ]
+        }
+    ],
+    "plugs": [
+        {
+            "type": "effort",
+            "name": "forceOut",
+            "variables": [
+                "p_Crane.e[1]",
+                "p_Crane.e[2]",
+                "p_Crane.e[3]"
+            ]
+        }
+    ],
+    "bonds": [
+        {
+            "name": "jim",
+            "sockets": [
+                "fpeed"
+            ],
+            "plugs": [
+                "forceOut"
+            ]
+        }
+    ]
+}
+
+
+}
