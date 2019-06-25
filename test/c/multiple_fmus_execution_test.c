@@ -3,6 +3,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #ifdef _WINDOWS
 #    include <windows.h>
@@ -87,6 +88,16 @@ int main()
     rc = cse_manipulator_slave_set_integer(manipulator, slave_index1, &intInVar, 1, &intInVal);
     if (rc < 0) { goto Lerror; }
 
+    cse_variable_index boolInVar = 0;
+    const bool boolInVal = true;
+    rc = cse_manipulator_slave_set_boolean(manipulator, slave_index1, &boolInVar, 1, &boolInVal);
+    if (rc < 0) { goto Lerror; }
+
+    cse_variable_index strInVar = 0;
+    const char* strInVal = "foo";
+    rc = cse_manipulator_slave_set_string(manipulator, slave_index1, &strInVar, 1, &strInVal);
+    if (rc < 0) { goto Lerror; }
+
     rc = cse_execution_step(execution, 10);
     if (rc < 0) { goto Lerror; }
 
@@ -116,17 +127,38 @@ int main()
     rc = cse_observer_slave_get_real(observer1, slave_index1, &realOutVar, 1, &realOutVal);
     if (rc < 0) { goto Lerror; }
 
+    if (realOutVal != 5.0) {
+        fprintf(stderr, "Expected value 5.0, got %f\n", realOutVal);
+        goto Lfailure;
+    }
+
     cse_variable_index intOutVar = 0;
     int intOutVal = 10;
     rc = cse_observer_slave_get_integer(observer1, slave_index1, &intOutVar, 1, &intOutVal);
     if (rc < 0) { goto Lerror; }
 
-    if (realOutVal != 5.0) {
-        fprintf(stderr, "Expected value 0.0, got %f\n", realOutVal);
+    if (intOutVal != 42) {
+        fprintf(stderr, "Expected value 42, got %i\n", intOutVal);
         goto Lfailure;
     }
-    if (intOutVal != 42) {
-        fprintf(stderr, "Expected value 0, got %i\n", intOutVal);
+
+    cse_variable_index boolOutVar = 0;
+    bool boolOutVal = false;
+    rc = cse_observer_slave_get_boolean(observer1, slave_index1, &boolOutVar, 1, &boolOutVal);
+    if (rc < 0) { goto Lerror; }
+
+    if (boolOutVal != true) {
+        fprintf(stderr, "Expected value true, got %s\n", boolOutVal > 0 ? "true" : "false");
+        goto Lfailure;
+    }
+
+    cse_variable_index strOutVar = 0;
+    const char* strOutVal;
+    rc = cse_observer_slave_get_string(observer1, slave_index1, &strOutVar, 1, &strOutVal);
+    if (rc < 0) { goto Lerror; }
+
+    if (0 != strncmp(strOutVal, "foo", SLAVE_NAME_MAX_SIZE)) {
+        fprintf(stderr, "Expected value foo, got %s\n", strOutVal);
         goto Lfailure;
     }
 

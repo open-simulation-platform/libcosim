@@ -1,0 +1,38 @@
+#!/bin/bash
+#
+# This script performs the following operations on version-tracked files within
+# the current working directory and its subdirectories:
+#
+#  - Fixes file permissions
+#  - Ensures that all text files end with a newline
+#  - Runs clang-format on all source files
+#
+set -o errexit -o nounset -o pipefail
+
+# Regex to select files for clang-format
+readonly clangFormattableFiles='\.(h|c|hpp|cpp)$'
+
+# Regex to exclude files from clang-format
+readonly excludeFromClangFormat='(include/cse/fmuproxy|src/cpp/fmuproxy)/(fmu_service|service_types)'
+
+# Per-file corrections
+for f in $(git ls-files); do
+    # Ensure that only executable files have executable permissions
+    if { file "$f" | grep -q " executable"; }; then
+        chmod -c 0755 "$f"
+    else
+        chmod -c 0644 "$f"
+    fi
+
+    # Ensure that all text files end with a newline
+    if { file "$f" | grep -q " text"; }; then
+        { tail -c1 "$f" | read -r _; } || { echo >> "$f"; echo "appended newline to '$f'"; }
+    fi
+done
+
+# Apply clang-format to all relevant source files
+echo "running clang-format"
+git ls-files \
+    | egrep "$clangFormattableFiles" \
+    | egrep -v "$excludeFromClangFormat" \
+    | xargs -r clang-format -i -style=file

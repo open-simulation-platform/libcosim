@@ -7,6 +7,8 @@
 
 #include <gsl/span>
 
+#include <string>
+
 namespace cse
 {
 
@@ -42,6 +44,30 @@ public:
         simulator_index sim,
         gsl::span<const variable_index> variables,
         gsl::span<int> values) = 0;
+
+    /**
+     * Retrieves the latest observed values for a range of boolean variables.
+     *
+     * \param [in] sim index of the simulator
+     * \param [in] variables the variable indices to retrieve values for
+     * \param [out] values a collection where the observed values will be stored
+     */
+    virtual void get_boolean(
+        simulator_index sim,
+        gsl::span<const variable_index> variables,
+        gsl::span<bool> values) = 0;
+
+    /**
+     * Retrieves the latest observed values for a range of string variables.
+     *
+     * \param [in] sim index of the simulator
+     * \param [in] variables the variable indices to retrieve values for
+     * \param [out] values a collection where the observed values will be stored
+     */
+    virtual void get_string(
+        simulator_index sim,
+        gsl::span<const variable_index> variables,
+        gsl::span<std::string> values) = 0;
 };
 
 } // namespace cse

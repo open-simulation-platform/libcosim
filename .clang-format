@@ -14,6 +14,7 @@ AllowShortBlocksOnASingleLine: true
 AllowShortLoopsOnASingleLine: true
 BreakBeforeBinaryOperators: None
 Cpp11BracedListStyle: true
+SpaceBeforeCpp11BracedList: false
 BreakBeforeBraces: Custom
 BraceWrapping:
   AfterEnum: true

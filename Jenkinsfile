@@ -132,6 +132,37 @@ pipeline {
                                 }
                             }
                         }
+                        stage ('Test Release') {
+                            steps {
+                                dir('release-build-fmuproxy') {
+                                    bat 'ctest -C Release -T Test --no-compress-output --test-output-size-passed 307200 || true'
+                                }
+                            }
+                            post {
+                                always{
+                                    xunit (
+                                        testTimeMargin: '30000',
+                                        thresholdMode: 1,
+                                        thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
+                                        tools: [ CTest(pattern: 'release-build-fmuproxy/Testing/**/Test.xml') ]
+                                    )
+                                }
+                                success {
+                                    dir('release-build-fmuproxy') {
+                                        sh "conan export-pkg ../cse-core osp/${CSE_CONAN_CHANNEL} -pf package/windows/release --force"
+                                        sh "conan upload cse-core/*@osp/${CSE_CONAN_CHANNEL} --all -r=osp --confirm"
+                                    }
+                                    dir('release-build-fmuproxy/package') {
+                                        archiveArtifacts artifacts: '**',  fingerprint: true
+                                    }
+                                }
+                                cleanup {
+                                    dir('release-build-fmuproxy/Testing') {
+                                        deleteDir();
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
                 stage ( 'Build on Linux with Conan' ) {
@@ -264,6 +295,37 @@ pipeline {
                                 dir('release-build-conan-fmuproxy') {
                                     sh 'conan install ../cse-core -s compiler.libcxx=libstdc++11 -s build_type=Release -o fmuproxy=True -b missing'
                                     sh 'conan package ../cse-core -pf package/linux/release'
+                                }
+                            }
+                        }
+                        stage ('Test Release') {
+                            steps {
+                                dir('release-build-conan-fmuproxy') {
+                                    sh '. ./activate_run.sh && ctest -C Release -T Test --no-compress-output --test-output-size-passed 307200 || true'
+                                }
+                            }
+                            post {
+                                always{
+                                    xunit (
+                                        testTimeMargin: '30000',
+                                        thresholdMode: 1,
+                                        thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
+                                        tools: [ CTest(pattern: 'release-build-conan-fmuproxy/Testing/**/Test.xml') ]
+                                    )
+                                }
+                                success {
+                                    dir('release-build-conan-fmuproxy') {
+                                        sh "conan export-pkg ../cse-core osp/${CSE_CONAN_CHANNEL} -pf package/linux/release --force"
+                                        sh "conan upload cse-core/*@osp/${CSE_CONAN_CHANNEL} --all -r=osp --confirm"
+                                    }
+                                    dir('release-build-conan-fmuproxy/package') {
+                                        archiveArtifacts artifacts: '**',  fingerprint: true
+                                    }
+                                }
+                                cleanup {
+                                    dir('release-build-conan-fmuproxy/Testing') {
+                                        deleteDir();
+                                    }
                                 }
                             }
                         }

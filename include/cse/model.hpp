@@ -163,7 +163,8 @@ enum class variable_type
     real,
     integer,
     boolean,
-    string
+    string,
+    enumeration
 };
 
 
@@ -197,6 +198,7 @@ constexpr const char* to_text(variable_type v)
         case variable_type::integer: return "integer";
         case variable_type::boolean: return "boolean";
         case variable_type::string: return "string";
+        case variable_type::enumeration: return "enumeration";
         default: return nullptr;
     }
 }
@@ -307,6 +309,12 @@ struct model_description
     /// Variable descriptions.
     std::vector<variable_description> variables;
 };
+
+/// Getter for returning a variable description.
+const variable_description find_variable(const model_description& description, const std::string& variable_name, variable_type type, variable_causality causality);
+
+/// Getter for returning all variable descriptions of the given datatype.
+const std::vector<variable_description> find_variables_of_type(const model_description& description, variable_type type);
 
 
 /// Possible outcomes of a subsimulator time step

@@ -62,7 +62,7 @@ int main()
         auto start = std::chrono::steady_clock::now();
         REQUIRE(simResult.get());
         REQUIRE(std::chrono::abs(execution.current_time() - midTime) < std::chrono::microseconds(1));
-        REQUIRE(execution.get_real_time_factor() > 1.0);
+        REQUIRE(execution.get_measured_real_time_factor() > 1.0);
         simResult = execution.simulate_until(endTime);
         REQUIRE(simResult.get());
         auto end = std::chrono::steady_clock::now();
@@ -122,8 +122,8 @@ int main()
         REQUIRE(!slowerThanRealTime);
         REQUIRE(!fasterThanRealTime);
 
-        printf("Real time factor: %lf\n", execution.get_real_time_factor());
-        REQUIRE(fabs(execution.get_real_time_factor() - 1.0) < 0.05);
+        printf("Real time factor: %lf\n", execution.get_measured_real_time_factor());
+        REQUIRE(fabs(execution.get_measured_real_time_factor() - 1.0) < 0.05);
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;

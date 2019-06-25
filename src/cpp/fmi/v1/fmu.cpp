@@ -66,7 +66,14 @@ fmu::fmu(
     const auto varCount = fmi1_import_get_variable_list_size(varList);
     for (unsigned int i = 0; i < varCount; ++i) {
         const auto var = fmi1_import_get_variable(varList, i);
-        modelDescription_.variables.push_back(to_variable_description(var));
+        const auto vd = to_variable_description(var);
+        if (variable_type::enumeration != vd.type) {
+            modelDescription_.variables.push_back(vd);
+        } else {
+            BOOST_LOG_SEV(log::logger(), log::level::warning)
+                << "FMI 1.0 Enumeration variable type not supported, variable with name "
+                << vd.name << " will be ignored";
+        }
     }
 }
 
@@ -126,7 +133,7 @@ std::shared_ptr<v1::slave_instance> fmu::instantiate_v1_slave(
     if (isSingleton && !instances_.empty()) {
         throw error(
             make_error_code(errc::unsupported_feature),
-            "FMU can only be instantiated once");
+            "FMU '" + modelDescription_.name + "' can only be instantiated once");
     }
     auto instance = std::shared_ptr<slave_instance>(
         new slave_instance(shared_from_this(), instanceName));

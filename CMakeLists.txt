@@ -13,6 +13,7 @@ option(CSECORE_BUILD_PRIVATE_APIDOC "Build private API documentation" OFF)
 option(CSECORE_STANDALONE_INSTALLATION "Whether to build for a standalone installation (Linux only; sets a relative RPATH)" OFF)
 option(CSECORE_USING_CONAN "Whether Conan is used for package management" OFF)
 option(CSECORE_WITH_FMUPROXY "Whether or not to build with fmuproxy integration" OFF)
+option(CSECORE_TEST_FMUPROXY "Whether or not to run fmuproxy tests (only if CSECORE_WITH_FMUPROXY=ON)" ON)
 
 # ==============================================================================
 # Global internal configuration
@@ -67,12 +68,6 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
         # we are compiling in release mode. However, when we use Conan, this
         # should not be a problem, so we disable the warning.
         add_compile_options("/wd4251")
-    endif()
-    if (CSECORE_WITH_FMUPROXY)
-        #warning C4245: 'return': conversion from 'int' to 'SOCKET', signed/unsigned mismatch
-        add_compile_options("/wd4245")
-        #warning C4706: assignment within conditional expression
-        add_compile_options("/wd4706")
     endif()
     add_definitions("-D_SCL_SECURE_NO_WARNINGS" "-D_CRT_SECURE_NO_WARNINGS")
 endif()

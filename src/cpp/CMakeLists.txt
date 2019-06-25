@@ -21,11 +21,13 @@ set(publicHeaders
     "observer/last_value_provider.hpp"
     "observer/time_series_observer.hpp"
     "observer/time_series_provider.hpp"
+    "orchestration.hpp"
     "slave.hpp"
     "timer.hpp"
     "scenario.hpp"
     "scenario_parser.hpp"
     "manipulator.hpp"
+    "uri.hpp"
 )
 set(privateHeaders
     "error.hpp"
@@ -49,12 +51,15 @@ set(sources
     "fmi/importer.cpp"
     "fmi/v1/fmu.cpp"
     "fmi/v2/fmu.cpp"
+    "model.cpp"
     "observer/file_observer.cpp"
     "observer/last_value_observer.cpp"
     "observer/time_series_observer.cpp"
+    "orchestration.cpp"
     "scenario_manager.cpp"
     "scenario_parser.cpp"
     "override_manipulator.cpp"
+    "uri.cpp"
 
     "error.cpp"
     "fmi/glue.cpp"
@@ -71,23 +76,24 @@ set(sources
 if(CSECORE_WITH_FMUPROXY)
     list(APPEND publicHeaders
             "fmuproxy/remote_fmu.hpp"
-            "fmuproxy/fmu_service.hpp"
             "fmuproxy/service_types.hpp"
-            "fmuproxy/fmuproxy_client.hpp"
             "fmuproxy/thrift_state.hpp"
+            "fmuproxy/fmu_service.hpp"
+            "fmuproxy/fmuproxy_client.hpp"
+            "fmuproxy/fmuproxy_uri_sub_resolver.hpp"
     )
-
     list(APPEND privateHeaders
             "fmuproxy/fmuproxy_helper.hpp"
             "fmuproxy/remote_slave.hpp"
     )
     list(APPEND sources
-            "fmuproxy/fmu_service.cpp"
-            "fmuproxy/service_types.cpp"
             "fmuproxy/remote_slave.cpp"
             "fmuproxy/remote_fmu.cpp"
-            "fmuproxy/fmuproxy_client.cpp"
+            "fmuproxy/service_types.cpp"
             "fmuproxy/thrift_state.cpp"
+            "fmuproxy/fmu_service.cpp"
+            "fmuproxy/fmuproxy_client.cpp"
+            "fmuproxy/fmuproxy_uri_sub_resolver.cpp"
     )
 endif()
 
@@ -125,6 +131,7 @@ target_link_libraries(csecorecpp
     )
 
 if(CSECORE_WITH_FMUPROXY)
+    target_compile_definitions(csecorecpp PRIVATE "HAS_FMUPROXY")
     target_link_libraries(csecorecpp
         PUBLIC
             thrift::thrift
