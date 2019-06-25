@@ -374,6 +374,17 @@ typedef struct
     cse_slave_index index;
 } cse_slave_info;
 
+/// A struct containing variable information.
+typedef struct
+{
+    /// The index of the slave containing the variable.
+    cse_slave_index slave_index;
+    /// The type of the variable.
+    cse_variable_type type;
+    /// The index of the variable.
+    cse_variable_index variable_index;
+} cse_variable_id;
+
 
 /// Returns the number of slaves which have been added to an execution.
 size_t cse_execution_get_num_slaves(cse_execution* execution);
@@ -911,6 +922,19 @@ int cse_scenario_is_running(cse_manipulator* manipulator);
 
 /// Aborts the execution of a running scenario
 int cse_scenario_abort(cse_manipulator* manipulator);
+
+/*
+ * Retrieves a list of the currently modified variables in the simulation.
+ *
+ *  \param [in] execution
+ *      The execution.
+ *  \param [in] ids
+ *      A list of cse_variable_id structs to contain the variable information.
+ *
+ *  \returns
+ *      0 on success and -1 on error.
+ */
+int cse_get_modified_variables(cse_execution* execution, cse_variable_id ids[]);
 
 #ifdef __cplusplus
 } // extern(C)

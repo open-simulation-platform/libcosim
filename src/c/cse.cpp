@@ -1072,17 +1072,28 @@ int cse_scenario_abort(cse_manipulator* manipulator)
     }
 }
 
-int cse_get_modified_variables(cse_execution* execution, cse_slave_index slave_index)
+int cse_get_modified_variables(cse_execution* execution, cse_variable_id ids[])
 {
     try {
         auto modified_vars = execution->cpp_execution->get_modified_variables();
 
         for (const auto& [index, vars] : modified_vars) {
             std::cout << "Number of modified variables for simulator " << index << ": " << vars.size() << std::endl;
+
+            size_t counter = 0;
+            for (const auto& var : vars) {
+                ids[counter].slave_index = var.simulator;
+                ids[counter].type = to_c_variable_type(var.type);
+                ids[counter].variable_index = var.index;
+
+                ++counter;
+            }
         }
 
         return success;
     } catch (...) {
+        execution->state = CSE_EXECUTION_ERROR;
+        execution->error_code = CSE_ERRC_UNSPECIFIED;
         handle_current_exception();
         return failure;
     }
