@@ -4,31 +4,10 @@
 #include "cse/slave_simulator.hpp"
 #include "cse/timer.hpp"
 
-#include <boost/functional/hash.hpp>
-
 #include <sstream>
 #include <unordered_map>
 #include <utility>
 #include <vector>
-
-
-// Specialisation of std::hash for variable_id
-namespace std
-{
-template<>
-class hash<cse::variable_id>
-{
-public:
-    std::size_t operator()(const cse::variable_id& v) const noexcept
-    {
-        std::size_t seed = 0;
-        boost::hash_combine(seed, v.simulator);
-        boost::hash_combine(seed, v.type);
-        boost::hash_combine(seed, v.index);
-        return seed;
-    }
-};
-} // namespace std
 
 
 namespace cse

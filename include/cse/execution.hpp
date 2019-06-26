@@ -9,6 +9,7 @@
 #include <cse/model.hpp>
 
 #include <boost/fiber/future.hpp>
+#include <boost/functional/hash.hpp>
 
 #include <memory>
 #include <optional>
@@ -47,6 +48,28 @@ inline bool operator!=(const variable_id& a, const variable_id& b) noexcept
 {
     return !operator==(a, b);
 }
+
+}
+
+// Specialisation of std::hash for variable_id
+namespace std
+{
+template<>
+class hash<cse::variable_id>
+{
+public:
+    std::size_t operator()(const cse::variable_id& v) const noexcept
+    {
+        std::size_t seed = 0;
+        boost::hash_combine(seed, v.simulator);
+        boost::hash_combine(seed, v.type);
+        boost::hash_combine(seed, v.index);
+        return seed;
+    }
+};
+} // namespace std
+
+namespace cse {
 
 
 // Forward declarations

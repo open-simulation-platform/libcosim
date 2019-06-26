@@ -72,8 +72,14 @@ public:
         simulators_[output.simulator].outgoingConnections.push_back({output, input});
     }
 
-    void add_connection(const multi_connection& c)
+    void add_connection(std::shared_ptr<multi_connection> c)
     {
+        for (const auto& source : c->get_sources()) {
+            simulators_[source.simulator].sim->expose_for_getting(source.type, source.index);
+        }
+        for (const auto& destination : c->get_destinations()) {
+            simulators_[destination.simulator].sim->expose_for_setting(destination.type, destination.index);
+        }
         connections_.push_back(c);
     }
 
@@ -227,10 +233,10 @@ private:
     void transfer_sources(simulator_index i)
     {
         for (auto& c : connections_) {
-            for (const auto& id : c.get_sources()) {
+            for (const auto& id : c->get_sources()) {
                 if (id.simulator == i) {
                     if (id.type == variable_type::real) {
-                        c.set_real_source_value(id, simulators_.at(i).sim->get_real(id.index));
+                        c->set_real_source_value(id, simulators_.at(i).sim->get_real(id.index));
                     }
                 }
             }
@@ -240,10 +246,10 @@ private:
     void transfer_destinations(simulator_index i)
     {
         for (auto& c : connections_) {
-            for (const auto& id : c.get_destinations()) {
+            for (const auto& id : c->get_destinations()) {
                 if (id.simulator == i) {
                     if (id.type == variable_type::real) {
-                        simulators_.at(i).sim->set_real(id.index, c.get_real_destination_value(id));
+                        simulators_.at(i).sim->set_real(id.index, c->get_real_destination_value(id));
                     }
                 }
             }
@@ -309,7 +315,7 @@ private:
     std::optional<time_point> stopTime_;
     std::unordered_map<simulator_index, simulator_info> simulators_;
     int64_t stepCounter_ = 0;
-    std::vector<multi_connection> connections_;
+    std::vector<std::shared_ptr<multi_connection>> connections_;
 };
 
 
@@ -364,7 +370,7 @@ void fixed_step_algorithm::disconnect_variable(variable_id input)
     pimpl_->disconnect_variable(input);
 }
 
-void fixed_step_algorithm::add_connection(const multi_connection& c)
+void fixed_step_algorithm::add_connection(std::shared_ptr<multi_connection> c)
 {
     pimpl_->add_connection(c);
 }

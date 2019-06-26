@@ -275,7 +275,7 @@ public:
     /// Breaks a previously established connection to input variable `input`.
     virtual void disconnect_variable(variable_id input) = 0;
 
-    virtual void add_connection(const multi_connection& c) = 0;
+    virtual void add_connection(std::shared_ptr<multi_connection> c) = 0;
 
     /**
      *  Performs initial setup.
@@ -361,7 +361,7 @@ public:
         variable_id input,
         bool inputAlreadyConnected) override;
     void disconnect_variable(variable_id input) override;
-    void add_connection(const multi_connection& c) override;
+    void add_connection(std::shared_ptr<multi_connection> c) override;
     void setup(time_point startTime, std::optional<time_point> stopTime) override;
     void initialize() override;
     std::pair<duration, std::unordered_set<simulator_index>> do_step(time_point currentT) override;
