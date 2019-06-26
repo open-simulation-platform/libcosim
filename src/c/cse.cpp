@@ -316,22 +316,6 @@ int cse_slave_get_variables(cse_execution* execution, cse_slave_index slave, cse
     }
 }
 
-int cse_slave_get_modified_variables(cse_execution* execution, cse_slave_index slave,
-        cse_variable_description variables[], size_t numVariables)
-{
-    try {
-        for (const auto& sim : execution->simulators) {
-            if (sim.second.index == slave) {
-
-            }
-        }
-    } catch (...) {
-        handle_current_exception();
-        return failure;
-    }
-}
-
-
 struct cse_slave_s
 {
     std::string address;
