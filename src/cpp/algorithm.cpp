@@ -75,12 +75,12 @@ public:
     void disconnect_variable(variable_id input)
     {
         for (auto& s : simulators_) {
-            auto conns = s.second.outgoingConnections;
+            auto& conns = s.second.outgoingConnections;
             const auto it = std::find_if(
                 conns.begin(),
                 conns.end(),
                 [input](const auto& c) { return c.input == input; });
-            conns.erase(it);
+            if (it != conns.end()) conns.erase(it);
         }
     }
 
