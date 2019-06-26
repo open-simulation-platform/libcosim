@@ -4,7 +4,7 @@ pipeline {
     environment {
         CONAN_USER_HOME_SHORT = 'None'
         OSP_CONAN_CREDS = credentials('jenkins-osp-conan-creds')
-        CSE_CONAN_CHANNEL = "${env.BRANCH_NAME}".replaceAll("/", "_")
+        CSE_CONAN_CHANNEL = "${env.BRANCH_NAME}".take(51).replaceAll("/", "_")
     }
 
     options { checkoutToSubdirectory('cse-core') }
