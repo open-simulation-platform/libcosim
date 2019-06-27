@@ -1,2 +1,19 @@
 @PACKAGE_INIT@
 include ("@PACKAGE_targetsFile@")
+
+get_filename_component(CSECORE_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+include(CMakeFindDependencyMacro)
+
+list(APPEND CMAKE_MODULE_PATH ${CSECORE_CMAKE_DIR})
+
+find_dependency(GSL REQUIRED)
+find_dependency(Boost REQUIRED COMPONENTS date_time fiber filesystem log)
+find_dependency(FMILibrary REQUIRED)
+find_dependency(LIBZIP REQUIRED)
+find_dependency(nlohmann_json REQUIRED)
+
+if(CSECORE_WITH_FMUPROXY)
+    find_dependency(Thrift REQUIRED)
+endif()
+
+list(REMOVE_AT CMAKE_MODULE_PATH -1)

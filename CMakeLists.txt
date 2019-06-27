@@ -208,3 +208,14 @@ write_basic_package_version_file(
     VERSION "${PROJECT_VERSION}"
     COMPATIBILITY "SameMajorVersion")
 install(FILES "${versionFile}" DESTINATION "${CSECORE_CMAKE_INSTALL_DIR}")
+
+# Install custom find modules
+install(FILES
+        ${CMAKE_SOURCE_DIR}/cmake/FindFMILibrary.cmake
+        ${CMAKE_SOURCE_DIR}/cmake/FindLIBZIP.cmake
+        ${CMAKE_SOURCE_DIR}/cmake/FindGSL.cmake
+        ${CMAKE_SOURCE_DIR}/cmake/Findnhlomann_json.cmake
+        ${CMAKE_SOURCE_DIR}/cmake/FindThrift.cmake
+        DESTINATION
+        ${CSECORE_CMAKE_INSTALL_DIR}
+)
