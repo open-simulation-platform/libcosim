@@ -214,7 +214,7 @@ install(FILES
         ${CMAKE_SOURCE_DIR}/cmake/FindFMILibrary.cmake
         ${CMAKE_SOURCE_DIR}/cmake/FindLIBZIP.cmake
         ${CMAKE_SOURCE_DIR}/cmake/FindGSL.cmake
-        ${CMAKE_SOURCE_DIR}/cmake/Findnhlomann_json.cmake
+        ${CMAKE_SOURCE_DIR}/cmake/Findnlohmann_json.cmake
         ${CMAKE_SOURCE_DIR}/cmake/FindThrift.cmake
         DESTINATION
         ${CSECORE_CMAKE_INSTALL_DIR}
