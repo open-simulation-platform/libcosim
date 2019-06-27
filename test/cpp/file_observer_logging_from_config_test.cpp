@@ -43,8 +43,8 @@ int main()
             cse::make_pseudo_async(std::make_unique<mock_slave>(
                 [](double x) { return x + 1.234; },
                 [](int x) { return x + 1; },
-                [](bool x) {return x; },
-                [](std::string_view) {return std::string("hello log");})), 
+                [](bool x) { return x; },
+                [](std::string_view) { return std::string("hello log"); })),
             "slave");
 
         execution.add_slave(

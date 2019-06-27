@@ -1,4 +1,5 @@
 #include "cse/manipulator.hpp"
+#include <cse/error.hpp>
 
 #include <sstream>
 
@@ -172,32 +173,27 @@ void override_manipulator::override_string_variable(
     add_action(index, variable, variable_type::string, scenario::string_modifier{f});
 }
 
-void override_manipulator::reset_real_variable(
+void override_manipulator::reset_variable(
     simulator_index index,
+    variable_type type,
     variable_index variable)
 {
-    add_action(index, variable, variable_type::real, scenario::real_modifier{nullptr});
-}
-
-void override_manipulator::reset_integer_variable(
-    simulator_index index,
-    variable_index variable)
-{
-    add_action(index, variable, variable_type::integer, scenario::integer_modifier{nullptr});
-}
-
-void override_manipulator::reset_boolean_variable(
-    simulator_index index,
-    variable_index variable)
-{
-    add_action(index, variable, variable_type::boolean, scenario::boolean_modifier{nullptr});
-}
-
-void override_manipulator::reset_string_variable(
-    simulator_index index,
-    variable_index variable)
-{
-    add_action(index, variable, variable_type::string, scenario::string_modifier{nullptr});
+    switch (type) {
+        case variable_type::real:
+            add_action(index, variable, variable_type::real, scenario::real_modifier{nullptr});
+            break;
+        case variable_type::integer:
+            add_action(index, variable, variable_type::integer, scenario::integer_modifier{nullptr});
+            break;
+        case variable_type::boolean:
+            add_action(index, variable, variable_type::boolean, scenario::boolean_modifier{nullptr});
+            break;
+        case variable_type::string:
+            add_action(index, variable, variable_type::string, scenario::string_modifier{nullptr});
+            break;
+        default:
+            CSE_PANIC();
+    }
 }
 
 override_manipulator::~override_manipulator() = default;

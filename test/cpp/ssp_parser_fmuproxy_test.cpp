@@ -1,3 +1,4 @@
+#include <cse/fmuproxy/fmuproxy_uri_sub_resolver.hpp>
 #include <cse/log.hpp>
 #include <cse/ssp_parser.hpp>
 
@@ -5,7 +6,6 @@
 
 #include <cstdlib>
 #include <exception>
-
 
 #define REQUIRE(test) \
     if (!(test)) throw std::runtime_error("Requirement not satisfied: " #test)
@@ -17,16 +17,15 @@ int main()
 
         const auto testDataDir = std::getenv("TEST_DATA_DIR");
         REQUIRE(testDataDir);
-        boost::filesystem::path xmlPath = boost::filesystem::path(testDataDir) / "ssp" / "demo";
+        boost::filesystem::path xmlPath = boost::filesystem::path(testDataDir) / "ssp" / "demo" / "fmuproxy";
 
         auto resolver = cse::default_model_uri_resolver();
+        resolver->add_sub_resolver(std::make_shared<cse::fmuproxy::fmuproxy_uri_sub_resolver>());
         auto simulation = cse::load_ssp(*resolver, xmlPath, cse::to_time_point(0.0));
         auto& execution = simulation.first;
 
         auto& simulator_map = simulation.second;
         REQUIRE(simulator_map.size() == 2);
-        REQUIRE(simulator_map.at("CraneController").source == "CraneController.fmu");
-        REQUIRE(simulator_map.at("KnuckleBoomCrane").source == "KnuckleBoomCrane.fmu");
 
         auto result = execution.simulate_until(cse::to_time_point(1e-3));
         REQUIRE(result.get());

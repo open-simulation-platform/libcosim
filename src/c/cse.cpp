@@ -12,6 +12,7 @@
 #include <cse/manipulator.hpp>
 #include <cse/model.hpp>
 #include <cse/observer.hpp>
+#include <cse/orchestration.hpp>
 #include <cse/ssp_parser.hpp>
 
 #include <algorithm>
@@ -164,7 +165,8 @@ cse_execution* cse_ssp_execution_create(const char* sspDir, cse_time_point start
         cse::log::set_global_output_level(cse::log::level::info);
         auto execution = std::make_unique<cse_execution>();
 
-        auto sim = cse::load_ssp(sspDir, to_time_point(startTime));
+        auto resolver = cse::default_model_uri_resolver();
+        auto sim = cse::load_ssp(*resolver, sspDir, to_time_point(startTime));
 
         execution->cpp_execution = std::make_unique<cse::execution>(std::move(sim.first));
         execution->simulators = std::move(sim.second);
@@ -434,7 +436,8 @@ int cse_execution_get_status(cse_execution* execution, cse_execution_status* sta
         status->error_code = execution->error_code;
         status->state = execution->state;
         status->current_time = to_integer_time_point(execution->cpp_execution->current_time());
-        status->real_time_factor = execution->cpp_execution->get_real_time_factor();
+        status->real_time_factor = execution->cpp_execution->get_measured_real_time_factor();
+        status->real_time_factor_target = execution->cpp_execution->get_real_time_factor_target();
         status->is_real_time_simulation = execution->cpp_execution->is_real_time_simulation() ? 1 : 0;
         return success;
     } catch (...) {
@@ -445,14 +448,35 @@ int cse_execution_get_status(cse_execution* execution, cse_execution_status* sta
 
 int cse_execution_enable_real_time_simulation(cse_execution* execution)
 {
-    execution->cpp_execution->enable_real_time_simulation();
-    return success;
+    try {
+        execution->cpp_execution->enable_real_time_simulation();
+        return success;
+    } catch (...) {
+        handle_current_exception();
+        return failure;
+    }
 }
 
 int cse_execution_disable_real_time_simulation(cse_execution* execution)
 {
-    execution->cpp_execution->disable_real_time_simulation();
-    return success;
+    try {
+        execution->cpp_execution->disable_real_time_simulation();
+        return success;
+    } catch (...) {
+        handle_current_exception();
+        return failure;
+    }
+}
+
+int cse_execution_set_real_time_factor_target(cse_execution* execution, double realTimeFactor)
+{
+    try {
+        execution->cpp_execution->set_real_time_factor_target(realTimeFactor);
+        return success;
+    } catch (...) {
+        handle_current_exception();
+        return failure;
+    }
 }
 
 struct cse_observer_s
@@ -546,6 +570,55 @@ int cse_observer_slave_get_integer(
             throw std::invalid_argument("Invalid observer! The provided observer must be a last_value_observer.");
         }
         obs->get_integer(slave, gsl::make_span(variables, nv), gsl::make_span(values, nv));
+        return success;
+    } catch (...) {
+        handle_current_exception();
+        return failure;
+    }
+}
+
+int cse_observer_slave_get_boolean(
+    cse_observer* observer,
+    cse_slave_index slave,
+    const cse_variable_index variables[],
+    size_t nv,
+    bool values[])
+{
+    try {
+        const auto obs = std::dynamic_pointer_cast<cse::last_value_provider>(observer->cpp_observer);
+        if (!obs) {
+            throw std::invalid_argument("Invalid observer! The provided observer must be a last_value_observer.");
+        }
+        obs->get_boolean(slave, gsl::make_span(variables, nv), gsl::make_span(values, nv));
+        return success;
+    } catch (...) {
+        handle_current_exception();
+        return failure;
+    }
+}
+
+// This holds string variable values.
+// Must only be used with `cse_observer_slave_get_string()`.
+thread_local std::vector<std::string> g_stringVariableBuffer;
+
+int cse_observer_slave_get_string(
+    cse_observer* observer,
+    cse_slave_index slave,
+    const cse_variable_index variables[],
+    size_t nv,
+    const char* values[])
+{
+    try {
+        const auto obs = std::dynamic_pointer_cast<cse::last_value_provider>(observer->cpp_observer);
+        if (!obs) {
+            throw std::invalid_argument("Invalid observer! The provided observer must be a last_value_observer.");
+        }
+        g_stringVariableBuffer.clear();
+        g_stringVariableBuffer.resize(nv);
+        obs->get_string(slave, gsl::make_span(variables, nv), gsl::span<std::string>(g_stringVariableBuffer));
+        for (size_t i = 0; i < nv; i++) {
+            values[i] = g_stringVariableBuffer.at(i).c_str();
+        }
         return success;
     } catch (...) {
         handle_current_exception();
@@ -862,11 +935,12 @@ int cse_manipulator_slave_set_integer(
     }
 }
 
-int cse_manipulator_slave_reset_real(
+int cse_manipulator_slave_set_boolean(
     cse_manipulator* manipulator,
     cse_slave_index slaveIndex,
     const cse_variable_index variables[],
-    size_t nv)
+    size_t nv,
+    const bool values[])
 {
     try {
         const auto man = std::dynamic_pointer_cast<cse::override_manipulator>(manipulator->cpp_manipulator);
@@ -874,7 +948,7 @@ int cse_manipulator_slave_reset_real(
             throw std::invalid_argument("Invalid manipulator!");
         }
         for (size_t i = 0; i < nv; i++) {
-            man->reset_real_variable(slaveIndex, variables[i]);
+            man->override_boolean_variable(slaveIndex, variables[i], values[i]);
         }
         return success;
     } catch (...) {
@@ -883,9 +957,32 @@ int cse_manipulator_slave_reset_real(
     }
 }
 
-int cse_manipulator_slave_reset_integer(
+int cse_manipulator_slave_set_string(
     cse_manipulator* manipulator,
     cse_slave_index slaveIndex,
+    const cse_variable_index variables[],
+    size_t nv,
+    const char* values[])
+{
+    try {
+        const auto man = std::dynamic_pointer_cast<cse::override_manipulator>(manipulator->cpp_manipulator);
+        if (!man) {
+            throw std::invalid_argument("Invalid manipulator!");
+        }
+        for (size_t i = 0; i < nv; i++) {
+            man->override_string_variable(slaveIndex, variables[i], values[i]);
+        }
+        return success;
+    } catch (...) {
+        handle_current_exception();
+        return failure;
+    }
+}
+
+int cse_manipulator_slave_reset(
+    cse_manipulator* manipulator,
+    cse_slave_index slaveIndex,
+    cse_variable_type type,
     const cse_variable_index variables[],
     size_t nv)
 {
@@ -894,8 +991,9 @@ int cse_manipulator_slave_reset_integer(
         if (!man) {
             throw std::invalid_argument("Invalid manipulator!");
         }
+        cse::variable_type vt = to_cpp_variable_type(type);
         for (size_t i = 0; i < nv; i++) {
-            man->reset_integer_variable(slaveIndex, variables[i]);
+            man->reset_variable(slaveIndex, vt, variables[i]);
         }
         return success;
     } catch (...) {
