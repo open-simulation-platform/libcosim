@@ -18,7 +18,7 @@ class CSECoreConan(ConanFile):
         "boost/1.66.0@conan/stable",
         "FMILibrary/2.0.3@kyllingstad/testing",
         "gsl_microsoft/1.0.0@bincrafters/stable",
-        "libzip/1.5.1@bincrafters/stable",
+        "libzip/1.5.2@bincrafters/stable",
         "jsonformoderncpp/3.5.0@vthiery/stable"
         )
 
@@ -26,7 +26,8 @@ class CSECoreConan(ConanFile):
     default_options = (
         "fmuproxy=False",
         "boost:shared=True",
-        "libzip:shared=True"
+        "libzip:with_bzip2=False",
+        "libzip:with_openssl=False"
         )
 
     def imports(self):
