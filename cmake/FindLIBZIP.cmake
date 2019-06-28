@@ -10,7 +10,8 @@
 #
 cmake_minimum_required (VERSION 3.0.0)
 
-find_package(BZip2 QUIET) # optional - used when building uisng conan
+find_package(BZip2 QUIET) # optional package - used when building using conan
+find_package(OpenSSL COMPONENTS Crypto SSL QUIET) # optional package - used when building using conan on linux
 
 # Find static library, and use its path prefix to provide a HINTS option to the
 # other find_*() commands.
@@ -70,15 +71,20 @@ if (LIBZIP_LIBRARY)
 
     set (LIBZIP_LIBRARIES "libzip::libzip")
 
+    ##### required by conan when linking libzip statically  ####
     if (BZip2_FOUND)
-        # required by conan when linking libzip statically
         list(APPEND INTERFACE_LINK_LIBRARIES BZip2::BZip2)
+    endif()
+    if (OpenSSL_FOUND)
+        list(APPEND INTERFACE_LINK_LIBRARIES OpenSSL::SSL OpenSSL::Crypto)
+    endif()
+    if (BZip2_FOUND OR OpenSSL_FOUND)
         set_property(TARGET libzip::libzip
                 APPEND
                 PROPERTY INTERFACE_LINK_LIBRARIES
                 ${INTERFACE_LINK_LIBRARIES})
     endif()
-
+    ###############################################################
 endif ()
 
 # Debug print-out.
