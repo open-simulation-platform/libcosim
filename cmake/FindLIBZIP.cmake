@@ -10,6 +10,8 @@
 #
 cmake_minimum_required (VERSION 3.0.0)
 
+find_package(BZip2 QUIET) # optional - used when building uisng conan
+
 # Find static library, and use its path prefix to provide a HINTS option to the
 # other find_*() commands.
 find_library (LIBZIP_LIBRARY "zip"
@@ -67,6 +69,16 @@ if (LIBZIP_LIBRARY)
     endif ()
 
     set (LIBZIP_LIBRARIES "libzip::libzip")
+
+    if (BZip2_FOUND)
+        # required by conan when linking libzip statically
+        list(APPEND INTERFACE_LINK_LIBRARIES BZip2::BZip2)
+        set_property(TARGET libzip::libzip
+                APPEND
+                PROPERTY INTERFACE_LINK_LIBRARIES
+                ${INTERFACE_LINK_LIBRARIES})
+    endif()
+
 endif ()
 
 # Debug print-out.

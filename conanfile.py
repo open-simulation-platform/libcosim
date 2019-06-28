@@ -25,9 +25,7 @@ class CSECoreConan(ConanFile):
     options = {"fmuproxy": [True, False]}
     default_options = (
         "fmuproxy=False",
-        "boost:shared=True",
-        "libzip:with_bzip2=False",
-        "libzip:with_openssl=False"
+        "boost:shared=True"
         )
 
     def imports(self):
