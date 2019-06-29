@@ -46,7 +46,7 @@ class CSECoreConan(ConanFile):
             self.requires("OpenSSL/1.0.2o@conan/stable")
             self.requires("thrift/0.12.0@helmesjo/stable")
 
-    def configure_cmake(self):
+    def configure_cmake(self, build_step):
         cmake = CMake(self)
         cmake.parallel = False # Needed to keep stable build on Jenkins Windows Node
         cmake.definitions["CSECORE_USING_CONAN"] = "ON"
@@ -56,11 +56,14 @@ class CSECoreConan(ConanFile):
         if self.options.fmuproxy:
             cmake.definitions["CSECORE_WITH_FMUPROXY"] = "ON"
             cmake.definitions["CSECORE_TEST_FMUPROXY"] = "OFF" # since we can't test on Jenkins yet
-        cmake.configure(source_folder = "cse-core")
+        if build_step:
+            cmake.configure()
+        else:
+            cmake.configure(source_folder="cse-core")
         return cmake
 
     def build(self):
-        cmake = self.configure_cmake()
+        cmake = self.configure_cmake(True)
         cmake.build()
         cmake.test()
         if not self.options.build_apidoc:
@@ -69,7 +72,7 @@ class CSECoreConan(ConanFile):
             self.run('cmake --build . --target doc')
             
     def package(self):
-        cmake = self.configure_cmake()
+        cmake = self.configure_cmake(False)
         if not self.options.build_apidoc:
             self.run('cmake --build %s' % (self.build_folder))
         else:
