@@ -13,10 +13,10 @@ set(tests
     "synchronized_xy_series_test"
 )
 
-if(CSECORE_WITH_FMUPROXY)
+if(CSECORE_WITH_FMUPROXY AND CSECORE_TEST_FMUPROXY)
     list(APPEND tests
-            "fmuproxy_test"
-            "ssp_parser_fmuproxy_test"
+        "fmuproxy_test"
+        "ssp_parser_fmuproxy_test"
     )
 endif()
 

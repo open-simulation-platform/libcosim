@@ -47,6 +47,7 @@ class CSECoreConan(ConanFile):
             cmake.definitions["CSECORE_BUILD_PRIVATE_APIDOC"] = "ON"
         if self.options.fmuproxy:
             cmake.definitions["CSECORE_WITH_FMUPROXY"] = "ON"
+            cmake.definitions["CSECORE_TEST_FMUPROXY"] = "OFF" # since we can't test on Jenkins yet
         cmake.configure()
         return cmake
 
@@ -61,3 +62,5 @@ class CSECoreConan(ConanFile):
         self.run('cmake --build %s --target install-doc' % (self.build_folder))
         cmake.install()
 
+    def package_info(self):
+        self.cpp_info.libs = [ "csecorecpp", "csecorec" ]
