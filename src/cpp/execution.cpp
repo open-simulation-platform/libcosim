@@ -3,6 +3,7 @@
 #include "cse/algorithm.hpp"
 #include "cse/slave_simulator.hpp"
 #include "cse/timer.hpp"
+#include <cse/exception.hpp>
 
 #include <boost/functional/hash.hpp>
 
@@ -184,6 +185,42 @@ public:
         return timer_.get_real_time_factor();
     }
 
+    void set_real_initial_value(simulator_index sim, variable_index var, double value)
+    {
+        if (initialized_) {
+            throw error(make_error_code(errc::unsupported_feature), "Initial values must be set before simulation is started");
+        }
+        simulators_.at(sim)->expose_for_setting(variable_type::real, var);
+        simulators_.at(sim)->set_real(var, value);
+    }
+
+    void set_integer_initial_value(simulator_index sim, variable_index var, int value)
+    {
+        if (initialized_) {
+            throw error(make_error_code(errc::unsupported_feature), "Initial values must be set before simulation is started");
+        }
+        simulators_.at(sim)->expose_for_setting(variable_type::integer, var);
+        simulators_.at(sim)->set_integer(var, value);
+    }
+
+    void set_boolean_initial_value(simulator_index sim, variable_index var, bool value)
+    {
+        if (initialized_) {
+            throw error(make_error_code(errc::unsupported_feature), "Initial values must be set before simulation is started");
+        }
+        simulators_.at(sim)->expose_for_setting(variable_type::boolean, var);
+        simulators_.at(sim)->set_boolean(var, value);
+    }
+
+    void set_string_initial_value(simulator_index sim, variable_index var, const std::string& value)
+    {
+        if (initialized_) {
+            throw error(make_error_code(errc::unsupported_feature), "Initial values must be set before simulation is started");
+        }
+        simulators_.at(sim)->expose_for_setting(variable_type::string, var);
+        simulators_.at(sim)->set_string(var, value);
+    }
+
 private:
     void validate_variable(variable_id variable, variable_causality causality)
     {
@@ -300,6 +337,23 @@ bool execution::is_real_time_simulation()
 double execution::get_real_time_factor()
 {
     return pimpl_->get_real_time_factor();
+}
+
+void execution::set_real_initial_value(simulator_index sim, variable_index var, double value)
+{
+    pimpl_->set_real_initial_value(sim, var, value);
+}
+void execution::set_integer_initial_value(simulator_index sim, variable_index var, int value)
+{
+    pimpl_->set_integer_initial_value(sim, var, value);
+}
+void execution::set_boolean_initial_value(simulator_index sim, variable_index var, bool value)
+{
+    pimpl_->set_boolean_initial_value(sim, var, value);
+}
+void execution::set_string_initial_value(simulator_index sim, variable_index var, const std::string& value)
+{
+    pimpl_->set_string_initial_value(sim, var, value);
 }
 
 

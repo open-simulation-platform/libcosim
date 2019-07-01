@@ -38,7 +38,12 @@ int main()
         cse::variable_index index = cse::find_variable(simulator_map.at("KnuckleBoomCrane").description, "Spring_Joint.k").index;
         obs->get_real(i, gsl::make_span(&index, 1), gsl::make_span(&realValue, 1));
 
-        REQUIRE(std::fabs(realValue - 0.05) < 1e-9);
+        REQUIRE(std::fabs(realValue - 0.005) < 1e-9);
+
+        cse::variable_index index2 = cse::find_variable(simulator_map.at("KnuckleBoomCrane").description, "mt0_init").index;
+        obs->get_real(i, gsl::make_span(&index2, 1), gsl::make_span(&realValue, 1));
+
+        REQUIRE(std::fabs(realValue - 69.0) < 1e-9);
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what();

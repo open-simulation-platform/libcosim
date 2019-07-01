@@ -69,9 +69,9 @@ public:
 
     struct Parameter
     {
-      std::string name;
-      cse::variable_type type;
-      std::variant<double,int,bool,std::string> value;
+        std::string name;
+        cse::variable_type type;
+        std::variant<double, int, bool, std::string> value;
     };
 
     struct Component
@@ -165,7 +165,7 @@ ssp_parser::ssp_parser(const boost::filesystem::path& xmlPath)
                 if (const auto parameterValues = parameterBinding.second.get_child_optional("ssd:ParameterValues")) {
                     const auto parameterSet = parameterValues->get_child("ssv:ParameterSet");
                     const auto parameters = parameterSet.get_child("ssv:Parameters");
-                    for (const auto &parameter : parameters) {
+                    for (const auto& parameter : parameters) {
                         const auto name = get_attribute<std::string>(parameter.second, "name");
                         if (const auto realParameter = parameter.second.get_child_optional("ssv:Real")) {
                             const auto value = get_attribute<double>(*realParameter, "value");
@@ -244,7 +244,6 @@ std::pair<execution, simulator_map> load_ssp(
         std::make_unique<cse::fixed_step_algorithm>(stepSize));
 
     std::map<std::string, slave_info> slaves;
-    std::vector<boost::fibers::future<void>> initialValueFutures;
     for (const auto& component : elements) {
         auto model = resolver.lookup_model(baseURI, component.source);
         auto slave = model->instantiate(component.name);
@@ -255,31 +254,26 @@ std::pair<execution, simulator_map> load_ssp(
         for (const auto& v : model->description()->variables) {
             slaves[component.name].variables[v.name] = v;
         }
-        std::vector<variable_index> realIndexes;
-        std::vector<double> realValues;
+
         for (const auto& p : component.parameters) {
             auto varIndex = find_variable(*model->description(), p.name).index;
             switch (p.type) {
-              case variable_type::real:
-                  realIndexes.push_back(varIndex);
-                  realValues.push_back(std::get<double>(p.value));
-                  break;
-              default:
-                  throw error(make_error_code(errc::unsupported_feature), "Variable type not supported yet");
+                case variable_type::real:
+                    execution.set_real_initial_value(index, varIndex, std::get<double>(p.value));
+                    break;
+                case variable_type::integer:
+                    execution.set_integer_initial_value(index, varIndex, std::get<int>(p.value));
+                    break;
+                case variable_type::boolean:
+                    execution.set_boolean_initial_value(index, varIndex, std::get<bool>(p.value));
+                    break;
+                case variable_type::string:
+                    execution.set_string_initial_value(index, varIndex, std::get<std::string>(p.value));
+                    break;
+                default:
+                    throw error(make_error_code(errc::unsupported_feature), "Variable type not supported yet");
             }
         }
-        // TODO: Find much better way to set initial values, like:
-        // execution.set_initial_real(simulator index sim, variable_index index, double value)
-        initialValueFutures.push_back(
-            slave->set_variables(
-                gsl::make_span(realIndexes),
-                gsl::make_span(realValues),
-                gsl::span<variable_index>(),
-                gsl::span<int>(),
-                gsl::span<variable_index>(),
-                gsl::span<bool>(),
-                gsl::span<variable_index>(),
-                gsl::span<std::string>()));
     }
 
     for (const auto& connection : parser.get_connections()) {
@@ -292,10 +286,6 @@ std::pair<execution, simulator_map> load_ssp(
             slaves[connection.endElement].variables[connection.endConnector].index};
 
         execution.connect_variables(output, input);
-    }
-
-    for (auto& f : initialValueFutures) {
-        f.get();
     }
 
     return std::make_pair(std::move(execution), std::move(simulatorMap));

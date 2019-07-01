@@ -171,6 +171,12 @@ public:
     /// Returns the current real time factor
     double get_real_time_factor();
 
+    void set_real_initial_value(simulator_index sim, variable_index var, double value);
+    void set_integer_initial_value(simulator_index sim, variable_index var, int value);
+    void set_boolean_initial_value(simulator_index sim, variable_index var, bool value);
+    void set_string_initial_value(simulator_index sim, variable_index var, const std::string& value);
+
+
 
 private:
     class impl;
