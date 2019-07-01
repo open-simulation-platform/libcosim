@@ -2,28 +2,21 @@
   "defaults": {
     "model": "slave uno",
     "variable": "realOut",
-    "causality": "input",
-    "type": "integer",
     "action": "override"
   },
   "events": [
     {
       "time": 0.5,
       "variable": "realIn",
-      "type": "real",
       "action": "bias",
       "value": 1.001
     },
     {
       "time": 0.2,
-      "causality": "output",
-      "type": "real",
       "value": -1.0
     },
     {
       "time": 0.3,
-      "causality": "output",
-      "type": "real",
       "action": "reset"
     },
     {
@@ -34,7 +27,6 @@
     {
       "time": 0.8,
       "variable": "intOut",
-      "causality": "output",
       "value": 5
     }
   ],

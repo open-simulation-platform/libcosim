@@ -31,42 +31,6 @@ std::pair<cse::simulator_index, cse::simulator*> find_simulator(
     throw std::invalid_argument(oss.str());
 }
 
-cse::variable_type find_variable_type(const nlohmann::json& j)
-{
-    auto typestr = j.get<std::string>();
-    if (typestr == "real") {
-        return variable_type::real;
-    } else if (typestr == "integer") {
-        return variable_type::integer;
-    } else if (typestr == "boolean") {
-        return variable_type::boolean;
-    } else if (typestr == "string") {
-        return variable_type::string;
-    }
-    std::ostringstream oss;
-    oss << "Can't process unrecognized variable type: " << typestr;
-    throw std::invalid_argument(oss.str());
-}
-
-cse::variable_causality find_causality(const nlohmann::json& j)
-{
-    auto caus = j.get<std::string>();
-    if (caus == "output") {
-        return variable_causality::output;
-    } else if (caus == "input") {
-        return variable_causality::input;
-    } else if (caus == "parameter") {
-        return variable_causality::parameter;
-    } else if (caus == "calculatedParameter") {
-        return variable_causality::calculated_parameter;
-    } else if (caus == "local") {
-        return variable_causality::local;
-    }
-    std::ostringstream oss;
-    oss << "Can't process unrecognized variable causality: " << caus;
-    throw std::invalid_argument(oss.str());
-}
-
 bool is_input(cse::variable_causality causality)
 {
     switch (causality) {
@@ -84,22 +48,17 @@ bool is_input(cse::variable_causality causality)
     }
 }
 
-cse::variable_index find_variable_index(
+cse::variable_description find_variable(
     const std::vector<variable_description>& variables,
-    const std::string& name,
-    const cse::variable_type type,
-    const cse::variable_causality causality)
+    const std::string& name)
 {
     for (const auto& vd : variables) {
-        if ((vd.name == name) && (vd.type == type) && (vd.causality == causality)) {
-            return vd.index;
+        if (vd.name == name) {
+            return vd;
         }
     }
-    std::ostringstream oss;
-    oss << "Cannot find variable with name " << name
-        << ", causality " << cse::to_text(causality)
-        << " and type " << cse::to_text(type);
-    throw std::invalid_argument(oss.str());
+
+    throw std::invalid_argument("Cannot find variable with name " + name);
 }
 
 template<typename T>
@@ -151,8 +110,6 @@ struct defaults
 {
     std::optional<std::string> model;
     std::optional<std::string> variable;
-    std::optional<std::string> causality;
-    std::optional<std::string> type;
     std::optional<std::string> action;
 };
 
@@ -174,8 +131,6 @@ defaults parse_defaults(const nlohmann::json& scenario)
         return defaults{
             parse_element(j, "model"),
             parse_element(j, "variable"),
-            parse_element(j, "causality"),
-            parse_element(j, "type"),
             parse_element(j, "action")};
     }
     return defaults{};
@@ -227,18 +182,14 @@ scenario::scenario parse_scenario(
 
         const auto& [index, simulator] =
             find_simulator(simulators, specified_or_default(event, "model", defaultOpts.model));
-        variable_type type =
-            find_variable_type(specified_or_default(event, "type", defaultOpts.type));
-        variable_causality causality =
-            find_causality(specified_or_default(event, "causality", defaultOpts.causality));
         auto varName =
             specified_or_default(event, "variable", defaultOpts.variable);
-        variable_index varIndex =
-            find_variable_index(simulator->model_description().variables, varName, type, causality);
+        const auto var =
+            find_variable(simulator->model_description().variables, varName);
 
         auto mode = specified_or_default(event, "action", defaultOpts.action);
-        bool isInput = is_input(causality);
-        scenario::variable_action a = generate_action(event, mode, index, type, isInput, varIndex);
+        bool isInput = is_input(var.causality);
+        scenario::variable_action a = generate_action(event, mode, index, var.type, isInput, var.index);
         events.emplace_back(scenario::event{time, a});
     }
 
