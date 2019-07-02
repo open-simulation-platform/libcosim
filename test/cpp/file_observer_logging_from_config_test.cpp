@@ -49,6 +49,12 @@ int main()
 
         execution.add_slave(
             cse::make_pseudo_async(std::make_unique<mock_slave>(
+                [](double x) { return x + 123.456; },
+                [](int x) { return x - 1; })),
+            "slave1");
+
+        execution.add_slave(
+            cse::make_pseudo_async(std::make_unique<mock_slave>(
                 [](double x) { return x + 1.234; },
                 [](int x) { return x + 1; })),
             "slave2");

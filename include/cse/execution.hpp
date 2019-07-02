@@ -165,11 +165,17 @@ public:
     /// Disables real time simulation
     void disable_real_time_simulation();
 
+    /// Sets the custom real time factor for the simulation
+    void set_real_time_factor_target(double realTimeFactor);
+
     /// Returns if this is a real time simulation
     bool is_real_time_simulation();
 
     /// Returns the current real time factor
-    double get_real_time_factor();
+    double get_measured_real_time_factor();
+
+    /// Returns the current real time factor target
+    double get_real_time_factor_target();
 
     /// Set initial value for a variable of type real. Must be called before simulation is started.
     void set_real_initial_value(simulator_index sim, variable_index var, double value);

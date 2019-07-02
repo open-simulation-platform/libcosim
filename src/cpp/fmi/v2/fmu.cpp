@@ -15,7 +15,6 @@
 #include <cstdarg>
 #include <cstdlib>
 #include <cstring>
-#include <limits>
 #include <mutex>
 #include <stdexcept>
 #include <type_traits>
@@ -327,8 +326,7 @@ void slave_instance::setup(
         relativeTolerance ? *relativeTolerance : 0.0,
         to_double_time_point(startTime),
         stopTime ? fmi2_true : fmi2_false,
-        stopTime ? to_double_time_point(*stopTime)
-                 : std::numeric_limits<fmi2_real_t>::quiet_NaN());
+        stopTime ? to_double_time_point(*stopTime) : 0.0);
     if (rcs != fmi2_status_ok && rcs != fmi2_status_warning) {
         throw error(
             make_error_code(errc::model_error),

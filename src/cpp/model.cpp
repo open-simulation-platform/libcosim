@@ -25,4 +25,5 @@ const std::vector<variable_description> find_variables_of_type(const model_descr
     }
     return vars;
 }
+
 } // namespace cse
