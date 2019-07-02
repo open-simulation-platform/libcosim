@@ -5,6 +5,7 @@
 #include "cse/fmi/fmu.hpp"
 #include "cse/log.hpp"
 #include "cse/log/logger.hpp"
+#include <cse/error.hpp>
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
@@ -172,8 +173,17 @@ ssp_parser::ssp_parser(const boost::filesystem::path& xmlPath)
                         if (const auto realParameter = parameter.second.get_child_optional("ssv:Real")) {
                             const auto value = get_attribute<double>(*realParameter, "value");
                             e.parameters.push_back({name, variable_type::real, value});
+                        } else if (const auto intParameter = parameter.second.get_child_optional("ssv:Integer")) {
+                            const auto value = get_attribute<int>(*intParameter, "value");
+                            e.parameters.push_back({name, variable_type::integer, value});
+                        } else if (const auto boolParameter = parameter.second.get_child_optional("ssv:Boolean")) {
+                            const auto value = get_attribute<bool>(*boolParameter, "value");
+                            e.parameters.push_back({name, variable_type::boolean, value});
+                        } else if (const auto stringParameter = parameter.second.get_child_optional("ssv:String")) {
+                            const auto value = get_attribute<std::string>(*stringParameter, "value");
+                            e.parameters.push_back({name, variable_type::string, value});
                         } else {
-                            assert(false);
+                            CSE_PANIC();
                         }
                     }
                 }
