@@ -3,6 +3,8 @@
 #include "cse/algorithm.hpp"
 #include "cse/exception.hpp"
 #include "cse/fmi/fmu.hpp"
+#include "cse/log.hpp"
+#include "cse/log/logger.hpp"
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
@@ -169,7 +171,6 @@ ssp_parser::ssp_parser(const boost::filesystem::path& xmlPath)
                         const auto name = get_attribute<std::string>(parameter.second, "name");
                         if (const auto realParameter = parameter.second.get_child_optional("ssv:Real")) {
                             const auto value = get_attribute<double>(*realParameter, "value");
-                            std::cout << "parameter with name: " << name << " has value: " << value << std::endl;
                             e.parameters.push_back({name, variable_type::real, value});
                         } else {
                             assert(false);
@@ -219,6 +220,29 @@ struct slave_info
     std::map<std::string, cse::variable_description> variables;
 };
 
+template<class T>
+struct streamer
+{
+    const T& val;
+};
+
+template<class T>
+streamer(T)->streamer<T>;
+
+template<class T>
+std::ostream& operator<<(std::ostream& os, streamer<T> s)
+{
+    os << s.val;
+    return os;
+}
+
+template<class... Ts>
+std::ostream& operator<<(std::ostream& os, streamer<std::variant<Ts...>> sv)
+{
+    std::visit([&os](const auto& v) { os << streamer{v}; }, sv.val);
+    return os;
+}
+
 } // namespace
 
 
@@ -257,6 +281,8 @@ std::pair<execution, simulator_map> load_ssp(
 
         for (const auto& p : component.parameters) {
             auto varIndex = find_variable(*model->description(), p.name).index;
+            BOOST_LOG_SEV(log::logger(), log::level::info)
+                << "Initializing variable " << component.name << ":" << p.name << " with value " << streamer{p.value};
             switch (p.type) {
                 case variable_type::real:
                     execution.set_real_initial_value(index, varIndex, std::get<double>(p.value));

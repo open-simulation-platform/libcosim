@@ -343,18 +343,20 @@ void execution::set_real_initial_value(simulator_index sim, variable_index var, 
 {
     pimpl_->set_real_initial_value(sim, var, value);
 }
+
 void execution::set_integer_initial_value(simulator_index sim, variable_index var, int value)
 {
     pimpl_->set_integer_initial_value(sim, var, value);
 }
+
 void execution::set_boolean_initial_value(simulator_index sim, variable_index var, bool value)
 {
     pimpl_->set_boolean_initial_value(sim, var, value);
 }
+
 void execution::set_string_initial_value(simulator_index sim, variable_index var, const std::string& value)
 {
     pimpl_->set_string_initial_value(sim, var, value);
 }
-
 
 } // namespace cse
