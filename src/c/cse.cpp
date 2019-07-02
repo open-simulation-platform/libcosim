@@ -231,6 +231,11 @@ int cse_slave_get_num_variables(cse_execution* execution, cse_slave_index slave)
     return -1;
 }
 
+int cse_get_num_modified_variables(cse_execution* execution)
+{
+    return static_cast<int>(execution->cpp_execution->get_modified_variables().size());
+}
+
 cse_variable_variability to_variable_variability(const cse::variable_variability& vv)
 {
     switch (vv) {
@@ -824,6 +829,7 @@ int cse_observer_start_observing(cse_observer* observer, cse_slave_index slave, 
         return failure;
     }
 }
+
 int cse_observer_stop_observing(cse_observer* observer, cse_slave_index slave, cse_variable_type type, cse_variable_index index)
 {
     try {

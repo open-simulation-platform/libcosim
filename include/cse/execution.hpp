@@ -177,7 +177,7 @@ public:
     /// Returns the current real time factor target
     double get_real_time_factor_target();
 
-    std::map<simulator_index, std::vector<variable_id>> get_modified_variables();
+    std::unordered_map<simulator_index, std::vector<variable_id>> get_modified_variables();
 
 
 private:

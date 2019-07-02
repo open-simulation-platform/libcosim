@@ -322,7 +322,7 @@ public:
         if (modifier) {
             modifiedIndexes.push_back(index);
         } else {
-            modifiedIndexes.erase(remove(modifiedIndexes.begin(), modifiedIndexes.end(), index), modifiedIndexes.end());
+            modifiedIndexes.erase(std::remove(modifiedIndexes.begin(), modifiedIndexes.end(), index), modifiedIndexes.end());
         }
     }
 

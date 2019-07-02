@@ -363,6 +363,9 @@ int cse_slave_get_num_variables(cse_execution* execution, cse_slave_index slave)
  */
 int cse_slave_get_variables(cse_execution* execution, cse_slave_index slave, cse_variable_description variables[], size_t numVariables);
 
+/// Returns the number of variables in the execution that currently has an active modifier (all slaves).
+int cse_get_num_modified_variables(cse_execution* execution);
+
 /// A struct containing information about a slave which has been added to an execution.
 typedef struct
 {

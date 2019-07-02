@@ -194,9 +194,9 @@ public:
         return timer_.get_real_time_factor_target();
     }
 
-    std::map<simulator_index, std::vector<variable_id>> get_modified_variables()
+    std::unordered_map<simulator_index, std::vector<variable_id>> get_modified_variables()
     {
-        std::map<simulator_index, std::vector<variable_id>> modifiedVariables;
+        std::unordered_map<simulator_index, std::vector<variable_id>> modifiedVariables;
         std::vector<variable_id> realIds;
         std::vector<variable_id> intIds;
         std::vector<variable_id> boolIds;
@@ -371,7 +371,7 @@ double execution::get_real_time_factor_target() {
     return pimpl_->get_real_time_factor_target();
 }
 
-std::map<simulator_index, std::vector<variable_id>> execution::get_modified_variables()
+std::unordered_map<simulator_index, std::vector<variable_id>> execution::get_modified_variables()
 {
     return pimpl_->get_modified_variables();
 }
