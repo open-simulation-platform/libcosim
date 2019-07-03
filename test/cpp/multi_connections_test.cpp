@@ -64,6 +64,66 @@ int main()
         auto scalarConnection = std::make_shared<cse::scalar_connection>(out3, in4);
         algorithm->add_connection(scalarConnection);
 
+        bool exceptionThrown = false;
+        try {
+            cse::variable_id out{0, cse::variable_type::real, 0};
+            cse::variable_id in{5, cse::variable_type::real, 1};
+            auto scalarConnectionToNonExistingSimulator = std::make_shared<cse::scalar_connection>(out, in);
+            algorithm->add_connection(scalarConnectionToNonExistingSimulator);
+        } catch (const std::exception& e) {
+            std::cout << "Caught exception as expected: " << e.what() << std::endl;
+            exceptionThrown = true;
+        }
+        REQUIRE(exceptionThrown);
+
+        exceptionThrown = false;
+        try {
+            cse::variable_id out{0, cse::variable_type::real, 4};
+            cse::variable_id in{1, cse::variable_type::real, 1};
+            auto scalarConnectionFromNonExistingVariable = std::make_shared<cse::scalar_connection>(out, in);
+            algorithm->add_connection(scalarConnectionFromNonExistingVariable);
+        } catch (const std::exception& e) {
+            std::cout << "Caught exception as expected: " << e.what() << std::endl;
+            exceptionThrown = true;
+        }
+        REQUIRE(exceptionThrown);
+
+        exceptionThrown = false;
+        try {
+            cse::variable_id out{0, cse::variable_type::real, 1};
+            cse::variable_id in{1, cse::variable_type::real, 1};
+            auto scalarConnectionFromVariableWithWrongCausality = std::make_shared<cse::scalar_connection>(out, in);
+            algorithm->add_connection(scalarConnectionFromVariableWithWrongCausality);
+        } catch (const std::exception& e) {
+            std::cout << "Caught exception as expected: " << e.what() << std::endl;
+            exceptionThrown = true;
+        }
+        REQUIRE(exceptionThrown);
+
+        exceptionThrown = false;
+        try {
+            cse::variable_id out{0, cse::variable_type::real, 0};
+            cse::variable_id in{1, cse::variable_type::real, 0};
+            auto scalarConnectionToVariableWithWrongCausality = std::make_shared<cse::scalar_connection>(out, in);
+            algorithm->add_connection(scalarConnectionToVariableWithWrongCausality);
+        } catch (const std::exception& e) {
+            std::cout << "Caught exception as expected: " << e.what() << std::endl;
+            exceptionThrown = true;
+        }
+        REQUIRE(exceptionThrown);
+
+        exceptionThrown = false;
+        try {
+            cse::variable_id out{0, cse::variable_type::real, 0};
+            cse::variable_id in{4, cse::variable_type::real, 1};
+            auto scalarConnectionToAlreadyConnectedDestination = std::make_shared<cse::scalar_connection>(out, in);
+            algorithm->add_connection(scalarConnectionToAlreadyConnectedDestination);
+        } catch (const std::exception& e) {
+            std::cout << "Caught exception as expected: " << e.what() << std::endl;
+            exceptionThrown = true;
+        }
+        REQUIRE(exceptionThrown);
+
         // Run simulation
         auto simResult = execution.simulate_until(endTime);
         REQUIRE(simResult.get());

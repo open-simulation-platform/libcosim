@@ -17,11 +17,25 @@ namespace cse
 class multi_connection
 {
 public:
-    virtual const std::vector<variable_id>& get_sources() const = 0;
+    const std::vector<variable_id>& get_sources() const
+    {
+        return sources_;
+    }
     virtual void set_real_source_value(variable_id id, double value) = 0;
 
-    virtual const std::vector<variable_id>& get_destinations() const = 0;
+    const std::vector<variable_id>& get_destinations() const
+    {
+        return destinations_;
+    }
     virtual double get_real_destination_value(variable_id id) = 0;
+
+protected:
+    multi_connection(std::vector<variable_id> sources, std::vector<variable_id> destinations)
+        : sources_(std::move(sources))
+        , destinations_(std::move(destinations))
+    {}
+    std::vector<variable_id> sources_;
+    std::vector<variable_id> destinations_;
 };
 
 
@@ -30,19 +44,8 @@ class scalar_connection : public multi_connection
 
 public:
     scalar_connection(variable_id source, variable_id destination)
-        : sources_{source}
-        , destinations_{destination}
+        : multi_connection({source}, {destination})
     {}
-
-    const std::vector<variable_id>& get_sources() const override
-    {
-        return sources_;
-    }
-
-    const std::vector<variable_id>& get_destinations() const override
-    {
-        return destinations_;
-    }
 
     void set_real_source_value(variable_id, double value) override
     {
@@ -55,8 +58,6 @@ public:
     }
 
 private:
-    std::vector<variable_id> sources_;
-    std::vector<variable_id> destinations_;
     double realValue_ = 0.0;
 };
 
@@ -64,23 +65,12 @@ class sum_connection : public multi_connection
 {
 
 public:
-    sum_connection(std::vector<variable_id> sources, variable_id destination)
-        : sources_(sources)
-        , destinations_{destination}
+    sum_connection(const std::vector<variable_id>& sources, variable_id destination)
+        : multi_connection(sources, {destination})
     {
         for (const auto id : sources) {
             sourceValues_[id] = 0.0;
         }
-    }
-
-    const std::vector<variable_id>& get_sources() const override
-    {
-        return sources_;
-    }
-
-    const std::vector<variable_id>& get_destinations() const override
-    {
-        return destinations_;
     }
 
     void set_real_source_value(variable_id id, double value) override
@@ -98,8 +88,6 @@ public:
     }
 
 private:
-    std::vector<variable_id> sources_;
-    std::vector<variable_id> destinations_;
     std::unordered_map<variable_id, double> sourceValues_;
 };
 

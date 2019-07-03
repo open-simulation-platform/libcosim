@@ -13,6 +13,7 @@
 
 #include <memory>
 #include <optional>
+#include <sstream>
 
 
 namespace cse
@@ -49,7 +50,15 @@ inline bool operator!=(const variable_id& a, const variable_id& b) noexcept
     return !operator==(a, b);
 }
 
+/// Writes a textual representation of `v` to `stream`.
+inline std::ostream& operator<<(std::ostream& stream, variable_id v)
+{
+    return stream << "simulator index: " << v.simulator
+                  << ", variable index: " << v.index
+                  << ", variable type: " << v.type;
 }
+
+} // namespace cse
 
 // Specialisation of std::hash for variable_id
 namespace std
@@ -69,7 +78,8 @@ public:
 };
 } // namespace std
 
-namespace cse {
+namespace cse
+{
 
 
 // Forward declarations

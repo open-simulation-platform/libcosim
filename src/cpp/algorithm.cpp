@@ -74,11 +74,16 @@ public:
 
     void add_connection(std::shared_ptr<multi_connection> c)
     {
+        validate_connection(c);
         for (const auto& source : c->get_sources()) {
-            simulators_[source.simulator].sim->expose_for_getting(source.type, source.index);
+            auto& simInfo = find_simulator(source.simulator);
+            simInfo.sim->expose_for_getting(source.type, source.index);
+            simInfo.outgoingMultiConnections[source].push_back(c);
         }
         for (const auto& destination : c->get_destinations()) {
-            simulators_[destination.simulator].sim->expose_for_setting(destination.type, destination.index);
+            auto& simInfo = find_simulator(destination.simulator);
+            simInfo.sim->expose_for_setting(destination.type, destination.index);
+            simInfo.incomingMultiConnections[destination] = c;
         }
         connections_.push_back(c);
     }
@@ -175,6 +180,8 @@ private:
         int decimationFactor = 1;
         boost::fibers::future<step_result> stepResult;
         std::vector<connection> outgoingConnections;
+        std::unordered_map<variable_id, std::vector<std::shared_ptr<multi_connection>>> outgoingMultiConnections;
+        std::unordered_map<variable_id, std::shared_ptr<multi_connection>> incomingMultiConnections;
     };
 
     void disconnect_simulator_variables(simulator_index i)
@@ -230,14 +237,57 @@ private:
         });
     }
 
+    void validate_connection(const std::shared_ptr<multi_connection>& c)
+    {
+        for (const auto& source : c->get_sources()) {
+            auto& simInfo = find_simulator(source.simulator);
+            auto& sourceVar = find_variable(simInfo.sim->model_description(), source.type, source.index);
+            if (sourceVar.causality != variable_causality::output) {
+                std::ostringstream oss;
+                oss << "Connection source variable with name " << sourceVar.name
+                    << " must have causality output, but has causality " << sourceVar.causality;
+                throw error(make_error_code(errc::unsupported_feature), oss.str());
+            }
+        }
+
+        for (const auto& destination : c->get_destinations()) {
+            auto& simInfo = find_simulator(destination.simulator);
+            auto& destinationVar = find_variable(simInfo.sim->model_description(), destination.type, destination.index);
+            if (destinationVar.causality != variable_causality::input) {
+                std::ostringstream oss;
+                oss << "Connection destination variable with name " << destinationVar.name
+                    << " must have causality input, but has causality " << destinationVar.causality;
+                throw error(make_error_code(errc::unsupported_feature), oss.str());
+            }
+
+            for (auto& existingDestination : simInfo.incomingMultiConnections) {
+                if (existingDestination.first == destination) {
+                    std::ostringstream oss;
+                    oss << "A connection to this destination variable already exists: "
+                        << destination;
+                    throw error(make_error_code(errc::unsupported_feature), oss.str());
+                }
+            }
+        }
+    }
+
+    simulator_info& find_simulator(simulator_index i)
+    {
+        auto sim = simulators_.find(i);
+        if (sim == simulators_.end()) {
+            std::ostringstream oss;
+            oss << "Cannot find simulator with index " << i;
+            throw std::out_of_range(oss.str());
+        }
+        return sim->second;
+    }
+
     void transfer_sources(simulator_index i)
     {
-        for (auto& c : connections_) {
-            for (const auto& id : c->get_sources()) {
-                if (id.simulator == i) {
-                    if (id.type == variable_type::real) {
-                        c->set_real_source_value(id, simulators_.at(i).sim->get_real(id.index));
-                    }
+        for (auto& [sourceVar, connections] : simulators_[i].outgoingMultiConnections) {
+            for (const auto& c : connections) {
+                if (sourceVar.type == variable_type::real) {
+                    c->set_real_source_value(sourceVar, simulators_.at(i).sim->get_real(sourceVar.index));
                 }
             }
         }
@@ -245,13 +295,9 @@ private:
 
     void transfer_destinations(simulator_index i)
     {
-        for (auto& c : connections_) {
-            for (const auto& id : c->get_destinations()) {
-                if (id.simulator == i) {
-                    if (id.type == variable_type::real) {
-                        simulators_.at(i).sim->set_real(id.index, c->get_real_destination_value(id));
-                    }
-                }
+        for (auto& [destVar, connection] : simulators_[i].incomingMultiConnections) {
+            if (destVar.type == variable_type::real) {
+                simulators_.at(i).sim->set_real(destVar.index, connection->get_real_destination_value(destVar));
             }
         }
     }
