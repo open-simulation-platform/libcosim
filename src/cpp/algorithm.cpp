@@ -85,8 +85,32 @@ public:
             simInfo.sim->expose_for_setting(destination.type, destination.index);
             simInfo.incomingMultiConnections[destination] = c;
         }
-        connections_.push_back(c);
     }
+
+    void remove_connection(variable_id destination)
+    {
+        auto& incomingConnections = find_simulator(destination.simulator).incomingMultiConnections;
+        const auto& it = incomingConnections.find(destination);
+        if (it == incomingConnections.end()) {
+            std::stringstream oss;
+            oss << "Can't find a connection with destination: " << destination;
+            throw std::out_of_range(oss.str());
+        }
+        auto& connection = it->second;
+        for (const auto& sourceId : connection->get_sources()) {
+            auto& sourceSim = find_simulator(sourceId.simulator);
+            auto& outgoingConns = sourceSim.outgoingMultiConnections.at(sourceId);
+            outgoingConns.erase(std::remove(outgoingConns.begin(), outgoingConns.end(), connection), outgoingConns.end());
+            if (outgoingConns.empty()) {
+                sourceSim.outgoingMultiConnections.erase(sourceId);
+            }
+        }
+        for (const auto& destinationId : connection->get_destinations()) {
+            auto& connectedSim = find_simulator(destinationId.simulator);
+            connectedSim.incomingMultiConnections.erase(destinationId);
+        }
+    }
+
 
     void disconnect_variable(variable_id input)
     {
@@ -361,7 +385,6 @@ private:
     std::optional<time_point> stopTime_;
     std::unordered_map<simulator_index, simulator_info> simulators_;
     int64_t stepCounter_ = 0;
-    std::vector<std::shared_ptr<multi_connection>> connections_;
 };
 
 
@@ -419,6 +442,11 @@ void fixed_step_algorithm::disconnect_variable(variable_id input)
 void fixed_step_algorithm::add_connection(std::shared_ptr<multi_connection> c)
 {
     pimpl_->add_connection(c);
+}
+
+void fixed_step_algorithm::remove_connection(variable_id destination)
+{
+    pimpl_->remove_connection(destination);
 }
 
 

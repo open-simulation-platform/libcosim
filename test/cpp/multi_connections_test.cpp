@@ -21,7 +21,7 @@
 int main()
 {
     try {
-        constexpr int numSlaves = 5;
+        constexpr int numSlaves = 6;
         constexpr cse::time_point startTime;
         constexpr cse::time_point endTime = cse::to_time_point(1.0);
         constexpr cse::duration stepSize = cse::to_duration(0.1);
@@ -33,15 +33,11 @@ int main()
             startTime,
             algorithm);
 
-        // Default should not be real time
-        REQUIRE(!execution.is_real_time_simulation());
-
         auto observer = std::make_shared<cse::last_value_observer>();
         execution.add_observer(observer);
 
         const cse::variable_index realOutIndex = 0;
         const cse::variable_index realInIndex = 1;
-
 
         // Add slaves to it
         for (int i = 0; i < numSlaves; ++i) {
@@ -50,19 +46,24 @@ int main()
                 "slave" + std::to_string(i));
         }
 
-        cse::variable_id destination{3, cse::variable_type::real, 1};
+        cse::variable_id sum_destination{3, cse::variable_type::real, 1};
         std::vector<cse::variable_id> sources;
         sources.push_back({0, cse::variable_type::real, 0});
         sources.push_back({1, cse::variable_type::real, 0});
         sources.push_back({2, cse::variable_type::real, 0});
 
-        auto sumConnection = std::make_shared<cse::sum_connection>(sources, destination);
+        auto sumConnection = std::make_shared<cse::sum_connection>(sources, sum_destination);
         algorithm->add_connection(sumConnection);
 
         cse::variable_id out3{3, cse::variable_type::real, 0};
         cse::variable_id in4{4, cse::variable_type::real, 1};
         auto scalarConnection = std::make_shared<cse::scalar_connection>(out3, in4);
         algorithm->add_connection(scalarConnection);
+
+        cse::variable_id out0{3, cse::variable_type::real, 0};
+        cse::variable_id in5{5, cse::variable_type::real, 1};
+        auto scalarConnection2 = std::make_shared<cse::scalar_connection>(out0, in5);
+        algorithm->add_connection(scalarConnection2);
 
         bool exceptionThrown = false;
         try {
@@ -124,7 +125,6 @@ int main()
         }
         REQUIRE(exceptionThrown);
 
-        // Run simulation
         auto simResult = execution.simulate_until(endTime);
         REQUIRE(simResult.get());
 
@@ -137,6 +137,26 @@ int main()
         double expectedRealOutValue = 5.0;
         observer->get_real(4, gsl::make_span(&realOutIndex, 1), gsl::make_span(&realOutValue, 1));
         REQUIRE(std::fabs(expectedRealOutValue - realOutValue) < 1.0e-9);
+
+
+        algorithm->remove_connection(sum_destination);
+
+        std::vector<cse::variable_id> newSources;
+        newSources.push_back({0, cse::variable_type::real, 0});
+        newSources.push_back({1, cse::variable_type::real, 0});
+
+        auto modifiedSumConnection = std::make_shared<cse::sum_connection>(newSources, sum_destination);
+        algorithm->add_connection(modifiedSumConnection);
+
+        constexpr cse::time_point newEndTime = cse::to_time_point(2.0);
+
+        simResult = execution.simulate_until(newEndTime);
+        REQUIRE(simResult.get());
+
+        expectedRealOutValue = 4.0;
+        observer->get_real(4, gsl::make_span(&realOutIndex, 1), gsl::make_span(&realOutValue, 1));
+        REQUIRE(std::fabs(expectedRealOutValue - realOutValue) < 1.0e-9);
+
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
