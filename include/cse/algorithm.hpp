@@ -276,6 +276,7 @@ public:
     virtual void disconnect_variable(variable_id input) = 0;
 
     virtual void add_connection(std::shared_ptr<multi_connection> c) = 0;
+    virtual void remove_connection(std::shared_ptr<multi_connection> c) = 0;
     virtual void remove_connection(variable_id destination) = 0;
 
     /**
@@ -363,6 +364,7 @@ public:
         bool inputAlreadyConnected) override;
     void disconnect_variable(variable_id input) override;
     void add_connection(std::shared_ptr<multi_connection> c) override;
+    void remove_connection(std::shared_ptr<multi_connection> c) override;
     void remove_connection(variable_id destination) override;
     void setup(time_point startTime, std::optional<time_point> stopTime) override;
     void initialize() override;

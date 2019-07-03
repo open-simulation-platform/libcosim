@@ -21,7 +21,7 @@
 int main()
 {
     try {
-        constexpr int numSlaves = 6;
+        constexpr int numSlaves = 7;
         constexpr cse::time_point startTime;
         constexpr cse::time_point endTime = cse::to_time_point(1.0);
         constexpr cse::duration stepSize = cse::to_duration(0.1);
@@ -64,6 +64,11 @@ int main()
         cse::variable_id in5{5, cse::variable_type::real, 1};
         auto scalarConnection2 = std::make_shared<cse::scalar_connection>(out0, in5);
         algorithm->add_connection(scalarConnection2);
+
+        cse::variable_id out5{5, cse::variable_type::real, 0};
+        cse::variable_id in6{6, cse::variable_type::real, 1};
+        auto scalarConnection3 = std::make_shared<cse::scalar_connection>(out5, in6);
+        algorithm->add_connection(scalarConnection3);
 
         bool exceptionThrown = false;
         try {
@@ -156,6 +161,8 @@ int main()
         expectedRealOutValue = 4.0;
         observer->get_real(4, gsl::make_span(&realOutIndex, 1), gsl::make_span(&realOutValue, 1));
         REQUIRE(std::fabs(expectedRealOutValue - realOutValue) < 1.0e-9);
+
+        algorithm->remove_simulator(5);
 
 
     } catch (const std::exception& e) {

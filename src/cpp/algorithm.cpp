@@ -57,6 +57,7 @@ public:
 
     void remove_simulator(simulator_index i)
     {
+        remove_connections(i);
         simulators_.erase(i);
         disconnect_simulator_variables(i);
     }
@@ -87,6 +88,12 @@ public:
         }
     }
 
+    void remove_connection(std::shared_ptr<multi_connection> c)
+    {
+        remove_sources(c);
+        remove_destinations(c);
+    }
+
     void remove_connection(variable_id destination)
     {
         auto& incomingConnections = find_simulator(destination.simulator).incomingMultiConnections;
@@ -96,21 +103,8 @@ public:
             oss << "Can't find a connection with destination: " << destination;
             throw std::out_of_range(oss.str());
         }
-        auto& connection = it->second;
-        for (const auto& sourceId : connection->get_sources()) {
-            auto& sourceSim = find_simulator(sourceId.simulator);
-            auto& outgoingConns = sourceSim.outgoingMultiConnections.at(sourceId);
-            outgoingConns.erase(std::remove(outgoingConns.begin(), outgoingConns.end(), connection), outgoingConns.end());
-            if (outgoingConns.empty()) {
-                sourceSim.outgoingMultiConnections.erase(sourceId);
-            }
-        }
-        for (const auto& destinationId : connection->get_destinations()) {
-            auto& connectedSim = find_simulator(destinationId.simulator);
-            connectedSim.incomingMultiConnections.erase(destinationId);
-        }
+        remove_connection(it->second);
     }
-
 
     void disconnect_variable(variable_id input)
     {
@@ -135,8 +129,10 @@ public:
         setup_simulators();
         for (std::size_t i = 0; i < simulators_.size(); ++i) {
             iterate_simulators();
-            for (const auto& s : simulators_) {
-                transfer_variables(s.second.outgoingConnections);
+            for (const auto& [idx, sim] : simulators_) {
+                transfer_variables(sim.outgoingConnections);
+                transfer_sources(idx);
+                transfer_destinations(idx);
             }
         }
     }
@@ -295,6 +291,38 @@ private:
         }
     }
 
+    void remove_destinations(std::shared_ptr<multi_connection> c)
+    {
+        for (const auto& destinationId : c->get_destinations()) {
+            auto& connectedSim = find_simulator(destinationId.simulator);
+            connectedSim.incomingMultiConnections.erase(destinationId);
+        }
+    }
+
+    void remove_sources(std::shared_ptr<multi_connection> c)
+    {
+        for (const auto& sourceId : c->get_sources()) {
+            auto& sourceSim = find_simulator(sourceId.simulator);
+            auto& outgoingConns = sourceSim.outgoingMultiConnections.at(sourceId);
+            outgoingConns.erase(std::remove(outgoingConns.begin(), outgoingConns.end(), c), outgoingConns.end());
+            if (outgoingConns.empty()) {
+                sourceSim.outgoingMultiConnections.erase(sourceId);
+            }
+        }
+    }
+
+    void remove_connections(simulator_index i)
+    {
+        for (auto& [sourceId, sourceConns] : simulators_.at(i).outgoingMultiConnections) {
+            for (auto& sourceConn : sourceConns) {
+                remove_destinations(sourceConn);
+            }
+        }
+        for (auto& [destId, destConn] : simulators_.at(i).incomingMultiConnections) {
+            remove_sources(destConn);
+        }
+    }
+
     simulator_info& find_simulator(simulator_index i)
     {
         auto sim = simulators_.find(i);
@@ -442,6 +470,11 @@ void fixed_step_algorithm::disconnect_variable(variable_id input)
 void fixed_step_algorithm::add_connection(std::shared_ptr<multi_connection> c)
 {
     pimpl_->add_connection(c);
+}
+
+void fixed_step_algorithm::remove_connection(std::shared_ptr<multi_connection> c)
+{
+    pimpl_->remove_connection(c);
 }
 
 void fixed_step_algorithm::remove_connection(variable_id destination)
