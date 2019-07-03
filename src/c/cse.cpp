@@ -240,8 +240,6 @@ int cse_get_num_modified_variables(cse_execution* execution)
         counter += static_cast<int>(variables.size());
     }
 
-    std::cout << "Number of modified variables: " << counter << std::endl;
-
     return counter;
 }
 

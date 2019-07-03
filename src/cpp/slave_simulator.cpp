@@ -317,14 +317,14 @@ public:
         stringSetCache_.set_value(index, value);
     }
 
-    void set_modified_index(std::vector<variable_index>& modifiedIndexes, variable_index& index, bool modifier)
+    void set_modified_index(std::unordered_set<variable_index>& modifiedIndexes, variable_index& index, bool modifier)
     {
         if (modifier) {
             std::cout << "Modifed var added, index: " << index << std::endl;
-            modifiedIndexes.push_back(index);
+            modifiedIndexes.insert(index);
         } else {
             std::cout << "Modified var erased, index: " << index << std::endl;
-            modifiedIndexes.erase(std::remove(modifiedIndexes.begin(), modifiedIndexes.end(), index), modifiedIndexes.end());
+            modifiedIndexes.erase(index);
         }
     }
 
@@ -392,22 +392,22 @@ public:
         set_modified_index(modifiedStringIndexes_, index, modifier ? true : false);
     }
 
-    std::vector<variable_index> get_modified_real_indexes()
+    std::unordered_set<variable_index> get_modified_real_indexes()
     {
         return modifiedRealIndexes_;
     }
 
-    std::vector<variable_index> get_modified_integer_indexes()
+    std::unordered_set<variable_index> get_modified_integer_indexes()
     {
         return modifiedIntegerIndexes_;
     }
 
-    std::vector<variable_index> get_modified_boolean_indexes()
+    std::unordered_set<variable_index> get_modified_boolean_indexes()
     {
         return modifiedBooleanIndexes_;
     }
 
-    std::vector<variable_index> get_modified_string_indexes()
+    std::unordered_set<variable_index> get_modified_string_indexes()
     {
         return modifiedStringIndexes_;
     }
@@ -519,10 +519,10 @@ private:
     set_variable_cache<bool> booleanSetCache_;
     set_variable_cache<std::string> stringSetCache_;
 
-    std::vector<variable_index> modifiedRealIndexes_;
-    std::vector<variable_index> modifiedIntegerIndexes_;
-    std::vector<variable_index> modifiedBooleanIndexes_;
-    std::vector<variable_index> modifiedStringIndexes_;
+    std::unordered_set<variable_index> modifiedRealIndexes_;
+    std::unordered_set<variable_index> modifiedIntegerIndexes_;
+    std::unordered_set<variable_index> modifiedBooleanIndexes_;
+    std::unordered_set<variable_index> modifiedStringIndexes_;
 };
 
 
@@ -668,22 +668,22 @@ void slave_simulator::set_string_output_modifier(
     pimpl_->set_string_output_modifier(index, modifier);
 }
 
-std::vector<variable_index> slave_simulator::get_modified_real_indexes()
+std::unordered_set<variable_index> slave_simulator::get_modified_real_indexes()
 {
     return pimpl_->get_modified_real_indexes();
 }
 
-std::vector<variable_index> slave_simulator::get_modified_integer_indexes()
+std::unordered_set<variable_index> slave_simulator::get_modified_integer_indexes()
 {
     return pimpl_->get_modified_integer_indexes();
 }
 
-std::vector<variable_index> slave_simulator::get_modified_boolean_indexes()
+std::unordered_set<variable_index> slave_simulator::get_modified_boolean_indexes()
 {
     return pimpl_->get_modified_boolean_indexes();
 }
 
-std::vector<variable_index> slave_simulator::get_modified_string_indexes()
+std::unordered_set<variable_index> slave_simulator::get_modified_string_indexes()
 {
     return pimpl_->get_modified_string_indexes();
 }
