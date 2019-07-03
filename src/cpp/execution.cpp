@@ -197,14 +197,16 @@ public:
     std::unordered_map<simulator_index, std::vector<variable_id>> get_modified_variables()
     {
         std::unordered_map<simulator_index, std::vector<variable_id>> modifiedVariables;
-        std::vector<variable_id> realIds;
-        std::vector<variable_id> intIds;
-        std::vector<variable_id> boolIds;
-        std::vector<variable_id> stringIds;
 
         auto index = 0;
         for (const auto& simulator : simulators_) {
             const auto sim = std::dynamic_pointer_cast<cse::slave_simulator>(simulator);
+
+            std::vector<variable_id> realIds;
+            std::vector<variable_id> intIds;
+            std::vector<variable_id> boolIds;
+            std::vector<variable_id> stringIds;
+
             auto realIndexes = sim->get_modified_real_indexes();
             auto intIndexes = sim->get_modified_integer_indexes();
             auto boolIndexes = sim->get_modified_boolean_indexes();
@@ -235,7 +237,9 @@ public:
             std::move(boolIds.begin(), boolIds.end(), std::back_inserter(indexes));
             std::move(stringIds.begin(), stringIds.end(), std::back_inserter(indexes));
 
-            modifiedVariables.insert(std::make_pair(index, indexes));
+            if (!indexes.empty()) {
+                modifiedVariables.insert(std::make_pair(index, indexes));
+            }
 
             index++;
         }

@@ -233,7 +233,16 @@ int cse_slave_get_num_variables(cse_execution* execution, cse_slave_index slave)
 
 int cse_get_num_modified_variables(cse_execution* execution)
 {
-    return static_cast<int>(execution->cpp_execution->get_modified_variables().size());
+    auto vars = execution->cpp_execution->get_modified_variables();
+
+    int counter = 0;
+    for (const auto& [index, variables] : vars) {
+        counter += static_cast<int>(variables.size());
+    }
+
+    std::cout << "Number of modified variables: " << counter << std::endl;
+
+    return counter;
 }
 
 cse_variable_variability to_variable_variability(const cse::variable_variability& vv)
@@ -1067,16 +1076,18 @@ int cse_get_modified_variables(cse_execution* execution, cse_variable_id ids[])
     try {
         auto modified_vars = execution->cpp_execution->get_modified_variables();
 
-        for (const auto& [index, vars] : modified_vars) {
-            std::cout << "Number of modified variables for simulator " << index << ": " << vars.size() << std::endl;
+        if (!modified_vars.empty()) {
+            for (const auto& [index, vars] : modified_vars) {
+                size_t counter = 0;
+                if (!vars.empty()) {
+                    for (const auto& var : vars) {
+                        ids[counter].slave_index = var.simulator;
+                        ids[counter].type = to_c_variable_type(var.type);
+                        ids[counter].variable_index = var.index;
 
-            size_t counter = 0;
-            for (const auto& var : vars) {
-                ids[counter].slave_index = var.simulator;
-                ids[counter].type = to_c_variable_type(var.type);
-                ids[counter].variable_index = var.index;
-
-                ++counter;
+                        ++counter;
+                    }
+                }
             }
         }
 

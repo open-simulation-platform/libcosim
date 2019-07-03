@@ -320,8 +320,10 @@ public:
     void set_modified_index(std::vector<variable_index>& modifiedIndexes, variable_index& index, bool modifier)
     {
         if (modifier) {
+            std::cout << "Modifed var added, index: " << index << std::endl;
             modifiedIndexes.push_back(index);
         } else {
+            std::cout << "Modified var erased, index: " << index << std::endl;
             modifiedIndexes.erase(std::remove(modifiedIndexes.begin(), modifiedIndexes.end(), index), modifiedIndexes.end());
         }
     }
