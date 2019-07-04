@@ -65,12 +65,14 @@ public:
     void connect_variables(
         variable_id output,
         variable_id input,
-        bool inputAlreadyConnected)
+        bool /*inputAlreadyConnected*/)
     {
-        if (inputAlreadyConnected) disconnect_variable(input);
-        simulators_[output.simulator].sim->expose_for_getting(output.type, output.index);
-        simulators_[input.simulator].sim->expose_for_setting(input.type, input.index);
-        simulators_[output.simulator].outgoingConnections.push_back({output, input});
+        //        if (inputAlreadyConnected) disconnect_variable(input);
+        //        simulators_[output.simulator].sim->expose_for_getting(output.type, output.index);
+        //        simulators_[input.simulator].sim->expose_for_setting(input.type, input.index);
+        //        simulators_[output.simulator].outgoingConnections.push_back({output, input});
+        auto c = std::make_shared<cse::scalar_connection>(output, input);
+        add_connection(c);
     }
 
     void add_connection(std::shared_ptr<multi_connection> c)
@@ -257,30 +259,33 @@ private:
         });
     }
 
+    void validate_variable(variable_id variable, variable_causality causality)
+    {
+        const auto variables = find_simulator(variable.simulator).sim->model_description().variables;
+        const auto it = std::find_if(
+            variables.begin(),
+            variables.end(),
+            [=](const auto& var) { return var.causality == causality && var.type == variable.type && var.index == variable.index; });
+        if (it == variables.end()) {
+            std::ostringstream oss;
+            oss << "Cannot find variable: " << variable
+                << " and causality " << causality
+                << " for simulator with name " << simulators_.at(variable.simulator).sim->name();
+            throw std::out_of_range(oss.str());
+        }
+    }
+
+
     void validate_connection(const std::shared_ptr<multi_connection>& c)
     {
         for (const auto& source : c->get_sources()) {
-            auto& simInfo = find_simulator(source.simulator);
-            auto& sourceVar = find_variable(simInfo.sim->model_description(), source.type, source.index);
-            if (sourceVar.causality != variable_causality::output) {
-                std::ostringstream oss;
-                oss << "Connection source variable with name " << sourceVar.name
-                    << " must have causality output, but has causality " << sourceVar.causality;
-                throw error(make_error_code(errc::unsupported_feature), oss.str());
-            }
+            validate_variable(source, variable_causality::output);
         }
 
         for (const auto& destination : c->get_destinations()) {
-            auto& simInfo = find_simulator(destination.simulator);
-            auto& destinationVar = find_variable(simInfo.sim->model_description(), destination.type, destination.index);
-            if (destinationVar.causality != variable_causality::input) {
-                std::ostringstream oss;
-                oss << "Connection destination variable with name " << destinationVar.name
-                    << " must have causality input, but has causality " << destinationVar.causality;
-                throw error(make_error_code(errc::unsupported_feature), oss.str());
-            }
+            validate_variable(destination, variable_causality::input);
 
-            for (auto& existingDestination : simInfo.incomingMultiConnections) {
+            for (auto& existingDestination : find_simulator(destination.simulator).incomingMultiConnections) {
                 if (existingDestination.first == destination) {
                     std::ostringstream oss;
                     oss << "A connection to this destination variable already exists: "
@@ -338,9 +343,6 @@ private:
     {
         for (auto& [sourceVar, connections] : simulators_[i].outgoingMultiConnections) {
             for (const auto& c : connections) {
-                if (sourceVar.type == variable_type::real) {
-                    c->set_source_value(sourceVar, simulators_.at(i).sim->get_real(sourceVar.index));
-                }
                 switch (sourceVar.type) {
                     case variable_type::real:
                         c->set_source_value(sourceVar, simulators_.at(i).sim->get_real(sourceVar.index));
@@ -361,24 +363,37 @@ private:
         }
     }
 
+    bool decimation_factor_match(variable_id destination, const std::vector<variable_id>& sources)
+    {
+        const auto idf = simulators_[destination.simulator].decimationFactor;
+        bool match = true;
+        for (const auto& source : sources) {
+            const auto odf = simulators_[source.simulator].decimationFactor;
+            match &= (stepCounter_ % std::lcm(odf, idf) == 0);
+        }
+        return match;
+    }
+
     void transfer_destinations(simulator_index i)
     {
         for (auto& [destVar, connection] : simulators_[i].incomingMultiConnections) {
-            switch (destVar.type) {
-                case variable_type::real:
-                    simulators_.at(i).sim->set_real(destVar.index, std::get<double>(connection->get_destination_value(destVar)));
-                    break;
-                case variable_type::integer:
-                    simulators_.at(i).sim->set_integer(destVar.index, std::get<int>(connection->get_destination_value(destVar)));
-                    break;
-                case variable_type::boolean:
-                    simulators_.at(i).sim->set_boolean(destVar.index, std::get<bool>(connection->get_destination_value(destVar)));
-                    break;
-                case variable_type::string:
-                    simulators_.at(i).sim->set_string(destVar.index, std::get<std::string_view>(connection->get_destination_value(destVar)));
-                    break;
-                default:
-                    CSE_PANIC();
+            if (decimation_factor_match(destVar, connection->get_sources())) {
+                switch (destVar.type) {
+                    case variable_type::real:
+                        simulators_.at(i).sim->set_real(destVar.index, std::get<double>(connection->get_destination_value(destVar)));
+                        break;
+                    case variable_type::integer:
+                        simulators_.at(i).sim->set_integer(destVar.index, std::get<int>(connection->get_destination_value(destVar)));
+                        break;
+                    case variable_type::boolean:
+                        simulators_.at(i).sim->set_boolean(destVar.index, std::get<bool>(connection->get_destination_value(destVar)));
+                        break;
+                    case variable_type::string:
+                        simulators_.at(i).sim->set_string(destVar.index, std::get<std::string_view>(connection->get_destination_value(destVar)));
+                        break;
+                    default:
+                        CSE_PANIC();
+                }
             }
         }
     }
