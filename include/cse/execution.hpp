@@ -177,6 +177,18 @@ public:
     /// Returns the current real time factor target
     double get_real_time_factor_target();
 
+    /// Set initial value for a variable of type real. Must be called before simulation is started.
+    void set_real_initial_value(simulator_index sim, variable_index var, double value);
+
+    /// Set initial value for a variable of type integer. Must be called before simulation is started.
+    void set_integer_initial_value(simulator_index sim, variable_index var, int value);
+
+    /// Set initial value for a variable of type boolean. Must be called before simulation is started.
+    void set_boolean_initial_value(simulator_index sim, variable_index var, bool value);
+
+    /// Set initial value for a variable of type string. Must be called before simulation is started.
+    void set_string_initial_value(simulator_index sim, variable_index var, const std::string& value);
+
 
 private:
     class impl;
