@@ -46,6 +46,7 @@ set(privateHeaders
 set(sources
     "algorithm.cpp"
     "async_slave.cpp"
+    "connection.cpp"
     "exception.cpp"
     "execution.cpp"
     "ssp_parser.cpp"

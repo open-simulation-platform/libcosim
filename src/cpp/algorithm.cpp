@@ -339,7 +339,23 @@ private:
         for (auto& [sourceVar, connections] : simulators_[i].outgoingMultiConnections) {
             for (const auto& c : connections) {
                 if (sourceVar.type == variable_type::real) {
-                    c->set_real_source_value(sourceVar, simulators_.at(i).sim->get_real(sourceVar.index));
+                    c->set_source_value(sourceVar, simulators_.at(i).sim->get_real(sourceVar.index));
+                }
+                switch (sourceVar.type) {
+                    case variable_type::real:
+                        c->set_source_value(sourceVar, simulators_.at(i).sim->get_real(sourceVar.index));
+                        break;
+                    case variable_type::integer:
+                        c->set_source_value(sourceVar, simulators_.at(i).sim->get_integer(sourceVar.index));
+                        break;
+                    case variable_type::boolean:
+                        c->set_source_value(sourceVar, simulators_.at(i).sim->get_boolean(sourceVar.index));
+                        break;
+                    case variable_type::string:
+                        c->set_source_value(sourceVar, simulators_.at(i).sim->get_string(sourceVar.index));
+                        break;
+                    default:
+                        CSE_PANIC();
                 }
             }
         }
@@ -348,8 +364,21 @@ private:
     void transfer_destinations(simulator_index i)
     {
         for (auto& [destVar, connection] : simulators_[i].incomingMultiConnections) {
-            if (destVar.type == variable_type::real) {
-                simulators_.at(i).sim->set_real(destVar.index, connection->get_real_destination_value(destVar));
+            switch (destVar.type) {
+                case variable_type::real:
+                    simulators_.at(i).sim->set_real(destVar.index, std::get<double>(connection->get_destination_value(destVar)));
+                    break;
+                case variable_type::integer:
+                    simulators_.at(i).sim->set_integer(destVar.index, std::get<int>(connection->get_destination_value(destVar)));
+                    break;
+                case variable_type::boolean:
+                    simulators_.at(i).sim->set_boolean(destVar.index, std::get<bool>(connection->get_destination_value(destVar)));
+                    break;
+                case variable_type::string:
+                    simulators_.at(i).sim->set_string(destVar.index, std::get<std::string_view>(connection->get_destination_value(destVar)));
+                    break;
+                default:
+                    CSE_PANIC();
             }
         }
     }
