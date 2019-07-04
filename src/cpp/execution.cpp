@@ -6,6 +6,7 @@
 
 #include <boost/functional/hash.hpp>
 
+#include <cse/exception.hpp>
 #include <sstream>
 #include <unordered_map>
 #include <utility>
