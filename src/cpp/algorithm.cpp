@@ -313,13 +313,13 @@ private:
 
     void remove_connections(simulator_index i)
     {
-        for (auto& [sourceId, sourceConns] : simulators_.at(i).outgoingMultiConnections) {
-            for (auto& sourceConn : sourceConns) {
+        for (auto& entry : simulators_.at(i).outgoingMultiConnections) {
+            for (auto& sourceConn : entry.second) {
                 remove_destinations(sourceConn);
             }
         }
-        for (auto& [destId, destConn] : simulators_.at(i).incomingMultiConnections) {
-            remove_sources(destConn);
+        for (auto& entry : simulators_.at(i).incomingMultiConnections) {
+            remove_sources(entry.second);
         }
     }
 
