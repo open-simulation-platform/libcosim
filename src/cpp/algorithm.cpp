@@ -59,50 +59,26 @@ public:
     {
         remove_connections(i);
         simulators_.erase(i);
-        disconnect_simulator_variables(i);
     }
 
-    void connect_variables(
-        variable_id output,
-        variable_id input,
-        bool inputAlreadyConnected)
-    {
-        if (inputAlreadyConnected) disconnect_variable(input);
-        simulators_[output.simulator].sim->expose_for_getting(output.type, output.index);
-        simulators_[input.simulator].sim->expose_for_setting(input.type, input.index);
-        simulators_[output.simulator].outgoingConnections.push_back({output, input});
-    }
-
-    void add_connection(std::shared_ptr<multi_connection> c)
+    void add_connection(std::shared_ptr<connection> c)
     {
         for (const auto& source : c->get_sources()) {
             auto& simInfo = find_simulator(source.simulator);
             simInfo.sim->expose_for_getting(source.type, source.index);
-            simInfo.outgoingMultiConnections[source].push_back(c);
+            simInfo.outgoingConnections[source].push_back(c);
         }
         for (const auto& destination : c->get_destinations()) {
             auto& simInfo = find_simulator(destination.simulator);
             simInfo.sim->expose_for_setting(destination.type, destination.index);
-            simInfo.incomingMultiConnections[destination] = c;
+            simInfo.incomingConnections[destination] = c;
         }
     }
 
-    void remove_connection(std::shared_ptr<multi_connection> c)
+    void remove_connection(std::shared_ptr<connection> c)
     {
         remove_sources(c);
         remove_destinations(c);
-    }
-
-    void disconnect_variable(variable_id input)
-    {
-        for (auto& s : simulators_) {
-            auto conns = s.second.outgoingConnections;
-            const auto it = std::find_if(
-                conns.begin(),
-                conns.end(),
-                [input](const auto& c) { return c.input == input; });
-            conns.erase(it);
-        }
     }
 
     void setup(time_point startTime, std::optional<time_point> stopTime)
@@ -117,7 +93,6 @@ public:
         for (std::size_t i = 0; i < simulators_.size(); ++i) {
             iterate_simulators();
             for (const auto& [idx, sim] : simulators_) {
-                transfer_variables(sim.outgoingConnections);
                 transfer_sources(idx);
                 transfer_destinations(idx);
             }
@@ -160,7 +135,6 @@ public:
         }
 
         for (auto idx : finished) {
-            transfer_variables(simulators_.at(idx).outgoingConnections);
             transfer_sources(idx);
         }
 
@@ -175,35 +149,14 @@ public:
 
 
 private:
-    struct connection
-    {
-        variable_id output;
-        variable_id input;
-    };
-
     struct simulator_info
     {
         simulator* sim;
         int decimationFactor = 1;
         boost::fibers::future<step_result> stepResult;
-        std::vector<connection> outgoingConnections;
-        std::unordered_map<variable_id, std::vector<std::shared_ptr<multi_connection>>> outgoingMultiConnections;
-        std::unordered_map<variable_id, std::shared_ptr<multi_connection>> incomingMultiConnections;
+        std::unordered_map<variable_id, std::vector<std::shared_ptr<connection>>> outgoingConnections;
+        std::unordered_map<variable_id, std::shared_ptr<connection>> incomingConnections;
     };
-
-    void disconnect_simulator_variables(simulator_index i)
-    {
-        for (auto& s : simulators_) {
-            auto conns = s.second.outgoingConnections;
-            const auto newEnd = std::remove_if(
-                conns.begin(),
-                conns.end(),
-                [i](const auto& c) {
-                    return c.input.simulator == i;
-                });
-            conns.erase(newEnd, conns.end());
-        }
-    }
 
     template<typename F>
     void for_all_simulators(F f)
@@ -244,50 +197,34 @@ private:
         });
     }
 
-    void validate_variable(variable_id variable, variable_causality causality)
-    {
-        const auto variables = find_simulator(variable.simulator).sim->model_description().variables;
-        const auto it = std::find_if(
-            variables.begin(),
-            variables.end(),
-            [=](const auto& var) { return var.causality == causality && var.type == variable.type && var.index == variable.index; });
-        if (it == variables.end()) {
-            std::ostringstream oss;
-            oss << "Cannot find variable: " << variable
-                << " and causality " << causality
-                << " for simulator with name " << simulators_.at(variable.simulator).sim->name();
-            throw std::out_of_range(oss.str());
-        }
-    }
-
-    void remove_destinations(std::shared_ptr<multi_connection> c)
+    void remove_destinations(std::shared_ptr<connection> c)
     {
         for (const auto& destinationId : c->get_destinations()) {
             auto& connectedSim = find_simulator(destinationId.simulator);
-            connectedSim.incomingMultiConnections.erase(destinationId);
+            connectedSim.incomingConnections.erase(destinationId);
         }
     }
 
-    void remove_sources(std::shared_ptr<multi_connection> c)
+    void remove_sources(std::shared_ptr<connection> c)
     {
         for (const auto& sourceId : c->get_sources()) {
             auto& sourceSim = find_simulator(sourceId.simulator);
-            auto& outgoingConns = sourceSim.outgoingMultiConnections.at(sourceId);
+            auto& outgoingConns = sourceSim.outgoingConnections.at(sourceId);
             outgoingConns.erase(std::remove(outgoingConns.begin(), outgoingConns.end(), c), outgoingConns.end());
             if (outgoingConns.empty()) {
-                sourceSim.outgoingMultiConnections.erase(sourceId);
+                sourceSim.outgoingConnections.erase(sourceId);
             }
         }
     }
 
     void remove_connections(simulator_index i)
     {
-        for (auto& entry : simulators_.at(i).outgoingMultiConnections) {
+        for (auto& entry : simulators_.at(i).outgoingConnections) {
             for (auto& sourceConn : entry.second) {
                 remove_destinations(sourceConn);
             }
         }
-        for (auto& entry : simulators_.at(i).incomingMultiConnections) {
+        for (auto& entry : simulators_.at(i).incomingConnections) {
             remove_sources(entry.second);
         }
     }
@@ -305,7 +242,7 @@ private:
 
     void transfer_sources(simulator_index i)
     {
-        for (auto& [sourceVar, connections] : simulators_[i].outgoingMultiConnections) {
+        for (auto& [sourceVar, connections] : simulators_[i].outgoingConnections) {
             for (const auto& c : connections) {
                 switch (sourceVar.type) {
                     case variable_type::real:
@@ -340,7 +277,7 @@ private:
 
     void transfer_destinations(simulator_index i)
     {
-        for (auto& [destVar, connection] : simulators_[i].incomingMultiConnections) {
+        for (auto& [destVar, connection] : simulators_[i].incomingConnections) {
             if (decimation_factor_match(destVar, connection->get_sources())) {
                 switch (destVar.type) {
                     case variable_type::real:
@@ -360,60 +297,6 @@ private:
                 }
             }
         }
-    }
-
-    void transfer_variables(const std::vector<connection>& connections)
-    {
-        for (const auto& c : connections) {
-            const auto odf = simulators_[c.output.simulator].decimationFactor;
-            const auto idf = simulators_[c.input.simulator].decimationFactor;
-            if (stepCounter_ % std::lcm(odf, idf) == 0) {
-                switch (c.input.type) {
-                    case variable_type::real:
-                        transfer_real(c.output, c.input);
-                        break;
-                    case variable_type::integer:
-                        transfer_integer(c.output, c.input);
-                        break;
-                    case variable_type::boolean:
-                        transfer_boolean(c.output, c.input);
-                        break;
-                    case variable_type::string:
-                        transfer_string(c.output, c.input);
-                        break;
-                    case variable_type::enumeration:
-                        CSE_PANIC();
-                }
-            }
-        }
-    }
-
-    void transfer_real(variable_id output, variable_id input)
-    {
-        simulators_[input.simulator].sim->set_real(
-            input.index,
-            simulators_[output.simulator].sim->get_real(output.index));
-    }
-
-    void transfer_integer(variable_id output, variable_id input)
-    {
-        simulators_[input.simulator].sim->set_integer(
-            input.index,
-            simulators_[output.simulator].sim->get_integer(output.index));
-    }
-
-    void transfer_boolean(variable_id output, variable_id input)
-    {
-        simulators_[input.simulator].sim->set_boolean(
-            input.index,
-            simulators_[output.simulator].sim->get_boolean(output.index));
-    }
-
-    void transfer_string(variable_id output, variable_id input)
-    {
-        simulators_[input.simulator].sim->set_string(
-            input.index,
-            simulators_[output.simulator].sim->get_string(output.index));
     }
 
     const duration baseStepSize_;
@@ -461,26 +344,12 @@ void fixed_step_algorithm::remove_simulator(simulator_index i)
 }
 
 
-void fixed_step_algorithm::connect_variables(
-    variable_id output,
-    variable_id input,
-    bool inputAlreadyConnected)
-{
-    pimpl_->connect_variables(output, input, inputAlreadyConnected);
-}
-
-
-void fixed_step_algorithm::disconnect_variable(variable_id input)
-{
-    pimpl_->disconnect_variable(input);
-}
-
-void fixed_step_algorithm::add_connection(std::shared_ptr<multi_connection> c)
+void fixed_step_algorithm::add_connection(std::shared_ptr<connection> c)
 {
     pimpl_->add_connection(c);
 }
 
-void fixed_step_algorithm::remove_connection(std::shared_ptr<multi_connection> c)
+void fixed_step_algorithm::remove_connection(std::shared_ptr<connection> c)
 {
     pimpl_->remove_connection(c);
 }

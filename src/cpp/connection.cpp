@@ -7,7 +7,7 @@ namespace cse
 
 
 scalar_connection::scalar_connection(variable_id source, variable_id destination)
-    : multi_connection({source}, {destination})
+    : connection({source}, {destination})
 {
     CSE_INPUT_CHECK(source.type == destination.type);
     switch (source.type) {
@@ -40,7 +40,7 @@ std::variant<double, int, bool, std::string_view> scalar_connection::get_destina
 
 
 sum_connection::sum_connection(const std::vector<variable_id>& sources, variable_id destination)
-    : multi_connection(sources, {destination})
+    : connection(sources, {destination})
 {
     bool failed = false;
     std::ostringstream oss;

@@ -87,7 +87,7 @@ class algorithm;
 class observer;
 class manipulator;
 class simulator;
-class multi_connection;
+class connection;
 
 
 /**
@@ -138,21 +138,6 @@ public:
     void add_manipulator(std::shared_ptr<manipulator> man);
 
     /**
-     *  Connects an output variable to an input variable.
-     *
-     *  After this, the values of the output variable will be passed to the
-     *  input value at the co-simulation algorithm's discretion.  Different
-     *  algorithms may handle this in different ways, and could for instance
-     *  choose to extrapolate or correct the variable value during transfer.
-     *
-     *  When calling this method, the validity of both variables are checked
-     *  against the metadata of their respective `simulator`s. If either is
-     *  found to be invalid (i.e. not found, wrong type or causality, an
-     *  exception will be thrown.
-     */
-    void connect_variables(variable_id output, variable_id input);
-
-    /**
      *  Adds a connection to the execution.
      *
      *  After this, the values of the connection's source variables will be
@@ -168,7 +153,7 @@ public:
      *  exception will be thrown. If one of the connection's destination
      *  variables is already connected, an exception will be thrown.
      */
-    void add_connection(std::shared_ptr<multi_connection> connection);
+    void add_connection(std::shared_ptr<connection> conn);
 
     /**
      * Convenience method for removing a connection from the execution.
@@ -182,7 +167,8 @@ public:
      */
     void remove_connection(variable_id destination);
 
-    const std::vector<std::shared_ptr<multi_connection>>& get_connections();
+    /// Returns all variable connections in the execution.
+    const std::vector<std::shared_ptr<connection>>& get_connections();
 
 
     /// Returns the current logical time.

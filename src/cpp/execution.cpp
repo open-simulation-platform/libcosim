@@ -6,7 +6,6 @@
 
 #include <algorithm>
 #include <sstream>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -62,9 +61,6 @@ public:
                 simulators_[i].get(),
                 currentTime_);
         }
-        for (const auto conn : connections_) {
-            obs->variables_connected(conn.second, conn.first, currentTime_);
-        }
     }
 
     void add_manipulator(std::shared_ptr<manipulator> man)
@@ -78,25 +74,9 @@ public:
         }
     }
 
-    void connect_variables(variable_id output, variable_id input)
+    void add_connection(std::shared_ptr<connection> conn)
     {
-        validate_variable(output, variable_causality::output);
-        validate_variable(input, variable_causality::input);
-
-        const auto existing = connections_.find(input);
-        const auto hasExisting = existing != connections_.end();
-
-        algorithm_->connect_variables(output, input, hasExisting);
-        if (hasExisting) {
-            existing->second = output;
-        } else {
-            connections_.emplace(input, output);
-        }
-    }
-
-    void add_connection(std::shared_ptr<multi_connection> connection)
-    {
-        for (const auto& destination : connection->get_destinations()) {
+        for (const auto& destination : conn->get_destinations()) {
             if (find_connection(destination)) {
                 std::ostringstream oss;
                 oss << "A connection to this destination variable already exists: "
@@ -105,11 +85,11 @@ public:
             }
             validate_variable(destination, variable_causality::input);
         }
-        for (const auto& source : connection->get_sources()) {
+        for (const auto& source : conn->get_sources()) {
             validate_variable(source, variable_causality::output);
         }
-        algorithm_->add_connection(connection);
-        multiConnections_.push_back(connection);
+        algorithm_->add_connection(conn);
+        connections_.push_back(conn);
     }
 
     void remove_connection(variable_id destination)
@@ -121,17 +101,17 @@ public:
             throw std::out_of_range(oss.str());
         }
         algorithm_->remove_connection(toRemove);
-        multiConnections_.erase(
+        connections_.erase(
             std::remove(
-                multiConnections_.begin(),
-                multiConnections_.end(),
+                connections_.begin(),
+                connections_.end(),
                 toRemove),
-            multiConnections_.end());
+            connections_.end());
     }
 
-    const std::vector<std::shared_ptr<multi_connection>>& get_connections()
+    const std::vector<std::shared_ptr<connection>>& get_connections()
     {
-        return multiConnections_;
+        return connections_;
     }
 
 
@@ -234,9 +214,9 @@ private:
         }
     }
 
-    std::shared_ptr<multi_connection> find_connection(variable_id destination)
+    std::shared_ptr<connection> find_connection(variable_id destination)
     {
-        for (const auto& c : multiConnections_) {
+        for (const auto& c : connections_) {
             for (const auto& id : c->get_destinations()) {
                 if (id == destination) {
                     return c;
@@ -259,14 +239,12 @@ private:
     time_point currentTime_;
     bool initialized_;
     bool stopped_;
-    double realTimeFactor_ = 1.0;
 
     std::shared_ptr<algorithm> algorithm_;
     std::vector<std::shared_ptr<simulator>> simulators_;
     std::vector<std::shared_ptr<observer>> observers_;
     std::vector<std::shared_ptr<manipulator>> manipulators_;
-    std::unordered_map<variable_id, variable_id> connections_; // (key, value) = (input, output)
-    std::vector<std::shared_ptr<multi_connection>> multiConnections_;
+    std::vector<std::shared_ptr<connection>> connections_;
     real_time_timer timer_;
 };
 
@@ -297,14 +275,9 @@ void execution::add_manipulator(std::shared_ptr<manipulator> man)
     return pimpl_->add_manipulator(man);
 }
 
-void execution::connect_variables(variable_id output, variable_id input)
+void execution::add_connection(std::shared_ptr<connection> conn)
 {
-    pimpl_->connect_variables(output, input);
-}
-
-void execution::add_connection(std::shared_ptr<multi_connection> connection)
-{
-    pimpl_->add_connection(connection);
+    pimpl_->add_connection(conn);
 }
 
 void execution::remove_connection(variable_id destination)
@@ -312,7 +285,7 @@ void execution::remove_connection(variable_id destination)
     pimpl_->remove_connection(destination);
 }
 
-const std::vector<std::shared_ptr<multi_connection>>& execution::get_connections()
+const std::vector<std::shared_ptr<connection>>& execution::get_connections()
 {
     return pimpl_->get_connections();
 }

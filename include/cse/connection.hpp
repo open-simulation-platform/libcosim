@@ -21,7 +21,7 @@ namespace cse
  * on the implementation, a calculation of destination variable values based
  * on source variable values may occur.
  */
-class multi_connection
+class connection
 {
 public:
     /// Returns the source variables of the connection.
@@ -44,7 +44,7 @@ public:
 
 protected:
     /// Base class constructor.
-    multi_connection(std::vector<variable_id> sources, std::vector<variable_id> destinations)
+    connection(std::vector<variable_id> sources, std::vector<variable_id> destinations)
         : sources_(std::move(sources))
         , destinations_(std::move(destinations))
     {}
@@ -59,7 +59,7 @@ protected:
  *
  * Both variables are required to be of the same type.
  */
-class scalar_connection : public multi_connection
+class scalar_connection : public connection
 {
 
 public:
@@ -81,7 +81,7 @@ private:
  * values. Only valid when used with variables of type `real` or `integer`.
  * Mixing of variable types is not allowed.
  */
-class sum_connection : public multi_connection
+class sum_connection : public connection
 {
 
 public:

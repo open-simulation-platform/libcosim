@@ -251,31 +251,6 @@ public:
     virtual void remove_simulator(simulator_index index) = 0;
 
     /**
-     *  Connects an output variable to an input variable.
-     *
-     *  After this, the algorithm is responsible for acquiring the value of
-     *  the output variable and assigning it to the input variable at
-     *  communication points.
-     *
-     *  \param output
-     *      A reference to the output variable.
-     *  \param input
-     *      A reference to the input variable.
-     *  \param inputAlreadyConnected
-     *      Whether the input has already been connected in a previous
-     *      `connect_variables()` call. If so, the previous connection must
-     *      be broken. This is meant as an aid to subclass implementors,
-     *      saving them from having to perform this check on every connection.
-     */
-    virtual void connect_variables(
-        variable_id output,
-        variable_id input,
-        bool inputAlreadyConnected) = 0;
-
-    /// Breaks a previously established connection to input variable `input`.
-    virtual void disconnect_variable(variable_id input) = 0;
-
-    /**
      * Adds a connection to the co-simulation.
      *
      * After this, the algorithm is responsible for acquiring the values of
@@ -286,7 +261,7 @@ public:
      * and that there are no existing connections to any of the connection's
      * destination variables.
      */
-    virtual void add_connection(std::shared_ptr<multi_connection> connection) = 0;
+    virtual void add_connection(std::shared_ptr<connection> conn) = 0;
 
     /**
      * Removes a connection from the co-simulation.
@@ -294,7 +269,7 @@ public:
      * It is assumed that the connection has previously been added to the
      * co-simulation with `add_connection()`.
      */
-    virtual void remove_connection(std::shared_ptr<multi_connection> connection) = 0;
+    virtual void remove_connection(std::shared_ptr<connection> conn) = 0;
 
     /**
      *  Performs initial setup.
@@ -375,13 +350,8 @@ public:
     // `algorithm` methods
     void add_simulator(simulator_index i, simulator* s) override;
     void remove_simulator(simulator_index i) override;
-    void connect_variables(
-        variable_id output,
-        variable_id input,
-        bool inputAlreadyConnected) override;
-    void disconnect_variable(variable_id input) override;
-    void add_connection(std::shared_ptr<multi_connection> c) override;
-    void remove_connection(std::shared_ptr<multi_connection> c) override;
+    void add_connection(std::shared_ptr<connection> c) override;
+    void remove_connection(std::shared_ptr<connection> c) override;
     void setup(time_point startTime, std::optional<time_point> stopTime) override;
     void initialize() override;
     std::pair<duration, std::unordered_set<simulator_index>> do_step(time_point currentT) override;
