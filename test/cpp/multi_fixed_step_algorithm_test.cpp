@@ -94,15 +94,20 @@ int main()
         auto slave2 = std::make_shared<set_logging_mock_slave>(nullptr, [&i](int /*x*/) { return ++i + 1; });
         auto idx2 = execution.add_slave(cse::make_pseudo_async(slave2), "slave 2");
 
-        execution.connect_variables(
+        auto c1 = std::make_shared<cse::scalar_connection>(
             cse::variable_id{idx0, cse::variable_type::real, realOutIndex},
             cse::variable_id{idx1, cse::variable_type::real, realInIndex});
-        execution.connect_variables(
+        execution.add_connection(c1);
+
+        auto c2 = std::make_shared<cse::scalar_connection>(
             cse::variable_id{idx1, cse::variable_type::integer, integerOutIndex},
             cse::variable_id{idx2, cse::variable_type::integer, integerInIndex});
-        execution.connect_variables(
+        execution.add_connection(c2);
+
+        auto c3 = std::make_shared<cse::scalar_connection>(
             cse::variable_id{idx2, cse::variable_type::integer, integerOutIndex},
             cse::variable_id{idx1, cse::variable_type::integer, integerInIndex});
+        execution.add_connection(c3);
 
         algorithm->set_stepsize_decimation_factor(idx0, 1);
         algorithm->set_stepsize_decimation_factor(idx1, 2);

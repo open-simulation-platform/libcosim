@@ -6,7 +6,6 @@
 #include <cse/execution.hpp>
 #include <cse/log.hpp>
 #include <cse/observer/last_value_observer.hpp>
-#include <cse/observer/time_series_observer.hpp>
 
 #include <cmath>
 #include <exception>
@@ -53,29 +52,29 @@ int main()
         sources.push_back({2, cse::variable_type::real, 0});
 
         auto sumConnection = std::make_shared<cse::sum_connection>(sources, sum_destination);
-        algorithm->add_connection(sumConnection);
+        execution.add_connection(sumConnection);
 
         cse::variable_id out3{3, cse::variable_type::real, 0};
         cse::variable_id in4{4, cse::variable_type::real, 1};
         auto scalarConnection = std::make_shared<cse::scalar_connection>(out3, in4);
-        algorithm->add_connection(scalarConnection);
+        execution.add_connection(scalarConnection);
 
         cse::variable_id out0{3, cse::variable_type::real, 0};
         cse::variable_id in5{5, cse::variable_type::real, 1};
         auto scalarConnection2 = std::make_shared<cse::scalar_connection>(out0, in5);
-        algorithm->add_connection(scalarConnection2);
+        execution.add_connection(scalarConnection2);
 
         cse::variable_id out5{5, cse::variable_type::real, 0};
         cse::variable_id in6{6, cse::variable_type::real, 1};
         auto scalarConnection3 = std::make_shared<cse::scalar_connection>(out5, in6);
-        algorithm->add_connection(scalarConnection3);
+        execution.add_connection(scalarConnection3);
 
         bool exceptionThrown = false;
         try {
             cse::variable_id out{0, cse::variable_type::real, 0};
             cse::variable_id in{5, cse::variable_type::real, 1};
             auto scalarConnectionToNonExistingSimulator = std::make_shared<cse::scalar_connection>(out, in);
-            algorithm->add_connection(scalarConnectionToNonExistingSimulator);
+            execution.add_connection(scalarConnectionToNonExistingSimulator);
         } catch (const std::exception& e) {
             std::cout << "Caught exception as expected: " << e.what() << std::endl;
             exceptionThrown = true;
@@ -87,7 +86,7 @@ int main()
             cse::variable_id out{0, cse::variable_type::real, 4};
             cse::variable_id in{1, cse::variable_type::real, 1};
             auto scalarConnectionFromNonExistingVariable = std::make_shared<cse::scalar_connection>(out, in);
-            algorithm->add_connection(scalarConnectionFromNonExistingVariable);
+            execution.add_connection(scalarConnectionFromNonExistingVariable);
         } catch (const std::exception& e) {
             std::cout << "Caught exception as expected: " << e.what() << std::endl;
             exceptionThrown = true;
@@ -99,7 +98,7 @@ int main()
             cse::variable_id out{0, cse::variable_type::real, 1};
             cse::variable_id in{1, cse::variable_type::real, 1};
             auto scalarConnectionFromVariableWithWrongCausality = std::make_shared<cse::scalar_connection>(out, in);
-            algorithm->add_connection(scalarConnectionFromVariableWithWrongCausality);
+            execution.add_connection(scalarConnectionFromVariableWithWrongCausality);
         } catch (const std::exception& e) {
             std::cout << "Caught exception as expected: " << e.what() << std::endl;
             exceptionThrown = true;
@@ -111,7 +110,7 @@ int main()
             cse::variable_id out{0, cse::variable_type::real, 0};
             cse::variable_id in{1, cse::variable_type::real, 0};
             auto scalarConnectionToVariableWithWrongCausality = std::make_shared<cse::scalar_connection>(out, in);
-            algorithm->add_connection(scalarConnectionToVariableWithWrongCausality);
+            execution.add_connection(scalarConnectionToVariableWithWrongCausality);
         } catch (const std::exception& e) {
             std::cout << "Caught exception as expected: " << e.what() << std::endl;
             exceptionThrown = true;
@@ -123,7 +122,7 @@ int main()
             cse::variable_id out{0, cse::variable_type::real, 0};
             cse::variable_id in{4, cse::variable_type::real, 1};
             auto scalarConnectionToAlreadyConnectedDestination = std::make_shared<cse::scalar_connection>(out, in);
-            algorithm->add_connection(scalarConnectionToAlreadyConnectedDestination);
+            execution.add_connection(scalarConnectionToAlreadyConnectedDestination);
         } catch (const std::exception& e) {
             std::cout << "Caught exception as expected: " << e.what() << std::endl;
             exceptionThrown = true;
@@ -144,14 +143,14 @@ int main()
         REQUIRE(std::fabs(expectedRealOutValue - realOutValue) < 1.0e-9);
 
 
-        algorithm->remove_connection(sum_destination);
+        execution.remove_connection(sum_destination);
 
         std::vector<cse::variable_id> newSources;
         newSources.push_back({0, cse::variable_type::real, 0});
         newSources.push_back({1, cse::variable_type::real, 0});
 
         auto modifiedSumConnection = std::make_shared<cse::sum_connection>(newSources, sum_destination);
-        algorithm->add_connection(modifiedSumConnection);
+        execution.add_connection(modifiedSumConnection);
 
         constexpr cse::time_point newEndTime = cse::to_time_point(2.0);
 

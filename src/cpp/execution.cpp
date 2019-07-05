@@ -4,6 +4,7 @@
 #include "cse/slave_simulator.hpp"
 #include "cse/timer.hpp"
 
+#include <algorithm>
 #include <sstream>
 #include <unordered_map>
 #include <utility>
@@ -91,6 +92,41 @@ public:
         } else {
             connections_.emplace(input, output);
         }
+    }
+
+    void add_connection(std::shared_ptr<multi_connection> connection)
+    {
+        for (const auto& destination : connection->get_destinations()) {
+            if (find_connection(destination)) {
+                std::ostringstream oss;
+                oss << "A connection to this destination variable already exists: "
+                    << destination;
+                throw error(make_error_code(errc::unsupported_feature), oss.str());
+            }
+            validate_variable(destination, variable_causality::input);
+        }
+        for (const auto& source : connection->get_sources()) {
+            validate_variable(source, variable_causality::output);
+        }
+        algorithm_->add_connection(connection);
+        multiConnections_.push_back(connection);
+    }
+
+    void remove_connection(variable_id destination)
+    {
+        const auto& toRemove = find_connection(destination);
+        if (!toRemove) {
+            std::ostringstream oss;
+            oss << "Can't find connection connected to destination: " << destination;
+            throw std::out_of_range(oss.str());
+        }
+        algorithm_->remove_connection(toRemove);
+        multiConnections_.erase(
+            std::remove(
+                multiConnections_.begin(),
+                multiConnections_.end(),
+                toRemove),
+            multiConnections_.end());
     }
 
     time_point current_time() const noexcept
@@ -192,6 +228,18 @@ private:
         }
     }
 
+    std::shared_ptr<multi_connection> find_connection(variable_id destination)
+    {
+        for (const auto& c : multiConnections_) {
+            for (const auto& id : c->get_destinations()) {
+                if (id == destination) {
+                    return c;
+                }
+            }
+        }
+        return nullptr;
+    }
+
     static bool timed_out(std::optional<time_point> endTime, time_point currentTime, duration stepSize)
     {
         constexpr double relativeTolerance = 0.01;
@@ -212,6 +260,7 @@ private:
     std::vector<std::shared_ptr<observer>> observers_;
     std::vector<std::shared_ptr<manipulator>> manipulators_;
     std::unordered_map<variable_id, variable_id> connections_; // (key, value) = (input, output)
+    std::vector<std::shared_ptr<multi_connection>> multiConnections_;
     real_time_timer timer_;
 };
 
@@ -246,6 +295,17 @@ void execution::connect_variables(variable_id output, variable_id input)
 {
     pimpl_->connect_variables(output, input);
 }
+
+void execution::add_connection(std::shared_ptr<multi_connection> connection)
+{
+    pimpl_->add_connection(connection);
+}
+
+void execution::remove_connection(variable_id destination)
+{
+    pimpl_->remove_connection(destination);
+}
+
 
 time_point execution::current_time() const noexcept
 {
@@ -297,7 +357,8 @@ void execution::set_real_time_factor_target(double realTimeFactor)
     pimpl_->set_real_time_factor_target(realTimeFactor);
 }
 
-double execution::get_real_time_factor_target() {
+double execution::get_real_time_factor_target()
+{
     return pimpl_->get_real_time_factor_target();
 }
 

@@ -87,6 +87,7 @@ class algorithm;
 class observer;
 class manipulator;
 class simulator;
+class multi_connection;
 
 
 /**
@@ -150,6 +151,37 @@ public:
      *  exception will be thrown.
      */
     void connect_variables(variable_id output, variable_id input);
+
+    /**
+     *  Adds a connection to the execution.
+     *
+     *  After this, the values of the connection's source variables will be
+     *  passed to the connection object, and from there to the connection's
+     *  destination variables at the co-simulation algorithm's discretion.
+     *  Different algorithms may handle this in different ways, and could for
+     *  instance choose to extrapolate or correct the variable value during
+     *  transfer.
+     *
+     *  When calling this method, the validity of both variables are checked
+     *  against the metadata of their respective `simulator`s. If either is
+     *  found to be invalid (i.e. not found, wrong type or causality, an
+     *  exception will be thrown. If one of the connection's destination
+     *  variables is already connected, an exception will be thrown.
+     */
+    void add_connection(std::shared_ptr<multi_connection> connection);
+
+    /**
+     * Convenience method for removing a connection from the execution.
+     *
+     * Searches for a connection containing a destination variable which
+     * matches the `destination` argument and then removes it. Throws an
+     * exception if no such connection is found.
+     *
+     * @param destination
+     *      Any of the connection's destination variables.
+     */
+    void remove_connection(variable_id destination);
+
 
     /// Returns the current logical time.
     time_point current_time() const noexcept;

@@ -65,19 +65,16 @@ public:
     void connect_variables(
         variable_id output,
         variable_id input,
-        bool /*inputAlreadyConnected*/)
+        bool inputAlreadyConnected)
     {
-        //        if (inputAlreadyConnected) disconnect_variable(input);
-        //        simulators_[output.simulator].sim->expose_for_getting(output.type, output.index);
-        //        simulators_[input.simulator].sim->expose_for_setting(input.type, input.index);
-        //        simulators_[output.simulator].outgoingConnections.push_back({output, input});
-        auto c = std::make_shared<cse::scalar_connection>(output, input);
-        add_connection(c);
+        if (inputAlreadyConnected) disconnect_variable(input);
+        simulators_[output.simulator].sim->expose_for_getting(output.type, output.index);
+        simulators_[input.simulator].sim->expose_for_setting(input.type, input.index);
+        simulators_[output.simulator].outgoingConnections.push_back({output, input});
     }
 
     void add_connection(std::shared_ptr<multi_connection> c)
     {
-        validate_connection(c);
         for (const auto& source : c->get_sources()) {
             auto& simInfo = find_simulator(source.simulator);
             simInfo.sim->expose_for_getting(source.type, source.index);
@@ -94,18 +91,6 @@ public:
     {
         remove_sources(c);
         remove_destinations(c);
-    }
-
-    void remove_connection(variable_id destination)
-    {
-        auto& incomingConnections = find_simulator(destination.simulator).incomingMultiConnections;
-        const auto& it = incomingConnections.find(destination);
-        if (it == incomingConnections.end()) {
-            std::stringstream oss;
-            oss << "Can't find a connection with destination: " << destination;
-            throw std::out_of_range(oss.str());
-        }
-        remove_connection(it->second);
     }
 
     void disconnect_variable(variable_id input)
@@ -272,27 +257,6 @@ private:
                 << " and causality " << causality
                 << " for simulator with name " << simulators_.at(variable.simulator).sim->name();
             throw std::out_of_range(oss.str());
-        }
-    }
-
-
-    void validate_connection(const std::shared_ptr<multi_connection>& c)
-    {
-        for (const auto& source : c->get_sources()) {
-            validate_variable(source, variable_causality::output);
-        }
-
-        for (const auto& destination : c->get_destinations()) {
-            validate_variable(destination, variable_causality::input);
-
-            for (auto& existingDestination : find_simulator(destination.simulator).incomingMultiConnections) {
-                if (existingDestination.first == destination) {
-                    std::ostringstream oss;
-                    oss << "A connection to this destination variable already exists: "
-                        << destination;
-                    throw error(make_error_code(errc::unsupported_feature), oss.str());
-                }
-            }
         }
     }
 
@@ -520,12 +484,6 @@ void fixed_step_algorithm::remove_connection(std::shared_ptr<multi_connection> c
 {
     pimpl_->remove_connection(c);
 }
-
-void fixed_step_algorithm::remove_connection(variable_id destination)
-{
-    pimpl_->remove_connection(destination);
-}
-
 
 void fixed_step_algorithm::setup(
     time_point startTime,

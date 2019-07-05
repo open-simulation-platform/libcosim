@@ -275,9 +275,26 @@ public:
     /// Breaks a previously established connection to input variable `input`.
     virtual void disconnect_variable(variable_id input) = 0;
 
-    virtual void add_connection(std::shared_ptr<multi_connection> c) = 0;
-    virtual void remove_connection(std::shared_ptr<multi_connection> c) = 0;
-    virtual void remove_connection(variable_id destination) = 0;
+    /**
+     * Adds a connection to the co-simulation.
+     *
+     * After this, the algorithm is responsible for acquiring the values of
+     * the connection's source variables, and distributing the connection's
+     * destination variable values at communication points.
+     *
+     * It is assumed that the variables contained by the connection are valid
+     * and that there are no existing connections to any of the connection's
+     * destination variables.
+     */
+    virtual void add_connection(std::shared_ptr<multi_connection> connection) = 0;
+
+    /**
+     * Removes a connection from the co-simulation.
+     *
+     * It is assumed that the connection has previously been added to the
+     * co-simulation with `add_connection()`.
+     */
+    virtual void remove_connection(std::shared_ptr<multi_connection> connection) = 0;
 
     /**
      *  Performs initial setup.
@@ -365,7 +382,6 @@ public:
     void disconnect_variable(variable_id input) override;
     void add_connection(std::shared_ptr<multi_connection> c) override;
     void remove_connection(std::shared_ptr<multi_connection> c) override;
-    void remove_connection(variable_id destination) override;
     void setup(time_point startTime, std::optional<time_point> stopTime) override;
     void initialize() override;
     std::pair<duration, std::unordered_set<simulator_index>> do_step(time_point currentT) override;
