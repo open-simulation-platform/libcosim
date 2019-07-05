@@ -92,9 +92,9 @@ public:
         setup_simulators();
         for (std::size_t i = 0; i < simulators_.size(); ++i) {
             iterate_simulators();
-            for (const auto& [idx, sim] : simulators_) {
-                transfer_sources(idx);
-                transfer_destinations(idx);
+            for (const auto& entry : simulators_) {
+                transfer_sources(entry.first);
+                transfer_destinations(entry.first);
             }
         }
     }
@@ -277,20 +277,20 @@ private:
 
     void transfer_destinations(simulator_index i)
     {
-        for (auto& [destVar, connection] : simulators_[i].incomingConnections) {
-            if (decimation_factor_match(destVar, connection->get_sources())) {
+        for (auto& [destVar, conn] : simulators_[i].incomingConnections) {
+            if (decimation_factor_match(destVar, conn->get_sources())) {
                 switch (destVar.type) {
                     case variable_type::real:
-                        simulators_.at(i).sim->set_real(destVar.index, std::get<double>(connection->get_destination_value(destVar)));
+                        simulators_.at(i).sim->set_real(destVar.index, std::get<double>(conn->get_destination_value(destVar)));
                         break;
                     case variable_type::integer:
-                        simulators_.at(i).sim->set_integer(destVar.index, std::get<int>(connection->get_destination_value(destVar)));
+                        simulators_.at(i).sim->set_integer(destVar.index, std::get<int>(conn->get_destination_value(destVar)));
                         break;
                     case variable_type::boolean:
-                        simulators_.at(i).sim->set_boolean(destVar.index, std::get<bool>(connection->get_destination_value(destVar)));
+                        simulators_.at(i).sim->set_boolean(destVar.index, std::get<bool>(conn->get_destination_value(destVar)));
                         break;
                     case variable_type::string:
-                        simulators_.at(i).sim->set_string(destVar.index, std::get<std::string_view>(connection->get_destination_value(destVar)));
+                        simulators_.at(i).sim->set_string(destVar.index, std::get<std::string_view>(conn->get_destination_value(destVar)));
                         break;
                     default:
                         CSE_PANIC();
