@@ -129,6 +129,12 @@ public:
             multiConnections_.end());
     }
 
+    const std::vector<std::shared_ptr<multi_connection>>& get_connections()
+    {
+        return multiConnections_;
+    }
+
+
     time_point current_time() const noexcept
     {
         return currentTime_;
@@ -304,6 +310,11 @@ void execution::add_connection(std::shared_ptr<multi_connection> connection)
 void execution::remove_connection(variable_id destination)
 {
     pimpl_->remove_connection(destination);
+}
+
+const std::vector<std::shared_ptr<multi_connection>>& execution::get_connections()
+{
+    return pimpl_->get_connections();
 }
 
 

@@ -182,6 +182,8 @@ public:
      */
     void remove_connection(variable_id destination);
 
+    const std::vector<std::shared_ptr<multi_connection>>& get_connections();
+
 
     /// Returns the current logical time.
     time_point current_time() const noexcept;

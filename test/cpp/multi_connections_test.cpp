@@ -142,8 +142,12 @@ int main()
         observer->get_real(4, gsl::make_span(&realOutIndex, 1), gsl::make_span(&realOutValue, 1));
         REQUIRE(std::fabs(expectedRealOutValue - realOutValue) < 1.0e-9);
 
+        REQUIRE(execution.get_connections().size() == 4);
 
         execution.remove_connection(sum_destination);
+
+        REQUIRE(execution.get_connections().size() == 3);
+
 
         std::vector<cse::variable_id> newSources;
         newSources.push_back({0, cse::variable_type::real, 0});
@@ -161,6 +165,9 @@ int main()
         observer->get_real(4, gsl::make_span(&realOutIndex, 1), gsl::make_span(&realOutValue, 1));
         REQUIRE(std::fabs(expectedRealOutValue - realOutValue) < 1.0e-9);
 
+        REQUIRE(execution.get_connections().size() == 4);
+
+        // Just check that it doesn't crash
         algorithm->remove_simulator(5);
 
 
