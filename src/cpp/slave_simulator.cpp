@@ -320,10 +320,8 @@ public:
     void set_modified_index(std::unordered_set<variable_index>& modifiedIndexes, variable_index& index, bool modifier)
     {
         if (modifier) {
-            std::cout << "Modifed var added, index: " << index << std::endl;
             modifiedIndexes.insert(index);
         } else {
-            std::cout << "Modified var erased, index: " << index << std::endl;
             modifiedIndexes.erase(index);
         }
     }
