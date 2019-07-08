@@ -237,6 +237,7 @@ int cse_get_num_modified_variables(cse_execution* execution)
 
     int counter = 0;
     for (const auto& [index, variables] : vars) {
+        (void)index; // GCC 7
         counter += static_cast<int>(variables.size());
     }
 
@@ -1076,6 +1077,7 @@ int cse_get_modified_variables(cse_execution* execution, cse_variable_id ids[])
 
         if (!modified_vars.empty()) {
             for (const auto& [index, vars] : modified_vars) {
+                (void)index; // GCC 7
                 size_t counter = 0;
                 if (!vars.empty()) {
                     for (const auto& var : vars) {
