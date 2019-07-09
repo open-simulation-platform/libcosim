@@ -175,22 +175,59 @@ public:
      *      solver doesn't use error estimation, it will just ignore this
      *      parameter.
      */
+
     virtual boost::fibers::future<void> setup(
         time_point startTime,
         std::optional<time_point> stopTime,
         std::optional<double> relativeTolerance) = 0;
 
+    /**
+     *
+     * Returns all variable_indexes of real type with an active modifier.
+     *
+     * @return modifiedRealIndexes
+     * Unordered set of all variable_indexes that currently have an active modifier.
+     */
+    virtual std::unordered_set<variable_index> get_modified_real_indexes() = 0;
 
     /**
-     *  Updates the simulator with new input values and makes it calculate
-     *  new output values, without advancing logical time.
      *
-     *  This function can be used in the initialisation phase, after `setup()`
-     *  has been called and before the first `do_step()` call.  It enables
-     *  iterative initialisation of the system.  The purpose could be to
-     *  propagate initial values between simulators and/or bring the system
-     *  to a steady state.
+     * Returns all variable_indexes of integer type with an active modifier.
+     *
+     * @return modifiedIntegerIndexes
+     * Unordered set of all variable_indexes that currently have an active modifier.
      */
+    virtual std::unordered_set<variable_index> get_modified_integer_indexes() = 0;
+
+    /**
+     *
+     * Returns all variable_indexes of boolean type with an active modifier.
+     *
+     * @return modifiedBooleanIndexes
+     * Unordered set of all variable_indexes that currently have an active modifier.
+     */
+    virtual std::unordered_set<variable_index> get_modified_boolean_indexes() = 0;
+
+    /**
+     *
+     * Returns all variable_indexes of string type with an active modifier.
+     *
+     * @return modifiedStringIndexes
+     * Unordered set of all variable_indexes that currently have an active modifier.
+     */
+    virtual std::unordered_set<variable_index> get_modified_string_indexes() = 0;
+
+    /**
+  *  Updates the simulator with new input values and makes it calculate
+  *  new output values, without advancing logical time.
+  *
+  *  This function can be used in the initialisation phase, after `setup()`
+  *  has been called and before the first `do_step()` call.  It enables
+  *  iterative initialisation of the system.  The purpose could be to
+  *  propagate initial values between simulators and/or bring the system
+  *  to a steady state.
+  */
+
     virtual boost::fibers::future<void> do_iteration() = 0;
 
     /**

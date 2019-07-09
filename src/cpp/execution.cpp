@@ -200,8 +200,8 @@ public:
         std::vector<variable_id> modifiedVariables;
 
         auto index = 0;
-        for (const auto& simulator : simulators_) {
-            const auto sim = std::dynamic_pointer_cast<cse::slave_simulator>(simulator);
+        for (const auto& sim : simulators_) {
+            //const auto sim = std::dynamic_pointer_cast<cse::slave_simulator>(simulator);
 
             std::vector<variable_id> realIds;
             std::vector<variable_id> intIds;

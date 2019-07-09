@@ -437,15 +437,6 @@ public:
     }
 
 private:
-    void set_modified_index(std::unordered_set<variable_index>& modifiedIndexes, variable_index& index, bool modifier)
-    {
-        if (modifier) {
-            modifiedIndexes.insert(index);
-        } else {
-            modifiedIndexes.erase(index);
-        }
-    }
-
     void set_variables()
     {
         const auto [realIndexes, realValues] = realSetCache_.modify_and_get();
@@ -500,6 +491,15 @@ private:
             throw std::out_of_range(oss.str());
         }
         return *it;
+    }
+
+    void set_modified_index(std::unordered_set<variable_index>& modifiedIndexes, variable_index& index, bool modifier)
+    {
+        if (modifier) {
+            modifiedIndexes.insert(index);
+        } else {
+            modifiedIndexes.erase(index);
+        }
     }
 
 private:

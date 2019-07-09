@@ -71,10 +71,10 @@ public:
         variable_index index,
         std::function<std::string(std::string_view)> modifier) override;
 
-    std::unordered_set<variable_index> get_modified_real_indexes();
-    std::unordered_set<variable_index> get_modified_integer_indexes();
-    std::unordered_set<variable_index> get_modified_boolean_indexes();
-    std::unordered_set<variable_index> get_modified_string_indexes();
+    std::unordered_set<variable_index> get_modified_real_indexes() override;
+    std::unordered_set<variable_index> get_modified_integer_indexes() override;
+    std::unordered_set<variable_index> get_modified_boolean_indexes() override;
+    std::unordered_set<variable_index> get_modified_string_indexes() override;
 
     boost::fibers::future<void> setup(
         time_point startTime,
