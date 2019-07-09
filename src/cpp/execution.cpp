@@ -195,9 +195,9 @@ public:
         return timer_.get_real_time_factor_target();
     }
 
-    std::unordered_map<simulator_index, std::vector<variable_id>> get_modified_variables()
+    std::vector<variable_id> get_modified_variables()
     {
-        std::unordered_map<simulator_index, std::vector<variable_id>> modifiedVariables;
+        std::vector<variable_id> modifiedVariables;
 
         auto index = 0;
         for (const auto& simulator : simulators_) {
@@ -215,31 +215,22 @@ public:
 
             for (const auto& varIndex : realIndexes) {
                 variable_id var = {index, variable_type::real, varIndex};
-                realIds.emplace_back(var);
+                modifiedVariables.push_back(var);
             }
 
             for (const auto& varIndex : intIndexes) {
                 variable_id var = {index, variable_type::integer, varIndex};
-                intIds.emplace_back(var);
+                intIds.push_back(var);
             }
 
             for (const auto& varIndex : boolIndexes) {
                 variable_id var = {index, variable_type::boolean, varIndex};
-                boolIds.emplace_back(var);
+                boolIds.push_back(var);
             }
 
             for (const auto& varIndex : stringIndexes) {
                 variable_id var = {index, variable_type::string, varIndex};
-                stringIds.emplace_back(var);
-            }
-
-            std::vector<variable_id> indexes(realIds);
-            std::move(intIds.begin(), intIds.end(), std::back_inserter(indexes));
-            std::move(boolIds.begin(), boolIds.end(), std::back_inserter(indexes));
-            std::move(stringIds.begin(), stringIds.end(), std::back_inserter(indexes));
-
-            if (!indexes.empty()) {
-                modifiedVariables.insert(std::make_pair(index, indexes));
+                stringIds.push_back(var);
             }
 
             index++;
@@ -412,7 +403,7 @@ double execution::get_real_time_factor_target() {
     return pimpl_->get_real_time_factor_target();
 }
 
-std::unordered_map<simulator_index, std::vector<variable_id>> execution::get_modified_variables()
+std::vector<variable_id> execution::get_modified_variables()
 {
     return pimpl_->get_modified_variables();
 }

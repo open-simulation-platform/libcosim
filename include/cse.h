@@ -937,7 +937,7 @@ int cse_scenario_abort(cse_manipulator* manipulator);
  *  \returns
  *      0 on success and -1 on error.
  */
-int cse_get_modified_variables(cse_execution* execution, cse_variable_id ids[]);
+int cse_get_modified_variables(cse_execution* execution, cse_variable_id ids[], size_t numVariables);
 
 #ifdef __cplusplus
 } // extern(C)

@@ -178,7 +178,7 @@ public:
     double get_real_time_factor_target();
 
     /// Returns a map of currently modified variables
-    std::unordered_map<simulator_index, std::vector<variable_id>> get_modified_variables();
+    std::vector<variable_id> get_modified_variables();
     /// Set initial value for a variable of type real. Must be called before simulation is started.
     void set_real_initial_value(simulator_index sim, variable_index var, double value);
 

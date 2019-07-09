@@ -317,15 +317,6 @@ public:
         stringSetCache_.set_value(index, value);
     }
 
-    void set_modified_index(std::unordered_set<variable_index>& modifiedIndexes, variable_index& index, bool modifier)
-    {
-        if (modifier) {
-            modifiedIndexes.insert(index);
-        } else {
-            modifiedIndexes.erase(index);
-        }
-    }
-
     void set_real_input_modifier(
         variable_index index,
         std::function<double(double)> modifier)
@@ -446,6 +437,15 @@ public:
     }
 
 private:
+    void set_modified_index(std::unordered_set<variable_index>& modifiedIndexes, variable_index& index, bool modifier)
+    {
+        if (modifier) {
+            modifiedIndexes.insert(index);
+        } else {
+            modifiedIndexes.erase(index);
+        }
+    }
+
     void set_variables()
     {
         const auto [realIndexes, realValues] = realSetCache_.modify_and_get();

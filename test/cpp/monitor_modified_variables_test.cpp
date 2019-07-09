@@ -60,10 +60,9 @@ int main()
         auto modifiedVariables = execution.get_modified_variables();
         REQUIRE(modifiedVariables.size() == 1);
 
-        auto indexes = modifiedVariables.at(simIndex);
-        for (auto index : indexes) {
-            REQUIRE(index.type == cse::variable_type::integer);
-            REQUIRE(index.index == 0);
+        for (auto var : modifiedVariables) {
+            REQUIRE(var.type == cse::variable_type::integer);
+            REQUIRE(var.index == 0);
         }
 
     } catch (const std::exception& e) {

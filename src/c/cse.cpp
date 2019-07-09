@@ -233,15 +233,7 @@ int cse_slave_get_num_variables(cse_execution* execution, cse_slave_index slave)
 
 int cse_get_num_modified_variables(cse_execution* execution)
 {
-    auto vars = execution->cpp_execution->get_modified_variables();
-
-    int counter = 0;
-    for (const auto& [index, variables] : vars) {
-        (void)index; // GCC 7
-        counter += static_cast<int>(variables.size());
-    }
-
-    return counter;
+    return static_cast<int>(execution->cpp_execution->get_modified_variables().size());
 }
 
 cse_variable_variability to_variable_variability(const cse::variable_variability& vv)
@@ -1070,28 +1062,23 @@ int cse_scenario_abort(cse_manipulator* manipulator)
     }
 }
 
-int cse_get_modified_variables(cse_execution* execution, cse_variable_id ids[])
+int cse_get_modified_variables(cse_execution* execution, cse_variable_id ids[], size_t numVariables)
 {
     try {
         auto modified_vars = execution->cpp_execution->get_modified_variables();
+        size_t counter = 0;
 
         if (!modified_vars.empty()) {
-            for (const auto& [index, vars] : modified_vars) {
-                (void)index; // GCC 7
-                size_t counter = 0;
-                if (!vars.empty()) {
-                    for (const auto& var : vars) {
-                        ids[counter].slave_index = var.simulator;
-                        ids[counter].type = to_c_variable_type(var.type);
-                        ids[counter].variable_index = var.index;
+            for (; counter < std::min(numVariables, modified_vars.size()); counter++) {
+                ids[counter].slave_index = modified_vars[counter].simulator;
+                ids[counter].type = to_c_variable_type(modified_vars[counter].type);
+                ids[counter].variable_index = modified_vars[counter].index;
 
-                        ++counter;
-                    }
-                }
+                ++counter;
             }
         }
 
-        return success;
+        return static_cast<int>(counter);
     } catch (...) {
         execution->state = CSE_EXECUTION_ERROR;
         execution->error_code = CSE_ERRC_UNSPECIFIED;
