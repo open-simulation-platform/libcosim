@@ -224,7 +224,7 @@ public:
   *  has been called and before the first `do_step()` call.  It enables
   *  iterative initialisation of the system.  The purpose could be to
   *  propagate initial values between simulators and/or bring the system
-  *  to a steady state.
+     *  to a steady state.
      */
     virtual boost::fibers::future<void> do_iteration() = 0;
 
