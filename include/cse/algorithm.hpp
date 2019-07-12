@@ -219,7 +219,7 @@ public:
     /**
   *  Updates the simulator with new input values and makes it calculate
   *  new output values, without advancing logical time.
-  *
+     *
      *  This function can be used in the initialisation phase, after `setup()`
      *  has been called and before the first `do_step()` call.  It enables
      *  iterative initialisation of the system.  The purpose could be to
