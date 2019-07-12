@@ -3,10 +3,10 @@
 #include "cse/algorithm.hpp"
 #include "cse/slave_simulator.hpp"
 #include "cse/timer.hpp"
-#include <cse/exception.hpp>
 
 #include <boost/functional/hash.hpp>
 
+#include <cse/exception.hpp>
 #include <sstream>
 #include <unordered_map>
 #include <utility>
@@ -195,6 +195,44 @@ public:
         return timer_.get_real_time_factor_target();
     }
 
+    std::vector<variable_id> get_modified_variables()
+    {
+        std::vector<variable_id> modifiedVariables;
+
+        auto index = 0;
+        for (const auto& sim : simulators_) {
+
+            const auto& realIndexes = sim->get_modified_real_indexes();
+            const auto& intIndexes = sim->get_modified_integer_indexes();
+            const auto& boolIndexes = sim->get_modified_boolean_indexes();
+            const auto& stringIndexes = sim->get_modified_string_indexes();
+
+            for (const auto& varIndex : realIndexes) {
+                variable_id var = {index, variable_type::real, varIndex};
+                modifiedVariables.push_back(var);
+            }
+
+            for (const auto& varIndex : intIndexes) {
+                variable_id var = {index, variable_type::integer, varIndex};
+                modifiedVariables.push_back(var);
+            }
+
+            for (const auto& varIndex : boolIndexes) {
+                variable_id var = {index, variable_type::boolean, varIndex};
+                modifiedVariables.push_back(var);
+            }
+
+            for (const auto& varIndex : stringIndexes) {
+                variable_id var = {index, variable_type::string, varIndex};
+                modifiedVariables.push_back(var);
+            }
+
+            index++;
+        }
+
+        return modifiedVariables;
+    }
+
     void set_real_initial_value(simulator_index sim, variable_index var, double value)
     {
         if (initialized_) {
@@ -357,6 +395,11 @@ void execution::set_real_time_factor_target(double realTimeFactor)
 
 double execution::get_real_time_factor_target() {
     return pimpl_->get_real_time_factor_target();
+}
+
+std::vector<variable_id> execution::get_modified_variables()
+{
+    return pimpl_->get_modified_variables();
 }
 
 void execution::set_real_initial_value(simulator_index sim, variable_index var, double value)
