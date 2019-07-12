@@ -381,22 +381,22 @@ public:
         set_modified_index(modifiedStringIndexes_, index, modifier ? true : false);
     }
 
-    std::unordered_set<variable_index> get_modified_real_indexes()
+    std::unordered_set<variable_index>& get_modified_real_indexes()
     {
         return modifiedRealIndexes_;
     }
 
-    std::unordered_set<variable_index> get_modified_integer_indexes()
+    std::unordered_set<variable_index>& get_modified_integer_indexes()
     {
         return modifiedIntegerIndexes_;
     }
 
-    std::unordered_set<variable_index> get_modified_boolean_indexes()
+    std::unordered_set<variable_index>& get_modified_boolean_indexes()
     {
         return modifiedBooleanIndexes_;
     }
 
-    std::unordered_set<variable_index> get_modified_string_indexes()
+    std::unordered_set<variable_index>& get_modified_string_indexes()
     {
         return modifiedStringIndexes_;
     }
@@ -666,22 +666,22 @@ void slave_simulator::set_string_output_modifier(
     pimpl_->set_string_output_modifier(index, modifier);
 }
 
-std::unordered_set<variable_index> slave_simulator::get_modified_real_indexes()
+std::unordered_set<variable_index>& slave_simulator::get_modified_real_indexes() const
 {
     return pimpl_->get_modified_real_indexes();
 }
 
-std::unordered_set<variable_index> slave_simulator::get_modified_integer_indexes()
+std::unordered_set<variable_index>& slave_simulator::get_modified_integer_indexes() const
 {
     return pimpl_->get_modified_integer_indexes();
 }
 
-std::unordered_set<variable_index> slave_simulator::get_modified_boolean_indexes()
+std::unordered_set<variable_index>& slave_simulator::get_modified_boolean_indexes() const
 {
     return pimpl_->get_modified_boolean_indexes();
 }
 
-std::unordered_set<variable_index> slave_simulator::get_modified_string_indexes()
+std::unordered_set<variable_index>& slave_simulator::get_modified_string_indexes() const
 {
     return pimpl_->get_modified_string_indexes();
 }

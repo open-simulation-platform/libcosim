@@ -188,7 +188,7 @@ public:
      * @return modifiedRealIndexes
      * Unordered set of all variable_indexes that currently have an active modifier.
      */
-    virtual const std::unordered_set<variable_index> get_modified_real_indexes() const = 0;
+    virtual const std::unordered_set<variable_index>& get_modified_real_indexes() const = 0;
 
     /**
      *
@@ -197,7 +197,7 @@ public:
      * @return modifiedIntegerIndexes
      * Unordered set of all variable_indexes that currently have an active modifier.
      */
-    virtual const std::unordered_set<variable_index> get_modified_integer_indexes() const = 0;
+    virtual const std::unordered_set<variable_index>& get_modified_integer_indexes() const = 0;
 
     /**
      *
@@ -206,7 +206,7 @@ public:
      * @return modifiedBooleanIndexes
      * Unordered set of all variable_indexes that currently have an active modifier.
      */
-    virtual const std::unordered_set<variable_index> get_modified_boolean_indexes() const = 0;
+    virtual const std::unordered_set<variable_index>& get_modified_boolean_indexes() const = 0;
 
     /**
      *
@@ -215,7 +215,7 @@ public:
      * @return modifiedStringIndexes
      * Unordered set of all variable_indexes that currently have an active modifier.
      */
-    virtual const std::unordered_set<variable_index> get_modified_string_indexes() const = 0;
+    virtual const std::unordered_set<variable_index>& get_modified_string_indexes() const = 0;
 
     /**
   *  Updates the simulator with new input values and makes it calculate
