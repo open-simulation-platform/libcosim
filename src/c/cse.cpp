@@ -1073,8 +1073,6 @@ int cse_get_modified_variables(cse_execution* execution, cse_variable_id ids[], 
                 ids[counter].slave_index = modified_vars[counter].simulator;
                 ids[counter].type = to_c_variable_type(modified_vars[counter].type);
                 ids[counter].variable_index = modified_vars[counter].index;
-
-                ++counter;
             }
         }
 
