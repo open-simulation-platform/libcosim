@@ -175,7 +175,6 @@ public:
      *      solver doesn't use error estimation, it will just ignore this
      *      parameter.
      */
-
     virtual boost::fibers::future<void> setup(
         time_point startTime,
         std::optional<time_point> stopTime,
