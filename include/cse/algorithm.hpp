@@ -226,7 +226,6 @@ public:
   *  propagate initial values between simulators and/or bring the system
   *  to a steady state.
   */
-
     virtual boost::fibers::future<void> do_iteration() = 0;
 
     /**
