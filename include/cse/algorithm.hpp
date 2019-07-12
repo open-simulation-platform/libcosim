@@ -222,7 +222,7 @@ public:
   *
   *  This function can be used in the initialisation phase, after `setup()`
   *  has been called and before the first `do_step()` call.  It enables
-  *  iterative initialisation of the system.  The purpose could be to
+     *  iterative initialisation of the system.  The purpose could be to
      *  propagate initial values between simulators and/or bring the system
      *  to a steady state.
      */
