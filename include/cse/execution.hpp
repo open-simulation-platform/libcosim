@@ -179,6 +179,7 @@ public:
 
     /// Returns a map of currently modified variables
     std::vector<variable_id> get_modified_variables();
+    
     /// Set initial value for a variable of type real. Must be called before simulation is started.
     void set_real_initial_value(simulator_index sim, variable_index var, double value);
 
