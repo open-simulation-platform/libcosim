@@ -931,7 +931,7 @@ int cse_scenario_abort(cse_manipulator* manipulator);
  *
  *  \param [in] execution
  *      The execution.
- *  \param [in] ids
+ *  \param [out] ids
  *      A list of cse_variable_id structs to contain the variable information.
  *  \param [in] numVariables
  *      The length of the `ids` array.
