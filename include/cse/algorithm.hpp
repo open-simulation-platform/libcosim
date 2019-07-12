@@ -217,7 +217,7 @@ public:
     virtual const std::unordered_set<variable_index> get_modified_string_indexes() const = 0;
 
     /**
-  *  Updates the simulator with new input values and makes it calculate
+     *  Updates the simulator with new input values and makes it calculate
      *  new output values, without advancing logical time.
      *
      *  This function can be used in the initialisation phase, after `setup()`
