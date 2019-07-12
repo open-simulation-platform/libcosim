@@ -201,17 +201,11 @@ public:
 
         auto index = 0;
         for (const auto& sim : simulators_) {
-            //const auto sim = std::dynamic_pointer_cast<cse::slave_simulator>(simulator);
 
-            std::vector<variable_id> realIds;
-            std::vector<variable_id> intIds;
-            std::vector<variable_id> boolIds;
-            std::vector<variable_id> stringIds;
-
-            auto realIndexes = sim->get_modified_real_indexes();
-            auto intIndexes = sim->get_modified_integer_indexes();
-            auto boolIndexes = sim->get_modified_boolean_indexes();
-            auto stringIndexes = sim->get_modified_string_indexes();
+            const auto& realIndexes = sim->get_modified_real_indexes();
+            const auto& intIndexes = sim->get_modified_integer_indexes();
+            const auto& boolIndexes = sim->get_modified_boolean_indexes();
+            const auto& stringIndexes = sim->get_modified_string_indexes();
 
             for (const auto& varIndex : realIndexes) {
                 variable_id var = {index, variable_type::real, varIndex};
@@ -220,17 +214,17 @@ public:
 
             for (const auto& varIndex : intIndexes) {
                 variable_id var = {index, variable_type::integer, varIndex};
-                intIds.push_back(var);
+                modifiedVariables.push_back(var);
             }
 
             for (const auto& varIndex : boolIndexes) {
                 variable_id var = {index, variable_type::boolean, varIndex};
-                boolIds.push_back(var);
+                modifiedVariables.push_back(var);
             }
 
             for (const auto& varIndex : stringIndexes) {
                 variable_id var = {index, variable_type::string, varIndex};
-                stringIds.push_back(var);
+                modifiedVariables.push_back(var);
             }
 
             index++;
