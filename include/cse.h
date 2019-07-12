@@ -926,7 +926,7 @@ int cse_scenario_is_running(cse_manipulator* manipulator);
 /// Aborts the execution of a running scenario
 int cse_scenario_abort(cse_manipulator* manipulator);
 
-/*
+/**
  * Retrieves a list of the currently modified variables in the simulation.
  *
  *  \param [in] execution
