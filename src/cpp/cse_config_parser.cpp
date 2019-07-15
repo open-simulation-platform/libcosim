@@ -234,6 +234,64 @@ void connect_variables(
     }
 }
 
+void connect_plugs_and_sockets(
+    std::vector<cse_config_parser::Connection> plugSocketConnections,
+    std::unordered_map<std::string, slave_info>& slaves,
+    cse::execution& execution,
+    std::unordered_map<std::string, extended_model_description> emds) {
+
+    for (const auto& connection : plugSocketConnections) {
+        const auto& plugVariables = emds.at(connection.sourceSimulator).plugs.at(connection.sourceConnector).variables;
+        const auto& socketVariables = emds.at(connection.targetSimulator).sockets.at(connection.targetConnector).variables;
+
+        assert(plugVariables.size() == socketVariables.size());
+        
+        std::vector<cse_config_parser::Connection> variableConnections;
+
+        for (std::size_t i = 0; i < plugVariables.size(); ++i) {
+            variableConnections.push_back({connection.sourceSimulator,
+                                            plugVariables.at(i),
+                                            connection.targetSimulator,
+                                            socketVariables.at(i)});
+        }
+
+        connect_variables(variableConnections, slaves, execution);
+    }
+}
+
+void connect_bonds(
+    std::vector<cse_config_parser::Connection> bondConnections,
+    std::unordered_map<std::string, slave_info>& slaves,
+    cse::execution& execution,
+    std::unordered_map<std::string, extended_model_description> emds) {
+    
+    for (const auto& connection : bondConnections) {
+        auto const& bondAPlugs = emds.at(connection.sourceSimulator).bonds.at(connection.sourceConnector).plugs;
+        auto const& bondBSockets = emds.at(connection.targetSimulator).bonds.at(connection.targetConnector).sockets;        
+        assert(bondAPlugs.size() == bondBSockets.size());
+        std::vector<cse_config_parser::Connection> plugSocketConnectionsA;
+        for (std::size_t i = 0; i < bondAPlugs.size(); ++i) {
+            plugSocketConnectionsA.push_back({connection.sourceSimulator,
+                                            bondAPlugs.at(i),
+                                            connection.targetSimulator,
+                                            bondBSockets.at(i)});
+        }
+        connect_plugs_and_sockets(plugSocketConnectionsA, slaves, execution, emds);
+
+        auto const& bondASockets = emds.at(connection.sourceSimulator).bonds.at(connection.sourceConnector).sockets;
+        auto const& bondBPlugs = emds.at(connection.targetSimulator).bonds.at(connection.targetConnector).plugs;        
+        assert(bondASockets.size() == bondBPlugs.size());
+        std::vector<cse_config_parser::Connection> plugSocketConnectionsB;
+        for (std::size_t i = 0; i < bondASockets.size(); ++i) {
+            plugSocketConnectionsB.push_back({connection.targetSimulator,
+                                            bondBPlugs.at(i),
+                                            connection.sourceSimulator,
+                                            bondASockets.at(i)});
+        }
+        connect_plugs_and_sockets(plugSocketConnectionsB, slaves, execution, emds);
+    }
+}
+
 std::pair<execution, simulator_map> load_cse_config(
     cse::model_uri_resolver& resolver,
     const boost::filesystem::path& configPath,
@@ -273,45 +331,9 @@ std::pair<execution, simulator_map> load_cse_config(
         emds.emplace(simulator.name, msmiFilePath);
     }
 
-    connect_variables(parser.get_variable_connections(), slaves, execution);
-
-//    for (const auto& connection : parser.get_variable_connections()) {
-//        cse::variable_id output = {slaves[connection.sourceSimulator].index,
-//            slaves[connection.sourceSimulator].variables[connection.sourceConnector].type,
-//            slaves[connection.sourceSimulator].variables[connection.sourceConnector].index};
-//
-//        cse::variable_id input = {slaves[connection.targetSimulator].index,
-//            slaves[connection.targetSimulator].variables[connection.targetConnector].type,
-//            slaves[connection.targetSimulator].variables[connection.targetConnector].index};
-//
-//        execution.connect_variables(output, input);
-//    }
-
-    for (const auto& connection : parser.get_plug_socket_connections()) {
-
-        const auto& plugVariables = emds.at(connection.sourceSimulator).plugs.at(connection.sourceConnector).variables;
-        const auto& socketVariables = emds.at(connection.targetSimulator).sockets.at(connection.targetConnector).variables;
-
-        assert(plugVariables.size() == socketVariables.size());
-
-        for (std::size_t i = 0; i < plugVariables.size(); ++i) {
-            const auto& plugVarName = plugVariables.at(i);
-            const auto& socketVarName = socketVariables.at(i);
-
-            std::cout << "Connecting " << connection.sourceSimulator << "." << plugVarName << " to "
-                << connection.targetSimulator << "." << socketVarName << std::endl;
-
-            cse::variable_id output = {slaves[connection.sourceSimulator].index,
-                                       slaves[connection.sourceSimulator].variables[plugVarName].type,
-                                       slaves[connection.sourceSimulator].variables[plugVarName].index};
-
-            cse::variable_id input = {slaves[connection.targetSimulator].index,
-                                      slaves[connection.targetSimulator].variables[socketVarName].type,
-                                      slaves[connection.targetSimulator].variables[socketVarName].index};
-
-            execution.connect_variables(output, input);
-        }
-    }
+    connect_variables(parser.get_variable_connections(), slaves, execution);    
+    connect_plugs_and_sockets(parser.get_plug_socket_connections(), slaves, execution, emds);
+    connect_bonds(parser.get_bond_connections(), slaves, execution, emds);
 
     return std::make_pair(std::move(execution), std::move(simulatorMap));
 }
