@@ -54,7 +54,6 @@ class CSECoreConan(ConanFile):
     def build(self):
         cmake = self.configure_cmake()
         cmake.build()
-        cmake.test()
         self.run('cmake --build . --target doc')
 
     def package(self):
