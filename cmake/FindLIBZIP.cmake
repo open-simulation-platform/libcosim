@@ -72,7 +72,7 @@ if (LIBZIP_LIBRARY)
     set (LIBZIP_LIBRARIES "libzip::libzip")
 
     ##### required by conan when linking libzip statically  ####
-    set(interfaceLinkLibraries)
+    set(LIBZIP_interfaceLinkLibraries)
     if (BZip2_FOUND)
         list(APPEND LIBZIP_interfaceLinkLibraries BZip2::BZip2)
     endif()
