@@ -3,9 +3,8 @@
 #include "cse/algorithm.hpp"
 #include "cse/exception.hpp"
 #include "cse/fmi/fmu.hpp"
-#include "cse/log.hpp"
 #include "cse/log/logger.hpp"
-#include <cse/error.hpp>
+#include "cse/error.hpp"
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
@@ -291,7 +290,7 @@ std::pair<execution, simulator_map> load_ssp(
 
         for (const auto& p : component.parameters) {
             auto varIndex = find_variable(*model->description(), p.name).index;
-            BOOST_LOG_SEV(log::logger(), log::level::info)
+            BOOST_LOG_SEV(log::logger(), log::info)
                 << "Initializing variable " << component.name << ":" << p.name << " with value " << streamer{p.value};
             switch (p.type) {
                 case variable_type::real:

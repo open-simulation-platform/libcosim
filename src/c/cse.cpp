@@ -8,7 +8,7 @@
 #include <cse/execution.hpp>
 #include <cse/fmi/fmu.hpp>
 #include <cse/fmi/importer.hpp>
-#include <cse/log.hpp>
+#include <cse/log/simple.hpp>
 #include <cse/manipulator.hpp>
 #include <cse/model.hpp>
 #include <cse/observer.hpp>
@@ -142,8 +142,6 @@ cse_execution* cse_execution_create(cse_time_point startTime, cse_duration stepS
     try {
         // No exceptions are possible right now, so try...catch and unique_ptr
         // are strictly unnecessary, but this will change soon enough.
-        cse::log::set_global_output_level(cse::log::level::info);
-
         auto execution = std::make_unique<cse_execution>();
 
         execution->cpp_execution = std::make_unique<cse::execution>(
@@ -162,7 +160,6 @@ cse_execution* cse_execution_create(cse_time_point startTime, cse_duration stepS
 cse_execution* cse_ssp_execution_create(const char* sspDir, cse_time_point startTime)
 {
     try {
-        cse::log::set_global_output_level(cse::log::level::info);
         auto execution = std::make_unique<cse_execution>();
 
         auto resolver = cse::default_model_uri_resolver();
@@ -1082,5 +1079,44 @@ int cse_get_modified_variables(cse_execution* execution, cse_variable_id ids[], 
         execution->error_code = CSE_ERRC_UNSPECIFIED;
         handle_current_exception();
         return failure;
+    }
+}
+
+
+int cse_log_setup_simple_console_logging()
+{
+    try {
+        cse::log::setup_simple_console_logging();
+        return success;
+    } catch (...) {
+        handle_current_exception();
+        return failure;
+    }
+}
+
+
+void cse_log_set_output_level(cse_log_severity_level level)
+{
+    switch (level) {
+        case CSE_LOG_SEVERITY_TRACE:
+            cse::log::set_global_output_level(cse::log::trace);
+            break;
+        case CSE_LOG_SEVERITY_DEBUG:
+            cse::log::set_global_output_level(cse::log::debug);
+            break;
+        case CSE_LOG_SEVERITY_INFO:
+            cse::log::set_global_output_level(cse::log::info);
+            break;
+        case CSE_LOG_SEVERITY_WARNING:
+            cse::log::set_global_output_level(cse::log::warning);
+            break;
+        case CSE_LOG_SEVERITY_ERROR:
+            cse::log::set_global_output_level(cse::log::error);
+            break;
+        case CSE_LOG_SEVERITY_FATAL:
+            cse::log::set_global_output_level(cse::log::fatal);
+            break;
+        default:
+            assert(false);
     }
 }

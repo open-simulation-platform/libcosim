@@ -1,5 +1,4 @@
 #include "cse/algorithm.hpp"
-#include "cse/log.hpp"
 #include "cse/log/logger.hpp"
 #include "cse/manipulator.hpp"
 #include "cse/scenario.hpp"
@@ -49,12 +48,12 @@ public:
         }
         state.running = true;
 
-        BOOST_LOG_SEV(log::logger(), log::level::info) << "Successfully loaded scenario";
+        BOOST_LOG_SEV(log::logger(), log::info) << "Successfully loaded scenario";
     }
 
     void load_scenario(const boost::filesystem::path& scenarioFile, time_point currentTime)
     {
-        BOOST_LOG_SEV(log::logger(), log::level::info) << "Loading scenario from " << scenarioFile;
+        BOOST_LOG_SEV(log::logger(), log::info) << "Loading scenario from " << scenarioFile;
         auto scenario = parse_scenario(scenarioFile, simulators_);
         load_scenario(scenario, currentTime);
     }
@@ -70,7 +69,7 @@ public:
 
         bool timedOut = state.endTime ? relativeTime >= *state.endTime : true;
         if (state.remainingEvents.empty() && timedOut) {
-            BOOST_LOG_SEV(log::logger(), log::level::info)
+            BOOST_LOG_SEV(log::logger(), log::info)
                 << "Scenario finished at relative time "
                 << to_double_time_point(relativeTime)
                 << ", performing cleanup";
@@ -108,7 +107,7 @@ public:
 
     void abort_scenario()
     {
-        BOOST_LOG_SEV(log::logger(), log::level::info)
+        BOOST_LOG_SEV(log::logger(), log::info)
             << "Scenario aborted, performing cleanup";
         state.running = false;
         cleanup(state.executedEvents);
@@ -172,7 +171,7 @@ private:
     bool maybe_run_event(time_point relativeTime, const scenario::event& e)
     {
         if (relativeTime >= e.time) {
-            BOOST_LOG_SEV(log::logger(), log::level::info)
+            BOOST_LOG_SEV(log::logger(), log::info)
                 << "Executing action for simulator " << e.action.simulator
                 << ", variable " << e.action.variable
                 << ", at relative time " << to_double_time_point(relativeTime);
@@ -184,7 +183,7 @@ private:
 
     void cleanup_action(simulator* sim, const scenario::variable_action& a)
     {
-        BOOST_LOG_SEV(log::logger(), log::level::info)
+        BOOST_LOG_SEV(log::logger(), log::info)
             << "Resetting variable for simulator " << a.simulator
             << ", variable " << a.variable;
         std::visit(

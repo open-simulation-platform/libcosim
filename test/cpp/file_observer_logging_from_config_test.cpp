@@ -3,7 +3,7 @@
 #include <cse/algorithm.hpp>
 #include <cse/async_slave.hpp>
 #include <cse/execution.hpp>
-#include <cse/log.hpp>
+#include <cse/log/simple.hpp>
 #include <cse/observer/file_observer.hpp>
 
 #include <boost/filesystem.hpp>
@@ -20,6 +20,9 @@
 int main()
 {
     try {
+        cse::log::setup_simple_console_logging();
+        cse::log::set_global_output_level(cse::log::debug);
+
         constexpr cse::time_point startTime = cse::to_time_point(0.0);
         constexpr cse::time_point endTime = cse::to_time_point(10.0);
         constexpr cse::duration stepSize = cse::to_duration(0.1);
@@ -31,7 +34,6 @@ int main()
         const auto logPath = boost::filesystem::current_path() / "logs";
         boost::filesystem::path csvPath = boost::filesystem::path(logPath);
 
-        cse::log::set_global_output_level(cse::log::level::debug);
 
         // Set up the execution and add observer
         auto execution = cse::execution(startTime, std::make_unique<cse::fixed_step_algorithm>(stepSize));

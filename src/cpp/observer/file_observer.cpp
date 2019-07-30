@@ -1,7 +1,6 @@
 #include "cse/observer/file_observer.hpp"
 
 #include "cse/error.hpp"
-#include "cse/log.hpp"
 #include "cse/log/logger.hpp"
 
 #include <boost/date_time/local_time/local_time.hpp>
@@ -396,7 +395,7 @@ void file_observer::parse_config(const std::string& simulatorName)
                 const auto variableDescription =
                     find_variable(simulator->model_description(), name);
 
-                BOOST_LOG_SEV(log::logger(), log::level::info) << "Logging variable: " << modelName << ":" << name;
+                BOOST_LOG_SEV(log::logger(), log::info) << "Logging variable: " << modelName << ":" << name;
 
                 switch (variableDescription.type) {
                     case variable_type::real:

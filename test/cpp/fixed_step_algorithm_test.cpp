@@ -3,7 +3,7 @@
 #include <cse/algorithm.hpp>
 #include <cse/async_slave.hpp>
 #include <cse/execution.hpp>
-#include <cse/log.hpp>
+#include <cse/log/simple.hpp>
 #include <cse/observer/last_value_observer.hpp>
 #include <cse/observer/time_series_observer.hpp>
 
@@ -20,13 +20,14 @@
 int main()
 {
     try {
+        cse::log::setup_simple_console_logging();
+        cse::log::set_global_output_level(cse::log::debug);
+
         constexpr int numSlaves = 10;
         constexpr cse::time_point startTime;
         constexpr cse::time_point midTime = cse::to_time_point(0.6);
         constexpr cse::time_point endTime = cse::to_time_point(1.0);
         constexpr cse::duration stepSize = cse::to_duration(0.1);
-
-        cse::log::set_global_output_level(cse::log::level::debug);
 
         // Set up execution
         auto execution = cse::execution(
