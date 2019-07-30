@@ -262,7 +262,7 @@ std::pair<execution, simulator_map> load_ssp(
     std::optional<cse::time_point> overrideStartTime)
 {
     simulator_map simulatorMap;
-    const auto ssdPath = sspDir / "SystemStructure.ssd";
+    const auto ssdPath = boost::filesystem::absolute(sspDir) / "SystemStructure.ssd";
     const auto baseURI = path_to_file_uri(ssdPath);
     const auto parser = ssp_parser(ssdPath);
 
