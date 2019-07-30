@@ -115,6 +115,9 @@ void run_threads(remote_fmu& fmu)
 
 int main(int argc, char** argv)
 {
+    cse::log::setup_simple_console_logging();
+    cse::log::set_global_output_level(cse::log::debug);
+
     if (argc != 4) {
         std::cerr << "Missing one or more program arguments: [url:string host:string port:int]" << std::endl;
         return 1;

@@ -15,6 +15,9 @@
 int main()
 {
     try {
+        cse::log::setup_simple_console_logging();
+        cse::log::set_global_output_level(cse::log::debug);
+
         constexpr cse::time_point startTime = cse::to_time_point(0.0);
         constexpr cse::time_point endTime = cse::to_time_point(1.1);
         constexpr cse::duration stepSize = cse::to_duration(0.1);

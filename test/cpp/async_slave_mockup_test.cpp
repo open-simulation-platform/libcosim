@@ -116,6 +116,9 @@ void run_test(std::shared_ptr<cse::async_slave> (*make_async)(std::shared_ptr<cs
 int main()
 {
     try {
+        cse::log::setup_simple_console_logging();
+        cse::log::set_global_output_level(cse::log::debug);
+
         run_test(cse::make_pseudo_async);
         run_test(cse::make_background_thread_slave);
     } catch (const std::exception& e) {
