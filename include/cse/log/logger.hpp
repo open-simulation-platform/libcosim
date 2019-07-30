@@ -46,7 +46,7 @@ constexpr severity_level fatal = boost::log::trivial::fatal;
  *  This keyword should be used when referring to the "Severity" attribute
  *  in filters and formatters.
  */
-constexpr auto severity = boost::log::trivial::severity;
+const auto severity = boost::log::trivial::severity;
 
 
 /// The logger type used by this library, a thread-safe severity logger.
