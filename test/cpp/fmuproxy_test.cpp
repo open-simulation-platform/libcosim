@@ -11,6 +11,7 @@
 // clang-format on
 #include <cse/algorithm.hpp>
 #include <cse/execution.hpp>
+#include <cse/log/simple.hpp>
 
 
 using namespace cse;
