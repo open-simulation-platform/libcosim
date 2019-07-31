@@ -14,6 +14,7 @@ set(publicHeaders
     "fmi/v2/fmu.hpp"
     "lib_info.hpp"
     "log/logger.hpp"
+    "log/simple.hpp"
     "model.hpp"
     "observer.hpp"
     "observer/observer.hpp"
