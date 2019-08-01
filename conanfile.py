@@ -59,7 +59,7 @@ class CSECoreConan(ConanFile):
         cmake = self.configure_cmake()
         cmake.build()
         if not self.options.doxygen:
-            self.run('cmake --build')
+            self.run('cmake --build .')
         else:
             self.run('cmake --build . --target doc')
 
