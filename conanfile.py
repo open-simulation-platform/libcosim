@@ -58,16 +58,12 @@ class CSECoreConan(ConanFile):
     def build(self):
         cmake = self.configure_cmake()
         cmake.build()
-        if not self.options.documentation:
-            self.run('cmake --build .')
-        else:
+        if self.options.documentation:
             self.run('cmake --build . --target doc')
 
     def package(self):
         cmake = self.configure_cmake()
-        if not self.options.documentation:
-            self.run('cmake --build %s' % self.build_folder)
-        else:
+        if self.options.documentation:
             self.run('cmake --build %s --target install-doc' % self.build_folder)
         cmake.install()
 
