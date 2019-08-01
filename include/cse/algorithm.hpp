@@ -180,6 +180,41 @@ public:
         std::optional<time_point> stopTime,
         std::optional<double> relativeTolerance) = 0;
 
+    /**
+     *
+     * Returns all variable_indexes of real type with an active modifier.
+     *
+     * @return modifiedRealIndexes
+     * Unordered set of all variable_indexes that currently have an active modifier.
+     */
+    virtual const std::unordered_set<variable_index>& get_modified_real_indexes() const = 0;
+
+    /**
+     *
+     * Returns all variable_indexes of integer type with an active modifier.
+     *
+     * @return modifiedIntegerIndexes
+     * Unordered set of all variable_indexes that currently have an active modifier.
+     */
+    virtual const std::unordered_set<variable_index>& get_modified_integer_indexes() const = 0;
+
+    /**
+     *
+     * Returns all variable_indexes of boolean type with an active modifier.
+     *
+     * @return modifiedBooleanIndexes
+     * Unordered set of all variable_indexes that currently have an active modifier.
+     */
+    virtual const std::unordered_set<variable_index>& get_modified_boolean_indexes() const = 0;
+
+    /**
+     *
+     * Returns all variable_indexes of string type with an active modifier.
+     *
+     * @return modifiedStringIndexes
+     * Unordered set of all variable_indexes that currently have an active modifier.
+     */
+    virtual const std::unordered_set<variable_index>& get_modified_string_indexes() const = 0;
 
     /**
      *  Updates the simulator with new input values and makes it calculate

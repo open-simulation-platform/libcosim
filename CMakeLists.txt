@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.9)
-project("csecore" VERSION "0.3.0")
+project("csecore" VERSION "0.4.0")
 
 # ==============================================================================
 # Build settings
@@ -208,3 +208,14 @@ write_basic_package_version_file(
     VERSION "${PROJECT_VERSION}"
     COMPATIBILITY "SameMajorVersion")
 install(FILES "${versionFile}" DESTINATION "${CSECORE_CMAKE_INSTALL_DIR}")
+
+# Install custom find modules
+install(FILES
+        "${CMAKE_SOURCE_DIR}/cmake/FindFMILibrary.cmake"
+        "${CMAKE_SOURCE_DIR}/cmake/FindLIBZIP.cmake"
+        "${CMAKE_SOURCE_DIR}/cmake/FindGSL.cmake"
+        "${CMAKE_SOURCE_DIR}/cmake/Findnlohmann_json.cmake"
+        "${CMAKE_SOURCE_DIR}/cmake/FindThrift.cmake"
+        DESTINATION
+        "${CSECORE_CMAKE_INSTALL_DIR}"
+)
