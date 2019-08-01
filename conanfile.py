@@ -23,11 +23,9 @@ class CSECoreConan(ConanFile):
         )
 
     options = {
-        "fmuproxy": [True, False],
-        "documentation": [True, False]
+        "fmuproxy": [True, False]
     }
     default_options = (
-        "documentation=True",
         "fmuproxy=False",
         "boost:shared=True"
         )
@@ -46,6 +44,7 @@ class CSECoreConan(ConanFile):
         cmake = CMake(self)
         cmake.parallel = False # Needed to keep stable build on Jenkins Windows Node
         cmake.definitions["CSECORE_USING_CONAN"] = "ON"
+        cmake.definitions["CSECORE_BUILD_TESTS"] = "OFF"
         cmake.definitions["CSECORE_BUILD_APIDOC"] = "ON" if self.options.documentation else "OFF"
         if self.options.documentation and self.settings.build_type == "Debug":
             cmake.definitions["CSECORE_BUILD_PRIVATE_APIDOC"] = "ON"
@@ -58,13 +57,9 @@ class CSECoreConan(ConanFile):
     def build(self):
         cmake = self.configure_cmake()
         cmake.build()
-        if self.options.documentation:
-            self.run('cmake --build . --target doc')
 
     def package(self):
         cmake = self.configure_cmake()
-        if self.options.documentation:
-            self.run('cmake --build %s --target install-doc' % self.build_folder)
         cmake.install()
 
     def package_info(self):
