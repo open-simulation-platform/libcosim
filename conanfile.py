@@ -22,8 +22,12 @@ class CSECoreConan(ConanFile):
         "jsonformoderncpp/3.5.0@vthiery/stable"
         )
 
-    options = {"fmuproxy": [True, False]}
+    options = {
+        "fmuproxy": [True, False],
+        "doxygen": [True, False]
+    }
     default_options = (
+        "doxygen=True"
         "fmuproxy=False",
         "boost:shared=True",
         "libzip:shared=True"
@@ -43,7 +47,8 @@ class CSECoreConan(ConanFile):
         cmake = CMake(self)
         cmake.parallel = False # Needed to keep stable build on Jenkins Windows Node
         cmake.definitions["CSECORE_USING_CONAN"] = "ON"
-        if self.settings.build_type == "Debug":
+        cmake.definitions["CSECORE_BUILD_APIDOC"] = "ON" if self.options.doxygen else "OFF"
+        if self.options.doxygen and self.settings.build_type == "Debug":
             cmake.definitions["CSECORE_BUILD_PRIVATE_APIDOC"] = "ON"
         if self.options.fmuproxy:
             cmake.definitions["CSECORE_WITH_FMUPROXY"] = "ON"
