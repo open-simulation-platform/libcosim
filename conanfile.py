@@ -27,7 +27,7 @@ class CSECoreConan(ConanFile):
         "doxygen": [True, False]
     }
     default_options = (
-        "doxygen=True"
+        "doxygen=True",
         "fmuproxy=False",
         "boost:shared=True",
         "libzip:shared=True"
