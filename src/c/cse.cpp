@@ -231,6 +231,11 @@ int cse_slave_get_num_variables(cse_execution* execution, cse_slave_index slave)
     return -1;
 }
 
+int cse_get_num_modified_variables(cse_execution* execution)
+{
+    return static_cast<int>(execution->cpp_execution->get_modified_variables().size());
+}
+
 cse_variable_variability to_variable_variability(const cse::variable_variability& vv)
 {
     switch (vv) {
@@ -315,7 +320,6 @@ int cse_slave_get_variables(cse_execution* execution, cse_slave_index slave, cse
         return failure;
     }
 }
-
 
 struct cse_slave_s
 {
@@ -826,6 +830,7 @@ int cse_observer_start_observing(cse_observer* observer, cse_slave_index slave, 
         return failure;
     }
 }
+
 int cse_observer_stop_observing(cse_observer* observer, cse_slave_index slave, cse_variable_type type, cse_variable_index index)
 {
     try {
@@ -1053,6 +1058,29 @@ int cse_scenario_abort(cse_manipulator* manipulator)
         manager->abort_scenario();
         return success;
     } catch (...) {
+        handle_current_exception();
+        return failure;
+    }
+}
+
+int cse_get_modified_variables(cse_execution* execution, cse_variable_id ids[], size_t numVariables)
+{
+    try {
+        auto modified_vars = execution->cpp_execution->get_modified_variables();
+        size_t counter = 0;
+
+        if (!modified_vars.empty()) {
+            for (; counter < std::min(numVariables, modified_vars.size()); counter++) {
+                ids[counter].slave_index = modified_vars[counter].simulator;
+                ids[counter].type = to_c_variable_type(modified_vars[counter].type);
+                ids[counter].variable_index = modified_vars[counter].index;
+            }
+        }
+
+        return static_cast<int>(counter);
+    } catch (...) {
+        execution->state = CSE_EXECUTION_ERROR;
+        execution->error_code = CSE_ERRC_UNSPECIFIED;
         handle_current_exception();
         return failure;
     }

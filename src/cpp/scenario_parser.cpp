@@ -99,6 +99,11 @@ cse::scenario::variable_action generate_action(
             return cse::scenario::variable_action{
                 sim, var, cse::scenario::integer_modifier{f}, isInput};
         }
+        case cse::variable_type::boolean: {
+            auto f = generate_modifier<bool>(mode, event);
+            return cse::scenario::variable_action{
+                sim, var, cse::scenario::boolean_modifier{f}, isInput};
+        }
         default:
             std::ostringstream oss;
             oss << "No scenario action support for variable type: " << to_text(type);
