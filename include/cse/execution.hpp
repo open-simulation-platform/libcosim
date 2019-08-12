@@ -53,9 +53,9 @@ inline bool operator!=(const variable_id& a, const variable_id& b) noexcept
 /// Writes a textual representation of `v` to `stream`.
 inline std::ostream& operator<<(std::ostream& stream, variable_id v)
 {
-    return stream << "simulator index: " << v.simulator
-                  << ", variable index: " << v.index
-                  << ", variable type: " << v.type;
+    return stream << "(simulator " << v.simulator
+                  << ", type " << v.type
+                  << ", variable " << v.index << ")";
 }
 
 } // namespace cse
@@ -232,7 +232,7 @@ public:
 
     /// Returns a map of currently modified variables
     std::vector<variable_id> get_modified_variables();
-    
+
     /// Set initial value for a variable of type real. Must be called before simulation is started.
     void set_real_initial_value(simulator_index sim, variable_index var, double value);
 

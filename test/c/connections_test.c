@@ -57,9 +57,6 @@ int main()
     rc = cse_execution_connect_real_variables(execution, slaveIndex1, 0, slaveIndex2, 0);
     if (rc < 0) { goto Lerror; }
 
-    fprintf(stderr, "Got this far");
-
-
     rc = cse_execution_connect_integer_variables(execution, slaveIndex1, 0, slaveIndex2, 0);
     if (rc < 0) { goto Lerror; }
 

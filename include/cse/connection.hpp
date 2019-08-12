@@ -6,6 +6,8 @@
 #include "cse/execution.hpp"
 #include "cse/model.hpp"
 
+#include <gsl/span>
+
 #include <string_view>
 #include <variant>
 #include <vector>
@@ -25,18 +27,18 @@ class connection
 {
 public:
     /// Returns the source variables of the connection.
-    const std::vector<variable_id>& get_sources() const
+    gsl::span<variable_id> get_sources()
     {
-        return sources_;
+        return gsl::make_span(sources_);
     }
 
     /// Sets the value of a source variable.
     virtual void set_source_value(variable_id id, std::variant<double, int, bool, std::string_view> value) = 0;
 
     /// Returns the destination variables of the connection.
-    const std::vector<variable_id>& get_destinations() const
+    gsl::span<variable_id> get_destinations()
     {
-        return destinations_;
+        return gsl::make_span(destinations_);
     }
 
     /// Returns the value of a destination variable.

@@ -56,12 +56,6 @@ int main()
             }
         }
 
-        // Test for issue #284, "fixed_step_algorithm crashes when a variable is reconnected".
-        // The following statement should be a no-op.
-        execution.connect_variables(
-            cse::variable_id{0, cse::variable_type::real, realOutIndex},
-            cse::variable_id{1, cse::variable_type::real, realInIndex});
-
         auto observer2 = std::make_shared<cse::time_series_observer>();
         execution.add_observer(observer2);
         observer2->start_observing(cse::variable_id{9, cse::variable_type::real, realOutIndex});
