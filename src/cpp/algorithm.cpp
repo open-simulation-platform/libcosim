@@ -265,7 +265,7 @@ private:
         }
     }
 
-    bool decimation_factor_match(variable_id destination, const gsl::span<variable_id>& sources)
+    bool decimation_factor_match(variable_id destination, gsl::span<variable_id> sources)
     {
         const auto idf = simulators_[destination.simulator].decimationFactor;
         bool match = true;
