@@ -109,7 +109,7 @@ std::shared_ptr<model> file_uri_sub_resolver::lookup_model(const uri& modelUri)
         return nullptr;
     }
     if (modelUri.query().has_value() || modelUri.fragment().has_value()) {
-        BOOST_LOG_SEV(log::logger(), log::level::warning)
+        BOOST_LOG_SEV(log::logger(), log::warning)
             << "Query and/or fragment component(s) in a file:// URI were ignored: "
             << modelUri;
     }

@@ -941,6 +941,44 @@ int cse_scenario_abort(cse_manipulator* manipulator);
  */
 int cse_get_modified_variables(cse_execution* execution, cse_variable_id ids[], size_t numVariables);
 
+
+/// Severity levels for log messages.
+typedef enum
+{
+    CSE_LOG_SEVERITY_TRACE,
+    CSE_LOG_SEVERITY_DEBUG,
+    CSE_LOG_SEVERITY_INFO,
+    CSE_LOG_SEVERITY_WARNING,
+    CSE_LOG_SEVERITY_ERROR,
+    CSE_LOG_SEVERITY_FATAL
+} cse_log_severity_level;
+
+
+/**
+ *  Configures simple console logging.
+ *
+ *  Note that the library may produce log messages before this function is
+ *  called, but then it uses the default or existing settings of the underlying
+ *  logging framework (Boost.Log).
+ *
+ *  \returns
+ *      0 on success and -1 on error.
+ */
+int cse_log_setup_simple_console_logging();
+
+
+/**
+ *  Installs a global severity level filter for log messages.
+ *
+ *  This function sets up a log message filter which ensures that only messages
+ *  whose severity level is at least `level` will be printed.
+ *
+ *  \param [in] level
+ *      The minimum visible severity level.
+ */
+void cse_log_set_output_level(cse_log_severity_level level);
+
+
 #ifdef __cplusplus
 } // extern(C)
 #endif

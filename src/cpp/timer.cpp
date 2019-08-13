@@ -1,6 +1,5 @@
 #include "cse/timer.hpp"
 
-#include "cse/log.hpp"
 #include "cse/log/logger.hpp"
 
 #include <atomic>
