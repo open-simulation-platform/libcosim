@@ -11,6 +11,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 * Give client code more control over logging ([PR#314](https://github.com/open-simulation-platform/cse-core/pull/314))
    
 ##### Fixed
+* Cannot run JavaFMI generated FMUs ([PR#268](https://github.com/open-simulation-platform/cse-core/pull/268))
 * Prevent crash when a variable is reconnected ([PR#285](https://github.com/open-simulation-platform/cse-core/pull/285))
 
 ### [v0.3.0] – 2019-06-26 
