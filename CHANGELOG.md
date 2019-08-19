@@ -3,7 +3,7 @@ All notable changes to cse-core will be documented in this file. This includes n
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
-### [v0.4.0] – 2019-06-26 
+### [v0.4.0] – 2019-08-19 
 ##### Added
 * Initial variable values configurable from SSP ([PR#291](https://github.com/open-simulation-platform/cse-core/pull/291))
 * Allow boolean to be set from scenario ([PR#292](https://github.com/open-simulation-platform/cse-core/pull/292))
