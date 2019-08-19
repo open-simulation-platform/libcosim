@@ -3,6 +3,16 @@ All notable changes to cse-core will be documented in this file. This includes n
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
+### [v0.4.0] – 2019-08-19 
+##### Added
+* Initial variable values configurable from SSP ([PR#291](https://github.com/open-simulation-platform/cse-core/pull/291))
+* Allow boolean to be set from scenario ([PR#292](https://github.com/open-simulation-platform/cse-core/pull/292))
+* Providing overview of modified variables ([PR#296](https://github.com/open-simulation-platform/cse-core/pull/296))
+* Give client code more control over logging ([PR#314](https://github.com/open-simulation-platform/cse-core/pull/314))
+   
+##### Fixed
+* Cannot run JavaFMI generated FMUs ([PR#268](https://github.com/open-simulation-platform/cse-core/pull/268))
+* Prevent crash when a variable is reconnected ([PR#285](https://github.com/open-simulation-platform/cse-core/pull/285))
 
 ### [v0.3.0] – 2019-06-26 
 ##### Added
@@ -32,3 +42,4 @@ First OSP JIP partner release
 
 [v0.2.0]: https://github.com/open-simulation-platform/cse-core/compare/v0.1.0...v0.2.0
 [v0.3.0]: https://github.com/open-simulation-platform/cse-core/compare/v0.2.0...v0.3.0
+[v0.4.0]: https://github.com/open-simulation-platform/cse-core/compare/v0.3.0...v0.4.0
