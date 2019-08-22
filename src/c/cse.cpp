@@ -398,7 +398,7 @@ int cse_execution_step(cse_execution* execution, size_t numSteps)
 int cse_execution_simulate_until(cse_execution* execution, cse_time_point targetTime)
 {
     if (execution->cpp_execution->is_running()) {
-        return success;
+        return failure;
     } else {
         execution->state = CSE_EXECUTION_RUNNING;
         try {
