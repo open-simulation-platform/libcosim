@@ -6,12 +6,13 @@
 #include "cse/error.hpp"
 #include "cse/exception.hpp"
 
+#include <gsl/span>
+
 #include <algorithm>
 #include <numeric>
 #include <sstream>
 #include <unordered_map>
 #include <vector>
-
 
 namespace
 {
@@ -57,31 +58,28 @@ public:
 
     void remove_simulator(simulator_index i)
     {
+        remove_connections(i);
         simulators_.erase(i);
-        disconnect_simulator_variables(i);
     }
 
-    void connect_variables(
-        variable_id output,
-        variable_id input,
-        bool inputAlreadyConnected)
+    void add_connection(std::shared_ptr<connection> c)
     {
-        if (inputAlreadyConnected) disconnect_variable(input);
-        simulators_[output.simulator].sim->expose_for_getting(output.type, output.index);
-        simulators_[input.simulator].sim->expose_for_setting(input.type, input.index);
-        simulators_[output.simulator].outgoingConnections.push_back({output, input});
-    }
-
-    void disconnect_variable(variable_id input)
-    {
-        for (auto& s : simulators_) {
-            auto& conns = s.second.outgoingConnections;
-            const auto it = std::find_if(
-                conns.begin(),
-                conns.end(),
-                [input](const auto& c) { return c.input == input; });
-            if (it != conns.end()) conns.erase(it);
+        for (const auto& source : c->get_sources()) {
+            auto& simInfo = find_simulator(source.simulator);
+            simInfo.sim->expose_for_getting(source.type, source.index);
+            simInfo.outgoingConnections[source].push_back(c);
         }
+        for (const auto& destination : c->get_destinations()) {
+            auto& simInfo = find_simulator(destination.simulator);
+            simInfo.sim->expose_for_setting(destination.type, destination.index);
+            simInfo.incomingConnections[destination] = c;
+        }
+    }
+
+    void remove_connection(std::shared_ptr<connection> c)
+    {
+        remove_sources(c);
+        remove_destinations(c);
     }
 
     void setup(time_point startTime, std::optional<time_point> stopTime)
@@ -95,8 +93,9 @@ public:
         setup_simulators();
         for (std::size_t i = 0; i < simulators_.size(); ++i) {
             iterate_simulators();
-            for (const auto& s : simulators_) {
-                transfer_variables(s.second.outgoingConnections);
+            for (const auto& entry : simulators_) {
+                transfer_sources(entry.first);
+                transfer_destinations(entry.first);
             }
         }
     }
@@ -106,6 +105,7 @@ public:
         for (auto& s : simulators_) {
             auto& info = s.second;
             if (stepCounter_ % info.decimationFactor == 0) {
+                transfer_destinations(s.first);
                 info.stepResult = info.sim->do_step(currentT, baseStepSize_ * info.decimationFactor);
             }
         }
@@ -136,7 +136,7 @@ public:
         }
 
         for (auto idx : finished) {
-            transfer_variables(simulators_.at(idx).outgoingConnections);
+            transfer_sources(idx);
         }
 
         return std::pair(baseStepSize_, std::move(finished));
@@ -150,33 +150,14 @@ public:
 
 
 private:
-    struct connection
-    {
-        variable_id output;
-        variable_id input;
-    };
-
     struct simulator_info
     {
         simulator* sim;
         int decimationFactor = 1;
         boost::fibers::future<step_result> stepResult;
-        std::vector<connection> outgoingConnections;
+        std::unordered_map<variable_id, std::vector<std::shared_ptr<connection>>> outgoingConnections;
+        std::unordered_map<variable_id, std::shared_ptr<connection>> incomingConnections;
     };
-
-    void disconnect_simulator_variables(simulator_index i)
-    {
-        for (auto& s : simulators_) {
-            auto conns = s.second.outgoingConnections;
-            const auto newEnd = std::remove_if(
-                conns.begin(),
-                conns.end(),
-                [i](const auto& c) {
-                    return c.input.simulator == i;
-                });
-            conns.erase(newEnd, conns.end());
-        }
-    }
 
     template<typename F>
     void for_all_simulators(F f)
@@ -217,58 +198,106 @@ private:
         });
     }
 
-    void transfer_variables(const std::vector<connection>& connections)
+    void remove_destinations(std::shared_ptr<connection> c)
     {
-        for (const auto& c : connections) {
-            const auto odf = simulators_[c.output.simulator].decimationFactor;
-            const auto idf = simulators_[c.input.simulator].decimationFactor;
-            if (stepCounter_ % std::lcm(odf, idf) == 0) {
-                switch (c.input.type) {
+        for (const auto& destinationId : c->get_destinations()) {
+            auto& connectedSim = find_simulator(destinationId.simulator);
+            connectedSim.incomingConnections.erase(destinationId);
+        }
+    }
+
+    void remove_sources(std::shared_ptr<connection> c)
+    {
+        for (const auto& sourceId : c->get_sources()) {
+            auto& sourceSim = find_simulator(sourceId.simulator);
+            auto& outgoingConns = sourceSim.outgoingConnections.at(sourceId);
+            outgoingConns.erase(std::remove(outgoingConns.begin(), outgoingConns.end(), c), outgoingConns.end());
+            if (outgoingConns.empty()) {
+                sourceSim.outgoingConnections.erase(sourceId);
+            }
+        }
+    }
+
+    void remove_connections(simulator_index i)
+    {
+        for (auto& entry : simulators_.at(i).outgoingConnections) {
+            for (auto& sourceConn : entry.second) {
+                remove_destinations(sourceConn);
+            }
+        }
+        for (auto& entry : simulators_.at(i).incomingConnections) {
+            remove_sources(entry.second);
+        }
+    }
+
+    simulator_info& find_simulator(simulator_index i)
+    {
+        auto sim = simulators_.find(i);
+        if (sim == simulators_.end()) {
+            std::ostringstream oss;
+            oss << "Cannot find simulator with index " << i;
+            throw std::out_of_range(oss.str());
+        }
+        return sim->second;
+    }
+
+    void transfer_sources(simulator_index i)
+    {
+        for (auto& [sourceVar, connections] : simulators_[i].outgoingConnections) {
+            for (const auto& c : connections) {
+                switch (sourceVar.type) {
                     case variable_type::real:
-                        transfer_real(c.output, c.input);
+                        c->set_source_value(sourceVar, simulators_.at(i).sim->get_real(sourceVar.index));
                         break;
                     case variable_type::integer:
-                        transfer_integer(c.output, c.input);
+                        c->set_source_value(sourceVar, simulators_.at(i).sim->get_integer(sourceVar.index));
                         break;
                     case variable_type::boolean:
-                        transfer_boolean(c.output, c.input);
+                        c->set_source_value(sourceVar, simulators_.at(i).sim->get_boolean(sourceVar.index));
                         break;
                     case variable_type::string:
-                        transfer_string(c.output, c.input);
+                        c->set_source_value(sourceVar, simulators_.at(i).sim->get_string(sourceVar.index));
                         break;
-                    case variable_type::enumeration:
+                    default:
                         CSE_PANIC();
                 }
             }
         }
     }
 
-    void transfer_real(variable_id output, variable_id input)
+    bool decimation_factor_match(variable_id destination, gsl::span<variable_id> sources)
     {
-        simulators_[input.simulator].sim->set_real(
-            input.index,
-            simulators_[output.simulator].sim->get_real(output.index));
+        const auto idf = simulators_[destination.simulator].decimationFactor;
+        bool match = true;
+        for (const auto& source : sources) {
+            const auto odf = simulators_[source.simulator].decimationFactor;
+            match &= (stepCounter_ % std::lcm(odf, idf) == 0);
+        }
+        return match;
     }
 
-    void transfer_integer(variable_id output, variable_id input)
+    void transfer_destinations(simulator_index i)
     {
-        simulators_[input.simulator].sim->set_integer(
-            input.index,
-            simulators_[output.simulator].sim->get_integer(output.index));
-    }
-
-    void transfer_boolean(variable_id output, variable_id input)
-    {
-        simulators_[input.simulator].sim->set_boolean(
-            input.index,
-            simulators_[output.simulator].sim->get_boolean(output.index));
-    }
-
-    void transfer_string(variable_id output, variable_id input)
-    {
-        simulators_[input.simulator].sim->set_string(
-            input.index,
-            simulators_[output.simulator].sim->get_string(output.index));
+        for (auto& [destVar, conn] : simulators_[i].incomingConnections) {
+            if (decimation_factor_match(destVar, conn->get_sources())) {
+                switch (destVar.type) {
+                    case variable_type::real:
+                        simulators_.at(i).sim->set_real(destVar.index, std::get<double>(conn->get_destination_value(destVar)));
+                        break;
+                    case variable_type::integer:
+                        simulators_.at(i).sim->set_integer(destVar.index, std::get<int>(conn->get_destination_value(destVar)));
+                        break;
+                    case variable_type::boolean:
+                        simulators_.at(i).sim->set_boolean(destVar.index, std::get<bool>(conn->get_destination_value(destVar)));
+                        break;
+                    case variable_type::string:
+                        simulators_.at(i).sim->set_string(destVar.index, std::get<std::string_view>(conn->get_destination_value(destVar)));
+                        break;
+                    default:
+                        CSE_PANIC();
+                }
+            }
+        }
     }
 
     const duration baseStepSize_;
@@ -316,20 +345,15 @@ void fixed_step_algorithm::remove_simulator(simulator_index i)
 }
 
 
-void fixed_step_algorithm::connect_variables(
-    variable_id output,
-    variable_id input,
-    bool inputAlreadyConnected)
+void fixed_step_algorithm::add_connection(std::shared_ptr<connection> c)
 {
-    pimpl_->connect_variables(output, input, inputAlreadyConnected);
+    pimpl_->add_connection(c);
 }
 
-
-void fixed_step_algorithm::disconnect_variable(variable_id input)
+void fixed_step_algorithm::remove_connection(std::shared_ptr<connection> c)
 {
-    pimpl_->disconnect_variable(input);
+    pimpl_->remove_connection(c);
 }
-
 
 void fixed_step_algorithm::setup(
     time_point startTime,

@@ -5,6 +5,7 @@ set(publicHeaders
     "algorithm.hpp"
     "async_slave.hpp"
     "config.hpp"
+    "connection.hpp"
     "exception.hpp"
     "execution.hpp"
     "ssp_parser.hpp"
@@ -45,6 +46,7 @@ set(privateHeaders
 set(sources
     "algorithm.cpp"
     "async_slave.cpp"
+    "connection.cpp"
     "exception.cpp"
     "execution.cpp"
     "ssp_parser.cpp"

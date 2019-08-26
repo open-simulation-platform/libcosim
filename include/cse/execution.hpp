@@ -9,9 +9,11 @@
 #include <cse/model.hpp>
 
 #include <boost/fiber/future.hpp>
+#include <boost/functional/hash.hpp>
 
 #include <memory>
 #include <optional>
+#include <sstream>
 
 
 namespace cse
@@ -48,12 +50,44 @@ inline bool operator!=(const variable_id& a, const variable_id& b) noexcept
     return !operator==(a, b);
 }
 
+/// Writes a textual representation of `v` to `stream`.
+inline std::ostream& operator<<(std::ostream& stream, variable_id v)
+{
+    return stream << "(simulator " << v.simulator
+                  << ", type " << v.type
+                  << ", variable " << v.index << ")";
+}
+
+} // namespace cse
+
+// Specialisation of std::hash for variable_id
+namespace std
+{
+template<>
+class hash<cse::variable_id>
+{
+public:
+    std::size_t operator()(const cse::variable_id& v) const noexcept
+    {
+        std::size_t seed = 0;
+        boost::hash_combine(seed, v.simulator);
+        boost::hash_combine(seed, v.type);
+        boost::hash_combine(seed, v.index);
+        return seed;
+    }
+};
+} // namespace std
+
+namespace cse
+{
+
 
 // Forward declarations
 class algorithm;
 class observer;
 class manipulator;
 class simulator;
+class connection;
 
 
 /**
@@ -104,19 +138,38 @@ public:
     void add_manipulator(std::shared_ptr<manipulator> man);
 
     /**
-     *  Connects an output variable to an input variable.
+     *  Adds a connection to the execution.
      *
-     *  After this, the values of the output variable will be passed to the
-     *  input value at the co-simulation algorithm's discretion.  Different
-     *  algorithms may handle this in different ways, and could for instance
-     *  choose to extrapolate or correct the variable value during transfer.
+     *  After this, the values of the connection's source variables will be
+     *  passed to the connection object, and from there to the connection's
+     *  destination variables at the co-simulation algorithm's discretion.
+     *  Different algorithms may handle this in different ways, and could for
+     *  instance choose to extrapolate or correct the variable value during
+     *  transfer.
      *
      *  When calling this method, the validity of both variables are checked
      *  against the metadata of their respective `simulator`s. If either is
      *  found to be invalid (i.e. not found, wrong type or causality, an
-     *  exception will be thrown.
+     *  exception will be thrown. If one of the connection's destination
+     *  variables is already connected, an exception will be thrown.
      */
-    void connect_variables(variable_id output, variable_id input);
+    void add_connection(std::shared_ptr<connection> conn);
+
+    /**
+     * Convenience method for removing a connection from the execution.
+     *
+     * Searches for a connection containing a destination variable which
+     * matches the `destination` argument and then removes it. Throws an
+     * exception if no such connection is found.
+     *
+     * @param destination
+     *      Any of the connection's destination variables.
+     */
+    void remove_connection(variable_id destination);
+
+    /// Returns all variable connections in the execution.
+    const std::vector<std::shared_ptr<connection>>& get_connections();
+
 
     /// Returns the current logical time.
     time_point current_time() const noexcept;
@@ -179,7 +232,7 @@ public:
 
     /// Returns a map of currently modified variables
     std::vector<variable_id> get_modified_variables();
-    
+
     /// Set initial value for a variable of type real. Must be called before simulation is started.
     void set_real_initial_value(simulator_index sim, variable_index var, double value);
 

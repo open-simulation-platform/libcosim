@@ -5,6 +5,7 @@
 #ifndef CSE_ALGORITHM_HPP
 #define CSE_ALGORITHM_HPP
 
+#include <cse/connection.hpp>
 #include <cse/execution.hpp>
 #include <cse/manipulator.hpp>
 #include <cse/model.hpp>
@@ -285,29 +286,25 @@ public:
     virtual void remove_simulator(simulator_index index) = 0;
 
     /**
-     *  Connects an output variable to an input variable.
+     * Adds a connection to the co-simulation.
      *
-     *  After this, the algorithm is responsible for acquiring the value of
-     *  the output variable and assigning it to the input variable at
-     *  communication points.
+     * After this, the algorithm is responsible for acquiring the values of
+     * the connection's source variables, and distributing the connection's
+     * destination variable values at communication points.
      *
-     *  \param output
-     *      A reference to the output variable.
-     *  \param input
-     *      A reference to the input variable.
-     *  \param inputAlreadyConnected
-     *      Whether the input has already been connected in a previous
-     *      `connect_variables()` call. If so, the previous connection must
-     *      be broken. This is meant as an aid to subclass implementors,
-     *      saving them from having to perform this check on every connection.
+     * It is assumed that the variables contained by the connection are valid
+     * and that there are no existing connections to any of the connection's
+     * destination variables.
      */
-    virtual void connect_variables(
-        variable_id output,
-        variable_id input,
-        bool inputAlreadyConnected) = 0;
+    virtual void add_connection(std::shared_ptr<connection> conn) = 0;
 
-    /// Breaks a previously established connection to input variable `input`.
-    virtual void disconnect_variable(variable_id input) = 0;
+    /**
+     * Removes a connection from the co-simulation.
+     *
+     * It is assumed that the connection has previously been added to the
+     * co-simulation with `add_connection()`.
+     */
+    virtual void remove_connection(std::shared_ptr<connection> conn) = 0;
 
     /**
      *  Performs initial setup.
@@ -388,11 +385,8 @@ public:
     // `algorithm` methods
     void add_simulator(simulator_index i, simulator* s) override;
     void remove_simulator(simulator_index i) override;
-    void connect_variables(
-        variable_id output,
-        variable_id input,
-        bool inputAlreadyConnected) override;
-    void disconnect_variable(variable_id input) override;
+    void add_connection(std::shared_ptr<connection> c) override;
+    void remove_connection(std::shared_ptr<connection> c) override;
     void setup(time_point startTime, std::optional<time_point> stopTime) override;
     void initialize() override;
     std::pair<duration, std::unordered_set<simulator_index>> do_step(time_point currentT) override;
