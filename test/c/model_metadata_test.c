@@ -53,6 +53,12 @@ int main()
         goto Lfailure;
     }
 
+    const char* expected_uuid = "ae713a03-634c-5da4-802e-9ea653e11f42";
+    if (0 != strncmp(info.uuid, expected_uuid, SLAVE_NAME_MAX_SIZE)) {
+        fprintf(stderr, "Expected uuid to be %s, got: %s\n", expected_uuid, info.uuid);
+        goto Lfailure;
+    }
+
     const char* expected_version = "0.3";
     if (0 != strncmp(info.version, expected_version, SLAVE_NAME_MAX_SIZE)) {
         fprintf(stderr, "Expected version to be %s, got: %s\n", expected_version, info.version);
@@ -66,7 +72,7 @@ int main()
     }
 
     const char* expected_description = "Has one input and one output of each type, and outputs are always set equal to inputs";
-    if (0 != strncmp(info.author, expected_author, SLAVE_NAME_MAX_SIZE)) {
+    if (0 != strncmp(info.description, expected_description, SLAVE_NAME_MAX_SIZE)) {
         fprintf(stderr, "Expected description to be %s, got: %s\n", expected_description, info.description);
         goto Lfailure;
     }
