@@ -10,6 +10,7 @@ set(tests
     "execution_from_ssp_test"
     "time_series_observer_test"
     "variable_metadata_test"
+    "model_metadata_test"
 )
 
 include("AddTestExecutable")
