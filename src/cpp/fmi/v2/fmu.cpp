@@ -15,7 +15,6 @@
 #include <cstdarg>
 #include <cstdlib>
 #include <cstring>
-#include <limits>
 #include <mutex>
 #include <stdexcept>
 #include <type_traits>
@@ -69,7 +68,7 @@ fmu::fmu(
         if (variable_type::enumeration != vd.type) {
             modelDescription_.variables.push_back(vd);
         } else {
-            BOOST_LOG_SEV(log::logger(), log::level::warning)
+            BOOST_LOG_SEV(log::logger(), log::warning)
                 << "FMI 2.0 Enumeration variable type not supported, variable with name "
                 << vd.name << " will be ignored";
         }
@@ -162,7 +161,7 @@ namespace
 {
 void step_finished_placeholder(fmi2_component_environment_t, fmi2_status_t)
 {
-    BOOST_LOG_SEV(log::logger(), log::level::debug)
+    BOOST_LOG_SEV(log::logger(), log::debug)
         << "FMU instance completed asynchronous step, "
            "but this feature is currently not supported";
 }
@@ -199,35 +198,35 @@ void log_message(
     assert(msgBuffer.back() == '\0');
 
     std::string statusName = "unknown";
-    log::level logLevel = log::level::error;
+    log::severity_level logLevel = log::error;
     switch (status) {
         case fmi2_status_ok:
             statusName = "ok";
-            logLevel = log::level::trace;
+            logLevel = log::trace;
             break;
         case fmi2_status_warning:
             statusName = "warning";
-            logLevel = log::level::warning;
+            logLevel = log::warning;
             break;
         case fmi2_status_discard:
             // Don't know if this ever happens, but we should at least
             // print a debug message if it does.
             statusName = "discard";
-            logLevel = log::level::debug;
+            logLevel = log::debug;
             break;
         case fmi2_status_error:
             statusName = "error";
-            logLevel = log::level::error;
+            logLevel = log::error;
             break;
         case fmi2_status_fatal:
             statusName = "fatal";
-            logLevel = log::level::error;
+            logLevel = log::error;
             break;
         case fmi2_status_pending:
             // Don't know if this ever happens, but we should at least
             // print a debug message if it does.
             statusName = "pending";
-            logLevel = log::level::debug;
+            logLevel = log::debug;
             break;
     }
     BOOST_LOG_SEV(log::logger(), logLevel)
@@ -327,8 +326,7 @@ void slave_instance::setup(
         relativeTolerance ? *relativeTolerance : 0.0,
         to_double_time_point(startTime),
         stopTime ? fmi2_true : fmi2_false,
-        stopTime ? to_double_time_point(*stopTime)
-                 : std::numeric_limits<fmi2_real_t>::quiet_NaN());
+        stopTime ? to_double_time_point(*stopTime) : 0.0);
     if (rcs != fmi2_status_ok && rcs != fmi2_status_warning) {
         throw error(
             make_error_code(errc::model_error),

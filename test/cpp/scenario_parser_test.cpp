@@ -1,8 +1,9 @@
 #include "mock_slave.hpp"
 
-#include "cse/algorithm.hpp"
-#include "cse/manipulator.hpp"
-#include "cse/observer/time_series_observer.hpp"
+#include <cse/algorithm.hpp>
+#include <cse/log/simple.hpp>
+#include <cse/manipulator.hpp>
+#include <cse/observer/time_series_observer.hpp>
 
 #include <exception>
 #include <memory>
@@ -15,6 +16,9 @@
 int main()
 {
     try {
+        cse::log::setup_simple_console_logging();
+        cse::log::set_global_output_level(cse::log::debug);
+
         constexpr cse::time_point startTime = cse::to_time_point(0.0);
         constexpr cse::time_point endTime = cse::to_time_point(1.1);
         constexpr cse::duration stepSize = cse::to_duration(0.1);

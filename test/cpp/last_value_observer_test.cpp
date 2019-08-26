@@ -3,7 +3,7 @@
 #include <cse/algorithm.hpp>
 #include <cse/async_slave.hpp>
 #include <cse/execution.hpp>
-#include <cse/log.hpp>
+#include <cse/log/simple.hpp>
 #include <cse/observer/last_value_observer.hpp>
 
 #include <cmath>
@@ -20,10 +20,11 @@
 int main()
 {
     try {
+        cse::log::setup_simple_console_logging();
+        cse::log::set_global_output_level(cse::log::debug);
+
         constexpr cse::time_point startTime;
         constexpr cse::duration stepSize = cse::to_duration(0.5);
-
-        cse::log::set_global_output_level(cse::log::level::debug);
 
         // Set up execution
         auto execution = cse::execution(

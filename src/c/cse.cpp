@@ -8,7 +8,7 @@
 #include <cse/execution.hpp>
 #include <cse/fmi/fmu.hpp>
 #include <cse/fmi/importer.hpp>
-#include <cse/log.hpp>
+#include <cse/log/simple.hpp>
 #include <cse/manipulator.hpp>
 #include <cse/model.hpp>
 #include <cse/observer.hpp>
@@ -142,8 +142,6 @@ cse_execution* cse_execution_create(cse_time_point startTime, cse_duration stepS
     try {
         // No exceptions are possible right now, so try...catch and unique_ptr
         // are strictly unnecessary, but this will change soon enough.
-        cse::log::set_global_output_level(cse::log::level::info);
-
         auto execution = std::make_unique<cse_execution>();
 
         execution->cpp_execution = std::make_unique<cse::execution>(
@@ -162,7 +160,6 @@ cse_execution* cse_execution_create(cse_time_point startTime, cse_duration stepS
 cse_execution* cse_ssp_execution_create(const char* sspDir, cse_time_point startTime)
 {
     try {
-        cse::log::set_global_output_level(cse::log::level::info);
         auto execution = std::make_unique<cse_execution>();
 
         auto resolver = cse::default_model_uri_resolver();
@@ -229,6 +226,11 @@ int cse_slave_get_num_variables(cse_execution* execution, cse_slave_index slave)
     }
     set_last_error(CSE_ERRC_OUT_OF_RANGE, "Invalid slave index");
     return -1;
+}
+
+int cse_get_num_modified_variables(cse_execution* execution)
+{
+    return static_cast<int>(execution->cpp_execution->get_modified_variables().size());
 }
 
 cse_variable_variability to_variable_variability(const cse::variable_variability& vv)
@@ -315,7 +317,6 @@ int cse_slave_get_variables(cse_execution* execution, cse_slave_index slave, cse
         return failure;
     }
 }
-
 
 struct cse_slave_s
 {
@@ -507,7 +508,8 @@ int connect_variables(
     try {
         const auto outputId = cse::variable_id{outputSimulator, type, outputVariable};
         const auto inputId = cse::variable_id{inputSimulator, type, inputVariable};
-        execution->cpp_execution->connect_variables(outputId, inputId);
+        const auto connection = std::make_shared<cse::scalar_connection>(outputId, inputId);
+        execution->cpp_execution->add_connection(connection);
         return success;
     } catch (...) {
         handle_current_exception();
@@ -825,6 +827,7 @@ int cse_observer_start_observing(cse_observer* observer, cse_slave_index slave, 
         return failure;
     }
 }
+
 int cse_observer_stop_observing(cse_observer* observer, cse_slave_index slave, cse_variable_type type, cse_variable_index index)
 {
     try {
@@ -1054,5 +1057,67 @@ int cse_scenario_abort(cse_manipulator* manipulator)
     } catch (...) {
         handle_current_exception();
         return failure;
+    }
+}
+
+int cse_get_modified_variables(cse_execution* execution, cse_variable_id ids[], size_t numVariables)
+{
+    try {
+        auto modified_vars = execution->cpp_execution->get_modified_variables();
+        size_t counter = 0;
+
+        if (!modified_vars.empty()) {
+            for (; counter < std::min(numVariables, modified_vars.size()); counter++) {
+                ids[counter].slave_index = modified_vars[counter].simulator;
+                ids[counter].type = to_c_variable_type(modified_vars[counter].type);
+                ids[counter].variable_index = modified_vars[counter].index;
+            }
+        }
+
+        return static_cast<int>(counter);
+    } catch (...) {
+        execution->state = CSE_EXECUTION_ERROR;
+        execution->error_code = CSE_ERRC_UNSPECIFIED;
+        handle_current_exception();
+        return failure;
+    }
+}
+
+
+int cse_log_setup_simple_console_logging()
+{
+    try {
+        cse::log::setup_simple_console_logging();
+        return success;
+    } catch (...) {
+        handle_current_exception();
+        return failure;
+    }
+}
+
+
+void cse_log_set_output_level(cse_log_severity_level level)
+{
+    switch (level) {
+        case CSE_LOG_SEVERITY_TRACE:
+            cse::log::set_global_output_level(cse::log::trace);
+            break;
+        case CSE_LOG_SEVERITY_DEBUG:
+            cse::log::set_global_output_level(cse::log::debug);
+            break;
+        case CSE_LOG_SEVERITY_INFO:
+            cse::log::set_global_output_level(cse::log::info);
+            break;
+        case CSE_LOG_SEVERITY_WARNING:
+            cse::log::set_global_output_level(cse::log::warning);
+            break;
+        case CSE_LOG_SEVERITY_ERROR:
+            cse::log::set_global_output_level(cse::log::error);
+            break;
+        case CSE_LOG_SEVERITY_FATAL:
+            cse::log::set_global_output_level(cse::log::fatal);
+            break;
+        default:
+            assert(false);
     }
 }

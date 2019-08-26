@@ -42,16 +42,16 @@ std::shared_ptr<importer> importer::create()
 
 namespace
 {
-log::level convert_log_level(jm_log_level_enu_t jmLogLevel)
+log::severity_level convert_log_level(jm_log_level_enu_t jmLogLevel)
 {
     switch (jmLogLevel) {
         case jm_log_level_fatal:
         case jm_log_level_error:
-            return log::level::error;
+            return log::error;
         case jm_log_level_warning:
-            return log::level::warning;
+            return log::warning;
         case jm_log_level_info:
-            return log::level::info;
+            return log::info;
         case jm_log_level_verbose:
         case jm_log_level_debug:
         case jm_log_level_nothing:
@@ -60,7 +60,7 @@ log::level convert_log_level(jm_log_level_enu_t jmLogLevel)
             // The last two cases + default should never match, and if
             // they do, we at least make sure a message is printed in
             // debug mode.
-            return log::level::debug;
+            return log::debug;
     }
 }
 

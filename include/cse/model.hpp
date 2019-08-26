@@ -311,7 +311,10 @@ struct model_description
 };
 
 /// Getter for returning a variable description.
-const variable_description find_variable(const model_description& description, const std::string& variable_name, variable_type type, variable_causality causality);
+const variable_description find_variable(const model_description& description, const std::string& variable_name);
+
+/// Getter for returning a variable description.
+const variable_description find_variable(const model_description& description, variable_type type, variable_index index);
 
 /// Getter for returning all variable descriptions of the given datatype.
 const std::vector<variable_description> find_variables_of_type(const model_description& description, variable_type type);

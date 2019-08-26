@@ -1,13 +1,16 @@
 #include "cse/ssp_parser.hpp"
 
 #include "cse/algorithm.hpp"
+#include "cse/exception.hpp"
 #include "cse/fmi/fmu.hpp"
+#include "cse/log/logger.hpp"
+#include "cse/error.hpp"
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 
 #include <string>
-
+#include <variant>
 
 namespace cse
 {
@@ -66,11 +69,19 @@ public:
         std::string type;
     };
 
+    struct Parameter
+    {
+        std::string name;
+        cse::variable_type type;
+        std::variant<double, int, bool, std::string> value;
+    };
+
     struct Component
     {
         std::string name;
         std::string source;
         std::vector<Connector> connectors;
+        std::vector<Parameter> parameters;
     };
 
     const std::vector<Component>& get_elements() const;
@@ -150,6 +161,33 @@ ssp_parser::ssp_parser(const boost::filesystem::path& xmlPath)
                 }
             }
         }
+
+        if (const auto parameterBindings = component.second.get_child_optional("ssd:ParameterBindings")) {
+            for (const auto& parameterBinding : *parameterBindings) {
+                if (const auto parameterValues = parameterBinding.second.get_child_optional("ssd:ParameterValues")) {
+                    const auto parameterSet = parameterValues->get_child("ssv:ParameterSet");
+                    const auto parameters = parameterSet.get_child("ssv:Parameters");
+                    for (const auto& parameter : parameters) {
+                        const auto name = get_attribute<std::string>(parameter.second, "name");
+                        if (const auto realParameter = parameter.second.get_child_optional("ssv:Real")) {
+                            const auto value = get_attribute<double>(*realParameter, "value");
+                            e.parameters.push_back({name, variable_type::real, value});
+                        } else if (const auto intParameter = parameter.second.get_child_optional("ssv:Integer")) {
+                            const auto value = get_attribute<int>(*intParameter, "value");
+                            e.parameters.push_back({name, variable_type::integer, value});
+                        } else if (const auto boolParameter = parameter.second.get_child_optional("ssv:Boolean")) {
+                            const auto value = get_attribute<bool>(*boolParameter, "value");
+                            e.parameters.push_back({name, variable_type::boolean, value});
+                        } else if (const auto stringParameter = parameter.second.get_child_optional("ssv:String")) {
+                            const auto value = get_attribute<std::string>(*stringParameter, "value");
+                            e.parameters.push_back({name, variable_type::string, value});
+                        } else {
+                            CSE_PANIC();
+                        }
+                    }
+                }
+            }
+        }
     }
 
     if (tmpTree.get_child_optional("ssd:Connections")) {
@@ -191,6 +229,29 @@ struct slave_info
     std::map<std::string, cse::variable_description> variables;
 };
 
+template<class T>
+struct streamer
+{
+    const T& val;
+};
+
+template<class T>
+streamer(T)->streamer<T>;
+
+template<class T>
+std::ostream& operator<<(std::ostream& os, streamer<T> s)
+{
+    os << s.val;
+    return os;
+}
+
+template<class... Ts>
+std::ostream& operator<<(std::ostream& os, streamer<std::variant<Ts...>> sv)
+{
+    std::visit([&os](const auto& v) { os << streamer{v}; }, sv.val);
+    return os;
+}
+
 } // namespace
 
 
@@ -200,7 +261,7 @@ std::pair<execution, simulator_map> load_ssp(
     std::optional<cse::time_point> overrideStartTime)
 {
     simulator_map simulatorMap;
-    const auto ssdPath = sspDir / "SystemStructure.ssd";
+    const auto ssdPath = boost::filesystem::absolute(sspDir) / "SystemStructure.ssd";
     const auto baseURI = path_to_file_uri(ssdPath);
     const auto parser = ssp_parser(ssdPath);
 
@@ -226,6 +287,28 @@ std::pair<execution, simulator_map> load_ssp(
         for (const auto& v : model->description()->variables) {
             slaves[component.name].variables[v.name] = v;
         }
+
+        for (const auto& p : component.parameters) {
+            auto varIndex = find_variable(*model->description(), p.name).index;
+            BOOST_LOG_SEV(log::logger(), log::info)
+                << "Initializing variable " << component.name << ":" << p.name << " with value " << streamer{p.value};
+            switch (p.type) {
+                case variable_type::real:
+                    execution.set_real_initial_value(index, varIndex, std::get<double>(p.value));
+                    break;
+                case variable_type::integer:
+                    execution.set_integer_initial_value(index, varIndex, std::get<int>(p.value));
+                    break;
+                case variable_type::boolean:
+                    execution.set_boolean_initial_value(index, varIndex, std::get<bool>(p.value));
+                    break;
+                case variable_type::string:
+                    execution.set_string_initial_value(index, varIndex, std::get<std::string>(p.value));
+                    break;
+                default:
+                    throw error(make_error_code(errc::unsupported_feature), "Variable type not supported yet");
+            }
+        }
     }
 
     for (const auto& connection : parser.get_connections()) {
@@ -237,7 +320,8 @@ std::pair<execution, simulator_map> load_ssp(
             slaves[connection.endElement].variables[connection.endConnector].type,
             slaves[connection.endElement].variables[connection.endConnector].index};
 
-        execution.connect_variables(output, input);
+        const auto c = std::make_shared<scalar_connection>(output, input);
+        execution.add_connection(c);
     }
 
     return std::make_pair(std::move(execution), std::move(simulatorMap));

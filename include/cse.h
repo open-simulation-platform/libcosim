@@ -363,6 +363,9 @@ int cse_slave_get_num_variables(cse_execution* execution, cse_slave_index slave)
  */
 int cse_slave_get_variables(cse_execution* execution, cse_slave_index slave, cse_variable_description variables[], size_t numVariables);
 
+/// Returns the number of variables in the execution that currently has an active modifier (all slaves).
+int cse_get_num_modified_variables(cse_execution* execution);
+
 /// A struct containing information about a slave which has been added to an execution.
 typedef struct
 {
@@ -373,6 +376,17 @@ typedef struct
     /// The slave's unique index in the exeuction.
     cse_slave_index index;
 } cse_slave_info;
+
+/// A struct containing variable information.
+typedef struct
+{
+    /// The index of the slave containing the variable.
+    cse_slave_index slave_index;
+    /// The type of the variable.
+    cse_variable_type type;
+    /// The index of the variable.
+    cse_variable_index variable_index;
+} cse_variable_id;
 
 
 /// Returns the number of slaves which have been added to an execution.
@@ -911,6 +925,59 @@ int cse_scenario_is_running(cse_manipulator* manipulator);
 
 /// Aborts the execution of a running scenario
 int cse_scenario_abort(cse_manipulator* manipulator);
+
+/**
+ * Retrieves a list of the currently modified variables in the simulation.
+ *
+ *  \param [in] execution
+ *      The execution.
+ *  \param [out] ids
+ *      A list of cse_variable_id structs to contain the variable information.
+ *  \param [in] numVariables
+ *      The length of the `ids` array.
+ *
+ *  \returns
+ *      0 on success and -1 on error.
+ */
+int cse_get_modified_variables(cse_execution* execution, cse_variable_id ids[], size_t numVariables);
+
+
+/// Severity levels for log messages.
+typedef enum
+{
+    CSE_LOG_SEVERITY_TRACE,
+    CSE_LOG_SEVERITY_DEBUG,
+    CSE_LOG_SEVERITY_INFO,
+    CSE_LOG_SEVERITY_WARNING,
+    CSE_LOG_SEVERITY_ERROR,
+    CSE_LOG_SEVERITY_FATAL
+} cse_log_severity_level;
+
+
+/**
+ *  Configures simple console logging.
+ *
+ *  Note that the library may produce log messages before this function is
+ *  called, but then it uses the default or existing settings of the underlying
+ *  logging framework (Boost.Log).
+ *
+ *  \returns
+ *      0 on success and -1 on error.
+ */
+int cse_log_setup_simple_console_logging();
+
+
+/**
+ *  Installs a global severity level filter for log messages.
+ *
+ *  This function sets up a log message filter which ensures that only messages
+ *  whose severity level is at least `level` will be printed.
+ *
+ *  \param [in] level
+ *      The minimum visible severity level.
+ */
+void cse_log_set_output_level(cse_log_severity_level level);
+
 
 #ifdef __cplusplus
 } // extern(C)

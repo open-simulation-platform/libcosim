@@ -3,7 +3,7 @@
 #include <cse/algorithm.hpp>
 #include <cse/async_slave.hpp>
 #include <cse/execution.hpp>
-#include <cse/log.hpp>
+#include <cse/log/simple.hpp>
 #include <cse/observer/time_series_observer.hpp>
 
 #include <cmath>
@@ -20,12 +20,13 @@
 int main()
 {
     try {
+        cse::log::setup_simple_console_logging();
+        cse::log::set_global_output_level(cse::log::debug);
+
         constexpr int numSlaves = 2;
         constexpr cse::time_point startTime;
         constexpr cse::time_point midTime = cse::to_time_point(1.0);
         constexpr cse::duration stepSize = cse::to_duration(0.1);
-
-        cse::log::set_global_output_level(cse::log::level::debug);
 
         // Set up execution
         auto execution = cse::execution(
@@ -44,7 +45,10 @@ int main()
                 cse::make_pseudo_async(std::make_unique<mock_slave>([](double x) { return x + 1.234; })),
                 "slave" + std::to_string(i));
             if (i > 0) {
-                execution.connect_variables(cse::variable_id{i - 1, cse::variable_type::real, realOutIndex}, cse::variable_id{i, cse::variable_type::real, realInIndex});
+                execution.add_connection(
+                    std::make_shared<cse::scalar_connection>(
+                        cse::variable_id{i - 1, cse::variable_type::real, realOutIndex},
+                        cse::variable_id{i, cse::variable_type::real, realInIndex}));
             }
         }
 
