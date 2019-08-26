@@ -778,7 +778,7 @@ cse_observer* cse_file_observer_create_from_cfg(const char* logDir, const char* 
     auto observer = std::make_unique<cse_observer>();
     auto boostLogDir = boost::filesystem::path(logDir);
     auto boostCfgPath = boost::filesystem::path(cfgPath);
-    observer->cpp_observer = std::make_shared<cse::file_observer>(boostCfgPath, boostLogDir);
+    observer->cpp_observer = std::make_shared<cse::file_observer>(boostLogDir, boostCfgPath);
     return observer.release();
 }
 
