@@ -382,7 +382,7 @@ typedef struct
 } cse_model_info;
 
 /**
- *  Returns variable metadata for a slave.
+ *  Returns model metadata for a slave.
  *
  *  \param [in] execution
  *      The execution which the slave has been added to.
