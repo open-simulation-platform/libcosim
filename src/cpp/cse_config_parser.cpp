@@ -229,8 +229,8 @@ void connect_variables(
                                   slaves[connection.targetSimulator].variables[connection.targetConnector].type,
                                   slaves[connection.targetSimulator].variables[connection.targetConnector].index};
 
-
-        execution.connect_variables(output, input);
+        auto c = std::make_shared<cse::scalar_connection>(output, input);
+        execution.add_connection(c);
     }
 }
 
@@ -245,7 +245,7 @@ void connect_plugs_and_sockets(
         const auto& socketVariables = emds.at(connection.targetSimulator).sockets.at(connection.targetConnector).variables;
 
         assert(plugVariables.size() == socketVariables.size());
-        
+
         std::vector<cse_config_parser::Connection> variableConnections;
 
         for (std::size_t i = 0; i < plugVariables.size(); ++i) {
@@ -264,10 +264,10 @@ void connect_bonds(
     std::unordered_map<std::string, slave_info>& slaves,
     cse::execution& execution,
     std::unordered_map<std::string, extended_model_description> emds) {
-    
+
     for (const auto& connection : bondConnections) {
         auto const& bondAPlugs = emds.at(connection.sourceSimulator).bonds.at(connection.sourceConnector).plugs;
-        auto const& bondBSockets = emds.at(connection.targetSimulator).bonds.at(connection.targetConnector).sockets;        
+        auto const& bondBSockets = emds.at(connection.targetSimulator).bonds.at(connection.targetConnector).sockets;
         assert(bondAPlugs.size() == bondBSockets.size());
         std::vector<cse_config_parser::Connection> plugSocketConnectionsA;
         for (std::size_t i = 0; i < bondAPlugs.size(); ++i) {
@@ -279,7 +279,7 @@ void connect_bonds(
         connect_plugs_and_sockets(plugSocketConnectionsA, slaves, execution, emds);
 
         auto const& bondASockets = emds.at(connection.sourceSimulator).bonds.at(connection.sourceConnector).sockets;
-        auto const& bondBPlugs = emds.at(connection.targetSimulator).bonds.at(connection.targetConnector).plugs;        
+        auto const& bondBPlugs = emds.at(connection.targetSimulator).bonds.at(connection.targetConnector).plugs;
         assert(bondASockets.size() == bondBPlugs.size());
         std::vector<cse_config_parser::Connection> plugSocketConnectionsB;
         for (std::size_t i = 0; i < bondASockets.size(); ++i) {
@@ -306,7 +306,7 @@ std::pair<execution, simulator_map> load_cse_config(
     const cse::duration stepSize = cse::to_duration(simInfo.stepSize);
 
     auto simulators = parser.get_elements();
-    
+
     const auto startTime = overrideStartTime ? *overrideStartTime : cse::to_time_point(simInfo.startTime);
 
     auto execution = cse::execution(
@@ -325,13 +325,13 @@ std::pair<execution, simulator_map> load_cse_config(
         for (const auto& v : model->description()->variables) {
             slaves[simulator.name].variables[v.name] = v;
         }
-        
+
         std::string msmiFileName = model->description()->name + ".json";
         const auto msmiFilePath = configPath / msmiFileName;
         emds.emplace(simulator.name, msmiFilePath);
     }
 
-    connect_variables(parser.get_variable_connections(), slaves, execution);    
+    connect_variables(parser.get_variable_connections(), slaves, execution);
     connect_plugs_and_sockets(parser.get_plug_socket_connections(), slaves, execution, emds);
     connect_bonds(parser.get_bond_connections(), slaves, execution, emds);
 
