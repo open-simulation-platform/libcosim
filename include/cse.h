@@ -381,7 +381,20 @@ typedef struct
     char version[SLAVE_NAME_MAX_SIZE];
 } cse_model_info;
 
-int cse_get_model_info(cse_execution* execution, cse_slave_index slave);
+/**
+ *  Returns variable metadata for a slave.
+ *
+ *  \param [in] execution
+ *      The execution which the slave has been added to.
+ *  \param [in] slave
+ *      The index of the slave.
+ *  \param [out] info
+ *      A pointer to a cse_get_model_info that will be filled with actual model info.
+ *
+ *  \returns
+ *      0 on success and -1 on error.
+ */
+int cse_get_model_info(cse_execution* execution, cse_slave_index slave, cse_model_info* info);
 
 /// A struct containing information about a slave which has been added to an execution.
 typedef struct
