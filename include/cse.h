@@ -370,15 +370,15 @@ int cse_get_num_modified_variables(cse_execution* execution);
 typedef struct
 {
     /// The model name.
-    char name[SLAVE_NAME_MAX_SIZE];
+    const char* name;
     /// A universally unique identifier (UUID) for the model.
-    char uuid[SLAVE_NAME_MAX_SIZE];
+    const char* uuid;
     /// A human-readable description of the model.
-    char description[SLAVE_NAME_MAX_SIZE];
+    const char* description;
     /// Author information.
-    char author[SLAVE_NAME_MAX_SIZE];
+    const char* author;
     /// Version information.
-    char version[SLAVE_NAME_MAX_SIZE];
+    const char* version;
 } cse_model_info;
 
 /**

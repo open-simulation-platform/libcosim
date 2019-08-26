@@ -320,11 +320,11 @@ int cse_slave_get_variables(cse_execution* execution, cse_slave_index slave, cse
 
 void translate_model_info(const cse::model_description& md, cse_model_info& cmd)
 {
-    std::strncpy(cmd.name, md.name.c_str(), SLAVE_NAME_MAX_SIZE);
-    std::strncpy(cmd.uuid, md.uuid.c_str(), SLAVE_NAME_MAX_SIZE);
-    std::strncpy(cmd.description, md.description.c_str(), SLAVE_NAME_MAX_SIZE);
-    std::strncpy(cmd.author, md.author.c_str(), SLAVE_NAME_MAX_SIZE);
-    std::strncpy(cmd.version, md.version.c_str(), SLAVE_NAME_MAX_SIZE);
+    cmd.name = md.name.c_str();
+    cmd.uuid = md.uuid.c_str();
+    cmd.description = md.description.c_str();
+    cmd.author = md.author.c_str();
+    cmd.version = md.version.c_str();
 }
 
 int cse_get_model_info(cse_execution* execution, cse_slave_index slave, cse_model_info* info)
