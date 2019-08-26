@@ -4,7 +4,7 @@
 #include <cse/async_slave.hpp>
 #include <cse/connection.hpp>
 #include <cse/execution.hpp>
-#include <cse/log.hpp>
+#include <cse/log/simple.hpp>
 #include <cse/observer/last_value_observer.hpp>
 
 #include <cmath>
@@ -25,7 +25,8 @@ int main()
         constexpr cse::time_point endTime = cse::to_time_point(1.0);
         constexpr cse::duration stepSize = cse::to_duration(0.1);
 
-        cse::log::set_global_output_level(cse::log::level::debug);
+        cse::log::setup_simple_console_logging();
+        cse::log::set_global_output_level(cse::log::debug);
 
         auto algorithm = std::make_shared<cse::fixed_step_algorithm>(stepSize);
         auto execution = cse::execution(
