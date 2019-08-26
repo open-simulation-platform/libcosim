@@ -251,7 +251,7 @@ int cse_execution_enable_real_time_simulation(cse_execution* execution);
 int cse_execution_disable_real_time_simulation(cse_execution* execution);
 
 /// Sets a custom real time factor.
-int cse_execution_set_real_time_factor_target(cse_execution *execution, double realTimeFactor);
+int cse_execution_set_real_time_factor_target(cse_execution* execution, double realTimeFactor);
 
 
 /// Execution states.
@@ -365,6 +365,23 @@ int cse_slave_get_variables(cse_execution* execution, cse_slave_index slave, cse
 
 /// Returns the number of variables in the execution that currently has an active modifier (all slaves).
 int cse_get_num_modified_variables(cse_execution* execution);
+
+/// A description of a model.
+typedef struct
+{
+    /// The model name.
+    char name[SLAVE_NAME_MAX_SIZE];
+    /// A universally unique identifier (UUID) for the model.
+    char uuid[SLAVE_NAME_MAX_SIZE];
+    /// A human-readable description of the model.
+    char description[SLAVE_NAME_MAX_SIZE];
+    /// Author information.
+    char author[SLAVE_NAME_MAX_SIZE];
+    /// Version information.
+    char version[SLAVE_NAME_MAX_SIZE];
+} cse_model_info;
+
+int cse_get_model_info(cse_execution* execution, cse_slave_index slave);
 
 /// A struct containing information about a slave which has been added to an execution.
 typedef struct

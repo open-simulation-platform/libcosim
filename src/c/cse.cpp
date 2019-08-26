@@ -318,6 +318,35 @@ int cse_slave_get_variables(cse_execution* execution, cse_slave_index slave, cse
     }
 }
 
+void translate_model_info(const cse::model_description& md, cse_model_info& cmd)
+{
+    std::strncpy(cmd.name, md.name.c_str(), SLAVE_NAME_MAX_SIZE);
+    std::strncpy(cmd.uuid, md.uuid.c_str(), SLAVE_NAME_MAX_SIZE);
+    std::strncpy(cmd.description, md.description.c_str(), SLAVE_NAME_MAX_SIZE);
+    std::strncpy(cmd.author, md.author.c_str(), SLAVE_NAME_MAX_SIZE);
+    std::strncpy(cmd.version, md.version.c_str(), SLAVE_NAME_MAX_SIZE);
+}
+
+int cse_get_model_info(cse_execution* execution, cse_slave_index slave, cse_model_info* info)
+{
+    try {
+        for (const auto& entry : execution->simulators) {
+            if (entry.second.index == slave) {
+                cse::model_description md = entry.second.description;
+                translate_model_info(entry.second.description, *info);
+                return success;
+            }
+        }
+        std::ostringstream oss;
+        oss << "Slave with index " << slave
+            << " was not found among loaded slaves.";
+        throw std::invalid_argument(oss.str());
+    } catch (...) {
+        handle_current_exception();
+        return failure;
+    }
+}
+
 struct cse_slave_s
 {
     std::string address;
