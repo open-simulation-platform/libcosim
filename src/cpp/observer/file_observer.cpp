@@ -24,7 +24,7 @@ class file_observer::slave_value_writer
 public:
     slave_value_writer(observable* observable, boost::filesystem::path& logPath, time_point currentTime)
         : observable_(observable)
-        , logPath_(logPath)
+        , logPath_(boost::filesystem::absolute(logPath))
     {
         initialize_default(currentTime);
     }
@@ -33,7 +33,7 @@ public:
         std::vector<variable_description>& realVars, std::vector<variable_description>& intVars,
         std::vector<variable_description>& boolVars, std::vector<variable_description>& strVars)
         : observable_(observable)
-        , logPath_(logPath)
+        , logPath_(boost::filesystem::absolute(logPath))
         , decimationFactor_(decimationFactor)
         , loggableRealVariables_(realVars)
         , loggableIntVariables_(intVars)
