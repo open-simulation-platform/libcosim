@@ -45,7 +45,10 @@ int main()
                 cse::make_pseudo_async(std::make_unique<mock_slave>([](double x) { return x + 1.234; })),
                 "slave" + std::to_string(i));
             if (i > 0) {
-                execution.connect_variables(cse::variable_id{i - 1, cse::variable_type::real, realOutIndex}, cse::variable_id{i, cse::variable_type::real, realInIndex});
+                execution.add_connection(
+                    std::make_shared<cse::scalar_connection>(
+                        cse::variable_id{i - 1, cse::variable_type::real, realOutIndex},
+                        cse::variable_id{i, cse::variable_type::real, realInIndex}));
             }
         }
 

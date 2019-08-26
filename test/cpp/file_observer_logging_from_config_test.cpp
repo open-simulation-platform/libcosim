@@ -37,7 +37,7 @@ int main()
 
         // Set up the execution and add observer
         auto execution = cse::execution(startTime, std::make_unique<cse::fixed_step_algorithm>(stepSize));
-        auto csv_observer = std::make_shared<cse::file_observer>(configPath, csvPath);
+        auto csv_observer = std::make_shared<cse::file_observer>(csvPath, configPath);
         execution.add_observer(csv_observer);
 
         // Add two slaves to the execution and connect variables

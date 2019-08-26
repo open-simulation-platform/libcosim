@@ -320,7 +320,8 @@ std::pair<execution, simulator_map> load_ssp(
             slaves[connection.endElement].variables[connection.endConnector].type,
             slaves[connection.endElement].variables[connection.endConnector].index};
 
-        execution.connect_variables(output, input);
+        const auto c = std::make_shared<scalar_connection>(output, input);
+        execution.add_connection(c);
     }
 
     return std::make_pair(std::move(execution), std::move(simulatorMap));
