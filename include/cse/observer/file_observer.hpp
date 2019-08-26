@@ -26,7 +26,7 @@ class file_observer : public observer
 public:
     file_observer(const boost::filesystem::path& logDir);
 
-    file_observer(const boost::filesystem::path& configPath, const boost::filesystem::path& logDir);
+    file_observer(const boost::filesystem::path& logDir, const boost::filesystem::path& configPath);
 
     void simulator_added(simulator_index, observable*, time_point) override;
 
