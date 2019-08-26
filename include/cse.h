@@ -49,6 +49,9 @@ typedef enum
     /// Invalid function argument.
     CSE_ERRC_INVALID_ARGUMENT,
 
+    /// Function may not be called while in this state.
+    CSE_ERRC_ILLEGAL_STATE,
+
     /// Index out of range.
     CSE_ERRC_OUT_OF_RANGE,
 
