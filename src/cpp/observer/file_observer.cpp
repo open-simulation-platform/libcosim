@@ -254,7 +254,7 @@ file_observer::file_observer(const boost::filesystem::path& logDir)
 {
 }
 
-file_observer::file_observer(const boost::filesystem::path& configPath, const boost::filesystem::path& logDir)
+file_observer::file_observer(const boost::filesystem::path& logDir, const boost::filesystem::path& configPath)
     : configPath_(configPath)
     , logDir_(logDir)
     , logFromConfig_(true)
