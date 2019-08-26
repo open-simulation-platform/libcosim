@@ -1,4 +1,4 @@
-#include <cse/log.hpp>
+#include <cse/log/simple.hpp>
 #include <cse/orchestration.hpp>
 #include <cse/cse_config_parser.hpp>
 
@@ -14,7 +14,8 @@
 int main()
 {
     try {
-        cse::log::set_global_output_level(cse::log::level::info);
+        cse::log::setup_simple_console_logging();
+        cse::log::set_global_output_level(cse::log::info);
 
         const auto testDataDir = std::getenv("TEST_DATA_DIR");
         REQUIRE(testDataDir);
