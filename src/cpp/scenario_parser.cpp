@@ -194,7 +194,7 @@ scenario::scenario parse_scenario(
 
         auto mode = specified_or_default(event, "action", defaultOpts.action);
         bool isInput = is_input(var.causality);
-        scenario::variable_action a = generate_action(event, mode, index, var.type, isInput, var.index);
+        scenario::variable_action a = generate_action(event, mode, index, var.type, isInput, var.reference);
         events.emplace_back(scenario::event{time, a});
     }
 

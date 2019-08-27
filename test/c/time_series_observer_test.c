@@ -61,9 +61,9 @@ int main()
     double inputRealSamples[10] = {0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
     int inputIntSamples[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 
-    cse_value_reference index = 0;
+    cse_value_reference reference = 0;
 
-    rc = cse_observer_start_observing(observer, 0, CSE_VARIABLE_TYPE_INTEGER, index);
+    rc = cse_observer_start_observing(observer, 0, CSE_VARIABLE_TYPE_INTEGER, reference);
     if (rc < 0) { goto Lerror; }
 
     manipulator = cse_override_manipulator_create();
@@ -73,23 +73,23 @@ int main()
     if (rc < 0) { goto Lerror; }
 
     for (int i = 0; i < 5; i++) {
-        rc = cse_manipulator_slave_set_real(manipulator, 0, &index, 1, &inputRealSamples[i]);
+        rc = cse_manipulator_slave_set_real(manipulator, 0, &reference, 1, &inputRealSamples[i]);
         if (rc < 0) { goto Lerror; }
-        rc = cse_manipulator_slave_set_integer(manipulator, 0, &index, 1, &inputIntSamples[i]);
+        rc = cse_manipulator_slave_set_integer(manipulator, 0, &reference, 1, &inputIntSamples[i]);
         if (rc < 0) { goto Lerror; }
         rc = cse_execution_step(execution, 1);
         if (rc < 0) { goto Lerror; }
     }
 
-    rc = cse_observer_stop_observing(observer, 0, CSE_VARIABLE_TYPE_INTEGER, index);
+    rc = cse_observer_stop_observing(observer, 0, CSE_VARIABLE_TYPE_INTEGER, reference);
     if (rc < 0) { goto Lerror; }
-    rc = cse_observer_start_observing(observer, 0, CSE_VARIABLE_TYPE_REAL, index);
+    rc = cse_observer_start_observing(observer, 0, CSE_VARIABLE_TYPE_REAL, reference);
     if (rc < 0) { goto Lerror; }
 
     for (int i = 5; i < 10; i++) {
-        rc = cse_manipulator_slave_set_real(manipulator, 0, &index, 1, &inputRealSamples[i]);
+        rc = cse_manipulator_slave_set_real(manipulator, 0, &reference, 1, &inputRealSamples[i]);
         if (rc < 0) { goto Lerror; }
-        rc = cse_manipulator_slave_set_integer(manipulator, 0, &index, 1, &inputIntSamples[i]);
+        rc = cse_manipulator_slave_set_integer(manipulator, 0, &reference, 1, &inputIntSamples[i]);
         if (rc < 0) { goto Lerror; }
         rc = cse_execution_step(execution, 1);
         if (rc < 0) { goto Lerror; }
@@ -102,13 +102,13 @@ int main()
     cse_time_point times[10];
     cse_step_number steps[10];
 
-    int64_t readRealSamples = cse_observer_slave_get_real_samples(observer, slaveIndex, index, fromStep, nSamples, realSamples, steps, times);
+    int64_t readRealSamples = cse_observer_slave_get_real_samples(observer, slaveIndex, reference, fromStep, nSamples, realSamples, steps, times);
     if (readRealSamples != 5) {
         fprintf(stderr, "Expected to read 5 real samples, got %" PRId64 "\n", readRealSamples);
         goto Lfailure;
     }
 
-    int64_t readIntSamples = cse_observer_slave_get_integer_samples(observer, slaveIndex, index, fromStep, nSamples, intSamples, steps, times);
+    int64_t readIntSamples = cse_observer_slave_get_integer_samples(observer, slaveIndex, reference, fromStep, nSamples, intSamples, steps, times);
     if (readIntSamples != 0) {
         fprintf(stderr, "Expected to read 0 int samples, got %" PRId64 "\n", readIntSamples);
         goto Lfailure;

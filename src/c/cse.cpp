@@ -224,7 +224,7 @@ int cse_slave_get_num_variables(cse_execution* execution, cse_slave_index slave)
             return static_cast<int>(entry.second.description.variables.size());
         }
     }
-    set_last_error(CSE_ERRC_OUT_OF_RANGE, "Invalid slave index");
+    set_last_error(CSE_ERRC_OUT_OF_RANGE, "Invalid slave reference");
     return -1;
 }
 
@@ -288,7 +288,7 @@ cse_variable_type to_c_variable_type(const cse::variable_type& vt)
 void translate_variable_description(const cse::variable_description& vd, cse_variable_description& cvd)
 {
     std::strncpy(cvd.name, vd.name.c_str(), SLAVE_NAME_MAX_SIZE);
-    cvd.index = vd.index;
+    cvd.reference = vd.reference;
     cvd.type = to_c_variable_type(vd.type);
     cvd.causality = to_variable_causality(vd.causality);
     cvd.variability = to_variable_variability(vd.variability);
@@ -309,7 +309,7 @@ int cse_slave_get_variables(cse_execution* execution, cse_slave_index slave, cse
         }
 
         std::ostringstream oss;
-        oss << "Slave with index " << slave
+        oss << "Slave with reference " << slave
             << " was not found among loaded slaves.";
         throw std::invalid_argument(oss.str());
     } catch (...) {
@@ -812,14 +812,14 @@ cse::variable_type to_cpp_variable_type(cse_variable_type type)
     }
 }
 
-int cse_observer_start_observing(cse_observer* observer, cse_slave_index slave, cse_variable_type type, cse_value_reference index)
+int cse_observer_start_observing(cse_observer* observer, cse_slave_index slave, cse_variable_type type, cse_value_reference reference)
 {
     try {
         const auto timeSeriesObserver = std::dynamic_pointer_cast<cse::time_series_observer>(observer->cpp_observer);
         if (!timeSeriesObserver) {
             throw std::invalid_argument("Invalid observer! The provided observer must be a time_series_observer.");
         }
-        const auto variableId = cse::variable_id{slave, to_cpp_variable_type(type), index};
+        const auto variableId = cse::variable_id{slave, to_cpp_variable_type(type), reference};
         timeSeriesObserver->start_observing(variableId);
         return success;
     } catch (...) {
@@ -828,14 +828,14 @@ int cse_observer_start_observing(cse_observer* observer, cse_slave_index slave, 
     }
 }
 
-int cse_observer_stop_observing(cse_observer* observer, cse_slave_index slave, cse_variable_type type, cse_value_reference index)
+int cse_observer_stop_observing(cse_observer* observer, cse_slave_index slave, cse_variable_type type, cse_value_reference reference)
 {
     try {
         const auto timeSeriesObserver = std::dynamic_pointer_cast<cse::time_series_observer>(observer->cpp_observer);
         if (!timeSeriesObserver) {
             throw std::invalid_argument("Invalid observer! The provided observer must be a time_series_observer.");
         }
-        const auto variableId = cse::variable_id{slave, to_cpp_variable_type(type), index};
+        const auto variableId = cse::variable_id{slave, to_cpp_variable_type(type), reference};
         timeSeriesObserver->stop_observing(variableId);
         return success;
     } catch (...) {
@@ -1070,7 +1070,7 @@ int cse_get_modified_variables(cse_execution* execution, cse_variable_id ids[], 
             for (; counter < std::min(numVariables, modified_vars.size()); counter++) {
                 ids[counter].slave_index = modified_vars[counter].simulator;
                 ids[counter].type = to_c_variable_type(modified_vars[counter].type);
-                ids[counter].value_reference = modified_vars[counter].index;
+                ids[counter].value_reference = modified_vars[counter].reference;
             }
         }
 

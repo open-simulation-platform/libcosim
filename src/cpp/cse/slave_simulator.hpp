@@ -33,48 +33,48 @@ public:
     std::string name() const override;
     cse::model_description model_description() const override;
 
-    void expose_for_getting(variable_type type, value_reference index) override;
-    double get_real(value_reference index) const override;
-    int get_integer(value_reference index) const override;
-    bool get_boolean(value_reference index) const override;
-    std::string_view get_string(value_reference index) const override;
+    void expose_for_getting(variable_type type, value_reference ref) override;
+    double get_real(value_reference reference) const override;
+    int get_integer(value_reference reference) const override;
+    bool get_boolean(value_reference reference) const override;
+    std::string_view get_string(value_reference reference) const override;
 
     // `simulator` methods
-    void expose_for_setting(variable_type type, value_reference index) override;
-    void set_real(value_reference index, double value) override;
-    void set_integer(value_reference index, int value) override;
-    void set_boolean(value_reference index, bool value) override;
-    void set_string(value_reference index, std::string_view value) override;
+    void expose_for_setting(variable_type type, value_reference ref) override;
+    void set_real(value_reference reference, double value) override;
+    void set_integer(value_reference reference, int value) override;
+    void set_boolean(value_reference reference, bool value) override;
+    void set_string(value_reference reference, std::string_view value) override;
 
     void set_real_input_modifier(
-        value_reference index,
+        value_reference reference,
         std::function<double(double)> modifier) override;
     void set_integer_input_modifier(
-        value_reference index,
+        value_reference reference,
         std::function<int(int)> modifier) override;
     void set_boolean_input_modifier(
-        value_reference index,
+        value_reference reference,
         std::function<bool(bool)> modifier) override;
     void set_string_input_modifier(
-        value_reference index,
+        value_reference reference,
         std::function<std::string(std::string_view)> modifier) override;
     void set_real_output_modifier(
-        value_reference index,
+        value_reference reference,
         std::function<double(double)> modifier) override;
     void set_integer_output_modifier(
-        value_reference index,
+        value_reference reference,
         std::function<int(int)> modifier) override;
     void set_boolean_output_modifier(
-        value_reference index,
+        value_reference reference,
         std::function<bool(bool)> modifier) override;
     void set_string_output_modifier(
-        value_reference index,
+        value_reference reference,
         std::function<std::string(std::string_view)> modifier) override;
 
-    std::unordered_set<value_reference>& get_modified_real_indexes() const override;
-    std::unordered_set<value_reference>& get_modified_integer_indexes() const override;
-    std::unordered_set<value_reference>& get_modified_boolean_indexes() const override;
-    std::unordered_set<value_reference>& get_modified_string_indexes() const override;
+    std::unordered_set<value_reference>& get_modified_real_references() const override;
+    std::unordered_set<value_reference>& get_modified_integer_references() const override;
+    std::unordered_set<value_reference>& get_modified_boolean_references() const override;
+    std::unordered_set<value_reference>& get_modified_string_references() const override;
 
     boost::fibers::future<void> setup(
         time_point startTime,

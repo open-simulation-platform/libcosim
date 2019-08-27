@@ -34,14 +34,14 @@ struct variable_id
     /// The variable data type.
     variable_type type;
 
-    /// The variable index.
-    value_reference index;
+    /// The variable value reference.
+    value_reference reference;
 };
 
 /// Equality operator for `variable_id`.
 inline bool operator==(const variable_id& a, const variable_id& b) noexcept
 {
-    return a.simulator == b.simulator && a.type == b.type && a.index == b.index;
+    return a.simulator == b.simulator && a.type == b.type && a.reference == b.reference;
 }
 
 /// Inequality operator for `variable_id`.
@@ -55,7 +55,7 @@ inline std::ostream& operator<<(std::ostream& stream, variable_id v)
 {
     return stream << "(simulator " << v.simulator
                   << ", type " << v.type
-                  << ", variable " << v.index << ")";
+                  << ", variable " << v.reference << ")";
 }
 
 } // namespace cse
@@ -72,7 +72,7 @@ public:
         std::size_t seed = 0;
         boost::hash_combine(seed, v.simulator);
         boost::hash_combine(seed, v.type);
-        boost::hash_combine(seed, v.index);
+        boost::hash_combine(seed, v.reference);
         return seed;
     }
 };

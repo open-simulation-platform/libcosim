@@ -36,14 +36,14 @@ int main()
 
         cse::simulator_index i = simulator_map.at("KnuckleBoomCrane").index;
         double realValue = -1.0;
-        cse::value_reference index = cse::find_variable(simulator_map.at("KnuckleBoomCrane").description, "Spring_Joint.k").index;
-        obs->get_real(i, gsl::make_span(&index, 1), gsl::make_span(&realValue, 1));
+        cse::value_reference reference = cse::find_variable(simulator_map.at("KnuckleBoomCrane").description, "Spring_Joint.k").reference;
+        obs->get_real(i, gsl::make_span(&reference, 1), gsl::make_span(&realValue, 1));
 
         double magicNumberFromSsdFile = 0.005;
         REQUIRE(std::fabs(realValue - magicNumberFromSsdFile) < 1e-9);
 
-        cse::value_reference index2 = cse::find_variable(simulator_map.at("KnuckleBoomCrane").description, "mt0_init").index;
-        obs->get_real(i, gsl::make_span(&index2, 1), gsl::make_span(&realValue, 1));
+        cse::value_reference reference2 = cse::find_variable(simulator_map.at("KnuckleBoomCrane").description, "mt0_init").reference;
+        obs->get_real(i, gsl::make_span(&reference2, 1), gsl::make_span(&realValue, 1));
 
         magicNumberFromSsdFile = 69.0;
         REQUIRE(std::fabs(realValue - magicNumberFromSsdFile) < 1e-9);

@@ -204,28 +204,28 @@ public:
         auto index = 0;
         for (const auto& sim : simulators_) {
 
-            const auto& realIndexes = sim->get_modified_real_indexes();
-            const auto& intIndexes = sim->get_modified_integer_indexes();
-            const auto& boolIndexes = sim->get_modified_boolean_indexes();
-            const auto& stringIndexes = sim->get_modified_string_indexes();
+            const auto& realRefs = sim->get_modified_real_references();
+            const auto& integerRefs = sim->get_modified_integer_references();
+            const auto& booleanRefs = sim->get_modified_boolean_references();
+            const auto& stringRefs = sim->get_modified_string_references();
 
-            for (const auto& varIndex : realIndexes) {
-                variable_id var = {index, variable_type::real, varIndex};
+            for (const auto& ref : realRefs) {
+                variable_id var = {index, variable_type::real, ref};
                 modifiedVariables.push_back(var);
             }
 
-            for (const auto& varIndex : intIndexes) {
-                variable_id var = {index, variable_type::integer, varIndex};
+            for (const auto& ref : integerRefs) {
+                variable_id var = {index, variable_type::integer, ref};
                 modifiedVariables.push_back(var);
             }
 
-            for (const auto& varIndex : boolIndexes) {
-                variable_id var = {index, variable_type::boolean, varIndex};
+            for (const auto& ref : booleanRefs) {
+                variable_id var = {index, variable_type::boolean, ref};
                 modifiedVariables.push_back(var);
             }
 
-            for (const auto& varIndex : stringIndexes) {
-                variable_id var = {index, variable_type::string, varIndex};
+            for (const auto& ref : stringRefs) {
+                variable_id var = {index, variable_type::string, ref};
                 modifiedVariables.push_back(var);
             }
 
@@ -278,13 +278,13 @@ private:
         const auto it = std::find_if(
             variables.begin(),
             variables.end(),
-            [=](const auto& var) { return var.causality == causality && var.type == variable.type && var.index == variable.index; });
+            [=](const auto& var) { return var.causality == causality && var.type == variable.type && var.reference == variable.reference; });
         if (it == variables.end()) {
             std::ostringstream oss;
-            oss << "Cannot find variable with index " << variable.index
+            oss << "Cannot find variable with reference " << variable.reference
                 << ", causality " << cse::to_text(causality)
                 << " and type " << cse::to_text(variable.type)
-                << " for simulator with index " << variable.simulator
+                << " for simulator with reference " << variable.simulator
                 << " and name " << simulators_.at(variable.simulator)->name();
             throw std::out_of_range(oss.str());
         }

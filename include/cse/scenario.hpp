@@ -48,7 +48,7 @@ struct variable_action
 {
     /// The simulator index.
     simulator_index simulator;
-    /// The variable index.
+    /// The variable value reference.
     value_reference variable;
     /// The modification to be done to the variable's value.
     std::variant<

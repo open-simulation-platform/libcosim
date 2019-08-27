@@ -94,7 +94,7 @@ public:
             } else if (variables[i] == 1) {
                 values[i] = realIn_;
             } else {
-                throw std::out_of_range("bad index");
+                throw std::out_of_range("bad reference");
             }
         }
     }
@@ -109,7 +109,7 @@ public:
             } else if (variables[i] == 1) {
                 values[i] = intIn_;
             } else {
-                throw std::out_of_range("bad index");
+                throw std::out_of_range("bad reference");
             }
         }
     }
@@ -124,7 +124,7 @@ public:
             } else if (variables[i] == 1) {
                 values[i] = boolIn_;
             } else {
-                throw std::out_of_range("bad index");
+                throw std::out_of_range("bad reference");
             }
         }
     }
@@ -139,7 +139,7 @@ public:
             } else if (variables[i] == 1) {
                 values[i] = stringIn_;
             } else {
-                throw std::out_of_range("bad index");
+                throw std::out_of_range("bad reference");
             }
         }
     }
@@ -152,7 +152,7 @@ public:
             if (variables[i] == 1) {
                 realIn_ = values[i];
             } else {
-                throw std::out_of_range("bad index");
+                throw std::out_of_range("bad reference");
             }
         }
     }
@@ -165,7 +165,7 @@ public:
             if (variables[i] == 1) {
                 intIn_ = values[i];
             } else {
-                throw std::out_of_range("bad index");
+                throw std::out_of_range("bad reference");
             }
         }
     }
@@ -178,7 +178,7 @@ public:
             if (variables[i] == 1) {
                 boolIn_ = values[i];
             } else {
-                throw std::out_of_range("bad index");
+                throw std::out_of_range("bad reference");
             }
         }
     }
@@ -191,7 +191,7 @@ public:
             if (variables[i] == 1) {
                 stringIn_ = values[i];
             } else {
-                throw std::out_of_range("bad index");
+                throw std::out_of_range("bad reference");
             }
         }
     }

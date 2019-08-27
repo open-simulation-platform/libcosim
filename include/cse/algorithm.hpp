@@ -52,35 +52,35 @@ public:
      *  Calling this function more than once for the same variable has no
      *  effect.
      */
-    virtual void expose_for_setting(variable_type type, value_reference index) = 0;
+    virtual void expose_for_setting(variable_type type, value_reference reference) = 0;
 
     /**
      *  Sets the value of a real variable.
      *
      *  The variable must previously have been exposed with `expose_for_setting()`.
      */
-    virtual void set_real(value_reference index, double value) = 0;
+    virtual void set_real(value_reference reference, double value) = 0;
 
     /**
      *  Sets the value of an integer variable.
      *
      *  The variable must previously have been exposed with `expose_for_setting()`.
      */
-    virtual void set_integer(value_reference index, int value) = 0;
+    virtual void set_integer(value_reference reference, int value) = 0;
 
     /**
      *  Sets the value of a boolean variable.
      *
      *  The variable must previously have been exposed with `expose_for_setting()`.
      */
-    virtual void set_boolean(value_reference index, bool value) = 0;
+    virtual void set_boolean(value_reference reference, bool value) = 0;
 
     /**
      *  Sets the value of a string variable.
      *
      *  The variable must previously have been exposed with `expose_for_setting()`.
      */
-    virtual void set_string(value_reference index, std::string_view value) = 0;
+    virtual void set_string(value_reference reference, std::string_view value) = 0;
 
     /**
      *  Sets a modifier for the value of a real input variable.
@@ -88,7 +88,7 @@ public:
      *  The variable must previously have been exposed with `expose_for_setting()`.
      */
     virtual void set_real_input_modifier(
-        value_reference index,
+        value_reference reference,
         std::function<double(double)> modifier) = 0;
 
     /**
@@ -97,7 +97,7 @@ public:
      *  The variable must previously have been exposed with `expose_for_setting()`.
      */
     virtual void set_integer_input_modifier(
-        value_reference index,
+        value_reference reference,
         std::function<int(int)> modifier) = 0;
 
     /**
@@ -106,7 +106,7 @@ public:
      *  The variable must previously have been exposed with `expose_for_setting()`.
      */
     virtual void set_boolean_input_modifier(
-        value_reference index,
+        value_reference reference,
         std::function<bool(bool)> modifier) = 0;
 
     /**
@@ -115,7 +115,7 @@ public:
      *  The variable must previously have been exposed with `expose_for_setting()`.
      */
     virtual void set_string_input_modifier(
-        value_reference index,
+        value_reference reference,
         std::function<std::string(std::string_view)> modifier) = 0;
 
     /**
@@ -124,7 +124,7 @@ public:
      *  The variable must previously have been exposed with `expose_for_setting()`.
      */
     virtual void set_real_output_modifier(
-        value_reference index,
+        value_reference reference,
         std::function<double(double)> modifier) = 0;
 
     /**
@@ -133,7 +133,7 @@ public:
      *  The variable must previously have been exposed with `expose_for_setting()`.
      */
     virtual void set_integer_output_modifier(
-        value_reference index,
+        value_reference reference,
         std::function<int(int)> modifier) = 0;
 
     /**
@@ -142,7 +142,7 @@ public:
      *  The variable must previously have been exposed with `expose_for_setting()`.
      */
     virtual void set_boolean_output_modifier(
-        value_reference index,
+        value_reference reference,
         std::function<bool(bool)> modifier) = 0;
 
     /**
@@ -151,7 +151,7 @@ public:
      *  The variable must previously have been exposed with `expose_for_setting()`.
      */
     virtual void set_string_output_modifier(
-        value_reference index,
+        value_reference reference,
         std::function<std::string(std::string_view)> modifier) = 0;
 
     /**
@@ -181,41 +181,17 @@ public:
         std::optional<time_point> stopTime,
         std::optional<double> relativeTolerance) = 0;
 
-    /**
-     *
-     * Returns all value_reference of real type with an active modifier.
-     *
-     * @return modifiedRealIndexes
-     * Unordered set of all value_reference that currently have an active modifier.
-     */
-    virtual const std::unordered_set<value_reference>& get_modified_real_indexes() const = 0;
+    /// Returns all value references of real type that currently have an active modifier.
+    virtual const std::unordered_set<value_reference>& get_modified_real_references() const = 0;
 
-    /**
-     *
-     * Returns all value_references of integer type with an active modifier.
-     *
-     * @return modifiedIntegerIndexes
-     * Unordered set of all value_references that currently have an active modifier.
-     */
-    virtual const std::unordered_set<value_reference>& get_modified_integer_indexes() const = 0;
+    /// Returns all value references of integer type that currently have an active modifier.
+    virtual const std::unordered_set<value_reference>& get_modified_integer_references() const = 0;
 
-    /**
-     *
-     * Returns all value_references of boolean type with an active modifier.
-     *
-     * @return modifiedBooleanIndexes
-     * Unordered set of all value_references that currently have an active modifier.
-     */
-    virtual const std::unordered_set<value_reference>& get_modified_boolean_indexes() const = 0;
+    /// Returns all value references of boolean type that currently have an active modifier.
+    virtual const std::unordered_set<value_reference>& get_modified_boolean_references() const = 0;
 
-    /**
-     *
-     * Returns all value_references of string type with an active modifier.
-     *
-     * @return modifiedStringIndexes
-     * Unordered set of all value_references that currently have an active modifier.
-     */
-    virtual const std::unordered_set<value_reference>& get_modified_string_indexes() const = 0;
+    /// Returns all value references of string type that currently have an active modifier.
+    virtual const std::unordered_set<value_reference>& get_modified_string_references() const = 0;
 
     /**
      *  Updates the simulator with new input values and makes it calculate

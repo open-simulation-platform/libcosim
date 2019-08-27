@@ -23,15 +23,15 @@ struct visitor : Functors...
 cse::variable_causality find_variable_causality(
     const std::vector<variable_description>& variables,
     const cse::variable_type type,
-    const cse::value_reference index)
+    const cse::value_reference reference)
 {
     for (const auto& vd : variables) {
-        if ((vd.index == index) && (vd.type == type)) {
+        if ((vd.reference == reference) && (vd.type == type)) {
             return vd.causality;
         }
     }
     std::ostringstream oss;
-    oss << "Can't find variable with index: " << index
+    oss << "Can't find variable with reference: " << reference
         << " and type: " << to_text(type);
     throw std::invalid_argument(oss.str());
 }

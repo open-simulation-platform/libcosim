@@ -334,7 +334,7 @@ typedef struct
     /// The name of the variable.
     char name[SLAVE_NAME_MAX_SIZE];
     /// The value reference.
-    cse_value_reference index;
+    cse_value_reference reference;
     /// The variable type.
     cse_variable_type type;
     /// The variable causality.
@@ -430,7 +430,7 @@ typedef struct cse_manipulator_s cse_manipulator;
  *      The slave.
  *  \param [in] variables
  *      A pointer to an array of length `nv` that contains the (slave-specific)
- *      indices of variables to set.
+ *      value references of variables to set.
  *  \param [in] nv
  *      The length of the `variables` and `values` arrays.
  *  \param [out] values
@@ -456,7 +456,7 @@ int cse_manipulator_slave_set_real(
  *      The slave.
  *  \param [in] variables
  *      A pointer to an array of length `nv` that contains the (slave-specific)
- *      indices of variables to set.
+ *      value references of variables to set.
  *  \param [in] nv
  *      The length of the `variables` and `values` arrays.
  *  \param [out] values
@@ -482,7 +482,7 @@ int cse_manipulator_slave_set_integer(
  *      The slave.
  *  \param [in] variables
  *      A pointer to an array of length `nv` that contains the (slave-specific)
- *      indices of variables to set.
+ *      value references of variables to set.
  *  \param [in] nv
  *      The length of the `variables` and `values` arrays.
  *  \param [out] values
@@ -508,7 +508,7 @@ int cse_manipulator_slave_set_boolean(
  *      The slave.
  *  \param [in] variables
  *      A pointer to an array of length `nv` that contains the (slave-specific)
- *      indices of variables to set.
+ *      value references of variables to set.
  *  \param [in] nv
  *      The length of the `variables` and `values` arrays.
  *  \param [out] values
@@ -536,7 +536,7 @@ int cse_manipulator_slave_set_string(
  *      The variable type.
  *  \param [in] variables
  *      A pointer to an array of length `nv` that contains the (slave-specific)
- *      indices of variables to reset.
+ *      value references of variables to reset.
  *  \param [in] nv
  *      The length of the `variables` array.
  *
@@ -559,7 +559,7 @@ int cse_manipulator_slave_reset(
  *      The slave.
  *  \param [in] variables
  *      A pointer to an array of length `nv` that contains the (slave-specific)
- *      indices of variables to retrieve.
+ *      value references of variables to retrieve.
  *  \param [in] nv
  *      The length of the `variables` and `values` arrays.
  *  \param [out] values
@@ -585,7 +585,7 @@ int cse_observer_slave_get_real(
  *      The slave index.
  *  \param [in] variables
  *      A pointer to an array of length `nv` that contains the (slave-specific)
- *      indices of variables to retrieve.
+ *      value references of variables to retrieve.
  *  \param [in] nv
  *      The length of the `variables` and `values` arrays.
  *  \param [out] values
@@ -611,7 +611,7 @@ int cse_observer_slave_get_integer(
  *      The slave index.
  *  \param [in] variables
  *      A pointer to an array of length `nv` that contains the (slave-specific)
- *      indices of variables to retrieve.
+ *      value references of variables to retrieve.
  *  \param [in] nv
  *      The length of the `variables` and `values` arrays.
  *  \param [out] values
@@ -637,7 +637,7 @@ int cse_observer_slave_get_boolean(
  *      The slave index.
  *  \param [in] variables
  *      A pointer to an array of length `nv` that contains the (slave-specific)
- *      indices of variables to retrieve.
+ *      value references of variables to retrieve.
  *  \param [in] nv
  *      The length of the `variables` and `values` arrays.
  *  \param [out] values
@@ -864,10 +864,10 @@ cse_observer* cse_time_series_observer_create();
 cse_observer* cse_buffered_time_series_observer_create(size_t bufferSize);
 
 /// Start observing a variable with a `time_series_observer`.
-int cse_observer_start_observing(cse_observer* observer, cse_slave_index slave, cse_variable_type type, cse_value_reference index);
+int cse_observer_start_observing(cse_observer* observer, cse_slave_index slave, cse_variable_type type, cse_value_reference reference);
 
 /// Stop observing a variable with a `time_series_observer`.
-int cse_observer_stop_observing(cse_observer* observer, cse_slave_index slave, cse_variable_type type, cse_value_reference index);
+int cse_observer_stop_observing(cse_observer* observer, cse_slave_index slave, cse_variable_type type, cse_value_reference reference);
 
 /// Destroys an observer
 int cse_observer_destroy(cse_observer* observer);

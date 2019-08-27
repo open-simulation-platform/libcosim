@@ -70,7 +70,7 @@ inline cse::variable_description convert(const fmuproxy::thrift::ScalarVariable&
 {
     cse::variable_description var;
     var.name = v.name;
-    var.index = (cse::value_reference)v.value_reference;
+    var.reference = (cse::value_reference)v.value_reference;
     var.causality = parse_causality(v.causality);
     var.variability = parse_variability(v.variability);
     var.type = get_type(v);

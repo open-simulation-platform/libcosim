@@ -31,19 +31,19 @@ slave_value_provider::slave_value_provider(observable* observable)
     : observable_(observable)
 {
     for (const auto& vd : observable->model_description().variables) {
-        observable->expose_for_getting(vd.type, vd.index);
+        observable->expose_for_getting(vd.type, vd.reference);
         switch (vd.type) {
             case cse::variable_type::real:
-                realSamples_[vd.index] = double();
+                realSamples_[vd.reference] = double();
                 break;
             case cse::variable_type::integer:
-                intSamples_[vd.index] = int();
+                intSamples_[vd.reference] = int();
                 break;
             case cse::variable_type::boolean:
-                boolSamples_[vd.index] = bool();
+                boolSamples_[vd.reference] = bool();
                 break;
             case cse::variable_type::string:
-                stringSamples_[vd.index] = std::string();
+                stringSamples_[vd.reference] = std::string();
                 break;
             default:
                 CSE_PANIC();

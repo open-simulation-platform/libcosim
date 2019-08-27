@@ -88,40 +88,40 @@ public:
         adjustIfFull(timeSamples_, bufSize_);
     }
 
-    void start_observing(variable_type type, value_reference index)
+    void start_observing(variable_type type, value_reference reference)
     {
         std::lock_guard<std::mutex> lock(lock_);
         switch (type) {
             case variable_type::real:
-                realSamples_[index] = std::map<step_number, double>();
-                observable_->expose_for_getting(type, index);
+                realSamples_[reference] = std::map<step_number, double>();
+                observable_->expose_for_getting(type, reference);
                 break;
             case variable_type::integer:
-                intSamples_[index] = std::map<step_number, int>();
-                observable_->expose_for_getting(type, index);
+                intSamples_[reference] = std::map<step_number, int>();
+                observable_->expose_for_getting(type, reference);
                 break;
             default:
                 std::ostringstream oss;
                 oss << "No support for observing variable with type " << type
-                    << " and index " << index;
+                    << " and reference " << reference;
                 throw std::invalid_argument(oss.str());
         }
     }
 
-    void stop_observing(variable_type type, value_reference index)
+    void stop_observing(variable_type type, value_reference reference)
     {
         std::lock_guard<std::mutex> lock(lock_);
         switch (type) {
             case variable_type::real:
-                realSamples_.erase(index);
+                realSamples_.erase(reference);
                 break;
             case variable_type::integer:
-                intSamples_.erase(index);
+                intSamples_.erase(reference);
                 break;
             default:
                 std::ostringstream oss;
                 oss << "Could not stop observing variable with type " << type
-                    << " and index " << index;
+                    << " and reference " << reference;
                 throw std::invalid_argument(oss.str());
         }
     }
@@ -244,12 +244,12 @@ void time_series_observer::simulator_step_complete(
 
 void time_series_observer::start_observing(variable_id id)
 {
-    slaveObservers_.at(id.simulator)->start_observing(id.type, id.index);
+    slaveObservers_.at(id.simulator)->start_observing(id.type, id.reference);
 }
 
 void time_series_observer::stop_observing(variable_id id)
 {
-    slaveObservers_.at(id.simulator)->stop_observing(id.type, id.index);
+    slaveObservers_.at(id.simulator)->stop_observing(id.type, id.reference);
 }
 
 std::size_t time_series_observer::get_real_samples(

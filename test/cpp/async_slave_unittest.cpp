@@ -39,7 +39,7 @@ public:
         gsl::span<const int> values) override
     {
         if (!values.empty()) {
-            if (variables[0] != 0) throw std::logic_error("Invalid variable index");
+            if (variables[0] != 0) throw std::logic_error("Invalid variable reference");
             if (values[0] == 0) throw nonfatal_bad_value("integer");
         }
     }
