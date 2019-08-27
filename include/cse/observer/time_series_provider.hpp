@@ -29,7 +29,7 @@ public:
      * Retrieves a series of observed values, step numbers and times for a real variable.
      *
      * \param [in] sim index of the simulator
-     * \param [in] variableIndex the variable index
+     * \param [in] valueReference the variable index
      * \param [in] fromStep the step number to start from
      * \param [out] values the series of observed values
      * \param [out] steps the corresponding step numbers
@@ -40,7 +40,7 @@ public:
      */
     virtual std::size_t get_real_samples(
         simulator_index sim,
-        variable_index variableIndex,
+        value_reference valueReference,
         step_number fromStep,
         gsl::span<double> values,
         gsl::span<step_number> steps,
@@ -50,7 +50,7 @@ public:
      * Retrieves a series of observed values, step numbers and times for an integer variable.
      *
      * \param [in] sim index of the simulator
-     * \param [in] variableIndex the variable index
+     * \param [in] valueReference the variable index
      * \param [in] fromStep the step number to start from
      * \param [out] values the series of observed values
      * \param [out] steps the corresponding step numbers
@@ -61,7 +61,7 @@ public:
      */
     virtual std::size_t get_integer_samples(
         simulator_index sim,
-        variable_index variableIndex,
+        value_reference valueReference,
         step_number fromStep,
         gsl::span<int> values,
         gsl::span<step_number> steps,
@@ -103,9 +103,9 @@ public:
      * Retrieves two time-synchronized series of observed values for two real variables.
      *
      * \param [in] sim1 index of the first simulator
-     * \param [in] variableIndex1 the first variable index
+     * \param [in] valueReference1 the first variable index
      * \param [in] sim2 index of the second simulator
-     * \param [in] variableIndex2 the second variable index
+     * \param [in] valueReference2 the second variable index
      * \param [in] fromStep the step number to start from
      * \param [out] values1 the first series of observed values
      * \param [out] values2 the second series of observed values
@@ -115,9 +115,9 @@ public:
      */
     virtual std::size_t get_synchronized_real_series(
         simulator_index sim1,
-        variable_index variableIndex1,
+        value_reference valueReference1,
         simulator_index sim2,
-        variable_index variableIndex2,
+        value_reference valueReference2,
         step_number fromStep,
         gsl::span<double> values1,
         gsl::span<double> values2) = 0;

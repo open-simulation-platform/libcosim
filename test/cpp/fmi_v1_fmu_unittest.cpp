@@ -29,7 +29,7 @@ void run_tests(std::shared_ptr<fmi::fmu> fmu)
     BOOST_TEST(d->version == "0.3");
     BOOST_TEST(std::static_pointer_cast<fmi::v1::fmu>(fmu)->fmilib_handle() != nullptr);
 
-    cse::variable_index
+    cse::value_reference
         realIn = 0,
         integerIn = 0, booleanIn = 0, stringIn = 0,
         realOut = 0, integerOut = 0, booleanOut = 0, stringOut = 0;

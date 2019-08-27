@@ -40,8 +40,8 @@ int main()
         auto observer = std::make_shared<cse::last_value_observer>();
         execution.add_observer(observer);
 
-        const cse::variable_index realOutIndex = 0;
-        const cse::variable_index realInIndex = 1;
+        const cse::value_reference realOutIndex = 0;
+        const cse::value_reference realInIndex = 1;
 
 
         // Add slaves to it

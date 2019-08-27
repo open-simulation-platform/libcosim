@@ -23,19 +23,19 @@ public:
     void end_simulation() override {}
     step_result do_step(time_point, duration) override { return step_result::complete; }
 
-    void get_real_variables(gsl::span<const variable_index>, gsl::span<double>) const override {}
-    void get_integer_variables(gsl::span<const variable_index>, gsl::span<int>) const override {}
-    void get_boolean_variables(gsl::span<const variable_index>, gsl::span<bool>) const override {}
-    void get_string_variables(gsl::span<const variable_index>, gsl::span<std::string>) const override {}
+    void get_real_variables(gsl::span<const value_reference>, gsl::span<double>) const override {}
+    void get_integer_variables(gsl::span<const value_reference>, gsl::span<int>) const override {}
+    void get_boolean_variables(gsl::span<const value_reference>, gsl::span<bool>) const override {}
+    void get_string_variables(gsl::span<const value_reference>, gsl::span<std::string>) const override {}
 
     void set_real_variables(
-        gsl::span<const variable_index>,
+        gsl::span<const value_reference>,
         gsl::span<const double> values) override
     {
         if (!values.empty() && values[0] == 0.0) throw nonfatal_bad_value("real");
     }
     void set_integer_variables(
-        gsl::span<const variable_index> variables,
+        gsl::span<const value_reference> variables,
         gsl::span<const int> values) override
     {
         if (!values.empty()) {
@@ -44,13 +44,13 @@ public:
         }
     }
     void set_boolean_variables(
-        gsl::span<const variable_index>,
+        gsl::span<const value_reference>,
         gsl::span<const bool> values) override
     {
         if (!values.empty() && !values[0]) throw nonfatal_bad_value("boolean");
     }
     void set_string_variables(
-        gsl::span<const variable_index>,
+        gsl::span<const value_reference>,
         gsl::span<const std::string> values) override
     {
         if (!values.empty() && values[0].empty()) throw nonfatal_bad_value("string");
@@ -75,13 +75,13 @@ void test_error_handling_2(async_slave& as)
     f2.get();
     BOOST_REQUIRE(as.state() == slave_state::simulation);
 
-    variable_index realIndex = 0;
+    value_reference realIndex = 0;
     double realValue = 1.0;
-    variable_index integerIndex = 0;
+    value_reference integerIndex = 0;
     int integerValue = 1;
-    variable_index booleanIndex = 0;
+    value_reference booleanIndex = 0;
     bool booleanValue = true;
-    variable_index stringIndex = 0;
+    value_reference stringIndex = 0;
     std::string stringValue = "foo";
     auto f3 = as.set_variables(
         gsl::make_span(&realIndex, 1), gsl::make_span(&realValue, 1),

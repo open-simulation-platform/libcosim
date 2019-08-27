@@ -71,7 +71,7 @@ cse::step_result cse::fmuproxy::remote_slave::do_step(cse::time_point, cse::dura
     return cse::step_result::complete;
 }
 
-void cse::fmuproxy::remote_slave::get_real_variables(gsl::span<const cse::variable_index> variables,
+void cse::fmuproxy::remote_slave::get_real_variables(gsl::span<const cse::value_reference> variables,
     gsl::span<double> values) const
 {
     CSE_INPUT_CHECK(variables.size() == values.size());
@@ -87,7 +87,7 @@ void cse::fmuproxy::remote_slave::get_real_variables(gsl::span<const cse::variab
     }
 }
 
-void cse::fmuproxy::remote_slave::get_integer_variables(gsl::span<const cse::variable_index> variables,
+void cse::fmuproxy::remote_slave::get_integer_variables(gsl::span<const cse::value_reference> variables,
     gsl::span<int> values) const
 {
     CSE_INPUT_CHECK(variables.size() == values.size());
@@ -103,7 +103,7 @@ void cse::fmuproxy::remote_slave::get_integer_variables(gsl::span<const cse::var
     }
 }
 
-void cse::fmuproxy::remote_slave::get_boolean_variables(gsl::span<const cse::variable_index> variables,
+void cse::fmuproxy::remote_slave::get_boolean_variables(gsl::span<const cse::value_reference> variables,
     gsl::span<bool> values) const
 {
     CSE_INPUT_CHECK(variables.size() == values.size());
@@ -119,7 +119,7 @@ void cse::fmuproxy::remote_slave::get_boolean_variables(gsl::span<const cse::var
     }
 }
 
-void cse::fmuproxy::remote_slave::get_string_variables(gsl::span<const cse::variable_index> variables,
+void cse::fmuproxy::remote_slave::get_string_variables(gsl::span<const cse::value_reference> variables,
     gsl::span<std::string> values) const
 {
     CSE_INPUT_CHECK(variables.size() == values.size());
@@ -132,7 +132,7 @@ void cse::fmuproxy::remote_slave::get_string_variables(gsl::span<const cse::vari
     }
 }
 
-void cse::fmuproxy::remote_slave::set_real_variables(gsl::span<const cse::variable_index> variables,
+void cse::fmuproxy::remote_slave::set_real_variables(gsl::span<const cse::value_reference> variables,
     gsl::span<const double> values)
 {
     CSE_INPUT_CHECK(variables.size() == values.size());
@@ -144,7 +144,7 @@ void cse::fmuproxy::remote_slave::set_real_variables(gsl::span<const cse::variab
     }
 }
 
-void cse::fmuproxy::remote_slave::set_integer_variables(gsl::span<const cse::variable_index> variables,
+void cse::fmuproxy::remote_slave::set_integer_variables(gsl::span<const cse::value_reference> variables,
     gsl::span<const int> values)
 {
     CSE_INPUT_CHECK(variables.size() == values.size());
@@ -156,7 +156,7 @@ void cse::fmuproxy::remote_slave::set_integer_variables(gsl::span<const cse::var
     }
 }
 
-void cse::fmuproxy::remote_slave::set_boolean_variables(gsl::span<const cse::variable_index> variables,
+void cse::fmuproxy::remote_slave::set_boolean_variables(gsl::span<const cse::value_reference> variables,
     gsl::span<const bool> values)
 {
     CSE_INPUT_CHECK(variables.size() == values.size());
@@ -168,7 +168,7 @@ void cse::fmuproxy::remote_slave::set_boolean_variables(gsl::span<const cse::var
     }
 }
 
-void cse::fmuproxy::remote_slave::set_string_variables(gsl::span<const cse::variable_index> variables,
+void cse::fmuproxy::remote_slave::set_string_variables(gsl::span<const cse::value_reference> variables,
     gsl::span<const std::string> values)
 {
     CSE_INPUT_CHECK(variables.size() == values.size());

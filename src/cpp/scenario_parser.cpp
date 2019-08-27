@@ -86,7 +86,7 @@ cse::scenario::variable_action generate_action(
     cse::simulator_index sim,
     cse::variable_type type,
     bool isInput,
-    cse::variable_index var)
+    cse::value_reference var)
 {
     switch (type) {
         case cse::variable_type::real: {

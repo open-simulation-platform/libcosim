@@ -228,10 +228,10 @@ private:
     std::map<step_number, std::vector<int>> intSamples_;
     std::map<step_number, std::vector<bool>> boolSamples_;
     std::map<step_number, std::vector<std::string_view>> stringSamples_;
-    std::vector<variable_index> realIndexes_;
-    std::vector<variable_index> intIndexes_;
-    std::vector<variable_index> boolIndexes_;
-    std::vector<variable_index> stringIndexes_;
+    std::vector<value_reference> realIndexes_;
+    std::vector<value_reference> intIndexes_;
+    std::vector<value_reference> boolIndexes_;
+    std::vector<value_reference> stringIndexes_;
     std::map<step_number, double> timeSamples_;
     std::vector<variable_description> realVars_;
     std::vector<variable_description> intVars_;

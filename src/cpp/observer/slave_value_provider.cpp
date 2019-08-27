@@ -12,15 +12,15 @@ namespace
 
 template<typename T>
 void get(
-    gsl::span<const variable_index> variables,
-    const std::unordered_map<variable_index, T>& samples,
+    gsl::span<const value_reference> variables,
+    const std::unordered_map<value_reference, T>& samples,
     gsl::span<T> values)
 {
     if (samples.empty()) {
         throw std::out_of_range("no samples available");
     }
     for (int i = 0; i < values.size(); i++) {
-        variable_index valueRef = variables[i];
+        value_reference valueRef = variables[i];
         values[i] = samples.at(valueRef);
     }
 }
@@ -72,25 +72,25 @@ void slave_value_provider::observe()
     }
 }
 
-void slave_value_provider::get_real(gsl::span<const variable_index> variables, gsl::span<double> values)
+void slave_value_provider::get_real(gsl::span<const value_reference> variables, gsl::span<double> values)
 {
     std::lock_guard<std::mutex> lock(lock_);
     get<double>(variables, realSamples_, values);
 }
 
-void slave_value_provider::get_int(gsl::span<const variable_index> variables, gsl::span<int> values)
+void slave_value_provider::get_int(gsl::span<const value_reference> variables, gsl::span<int> values)
 {
     std::lock_guard<std::mutex> lock(lock_);
     get<int>(variables, intSamples_, values);
 }
 
-void slave_value_provider::get_boolean(gsl::span<const variable_index> variables, gsl::span<bool> values)
+void slave_value_provider::get_boolean(gsl::span<const value_reference> variables, gsl::span<bool> values)
 {
     std::lock_guard<std::mutex> lock(lock_);
     get<bool>(variables, boolSamples_, values);
 }
 
-void slave_value_provider::get_string(gsl::span<const variable_index> variables, gsl::span<std::string> values)
+void slave_value_provider::get_string(gsl::span<const value_reference> variables, gsl::span<std::string> values)
 {
     std::lock_guard<std::mutex> lock(lock_);
     get<std::string>(variables, stringSamples_, values);

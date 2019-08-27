@@ -34,13 +34,13 @@ struct var_view_type<std::string>
 template<typename T>
 struct get_variable_cache
 {
-    std::vector<variable_index> indexes;
+    std::vector<value_reference> indexes;
     boost::container::vector<T> originalValues;
     boost::container::vector<T> modifiedValues;
     std::vector<std::function<T(T)>> modifiers;
-    std::unordered_map<variable_index, std::size_t> indexMapping;
+    std::unordered_map<value_reference, std::size_t> indexMapping;
 
-    void expose(variable_index i)
+    void expose(value_reference i)
     {
         if (indexMapping.count(i)) return;
         indexes.push_back(i);
@@ -50,7 +50,7 @@ struct get_variable_cache
         indexMapping[i] = indexes.size() - 1;
     }
 
-    typename var_view_type<T>::type get(variable_index i) const
+    typename var_view_type<T>::type get(value_reference i) const
     {
         const auto it = indexMapping.find(i);
         if (it != indexMapping.end()) {
@@ -63,7 +63,7 @@ struct get_variable_cache
         }
     }
 
-    void set_modifier(variable_index i, std::function<T(T)> m)
+    void set_modifier(value_reference i, std::function<T(T)> m)
     {
         modifiers[indexMapping[i]] = m;
     }
@@ -85,12 +85,12 @@ template<typename T>
 class set_variable_cache
 {
 public:
-    void expose(variable_index i, T startValue)
+    void expose(value_reference i, T startValue)
     {
         exposedVariables_.emplace(i, exposed_variable{startValue, -1});
     }
 
-    void set_value(variable_index i, typename var_view_type<T>::type v)
+    void set_value(value_reference i, typename var_view_type<T>::type v)
     {
         assert(!hasRunModifiers_);
         const auto it = exposedVariables_.find(i);
@@ -112,7 +112,7 @@ public:
         }
     }
 
-    void set_modifier(variable_index i, std::function<T(T)> m)
+    void set_modifier(value_reference i, std::function<T(T)> m)
     {
         assert(!hasRunModifiers_);
         const auto it = exposedVariables_.find(i);
@@ -136,7 +136,7 @@ public:
         }
     }
 
-    std::pair<gsl::span<variable_index>, gsl::span<const T>> modify_and_get()
+    std::pair<gsl::span<value_reference>, gsl::span<const T>> modify_and_get()
     {
         if (!hasRunModifiers_) {
             assert(indexes_.size() == values_.size());
@@ -172,16 +172,16 @@ private:
         std::ptrdiff_t arrayIndex = -1;
     };
 
-    std::unordered_map<variable_index, exposed_variable> exposedVariables_;
+    std::unordered_map<value_reference, exposed_variable> exposedVariables_;
 
     // The modifiers associated with certain variables, and a flag that
     // specifies whether they have been run on the values currently in
     // `values_`.
-    std::unordered_map<variable_index, std::function<T(T)>> modifiers_;
+    std::unordered_map<value_reference, std::function<T(T)>> modifiers_;
     bool hasRunModifiers_ = false;
 
     // The indexes and values of the variables that will be set next.
-    std::vector<variable_index> indexes_;
+    std::vector<value_reference> indexes_;
     boost::container::vector<T> values_;
 };
 
@@ -236,7 +236,7 @@ public:
     }
 
 
-    void expose_for_getting(variable_type type, variable_index index)
+    void expose_for_getting(variable_type type, value_reference index)
     {
         switch (type) {
             case variable_type::real:
@@ -256,27 +256,27 @@ public:
         }
     }
 
-    double get_real(variable_index index) const
+    double get_real(value_reference index) const
     {
         return realGetCache_.get(index);
     }
 
-    int get_integer(variable_index index) const
+    int get_integer(value_reference index) const
     {
         return integerGetCache_.get(index);
     }
 
-    bool get_boolean(variable_index index) const
+    bool get_boolean(value_reference index) const
     {
         return booleanGetCache_.get(index);
     }
 
-    std::string_view get_string(variable_index index) const
+    std::string_view get_string(value_reference index) const
     {
         return stringGetCache_.get(index);
     }
 
-    void expose_for_setting(variable_type type, variable_index index)
+    void expose_for_setting(variable_type type, value_reference index)
     {
         const auto vd = find_variable_description(index, type);
         switch (type) {
@@ -297,28 +297,28 @@ public:
         }
     }
 
-    void set_real(variable_index index, double value)
+    void set_real(value_reference index, double value)
     {
         realSetCache_.set_value(index, value);
     }
 
-    void set_integer(variable_index index, int value)
+    void set_integer(value_reference index, int value)
     {
         integerSetCache_.set_value(index, value);
     }
 
-    void set_boolean(variable_index index, bool value)
+    void set_boolean(value_reference index, bool value)
     {
         booleanSetCache_.set_value(index, value);
     }
 
-    void set_string(variable_index index, std::string_view value)
+    void set_string(value_reference index, std::string_view value)
     {
         stringSetCache_.set_value(index, value);
     }
 
     void set_real_input_modifier(
-        variable_index index,
+        value_reference index,
         std::function<double(double)> modifier)
     {
         realSetCache_.set_modifier(index, modifier);
@@ -326,7 +326,7 @@ public:
     }
 
     void set_integer_input_modifier(
-        variable_index index,
+        value_reference index,
         std::function<int(int)> modifier)
     {
         integerSetCache_.set_modifier(index, modifier);
@@ -334,7 +334,7 @@ public:
     }
 
     void set_boolean_input_modifier(
-        variable_index index,
+        value_reference index,
         std::function<bool(bool)> modifier)
     {
         booleanSetCache_.set_modifier(index, modifier);
@@ -342,7 +342,7 @@ public:
     }
 
     void set_string_input_modifier(
-        variable_index index,
+        value_reference index,
         std::function<std::string(std::string_view)> modifier)
     {
         stringSetCache_.set_modifier(index, modifier);
@@ -350,7 +350,7 @@ public:
     }
 
     void set_real_output_modifier(
-        variable_index index,
+        value_reference index,
         std::function<double(double)> modifier)
     {
         realGetCache_.set_modifier(index, modifier);
@@ -358,7 +358,7 @@ public:
     }
 
     void set_integer_output_modifier(
-        variable_index index,
+        value_reference index,
         std::function<int(int)> modifier)
     {
         integerGetCache_.set_modifier(index, modifier);
@@ -366,7 +366,7 @@ public:
     }
 
     void set_boolean_output_modifier(
-        variable_index index,
+        value_reference index,
         std::function<bool(bool)> modifier)
     {
         booleanGetCache_.set_modifier(index, modifier);
@@ -374,29 +374,29 @@ public:
     }
 
     void set_string_output_modifier(
-        variable_index index,
+        value_reference index,
         std::function<std::string(std::string_view)> modifier)
     {
         stringGetCache_.set_modifier(index, modifier);
         set_modified_index(modifiedStringIndexes_, index, modifier ? true : false);
     }
 
-    std::unordered_set<variable_index>& get_modified_real_indexes()
+    std::unordered_set<value_reference>& get_modified_real_indexes()
     {
         return modifiedRealIndexes_;
     }
 
-    std::unordered_set<variable_index>& get_modified_integer_indexes()
+    std::unordered_set<value_reference>& get_modified_integer_indexes()
     {
         return modifiedIntegerIndexes_;
     }
 
-    std::unordered_set<variable_index>& get_modified_boolean_indexes()
+    std::unordered_set<value_reference>& get_modified_boolean_indexes()
     {
         return modifiedBooleanIndexes_;
     }
 
-    std::unordered_set<variable_index>& get_modified_string_indexes()
+    std::unordered_set<value_reference>& get_modified_string_indexes()
     {
         return modifiedStringIndexes_;
     }
@@ -477,7 +477,7 @@ private:
         stringGetCache_.run_modifiers();
     }
 
-    variable_description find_variable_description(variable_index index, variable_type type)
+    variable_description find_variable_description(value_reference index, variable_type type)
     {
         auto it = std::find_if(
             modelDescription_.variables.begin(),
@@ -493,7 +493,7 @@ private:
         return *it;
     }
 
-    void set_modified_index(std::unordered_set<variable_index>& modifiedIndexes, variable_index& index, bool modifier)
+    void set_modified_index(std::unordered_set<value_reference>& modifiedIndexes, value_reference& index, bool modifier)
     {
         if (modifier) {
             modifiedIndexes.insert(index);
@@ -517,10 +517,10 @@ private:
     set_variable_cache<bool> booleanSetCache_;
     set_variable_cache<std::string> stringSetCache_;
 
-    std::unordered_set<variable_index> modifiedRealIndexes_;
-    std::unordered_set<variable_index> modifiedIntegerIndexes_;
-    std::unordered_set<variable_index> modifiedBooleanIndexes_;
-    std::unordered_set<variable_index> modifiedStringIndexes_;
+    std::unordered_set<value_reference> modifiedRealIndexes_;
+    std::unordered_set<value_reference> modifiedIntegerIndexes_;
+    std::unordered_set<value_reference> modifiedBooleanIndexes_;
+    std::unordered_set<value_reference> modifiedStringIndexes_;
 };
 
 
@@ -551,137 +551,137 @@ cse::model_description slave_simulator::model_description() const
 }
 
 
-void slave_simulator::expose_for_getting(variable_type type, variable_index index)
+void slave_simulator::expose_for_getting(variable_type type, value_reference index)
 {
     pimpl_->expose_for_getting(type, index);
 }
 
 
-double slave_simulator::get_real(variable_index index) const
+double slave_simulator::get_real(value_reference index) const
 {
     return pimpl_->get_real(index);
 }
 
 
-int slave_simulator::get_integer(variable_index index) const
+int slave_simulator::get_integer(value_reference index) const
 {
     return pimpl_->get_integer(index);
 }
 
 
-bool slave_simulator::get_boolean(variable_index index) const
+bool slave_simulator::get_boolean(value_reference index) const
 {
     return pimpl_->get_boolean(index);
 }
 
 
-std::string_view slave_simulator::get_string(variable_index index) const
+std::string_view slave_simulator::get_string(value_reference index) const
 {
     return pimpl_->get_string(index);
 }
 
 
-void slave_simulator::expose_for_setting(variable_type type, variable_index index)
+void slave_simulator::expose_for_setting(variable_type type, value_reference index)
 {
     pimpl_->expose_for_setting(type, index);
 }
 
 
-void slave_simulator::set_real(variable_index index, double value)
+void slave_simulator::set_real(value_reference index, double value)
 {
     pimpl_->set_real(index, value);
 }
 
 
-void slave_simulator::set_integer(variable_index index, int value)
+void slave_simulator::set_integer(value_reference index, int value)
 {
     pimpl_->set_integer(index, value);
 }
 
 
-void slave_simulator::set_boolean(variable_index index, bool value)
+void slave_simulator::set_boolean(value_reference index, bool value)
 {
     pimpl_->set_boolean(index, value);
 }
 
 
-void slave_simulator::set_string(variable_index index, std::string_view value)
+void slave_simulator::set_string(value_reference index, std::string_view value)
 {
     pimpl_->set_string(index, value);
 }
 
 void slave_simulator::set_real_input_modifier(
-    variable_index index,
+    value_reference index,
     std::function<double(double)> modifier)
 {
     pimpl_->set_real_input_modifier(index, modifier);
 }
 
 void slave_simulator::set_integer_input_modifier(
-    variable_index index,
+    value_reference index,
     std::function<int(int)> modifier)
 {
     pimpl_->set_integer_input_modifier(index, modifier);
 }
 
 void slave_simulator::set_boolean_input_modifier(
-    variable_index index,
+    value_reference index,
     std::function<bool(bool)> modifier)
 {
     pimpl_->set_boolean_input_modifier(index, modifier);
 }
 
 void slave_simulator::set_string_input_modifier(
-    variable_index index,
+    value_reference index,
     std::function<std::string(std::string_view)> modifier)
 {
     pimpl_->set_string_input_modifier(index, modifier);
 }
 
 void slave_simulator::set_real_output_modifier(
-    variable_index index,
+    value_reference index,
     std::function<double(double)> modifier)
 {
     pimpl_->set_real_output_modifier(index, modifier);
 }
 
 void slave_simulator::set_integer_output_modifier(
-    variable_index index,
+    value_reference index,
     std::function<int(int)> modifier)
 {
     pimpl_->set_integer_output_modifier(index, modifier);
 }
 
 void slave_simulator::set_boolean_output_modifier(
-    variable_index index,
+    value_reference index,
     std::function<bool(bool)> modifier)
 {
     pimpl_->set_boolean_output_modifier(index, modifier);
 }
 
 void slave_simulator::set_string_output_modifier(
-    variable_index index,
+    value_reference index,
     std::function<std::string(std::string_view)> modifier)
 {
     pimpl_->set_string_output_modifier(index, modifier);
 }
 
-std::unordered_set<variable_index>& slave_simulator::get_modified_real_indexes() const
+std::unordered_set<value_reference>& slave_simulator::get_modified_real_indexes() const
 {
     return pimpl_->get_modified_real_indexes();
 }
 
-std::unordered_set<variable_index>& slave_simulator::get_modified_integer_indexes() const
+std::unordered_set<value_reference>& slave_simulator::get_modified_integer_indexes() const
 {
     return pimpl_->get_modified_integer_indexes();
 }
 
-std::unordered_set<variable_index>& slave_simulator::get_modified_boolean_indexes() const
+std::unordered_set<value_reference>& slave_simulator::get_modified_boolean_indexes() const
 {
     return pimpl_->get_modified_boolean_indexes();
 }
 
-std::unordered_set<variable_index>& slave_simulator::get_modified_string_indexes() const
+std::unordered_set<value_reference>& slave_simulator::get_modified_string_indexes() const
 {
     return pimpl_->get_modified_string_indexes();
 }

@@ -44,8 +44,8 @@ int main()
 
         execution.step();
 
-        const cse::variable_index outIndex = 0;
-        const cse::variable_index inIndex = 1;
+        const cse::value_reference outIndex = 0;
+        const cse::value_reference inIndex = 1;
 
         double realInValue = -1.0;
         double realOutValue = -1.0;

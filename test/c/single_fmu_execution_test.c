@@ -92,12 +92,12 @@ int main()
     if (rc < 0) { goto Lerror; }
 
     // ===== Can start/stop execution and get status
-    cse_variable_index realInVar = 0;
+    cse_value_reference realInVar = 0;
     const double realInVal = 5.0;
     rc = cse_manipulator_slave_set_real(manipulator, slave_index, &realInVar, 1, &realInVal);
     if (rc < 0) { goto Lerror; }
 
-    cse_variable_index intInVar = 0;
+    cse_value_reference intInVar = 0;
     const int intInVal = 42;
     rc = cse_manipulator_slave_set_integer(manipulator, slave_index, &intInVar, 1, &intInVal);
     if (rc < 0) { goto Lerror; }
@@ -136,13 +136,13 @@ int main()
         goto Lfailure;
     }
 
-    cse_variable_index realOutVar = 0;
+    cse_value_reference realOutVar = 0;
     double realOutVal = -1.0;
     rc = cse_observer_slave_get_real(observer, slave_index, &realOutVar, 1, &realOutVal);
     if (rc < 0) { goto Lerror; }
 
 
-    cse_variable_index intOutVar = 0;
+    cse_value_reference intOutVar = 0;
     int intOutVal = 10;
     rc = cse_observer_slave_get_integer(observer, slave_index, &intOutVar, 1, &intOutVal);
     if (rc < 0) { goto Lerror; }

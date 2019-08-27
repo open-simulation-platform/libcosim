@@ -85,7 +85,7 @@ public:
     }
 
     void get_real_variables(
-        gsl::span<const cse::variable_index> variables,
+        gsl::span<const cse::value_reference> variables,
         gsl::span<double> values) const override
     {
         for (int i = 0; i < variables.size(); ++i) {
@@ -100,7 +100,7 @@ public:
     }
 
     void get_integer_variables(
-        gsl::span<const cse::variable_index> variables,
+        gsl::span<const cse::value_reference> variables,
         gsl::span<int> values) const override
     {
         for (int i = 0; i < variables.size(); ++i) {
@@ -115,7 +115,7 @@ public:
     }
 
     void get_boolean_variables(
-        gsl::span<const cse::variable_index> variables,
+        gsl::span<const cse::value_reference> variables,
         gsl::span<bool> values) const override
     {
         for (int i = 0; i < variables.size(); ++i) {
@@ -130,7 +130,7 @@ public:
     }
 
     void get_string_variables(
-        gsl::span<const cse::variable_index> variables,
+        gsl::span<const cse::value_reference> variables,
         gsl::span<std::string> values) const override
     {
         for (int i = 0; i < variables.size(); ++i) {
@@ -145,7 +145,7 @@ public:
     }
 
     void set_real_variables(
-        gsl::span<const cse::variable_index> variables,
+        gsl::span<const cse::value_reference> variables,
         gsl::span<const double> values) override
     {
         for (int i = 0; i < variables.size(); ++i) {
@@ -158,7 +158,7 @@ public:
     }
 
     void set_integer_variables(
-        gsl::span<const cse::variable_index> variables,
+        gsl::span<const cse::value_reference> variables,
         gsl::span<const int> values) override
     {
         for (int i = 0; i < variables.size(); ++i) {
@@ -171,7 +171,7 @@ public:
     }
 
     void set_boolean_variables(
-        gsl::span<const cse::variable_index> variables,
+        gsl::span<const cse::value_reference> variables,
         gsl::span<const bool> values) override
     {
         for (int i = 0; i < variables.size(); ++i) {
@@ -184,7 +184,7 @@ public:
     }
 
     void set_string_variables(
-        gsl::span<const cse::variable_index> variables,
+        gsl::span<const cse::value_reference> variables,
         gsl::span<const std::string> values) override
     {
         for (int i = 0; i < variables.size(); ++i) {

@@ -61,7 +61,7 @@ int main()
     double inputRealSamples[10] = {0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0};
     int inputIntSamples[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 
-    cse_variable_index index = 0;
+    cse_value_reference index = 0;
 
     rc = cse_observer_start_observing(observer, 0, CSE_VARIABLE_TYPE_INTEGER, index);
     if (rc < 0) { goto Lerror; }

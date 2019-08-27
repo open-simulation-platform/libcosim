@@ -30,7 +30,7 @@ public:
      */
     virtual void get_real(
         simulator_index sim,
-        gsl::span<const variable_index> variables,
+        gsl::span<const value_reference> variables,
         gsl::span<double> values) = 0;
 
     /**
@@ -42,7 +42,7 @@ public:
      */
     virtual void get_integer(
         simulator_index sim,
-        gsl::span<const variable_index> variables,
+        gsl::span<const value_reference> variables,
         gsl::span<int> values) = 0;
 
     /**
@@ -54,7 +54,7 @@ public:
      */
     virtual void get_boolean(
         simulator_index sim,
-        gsl::span<const variable_index> variables,
+        gsl::span<const value_reference> variables,
         gsl::span<bool> values) = 0;
 
     /**
@@ -66,7 +66,7 @@ public:
      */
     virtual void get_string(
         simulator_index sim,
-        gsl::span<const variable_index> variables,
+        gsl::span<const value_reference> variables,
         gsl::span<std::string> values) = 0;
 };
 

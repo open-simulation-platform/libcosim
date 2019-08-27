@@ -34,7 +34,7 @@ public:
     }
 
     void set_real_variables(
-        gsl::span<const cse::variable_index> variables,
+        gsl::span<const cse::value_reference> variables,
         gsl::span<const double> values) override
     {
         if (!variables.empty()) setRealLog_.insert(time_);
@@ -42,7 +42,7 @@ public:
     }
 
     void set_integer_variables(
-        gsl::span<const cse::variable_index> variables,
+        gsl::span<const cse::value_reference> variables,
         gsl::span<const int> values) override
     {
         if (!variables.empty()) setIntegerLog_.insert(time_);
@@ -79,10 +79,10 @@ int main()
         auto observer = std::make_shared<cse::last_value_observer>();
         execution.add_observer(observer);
 
-        const cse::variable_index realOutIndex = 0;
-        const cse::variable_index realInIndex = 1;
-        const cse::variable_index integerOutIndex = 0;
-        const cse::variable_index integerInIndex = 1;
+        const cse::value_reference realOutIndex = 0;
+        const cse::value_reference realInIndex = 1;
+        const cse::value_reference integerOutIndex = 0;
+        const cse::value_reference integerInIndex = 1;
 
         double v = 0.0;
         auto slave0 = std::make_shared<mock_slave>([&v](double /*x*/) { return ++v; });

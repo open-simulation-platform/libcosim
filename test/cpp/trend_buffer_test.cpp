@@ -36,8 +36,8 @@ int main()
         auto observer = std::make_shared<cse::time_series_observer>();
         execution.add_observer(observer);
 
-        const cse::variable_index realOutIndex = 0;
-        const cse::variable_index realInIndex = 1;
+        const cse::value_reference realOutIndex = 0;
+        const cse::value_reference realInIndex = 1;
 
         // Add slaves to it
         for (int i = 0; i < numSlaves; ++i) {

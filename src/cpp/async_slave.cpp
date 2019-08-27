@@ -131,13 +131,13 @@ auto big_stack_async(F&& f)
  */
 void set_all_variables(
     slave& slave,
-    gsl::span<const cse::variable_index> realVariables,
+    gsl::span<const cse::value_reference> realVariables,
     gsl::span<const double> realValues,
-    gsl::span<const cse::variable_index> integerVariables,
+    gsl::span<const cse::value_reference> integerVariables,
     gsl::span<const int> integerValues,
-    gsl::span<const cse::variable_index> booleanVariables,
+    gsl::span<const cse::value_reference> booleanVariables,
     gsl::span<const bool> booleanValues,
-    gsl::span<const cse::variable_index> stringVariables,
+    gsl::span<const cse::value_reference> stringVariables,
     gsl::span<const std::string> stringValues)
 {
     bool nonfatalBadValue = false;
@@ -254,10 +254,10 @@ public:
     // clang-format off
 
     boost::fibers::future<variable_values> get_variables(
-        gsl::span<const cse::variable_index> realVariables,
-        gsl::span<const cse::variable_index> integerVariables,
-        gsl::span<const cse::variable_index> booleanVariables,
-        gsl::span<const cse::variable_index> stringVariables)
+        gsl::span<const cse::value_reference> realVariables,
+        gsl::span<const cse::value_reference> integerVariables,
+        gsl::span<const cse::value_reference> booleanVariables,
+        gsl::span<const cse::value_reference> stringVariables)
         override
     {
         CSE_PRECONDITION(
@@ -291,13 +291,13 @@ public:
     }
 
     boost::fibers::future<void> set_variables(
-        gsl::span<const cse::variable_index> realVariables,
+        gsl::span<const cse::value_reference> realVariables,
         gsl::span<const double> realValues,
-        gsl::span<const cse::variable_index> integerVariables,
+        gsl::span<const cse::value_reference> integerVariables,
         gsl::span<const int> integerValues,
-        gsl::span<const cse::variable_index> booleanVariables,
+        gsl::span<const cse::value_reference> booleanVariables,
         gsl::span<const bool> booleanValues,
-        gsl::span<const cse::variable_index> stringVariables,
+        gsl::span<const cse::value_reference> stringVariables,
         gsl::span<const std::string> stringValues)
         override
     {
@@ -387,24 +387,24 @@ struct do_step_request
 };
 struct get_variables_request
 {
-    gsl::span<const cse::variable_index> realVariables;
+    gsl::span<const cse::value_reference> realVariables;
     gsl::span<double> realValues;
-    gsl::span<const cse::variable_index> integerVariables;
+    gsl::span<const cse::value_reference> integerVariables;
     gsl::span<int> integerValues;
-    gsl::span<const cse::variable_index> booleanVariables;
+    gsl::span<const cse::value_reference> booleanVariables;
     gsl::span<bool> booleanValues;
-    gsl::span<const cse::variable_index> stringVariables;
+    gsl::span<const cse::value_reference> stringVariables;
     gsl::span<std::string> stringValues;
 };
 struct set_variables_request
 {
-    gsl::span<const cse::variable_index> realVariables;
+    gsl::span<const cse::value_reference> realVariables;
     gsl::span<const double> realValues;
-    gsl::span<const cse::variable_index> integerVariables;
+    gsl::span<const cse::value_reference> integerVariables;
     gsl::span<const int> integerValues;
-    gsl::span<const cse::variable_index> booleanVariables;
+    gsl::span<const cse::value_reference> booleanVariables;
     gsl::span<const bool> booleanValues;
-    gsl::span<const cse::variable_index> stringVariables;
+    gsl::span<const cse::value_reference> stringVariables;
     gsl::span<const std::string> stringValues;
 };
 
@@ -626,10 +626,10 @@ public:
     // clang-format off
 
     boost::fibers::future<variable_values> get_variables(
-        gsl::span<const cse::variable_index> realVariables,
-        gsl::span<const cse::variable_index> integerVariables,
-        gsl::span<const cse::variable_index> booleanVariables,
-        gsl::span<const cse::variable_index> stringVariables)
+        gsl::span<const cse::value_reference> realVariables,
+        gsl::span<const cse::value_reference> integerVariables,
+        gsl::span<const cse::value_reference> booleanVariables,
+        gsl::span<const cse::value_reference> stringVariables)
         override
     {
         CSE_PRECONDITION(
@@ -671,13 +671,13 @@ public:
     }
 
     boost::fibers::future<void> set_variables(
-        gsl::span<const cse::variable_index> realVariables,
+        gsl::span<const cse::value_reference> realVariables,
         gsl::span<const double> realValues,
-        gsl::span<const cse::variable_index> integerVariables,
+        gsl::span<const cse::value_reference> integerVariables,
         gsl::span<const int> integerValues,
-        gsl::span<const cse::variable_index> booleanVariables,
+        gsl::span<const cse::value_reference> booleanVariables,
         gsl::span<const bool> booleanValues,
-        gsl::span<const cse::variable_index> stringVariables,
+        gsl::span<const cse::value_reference> stringVariables,
         gsl::span<const std::string> stringValues)
         override
     {

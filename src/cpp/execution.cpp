@@ -235,7 +235,7 @@ public:
         return modifiedVariables;
     }
 
-    void set_real_initial_value(simulator_index sim, variable_index var, double value)
+    void set_real_initial_value(simulator_index sim, value_reference var, double value)
     {
         if (initialized_) {
             throw error(make_error_code(errc::unsupported_feature), "Initial values must be set before simulation is started");
@@ -244,7 +244,7 @@ public:
         simulators_.at(sim)->set_real(var, value);
     }
 
-    void set_integer_initial_value(simulator_index sim, variable_index var, int value)
+    void set_integer_initial_value(simulator_index sim, value_reference var, int value)
     {
         if (initialized_) {
             throw error(make_error_code(errc::unsupported_feature), "Initial values must be set before simulation is started");
@@ -253,7 +253,7 @@ public:
         simulators_.at(sim)->set_integer(var, value);
     }
 
-    void set_boolean_initial_value(simulator_index sim, variable_index var, bool value)
+    void set_boolean_initial_value(simulator_index sim, value_reference var, bool value)
     {
         if (initialized_) {
             throw error(make_error_code(errc::unsupported_feature), "Initial values must be set before simulation is started");
@@ -262,7 +262,7 @@ public:
         simulators_.at(sim)->set_boolean(var, value);
     }
 
-    void set_string_initial_value(simulator_index sim, variable_index var, const std::string& value)
+    void set_string_initial_value(simulator_index sim, value_reference var, const std::string& value)
     {
         if (initialized_) {
             throw error(make_error_code(errc::unsupported_feature), "Initial values must be set before simulation is started");
@@ -426,22 +426,22 @@ std::vector<variable_id> execution::get_modified_variables()
     return pimpl_->get_modified_variables();
 }
 
-void execution::set_real_initial_value(simulator_index sim, variable_index var, double value)
+void execution::set_real_initial_value(simulator_index sim, value_reference var, double value)
 {
     pimpl_->set_real_initial_value(sim, var, value);
 }
 
-void execution::set_integer_initial_value(simulator_index sim, variable_index var, int value)
+void execution::set_integer_initial_value(simulator_index sim, value_reference var, int value)
 {
     pimpl_->set_integer_initial_value(sim, var, value);
 }
 
-void execution::set_boolean_initial_value(simulator_index sim, variable_index var, bool value)
+void execution::set_boolean_initial_value(simulator_index sim, value_reference var, bool value)
 {
     pimpl_->set_boolean_initial_value(sim, var, value);
 }
 
-void execution::set_string_initial_value(simulator_index sim, variable_index var, const std::string& value)
+void execution::set_string_initial_value(simulator_index sim, value_reference var, const std::string& value)
 {
     pimpl_->set_string_initial_value(sim, var, value);
 }
