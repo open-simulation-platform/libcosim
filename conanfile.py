@@ -30,7 +30,7 @@ class CSECoreConan(ConanFile):
     default_options = (
         "fmuproxy=False",
         "boost:shared=True",
-        "generate_doxygen_doc=False",
+        "generate_doxygen_doc=False"
         )
 
     def imports(self):
