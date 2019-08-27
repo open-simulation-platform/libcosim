@@ -31,7 +31,7 @@ pipeline {
                         stage('Build Debug') {
                             steps {
                                 dir('debug-build') {
-                                    bat 'conan install ../cse-core -s build_type=Debug -b missing'
+                                    bat 'conan install ../cse-core -s build_type=Debug -o generate_doxygen_doc=True -b missing'
                                     bat 'conan package ../cse-core -pf package/windows/debug'
                                 }
                             }
@@ -39,7 +39,7 @@ pipeline {
                         stage('Build Release') {
                             steps {
                                 dir('release-build') {
-                                    bat 'conan install ../cse-core -s build_type=Release -b missing'
+                                    bat 'conan install ../cse-core -s build_type=Release -o generate_doxygen_doc=True -b missing'
                                     bat 'conan package ../cse-core -pf package/windows/release'
                                 }
                             }
@@ -129,7 +129,7 @@ pipeline {
                         stage('Build Release') {
                             steps {
                                 dir('release-build-fmuproxy') {
-                                    bat 'conan install ../cse-core -s build_type=Release -o fmuproxy=True -b missing'
+                                    bat 'conan install ../cse-core -s build_type=Release -o fmuproxy=True -o generate_doxygen_doc=True -b missing '
                                     bat 'conan package ../cse-core -pf package/windows/release'
                                 }
                             }
@@ -196,7 +196,7 @@ pipeline {
                             steps {
                                 dir('debug-build-conan') {
                                     sh 'pwd'
-                                    sh 'conan install ../cse-core -s compiler.libcxx=libstdc++11 -s build_type=Debug -b missing'
+                                    sh 'conan install ../cse-core -s compiler.libcxx=libstdc++11 -s build_type=Debug -o generate_doxygen_doc=True -b missing'
                                     sh 'conan package ../cse-core -pf package/linux/debug'
                                 }
                             }
@@ -205,7 +205,7 @@ pipeline {
                             steps {
                                 dir('release-build-conan') {
                                     sh 'pwd'
-                                    sh 'conan install ../cse-core -s compiler.libcxx=libstdc++11 -s build_type=Release -b missing'
+                                    sh 'conan install ../cse-core -s compiler.libcxx=libstdc++11 -s build_type=Release -o generate_doxygen_doc=True -b missing'
                                     sh 'conan package ../cse-core -pf package/linux/release'
                                 }
                             }
@@ -302,7 +302,7 @@ pipeline {
                         stage('Build Release') {
                             steps {
                                 dir('release-build-conan-fmuproxy') {
-                                    sh 'conan install ../cse-core -s compiler.libcxx=libstdc++11 -s build_type=Release -o fmuproxy=True -b missing'
+                                    sh 'conan install ../cse-core -s compiler.libcxx=libstdc++11 -s build_type=Release -o fmuproxy=True -o generate_doxygen_doc=True -b missing'
                                     sh 'conan package ../cse-core -pf package/linux/release'
                                 }
                             }

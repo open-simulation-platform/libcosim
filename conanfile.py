@@ -23,10 +23,14 @@ class CSECoreConan(ConanFile):
         "bzip2/1.0.8@conan/stable"
         )
 
-    options = {"fmuproxy": [True, False]}
+    options = {
+        "fmuproxy": [True, False],
+        "generate_doxygen_doc": [True, False]
+    }
     default_options = (
         "fmuproxy=False",
-        "boost:shared=True"
+        "boost:shared=True",
+        "generate_doxygen_doc=False",
         )
 
     def imports(self):
@@ -43,7 +47,8 @@ class CSECoreConan(ConanFile):
         cmake = CMake(self)
         cmake.parallel = False # Needed to keep stable build on Jenkins Windows Node
         cmake.definitions["CSECORE_USING_CONAN"] = "ON"
-        if self.settings.build_type == "Debug":
+        cmake.definitions["CSECORE_BUILD_APIDOC"] = "ON" if self.options.generate_doxygen_doc else "OFF"
+        if self.options.generate_doxygen_doc and self.settings.build_type == "Debug":
             cmake.definitions["CSECORE_BUILD_PRIVATE_APIDOC"] = "ON"
         if self.options.fmuproxy:
             cmake.definitions["CSECORE_WITH_FMUPROXY"] = "ON"
@@ -54,11 +59,13 @@ class CSECoreConan(ConanFile):
     def build(self):
         cmake = self.configure_cmake()
         cmake.build()
-        self.run('cmake --build . --target doc')
+        if self.options.generate_doxygen_doc:
+            self.run('cmake --build . --target doc')
 
     def package(self):
         cmake = self.configure_cmake()
-        self.run('cmake --build %s --target install-doc' % (self.build_folder))
+        if self.options.generate_doxygen_doc:
+            self.run('cmake --build %s --target install-doc' % (self.build_folder))
         cmake.install()
 
     def package_info(self):
