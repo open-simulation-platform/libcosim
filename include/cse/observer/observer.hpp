@@ -32,28 +32,28 @@ public:
      *  from remote simulators at each step, so that each individual `get_xxx()`
      *  function call doesn't trigger a separate RPC operation.
      */
-    virtual void expose_for_getting(variable_type, variable_index) = 0;
+    virtual void expose_for_getting(variable_type, value_reference) = 0;
 
     /**
      *  Returns the value of a real variable.
      *
      *  The variable must previously have been exposed with `expose_for_getting()`.
      */
-    virtual double get_real(variable_index) const = 0;
+    virtual double get_real(value_reference) const = 0;
 
     /**
      *  Returns the value of an integer variable.
      *
      *  The variable must previously have been exposed with `expose_for_getting()`.
      */
-    virtual int get_integer(variable_index) const = 0;
+    virtual int get_integer(value_reference) const = 0;
 
     /**
      *  Returns the value of a boolean variable.
      *
      *  The variable must previously have been exposed with `expose_for_getting()`.
      */
-    virtual bool get_boolean(variable_index) const = 0;
+    virtual bool get_boolean(value_reference) const = 0;
 
     /**
      *  Returns the value of a string variable.
@@ -63,7 +63,7 @@ public:
      *  The returned `std::string_view` is only guaranteed to remain valid
      *  until the next call of this or any other of the object's methods.
      */
-    virtual std::string_view get_string(variable_index) const = 0;
+    virtual std::string_view get_string(value_reference) const = 0;
 
     virtual ~observable() noexcept {}
 };

@@ -55,7 +55,7 @@ int main()
         REQUIRE(simResult.get());
 
         const int numSamples = 20;
-        const cse::variable_index varIndex = 0;
+        const cse::value_reference varIndex = 0;
         double realValues1[numSamples];
         double realValues2[numSamples];
 

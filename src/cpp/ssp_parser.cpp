@@ -289,21 +289,21 @@ std::pair<execution, simulator_map> load_ssp(
         }
 
         for (const auto& p : component.parameters) {
-            auto varIndex = find_variable(*model->description(), p.name).index;
+            auto reference = find_variable(*model->description(), p.name).reference;
             BOOST_LOG_SEV(log::logger(), log::info)
                 << "Initializing variable " << component.name << ":" << p.name << " with value " << streamer{p.value};
             switch (p.type) {
                 case variable_type::real:
-                    execution.set_real_initial_value(index, varIndex, std::get<double>(p.value));
+                    execution.set_real_initial_value(index, reference, std::get<double>(p.value));
                     break;
                 case variable_type::integer:
-                    execution.set_integer_initial_value(index, varIndex, std::get<int>(p.value));
+                    execution.set_integer_initial_value(index, reference, std::get<int>(p.value));
                     break;
                 case variable_type::boolean:
-                    execution.set_boolean_initial_value(index, varIndex, std::get<bool>(p.value));
+                    execution.set_boolean_initial_value(index, reference, std::get<bool>(p.value));
                     break;
                 case variable_type::string:
-                    execution.set_string_initial_value(index, varIndex, std::get<std::string>(p.value));
+                    execution.set_string_initial_value(index, reference, std::get<std::string>(p.value));
                     break;
                 default:
                     throw error(make_error_code(errc::unsupported_feature), "Variable type not supported yet");
@@ -314,11 +314,11 @@ std::pair<execution, simulator_map> load_ssp(
     for (const auto& connection : parser.get_connections()) {
         cse::variable_id output = {slaves[connection.startElement].index,
             slaves[connection.startElement].variables[connection.startConnector].type,
-            slaves[connection.startElement].variables[connection.startConnector].index};
+            slaves[connection.startElement].variables[connection.startConnector].reference};
 
         cse::variable_id input = {slaves[connection.endElement].index,
             slaves[connection.endElement].variables[connection.endConnector].type,
-            slaves[connection.endElement].variables[connection.endConnector].index};
+            slaves[connection.endElement].variables[connection.endConnector].reference};
 
         const auto c = std::make_shared<scalar_connection>(output, input);
         execution.add_connection(c);

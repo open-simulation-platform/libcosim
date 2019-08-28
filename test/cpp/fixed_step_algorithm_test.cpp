@@ -40,8 +40,8 @@ int main()
         auto observer = std::make_shared<cse::last_value_observer>();
         execution.add_observer(observer);
 
-        const cse::variable_index realOutIndex = 0;
-        const cse::variable_index realInIndex = 1;
+        const cse::value_reference realOutRef = 0;
+        const cse::value_reference realInRef = 1;
 
 
         // Add slaves to it
@@ -52,14 +52,14 @@ int main()
             if (i > 0) {
                 execution.add_connection(
                     std::make_shared<cse::scalar_connection>(
-                        cse::variable_id{i - 1, cse::variable_type::real, realOutIndex},
-                        cse::variable_id{i, cse::variable_type::real, realInIndex}));
+                        cse::variable_id{i - 1, cse::variable_type::real, realOutRef},
+                        cse::variable_id{i, cse::variable_type::real, realInRef}));
             }
         }
 
         auto observer2 = std::make_shared<cse::time_series_observer>();
         execution.add_observer(observer2);
-        observer2->start_observing(cse::variable_id{9, cse::variable_type::real, realOutIndex});
+        observer2->start_observing(cse::variable_id{9, cse::variable_type::real, realOutRef});
 
         // Run simulation
         auto simResult = execution.simulate_until(midTime);
@@ -81,8 +81,8 @@ int main()
 
         for (int j = 0; j < numSlaves; j++) {
             double lastRealOutValue = realOutValue;
-            observer->get_real(j, gsl::make_span(&realOutIndex, 1), gsl::make_span(&realOutValue, 1));
-            observer->get_real(j, gsl::make_span(&realInIndex, 1), gsl::make_span(&realInValue, 1));
+            observer->get_real(j, gsl::make_span(&realOutRef, 1), gsl::make_span(&realOutValue, 1));
+            observer->get_real(j, gsl::make_span(&realInRef, 1), gsl::make_span(&realInValue, 1));
             if (j > 0) {
                 // Check that real input of slave j has same value as real output of slave j - 1
                 REQUIRE(std::fabs(realInValue - lastRealOutValue) < 1.0e-9);
@@ -93,7 +93,7 @@ int main()
         double realValues[numSamples];
         cse::step_number steps[numSamples];
         cse::time_point timeValues[numSamples];
-        observer2->get_real_samples(9, realOutIndex, 1, gsl::make_span(realValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(timeValues, numSamples));
+        observer2->get_real_samples(9, realOutRef, 1, gsl::make_span(realValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(timeValues, numSamples));
         cse::step_number lastStep = -1;
         double lastValue = -1.0;
         for (int k = 0; k < numSamples; k++) {

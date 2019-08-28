@@ -81,22 +81,22 @@ int main()
     if (rc < 0) { goto Lerror; }
 
 
-    cse_variable_index realInVar = 0;
+    cse_value_reference realInVar = 0;
     const double realInVal = 5.0;
     rc = cse_manipulator_slave_set_real(manipulator, slave_index1, &realInVar, 1, &realInVal);
     if (rc < 0) { goto Lerror; }
 
-    cse_variable_index intInVar = 0;
+    cse_value_reference intInVar = 0;
     const int intInVal = 42;
     rc = cse_manipulator_slave_set_integer(manipulator, slave_index1, &intInVar, 1, &intInVal);
     if (rc < 0) { goto Lerror; }
 
-    cse_variable_index boolInVar = 0;
+    cse_value_reference boolInVar = 0;
     const bool boolInVal = true;
     rc = cse_manipulator_slave_set_boolean(manipulator, slave_index1, &boolInVar, 1, &boolInVal);
     if (rc < 0) { goto Lerror; }
 
-    cse_variable_index strInVar = 0;
+    cse_value_reference strInVar = 0;
     const char* strInVal = "foo";
     rc = cse_manipulator_slave_set_string(manipulator, slave_index1, &strInVar, 1, &strInVal);
     if (rc < 0) { goto Lerror; }
@@ -125,7 +125,7 @@ int main()
         goto Lfailure;
     }
 
-    cse_variable_index realOutVar = 0;
+    cse_value_reference realOutVar = 0;
     double realOutVal = -1.0;
     rc = cse_observer_slave_get_real(observer1, slave_index1, &realOutVar, 1, &realOutVal);
     if (rc < 0) { goto Lerror; }
@@ -135,7 +135,7 @@ int main()
         goto Lfailure;
     }
 
-    cse_variable_index intOutVar = 0;
+    cse_value_reference intOutVar = 0;
     int intOutVal = 10;
     rc = cse_observer_slave_get_integer(observer1, slave_index1, &intOutVar, 1, &intOutVal);
     if (rc < 0) { goto Lerror; }
@@ -145,7 +145,7 @@ int main()
         goto Lfailure;
     }
 
-    cse_variable_index boolOutVar = 0;
+    cse_value_reference boolOutVar = 0;
     bool boolOutVal = false;
     rc = cse_observer_slave_get_boolean(observer1, slave_index1, &boolOutVar, 1, &boolOutVal);
     if (rc < 0) { goto Lerror; }
@@ -155,7 +155,7 @@ int main()
         goto Lfailure;
     }
 
-    cse_variable_index strOutVar = 0;
+    cse_value_reference strOutVar = 0;
     const char* strOutVal;
     rc = cse_observer_slave_get_string(observer1, slave_index1, &strOutVar, 1, &strOutVal);
     if (rc < 0) { goto Lerror; }

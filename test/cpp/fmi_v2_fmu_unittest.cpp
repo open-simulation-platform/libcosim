@@ -44,7 +44,7 @@ BOOST_AUTO_TEST_CASE(v2_fmu)
             BOOST_TEST(v.causality == variable_causality::output);
             double start = std::get<double>(*v.start);
             BOOST_TEST(start == 0.0);
-            const auto varID = v.index;
+            const auto varID = v.reference;
             double varVal = -1.0;
             instance->get_real_variables(gsl::make_span(&varID, 1), gsl::make_span(&varVal, 1));
             BOOST_TEST(varVal == 0.0);
@@ -54,7 +54,7 @@ BOOST_AUTO_TEST_CASE(v2_fmu)
             BOOST_TEST(v.causality == variable_causality::parameter);
             double start = std::get<double>(*v.start);
             BOOST_TEST(start == 1.0);
-            const auto varID = v.index;
+            const auto varID = v.reference;
             double varVal = -1.0;
             instance->get_real_variables(gsl::make_span(&varID, 1), gsl::make_span(&varVal, 1));
             BOOST_TEST(varVal == 1.0);

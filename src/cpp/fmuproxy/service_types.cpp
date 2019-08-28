@@ -1192,7 +1192,7 @@ uint32_t Unknown::write(::apache::thrift::protocol::TProtocol* oprot) const {
   ::apache::thrift::protocol::TOutputRecursionTracker tracker(*oprot);
   xfer += oprot->writeStructBegin("Unknown");
 
-  xfer += oprot->writeFieldBegin("index", ::apache::thrift::protocol::T_I32, 1);
+  xfer += oprot->writeFieldBegin("reference", ::apache::thrift::protocol::T_I32, 1);
   xfer += oprot->writeI32(this->index);
   xfer += oprot->writeFieldEnd();
 
@@ -1249,7 +1249,7 @@ Unknown& Unknown::operator=(const Unknown& other27) {
 void Unknown::printTo(std::ostream& out) const {
   using ::apache::thrift::to_string;
   out << "Unknown(";
-  out << "index=" << to_string(index);
+  out << "reference=" << to_string(index);
   out << ", " << "dependencies=" << to_string(dependencies);
   out << ", " << "dependencies_kind=" << to_string(dependencies_kind);
   out << ")";

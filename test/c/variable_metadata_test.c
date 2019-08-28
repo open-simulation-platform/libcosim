@@ -79,8 +79,8 @@ int main()
                 fprintf(stderr, "Expected type to be string\n");
                 goto Lfailure;
             }
-            if (vd[i].index != 0) {
-                fprintf(stderr, "Expected variable index to be 0, got %i\n", vd[i].index);
+            if (vd[i].reference != 0) {
+                fprintf(stderr, "Expected variable reference to be 0, got %i\n", vd[i].reference);
                 goto Lfailure;
             }
         }
@@ -97,8 +97,8 @@ int main()
                 fprintf(stderr, "Expected type to be real\n");
                 goto Lfailure;
             }
-            if (vd[i].index != 0) {
-                fprintf(stderr, "Expected variable index to be 0, got %i\n", vd[i].index);
+            if (vd[i].reference != 0) {
+                fprintf(stderr, "Expected variable reference to be 0, got %i\n", vd[i].reference);
                 goto Lfailure;
             }
         }

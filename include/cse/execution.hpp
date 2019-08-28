@@ -34,14 +34,14 @@ struct variable_id
     /// The variable data type.
     variable_type type;
 
-    /// The variable index.
-    variable_index index;
+    /// The variable value reference.
+    value_reference reference;
 };
 
 /// Equality operator for `variable_id`.
 inline bool operator==(const variable_id& a, const variable_id& b) noexcept
 {
-    return a.simulator == b.simulator && a.type == b.type && a.index == b.index;
+    return a.simulator == b.simulator && a.type == b.type && a.reference == b.reference;
 }
 
 /// Inequality operator for `variable_id`.
@@ -55,7 +55,7 @@ inline std::ostream& operator<<(std::ostream& stream, variable_id v)
 {
     return stream << "(simulator " << v.simulator
                   << ", type " << v.type
-                  << ", variable " << v.index << ")";
+                  << ", variable " << v.reference << ")";
 }
 
 } // namespace cse
@@ -72,7 +72,7 @@ public:
         std::size_t seed = 0;
         boost::hash_combine(seed, v.simulator);
         boost::hash_combine(seed, v.type);
-        boost::hash_combine(seed, v.index);
+        boost::hash_combine(seed, v.reference);
         return seed;
     }
 };
@@ -234,16 +234,16 @@ public:
     std::vector<variable_id> get_modified_variables();
 
     /// Set initial value for a variable of type real. Must be called before simulation is started.
-    void set_real_initial_value(simulator_index sim, variable_index var, double value);
+    void set_real_initial_value(simulator_index sim, value_reference var, double value);
 
     /// Set initial value for a variable of type integer. Must be called before simulation is started.
-    void set_integer_initial_value(simulator_index sim, variable_index var, int value);
+    void set_integer_initial_value(simulator_index sim, value_reference var, int value);
 
     /// Set initial value for a variable of type boolean. Must be called before simulation is started.
-    void set_boolean_initial_value(simulator_index sim, variable_index var, bool value);
+    void set_boolean_initial_value(simulator_index sim, value_reference var, bool value);
 
     /// Set initial value for a variable of type string. Must be called before simulation is started.
-    void set_string_initial_value(simulator_index sim, variable_index var, const std::string& value);
+    void set_string_initial_value(simulator_index sim, value_reference var, const std::string& value);
 
 
 private:
