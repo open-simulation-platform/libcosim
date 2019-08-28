@@ -250,13 +250,13 @@ private:
 };
 
 file_observer::file_observer(const boost::filesystem::path& logDir)
-    : logDir_(logDir)
+    : logDir_(boost::filesystem::absolute(logDir))
 {
 }
 
 file_observer::file_observer(const boost::filesystem::path& logDir, const boost::filesystem::path& configPath)
     : configPath_(configPath)
-    , logDir_(logDir)
+    , logDir_(boost::filesystem::absolute(logDir))
     , logFromConfig_(true)
 {
     boost::property_tree::read_xml(configPath_.string(), ptree_,
