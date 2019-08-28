@@ -71,10 +71,10 @@ public:
         value_reference reference,
         std::function<std::string(std::string_view)> modifier) override;
 
-    std::unordered_set<value_reference>& get_modified_real_references() const override;
-    std::unordered_set<value_reference>& get_modified_integer_references() const override;
-    std::unordered_set<value_reference>& get_modified_boolean_references() const override;
-    std::unordered_set<value_reference>& get_modified_string_references() const override;
+    std::unordered_set<value_reference>& get_modified_real_variables() const override;
+    std::unordered_set<value_reference>& get_modified_integer_variables() const override;
+    std::unordered_set<value_reference>& get_modified_boolean_variables() const override;
+    std::unordered_set<value_reference>& get_modified_string_variables() const override;
 
     boost::fibers::future<void> setup(
         time_point startTime,

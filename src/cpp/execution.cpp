@@ -204,10 +204,10 @@ public:
         auto index = 0;
         for (const auto& sim : simulators_) {
 
-            const auto& realRefs = sim->get_modified_real_references();
-            const auto& integerRefs = sim->get_modified_integer_references();
-            const auto& booleanRefs = sim->get_modified_boolean_references();
-            const auto& stringRefs = sim->get_modified_string_references();
+            const auto& realRefs = sim->get_modified_real_variables();
+            const auto& integerRefs = sim->get_modified_integer_variables();
+            const auto& booleanRefs = sim->get_modified_boolean_variables();
+            const auto& stringRefs = sim->get_modified_string_variables();
 
             for (const auto& ref : realRefs) {
                 variable_id var = {index, variable_type::real, ref};

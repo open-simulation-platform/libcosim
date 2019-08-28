@@ -29,7 +29,7 @@ public:
      * Retrieves a series of observed values, step numbers and times for a real variable.
      *
      * \param [in] sim index of the simulator
-     * \param [in] valueReference the variable index
+     * \param [in] valueReference the value reference
      * \param [in] fromStep the step number to start from
      * \param [out] values the series of observed values
      * \param [out] steps the corresponding step numbers
@@ -50,7 +50,7 @@ public:
      * Retrieves a series of observed values, step numbers and times for an integer variable.
      *
      * \param [in] sim index of the simulator
-     * \param [in] valueReference the variable index
+     * \param [in] valueReference the value reference
      * \param [in] fromStep the step number to start from
      * \param [out] values the series of observed values
      * \param [out] steps the corresponding step numbers
@@ -103,9 +103,9 @@ public:
      * Retrieves two time-synchronized series of observed values for two real variables.
      *
      * \param [in] sim1 index of the first simulator
-     * \param [in] valueReference1 the first variable index
+     * \param [in] valueReference1 the first value reference
      * \param [in] sim2 index of the second simulator
-     * \param [in] valueReference2 the second variable index
+     * \param [in] valueReference2 the second value reference
      * \param [in] fromStep the step number to start from
      * \param [out] values1 the first series of observed values
      * \param [out] values2 the second series of observed values

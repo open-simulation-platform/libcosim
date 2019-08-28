@@ -224,7 +224,7 @@ int cse_slave_get_num_variables(cse_execution* execution, cse_slave_index slave)
             return static_cast<int>(entry.second.description.variables.size());
         }
     }
-    set_last_error(CSE_ERRC_OUT_OF_RANGE, "Invalid slave reference");
+    set_last_error(CSE_ERRC_OUT_OF_RANGE, "Invalid slave index");
     return -1;
 }
 
@@ -631,7 +631,7 @@ int cse_observer_slave_get_string(
 int64_t cse_observer_slave_get_real_samples(
     cse_observer* observer,
     cse_slave_index slave,
-    cse_value_reference ValueReference,
+    cse_value_reference valueReference,
     cse_step_number fromStep,
     size_t nSamples,
     double values[],
@@ -644,7 +644,7 @@ int64_t cse_observer_slave_get_real_samples(
         if (!obs) {
             throw std::invalid_argument("Invalid observer! The provided observer must be a time_series_observer.");
         }
-        size_t samplesRead = obs->get_real_samples(slave, ValueReference, fromStep,
+        size_t samplesRead = obs->get_real_samples(slave, valueReference, fromStep,
             gsl::make_span(values, nSamples),
             gsl::make_span(steps, nSamples), timePoints);
         for (size_t i = 0; i < samplesRead; ++i) {
@@ -692,7 +692,7 @@ int64_t cse_observer_slave_get_real_synchronized_series(
 int64_t cse_observer_slave_get_integer_samples(
     cse_observer* observer,
     cse_slave_index slave,
-    cse_value_reference ValueReference,
+    cse_value_reference valueReference,
     cse_step_number fromStep,
     size_t nSamples,
     int values[],
@@ -705,7 +705,7 @@ int64_t cse_observer_slave_get_integer_samples(
         if (!obs) {
             throw std::invalid_argument("Invalid observer! The provided observer must be a time_series_observer.");
         }
-        size_t samplesRead = obs->get_integer_samples(slave, ValueReference, fromStep,
+        size_t samplesRead = obs->get_integer_samples(slave, valueReference, fromStep,
             gsl::make_span(values, nSamples),
             gsl::make_span(steps, nSamples), timePoints);
         for (size_t i = 0; i < samplesRead; ++i) {

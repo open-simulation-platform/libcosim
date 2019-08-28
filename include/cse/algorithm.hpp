@@ -182,16 +182,16 @@ public:
         std::optional<double> relativeTolerance) = 0;
 
     /// Returns all value references of real type that currently have an active modifier.
-    virtual const std::unordered_set<value_reference>& get_modified_real_references() const = 0;
+    virtual const std::unordered_set<value_reference>& get_modified_real_variables() const = 0;
 
     /// Returns all value references of integer type that currently have an active modifier.
-    virtual const std::unordered_set<value_reference>& get_modified_integer_references() const = 0;
+    virtual const std::unordered_set<value_reference>& get_modified_integer_variables() const = 0;
 
     /// Returns all value references of boolean type that currently have an active modifier.
-    virtual const std::unordered_set<value_reference>& get_modified_boolean_references() const = 0;
+    virtual const std::unordered_set<value_reference>& get_modified_boolean_variables() const = 0;
 
     /// Returns all value references of string type that currently have an active modifier.
-    virtual const std::unordered_set<value_reference>& get_modified_string_references() const = 0;
+    virtual const std::unordered_set<value_reference>& get_modified_string_variables() const = 0;
 
     /**
      *  Updates the simulator with new input values and makes it calculate

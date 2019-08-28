@@ -384,7 +384,7 @@ typedef struct
     cse_slave_index slave_index;
     /// The type of the variable.
     cse_variable_type type;
-    /// The variables value reference.
+    /// The variable's value reference.
     cse_value_reference value_reference;
 } cse_variable_id;
 

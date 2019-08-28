@@ -322,7 +322,7 @@ public:
         std::function<double(double)> modifier)
     {
         realSetCache_.set_modifier(ref, modifier);
-        set_modified_reference(modifiedRealReferences_, ref, modifier ? true : false);
+        set_modified_reference(modifiedRealVariables_, ref, modifier ? true : false);
     }
 
     void set_integer_input_modifier(
@@ -330,7 +330,7 @@ public:
         std::function<int(int)> modifier)
     {
         integerSetCache_.set_modifier(ref, modifier);
-        set_modified_reference(modifiedIntegerReferences_, ref, modifier ? true : false);
+        set_modified_reference(modifiedIntegerVariables_, ref, modifier ? true : false);
     }
 
     void set_boolean_input_modifier(
@@ -338,7 +338,7 @@ public:
         std::function<bool(bool)> modifier)
     {
         booleanSetCache_.set_modifier(ref, modifier);
-        set_modified_reference(modifiedBooleanReferences_, ref, modifier ? true : false);
+        set_modified_reference(modifiedBooleanVariables_, ref, modifier ? true : false);
     }
 
     void set_string_input_modifier(
@@ -346,7 +346,7 @@ public:
         std::function<std::string(std::string_view)> modifier)
     {
         stringSetCache_.set_modifier(ref, modifier);
-        set_modified_reference(modifiedStringReferences_, ref, modifier ? true : false);
+        set_modified_reference(modifiedStringVariables_, ref, modifier ? true : false);
     }
 
     void set_real_output_modifier(
@@ -354,7 +354,7 @@ public:
         std::function<double(double)> modifier)
     {
         realGetCache_.set_modifier(ref, modifier);
-        set_modified_reference(modifiedRealReferences_, ref, modifier ? true : false);
+        set_modified_reference(modifiedRealVariables_, ref, modifier ? true : false);
     }
 
     void set_integer_output_modifier(
@@ -362,7 +362,7 @@ public:
         std::function<int(int)> modifier)
     {
         integerGetCache_.set_modifier(ref, modifier);
-        set_modified_reference(modifiedIntegerReferences_, ref, modifier ? true : false);
+        set_modified_reference(modifiedIntegerVariables_, ref, modifier ? true : false);
     }
 
     void set_boolean_output_modifier(
@@ -370,7 +370,7 @@ public:
         std::function<bool(bool)> modifier)
     {
         booleanGetCache_.set_modifier(ref, modifier);
-        set_modified_reference(modifiedBooleanReferences_, ref, modifier ? true : false);
+        set_modified_reference(modifiedBooleanVariables_, ref, modifier ? true : false);
     }
 
     void set_string_output_modifier(
@@ -378,27 +378,27 @@ public:
         std::function<std::string(std::string_view)> modifier)
     {
         stringGetCache_.set_modifier(ref, modifier);
-        set_modified_reference(modifiedStringReferences_, ref, modifier ? true : false);
+        set_modified_reference(modifiedStringVariables_, ref, modifier ? true : false);
     }
 
-    std::unordered_set<value_reference>& get_modified_real_references()
+    std::unordered_set<value_reference>& get_modified_real_variables()
     {
-        return modifiedRealReferences_;
+        return modifiedRealVariables_;
     }
 
-    std::unordered_set<value_reference>& get_modified_integer_references()
+    std::unordered_set<value_reference>& get_modified_integer_variables()
     {
-        return modifiedIntegerReferences_;
+        return modifiedIntegerVariables_;
     }
 
-    std::unordered_set<value_reference>& get_modified_boolean_references()
+    std::unordered_set<value_reference>& get_modified_boolean_variables()
     {
-        return modifiedBooleanReferences_;
+        return modifiedBooleanVariables_;
     }
 
-    std::unordered_set<value_reference>& get_modified_string_references()
+    std::unordered_set<value_reference>& get_modified_string_variables()
     {
-        return modifiedStringReferences_;
+        return modifiedStringVariables_;
     }
 
     boost::fibers::future<void> setup(
@@ -517,10 +517,10 @@ private:
     set_variable_cache<bool> booleanSetCache_;
     set_variable_cache<std::string> stringSetCache_;
 
-    std::unordered_set<value_reference> modifiedRealReferences_;
-    std::unordered_set<value_reference> modifiedIntegerReferences_;
-    std::unordered_set<value_reference> modifiedBooleanReferences_;
-    std::unordered_set<value_reference> modifiedStringReferences_;
+    std::unordered_set<value_reference> modifiedRealVariables_;
+    std::unordered_set<value_reference> modifiedIntegerVariables_;
+    std::unordered_set<value_reference> modifiedBooleanVariables_;
+    std::unordered_set<value_reference> modifiedStringVariables_;
 };
 
 
@@ -666,24 +666,24 @@ void slave_simulator::set_string_output_modifier(
     pimpl_->set_string_output_modifier(ref, modifier);
 }
 
-std::unordered_set<value_reference>& slave_simulator::get_modified_real_references() const
+std::unordered_set<value_reference>& slave_simulator::get_modified_real_variables() const
 {
-    return pimpl_->get_modified_real_references();
+    return pimpl_->get_modified_real_variables();
 }
 
-std::unordered_set<value_reference>& slave_simulator::get_modified_integer_references() const
+std::unordered_set<value_reference>& slave_simulator::get_modified_integer_variables() const
 {
-    return pimpl_->get_modified_integer_references();
+    return pimpl_->get_modified_integer_variables();
 }
 
-std::unordered_set<value_reference>& slave_simulator::get_modified_boolean_references() const
+std::unordered_set<value_reference>& slave_simulator::get_modified_boolean_variables() const
 {
-    return pimpl_->get_modified_boolean_references();
+    return pimpl_->get_modified_boolean_variables();
 }
 
-std::unordered_set<value_reference>& slave_simulator::get_modified_string_references() const
+std::unordered_set<value_reference>& slave_simulator::get_modified_string_variables() const
 {
-    return pimpl_->get_modified_string_references();
+    return pimpl_->get_modified_string_variables();
 }
 
 boost::fibers::future<void> slave_simulator::setup(
