@@ -112,7 +112,7 @@ if (CSECORE_BUILD_TESTS)
     list(APPEND Boost_components timer unit_test_framework)
 endif()
 
-find_package(GSL REQUIRED)
+find_package(MS_GSL REQUIRED)
 find_package(Boost REQUIRED COMPONENTS ${Boost_components})
 find_package(FMILibrary REQUIRED)
 find_package(LIBZIP REQUIRED)
