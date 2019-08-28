@@ -52,6 +52,9 @@ typedef enum
     /// Function may not be called while in this state.
     CSE_ERRC_ILLEGAL_STATE,
 
+    /// Simulation step failed
+    CSE_ERRC_STEP_FAILED,
+
     /// Index out of range.
     CSE_ERRC_OUT_OF_RANGE,
 
