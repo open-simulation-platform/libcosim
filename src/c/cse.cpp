@@ -660,9 +660,9 @@ int64_t cse_observer_slave_get_real_samples(
 int64_t cse_observer_slave_get_real_synchronized_series(
     cse_observer* observer,
     cse_slave_index slave1,
-    cse_value_reference ValueReference1,
+    cse_value_reference valueReference1,
     cse_slave_index slave2,
-    cse_value_reference ValueReference2,
+    cse_value_reference valueReference2,
     cse_step_number fromStep,
     size_t nSamples,
     double values1[],
@@ -676,9 +676,9 @@ int64_t cse_observer_slave_get_real_synchronized_series(
         }
         size_t samplesRead = obs->get_synchronized_real_series(
             slave1,
-            ValueReference1,
+            valueReference1,
             slave2,
-            ValueReference2,
+            valueReference2,
             fromStep,
             gsl::make_span(values1, nSamples),
             gsl::make_span(values2, nSamples));
