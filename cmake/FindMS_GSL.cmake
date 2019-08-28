@@ -7,8 +7,8 @@
 find_path(MS_GSL_INCLUDE_DIR "gsl/gsl")
 if(MS_GSL_INCLUDE_DIR)
     set(MS_GSL_INCLUDE_DIRS "${MS_GSL_INCLUDE_DIR}")
-    add_library(ms_gsl INTERFACE IMPORTED)
-    set_target_properties(ms_gsl PROPERTIES
+    add_library(gsl INTERFACE IMPORTED)
+    set_target_properties(gsl PROPERTIES
         INTERFACE_INCLUDE_DIRECTORIES "${MS_GSL_INCLUDE_DIR}"
     )
 endif()
