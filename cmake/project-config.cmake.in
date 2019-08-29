@@ -3,7 +3,7 @@ include ("@PACKAGE_targetsFile@")
 
 include(CMakeFindDependencyMacro)
 
-list(APPEND CMAKE_MODULE_PATH "${PACKAGE_PREFIX_DIR}/cmake")
+list(APPEND CMAKE_MODULE_PATH "${PACKAGE_PREFIX_DIR}/@CSECORE_CMAKE_INSTALL_DIR@")
 
 find_dependency(MS_GSL REQUIRED)
 find_dependency(Boost REQUIRED COMPONENTS date_time fiber filesystem log)
