@@ -8,7 +8,6 @@ project("csecore" VERSION "0.5.0")
 option(BUILD_SHARED_LIBS "Build shared libraries instead of static libraries" ON)
 option(CSECORE_TREAT_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" ON)
 option(CSECORE_BUILD_TESTS "Build test suite" ON)
-option(CSECORE_BUILD_APIDOC "Build API documentation" ON)
 option(CSECORE_BUILD_PRIVATE_APIDOC "Build private API documentation" OFF)
 option(CSECORE_STANDALONE_INSTALLATION "Whether to build for a standalone installation (Linux only; sets a relative RPATH)" OFF)
 option(CSECORE_USING_CONAN "Whether Conan is used for package management" OFF)
@@ -137,8 +136,9 @@ endif()
 # API documentation
 # ==============================================================================
 
-if(CSECORE_BUILD_APIDOC)
-    find_package(Doxygen REQUIRED)
+find_package(Doxygen)
+if(DOXYGEN_FOUND)
+    message("Found Doxygen, API documentation will be built.")
     set(DOXYGEN_PROJECT_NAME "CSE core")
     set(DOXYGEN_PROJECT_BRIEF "C/C++ library for distributed co-simulation")
     set(DOXYGEN_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/output/doc")
@@ -172,6 +172,11 @@ if(CSECORE_BUILD_APIDOC)
             "${CMAKE_INSTALL_PREFIX}/${CSECORE_DOC_INSTALL_DIR}/"
         DEPENDS doc
     )
+else()
+    if (CSECORE_BUILD_PRIVATE_APIDOC)
+        message(FATAL_ERROR "Doxygen was not found, cannot build private API documentation!")
+    endif()
+    message(WARNING "API documentation will not be built since Doxygen was not found.")
 endif()
 
 # ==============================================================================
