@@ -12,7 +12,7 @@ find_dependency(LIBZIP REQUIRED)
 find_dependency(nlohmann_json REQUIRED)
 
 if(@CSECORE_WITH_FMUPROXY@)
-    find_dependency(Thrift REQUIRED)
+    find_dependency(THRIFT REQUIRED)
 endif()
 
 list(REMOVE_AT CMAKE_MODULE_PATH -1)
