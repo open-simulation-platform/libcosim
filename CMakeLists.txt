@@ -112,7 +112,7 @@ if (CSECORE_BUILD_TESTS)
     list(APPEND Boost_components timer unit_test_framework)
 endif()
 
-find_package(GSL REQUIRED)
+find_package(MS_GSL REQUIRED)
 find_package(Boost REQUIRED COMPONENTS ${Boost_components})
 find_package(FMILibrary REQUIRED)
 find_package(LIBZIP REQUIRED)
@@ -213,7 +213,7 @@ install(FILES "${versionFile}" DESTINATION "${CSECORE_CMAKE_INSTALL_DIR}")
 install(FILES
         "${CMAKE_SOURCE_DIR}/cmake/FindFMILibrary.cmake"
         "${CMAKE_SOURCE_DIR}/cmake/FindLIBZIP.cmake"
-        "${CMAKE_SOURCE_DIR}/cmake/FindGSL.cmake"
+        "${CMAKE_SOURCE_DIR}/cmake/FindMS_GSL.cmake"
         "${CMAKE_SOURCE_DIR}/cmake/Findnlohmann_json.cmake"
         "${CMAKE_SOURCE_DIR}/cmake/FindThrift.cmake"
         DESTINATION
