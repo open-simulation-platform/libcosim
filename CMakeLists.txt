@@ -173,9 +173,6 @@ if(DOXYGEN_FOUND)
         DEPENDS doc
     )
 else()
-    if (CSECORE_BUILD_PRIVATE_APIDOC)
-        message(FATAL_ERROR "Doxygen was not found, cannot build private API documentation!")
-    endif()
     message(WARNING "API documentation will not be built since Doxygen was not found.")
 endif()
 
