@@ -215,7 +215,7 @@ install(FILES
         "${CMAKE_SOURCE_DIR}/cmake/FindLIBZIP.cmake"
         "${CMAKE_SOURCE_DIR}/cmake/FindMS_GSL.cmake"
         "${CMAKE_SOURCE_DIR}/cmake/Findnlohmann_json.cmake"
-        "${CMAKE_SOURCE_DIR}/cmake/FindThrift.cmake"
+        "${CMAKE_SOURCE_DIR}/cmake/FindTHRIFT.cmake"
         DESTINATION
         "${CSECORE_CMAKE_INSTALL_DIR}"
 )
