@@ -28,7 +28,10 @@ std::pair<std::string, unsigned int> parse_authority(std::string_view auth)
 std::shared_ptr<cse::model> cse::fmuproxy::fmuproxy_uri_sub_resolver::lookup_model(const cse::uri& baseUri, const cse::uri& modelUriReference)
 {
     const auto query = modelUriReference.query();
-    if (query && query->find("file=") < query->size()) {
+    if (query->find("file=file:///") < query->size()) {
+        const auto newQuery = "file=" + std::string(query->substr(13));
+        return model_uri_sub_resolver::lookup_model(baseUri, uri(modelUriReference.scheme(), modelUriReference.authority(), modelUriReference.path(), newQuery, modelUriReference.fragment()));
+    } else if (query && query->find("file=") < query->size()) {
         const auto newQuery = "file=" + cse::file_uri_to_path(baseUri).parent_path().string() + "/" + std::string(query->substr(5));
         return model_uri_sub_resolver::lookup_model(baseUri, uri(modelUriReference.scheme(), modelUriReference.authority(), modelUriReference.path(), newQuery, modelUriReference.fragment()));
     }
