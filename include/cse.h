@@ -17,6 +17,11 @@
 extern "C" {
 #endif
 
+/// boolean false
+const int CSE_FALSE = 0;
+
+/// boolean true
+const int CSE_TRUE = 1;
 
 /// The type used to specify (simulation) time points. The time unit is nanoseconds.
 typedef int64_t cse_time_point;
@@ -51,9 +56,6 @@ typedef enum
 
     /// Function may not be called while in this state.
     CSE_ERRC_ILLEGAL_STATE,
-
-    /// Simulation step failed
-    CSE_ERRC_STEP_FAILED,
 
     /// Index out of range.
     CSE_ERRC_OUT_OF_RANGE,
@@ -231,7 +233,8 @@ int cse_execution_step(cse_execution* execution, size_t numSteps);
  *      The point in time, which to advance the simulation execution.
  *
  *  \returns
- *      0 on success and -1 on error.
+ *      -1 on error, 0 if the simulation was stopped prior to reaching the specified targetTime
+ *      and 1 if the simulation was successfully advanced to the specified targetTime.
  */
 int cse_execution_simulate_until(cse_execution* execution, cse_time_point targetTime);
 
