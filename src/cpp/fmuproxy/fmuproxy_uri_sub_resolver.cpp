@@ -25,17 +25,25 @@ std::pair<std::string, unsigned int> parse_authority(std::string_view auth)
 
 } // namespace
 
-std::shared_ptr<cse::model> cse::fmuproxy::fmuproxy_uri_sub_resolver::lookup_model(const cse::uri& baseUri, const cse::uri& modelUriReference)
+std::shared_ptr<cse::model> cse::fmuproxy::fmuproxy_uri_sub_resolver::lookup_model(
+    const cse::uri& baseUri,
+    const cse::uri& modelUriReference)
 {
-    const auto query = modelUriReference.query();
-    if (query->find("file=file:///") < query->size()) {
-        const auto newQuery = "file=" + std::string(query->substr(13));
-        return model_uri_sub_resolver::lookup_model(baseUri, uri(modelUriReference.scheme(), modelUriReference.authority(), modelUriReference.path(), newQuery, modelUriReference.fragment()));
-    } else if (query && query->find("file=") < query->size()) {
-        const auto newQuery = "file=" + cse::file_uri_to_path(baseUri).parent_path().string() + "/" + std::string(query->substr(5));
-        return model_uri_sub_resolver::lookup_model(baseUri, uri(modelUriReference.scheme(), modelUriReference.authority(), modelUriReference.path(), newQuery, modelUriReference.fragment()));
+    const auto& mur = modelUriReference;
+    const auto query = mur.query();
+    if (query) {
+        if (query->find("file=file:///") < query->size()) {
+            const auto newQuery = "file=" + std::string(query->substr(13));
+            return model_uri_sub_resolver::lookup_model(
+                baseUri, uri(mur.scheme(), mur.authority(), mur.path(), newQuery, mur.fragment()));
+        } else if (query->find("file=") < query->size()) {
+            const auto pathToAppend = cse::file_uri_to_path(baseUri).parent_path().string();
+            const auto newQuery = "file=" + pathToAppend + "/" + std::string(query->substr(5));
+            return model_uri_sub_resolver::lookup_model(
+                baseUri, uri(mur.scheme(), mur.authority(), mur.path(), newQuery, mur.fragment()));
+        }
     }
-    return model_uri_sub_resolver::lookup_model(baseUri, modelUriReference);
+    return model_uri_sub_resolver::lookup_model(baseUri, mur);
 }
 
 std::shared_ptr<cse::model> cse::fmuproxy::fmuproxy_uri_sub_resolver::lookup_model(const cse::uri& modelUri)
