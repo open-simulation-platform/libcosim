@@ -86,7 +86,7 @@ cse::fmuproxy::fmuproxy_client::from_file(const std::string& file)
 
     BOOST_LOG_SEV(log::logger(), log::debug) << "fmu-proxy will load FMU from file '" << file << "'";
 
-    if ( !boost::filesystem::exists( file ) )
+    if ( !fs::exists( file ) )
     {
         std::string msg = "No such file '" + file +  "'!";
         CSE_PANIC_M(msg.c_str());
