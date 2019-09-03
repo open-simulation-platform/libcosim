@@ -83,7 +83,6 @@ cse::fmuproxy::fmuproxy_client::from_url(const std::string& url)
 std::shared_ptr<cse::fmuproxy::remote_fmu>
 cse::fmuproxy::fmuproxy_client::from_file(const std::string& file)
 {
-
     BOOST_LOG_SEV(log::logger(), log::debug) << "fmu-proxy will load FMU from file '" << file << "'";
 
     if (!fs::exists(file)) {
