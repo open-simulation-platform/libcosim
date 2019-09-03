@@ -74,7 +74,7 @@ cse::fmuproxy::fmuproxy_client::fmuproxy_client(const std::string& host, const u
 std::shared_ptr<cse::fmuproxy::remote_fmu>
 cse::fmuproxy::fmuproxy_client::from_url(const std::string& url)
 {
-    BOOST_LOG_SEV(log::logger(), log::info) << "fmu-proxy will load FMU from url '" << url << "'";
+    BOOST_LOG_SEV(log::logger(), log::debug) << "fmu-proxy will load FMU from url '" << url << "'";
     FmuId fmuId;
     state_->client_->load_from_url(fmuId, url);
     return from_guid(fmuId);
@@ -84,7 +84,7 @@ std::shared_ptr<cse::fmuproxy::remote_fmu>
 cse::fmuproxy::fmuproxy_client::from_file(const std::string& file)
 {
 
-    BOOST_LOG_SEV(log::logger(), log::info) << "fmu-proxy will load FMU from file '" << file << "'";
+    BOOST_LOG_SEV(log::logger(), log::debug) << "fmu-proxy will load FMU from file '" << file << "'";
 
     if ( !boost::filesystem::exists( file ) )
     {
@@ -105,8 +105,5 @@ cse::fmuproxy::fmuproxy_client::from_file(const std::string& file)
 std::shared_ptr<cse::fmuproxy::remote_fmu>
 cse::fmuproxy::fmuproxy_client::from_guid(const std::string& guid)
 {
-
-    BOOST_LOG_SEV(log::logger(), log::info) << "fmu-proxy will use pre-loaded FMU with guid '" << guid << "'";
-
     return std::make_shared<cse::fmuproxy::remote_fmu>(guid, state_);
 }
