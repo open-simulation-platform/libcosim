@@ -6,7 +6,9 @@
 #ifndef CSE_H
 #define CSE_H
 
-#include <stdbool.h>
+#ifndef __cplusplus
+#    include <stdbool.h>
+#endif
 #include <stddef.h>
 #include <stdint.h>
 
@@ -17,11 +19,6 @@
 extern "C" {
 #endif
 
-/// boolean false
-const int CSE_FALSE = 0;
-
-/// boolean true
-const int CSE_TRUE = 1;
 
 /// The type used to specify (simulation) time points. The time unit is nanoseconds.
 typedef int64_t cse_time_point;

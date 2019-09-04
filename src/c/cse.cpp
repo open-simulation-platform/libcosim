@@ -405,7 +405,7 @@ int cse_execution_simulate_until(cse_execution* execution, cse_time_point target
         try {
             const bool notStopped = execution->cpp_execution->simulate_until(to_time_point(targetTime)).get();
             execution->state = CSE_EXECUTION_STOPPED;
-            return notStopped ? CSE_TRUE : CSE_FALSE;
+            return notStopped;
         } catch (...) {
             handle_current_exception();
             execution->state = CSE_EXECUTION_ERROR;
