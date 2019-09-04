@@ -395,6 +395,25 @@ int cse_execution_step(cse_execution* execution, size_t numSteps)
     }
 }
 
+int cse_execution_simulate_until(cse_execution* execution, cse_time_point targetTime)
+{
+    if (execution->cpp_execution->is_running()) {
+        set_last_error(CSE_ERRC_ILLEGAL_STATE, "Function 'cse_execution_simulate_until' may not be called while simulation is running!");
+        return failure;
+    } else {
+        execution->state = CSE_EXECUTION_RUNNING;
+        try {
+            const bool notStopped = execution->cpp_execution->simulate_until(to_time_point(targetTime)).get();
+            execution->state = CSE_EXECUTION_STOPPED;
+            return notStopped;
+        } catch (...) {
+            handle_current_exception();
+            execution->state = CSE_EXECUTION_ERROR;
+            return failure;
+        }
+    }
+}
+
 int cse_execution_start(cse_execution* execution)
 {
     if (execution->t.joinable()) {

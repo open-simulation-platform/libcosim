@@ -6,7 +6,9 @@
 #ifndef CSE_H
 #define CSE_H
 
-#include <stdbool.h>
+#ifndef __cplusplus
+#    include <stdbool.h>
+#endif
 #include <stddef.h>
 #include <stdint.h>
 
@@ -48,6 +50,9 @@ typedef enum
 
     /// Invalid function argument.
     CSE_ERRC_INVALID_ARGUMENT,
+
+    /// Function may not be called while in this state.
+    CSE_ERRC_ILLEGAL_STATE,
 
     /// Index out of range.
     CSE_ERRC_OUT_OF_RANGE,
@@ -215,6 +220,20 @@ cse_slave_index cse_execution_add_slave(
  *      0 on success and -1 on error.
  */
 int cse_execution_step(cse_execution* execution, size_t numSteps);
+
+/**
+ *  Advances an execution to a specific point in time.
+ *
+ *  \param [in] execution
+ *      The execution to be stepped.
+ *  \param [in] targetTime
+ *      The point in time, which to advance the simulation execution.
+ *
+ *  \returns
+ *      -1 on error, 0 if the simulation was stopped prior to reaching the specified targetTime
+ *      and 1 if the simulation was successfully advanced to the specified targetTime.
+ */
+int cse_execution_simulate_until(cse_execution* execution, cse_time_point targetTime);
 
 
 /**
