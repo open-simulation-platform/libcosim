@@ -3,7 +3,13 @@
 #include "cse/algorithm.hpp"
 #include "cse/fmi/fmu.hpp"
 
+#include <boost/lexical_cast.hpp>
+#include <gsl/gsl_util>
 #include <nlohmann/json.hpp>
+#include <xercesc/dom/DOM.hpp>
+#include <xercesc/util/PlatformUtils.hpp>
+#include <xercesc/util/XMLString.hpp>
+
 #include <string>
 
 
@@ -48,6 +54,7 @@ public:
     {
         std::string name;
         std::string source;
+        int decimationFactor;
     };
 
     const std::vector<Simulator>& get_elements() const;
@@ -76,79 +83,118 @@ private:
 cse_config_parser::cse_config_parser(const boost::filesystem::path& configPath)
 {
     // Root node
-    boost::filesystem::ifstream i(configPath);
-    nlohmann::json j;
-    i >> j;
+    xercesc::XMLPlatformUtils::Initialize();
+    const auto xerces_cleanup = gsl::final_action([]() {
+        xercesc::XMLPlatformUtils::Terminate();
+    });
+    const auto domImpl = xercesc::DOMImplementationRegistry::getDOMImplementation(xercesc::XMLString::transcode("LS"));
+    const auto parser = static_cast<xercesc::DOMImplementationLS*>(domImpl)->createLSParser(xercesc::DOMImplementationLS::MODE_SYNCHRONOUS, 0);
+    const auto doc = parser->parseURI(configPath.string().c_str());
 
-    for (const auto& simulator : j.at("simulators")) {
-        const auto name = simulator.at("name").get<std::string>();
-        const auto source = simulator.at("source").get<std::string>();
-        simulators_.push_back({name, source});
-    }
-    if (j.count("description")) {
-        simulationInformation_.description = j.at("description").get<std::string>();
-    }
-    simulationInformation_.stepSize = j.at("baseStepSize").get<double>();
-    if (j.count("startTime")) {
-        simulationInformation_.startTime = j.at("startTime").get<double>();
-    }
+    //    const auto rootElement = doc->getElementsByTagName(xercesc::XMLString::transcode("OspSystemStructure"))->item(0);
+    const auto rootElement = doc->getDocumentElement();
 
-    if (j.count("variableConnections")) {
-        for (const auto& connection : j.at("variableConnections")) {
-            variableConnections_.push_back({connection.at("sourceSimulator").get<std::string>(),
-                                            connection.at("sourceVariable").get<std::string>(),
-                                            connection.at("targetSimulator").get<std::string>(),
-                                            connection.at("targetVariable").get<std::string>()});
+    const auto simulators = rootElement->getElementsByTagName(xercesc::XMLString::transcode("Simulators"))->item(0);
+    for (XMLSize_t i = 0; i < simulators->getChildNodes()->getLength(); i++) {
+        const auto simulator = simulators->getChildNodes()->item(i);
+
+        const auto attrs = simulator->getAttributes();
+        std::string name = xercesc::XMLString::transcode(attrs->getNamedItem(xercesc::XMLString::transcode("name"))->getNodeValue());
+        std::string source = xercesc::XMLString::transcode(attrs->getNamedItem(xercesc::XMLString::transcode("source"))->getNodeValue());
+
+        int decimationFactor = 1;
+        if (auto decFacNode = attrs->getNamedItem(xercesc::XMLString::transcode("decimationFactor"))) {
+            decimationFactor = boost::lexical_cast<int>(decFacNode->getNodeValue());
+            //TODO: Possibly obsolete with schema?
         }
+        //TODO: Initial values
+        simulators_.push_back({name, source, decimationFactor});
     }
 
-    if (j.count("plugSocketConnections")) {
-        for (const auto& plugSocketConnection : j.at("plugSocketConnections")) {
-            plugSocketConnections_.push_back({plugSocketConnection.at("sourceSimulator").get<std::string>(),
-                                              plugSocketConnection.at("plug").get<std::string>(),
-                                              plugSocketConnection.at("targetSimulator").get<std::string>(),
-                                              plugSocketConnection.at("socket").get<std::string>()});
-        }
+    auto descNodes = rootElement->getElementsByTagName(xercesc::XMLString::transcode("Description"));
+    if (descNodes->getLength() > 0) {
+        simulationInformation_.description = xercesc::XMLString::transcode(descNodes->item(0)->getTextContent());
     }
 
-    if (j.count("bondConnections")) {
-        for (const auto &bondConnection : j.at("bondConnections")) {
-            bondConnections_.push_back({bondConnection.at("simulatorA").get<std::string>(),
-                                        bondConnection.at("bondA").get<std::string>(),
-                                        bondConnection.at("simulatorB").get<std::string>(),
-                                        bondConnection.at("bondB").get<std::string>()});
-        }
+    auto ssNodes = rootElement->getElementsByTagName(xercesc::XMLString::transcode("BaseStepSize"));
+    if (ssNodes->getLength() > 0) {
+        simulationInformation_.stepSize = boost::lexical_cast<double>(ssNodes->item(0)->getTextContent());
+    }
+
+    auto stNodes = rootElement->getElementsByTagName(xercesc::XMLString::transcode("StartTime"));
+    if (stNodes->getLength() > 0) {
+        simulationInformation_.startTime = boost::lexical_cast<double>(stNodes->item(0)->getTextContent());
+    }
+
+    auto varConns = rootElement->getElementsByTagName(xercesc::XMLString::transcode("VariableConnections"));
+    for (XMLSize_t i = 0; i < varConns->getLength(); i++) {
+        auto varConn = varConns->item(i);
+        const auto attrs = varConn->getAttributes();
+        std::string sourceSimulator = xercesc::XMLString::transcode(attrs->getNamedItem(xercesc::XMLString::transcode("sourceSimulator"))->getNodeValue());
+        std::string sourceVariable = xercesc::XMLString::transcode(attrs->getNamedItem(xercesc::XMLString::transcode("sourceVariable"))->getNodeValue());
+        std::string targetSimulator = xercesc::XMLString::transcode(attrs->getNamedItem(xercesc::XMLString::transcode("targetSimulator"))->getNodeValue());
+        std::string targetVariable = xercesc::XMLString::transcode(attrs->getNamedItem(xercesc::XMLString::transcode("targetVariable"))->getNodeValue());
+
+        variableConnections_.push_back({sourceSimulator, sourceVariable,
+                                        targetSimulator, targetVariable});
+    }
+
+    auto plugSocketConns = rootElement->getElementsByTagName(xercesc::XMLString::transcode("PlugSocketConnections"));
+    for (XMLSize_t i = 0; i < plugSocketConns->getLength(); i++) {
+        auto plugSocketConn = plugSocketConns->item(i);
+        const auto attrs = plugSocketConn->getAttributes();
+        std::string sourceSimulator = xercesc::XMLString::transcode(attrs->getNamedItem(xercesc::XMLString::transcode("sourceSimulator"))->getNodeValue());
+        std::string plug = xercesc::XMLString::transcode(attrs->getNamedItem(xercesc::XMLString::transcode("plug"))->getNodeValue());
+        std::string targetSimulator = xercesc::XMLString::transcode(attrs->getNamedItem(xercesc::XMLString::transcode("targetSimulator"))->getNodeValue());
+        std::string socket = xercesc::XMLString::transcode(attrs->getNamedItem(xercesc::XMLString::transcode("socket"))->getNodeValue());
+
+        plugSocketConnections_.push_back({sourceSimulator, plug,
+                                        targetSimulator, socket});
+    }
+
+    auto bondConns = rootElement->getElementsByTagName(xercesc::XMLString::transcode("BondConnections"));
+    for (XMLSize_t i = 0; i < bondConns->getLength(); i++) {
+        auto bondConn = bondConns->item(i);
+        const auto attrs = bondConn->getAttributes();
+        std::string simulatorA = xercesc::XMLString::transcode(attrs->getNamedItem(xercesc::XMLString::transcode("simulatorA"))->getNodeValue());
+        std::string bondA = xercesc::XMLString::transcode(attrs->getNamedItem(xercesc::XMLString::transcode("bondA"))->getNodeValue());
+        std::string simulatorB = xercesc::XMLString::transcode(attrs->getNamedItem(xercesc::XMLString::transcode("simulatorB"))->getNodeValue());
+        std::string bondB = xercesc::XMLString::transcode(attrs->getNamedItem(xercesc::XMLString::transcode("bondB"))->getNodeValue());
+
+        bondConnections_.push_back({simulatorA, bondA,
+                                          simulatorB, bondB});
     }
 }
 
 cse_config_parser::~cse_config_parser() noexcept = default;
 
-const cse_config_parser::SimulationInformation&cse_config_parser::get_simulation_information() const
+const cse_config_parser::SimulationInformation& cse_config_parser::get_simulation_information() const
 {
     return simulationInformation_;
 }
 
-const std::vector<cse_config_parser::Simulator>&cse_config_parser::get_elements() const
+const std::vector<cse_config_parser::Simulator>& cse_config_parser::get_elements() const
 {
     return simulators_;
 }
 
-const std::vector<cse_config_parser::Connection>&cse_config_parser::get_variable_connections() const
+const std::vector<cse_config_parser::Connection>& cse_config_parser::get_variable_connections() const
 {
     return variableConnections_;
 }
 
-const std::vector<cse_config_parser::Connection>&cse_config_parser::get_plug_socket_connections() const
+const std::vector<cse_config_parser::Connection>& cse_config_parser::get_plug_socket_connections() const
 {
     return plugSocketConnections_;
 }
 
-const std::vector<cse_config_parser::Connection>&cse_config_parser::get_bond_connections() const
+const std::vector<cse_config_parser::Connection>& cse_config_parser::get_bond_connections() const
 {
     return bondConnections_;
 }
 
-std::vector<std::string> parse_string_vector(const nlohmann::json& element) {
+std::vector<std::string> parse_string_vector(const nlohmann::json& element)
+{
     std::vector<std::string> v;
     for (const auto& child : element) {
         v.emplace_back(child.get<std::string>());
@@ -164,12 +210,14 @@ struct slave_info
 };
 
 
-struct plug_socket_description {
+struct plug_socket_description
+{
     std::string type;
     std::vector<std::string> variables;
 };
 
-struct bond_description {
+struct bond_description
+{
     std::vector<std::string> plugs;
     std::vector<std::string> sockets;
 };
@@ -218,16 +266,17 @@ struct extended_model_description
 void connect_variables(
     std::vector<cse_config_parser::Connection> variableConnections,
     std::unordered_map<std::string, slave_info>& slaves,
-    cse::execution& execution) {
+    cse::execution& execution)
+{
 
     for (const auto& connection : variableConnections) {
         cse::variable_id output = {slaves[connection.sourceSimulator].index,
-                                   slaves[connection.sourceSimulator].variables[connection.sourceConnector].type,
-                                   slaves[connection.sourceSimulator].variables[connection.sourceConnector].index};
+            slaves[connection.sourceSimulator].variables[connection.sourceConnector].type,
+            slaves[connection.sourceSimulator].variables[connection.sourceConnector].index};
 
         cse::variable_id input = {slaves[connection.targetSimulator].index,
-                                  slaves[connection.targetSimulator].variables[connection.targetConnector].type,
-                                  slaves[connection.targetSimulator].variables[connection.targetConnector].index};
+            slaves[connection.targetSimulator].variables[connection.targetConnector].type,
+            slaves[connection.targetSimulator].variables[connection.targetConnector].index};
 
         auto c = std::make_shared<cse::scalar_connection>(output, input);
         execution.add_connection(c);
@@ -238,7 +287,8 @@ void connect_plugs_and_sockets(
     std::vector<cse_config_parser::Connection> plugSocketConnections,
     std::unordered_map<std::string, slave_info>& slaves,
     cse::execution& execution,
-    std::unordered_map<std::string, extended_model_description> emds) {
+    std::unordered_map<std::string, extended_model_description> emds)
+{
 
     for (const auto& connection : plugSocketConnections) {
         const auto& plugVariables = emds.at(connection.sourceSimulator).plugs.at(connection.sourceConnector).variables;
@@ -250,9 +300,9 @@ void connect_plugs_and_sockets(
 
         for (std::size_t i = 0; i < plugVariables.size(); ++i) {
             variableConnections.push_back({connection.sourceSimulator,
-                                            plugVariables.at(i),
-                                            connection.targetSimulator,
-                                            socketVariables.at(i)});
+                plugVariables.at(i),
+                connection.targetSimulator,
+                socketVariables.at(i)});
         }
 
         connect_variables(variableConnections, slaves, execution);
@@ -263,7 +313,8 @@ void connect_bonds(
     std::vector<cse_config_parser::Connection> bondConnections,
     std::unordered_map<std::string, slave_info>& slaves,
     cse::execution& execution,
-    std::unordered_map<std::string, extended_model_description> emds) {
+    std::unordered_map<std::string, extended_model_description> emds)
+{
 
     for (const auto& connection : bondConnections) {
         auto const& bondAPlugs = emds.at(connection.sourceSimulator).bonds.at(connection.sourceConnector).plugs;
@@ -272,9 +323,9 @@ void connect_bonds(
         std::vector<cse_config_parser::Connection> plugSocketConnectionsA;
         for (std::size_t i = 0; i < bondAPlugs.size(); ++i) {
             plugSocketConnectionsA.push_back({connection.sourceSimulator,
-                                            bondAPlugs.at(i),
-                                            connection.targetSimulator,
-                                            bondBSockets.at(i)});
+                bondAPlugs.at(i),
+                connection.targetSimulator,
+                bondBSockets.at(i)});
         }
         connect_plugs_and_sockets(plugSocketConnectionsA, slaves, execution, emds);
 
@@ -284,9 +335,9 @@ void connect_bonds(
         std::vector<cse_config_parser::Connection> plugSocketConnectionsB;
         for (std::size_t i = 0; i < bondASockets.size(); ++i) {
             plugSocketConnectionsB.push_back({connection.targetSimulator,
-                                            bondBPlugs.at(i),
-                                            connection.sourceSimulator,
-                                            bondASockets.at(i)});
+                bondBPlugs.at(i),
+                connection.sourceSimulator,
+                bondASockets.at(i)});
         }
         connect_plugs_and_sockets(plugSocketConnectionsB, slaves, execution, emds);
     }
@@ -298,7 +349,7 @@ std::pair<execution, simulator_map> load_cse_config(
     std::optional<cse::time_point> overrideStartTime)
 {
     simulator_map simulatorMap;
-    const auto configFile = configPath / "mapping.json";
+    const auto configFile = configPath / "SystemStructure.xml";
     const auto baseURI = path_to_file_uri(configFile);
     const auto parser = cse_config_parser(configFile);
 
@@ -326,7 +377,7 @@ std::pair<execution, simulator_map> load_cse_config(
             slaves[simulator.name].variables[v.name] = v;
         }
 
-        std::string msmiFileName = model->description()->name + ".json";
+        std::string msmiFileName = model->description()->name + ".xml";
         const auto msmiFilePath = configPath / msmiFileName;
         emds.emplace(simulator.name, msmiFilePath);
     }

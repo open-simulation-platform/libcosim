@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<OspSystemStructure>
+    <StartTime>0.0</StartTime>
+    <BaseStepSize>1e-4</BaseStepSize>:
+    <Algorithm>fixedStepMaster</Algorithm>
+    <Description>This is a simulation setup</Description>
+    <Simulators>
+        <Simulator name="CraneController" source="../ssp/demo/CraneController.fmu" decimationFactor="2">
+            <InitialValues>
+                <InitialValue variable="cl1_min"> <Real value="2.2"/> </InitialValue>
+                <InitialValue variable="cl1_max"> <Real value="3.8"/> </InitialValue>
+            </InitialValues>
+        </Simulator>
+        <Simulator name="KnuckleBoomCrane" source="../ssp/demo/KnuckleBoomCrane.fmu" decimationFactor="2"/>
+    </Simulators>
+    <PlugSocketConnections>
+        <PlugSocketConnection sourceSimulator="KnuckleBoomCrane" plug="Act_Limits"
+                              targetSimulator="CraneController" socket="Act_Limits"/>
+
+    </PlugSocketConnections>
+    <BondConnections>
+        <BondConnection simulatorA="CraneController" bondA="jim" simulatorB="KnuckleBoomCrane" bondB="james"/>
+    </BondConnections>
+    <VariableConnections>
+        <VariableConnection sourceSimulator="CraneController" sourceVariable="p_Crane.e[1]"
+                            targetSimulator="KnuckleBoomCrane" targetVariable="p_Crane.e[1]"/>
+    </VariableConnections>
+</OspSystemStructure>

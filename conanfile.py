@@ -20,7 +20,8 @@ class CSECoreConan(ConanFile):
         "gsl_microsoft/1.0.0@bincrafters/stable",
         "libzip/1.5.2@bincrafters/stable",
         "jsonformoderncpp/3.5.0@vthiery/stable",
-        "bzip2/1.0.8@conan/stable"
+        "bzip2/1.0.8@conan/stable",
+        "xerces-c/3.2.2@bincrafters/stable"
         )
 
     options = {"fmuproxy": [True, False]}

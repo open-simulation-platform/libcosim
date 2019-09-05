@@ -130,6 +130,7 @@ target_link_libraries(csecorecpp
         Boost::filesystem
         Boost::log
         gsl
+        XercesC::XercesC
     PRIVATE
         nlohmann_json
     )

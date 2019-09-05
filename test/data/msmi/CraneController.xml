@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<OspModelDescription>
+    <Sockets>
+        <Socket type="flow" name="fpeed">
+            <Variables>
+                <Variable name="p_Crane.f[1]"/>
+                <Variable name="p_Crane.f[2]"/>
+                <Variable name="p_Crane.f[3]"/>
+            </Variables>
+        </Socket>
+        <Socket type="abstract" name="Act_Limits">
+            <Variables>
+                <Variable name="Act_Limits[1]"/>
+                <Variable name="Act_Limits[2]"/>
+                <Variable name="Act_Limits[3]"/>
+            </Variables>
+        </Socket>
+    </Sockets>
+    <Plugs>
+        <Plug type="effort" name="forceOut">
+            <Variables>
+                <Variable name="p_Crane.e[1]"/>
+                <Variable name="p_Crane.e[2]"/>
+                <Variable name="p_Crane.e[3]"/>
+            </Variables>
+        </Plug>
+    </Plugs>
+    <Bonds>
+        <Bond name="jim">
+            <BondSockets>
+                <BondSocket name="fpeed"/>
+            </BondSockets>
+            <BondPlugs>
+                <BondPlug name="forceOut"/>
+            </BondPlugs>
+        </Bond>
+    </Bonds>
+</OspModelDescription>
