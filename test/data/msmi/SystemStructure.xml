@@ -28,5 +28,15 @@
     <VariableConnections>
         <VariableConnection sourceSimulator="CraneController" sourceVariable="p_Crane.e[1]"
                             targetSimulator="KnuckleBoomCrane" targetVariable="p_Crane.e[1]"/>
+        <!--<VariableConnection type="sum">
+            <Sources>
+                <Source simulator="KnuckleBoomCrane" variable="p_Crane.e[0]"/>
+                <Source simulator="KnuckleBoomCrane" variable="p_Crane.e[1]"/>
+                <Source simulator="KnuckleBoomCrane" variable="p_Crane.e[2]"/>
+            </Sources>
+            <Targets>
+                <Target simulator="CraneController" variable="p_Crane.e"/>
+            </Targets>
+        </VariableConnection>-->
     </VariableConnections>
 </OspSystemStructure>
