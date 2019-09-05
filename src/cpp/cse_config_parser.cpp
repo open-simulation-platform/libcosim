@@ -10,6 +10,7 @@
 #include <xercesc/util/PlatformUtils.hpp>
 #include <xercesc/util/XMLString.hpp>
 
+#include <memory>
 #include <string>
 
 
@@ -18,6 +19,18 @@ namespace cse
 
 namespace
 {
+std::shared_ptr<XMLCh> tc(const char* str)
+{
+    return std::shared_ptr<XMLCh>(
+        xercesc::XMLString::transcode(str),
+        [](XMLCh* ptr) { xercesc::XMLString::release(&ptr); });
+}
+std::shared_ptr<char> tc(const XMLCh* str)
+{
+    return std::shared_ptr<char>(
+        xercesc::XMLString::transcode(str),
+        [](char* ptr) { xercesc::XMLString::release(&ptr); });
+}
 
 class cse_config_parser
 {
@@ -87,79 +100,72 @@ cse_config_parser::cse_config_parser(const boost::filesystem::path& configPath)
     const auto xerces_cleanup = gsl::final_action([]() {
         xercesc::XMLPlatformUtils::Terminate();
     });
-    const auto domImpl = xercesc::DOMImplementationRegistry::getDOMImplementation(xercesc::XMLString::transcode("LS"));
+    const auto domImpl = xercesc::DOMImplementationRegistry::getDOMImplementation(tc("LS").get());
     const auto parser = static_cast<xercesc::DOMImplementationLS*>(domImpl)->createLSParser(xercesc::DOMImplementationLS::MODE_SYNCHRONOUS, 0);
     const auto doc = parser->parseURI(configPath.string().c_str());
 
-    //    const auto rootElement = doc->getElementsByTagName(xercesc::XMLString::transcode("OspSystemStructure"))->item(0);
+    //    const auto rootElement = doc->getElementsByTagName(tc("OspSystemStructure"))->item(0);
     const auto rootElement = doc->getDocumentElement();
 
-    const auto simulators = rootElement->getElementsByTagName(xercesc::XMLString::transcode("Simulators"))->item(0);
-    for (XMLSize_t i = 0; i < simulators->getChildNodes()->getLength(); i++) {
-        const auto simulator = simulators->getChildNodes()->item(i);
-
-        const auto attrs = simulator->getAttributes();
-        std::string name = xercesc::XMLString::transcode(attrs->getNamedItem(xercesc::XMLString::transcode("name"))->getNodeValue());
-        std::string source = xercesc::XMLString::transcode(attrs->getNamedItem(xercesc::XMLString::transcode("source"))->getNodeValue());
+    const auto simulators = static_cast<xercesc::DOMElement*>(rootElement->getElementsByTagName(tc("Simulators").get())->item(0));
+    for (auto element = simulators->getFirstElementChild(); element != nullptr; element=element->getNextElementSibling()) {
+        std::string name = tc(element->getAttribute(tc("name").get())).get();
+        std::string source = tc(element->getAttribute(tc("source").get())).get();
 
         int decimationFactor = 1;
-        if (auto decFacNode = attrs->getNamedItem(xercesc::XMLString::transcode("decimationFactor"))) {
-            decimationFactor = boost::lexical_cast<int>(decFacNode->getNodeValue());
+        auto decFacNode = tc(element->getAttribute(tc("decimationFactor").get()));
+        if (*decFacNode) {
+            decimationFactor = boost::lexical_cast<int>(decFacNode);
             //TODO: Possibly obsolete with schema?
         }
         //TODO: Initial values
         simulators_.push_back({name, source, decimationFactor});
     }
 
-    auto descNodes = rootElement->getElementsByTagName(xercesc::XMLString::transcode("Description"));
+    auto descNodes = rootElement->getElementsByTagName(tc("Description").get());
     if (descNodes->getLength() > 0) {
-        simulationInformation_.description = xercesc::XMLString::transcode(descNodes->item(0)->getTextContent());
+        simulationInformation_.description = tc(descNodes->item(0)->getTextContent()).get();
     }
 
-    auto ssNodes = rootElement->getElementsByTagName(xercesc::XMLString::transcode("BaseStepSize"));
+    auto ssNodes = rootElement->getElementsByTagName(tc("BaseStepSize").get());
     if (ssNodes->getLength() > 0) {
-        simulationInformation_.stepSize = boost::lexical_cast<double>(ssNodes->item(0)->getTextContent());
+        simulationInformation_.stepSize = boost::lexical_cast<double>(tc(ssNodes->item(0)->getTextContent()));
     }
 
-    auto stNodes = rootElement->getElementsByTagName(xercesc::XMLString::transcode("StartTime"));
+    auto stNodes = rootElement->getElementsByTagName(tc("StartTime").get());
     if (stNodes->getLength() > 0) {
-        simulationInformation_.startTime = boost::lexical_cast<double>(stNodes->item(0)->getTextContent());
+        simulationInformation_.startTime = boost::lexical_cast<double>(tc(stNodes->item(0)->getTextContent()).get());
     }
 
-    auto varConns = rootElement->getElementsByTagName(xercesc::XMLString::transcode("VariableConnections"));
-    for (XMLSize_t i = 0; i < varConns->getLength(); i++) {
-        auto varConn = varConns->item(i);
-        const auto attrs = varConn->getAttributes();
-        std::string sourceSimulator = xercesc::XMLString::transcode(attrs->getNamedItem(xercesc::XMLString::transcode("sourceSimulator"))->getNodeValue());
-        std::string sourceVariable = xercesc::XMLString::transcode(attrs->getNamedItem(xercesc::XMLString::transcode("sourceVariable"))->getNodeValue());
-        std::string targetSimulator = xercesc::XMLString::transcode(attrs->getNamedItem(xercesc::XMLString::transcode("targetSimulator"))->getNodeValue());
-        std::string targetVariable = xercesc::XMLString::transcode(attrs->getNamedItem(xercesc::XMLString::transcode("targetVariable"))->getNodeValue());
+    auto varConns = static_cast<xercesc::DOMElement*>(rootElement->getElementsByTagName(tc("VariableConnections").get())->item(0));
+
+    for (auto element = varConns->getFirstElementChild(); element != nullptr; element=element->getNextElementSibling()) {
+        std::string sourceSimulator = tc(element->getAttribute(tc("sourceSimulator").get())).get();
+        std::string sourceVariable = tc(element->getAttribute(tc("sourceVariable").get())).get();
+        std::string targetSimulator = tc(element->getAttribute(tc("targetSimulator").get())).get();
+        std::string targetVariable = tc(element->getAttribute(tc("targetVariable").get())).get();
 
         variableConnections_.push_back({sourceSimulator, sourceVariable,
                                         targetSimulator, targetVariable});
     }
 
-    auto plugSocketConns = rootElement->getElementsByTagName(xercesc::XMLString::transcode("PlugSocketConnections"));
-    for (XMLSize_t i = 0; i < plugSocketConns->getLength(); i++) {
-        auto plugSocketConn = plugSocketConns->item(i);
-        const auto attrs = plugSocketConn->getAttributes();
-        std::string sourceSimulator = xercesc::XMLString::transcode(attrs->getNamedItem(xercesc::XMLString::transcode("sourceSimulator"))->getNodeValue());
-        std::string plug = xercesc::XMLString::transcode(attrs->getNamedItem(xercesc::XMLString::transcode("plug"))->getNodeValue());
-        std::string targetSimulator = xercesc::XMLString::transcode(attrs->getNamedItem(xercesc::XMLString::transcode("targetSimulator"))->getNodeValue());
-        std::string socket = xercesc::XMLString::transcode(attrs->getNamedItem(xercesc::XMLString::transcode("socket"))->getNodeValue());
+    auto plugSocketConns = static_cast<xercesc::DOMElement*>(rootElement->getElementsByTagName(tc("PlugSocketConnections").get())->item(0));
+    for (auto element = plugSocketConns->getFirstElementChild(); element != nullptr; element=element->getNextElementSibling()) {
+        std::string sourceSimulator = tc(element->getAttribute(tc("sourceSimulator").get())).get();
+        std::string plug = tc(element->getAttribute(tc("plug").get())).get();
+        std::string targetSimulator = tc(element->getAttribute(tc("targetSimulator").get())).get();
+        std::string socket = tc(element->getAttribute(tc("socket").get())).get();
 
         plugSocketConnections_.push_back({sourceSimulator, plug,
                                         targetSimulator, socket});
     }
 
-    auto bondConns = rootElement->getElementsByTagName(xercesc::XMLString::transcode("BondConnections"));
-    for (XMLSize_t i = 0; i < bondConns->getLength(); i++) {
-        auto bondConn = bondConns->item(i);
-        const auto attrs = bondConn->getAttributes();
-        std::string simulatorA = xercesc::XMLString::transcode(attrs->getNamedItem(xercesc::XMLString::transcode("simulatorA"))->getNodeValue());
-        std::string bondA = xercesc::XMLString::transcode(attrs->getNamedItem(xercesc::XMLString::transcode("bondA"))->getNodeValue());
-        std::string simulatorB = xercesc::XMLString::transcode(attrs->getNamedItem(xercesc::XMLString::transcode("simulatorB"))->getNodeValue());
-        std::string bondB = xercesc::XMLString::transcode(attrs->getNamedItem(xercesc::XMLString::transcode("bondB"))->getNodeValue());
+    auto bondConns = static_cast<xercesc::DOMElement*>(rootElement->getElementsByTagName(tc("BondConnections").get())->item(0));
+    for (auto element = bondConns->getFirstElementChild(); element != nullptr; element=element->getNextElementSibling()) {
+        std::string simulatorA = tc(element->getAttribute(tc("simulatorA").get())).get();
+        std::string bondA = tc(element->getAttribute(tc("bondA").get())).get();
+        std::string simulatorB = tc(element->getAttribute(tc("simulatorB").get())).get();
+        std::string bondB = tc(element->getAttribute(tc("bondB").get())).get();
 
         bondConnections_.push_back({simulatorA, bondA,
                                           simulatorB, bondB});
@@ -377,7 +383,7 @@ std::pair<execution, simulator_map> load_cse_config(
             slaves[simulator.name].variables[v.name] = v;
         }
 
-        std::string msmiFileName = model->description()->name + ".xml";
+        std::string msmiFileName = model->description()->name + ".json";
         const auto msmiFilePath = configPath / msmiFileName;
         emds.emplace(simulator.name, msmiFilePath);
     }

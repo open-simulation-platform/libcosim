@@ -1,14 +1,18 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <OspSystemStructure>
     <StartTime>0.0</StartTime>
-    <BaseStepSize>1e-4</BaseStepSize>:
+    <BaseStepSize>1e-4</BaseStepSize>
     <Algorithm>fixedStepMaster</Algorithm>
     <Description>This is a simulation setup</Description>
     <Simulators>
         <Simulator name="CraneController" source="../ssp/demo/CraneController.fmu" decimationFactor="2">
             <InitialValues>
-                <InitialValue variable="cl1_min"> <Real value="2.2"/> </InitialValue>
-                <InitialValue variable="cl1_max"> <Real value="3.8"/> </InitialValue>
+                <InitialValue variable="cl1_min">
+                    <Real value="2.2"/>
+                </InitialValue>
+                <InitialValue variable="cl1_max">
+                    <Real value="3.8"/>
+                </InitialValue>
             </InitialValues>
         </Simulator>
         <Simulator name="KnuckleBoomCrane" source="../ssp/demo/KnuckleBoomCrane.fmu" decimationFactor="2"/>
