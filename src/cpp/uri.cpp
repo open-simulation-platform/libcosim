@@ -26,7 +26,8 @@ namespace
 
 bool is_scheme_char(char c) noexcept
 {
-    return std::isalnum(c) || c == '+' || c == '-' || c == '.';
+    return std::isalnum(static_cast<unsigned char>(c)) ||
+        c == '+' || c == '-' || c == '.';
 }
 
 std::optional<std::string_view> consume_scheme(std::string_view& input)
