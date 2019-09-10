@@ -81,7 +81,7 @@ public:
      * Load a scenario for execution.
      *
      * \param scenarioFile
-     *  The path to a proprietary `json` file defining the scenario.
+     *  The path to a proprietary file defining the scenario.
      * \param currentTime
      *  The time point at which the scenario will start. The scenario's events
      *  will be executed relative to this time point.
