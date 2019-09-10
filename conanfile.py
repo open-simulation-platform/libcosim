@@ -19,7 +19,6 @@ class CSECoreConan(ConanFile):
         "FMILibrary/2.0.3@kyllingstad/testing",
         "gsl_microsoft/1.0.0@bincrafters/stable",
         "libzip/1.5.2@bincrafters/stable",
-        "jsonformoderncpp/3.5.0@vthiery/stable",
         "yaml-cpp/0.6.2@bincrafters/stable",
         "bzip2/1.0.8@conan/stable"
         )
