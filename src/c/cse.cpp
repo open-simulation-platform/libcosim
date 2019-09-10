@@ -8,7 +8,7 @@
 #include <cse/execution.hpp>
 #include <cse/fmi/fmu.hpp>
 #include <cse/fmi/importer.hpp>
-#include <cse/log.hpp>
+#include <cse/log/simple.hpp>
 #include <cse/manipulator.hpp>
 #include <cse/model.hpp>
 #include <cse/observer.hpp>
@@ -142,8 +142,6 @@ cse_execution* cse_execution_create(cse_time_point startTime, cse_duration stepS
     try {
         // No exceptions are possible right now, so try...catch and unique_ptr
         // are strictly unnecessary, but this will change soon enough.
-        cse::log::set_global_output_level(cse::log::level::info);
-
         auto execution = std::make_unique<cse_execution>();
 
         execution->cpp_execution = std::make_unique<cse::execution>(
@@ -162,7 +160,6 @@ cse_execution* cse_execution_create(cse_time_point startTime, cse_duration stepS
 cse_execution* cse_ssp_execution_create(const char* sspDir, cse_time_point startTime)
 {
     try {
-        cse::log::set_global_output_level(cse::log::level::info);
         auto execution = std::make_unique<cse_execution>();
 
         auto resolver = cse::default_model_uri_resolver();
@@ -231,6 +228,11 @@ int cse_slave_get_num_variables(cse_execution* execution, cse_slave_index slave)
     return -1;
 }
 
+int cse_get_num_modified_variables(cse_execution* execution)
+{
+    return static_cast<int>(execution->cpp_execution->get_modified_variables().size());
+}
+
 cse_variable_variability to_variable_variability(const cse::variable_variability& vv)
 {
     switch (vv) {
@@ -286,7 +288,7 @@ cse_variable_type to_c_variable_type(const cse::variable_type& vt)
 void translate_variable_description(const cse::variable_description& vd, cse_variable_description& cvd)
 {
     std::strncpy(cvd.name, vd.name.c_str(), SLAVE_NAME_MAX_SIZE);
-    cvd.index = vd.index;
+    cvd.reference = vd.reference;
     cvd.type = to_c_variable_type(vd.type);
     cvd.causality = to_variable_causality(vd.causality);
     cvd.variability = to_variable_variability(vd.variability);
@@ -307,7 +309,7 @@ int cse_slave_get_variables(cse_execution* execution, cse_slave_index slave, cse
         }
 
         std::ostringstream oss;
-        oss << "Slave with index " << slave
+        oss << "Slave with reference " << slave
             << " was not found among loaded slaves.";
         throw std::invalid_argument(oss.str());
     } catch (...) {
@@ -315,7 +317,6 @@ int cse_slave_get_variables(cse_execution* execution, cse_slave_index slave, cse
         return failure;
     }
 }
-
 
 struct cse_slave_s
 {
@@ -391,6 +392,25 @@ int cse_execution_step(cse_execution* execution, size_t numSteps)
         }
         execution->state = CSE_EXECUTION_STOPPED;
         return success;
+    }
+}
+
+int cse_execution_simulate_until(cse_execution* execution, cse_time_point targetTime)
+{
+    if (execution->cpp_execution->is_running()) {
+        set_last_error(CSE_ERRC_ILLEGAL_STATE, "Function 'cse_execution_simulate_until' may not be called while simulation is running!");
+        return failure;
+    } else {
+        execution->state = CSE_EXECUTION_RUNNING;
+        try {
+            const bool notStopped = execution->cpp_execution->simulate_until(to_time_point(targetTime)).get();
+            execution->state = CSE_EXECUTION_STOPPED;
+            return notStopped;
+        } catch (...) {
+            handle_current_exception();
+            execution->state = CSE_EXECUTION_ERROR;
+            return failure;
+        }
     }
 }
 
@@ -499,15 +519,16 @@ int cse_observer_destroy(cse_observer* observer)
 int connect_variables(
     cse_execution* execution,
     cse::simulator_index outputSimulator,
-    cse::variable_index outputVariable,
+    cse::value_reference outputVariable,
     cse::simulator_index inputSimulator,
-    cse::variable_index inputVariable,
+    cse::value_reference inputVariable,
     cse::variable_type type)
 {
     try {
         const auto outputId = cse::variable_id{outputSimulator, type, outputVariable};
         const auto inputId = cse::variable_id{inputSimulator, type, inputVariable};
-        execution->cpp_execution->connect_variables(outputId, inputId);
+        const auto connection = std::make_shared<cse::scalar_connection>(outputId, inputId);
+        execution->cpp_execution->add_connection(connection);
         return success;
     } catch (...) {
         handle_current_exception();
@@ -518,29 +539,29 @@ int connect_variables(
 int cse_execution_connect_real_variables(
     cse_execution* execution,
     cse_slave_index outputSlaveIndex,
-    cse_variable_index outputVariableIndex,
+    cse_value_reference outputValueReference,
     cse_slave_index inputSlaveIndex,
-    cse_variable_index inputVariableIndex)
+    cse_value_reference inputValueReference)
 {
-    return connect_variables(execution, outputSlaveIndex, outputVariableIndex, inputSlaveIndex, inputVariableIndex,
+    return connect_variables(execution, outputSlaveIndex, outputValueReference, inputSlaveIndex, inputValueReference,
         cse::variable_type::real);
 }
 
 int cse_execution_connect_integer_variables(
     cse_execution* execution,
     cse_slave_index outputSlaveIndex,
-    cse_variable_index outputVariableIndex,
+    cse_value_reference outputValueReference,
     cse_slave_index inputSlaveIndex,
-    cse_variable_index inputVariableIndex)
+    cse_value_reference inputValueReference)
 {
-    return connect_variables(execution, outputSlaveIndex, outputVariableIndex, inputSlaveIndex, inputVariableIndex,
+    return connect_variables(execution, outputSlaveIndex, outputValueReference, inputSlaveIndex, inputValueReference,
         cse::variable_type::integer);
 }
 
 int cse_observer_slave_get_real(
     cse_observer* observer,
     cse_slave_index slave,
-    const cse_variable_index variables[],
+    const cse_value_reference variables[],
     size_t nv,
     double values[])
 {
@@ -560,7 +581,7 @@ int cse_observer_slave_get_real(
 int cse_observer_slave_get_integer(
     cse_observer* observer,
     cse_slave_index slave,
-    const cse_variable_index variables[],
+    const cse_value_reference variables[],
     size_t nv,
     int values[])
 {
@@ -580,7 +601,7 @@ int cse_observer_slave_get_integer(
 int cse_observer_slave_get_boolean(
     cse_observer* observer,
     cse_slave_index slave,
-    const cse_variable_index variables[],
+    const cse_value_reference variables[],
     size_t nv,
     bool values[])
 {
@@ -604,7 +625,7 @@ thread_local std::vector<std::string> g_stringVariableBuffer;
 int cse_observer_slave_get_string(
     cse_observer* observer,
     cse_slave_index slave,
-    const cse_variable_index variables[],
+    const cse_value_reference variables[],
     size_t nv,
     const char* values[])
 {
@@ -629,7 +650,7 @@ int cse_observer_slave_get_string(
 int64_t cse_observer_slave_get_real_samples(
     cse_observer* observer,
     cse_slave_index slave,
-    cse_variable_index variableIndex,
+    cse_value_reference valueReference,
     cse_step_number fromStep,
     size_t nSamples,
     double values[],
@@ -642,7 +663,7 @@ int64_t cse_observer_slave_get_real_samples(
         if (!obs) {
             throw std::invalid_argument("Invalid observer! The provided observer must be a time_series_observer.");
         }
-        size_t samplesRead = obs->get_real_samples(slave, variableIndex, fromStep,
+        size_t samplesRead = obs->get_real_samples(slave, valueReference, fromStep,
             gsl::make_span(values, nSamples),
             gsl::make_span(steps, nSamples), timePoints);
         for (size_t i = 0; i < samplesRead; ++i) {
@@ -658,9 +679,9 @@ int64_t cse_observer_slave_get_real_samples(
 int64_t cse_observer_slave_get_real_synchronized_series(
     cse_observer* observer,
     cse_slave_index slave1,
-    cse_variable_index variableIndex1,
+    cse_value_reference valueReference1,
     cse_slave_index slave2,
-    cse_variable_index variableIndex2,
+    cse_value_reference valueReference2,
     cse_step_number fromStep,
     size_t nSamples,
     double values1[],
@@ -674,9 +695,9 @@ int64_t cse_observer_slave_get_real_synchronized_series(
         }
         size_t samplesRead = obs->get_synchronized_real_series(
             slave1,
-            variableIndex1,
+            valueReference1,
             slave2,
-            variableIndex2,
+            valueReference2,
             fromStep,
             gsl::make_span(values1, nSamples),
             gsl::make_span(values2, nSamples));
@@ -690,7 +711,7 @@ int64_t cse_observer_slave_get_real_synchronized_series(
 int64_t cse_observer_slave_get_integer_samples(
     cse_observer* observer,
     cse_slave_index slave,
-    cse_variable_index variableIndex,
+    cse_value_reference valueReference,
     cse_step_number fromStep,
     size_t nSamples,
     int values[],
@@ -703,7 +724,7 @@ int64_t cse_observer_slave_get_integer_samples(
         if (!obs) {
             throw std::invalid_argument("Invalid observer! The provided observer must be a time_series_observer.");
         }
-        size_t samplesRead = obs->get_integer_samples(slave, variableIndex, fromStep,
+        size_t samplesRead = obs->get_integer_samples(slave, valueReference, fromStep,
             gsl::make_span(values, nSamples),
             gsl::make_span(steps, nSamples), timePoints);
         for (size_t i = 0; i < samplesRead; ++i) {
@@ -776,7 +797,7 @@ cse_observer* cse_file_observer_create_from_cfg(const char* logDir, const char* 
     auto observer = std::make_unique<cse_observer>();
     auto boostLogDir = boost::filesystem::path(logDir);
     auto boostCfgPath = boost::filesystem::path(cfgPath);
-    observer->cpp_observer = std::make_shared<cse::file_observer>(boostCfgPath, boostLogDir);
+    observer->cpp_observer = std::make_shared<cse::file_observer>(boostLogDir, boostCfgPath);
     return observer.release();
 }
 
@@ -810,14 +831,14 @@ cse::variable_type to_cpp_variable_type(cse_variable_type type)
     }
 }
 
-int cse_observer_start_observing(cse_observer* observer, cse_slave_index slave, cse_variable_type type, cse_variable_index index)
+int cse_observer_start_observing(cse_observer* observer, cse_slave_index slave, cse_variable_type type, cse_value_reference reference)
 {
     try {
         const auto timeSeriesObserver = std::dynamic_pointer_cast<cse::time_series_observer>(observer->cpp_observer);
         if (!timeSeriesObserver) {
             throw std::invalid_argument("Invalid observer! The provided observer must be a time_series_observer.");
         }
-        const auto variableId = cse::variable_id{slave, to_cpp_variable_type(type), index};
+        const auto variableId = cse::variable_id{slave, to_cpp_variable_type(type), reference};
         timeSeriesObserver->start_observing(variableId);
         return success;
     } catch (...) {
@@ -825,14 +846,15 @@ int cse_observer_start_observing(cse_observer* observer, cse_slave_index slave, 
         return failure;
     }
 }
-int cse_observer_stop_observing(cse_observer* observer, cse_slave_index slave, cse_variable_type type, cse_variable_index index)
+
+int cse_observer_stop_observing(cse_observer* observer, cse_slave_index slave, cse_variable_type type, cse_value_reference reference)
 {
     try {
         const auto timeSeriesObserver = std::dynamic_pointer_cast<cse::time_series_observer>(observer->cpp_observer);
         if (!timeSeriesObserver) {
             throw std::invalid_argument("Invalid observer! The provided observer must be a time_series_observer.");
         }
-        const auto variableId = cse::variable_id{slave, to_cpp_variable_type(type), index};
+        const auto variableId = cse::variable_id{slave, to_cpp_variable_type(type), reference};
         timeSeriesObserver->stop_observing(variableId);
         return success;
     } catch (...) {
@@ -894,7 +916,7 @@ int cse_execution_add_manipulator(
 int cse_manipulator_slave_set_real(
     cse_manipulator* manipulator,
     cse_slave_index slaveIndex,
-    const cse_variable_index variables[],
+    const cse_value_reference variables[],
     size_t nv,
     const double values[])
 {
@@ -916,7 +938,7 @@ int cse_manipulator_slave_set_real(
 int cse_manipulator_slave_set_integer(
     cse_manipulator* manipulator,
     cse_slave_index slaveIndex,
-    const cse_variable_index variables[],
+    const cse_value_reference variables[],
     size_t nv,
     const int values[])
 {
@@ -938,7 +960,7 @@ int cse_manipulator_slave_set_integer(
 int cse_manipulator_slave_set_boolean(
     cse_manipulator* manipulator,
     cse_slave_index slaveIndex,
-    const cse_variable_index variables[],
+    const cse_value_reference variables[],
     size_t nv,
     const bool values[])
 {
@@ -960,7 +982,7 @@ int cse_manipulator_slave_set_boolean(
 int cse_manipulator_slave_set_string(
     cse_manipulator* manipulator,
     cse_slave_index slaveIndex,
-    const cse_variable_index variables[],
+    const cse_value_reference variables[],
     size_t nv,
     const char* values[])
 {
@@ -983,7 +1005,7 @@ int cse_manipulator_slave_reset(
     cse_manipulator* manipulator,
     cse_slave_index slaveIndex,
     cse_variable_type type,
-    const cse_variable_index variables[],
+    const cse_value_reference variables[],
     size_t nv)
 {
     try {
@@ -1054,5 +1076,67 @@ int cse_scenario_abort(cse_manipulator* manipulator)
     } catch (...) {
         handle_current_exception();
         return failure;
+    }
+}
+
+int cse_get_modified_variables(cse_execution* execution, cse_variable_id ids[], size_t numVariables)
+{
+    try {
+        auto modified_vars = execution->cpp_execution->get_modified_variables();
+        size_t counter = 0;
+
+        if (!modified_vars.empty()) {
+            for (; counter < std::min(numVariables, modified_vars.size()); counter++) {
+                ids[counter].slave_index = modified_vars[counter].simulator;
+                ids[counter].type = to_c_variable_type(modified_vars[counter].type);
+                ids[counter].value_reference = modified_vars[counter].reference;
+            }
+        }
+
+        return static_cast<int>(counter);
+    } catch (...) {
+        execution->state = CSE_EXECUTION_ERROR;
+        execution->error_code = CSE_ERRC_UNSPECIFIED;
+        handle_current_exception();
+        return failure;
+    }
+}
+
+
+int cse_log_setup_simple_console_logging()
+{
+    try {
+        cse::log::setup_simple_console_logging();
+        return success;
+    } catch (...) {
+        handle_current_exception();
+        return failure;
+    }
+}
+
+
+void cse_log_set_output_level(cse_log_severity_level level)
+{
+    switch (level) {
+        case CSE_LOG_SEVERITY_TRACE:
+            cse::log::set_global_output_level(cse::log::trace);
+            break;
+        case CSE_LOG_SEVERITY_DEBUG:
+            cse::log::set_global_output_level(cse::log::debug);
+            break;
+        case CSE_LOG_SEVERITY_INFO:
+            cse::log::set_global_output_level(cse::log::info);
+            break;
+        case CSE_LOG_SEVERITY_WARNING:
+            cse::log::set_global_output_level(cse::log::warning);
+            break;
+        case CSE_LOG_SEVERITY_ERROR:
+            cse::log::set_global_output_level(cse::log::error);
+            break;
+        case CSE_LOG_SEVERITY_FATAL:
+            cse::log::set_global_output_level(cse::log::fatal);
+            break;
+        default:
+            assert(false);
     }
 }

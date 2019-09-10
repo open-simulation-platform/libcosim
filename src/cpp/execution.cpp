@@ -1,35 +1,15 @@
 #include "cse/execution.hpp"
 
 #include "cse/algorithm.hpp"
+#include "cse/exception.hpp"
 #include "cse/slave_simulator.hpp"
 #include "cse/timer.hpp"
-#include <cse/exception.hpp>
 
-#include <boost/functional/hash.hpp>
-
+#include <algorithm>
 #include <sstream>
 #include <unordered_map>
 #include <utility>
 #include <vector>
-
-
-// Specialisation of std::hash for variable_id
-namespace std
-{
-template<>
-class hash<cse::variable_id>
-{
-public:
-    std::size_t operator()(const cse::variable_id& v) const noexcept
-    {
-        std::size_t seed = 0;
-        boost::hash_combine(seed, v.simulator);
-        boost::hash_combine(seed, v.type);
-        boost::hash_combine(seed, v.index);
-        return seed;
-    }
-};
-} // namespace std
 
 
 namespace cse
@@ -83,9 +63,6 @@ public:
                 simulators_[i].get(),
                 currentTime_);
         }
-        for (const auto conn : connections_) {
-            obs->variables_connected(conn.second, conn.first, currentTime_);
-        }
     }
 
     void add_manipulator(std::shared_ptr<manipulator> man)
@@ -99,21 +76,46 @@ public:
         }
     }
 
-    void connect_variables(variable_id output, variable_id input)
+    void add_connection(std::shared_ptr<connection> conn)
     {
-        validate_variable(output, variable_causality::output);
-        validate_variable(input, variable_causality::input);
-
-        const auto existing = connections_.find(input);
-        const auto hasExisting = existing != connections_.end();
-
-        algorithm_->connect_variables(output, input, hasExisting);
-        if (hasExisting) {
-            existing->second = output;
-        } else {
-            connections_.emplace(input, output);
+        for (const auto& destination : conn->get_destinations()) {
+            if (find_connection(destination)) {
+                std::ostringstream oss;
+                oss << "A connection to this destination variable already exists: "
+                    << destination;
+                throw error(make_error_code(errc::unsupported_feature), oss.str());
+            }
+            validate_variable(destination, variable_causality::input);
         }
+        for (const auto& source : conn->get_sources()) {
+            validate_variable(source, variable_causality::output);
+        }
+        algorithm_->add_connection(conn);
+        connections_.push_back(conn);
     }
+
+    void remove_connection(variable_id destination)
+    {
+        const auto& toRemove = find_connection(destination);
+        if (!toRemove) {
+            std::ostringstream oss;
+            oss << "Can't find connection connected to destination: " << destination;
+            throw std::out_of_range(oss.str());
+        }
+        algorithm_->remove_connection(toRemove);
+        connections_.erase(
+            std::remove(
+                connections_.begin(),
+                connections_.end(),
+                toRemove),
+            connections_.end());
+    }
+
+    const std::vector<std::shared_ptr<connection>>& get_connections()
+    {
+        return connections_;
+    }
+
 
     time_point current_time() const noexcept
     {
@@ -195,7 +197,45 @@ public:
         return timer_.get_real_time_factor_target();
     }
 
-    void set_real_initial_value(simulator_index sim, variable_index var, double value)
+    std::vector<variable_id> get_modified_variables()
+    {
+        std::vector<variable_id> modifiedVariables;
+
+        auto index = 0;
+        for (const auto& sim : simulators_) {
+
+            const auto& realRefs = sim->get_modified_real_variables();
+            const auto& integerRefs = sim->get_modified_integer_variables();
+            const auto& booleanRefs = sim->get_modified_boolean_variables();
+            const auto& stringRefs = sim->get_modified_string_variables();
+
+            for (const auto& ref : realRefs) {
+                variable_id var = {index, variable_type::real, ref};
+                modifiedVariables.push_back(var);
+            }
+
+            for (const auto& ref : integerRefs) {
+                variable_id var = {index, variable_type::integer, ref};
+                modifiedVariables.push_back(var);
+            }
+
+            for (const auto& ref : booleanRefs) {
+                variable_id var = {index, variable_type::boolean, ref};
+                modifiedVariables.push_back(var);
+            }
+
+            for (const auto& ref : stringRefs) {
+                variable_id var = {index, variable_type::string, ref};
+                modifiedVariables.push_back(var);
+            }
+
+            index++;
+        }
+
+        return modifiedVariables;
+    }
+
+    void set_real_initial_value(simulator_index sim, value_reference var, double value)
     {
         if (initialized_) {
             throw error(make_error_code(errc::unsupported_feature), "Initial values must be set before simulation is started");
@@ -204,7 +244,7 @@ public:
         simulators_.at(sim)->set_real(var, value);
     }
 
-    void set_integer_initial_value(simulator_index sim, variable_index var, int value)
+    void set_integer_initial_value(simulator_index sim, value_reference var, int value)
     {
         if (initialized_) {
             throw error(make_error_code(errc::unsupported_feature), "Initial values must be set before simulation is started");
@@ -213,7 +253,7 @@ public:
         simulators_.at(sim)->set_integer(var, value);
     }
 
-    void set_boolean_initial_value(simulator_index sim, variable_index var, bool value)
+    void set_boolean_initial_value(simulator_index sim, value_reference var, bool value)
     {
         if (initialized_) {
             throw error(make_error_code(errc::unsupported_feature), "Initial values must be set before simulation is started");
@@ -222,7 +262,7 @@ public:
         simulators_.at(sim)->set_boolean(var, value);
     }
 
-    void set_string_initial_value(simulator_index sim, variable_index var, const std::string& value)
+    void set_string_initial_value(simulator_index sim, value_reference var, const std::string& value)
     {
         if (initialized_) {
             throw error(make_error_code(errc::unsupported_feature), "Initial values must be set before simulation is started");
@@ -238,16 +278,28 @@ private:
         const auto it = std::find_if(
             variables.begin(),
             variables.end(),
-            [=](const auto& var) { return var.causality == causality && var.type == variable.type && var.index == variable.index; });
+            [=](const auto& var) { return var.causality == causality && var.type == variable.type && var.reference == variable.reference; });
         if (it == variables.end()) {
             std::ostringstream oss;
-            oss << "Cannot find variable with index " << variable.index
+            oss << "Cannot find variable with reference " << variable.reference
                 << ", causality " << cse::to_text(causality)
                 << " and type " << cse::to_text(variable.type)
-                << " for simulator with index " << variable.simulator
+                << " for simulator with reference " << variable.simulator
                 << " and name " << simulators_.at(variable.simulator)->name();
             throw std::out_of_range(oss.str());
         }
+    }
+
+    std::shared_ptr<connection> find_connection(variable_id destination)
+    {
+        for (const auto& c : connections_) {
+            for (const auto& id : c->get_destinations()) {
+                if (id == destination) {
+                    return c;
+                }
+            }
+        }
+        return nullptr;
     }
 
     static bool timed_out(std::optional<time_point> endTime, time_point currentTime, duration stepSize)
@@ -263,13 +315,12 @@ private:
     time_point currentTime_;
     bool initialized_;
     bool stopped_;
-    double realTimeFactor_ = 1.0;
 
     std::shared_ptr<algorithm> algorithm_;
     std::vector<std::shared_ptr<simulator>> simulators_;
     std::vector<std::shared_ptr<observer>> observers_;
     std::vector<std::shared_ptr<manipulator>> manipulators_;
-    std::unordered_map<variable_id, variable_id> connections_; // (key, value) = (input, output)
+    std::vector<std::shared_ptr<connection>> connections_;
     real_time_timer timer_;
 };
 
@@ -300,9 +351,19 @@ void execution::add_manipulator(std::shared_ptr<manipulator> man)
     return pimpl_->add_manipulator(man);
 }
 
-void execution::connect_variables(variable_id output, variable_id input)
+void execution::add_connection(std::shared_ptr<connection> conn)
 {
-    pimpl_->connect_variables(output, input);
+    pimpl_->add_connection(conn);
+}
+
+void execution::remove_connection(variable_id destination)
+{
+    pimpl_->remove_connection(destination);
+}
+
+const std::vector<std::shared_ptr<connection>>& execution::get_connections()
+{
+    return pimpl_->get_connections();
 }
 
 time_point execution::current_time() const noexcept
@@ -355,26 +416,32 @@ void execution::set_real_time_factor_target(double realTimeFactor)
     pimpl_->set_real_time_factor_target(realTimeFactor);
 }
 
-double execution::get_real_time_factor_target() {
+double execution::get_real_time_factor_target()
+{
     return pimpl_->get_real_time_factor_target();
 }
 
-void execution::set_real_initial_value(simulator_index sim, variable_index var, double value)
+std::vector<variable_id> execution::get_modified_variables()
+{
+    return pimpl_->get_modified_variables();
+}
+
+void execution::set_real_initial_value(simulator_index sim, value_reference var, double value)
 {
     pimpl_->set_real_initial_value(sim, var, value);
 }
 
-void execution::set_integer_initial_value(simulator_index sim, variable_index var, int value)
+void execution::set_integer_initial_value(simulator_index sim, value_reference var, int value)
 {
     pimpl_->set_integer_initial_value(sim, var, value);
 }
 
-void execution::set_boolean_initial_value(simulator_index sim, variable_index var, bool value)
+void execution::set_boolean_initial_value(simulator_index sim, value_reference var, bool value)
 {
     pimpl_->set_boolean_initial_value(sim, var, value);
 }
 
-void execution::set_string_initial_value(simulator_index sim, variable_index var, const std::string& value)
+void execution::set_string_initial_value(simulator_index sim, value_reference var, const std::string& value)
 {
     pimpl_->set_string_initial_value(sim, var, value);
 }

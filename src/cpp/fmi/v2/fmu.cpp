@@ -68,7 +68,7 @@ fmu::fmu(
         if (variable_type::enumeration != vd.type) {
             modelDescription_.variables.push_back(vd);
         } else {
-            BOOST_LOG_SEV(log::logger(), log::level::warning)
+            BOOST_LOG_SEV(log::logger(), log::warning)
                 << "FMI 2.0 Enumeration variable type not supported, variable with name "
                 << vd.name << " will be ignored";
         }
@@ -161,7 +161,7 @@ namespace
 {
 void step_finished_placeholder(fmi2_component_environment_t, fmi2_status_t)
 {
-    BOOST_LOG_SEV(log::logger(), log::level::debug)
+    BOOST_LOG_SEV(log::logger(), log::debug)
         << "FMU instance completed asynchronous step, "
            "but this feature is currently not supported";
 }
@@ -198,35 +198,35 @@ void log_message(
     assert(msgBuffer.back() == '\0');
 
     std::string statusName = "unknown";
-    log::level logLevel = log::level::error;
+    log::severity_level logLevel = log::error;
     switch (status) {
         case fmi2_status_ok:
             statusName = "ok";
-            logLevel = log::level::trace;
+            logLevel = log::trace;
             break;
         case fmi2_status_warning:
             statusName = "warning";
-            logLevel = log::level::warning;
+            logLevel = log::warning;
             break;
         case fmi2_status_discard:
             // Don't know if this ever happens, but we should at least
             // print a debug message if it does.
             statusName = "discard";
-            logLevel = log::level::debug;
+            logLevel = log::debug;
             break;
         case fmi2_status_error:
             statusName = "error";
-            logLevel = log::level::error;
+            logLevel = log::error;
             break;
         case fmi2_status_fatal:
             statusName = "fatal";
-            logLevel = log::level::error;
+            logLevel = log::error;
             break;
         case fmi2_status_pending:
             // Don't know if this ever happens, but we should at least
             // print a debug message if it does.
             statusName = "pending";
-            logLevel = log::level::debug;
+            logLevel = log::debug;
             break;
     }
     BOOST_LOG_SEV(log::logger(), logLevel)
@@ -396,7 +396,7 @@ step_result slave_instance::do_step(time_point currentT, duration deltaT)
 
 
 void slave_instance::get_real_variables(
-    gsl::span<const variable_index> variables,
+    gsl::span<const value_reference> variables,
     gsl::span<double> values) const
 {
     CSE_INPUT_CHECK(variables.size() == values.size());
@@ -412,7 +412,7 @@ void slave_instance::get_real_variables(
 
 
 void slave_instance::get_integer_variables(
-    gsl::span<const variable_index> variables,
+    gsl::span<const value_reference> variables,
     gsl::span<int> values) const
 {
     CSE_INPUT_CHECK(variables.size() == values.size());
@@ -428,7 +428,7 @@ void slave_instance::get_integer_variables(
 
 
 void slave_instance::get_boolean_variables(
-    gsl::span<const variable_index> variables,
+    gsl::span<const value_reference> variables,
     gsl::span<bool> values) const
 {
     CSE_INPUT_CHECK(variables.size() == values.size());
@@ -448,7 +448,7 @@ void slave_instance::get_boolean_variables(
 
 
 void slave_instance::get_string_variables(
-    gsl::span<const variable_index> variables,
+    gsl::span<const value_reference> variables,
     gsl::span<std::string> values) const
 {
     CSE_INPUT_CHECK(variables.size() == values.size());
@@ -469,7 +469,7 @@ void slave_instance::get_string_variables(
 
 
 void slave_instance::set_real_variables(
-    gsl::span<const variable_index> variables,
+    gsl::span<const value_reference> variables,
     gsl::span<const double> values)
 {
     CSE_INPUT_CHECK(variables.size() == values.size());
@@ -489,7 +489,7 @@ void slave_instance::set_real_variables(
 
 
 void slave_instance::set_integer_variables(
-    gsl::span<const variable_index> variables,
+    gsl::span<const value_reference> variables,
     gsl::span<const int> values)
 {
     CSE_INPUT_CHECK(variables.size() == values.size());
@@ -509,7 +509,7 @@ void slave_instance::set_integer_variables(
 
 
 void slave_instance::set_boolean_variables(
-    gsl::span<const variable_index> variables,
+    gsl::span<const value_reference> variables,
     gsl::span<const bool> values)
 {
     CSE_INPUT_CHECK(variables.size() == values.size());
@@ -534,7 +534,7 @@ void slave_instance::set_boolean_variables(
 
 
 void slave_instance::set_string_variables(
-    gsl::span<const variable_index> variables,
+    gsl::span<const value_reference> variables,
     gsl::span<const std::string> values)
 {
     CSE_INPUT_CHECK(variables.size() == values.size());

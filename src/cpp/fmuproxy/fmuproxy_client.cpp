@@ -1,6 +1,7 @@
 #include <cse/error.hpp>
 #include <cse/fmuproxy/fmuproxy_client.hpp>
 #include <cse/fmuproxy/thrift_state.hpp>
+#include <cse/log/logger.hpp>
 
 #include <boost/filesystem.hpp>
 
@@ -73,6 +74,7 @@ cse::fmuproxy::fmuproxy_client::fmuproxy_client(const std::string& host, const u
 std::shared_ptr<cse::fmuproxy::remote_fmu>
 cse::fmuproxy::fmuproxy_client::from_url(const std::string& url)
 {
+    BOOST_LOG_SEV(log::logger(), log::debug) << "fmu-proxy will load FMU from url '" << url << "'";
     FmuId fmuId;
     state_->client_->load_from_url(fmuId, url);
     return from_guid(fmuId);
@@ -81,6 +83,13 @@ cse::fmuproxy::fmuproxy_client::from_url(const std::string& url)
 std::shared_ptr<cse::fmuproxy::remote_fmu>
 cse::fmuproxy::fmuproxy_client::from_file(const std::string& file)
 {
+    BOOST_LOG_SEV(log::logger(), log::debug) << "fmu-proxy will load FMU from file '" << file << "'";
+
+    if (!fs::exists(file)) {
+        std::string msg = "No such file '" + file + "'!";
+        CSE_PANIC_M(msg.c_str());
+    }
+
     const auto name = fs::path(file).stem().string();
 
     std::string data;

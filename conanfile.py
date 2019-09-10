@@ -5,7 +5,7 @@ from conans import ConanFile, CMake
 
 class CSECoreConan(ConanFile):
     name = "cse-core"
-    version = "0.3.0"
+    version = "0.5.0"
     author = "osp"
     scm = {
         "type": "git",
@@ -18,15 +18,16 @@ class CSECoreConan(ConanFile):
         "boost/1.66.0@conan/stable",
         "FMILibrary/2.0.3@kyllingstad/testing",
         "gsl_microsoft/1.0.0@bincrafters/stable",
-        "libzip/1.5.1@bincrafters/stable",
-        "yaml-cpp/0.6.2@bincrafters/stable"
+        "libzip/1.5.2@bincrafters/stable",
+        "jsonformoderncpp/3.5.0@vthiery/stable",
+        "yaml-cpp/0.6.2@bincrafters/stable",
+        "bzip2/1.0.8@conan/stable"
         )
 
     options = {"fmuproxy": [True, False]}
     default_options = (
         "fmuproxy=False",
-        "boost:shared=True",
-        "libzip:shared=True"
+        "boost:shared=True"
         )
 
     def imports(self):
@@ -54,7 +55,6 @@ class CSECoreConan(ConanFile):
     def build(self):
         cmake = self.configure_cmake()
         cmake.build()
-        cmake.test()
         self.run('cmake --build . --target doc')
 
     def package(self):

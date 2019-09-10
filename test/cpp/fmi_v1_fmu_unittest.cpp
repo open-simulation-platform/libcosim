@@ -29,27 +29,27 @@ void run_tests(std::shared_ptr<fmi::fmu> fmu)
     BOOST_TEST(d->version == "0.3");
     BOOST_TEST(std::static_pointer_cast<fmi::v1::fmu>(fmu)->fmilib_handle() != nullptr);
 
-    cse::variable_index
+    cse::value_reference
         realIn = 0,
         integerIn = 0, booleanIn = 0, stringIn = 0,
         realOut = 0, integerOut = 0, booleanOut = 0, stringOut = 0;
     for (const auto& v : d->variables) {
         if (v.name == "realIn") {
-            realIn = v.index;
+            realIn = v.reference;
         } else if (v.name == "integerIn") {
-            integerIn = v.index;
+            integerIn = v.reference;
         } else if (v.name == "booleanIn") {
-            booleanIn = v.index;
+            booleanIn = v.reference;
         } else if (v.name == "stringIn") {
-            stringIn = v.index;
+            stringIn = v.reference;
         } else if (v.name == "realOut") {
-            realOut = v.index;
+            realOut = v.reference;
         } else if (v.name == "integerOut") {
-            integerOut = v.index;
+            integerOut = v.reference;
         } else if (v.name == "booleanOut") {
-            booleanOut = v.index;
+            booleanOut = v.reference;
         } else if (v.name == "stringOut") {
-            stringOut = v.index;
+            stringOut = v.reference;
         }
 
         if (v.name == "realIn") {

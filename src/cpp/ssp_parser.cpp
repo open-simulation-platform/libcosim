@@ -3,9 +3,8 @@
 #include "cse/algorithm.hpp"
 #include "cse/exception.hpp"
 #include "cse/fmi/fmu.hpp"
-#include "cse/log.hpp"
 #include "cse/log/logger.hpp"
-#include <cse/error.hpp>
+#include "cse/error.hpp"
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
@@ -262,7 +261,7 @@ std::pair<execution, simulator_map> load_ssp(
     std::optional<cse::time_point> overrideStartTime)
 {
     simulator_map simulatorMap;
-    const auto ssdPath = sspDir / "SystemStructure.ssd";
+    const auto ssdPath = boost::filesystem::absolute(sspDir) / "SystemStructure.ssd";
     const auto baseURI = path_to_file_uri(ssdPath);
     const auto parser = ssp_parser(ssdPath);
 
@@ -290,21 +289,21 @@ std::pair<execution, simulator_map> load_ssp(
         }
 
         for (const auto& p : component.parameters) {
-            auto varIndex = find_variable(*model->description(), p.name).index;
-            BOOST_LOG_SEV(log::logger(), log::level::info)
+            auto reference = find_variable(*model->description(), p.name).reference;
+            BOOST_LOG_SEV(log::logger(), log::info)
                 << "Initializing variable " << component.name << ":" << p.name << " with value " << streamer{p.value};
             switch (p.type) {
                 case variable_type::real:
-                    execution.set_real_initial_value(index, varIndex, std::get<double>(p.value));
+                    execution.set_real_initial_value(index, reference, std::get<double>(p.value));
                     break;
                 case variable_type::integer:
-                    execution.set_integer_initial_value(index, varIndex, std::get<int>(p.value));
+                    execution.set_integer_initial_value(index, reference, std::get<int>(p.value));
                     break;
                 case variable_type::boolean:
-                    execution.set_boolean_initial_value(index, varIndex, std::get<bool>(p.value));
+                    execution.set_boolean_initial_value(index, reference, std::get<bool>(p.value));
                     break;
                 case variable_type::string:
-                    execution.set_string_initial_value(index, varIndex, std::get<std::string>(p.value));
+                    execution.set_string_initial_value(index, reference, std::get<std::string>(p.value));
                     break;
                 default:
                     throw error(make_error_code(errc::unsupported_feature), "Variable type not supported yet");
@@ -315,13 +314,14 @@ std::pair<execution, simulator_map> load_ssp(
     for (const auto& connection : parser.get_connections()) {
         cse::variable_id output = {slaves[connection.startElement].index,
             slaves[connection.startElement].variables[connection.startConnector].type,
-            slaves[connection.startElement].variables[connection.startConnector].index};
+            slaves[connection.startElement].variables[connection.startConnector].reference};
 
         cse::variable_id input = {slaves[connection.endElement].index,
             slaves[connection.endElement].variables[connection.endConnector].type,
-            slaves[connection.endElement].variables[connection.endConnector].index};
+            slaves[connection.endElement].variables[connection.endConnector].reference};
 
-        execution.connect_variables(output, input);
+        const auto c = std::make_shared<scalar_connection>(output, input);
+        execution.add_connection(c);
     }
 
     return std::make_pair(std::move(execution), std::move(simulatorMap));

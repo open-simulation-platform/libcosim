@@ -154,7 +154,7 @@ constexpr double to_double_duration(duration d, time_point startTime)
 
 
 /// Unsigned integer type used for variable identifiers.
-using variable_index = std::uint32_t;
+using value_reference = std::uint32_t;
 
 
 /// Variable data types.
@@ -272,7 +272,7 @@ struct variable_description
      *  variables of the same type have the same value reference, they will
      *  be considered as aliases of each other.
      */
-    variable_index index;
+    value_reference reference;
 
     /// The variable's data type.
     variable_type type;
@@ -312,6 +312,9 @@ struct model_description
 
 /// Getter for returning a variable description.
 const variable_description find_variable(const model_description& description, const std::string& variable_name);
+
+/// Getter for returning a variable description.
+const variable_description find_variable(const model_description& description, variable_type type, value_reference reference);
 
 /// Getter for returning all variable descriptions of the given datatype.
 const std::vector<variable_description> find_variables_of_type(const model_description& description, variable_type type);

@@ -21,6 +21,9 @@ void print_last_error()
 
 int main()
 {
+    cse_log_setup_simple_console_logging();
+    cse_log_set_output_level(CSE_LOG_SEVERITY_INFO);
+
     int exitCode = 0;
 
     cse_execution* execution = NULL;
@@ -65,7 +68,7 @@ int main()
 
     // ===== Getting real before step
 
-    cse_variable_index realOutVar = 0;
+    cse_value_reference realOutVar = 0;
     double realOutVal = -1.0;
     rc = cse_observer_slave_get_real(observer, slave_index, &realOutVar, 1, &realOutVal);
     if (rc < 0) { goto Lerror; }

@@ -3,7 +3,7 @@
 #include <cse/algorithm.hpp>
 #include <cse/async_slave.hpp>
 #include <cse/execution.hpp>
-#include <cse/log.hpp>
+#include <cse/log/simple.hpp>
 #include <cse/observer/last_value_observer.hpp>
 #include <cse/observer/time_series_observer.hpp>
 
@@ -34,7 +34,7 @@ public:
     }
 
     void set_real_variables(
-        gsl::span<const cse::variable_index> variables,
+        gsl::span<const cse::value_reference> variables,
         gsl::span<const double> values) override
     {
         if (!variables.empty()) setRealLog_.insert(time_);
@@ -42,7 +42,7 @@ public:
     }
 
     void set_integer_variables(
-        gsl::span<const cse::variable_index> variables,
+        gsl::span<const cse::value_reference> variables,
         gsl::span<const int> values) override
     {
         if (!variables.empty()) setIntegerLog_.insert(time_);
@@ -63,11 +63,12 @@ private:
 int main()
 {
     try {
+        cse::log::setup_simple_console_logging();
+        cse::log::set_global_output_level(cse::log::debug);
+
         constexpr cse::time_point startTime;
         constexpr cse::time_point endTime = cse::to_time_point(1.0);
         constexpr cse::duration stepSize = cse::to_duration(0.1);
-
-        cse::log::set_global_output_level(cse::log::level::debug);
 
         auto algorithm = std::make_shared<cse::fixed_step_algorithm>(stepSize);
 
@@ -78,10 +79,10 @@ int main()
         auto observer = std::make_shared<cse::last_value_observer>();
         execution.add_observer(observer);
 
-        const cse::variable_index realOutIndex = 0;
-        const cse::variable_index realInIndex = 1;
-        const cse::variable_index integerOutIndex = 0;
-        const cse::variable_index integerInIndex = 1;
+        const cse::value_reference realOutIndex = 0;
+        const cse::value_reference realInIndex = 1;
+        const cse::value_reference integerOutIndex = 0;
+        const cse::value_reference integerInIndex = 1;
 
         double v = 0.0;
         auto slave0 = std::make_shared<mock_slave>([&v](double /*x*/) { return ++v; });
@@ -94,15 +95,20 @@ int main()
         auto slave2 = std::make_shared<set_logging_mock_slave>(nullptr, [&i](int /*x*/) { return ++i + 1; });
         auto idx2 = execution.add_slave(cse::make_pseudo_async(slave2), "slave 2");
 
-        execution.connect_variables(
+        auto c1 = std::make_shared<cse::scalar_connection>(
             cse::variable_id{idx0, cse::variable_type::real, realOutIndex},
             cse::variable_id{idx1, cse::variable_type::real, realInIndex});
-        execution.connect_variables(
+        execution.add_connection(c1);
+
+        auto c2 = std::make_shared<cse::scalar_connection>(
             cse::variable_id{idx1, cse::variable_type::integer, integerOutIndex},
             cse::variable_id{idx2, cse::variable_type::integer, integerInIndex});
-        execution.connect_variables(
+        execution.add_connection(c2);
+
+        auto c3 = std::make_shared<cse::scalar_connection>(
             cse::variable_id{idx2, cse::variable_type::integer, integerOutIndex},
             cse::variable_id{idx1, cse::variable_type::integer, integerInIndex});
+        execution.add_connection(c3);
 
         algorithm->set_stepsize_decimation_factor(idx0, 1);
         algorithm->set_stepsize_decimation_factor(idx1, 2);

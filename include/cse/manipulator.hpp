@@ -112,22 +112,22 @@ public:
     void step_commencing(time_point currentTime) override;
 
     /// Override the value of a variable with type `real`
-    void override_real_variable(simulator_index, variable_index, double value);
+    void override_real_variable(simulator_index, value_reference, double value);
     /// Override the value of a variable with type `integer`
-    void override_integer_variable(simulator_index, variable_index, int value);
+    void override_integer_variable(simulator_index, value_reference, int value);
     /// Override the value of a variable with type `boolean`
-    void override_boolean_variable(simulator_index, variable_index, bool value);
+    void override_boolean_variable(simulator_index, value_reference, bool value);
     /// Override the value of a variable with type `string`
-    void override_string_variable(simulator_index, variable_index, const std::string& value);
+    void override_string_variable(simulator_index, value_reference, const std::string& value);
     /// Reset override of a variable
-    void reset_variable(simulator_index, variable_type, variable_index);
+    void reset_variable(simulator_index, variable_type, value_reference);
 
     ~override_manipulator() noexcept override;
 
 private:
     void add_action(
         simulator_index index,
-        variable_index variable,
+        value_reference variable,
         variable_type type,
         const std::variant<
             scenario::real_modifier,

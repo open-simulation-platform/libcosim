@@ -230,10 +230,10 @@ public:
      *  \see slave::get_string_variables()
      */
     virtual boost::fibers::future<variable_values> get_variables(
-        gsl::span<const variable_index> realVariables,
-        gsl::span<const variable_index> integerVariables,
-        gsl::span<const variable_index> booleanVariables,
-        gsl::span<const variable_index> stringVariables) = 0;
+        gsl::span<const value_reference> realVariables,
+        gsl::span<const value_reference> integerVariables,
+        gsl::span<const value_reference> booleanVariables,
+        gsl::span<const value_reference> stringVariables) = 0;
 
     /**
      *  Sets variable values.
@@ -262,13 +262,13 @@ public:
      *  \see slave::set_string_variables()
      */
     virtual boost::fibers::future<void> set_variables(
-        gsl::span<const variable_index> realVariables,
+        gsl::span<const value_reference> realVariables,
         gsl::span<const double> realValues,
-        gsl::span<const variable_index> integerVariables,
+        gsl::span<const value_reference> integerVariables,
         gsl::span<const int> integerValues,
-        gsl::span<const variable_index> booleanVariables,
+        gsl::span<const value_reference> booleanVariables,
         gsl::span<const bool> booleanValues,
-        gsl::span<const variable_index> stringVariables,
+        gsl::span<const value_reference> stringVariables,
         gsl::span<const std::string> stringValues) = 0;
 };
 

@@ -1,6 +1,7 @@
 #include "mock_slave.hpp"
 
 #include <cse/async_slave.hpp>
+#include <cse/log/simple.hpp>
 
 #include <boost/fiber/future.hpp>
 
@@ -73,7 +74,7 @@ void run_test(std::shared_ptr<cse::async_slave> (*make_async)(std::shared_ptr<cs
         // slave's sole real output variable.
         std::vector<future<cse::async_slave::variable_values>> getResults;
         for (const auto& slave : asyncSlaves) {
-            const cse::variable_index realOutIndex = 0;
+            const cse::value_reference realOutIndex = 0;
             getResults.push_back(
                 slave->get_variables({&realOutIndex, 1}, {}, {}, {}));
         }
@@ -89,7 +90,7 @@ void run_test(std::shared_ptr<cse::async_slave> (*make_async)(std::shared_ptr<cs
 
         std::vector<future<void>> setResults;
         for (int i = 0; i < numSlaves; ++i) {
-            const cse::variable_index realInIndex = 1;
+            const cse::value_reference realInIndex = 1;
             setResults.push_back(
                 asyncSlaves[i]->set_variables(
                     {&realInIndex, 1}, {&values[i], 1},
@@ -116,6 +117,9 @@ void run_test(std::shared_ptr<cse::async_slave> (*make_async)(std::shared_ptr<cs
 int main()
 {
     try {
+        cse::log::setup_simple_console_logging();
+        cse::log::set_global_output_level(cse::log::debug);
+
         run_test(cse::make_pseudo_async);
         run_test(cse::make_background_thread_slave);
     } catch (const std::exception& e) {

@@ -22,6 +22,9 @@ void print_last_error()
 
 int main()
 {
+    cse_log_setup_simple_console_logging();
+    cse_log_set_output_level(CSE_LOG_SEVERITY_INFO);
+
     const char* dataDir = getenv("TEST_DATA_DIR");
     if (!dataDir) {
         fprintf(stderr, "Environment variable TEST_DATA_DIR not set\n");

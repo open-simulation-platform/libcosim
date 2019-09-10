@@ -4,7 +4,7 @@ pipeline {
     environment {
         CONAN_USER_HOME_SHORT = 'None'
         OSP_CONAN_CREDS = credentials('jenkins-osp-conan-creds')
-        CSE_CONAN_CHANNEL = "${env.BRANCH_NAME}".replaceAll("/", "_")
+        CSE_CONAN_CHANNEL = "${env.BRANCH_NAME}".take(51).replaceAll("/", "_")
     }
 
     options { checkoutToSubdirectory('cse-core') }
@@ -15,7 +15,7 @@ pipeline {
             parallel {
                 stage('Build on Windows') {
                     agent { label 'windows' }
-                    
+
                     environment {
                         CONAN_USER_HOME = "${env.SLAVE_HOME}/conan-repositories/${env.EXECUTOR_NUMBER}"
                     }
@@ -61,8 +61,9 @@ pipeline {
                                 }
                                 success {
                                     dir('debug-build') {
+                                        sh "conan remove cse-core --force"
                                         sh "conan export-pkg ../cse-core osp/${CSE_CONAN_CHANNEL} -pf package/windows/debug --force"
-                                        sh "conan upload cse-core/*@osp/${CSE_CONAN_CHANNEL} --all -r=osp --confirm"
+                                        sh "conan upload cse-core/*@osp/${CSE_CONAN_CHANNEL} --all -r=osp --confirm --force"
                                     }
                                     dir('debug-build/package') {
                                         archiveArtifacts artifacts: '**',  fingerprint: true
@@ -92,8 +93,9 @@ pipeline {
                                 }
                                 success {
                                     dir('release-build') {
+                                        sh "conan remove cse-core --force"
                                         sh "conan export-pkg ../cse-core osp/${CSE_CONAN_CHANNEL} -pf package/windows/release --force"
-                                        sh "conan upload cse-core/*@osp/${CSE_CONAN_CHANNEL} --all -r=osp --confirm"    
+                                        sh "conan upload cse-core/*@osp/${CSE_CONAN_CHANNEL} --all -r=osp --confirm --force"
                                     }
                                     dir('release-build/package') {
                                         archiveArtifacts artifacts: '**',  fingerprint: true
@@ -149,8 +151,9 @@ pipeline {
                                 }
                                 success {
                                     dir('release-build-fmuproxy') {
+                                        sh "conan remove cse-core --force"
                                         sh "conan export-pkg ../cse-core osp/${CSE_CONAN_CHANNEL} -pf package/windows/release --force"
-                                        sh "conan upload cse-core/*@osp/${CSE_CONAN_CHANNEL} --all -r=osp --confirm"
+                                        sh "conan upload cse-core/*@osp/${CSE_CONAN_CHANNEL} --all -r=osp --confirm --force"
                                     }
                                     dir('release-build-fmuproxy/package') {
                                         archiveArtifacts artifacts: '**',  fingerprint: true
@@ -166,7 +169,7 @@ pipeline {
                     }
                 }
                 stage ( 'Build on Linux with Conan' ) {
-                    agent { 
+                    agent {
                         dockerfile {
                             filename 'Dockerfile.conan-build'
                             dir 'cse-core/.dockerfiles'
@@ -178,7 +181,7 @@ pipeline {
                     environment {
                         CONAN_USER_HOME = '/conan_repo'
                     }
-                    
+
                     stages {
                         stage('Configure Conan') {
                             steps {
@@ -224,8 +227,9 @@ pipeline {
                                 }
                                 success {
                                     dir('debug-build-conan') {
+                                        sh "conan remove cse-core --force"
                                         sh "conan export-pkg ../cse-core osp/${CSE_CONAN_CHANNEL} -pf package/linux/debug --force"
-                                        sh "conan upload cse-core/*@osp/${CSE_CONAN_CHANNEL} --all -r=osp --confirm"
+                                        sh "conan upload cse-core/*@osp/${CSE_CONAN_CHANNEL} --all -r=osp --confirm --force"
                                     }
                                     dir('debug-build-conan/package') {
                                         archiveArtifacts artifacts: '**',  fingerprint: true
@@ -255,8 +259,9 @@ pipeline {
                                 }
                                 success {
                                     dir('release-build-conan') {
+                                        sh "conan remove cse-core --force"
                                         sh "conan export-pkg ../cse-core osp/${CSE_CONAN_CHANNEL} -pf package/linux/release --force"
-                                        sh "conan upload cse-core/*@osp/${CSE_CONAN_CHANNEL} --all -r=osp --confirm"
+                                        sh "conan upload cse-core/*@osp/${CSE_CONAN_CHANNEL} --all -r=osp --confirm --force"
                                     }
                                     dir('release-build-conan/package') {
                                         archiveArtifacts artifacts: '**',  fingerprint: true
@@ -319,8 +324,9 @@ pipeline {
                                 }
                                 success {
                                     dir('release-build-conan-fmuproxy') {
+                                        sh "conan remove cse-core --force"
                                         sh "conan export-pkg ../cse-core osp/${CSE_CONAN_CHANNEL} -pf package/linux/release --force"
-                                        sh "conan upload cse-core/*@osp/${CSE_CONAN_CHANNEL} --all -r=osp --confirm"
+                                        sh "conan upload cse-core/*@osp/${CSE_CONAN_CHANNEL} --all -r=osp --confirm --force"
                                     }
                                     dir('release-build-conan-fmuproxy/package') {
                                         archiveArtifacts artifacts: '**',  fingerprint: true
@@ -336,8 +342,8 @@ pipeline {
                     }
                 }
                 stage ( 'Build on Linux with Docker' ) {
-                    agent { 
-                        dockerfile { 
+                    agent {
+                        dockerfile {
                             filename 'Dockerfile.build'
                             dir 'cse-core/.dockerfiles'
                             label 'linux && docker'

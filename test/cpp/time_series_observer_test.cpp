@@ -3,7 +3,7 @@
 #include <cse/algorithm.hpp>
 #include <cse/async_slave.hpp>
 #include <cse/execution.hpp>
-#include <cse/log.hpp>
+#include <cse/log/simple.hpp>
 #include <cse/observer/time_series_observer.hpp>
 
 #include <exception>
@@ -16,13 +16,14 @@
 int main()
 {
     try {
+        cse::log::setup_simple_console_logging();
+        cse::log::set_global_output_level(cse::log::debug);
+
         constexpr cse::time_point startTime = cse::to_time_point(0.0);
         constexpr cse::time_point time1 = cse::to_time_point(1.0);
         constexpr cse::time_point time2 = cse::to_time_point(2.0);
         constexpr cse::time_point endTime = cse::to_time_point(3.0);
         constexpr cse::duration stepSize = cse::to_duration(0.1);
-
-        cse::log::set_global_output_level(cse::log::level::debug);
 
         auto execution = cse::execution(startTime, std::make_unique<cse::fixed_step_algorithm>(stepSize));
 
@@ -54,7 +55,7 @@ int main()
         REQUIRE(simResult.get());
 
         const int numSamples = 15;
-        const cse::variable_index varIndex = 0;
+        const cse::value_reference varIndex = 0;
         double realValues[numSamples];
         cse::step_number steps[numSamples];
         cse::time_point times[numSamples];

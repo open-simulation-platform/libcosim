@@ -85,7 +85,7 @@ public:
     }
 
     void get_real_variables(
-        gsl::span<const cse::variable_index> variables,
+        gsl::span<const cse::value_reference> variables,
         gsl::span<double> values) const override
     {
         for (int i = 0; i < variables.size(); ++i) {
@@ -94,13 +94,13 @@ public:
             } else if (variables[i] == 1) {
                 values[i] = realIn_;
             } else {
-                throw std::out_of_range("bad index");
+                throw std::out_of_range("bad reference");
             }
         }
     }
 
     void get_integer_variables(
-        gsl::span<const cse::variable_index> variables,
+        gsl::span<const cse::value_reference> variables,
         gsl::span<int> values) const override
     {
         for (int i = 0; i < variables.size(); ++i) {
@@ -109,13 +109,13 @@ public:
             } else if (variables[i] == 1) {
                 values[i] = intIn_;
             } else {
-                throw std::out_of_range("bad index");
+                throw std::out_of_range("bad reference");
             }
         }
     }
 
     void get_boolean_variables(
-        gsl::span<const cse::variable_index> variables,
+        gsl::span<const cse::value_reference> variables,
         gsl::span<bool> values) const override
     {
         for (int i = 0; i < variables.size(); ++i) {
@@ -124,13 +124,13 @@ public:
             } else if (variables[i] == 1) {
                 values[i] = boolIn_;
             } else {
-                throw std::out_of_range("bad index");
+                throw std::out_of_range("bad reference");
             }
         }
     }
 
     void get_string_variables(
-        gsl::span<const cse::variable_index> variables,
+        gsl::span<const cse::value_reference> variables,
         gsl::span<std::string> values) const override
     {
         for (int i = 0; i < variables.size(); ++i) {
@@ -139,59 +139,59 @@ public:
             } else if (variables[i] == 1) {
                 values[i] = stringIn_;
             } else {
-                throw std::out_of_range("bad index");
+                throw std::out_of_range("bad reference");
             }
         }
     }
 
     void set_real_variables(
-        gsl::span<const cse::variable_index> variables,
+        gsl::span<const cse::value_reference> variables,
         gsl::span<const double> values) override
     {
         for (int i = 0; i < variables.size(); ++i) {
             if (variables[i] == 1) {
                 realIn_ = values[i];
             } else {
-                throw std::out_of_range("bad index");
+                throw std::out_of_range("bad reference");
             }
         }
     }
 
     void set_integer_variables(
-        gsl::span<const cse::variable_index> variables,
+        gsl::span<const cse::value_reference> variables,
         gsl::span<const int> values) override
     {
         for (int i = 0; i < variables.size(); ++i) {
             if (variables[i] == 1) {
                 intIn_ = values[i];
             } else {
-                throw std::out_of_range("bad index");
+                throw std::out_of_range("bad reference");
             }
         }
     }
 
     void set_boolean_variables(
-        gsl::span<const cse::variable_index> variables,
+        gsl::span<const cse::value_reference> variables,
         gsl::span<const bool> values) override
     {
         for (int i = 0; i < variables.size(); ++i) {
             if (variables[i] == 1) {
                 boolIn_ = values[i];
             } else {
-                throw std::out_of_range("bad index");
+                throw std::out_of_range("bad reference");
             }
         }
     }
 
     void set_string_variables(
-        gsl::span<const cse::variable_index> variables,
+        gsl::span<const cse::value_reference> variables,
         gsl::span<const std::string> values) override
     {
         for (int i = 0; i < variables.size(); ++i) {
             if (variables[i] == 1) {
                 stringIn_ = values[i];
             } else {
-                throw std::out_of_range("bad index");
+                throw std::out_of_range("bad reference");
             }
         }
     }

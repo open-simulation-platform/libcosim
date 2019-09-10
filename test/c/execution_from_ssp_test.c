@@ -22,6 +22,9 @@ void print_last_error()
 
 int main()
 {
+    cse_log_setup_simple_console_logging();
+    cse_log_set_output_level(CSE_LOG_SEVERITY_INFO);
+
     int exitCode = 0;
     cse_execution* execution = NULL;
     cse_observer* observer = NULL;
@@ -59,7 +62,7 @@ int main()
         if (0 == strncmp(infos[i].name, "KnuckleBoomCrane", SLAVE_NAME_MAX_SIZE)) {
             double value = -1;
             cse_slave_index slaveIndex = infos[i].index;
-            cse_variable_index varIndex = 2;
+            cse_value_reference varIndex = 2;
             rc = cse_observer_slave_get_real(observer, slaveIndex, &varIndex, 1, &value);
             if (rc < 0) {
                 goto Lerror;

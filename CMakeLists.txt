@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.9)
-project("csecore" VERSION "0.3.0")
+project("csecore" VERSION "0.5.0")
 
 # ==============================================================================
 # Build settings
@@ -8,7 +8,6 @@ project("csecore" VERSION "0.3.0")
 option(BUILD_SHARED_LIBS "Build shared libraries instead of static libraries" ON)
 option(CSECORE_TREAT_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" ON)
 option(CSECORE_BUILD_TESTS "Build test suite" ON)
-option(CSECORE_BUILD_APIDOC "Build API documentation" ON)
 option(CSECORE_BUILD_PRIVATE_APIDOC "Build private API documentation" OFF)
 option(CSECORE_STANDALONE_INSTALLATION "Whether to build for a standalone installation (Linux only; sets a relative RPATH)" OFF)
 option(CSECORE_USING_CONAN "Whether Conan is used for package management" OFF)
@@ -112,13 +111,13 @@ if (CSECORE_BUILD_TESTS)
     list(APPEND Boost_components timer unit_test_framework)
 endif()
 
-find_package(GSL REQUIRED)
+find_package(MS_GSL REQUIRED)
 find_package(Boost REQUIRED COMPONENTS ${Boost_components})
 find_package(FMILibrary REQUIRED)
 find_package(LIBZIP REQUIRED)
 find_package(yaml-cpp REQUIRED)
 if(CSECORE_WITH_FMUPROXY)
-    find_package(Thrift REQUIRED)
+    find_package(THRIFT REQUIRED)
 endif()
 
 # ==============================================================================
@@ -137,8 +136,9 @@ endif()
 # API documentation
 # ==============================================================================
 
-if(CSECORE_BUILD_APIDOC)
-    find_package(Doxygen REQUIRED)
+find_package(Doxygen)
+if(DOXYGEN_FOUND)
+    message("Found Doxygen, API documentation will be built.")
     set(DOXYGEN_PROJECT_NAME "CSE core")
     set(DOXYGEN_PROJECT_BRIEF "C/C++ library for distributed co-simulation")
     set(DOXYGEN_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/output/doc")
@@ -172,6 +172,8 @@ if(CSECORE_BUILD_APIDOC)
             "${CMAKE_INSTALL_PREFIX}/${CSECORE_DOC_INSTALL_DIR}/"
         DEPENDS doc
     )
+else()
+    message(WARNING "API documentation will not be built since Doxygen was not found.")
 endif()
 
 # ==============================================================================
@@ -208,3 +210,14 @@ write_basic_package_version_file(
     VERSION "${PROJECT_VERSION}"
     COMPATIBILITY "SameMajorVersion")
 install(FILES "${versionFile}" DESTINATION "${CSECORE_CMAKE_INSTALL_DIR}")
+
+# Install custom find modules
+install(FILES
+        "${CMAKE_SOURCE_DIR}/cmake/FindFMILibrary.cmake"
+        "${CMAKE_SOURCE_DIR}/cmake/FindLIBZIP.cmake"
+        "${CMAKE_SOURCE_DIR}/cmake/FindMS_GSL.cmake"
+        "${CMAKE_SOURCE_DIR}/cmake/Findnlohmann_json.cmake"
+        "${CMAKE_SOURCE_DIR}/cmake/FindTHRIFT.cmake"
+        DESTINATION
+        "${CSECORE_CMAKE_INSTALL_DIR}"
+)

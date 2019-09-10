@@ -5,6 +5,7 @@
 #ifndef CSE_ALGORITHM_HPP
 #define CSE_ALGORITHM_HPP
 
+#include <cse/connection.hpp>
 #include <cse/execution.hpp>
 #include <cse/manipulator.hpp>
 #include <cse/model.hpp>
@@ -51,35 +52,35 @@ public:
      *  Calling this function more than once for the same variable has no
      *  effect.
      */
-    virtual void expose_for_setting(variable_type type, variable_index index) = 0;
+    virtual void expose_for_setting(variable_type type, value_reference reference) = 0;
 
     /**
      *  Sets the value of a real variable.
      *
      *  The variable must previously have been exposed with `expose_for_setting()`.
      */
-    virtual void set_real(variable_index index, double value) = 0;
+    virtual void set_real(value_reference reference, double value) = 0;
 
     /**
      *  Sets the value of an integer variable.
      *
      *  The variable must previously have been exposed with `expose_for_setting()`.
      */
-    virtual void set_integer(variable_index index, int value) = 0;
+    virtual void set_integer(value_reference reference, int value) = 0;
 
     /**
      *  Sets the value of a boolean variable.
      *
      *  The variable must previously have been exposed with `expose_for_setting()`.
      */
-    virtual void set_boolean(variable_index index, bool value) = 0;
+    virtual void set_boolean(value_reference reference, bool value) = 0;
 
     /**
      *  Sets the value of a string variable.
      *
      *  The variable must previously have been exposed with `expose_for_setting()`.
      */
-    virtual void set_string(variable_index index, std::string_view value) = 0;
+    virtual void set_string(value_reference reference, std::string_view value) = 0;
 
     /**
      *  Sets a modifier for the value of a real input variable.
@@ -87,7 +88,7 @@ public:
      *  The variable must previously have been exposed with `expose_for_setting()`.
      */
     virtual void set_real_input_modifier(
-        variable_index index,
+        value_reference reference,
         std::function<double(double)> modifier) = 0;
 
     /**
@@ -96,7 +97,7 @@ public:
      *  The variable must previously have been exposed with `expose_for_setting()`.
      */
     virtual void set_integer_input_modifier(
-        variable_index index,
+        value_reference reference,
         std::function<int(int)> modifier) = 0;
 
     /**
@@ -105,7 +106,7 @@ public:
      *  The variable must previously have been exposed with `expose_for_setting()`.
      */
     virtual void set_boolean_input_modifier(
-        variable_index index,
+        value_reference reference,
         std::function<bool(bool)> modifier) = 0;
 
     /**
@@ -114,7 +115,7 @@ public:
      *  The variable must previously have been exposed with `expose_for_setting()`.
      */
     virtual void set_string_input_modifier(
-        variable_index index,
+        value_reference reference,
         std::function<std::string(std::string_view)> modifier) = 0;
 
     /**
@@ -123,7 +124,7 @@ public:
      *  The variable must previously have been exposed with `expose_for_setting()`.
      */
     virtual void set_real_output_modifier(
-        variable_index index,
+        value_reference reference,
         std::function<double(double)> modifier) = 0;
 
     /**
@@ -132,7 +133,7 @@ public:
      *  The variable must previously have been exposed with `expose_for_setting()`.
      */
     virtual void set_integer_output_modifier(
-        variable_index index,
+        value_reference reference,
         std::function<int(int)> modifier) = 0;
 
     /**
@@ -141,7 +142,7 @@ public:
      *  The variable must previously have been exposed with `expose_for_setting()`.
      */
     virtual void set_boolean_output_modifier(
-        variable_index index,
+        value_reference reference,
         std::function<bool(bool)> modifier) = 0;
 
     /**
@@ -150,7 +151,7 @@ public:
      *  The variable must previously have been exposed with `expose_for_setting()`.
      */
     virtual void set_string_output_modifier(
-        variable_index index,
+        value_reference reference,
         std::function<std::string(std::string_view)> modifier) = 0;
 
     /**
@@ -180,6 +181,17 @@ public:
         std::optional<time_point> stopTime,
         std::optional<double> relativeTolerance) = 0;
 
+    /// Returns all value references of real type that currently have an active modifier.
+    virtual const std::unordered_set<value_reference>& get_modified_real_variables() const = 0;
+
+    /// Returns all value references of integer type that currently have an active modifier.
+    virtual const std::unordered_set<value_reference>& get_modified_integer_variables() const = 0;
+
+    /// Returns all value references of boolean type that currently have an active modifier.
+    virtual const std::unordered_set<value_reference>& get_modified_boolean_variables() const = 0;
+
+    /// Returns all value references of string type that currently have an active modifier.
+    virtual const std::unordered_set<value_reference>& get_modified_string_variables() const = 0;
 
     /**
      *  Updates the simulator with new input values and makes it calculate
@@ -250,29 +262,25 @@ public:
     virtual void remove_simulator(simulator_index index) = 0;
 
     /**
-     *  Connects an output variable to an input variable.
+     * Adds a connection to the co-simulation.
      *
-     *  After this, the algorithm is responsible for acquiring the value of
-     *  the output variable and assigning it to the input variable at
-     *  communication points.
+     * After this, the algorithm is responsible for acquiring the values of
+     * the connection's source variables, and distributing the connection's
+     * destination variable values at communication points.
      *
-     *  \param output
-     *      A reference to the output variable.
-     *  \param input
-     *      A reference to the input variable.
-     *  \param inputAlreadyConnected
-     *      Whether the input has already been connected in a previous
-     *      `connect_variables()` call. If so, the previous connection must
-     *      be broken. This is meant as an aid to subclass implementors,
-     *      saving them from having to perform this check on every connection.
+     * It is assumed that the variables contained by the connection are valid
+     * and that there are no existing connections to any of the connection's
+     * destination variables.
      */
-    virtual void connect_variables(
-        variable_id output,
-        variable_id input,
-        bool inputAlreadyConnected) = 0;
+    virtual void add_connection(std::shared_ptr<connection> conn) = 0;
 
-    /// Breaks a previously established connection to input variable `input`.
-    virtual void disconnect_variable(variable_id input) = 0;
+    /**
+     * Removes a connection from the co-simulation.
+     *
+     * It is assumed that the connection has previously been added to the
+     * co-simulation with `add_connection()`.
+     */
+    virtual void remove_connection(std::shared_ptr<connection> conn) = 0;
 
     /**
      *  Performs initial setup.
@@ -353,11 +361,8 @@ public:
     // `algorithm` methods
     void add_simulator(simulator_index i, simulator* s) override;
     void remove_simulator(simulator_index i) override;
-    void connect_variables(
-        variable_id output,
-        variable_id input,
-        bool inputAlreadyConnected) override;
-    void disconnect_variable(variable_id input) override;
+    void add_connection(std::shared_ptr<connection> c) override;
+    void remove_connection(std::shared_ptr<connection> c) override;
     void setup(time_point startTime, std::optional<time_point> stopTime) override;
     void initialize() override;
     std::pair<duration, std::unordered_set<simulator_index>> do_step(time_point currentT) override;

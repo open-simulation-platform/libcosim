@@ -93,7 +93,7 @@ cse::scenario::variable_action generate_action(
     cse::simulator_index sim,
     cse::variable_type type,
     bool isInput,
-    cse::variable_index var)
+    cse::value_reference var)
 {
     switch (type) {
         case cse::variable_type::real: {
@@ -200,7 +200,7 @@ scenario::scenario parse_scenario(
 
         auto mode = specified_or_default(event, "action", defaultOpts.action);
         bool isInput = is_input(var.causality);
-        scenario::variable_action a = generate_action(event, mode, index, var.type, isInput, var.index);
+        scenario::variable_action a = generate_action(event, mode, index, var.type, isInput, var.reference);
         events.emplace_back(scenario::event{time, a});
     }
 
