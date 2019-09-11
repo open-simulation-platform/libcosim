@@ -33,7 +33,7 @@ pipeline {
                                 dir('debug-build') {
                                     bat 'conan install ../cse-core -s build_type=Debug -b missing'
                                     bat 'conan package ../cse-core -pf package/windows/debug'
-                                    bat 'cmake -DCMAKE_INSTALL_PREFIX=../install/windows/debug -G -DCSECORE_USING_CONAN=TRUE "Visual Studio 15 2017 Win64" ../cse-core'
+                                    bat 'cmake -DCMAKE_INSTALL_PREFIX=../install/windows/debug -DCSECORE_USING_CONAN=TRUE -G "Visual Studio 15 2017 Win64" ../cse-core'
                                     bat 'cmake --build . --config Debug'
                                 }
                             }
@@ -43,7 +43,7 @@ pipeline {
                                 dir('release-build') {
                                     bat 'conan install ../cse-core -s build_type=Release -b missing'
                                     bat 'conan package ../cse-core -pf package/windows/release'
-                                    bat 'cmake -DCMAKE_INSTALL_PREFIX=../install/windows/release -G -DCSECORE_USING_CONAN=TRUE "Visual Studio 15 2017 Win64" ../cse-core'
+                                    bat 'cmake -DCMAKE_INSTALL_PREFIX=../install/windows/release -DCSECORE_USING_CONAN=TRUE -G "Visual Studio 15 2017 Win64" ../cse-core'
                                     bat 'cmake --build . --config Release'
                                 }
                             }
