@@ -33,6 +33,8 @@ pipeline {
                                 dir('debug-build') {
                                     bat 'conan install ../cse-core -s build_type=Debug -b missing'
                                     bat 'conan package ../cse-core -pf package/windows/debug'
+                                    bat 'cmake -DCMAKE_INSTALL_PREFIX=../install/windows/debug -G "Visual Studio 15 2017 Win64" ../cse-core'
+                                    bat 'cmake --build . --config Debug'
                                 }
                             }
                         }
@@ -41,6 +43,8 @@ pipeline {
                                 dir('release-build') {
                                     bat 'conan install ../cse-core -s build_type=Release -b missing'
                                     bat 'conan package ../cse-core -pf package/windows/release'
+                                    bat 'cmake -DCMAKE_INSTALL_PREFIX=../install/windows/release -G "Visual Studio 15 2017 Win64" ../cse-core'
+                                    bat 'cmake --build . --config Release'
                                 }
                             }
                         }
@@ -131,6 +135,8 @@ pipeline {
                                 dir('release-build-fmuproxy') {
                                     bat 'conan install ../cse-core -s build_type=Release -o fmuproxy=True -b missing'
                                     bat 'conan package ../cse-core -pf package/windows/release'
+                                    bat 'cmake -DCMAKE_INSTALL_PREFIX=../install/windows/release -G "Visual Studio 15 2017 Win64" ../cse-core'
+                                    bat 'cmake --build . --config Release'
                                 }
                             }
                         }
@@ -198,6 +204,9 @@ pipeline {
                                     sh 'pwd'
                                     sh 'conan install ../cse-core -s compiler.libcxx=libstdc++11 -s build_type=Debug -b missing'
                                     sh 'conan package ../cse-core -pf package/linux/debug'
+                                    sh 'cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=../install/linux/debug -DCSECORE_USING_CONAN=FALSE -DCSECORE_BUILD_PRIVATE_APIDOC=ON ../cse-core'
+                                    sh 'cmake --build .'
+                                    sh 'cmake --build . --target install'
                                 }
                             }
                         }
@@ -207,6 +216,9 @@ pipeline {
                                     sh 'pwd'
                                     sh 'conan install ../cse-core -s compiler.libcxx=libstdc++11 -s build_type=Release -b missing'
                                     sh 'conan package ../cse-core -pf package/linux/release'
+                                    sh 'cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../install/linux/release -DCSECORE_USING_CONAN=TRUE -DCSECORE_BUILD_PRIVATE_APIDOC=ON ../cse-core'
+                                    sh 'cmake --build .'
+                                    sh 'cmake --build . --target install'
                                 }
                             }
                         }
@@ -304,6 +316,9 @@ pipeline {
                                 dir('release-build-conan-fmuproxy') {
                                     sh 'conan install ../cse-core -s compiler.libcxx=libstdc++11 -s build_type=Release -o fmuproxy=True -b missing'
                                     sh 'conan package ../cse-core -pf package/linux/release'
+                                    sh 'cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../install/linux/debug -DCSECORE_USING_CONAN=TRUE -DCSECORE_BUILD_PRIVATE_APIDOC=ON ../cse-core'
+                                    sh 'cmake --build .'
+                                    sh 'cmake --build . --target install'
                                 }
                             }
                         }
