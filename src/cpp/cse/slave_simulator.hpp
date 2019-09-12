@@ -5,8 +5,8 @@
 #ifndef CSE_SLAVE_SIMULATOR_HPP
 #define CSE_SLAVE_SIMULATOR_HPP
 
-#include <cse/algorithm.hpp>
 #include <cse/async_slave.hpp>
+#include <cse/master_algorithm.hpp>
 
 #include <memory>
 #include <string_view>

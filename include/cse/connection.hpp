@@ -18,7 +18,7 @@ namespace cse
 /**
  * A base class representing a connection between variables in a co-simulation.
  *
- * This will be used by a co-simulation algorithm to transfer values from
+ * This will be used by a co-simulation master algorithm to transfer values from
  * a number of source variables to a number of destination variables. Depending
  * on the implementation, a calculation of destination variable values based
  * on source variable values may occur.

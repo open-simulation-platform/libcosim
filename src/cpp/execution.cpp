@@ -1,7 +1,7 @@
 #include "cse/execution.hpp"
 
-#include "cse/algorithm.hpp"
 #include "cse/exception.hpp"
+#include "cse/master_algorithm.hpp"
 #include "cse/slave_simulator.hpp"
 #include "cse/timer.hpp"
 
@@ -18,12 +18,12 @@ namespace cse
 class execution::impl
 {
 public:
-    impl(time_point startTime, std::shared_ptr<algorithm> algo)
+    impl(time_point startTime, std::shared_ptr<master_algorithm> algorithm)
         : lastStep_(0)
         , currentTime_(startTime)
         , initialized_(false)
         , stopped_(true)
-        , algorithm_(algo)
+        , algorithm_(algorithm)
         , timer_()
     {
         algorithm_->setup(currentTime_, std::nullopt);
@@ -316,7 +316,7 @@ private:
     bool initialized_;
     bool stopped_;
 
-    std::shared_ptr<algorithm> algorithm_;
+    std::shared_ptr<master_algorithm> algorithm_;
     std::vector<std::shared_ptr<simulator>> simulators_;
     std::vector<std::shared_ptr<observer>> observers_;
     std::vector<std::shared_ptr<manipulator>> manipulators_;
@@ -325,8 +325,8 @@ private:
 };
 
 
-execution::execution(time_point startTime, std::shared_ptr<algorithm> algo)
-    : pimpl_(std::make_unique<impl>(startTime, algo))
+execution::execution(time_point startTime, std::shared_ptr<master_algorithm> algorithm)
+    : pimpl_(std::make_unique<impl>(startTime, algorithm))
 {
 }
 

@@ -1,7 +1,7 @@
 #if defined(_WIN32) && !defined(NOMINMAX)
 #    define NOMINMAX
 #endif
-#include "cse/algorithm.hpp"
+#include "cse/master_algorithm.hpp"
 
 #include "cse/error.hpp"
 #include "cse/exception.hpp"

@@ -2,7 +2,6 @@ set(publicHeaderDir "${CMAKE_SOURCE_DIR}/include/cse")
 set(privateHeaderDir "${CMAKE_CURRENT_SOURCE_DIR}/cse")
 
 set(publicHeaders
-    "algorithm.hpp"
     "async_slave.hpp"
     "config.hpp"
     "connection.hpp"
@@ -16,6 +15,7 @@ set(publicHeaders
     "lib_info.hpp"
     "log/logger.hpp"
     "log/simple.hpp"
+    "master_algorithm.hpp"
     "model.hpp"
     "observer.hpp"
     "observer/observer.hpp"
@@ -44,7 +44,6 @@ set(privateHeaders
     "utility/zip.hpp"
 )
 set(sources
-    "algorithm.cpp"
     "async_slave.cpp"
     "connection.cpp"
     "exception.cpp"
@@ -54,6 +53,7 @@ set(sources
     "fmi/v1/fmu.cpp"
     "fmi/v2/fmu.cpp"
     "log/logger.cpp"
+    "master_algorithm.cpp"
     "model.cpp"
     "observer/file_observer.cpp"
     "observer/last_value_observer.cpp"

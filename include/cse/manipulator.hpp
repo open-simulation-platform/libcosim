@@ -6,7 +6,7 @@
 #ifndef CSECORE_MANIPULATOR_H
 #define CSECORE_MANIPULATOR_H
 
-#include <cse/algorithm.hpp>
+#include <cse/master_algorithm.hpp>
 #include <cse/model.hpp>
 #include <cse/scenario.hpp>
 

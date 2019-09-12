@@ -1,10 +1,10 @@
 #include "mock_slave.hpp"
 
-#include <cse/algorithm.hpp>
 #include <cse/async_slave.hpp>
 #include <cse/connection.hpp>
 #include <cse/execution.hpp>
 #include <cse/log/simple.hpp>
+#include <cse/master_algorithm.hpp>
 #include <cse/observer/last_value_observer.hpp>
 
 #include <cmath>

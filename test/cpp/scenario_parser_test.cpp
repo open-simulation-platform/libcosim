@@ -1,8 +1,8 @@
 #include "mock_slave.hpp"
 
-#include <cse/algorithm.hpp>
 #include <cse/log/simple.hpp>
 #include <cse/manipulator.hpp>
+#include <cse/master_algorithm.hpp>
 #include <cse/observer/time_series_observer.hpp>
 
 #include <exception>

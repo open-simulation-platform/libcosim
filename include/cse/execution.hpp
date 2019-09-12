@@ -83,7 +83,7 @@ namespace cse
 
 
 // Forward declarations
-class algorithm;
+class master_algorithm;
 class observer;
 class manipulator;
 class simulator;
@@ -94,7 +94,7 @@ class connection;
  *  A class which represents an execution, i.e., a co-simulation run.
  *
  *  The `execution` class manages all the entities involved in an execution
- *  and provides a high-level API for driving the co-simulation algorithm
+ *  and provides a high-level API for driving the co-simulation master algorithm
  *  forward.
  */
 class execution
@@ -105,11 +105,11 @@ public:
      *
      *  \param startTime
      *      The logical time at which the simulation will start.
-     *  \param algo
-     *      The co-simulation algorithm which will be used. One `algorithm`
+     *  \param algorithm
+     *      The co-simulation master algorithm which will be used. One `master_algorithm`
      *      object may only be used with one `execution`.
      */
-    execution(time_point startTime, std::shared_ptr<algorithm> algo);
+    execution(time_point startTime, std::shared_ptr<master_algorithm> algorithm);
 
     ~execution() noexcept;
 
@@ -142,8 +142,8 @@ public:
      *
      *  After this, the values of the connection's source variables will be
      *  passed to the connection object, and from there to the connection's
-     *  destination variables at the co-simulation algorithm's discretion.
-     *  Different algorithms may handle this in different ways, and could for
+     *  destination variables at the co-simulation master algorithm's discretion.
+     *  Different master algorithms may handle this in different ways, and could for
      *  instance choose to extrapolate or correct the variable value during
      *  transfer.
      *

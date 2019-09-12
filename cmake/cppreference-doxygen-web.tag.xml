@@ -79,7 +79,7 @@
     <member kind="function">
       <type>T</type>
       <name>adjacent_difference</name>
-      <anchorfile>cpp/algorithm/adjacent_difference</anchorfile>
+      <anchorfile>cpp/master_algorithm/adjacent_difference</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -135,7 +135,7 @@
     <member kind="function">
       <type>T</type>
       <name>set_intersection</name>
-      <anchorfile>cpp/algorithm/set_intersection</anchorfile>
+      <anchorfile>cpp/master_algorithm/set_intersection</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -210,7 +210,7 @@
     <member kind="function">
       <type>T</type>
       <name>transform</name>
-      <anchorfile>cpp/algorithm/transform</anchorfile>
+      <anchorfile>cpp/master_algorithm/transform</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -259,7 +259,7 @@
     <member kind="function">
       <type>T</type>
       <name>replace_copy_if</name>
-      <anchorfile>cpp/algorithm/replace_copy</anchorfile>
+      <anchorfile>cpp/master_algorithm/replace_copy</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -274,7 +274,7 @@
     <member kind="function">
       <type>T</type>
       <name>partial_sort_copy</name>
-      <anchorfile>cpp/algorithm/partial_sort_copy</anchorfile>
+      <anchorfile>cpp/master_algorithm/partial_sort_copy</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -403,7 +403,7 @@
     <member kind="function">
       <type>T</type>
       <name>prev_permutation</name>
-      <anchorfile>cpp/algorithm/prev_permutation</anchorfile>
+      <anchorfile>cpp/master_algorithm/prev_permutation</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -412,7 +412,7 @@
     <member kind="function">
       <type>T</type>
       <name>max_element</name>
-      <anchorfile>cpp/algorithm/max_element</anchorfile>
+      <anchorfile>cpp/master_algorithm/max_element</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -423,7 +423,7 @@
     <member kind="function">
       <type>T</type>
       <name>set_symmetric_difference</name>
-      <anchorfile>cpp/algorithm/set_symmetric_difference</anchorfile>
+      <anchorfile>cpp/master_algorithm/set_symmetric_difference</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -444,7 +444,7 @@
     <member kind="function">
       <type>T</type>
       <name>minmax_element</name>
-      <anchorfile>cpp/algorithm/minmax_element</anchorfile>
+      <anchorfile>cpp/master_algorithm/minmax_element</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -550,7 +550,7 @@
     <member kind="function">
       <type>T</type>
       <name>pop_heap</name>
-      <anchorfile>cpp/algorithm/pop_heap</anchorfile>
+      <anchorfile>cpp/master_algorithm/pop_heap</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -586,7 +586,7 @@
     <member kind="function">
       <type>T</type>
       <name>make_heap</name>
-      <anchorfile>cpp/algorithm/make_heap</anchorfile>
+      <anchorfile>cpp/master_algorithm/make_heap</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -626,7 +626,7 @@
     <member kind="function">
       <type>T</type>
       <name>set_union</name>
-      <anchorfile>cpp/algorithm/set_union</anchorfile>
+      <anchorfile>cpp/master_algorithm/set_union</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -672,7 +672,7 @@
     <member kind="function">
       <type>T</type>
       <name>sort</name>
-      <anchorfile>cpp/algorithm/sort</anchorfile>
+      <anchorfile>cpp/master_algorithm/sort</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -741,7 +741,7 @@
     <member kind="function">
       <type>T</type>
       <name>is_sorted_until</name>
-      <anchorfile>cpp/algorithm/is_sorted_until</anchorfile>
+      <anchorfile>cpp/master_algorithm/is_sorted_until</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -838,7 +838,7 @@
     <member kind="function">
       <type>T</type>
       <name>remove_copy_if</name>
-      <anchorfile>cpp/algorithm/remove_copy</anchorfile>
+      <anchorfile>cpp/master_algorithm/remove_copy</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -860,7 +860,7 @@
     <member kind="function">
       <type>T</type>
       <name>stable_partition</name>
-      <anchorfile>cpp/algorithm/stable_partition</anchorfile>
+      <anchorfile>cpp/master_algorithm/stable_partition</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -869,7 +869,7 @@
     <member kind="function">
       <type>T</type>
       <name>fill_n</name>
-      <anchorfile>cpp/algorithm/fill_n</anchorfile>
+      <anchorfile>cpp/master_algorithm/fill_n</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -877,7 +877,7 @@
     <member kind="function">
       <type>T</type>
       <name>remove_copy</name>
-      <anchorfile>cpp/algorithm/remove_copy</anchorfile>
+      <anchorfile>cpp/master_algorithm/remove_copy</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -924,7 +924,7 @@
     <member kind="function">
       <type>T</type>
       <name>unique</name>
-      <anchorfile>cpp/algorithm/unique</anchorfile>
+      <anchorfile>cpp/master_algorithm/unique</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -932,7 +932,7 @@
     <member kind="function">
       <type>T</type>
       <name>includes</name>
-      <anchorfile>cpp/algorithm/includes</anchorfile>
+      <anchorfile>cpp/master_algorithm/includes</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -968,7 +968,7 @@
     <member kind="function">
       <type>T</type>
       <name>is_heap_until</name>
-      <anchorfile>cpp/algorithm/is_heap_until</anchorfile>
+      <anchorfile>cpp/master_algorithm/is_heap_until</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -1000,7 +1000,7 @@
     <member kind="function">
       <type>T</type>
       <name>copy_backward</name>
-      <anchorfile>cpp/algorithm/copy_backward</anchorfile>
+      <anchorfile>cpp/master_algorithm/copy_backward</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -1028,7 +1028,7 @@
     <member kind="function">
       <type>T</type>
       <name>stable_sort</name>
-      <anchorfile>cpp/algorithm/stable_sort</anchorfile>
+      <anchorfile>cpp/master_algorithm/stable_sort</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -1075,7 +1075,7 @@
     <member kind="function">
       <type>T</type>
       <name>fill</name>
-      <anchorfile>cpp/algorithm/fill</anchorfile>
+      <anchorfile>cpp/master_algorithm/fill</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -1153,14 +1153,14 @@
     <member kind="function">
       <type>T</type>
       <name>copy</name>
-      <anchorfile>cpp/algorithm/copy</anchorfile>
+      <anchorfile>cpp/master_algorithm/copy</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
     <member kind="function">
       <type>T</type>
       <name>binary_search</name>
-      <anchorfile>cpp/algorithm/binary_search</anchorfile>
+      <anchorfile>cpp/master_algorithm/binary_search</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -1246,7 +1246,7 @@
     <member kind="function">
       <type>T</type>
       <name>count</name>
-      <anchorfile>cpp/algorithm/count</anchorfile>
+      <anchorfile>cpp/master_algorithm/count</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -1358,7 +1358,7 @@
     <member kind="function">
       <type>T</type>
       <name>partition</name>
-      <anchorfile>cpp/algorithm/partition</anchorfile>
+      <anchorfile>cpp/master_algorithm/partition</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -1451,7 +1451,7 @@
     <member kind="function">
       <type>T</type>
       <name>lower_bound</name>
-      <anchorfile>cpp/algorithm/lower_bound</anchorfile>
+      <anchorfile>cpp/master_algorithm/lower_bound</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -1461,7 +1461,7 @@
     <member kind="function">
       <type>T</type>
       <name>copy_if</name>
-      <anchorfile>cpp/algorithm/copy</anchorfile>
+      <anchorfile>cpp/master_algorithm/copy</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -1533,7 +1533,7 @@
     <member kind="function">
       <type>T</type>
       <name>search</name>
-      <anchorfile>cpp/algorithm/search</anchorfile>
+      <anchorfile>cpp/master_algorithm/search</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -1542,14 +1542,14 @@
     <member kind="function">
       <type>T</type>
       <name>find_first_of</name>
-      <anchorfile>cpp/algorithm/find_first_of</anchorfile>
+      <anchorfile>cpp/master_algorithm/find_first_of</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
     <member kind="function">
       <type>T</type>
       <name>iota</name>
-      <anchorfile>cpp/algorithm/iota</anchorfile>
+      <anchorfile>cpp/master_algorithm/iota</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -1579,7 +1579,7 @@
     <member kind="function">
       <type>T</type>
       <name>accumulate</name>
-      <anchorfile>cpp/algorithm/accumulate</anchorfile>
+      <anchorfile>cpp/master_algorithm/accumulate</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -1594,7 +1594,7 @@
     <member kind="function">
       <type>T</type>
       <name>min_element</name>
-      <anchorfile>cpp/algorithm/min_element</anchorfile>
+      <anchorfile>cpp/master_algorithm/min_element</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -1609,7 +1609,7 @@
     <member kind="function">
       <type>T</type>
       <name>random_shuffle</name>
-      <anchorfile>cpp/algorithm/random_shuffle</anchorfile>
+      <anchorfile>cpp/master_algorithm/random_shuffle</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -1643,7 +1643,7 @@
     <member kind="function">
       <type>T</type>
       <name>bsearch</name>
-      <anchorfile>cpp/algorithm/bsearch</anchorfile>
+      <anchorfile>cpp/master_algorithm/bsearch</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -1659,7 +1659,7 @@
     <member kind="function">
       <type>T</type>
       <name>unique_copy</name>
-      <anchorfile>cpp/algorithm/unique_copy</anchorfile>
+      <anchorfile>cpp/master_algorithm/unique_copy</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -1680,7 +1680,7 @@
     <member kind="function">
       <type>T</type>
       <name>find_end</name>
-      <anchorfile>cpp/algorithm/find_end</anchorfile>
+      <anchorfile>cpp/master_algorithm/find_end</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -1700,7 +1700,7 @@
     <member kind="function">
       <type>T</type>
       <name>nth_element</name>
-      <anchorfile>cpp/algorithm/nth_element</anchorfile>
+      <anchorfile>cpp/master_algorithm/nth_element</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -1714,7 +1714,7 @@
     <member kind="function">
       <type>T</type>
       <name>lexicographical_compare</name>
-      <anchorfile>cpp/algorithm/lexicographical_compare</anchorfile>
+      <anchorfile>cpp/master_algorithm/lexicographical_compare</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -1790,7 +1790,7 @@
     <member kind="function">
       <type>T</type>
       <name>find_if</name>
-      <anchorfile>cpp/algorithm/find</anchorfile>
+      <anchorfile>cpp/master_algorithm/find</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -1821,14 +1821,14 @@
     <member kind="function">
       <type>T</type>
       <name>push_heap</name>
-      <anchorfile>cpp/algorithm/push_heap</anchorfile>
+      <anchorfile>cpp/master_algorithm/push_heap</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
     <member kind="function">
       <type>T</type>
       <name>min</name>
-      <anchorfile>cpp/algorithm/min</anchorfile>
+      <anchorfile>cpp/master_algorithm/min</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -1867,7 +1867,7 @@
     <member kind="function">
       <type>T</type>
       <name>shuffle</name>
-      <anchorfile>cpp/algorithm/random_shuffle</anchorfile>
+      <anchorfile>cpp/master_algorithm/random_shuffle</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -1994,7 +1994,7 @@
     <member kind="function">
       <type>T</type>
       <name>find</name>
-      <anchorfile>cpp/algorithm/find</anchorfile>
+      <anchorfile>cpp/master_algorithm/find</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -2042,7 +2042,7 @@
     <member kind="function">
       <type>T</type>
       <name>rotate_copy</name>
-      <anchorfile>cpp/algorithm/rotate_copy</anchorfile>
+      <anchorfile>cpp/master_algorithm/rotate_copy</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -2071,7 +2071,7 @@
     <member kind="function">
       <type>T</type>
       <name>partition_point</name>
-      <anchorfile>cpp/algorithm/partition_point</anchorfile>
+      <anchorfile>cpp/master_algorithm/partition_point</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -2127,7 +2127,7 @@
     <member kind="function">
       <type>T</type>
       <name>remove</name>
-      <anchorfile>cpp/algorithm/remove</anchorfile>
+      <anchorfile>cpp/master_algorithm/remove</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -2172,7 +2172,7 @@
     <member kind="function">
       <type>T</type>
       <name>set_difference</name>
-      <anchorfile>cpp/algorithm/set_difference</anchorfile>
+      <anchorfile>cpp/master_algorithm/set_difference</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -2278,7 +2278,7 @@
     <member kind="function">
       <type>T</type>
       <name>is_permutation</name>
-      <anchorfile>cpp/algorithm/is_permutation</anchorfile>
+      <anchorfile>cpp/master_algorithm/is_permutation</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -2286,7 +2286,7 @@
     <member kind="function">
       <type>T</type>
       <name>generate_n</name>
-      <anchorfile>cpp/algorithm/generate_n</anchorfile>
+      <anchorfile>cpp/master_algorithm/generate_n</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -2360,7 +2360,7 @@
     <member kind="function">
       <type>T</type>
       <name>generate</name>
-      <anchorfile>cpp/algorithm/generate</anchorfile>
+      <anchorfile>cpp/master_algorithm/generate</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -2387,7 +2387,7 @@
     <member kind="function">
       <type>T</type>
       <name>remove_if</name>
-      <anchorfile>cpp/algorithm/remove</anchorfile>
+      <anchorfile>cpp/master_algorithm/remove</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -2411,7 +2411,7 @@
     <member kind="function">
       <type>T</type>
       <name>find_if_not</name>
-      <anchorfile>cpp/algorithm/find</anchorfile>
+      <anchorfile>cpp/master_algorithm/find</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -2419,7 +2419,7 @@
     <member kind="function">
       <type>T</type>
       <name>merge</name>
-      <anchorfile>cpp/algorithm/merge</anchorfile>
+      <anchorfile>cpp/master_algorithm/merge</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -2433,7 +2433,7 @@
     <member kind="function">
       <type>T</type>
       <name>count_if</name>
-      <anchorfile>cpp/algorithm/count</anchorfile>
+      <anchorfile>cpp/master_algorithm/count</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -2538,7 +2538,7 @@
     <member kind="function">
       <type>T</type>
       <name>upper_bound</name>
-      <anchorfile>cpp/algorithm/upper_bound</anchorfile>
+      <anchorfile>cpp/master_algorithm/upper_bound</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -2547,7 +2547,7 @@
     <member kind="function">
       <type>T</type>
       <name>adjacent_find</name>
-      <anchorfile>cpp/algorithm/adjacent_find</anchorfile>
+      <anchorfile>cpp/master_algorithm/adjacent_find</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -2642,7 +2642,7 @@
     <member kind="function">
       <type>T</type>
       <name>sort_heap</name>
-      <anchorfile>cpp/algorithm/sort_heap</anchorfile>
+      <anchorfile>cpp/master_algorithm/sort_heap</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -2722,7 +2722,7 @@
     <member kind="function">
       <type>T</type>
       <name>partial_sort</name>
-      <anchorfile>cpp/algorithm/partial_sort</anchorfile>
+      <anchorfile>cpp/master_algorithm/partial_sort</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -2745,7 +2745,7 @@
     <member kind="function">
       <type>T</type>
       <name>reverse</name>
-      <anchorfile>cpp/algorithm/reverse</anchorfile>
+      <anchorfile>cpp/master_algorithm/reverse</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -2753,7 +2753,7 @@
     <member kind="function">
       <type>T</type>
       <name>partial_sum</name>
-      <anchorfile>cpp/algorithm/partial_sum</anchorfile>
+      <anchorfile>cpp/master_algorithm/partial_sum</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -2793,7 +2793,7 @@
     <member kind="function">
       <type>T</type>
       <name>iter_swap</name>
-      <anchorfile>cpp/algorithm/iter_swap</anchorfile>
+      <anchorfile>cpp/master_algorithm/iter_swap</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -2808,7 +2808,7 @@
     <member kind="function">
       <type>T</type>
       <name>reverse_copy</name>
-      <anchorfile>cpp/algorithm/reverse_copy</anchorfile>
+      <anchorfile>cpp/master_algorithm/reverse_copy</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -2837,7 +2837,7 @@
     <member kind="function">
       <type>T</type>
       <name>equal_range</name>
-      <anchorfile>cpp/algorithm/equal_range</anchorfile>
+      <anchorfile>cpp/master_algorithm/equal_range</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -2851,14 +2851,14 @@
     <member kind="function">
       <type>T</type>
       <name>is_partitioned</name>
-      <anchorfile>cpp/algorithm/is_partitioned</anchorfile>
+      <anchorfile>cpp/master_algorithm/is_partitioned</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
     <member kind="function">
       <type>T</type>
       <name>next_permutation</name>
-      <anchorfile>cpp/algorithm/next_permutation</anchorfile>
+      <anchorfile>cpp/master_algorithm/next_permutation</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -2923,7 +2923,7 @@
     <member kind="function">
       <type>T</type>
       <name>is_heap</name>
-      <anchorfile>cpp/algorithm/is_heap</anchorfile>
+      <anchorfile>cpp/master_algorithm/is_heap</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -3009,7 +3009,7 @@
     <member kind="function">
       <type>T</type>
       <name>replace_copy</name>
-      <anchorfile>cpp/algorithm/replace_copy</anchorfile>
+      <anchorfile>cpp/master_algorithm/replace_copy</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -3087,7 +3087,7 @@
     <member kind="function">
       <type>T</type>
       <name>none_of</name>
-      <anchorfile>cpp/algorithm/all_any_none_of</anchorfile>
+      <anchorfile>cpp/master_algorithm/all_any_none_of</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -3156,7 +3156,7 @@
     <member kind="function">
       <type>T</type>
       <name>copy_n</name>
-      <anchorfile>cpp/algorithm/copy_n</anchorfile>
+      <anchorfile>cpp/master_algorithm/copy_n</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -3247,7 +3247,7 @@
     <member kind="function">
       <type>T</type>
       <name>rotate</name>
-      <anchorfile>cpp/algorithm/rotate</anchorfile>
+      <anchorfile>cpp/master_algorithm/rotate</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -3321,7 +3321,7 @@
     <member kind="function">
       <type>T</type>
       <name>swap</name>
-      <anchorfile>cpp/algorithm/swap</anchorfile>
+      <anchorfile>cpp/master_algorithm/swap</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -3359,7 +3359,7 @@
     <member kind="function">
       <type>T</type>
       <name>qsort</name>
-      <anchorfile>cpp/algorithm/qsort</anchorfile>
+      <anchorfile>cpp/master_algorithm/qsort</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -3440,7 +3440,7 @@
     <member kind="function">
       <type>T</type>
       <name>all_of</name>
-      <anchorfile>cpp/algorithm/all_any_none_of</anchorfile>
+      <anchorfile>cpp/master_algorithm/all_any_none_of</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -3448,7 +3448,7 @@
     <member kind="function">
       <type>T</type>
       <name>replace</name>
-      <anchorfile>cpp/algorithm/replace</anchorfile>
+      <anchorfile>cpp/master_algorithm/replace</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -3494,7 +3494,7 @@
     <member kind="function">
       <type>T</type>
       <name>any_of</name>
-      <anchorfile>cpp/algorithm/all_any_none_of</anchorfile>
+      <anchorfile>cpp/master_algorithm/all_any_none_of</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -3502,14 +3502,14 @@
     <member kind="function">
       <type>T</type>
       <name>equal</name>
-      <anchorfile>cpp/algorithm/equal</anchorfile>
+      <anchorfile>cpp/master_algorithm/equal</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
     <member kind="function">
       <type>T</type>
       <name>max</name>
-      <anchorfile>cpp/algorithm/max</anchorfile>
+      <anchorfile>cpp/master_algorithm/max</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -3619,7 +3619,7 @@
     <member kind="function">
       <type>T</type>
       <name>search_n</name>
-      <anchorfile>cpp/algorithm/search_n</anchorfile>
+      <anchorfile>cpp/master_algorithm/search_n</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -3634,14 +3634,14 @@
     <member kind="function">
       <type>T</type>
       <name>move_backward</name>
-      <anchorfile>cpp/algorithm/move_backward</anchorfile>
+      <anchorfile>cpp/master_algorithm/move_backward</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
     <member kind="function">
       <type>T</type>
       <name>is_sorted</name>
-      <anchorfile>cpp/algorithm/is_sorted</anchorfile>
+      <anchorfile>cpp/master_algorithm/is_sorted</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -3746,7 +3746,7 @@
     <member kind="function">
       <type>T</type>
       <name>replace_if</name>
-      <anchorfile>cpp/algorithm/replace</anchorfile>
+      <anchorfile>cpp/master_algorithm/replace</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -3768,7 +3768,7 @@
     <member kind="function">
       <type>T</type>
       <name>mismatch</name>
-      <anchorfile>cpp/algorithm/mismatch</anchorfile>
+      <anchorfile>cpp/master_algorithm/mismatch</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -3817,7 +3817,7 @@
     <member kind="function">
       <type>T</type>
       <name>for_each</name>
-      <anchorfile>cpp/algorithm/for_each</anchorfile>
+      <anchorfile>cpp/master_algorithm/for_each</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -3907,7 +3907,7 @@
     <member kind="function">
       <type>T</type>
       <name>inplace_merge</name>
-      <anchorfile>cpp/algorithm/inplace_merge</anchorfile>
+      <anchorfile>cpp/master_algorithm/inplace_merge</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -3972,7 +3972,7 @@
     <member kind="function">
       <type>T</type>
       <name>swap_ranges</name>
-      <anchorfile>cpp/algorithm/swap_ranges</anchorfile>
+      <anchorfile>cpp/master_algorithm/swap_ranges</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -3981,7 +3981,7 @@
     <member kind="function">
       <type>T</type>
       <name>minmax</name>
-      <anchorfile>cpp/algorithm/minmax</anchorfile>
+      <anchorfile>cpp/master_algorithm/minmax</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -4037,7 +4037,7 @@
     <member kind="function">
       <type>T</type>
       <name>partition_copy</name>
-      <anchorfile>cpp/algorithm/partition_copy</anchorfile>
+      <anchorfile>cpp/master_algorithm/partition_copy</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>
@@ -4122,7 +4122,7 @@
     <member kind="function">
       <type>T</type>
       <name>inner_product</name>
-      <anchorfile>cpp/algorithm/inner_product</anchorfile>
+      <anchorfile>cpp/master_algorithm/inner_product</anchorfile>
       <anchor></anchor>
       <arglist>(T... args)</arglist>
     </member>

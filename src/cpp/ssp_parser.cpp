@@ -1,10 +1,10 @@
 #include "cse/ssp_parser.hpp"
 
-#include "cse/algorithm.hpp"
+#include "cse/error.hpp"
 #include "cse/exception.hpp"
 #include "cse/fmi/fmu.hpp"
 #include "cse/log/logger.hpp"
-#include "cse/error.hpp"
+#include "cse/master_algorithm.hpp"
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>

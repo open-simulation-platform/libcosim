@@ -1,7 +1,7 @@
 #ifndef CSECORE_SCENARIO_PARSER_H
 #define CSECORE_SCENARIO_PARSER_H
 
-#include <cse/algorithm.hpp>
+#include <cse/master_algorithm.hpp>
 #include <cse/scenario.hpp>
 
 #include <boost/filesystem/path.hpp>

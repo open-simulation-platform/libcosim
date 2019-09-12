@@ -1,17 +1,17 @@
 #include "mock_slave.hpp"
 
-#include "cse/algorithm.hpp"
 #include "cse/async_slave.hpp"
 #include "cse/execution.hpp"
 #include "cse/log/simple.hpp"
+#include "cse/master_algorithm.hpp"
 #include "cse/observer/time_series_observer.hpp"
+#include <cse/observer/last_value_observer.hpp>
 
-#include <inttypes.h>
 #include <exception>
+#include <inttypes.h>
 #include <memory>
 #include <stdexcept>
 #include <vector>
-#include <cse/observer/last_value_observer.hpp>
 
 #define REQUIRE(test) \
     if (!(test)) throw std::runtime_error("Requirement not satisfied: " #test)

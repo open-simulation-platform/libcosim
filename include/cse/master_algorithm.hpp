@@ -1,9 +1,9 @@
 /**
  *  \file
- *  \brief Co-simulation algorithms.
+ *  \brief Co-simulation master algorithms.
  */
-#ifndef CSE_ALGORITHM_HPP
-#define CSE_ALGORITHM_HPP
+#ifndef CSE_MASTER_ALGORITHM_HPP
+#define CSE_MASTER_ALGORITHM_HPP
 
 #include <cse/connection.hpp>
 #include <cse/execution.hpp>
@@ -26,9 +26,9 @@ namespace cse
 
 
 /**
- *  A simulator interface for co-simulation algorithms.
+ *  A simulator interface for co-simulation master algorithms.
  *
- *  This is the simulator interface exposed to `algorithm` implementers,
+ *  This is the simulator interface exposed to `master_algorithm` implementers,
  *  and is used to control one "sub-simulator" in a co-simulation.
  *
  *  Some of the functions in this class, specifically the ones that return a
@@ -171,7 +171,7 @@ public:
      *  \param relativeTolerance
      *      A suggested relative tolerance for the internal error estimation
      *      of the simulator's solver.  This should be specified if the
-     *      co-simulation algorithm itself uses error estimation to determine
+     *      co-simulation master algorithm itself uses error estimation to determine
      *      the length of communication intervals.  If the simulator's
      *      solver doesn't use error estimation, it will just ignore this
      *      parameter.
@@ -223,9 +223,9 @@ public:
 
 
 /**
- *  An interface for co-simulation algorithms.
+ *  An interface for co-simulation master algorithms.
  *
- *  A co-simulation algorithm is responsible for connecting variables (i.e.,
+ *  A co-simulation master algorithm is responsible for connecting variables (i.e.,
  *  transferring output values to the right input variables) and stepping
  *  simulators.
  *
@@ -236,7 +236,7 @@ public:
  *    2. `initialize()`
  *    3. `do_step()` (possibly repeatedly)
  */
-class algorithm
+class master_algorithm
 {
 public:
     /**
@@ -247,7 +247,7 @@ public:
      *      in other function calls.
      *  \param sim
      *      A pointer to an object that is used to control the simulator.
-     *      Note that the algorithm does not have resource ownership of
+     *      Note that the master algorithm does not have resource ownership of
      *      the object it points to (i.e., should not try to delete it).
      */
     virtual void add_simulator(simulator_index index, simulator* sim) = 0;
@@ -312,7 +312,7 @@ public:
     /**
      *  Performs a single macro time step.
      *
-     *  The actual time step length is determined by the algorithm, but it may
+     *  The actual time step length is determined by the master algorithm, but it may
      *  not exceed `maxDeltaT` if specified.
      *
      *  This function is guaranteed to be called after `initialize()`. The
@@ -328,18 +328,18 @@ public:
      */
     virtual std::pair<duration, std::unordered_set<simulator_index>> do_step(time_point currentT) = 0;
 
-    virtual ~algorithm() noexcept = default;
+    virtual ~master_algorithm() noexcept = default;
 };
 
 
 /**
- *  A fixed-stepsize co-simulation algorithm.
+ *  A fixed-stepsize co-simulation master algorithm.
  *
- *  A simple implementation of `algorithm`. The simulation progresses
+ *  A simple implementation of `master_algorithm`. The simulation progresses
  *  at a fixed base stepsize. Simulators are stepped in parallel at an optional
  *  multiple of this base step size.
  */
-class fixed_step_algorithm : public algorithm
+class fixed_step_algorithm : public master_algorithm
 {
 public:
     /**
@@ -358,7 +358,7 @@ public:
     fixed_step_algorithm(fixed_step_algorithm&&) noexcept;
     fixed_step_algorithm& operator=(fixed_step_algorithm&&) noexcept;
 
-    // `algorithm` methods
+    // `master_algorithm` methods
     void add_simulator(simulator_index i, simulator* s) override;
     void remove_simulator(simulator_index i) override;
     void add_connection(std::shared_ptr<connection> c) override;
@@ -371,8 +371,8 @@ public:
      * Sets step size decimation factor for a simulator.
      *
      * This will effectively set the simulator step size to a multiple
-     * of the algorithm's base step size. The default decimation factor is 1.
-     * Must be called *after* the simulator has been added to the algorithm with `add_simulator()`.
+     * of the master algorithm's base step size. The default decimation factor is 1.
+     * Must be called *after* the simulator has been added to the `master_algorithm` with `add_simulator()`.
      *
      * \param simulator
      *      The index of the simulator.

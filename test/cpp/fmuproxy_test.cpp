@@ -9,7 +9,7 @@
 #include <cse/fmuproxy/fmuproxy_client.hpp>
 #include <cse/fmuproxy/remote_fmu.hpp>
 // clang-format on
-#include <cse/algorithm.hpp>
+#include <cse/master_algorithm.hpp>
 #include <cse/execution.hpp>
 #include <cse/log/simple.hpp>
 

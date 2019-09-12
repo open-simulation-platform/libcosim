@@ -3,13 +3,13 @@
 #endif
 
 #include <cse.h>
-#include <cse/algorithm.hpp>
 #include <cse/exception.hpp>
 #include <cse/execution.hpp>
 #include <cse/fmi/fmu.hpp>
 #include <cse/fmi/importer.hpp>
 #include <cse/log/simple.hpp>
 #include <cse/manipulator.hpp>
+#include <cse/master_algorithm.hpp>
 #include <cse/model.hpp>
 #include <cse/observer.hpp>
 #include <cse/orchestration.hpp>
