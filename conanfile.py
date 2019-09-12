@@ -48,7 +48,6 @@ class CSECoreConan(ConanFile):
             cmake.definitions["CSECORE_BUILD_PRIVATE_APIDOC"] = "ON"
         if self.options.fmuproxy:
             cmake.definitions["CSECORE_WITH_FMUPROXY"] = "ON"
-            cmake.definitions["CSECORE_TEST_FMUPROXY"] = "OFF" # since we can't test on Jenkins yet
         cmake.configure()
         return cmake
 
