@@ -45,6 +45,7 @@ pipeline {
                                     bat 'conan package ../cse-core -pf package/windows/release'
                                     bat 'cmake -DCMAKE_INSTALL_PREFIX=../install/windows/release -DCSECORE_USING_CONAN=ON -G "Visual Studio 15 2017 Win64" ../cse-core'
                                     bat 'cmake --build . --config Release'
+                                    bat 'cmake --build . --target doc'
                                 }
                             }
                         }
@@ -137,6 +138,7 @@ pipeline {
                                     bat 'conan package ../cse-core -pf package/windows/release'
                                     bat 'cmake -DCMAKE_INSTALL_PREFIX=../install/windows/release -DCSECORE_USING_CONAN=ON -DCSECORE_WITH_FMUPROXY=ON -DCSECORE_TEST_FMUPROXY=OFF -G "Visual Studio 15 2017 Win64" ../cse-core'
                                     bat 'cmake --build . --config Release'
+                                    bat 'cmake --build . --target doc'
                                 }
                             }
                         }
@@ -219,6 +221,7 @@ pipeline {
                                     sh 'cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../install/linux/release -DCSECORE_USING_CONAN=ON ../cse-core'
                                     sh 'cmake --build .'
                                     sh 'cmake --build . --target install'
+                                    sh 'cmake --build . --target doc'
                                 }
                             }
                         }
@@ -319,6 +322,7 @@ pipeline {
                                     sh 'cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../install/linux/release -DCSECORE_USING_CONAN=ON -DCSECORE_WITH_FMUPROXY=ON -DCSECORE_TEST_FMUPROXY=OFF ../cse-core'
                                     sh 'cmake --build .'
                                     sh 'cmake --build . --target install'
+                                    sh 'cmake --build . --target doc'
                                 }
                             }
                         }
@@ -381,6 +385,7 @@ pipeline {
                                     sh 'cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../install/linux/release -DCSECORE_USING_CONAN=OFF -DCSECORE_BUILD_PRIVATE_APIDOC=ON ../cse-core'
                                     sh 'cmake --build .'
                                     sh 'cmake --build . --target install'
+                                    sh 'cmake --build . --target doc'
                                 }
                             }
                         }
