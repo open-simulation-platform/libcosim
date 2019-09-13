@@ -2,7 +2,7 @@
 #
 # If found, the following is defined:
 #   - `MS_GSL_FOUND` and `MS_GSL_INCLUDE_DIRS` variables.
-#   - `ms_gsl` target
+#   - `gsl` target
 
 find_path(MS_GSL_INCLUDE_DIR "gsl/gsl")
 if(MS_GSL_INCLUDE_DIR)
