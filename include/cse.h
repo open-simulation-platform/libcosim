@@ -152,6 +152,7 @@ cse_execution* cse_execution_create(
  */
 cse_execution* cse_ssp_execution_create(
     const char* sspDir,
+    bool startTimeDefined,
     cse_time_point startTime);
 
 /**
