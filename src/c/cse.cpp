@@ -157,7 +157,7 @@ cse_execution* cse_execution_create(cse_time_point startTime, cse_duration stepS
     }
 }
 
-cse_execution* cse_ssp_execution_create(const char* sspDir, double stepSize, bool startTimeDefined, cse_time_point startTime)
+cse_execution* cse_ssp_execution_create(const char* sspDir, bool startTimeDefined, cse_time_point startTime)
 {
     try {
         auto execution = std::make_unique<cse_execution>();
