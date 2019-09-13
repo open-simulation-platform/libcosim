@@ -1,11 +1,12 @@
+#include <cse/algorithm.hpp>
 #include <cse/log/simple.hpp>
+#include <cse/observer/last_value_observer.hpp>
 #include <cse/ssp_parser.hpp>
 
 #include <boost/filesystem.hpp>
 
 #include <cstdlib>
 #include <exception>
-#include <cse/observer/last_value_observer.hpp>
 
 #define REQUIRE(test) \
     if (!(test)) throw std::runtime_error("Requirement not satisfied: " #test)
@@ -21,7 +22,7 @@ int main()
         boost::filesystem::path xmlPath = boost::filesystem::path(testDataDir) / "ssp" / "demo";
 
         auto resolver = cse::default_model_uri_resolver();
-        auto simulation = cse::load_ssp(*resolver, xmlPath, cse::to_time_point(0.0));
+        auto simulation = cse::load_ssp(*resolver, xmlPath, std::make_unique<cse::fixed_step_algorithm>(cse::to_duration(1e-4)));
         auto& execution = simulation.first;
 
         auto& simulator_map = simulation.second;

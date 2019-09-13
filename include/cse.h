@@ -144,6 +144,8 @@ cse_execution* cse_execution_create(
  *
  *  \param [in] sspDir
  *      Path to the directory holding SystemStructure.ssd
+ *  \param [in] stepSize
+ *      The step size used by the (fixed-step) co-simulation algorithm.
  *  \param [in] startTime
  *      The (logical) time point at which the simulation should start.
  *  \returns
@@ -152,6 +154,7 @@ cse_execution* cse_execution_create(
  */
 cse_execution* cse_ssp_execution_create(
     const char* sspDir,
+    double stepSize,
     cse_time_point startTime);
 
 /**

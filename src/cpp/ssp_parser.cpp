@@ -1,10 +1,10 @@
 #include "cse/ssp_parser.hpp"
 
 #include "cse/algorithm.hpp"
+#include "cse/error.hpp"
 #include "cse/exception.hpp"
 #include "cse/fmi/fmu.hpp"
 #include "cse/log/logger.hpp"
-#include "cse/error.hpp"
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
@@ -45,14 +45,6 @@ public:
     };
 
     const DefaultExperiment& get_default_experiment() const;
-
-    struct SimulationInformation
-    {
-        std::string description;
-        double stepSize;
-    };
-
-    const SimulationInformation& get_simulation_information() const;
 
     struct SystemDescription
     {
@@ -102,7 +94,6 @@ private:
 
     SystemDescription systemDescription_;
     DefaultExperiment defaultExperiment_;
-    SimulationInformation simulationInformation_;
     std::vector<Component> elements_;
     std::vector<Connection> connections_;
 };
@@ -131,19 +122,6 @@ ssp_parser::ssp_parser(const boost::filesystem::path& xmlPath)
     systemDescription_.systemName = get_attribute<std::string>(tmpTree, "name");
     systemDescription_.systemDescription = get_attribute<std::string>(tmpTree, "description");
 
-    if (const auto annotations = tmpTree.get_child_optional("ssd:Annotations")) {
-        for (const auto& annotation : *annotations) {
-            const auto& annotationType = get_attribute<std::string>(annotation.second, "type");
-            if (annotationType == "org.open-simulation-platform") {
-                for (const auto& infos : annotation.second.get_child("osp:SimulationInformation")) {
-                    if (infos.first == "osp:FixedStepMaster") {
-                        simulationInformation_.description = get_attribute<std::string>(infos.second, "description");
-                        simulationInformation_.stepSize = get_attribute<double>(infos.second, "stepSize");
-                    }
-                }
-            }
-        }
-    }
 
     for (const auto& component : tmpTree.get_child("ssd:Elements")) {
 
@@ -203,11 +181,6 @@ ssp_parser::ssp_parser(const boost::filesystem::path& xmlPath)
 
 ssp_parser::~ssp_parser() noexcept = default;
 
-const ssp_parser::SimulationInformation& ssp_parser::get_simulation_information() const
-{
-    return simulationInformation_;
-}
-
 const std::vector<ssp_parser::Component>& ssp_parser::get_elements() const
 {
     return elements_;
@@ -258,6 +231,7 @@ std::ostream& operator<<(std::ostream& os, streamer<std::variant<Ts...>> sv)
 std::pair<execution, simulator_map> load_ssp(
     cse::model_uri_resolver& resolver,
     const boost::filesystem::path& sspDir,
+    std::shared_ptr<algorithm> algorithm,
     std::optional<cse::time_point> overrideStartTime)
 {
     simulator_map simulatorMap;
@@ -265,16 +239,11 @@ std::pair<execution, simulator_map> load_ssp(
     const auto baseURI = path_to_file_uri(ssdPath);
     const auto parser = ssp_parser(ssdPath);
 
-    const auto& simInfo = parser.get_simulation_information();
-    const cse::duration stepSize = cse::to_duration(simInfo.stepSize);
-
     auto elements = parser.get_elements();
 
     const auto startTime = overrideStartTime ? *overrideStartTime : cse::to_time_point(parser.get_default_experiment().startTime);
 
-    auto execution = cse::execution(
-        startTime,
-        std::make_unique<cse::fixed_step_algorithm>(stepSize));
+    auto execution = cse::execution(startTime, algorithm);
 
     std::map<std::string, slave_info> slaves;
     for (const auto& component : elements) {

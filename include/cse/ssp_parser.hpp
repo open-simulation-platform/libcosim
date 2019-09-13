@@ -26,7 +26,11 @@ struct simulator_map_entry
 
 using simulator_map = std::map<std::string, simulator_map_entry>;
 
-std::pair<execution, simulator_map> load_ssp(cse::model_uri_resolver&, const boost::filesystem::path& sspDir, std::optional<cse::time_point> overrideStartTime = {});
+std::pair<execution, simulator_map> load_ssp(
+    cse::model_uri_resolver&,
+    const boost::filesystem::path& sspDir,
+    std::shared_ptr<algorithm> algorithm,
+    std::optional<cse::time_point> overrideStartTime = {});
 
 } // namespace cse
 
