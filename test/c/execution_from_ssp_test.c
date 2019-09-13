@@ -42,7 +42,7 @@ int main()
         goto Lfailure;
     }
 
-    execution = cse_ssp_execution_create(sspDir, 0);
+    execution = cse_ssp_execution_create(sspDir, true, 0);
     if (!execution) { goto Lerror; }
 
     observer = cse_last_value_observer_create();
