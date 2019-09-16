@@ -191,6 +191,6 @@ void override_manipulator::reset_variable(
     }
 }
 
-override_manipulator::~override_manipulator() = default;
+override_manipulator::~override_manipulator() noexcept = default;
 
 } // namespace cosim

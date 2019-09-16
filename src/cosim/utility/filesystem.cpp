@@ -43,7 +43,7 @@ temp_dir& temp_dir::operator=(temp_dir&& other) noexcept
     return *this;
 }
 
-temp_dir::~temp_dir()
+temp_dir::~temp_dir() noexcept
 {
     delete_noexcept();
 }

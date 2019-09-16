@@ -83,7 +83,7 @@ public:
         : fmu_(fmu)
     { }
 
-    std::shared_ptr<const model_description> description() const noexcept
+    std::shared_ptr<const model_description> description() const noexcept override
     {
         return fmu_->model_description();
     }
