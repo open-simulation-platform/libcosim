@@ -147,7 +147,7 @@ cse_execution* cse_execution_create(
  *  \param [in] startTimeDefined
  *      Defines whether or not the following startTime variable should be ignored or not.
  *  \param [in] startTime
- *      The (logical) time point at which the simulation should start. If startTimeDefined=true, this variable will be ignored.
+ *      The (logical) time point at which the simulation should start. If startTimeDefined=false, this variable will be ignored.
  *  \returns
  *      A pointer to an object which holds the execution state,
  *      or NULL on error.
