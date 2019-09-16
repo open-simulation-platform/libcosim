@@ -160,6 +160,14 @@ cse_execution* cse_execution_create(cse_time_point startTime, cse_duration stepS
 cse_execution* cse_ssp_execution_create(
     const char* sspDir,
     bool startTimeDefined,
+    cse_time_point startTime)
+{
+    return cse_ssp_fixed_step_execution_create(sspDir, startTimeDefined, startTime, false, 0);
+}
+
+cse_execution* cse_ssp_fixed_step_execution_create(
+    const char* sspDir,
+    bool startTimeDefined,
     cse_time_point startTime,
     bool stepSizeDefined,
     cse_duration stepSize)
