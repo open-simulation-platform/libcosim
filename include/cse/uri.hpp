@@ -7,6 +7,7 @@
 
 #include <boost/filesystem.hpp>
 
+#include <cstddef>
 #include <optional>
 #include <ostream>
 #include <string>
@@ -15,6 +16,15 @@
 
 namespace cse
 {
+namespace detail
+{
+struct subrange
+{
+    std::size_t offset = 0;
+    std::size_t size = 0;
+};
+} // namespace detail
+
 
 /**
  *  A URI reference.
@@ -78,10 +88,7 @@ public:
      *  The returned `std::string_view` is only valid as long as the `uri`
      *  object remains alive and unmodified.
      */
-    std::string_view view() const noexcept
-    {
-        return std::string_view(data_);
-    }
+    std::string_view view() const noexcept;
 
     /**
      *  Returns the scheme component, or null if there is none.
@@ -89,10 +96,7 @@ public:
      *  The returned `std::string_view` is only valid as long as the `uri`
      *  object remains alive and unmodified.
      */
-    std::optional<std::string_view> scheme() const noexcept
-    {
-        return scheme_;
-    }
+    std::optional<std::string_view> scheme() const noexcept;
 
     /**
      *  Returns the authority component, or null if there is none.
@@ -100,10 +104,7 @@ public:
      *  The returned `std::string_view` is only valid as long as the `uri`
      *  object remains alive and unmodified.
      */
-    std::optional<std::string_view> authority() const noexcept
-    {
-        return authority_;
-    }
+    std::optional<std::string_view> authority() const noexcept;
 
     /**
      *  Returns the path component.
@@ -111,10 +112,7 @@ public:
      *  The returned `std::string_view` is only valid as long as the `uri`
      *  object remains alive and unmodified.
      */
-    std::string_view path() const noexcept
-    {
-        return path_;
-    }
+    std::string_view path() const noexcept;
 
     /**
      *  Returns the query component, or null if there is none.
@@ -122,10 +120,7 @@ public:
      *  The returned `std::string_view` is only valid as long as the `uri`
      *  object remains alive and unmodified.
      */
-    std::optional<std::string_view> query() const noexcept
-    {
-        return query_;
-    }
+    std::optional<std::string_view> query() const noexcept;
 
     /**
      *  Returns the fragment component, or null if there is none.
@@ -133,25 +128,19 @@ public:
      *  The returned `std::string_view` is only valid as long as the `uri`
      *  object remains alive and unmodified.
      */
-    std::optional<std::string_view> fragment() const noexcept
-    {
-        return fragment_;
-    }
+    std::optional<std::string_view> fragment() const noexcept;
 
     /// Returns whether the `uri` object is empty.
-    bool empty() const noexcept
-    {
-        return data_.empty();
-    }
+    bool empty() const noexcept;
 
 private:
     std::string data_;
 
-    std::optional<std::string_view> scheme_;
-    std::optional<std::string_view> authority_;
-    std::string_view path_;
-    std::optional<std::string_view> query_;
-    std::optional<std::string_view> fragment_;
+    std::optional<detail::subrange> scheme_;
+    std::optional<detail::subrange> authority_;
+    detail::subrange path_;
+    std::optional<detail::subrange> query_;
+    std::optional<detail::subrange> fragment_;
 };
 
 
