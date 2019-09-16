@@ -52,6 +52,7 @@ public:
         double stepSize;
     };
 
+    const bool has_simulation_information() const;
     const SimulationInformation& get_simulation_information() const;
 
     struct SystemDescription
@@ -97,6 +98,8 @@ public:
     const std::vector<Connection>& get_connections() const;
 
 private:
+    bool hasSimulationInformation_;
+
     boost::filesystem::path xmlPath_;
     boost::property_tree::ptree pt_;
 
@@ -108,7 +111,7 @@ private:
 };
 
 ssp_parser::ssp_parser(const boost::filesystem::path& xmlPath)
-    : xmlPath_(xmlPath)
+    : hasSimulationInformation_(false), xmlPath_(xmlPath)
 {
     // Root node
     std::string path = "ssd:SystemStructureDescription";
@@ -136,6 +139,7 @@ ssp_parser::ssp_parser(const boost::filesystem::path& xmlPath)
             const auto& annotationType = get_attribute<std::string>(annotation.second, "type");
             if (annotationType == "org.open-simulation-platform") {
                 for (const auto& infos : annotation.second.get_child("osp:SimulationInformation")) {
+                    hasSimulationInformation_ = true;
                     if (infos.first == "osp:FixedStepMaster") {
                         simulationInformation_.description = get_attribute<std::string>(infos.second, "description");
                         simulationInformation_.stepSize = get_attribute<double>(infos.second, "stepSize");
@@ -203,6 +207,11 @@ ssp_parser::ssp_parser(const boost::filesystem::path& xmlPath)
 
 ssp_parser::~ssp_parser() noexcept = default;
 
+const bool ssp_parser::has_simulation_information() const
+{
+    return hasSimulationInformation_;
+}
+
 const ssp_parser::SimulationInformation& ssp_parser::get_simulation_information() const
 {
     return simulationInformation_;
@@ -259,6 +268,15 @@ cse::time_point get_default_start_time(const ssp_parser& parser)
 
 } // namespace
 
+
+std::pair<execution, simulator_map> load_ssp(
+    cse::model_uri_resolver& resolver,
+    const boost::filesystem::path& sspDir,
+    std::optional<cse::time_point> overrideStartTime)
+{
+    return load_ssp(resolver, sspDir, nullptr, overrideStartTime);
+}
+
 std::pair<execution, simulator_map> load_ssp(
     cse::model_uri_resolver& resolver,
     const boost::filesystem::path& sspDir,
@@ -273,10 +291,12 @@ std::pair<execution, simulator_map> load_ssp(
     std::shared_ptr<cse::algorithm> algorithm;
     if (overrideAlgorithm != nullptr) {
         algorithm = overrideAlgorithm;
-    } else {
+    } else if (parser.has_simulation_information()) {
         const auto& simInfo = parser.get_simulation_information();
         const cse::duration stepSize = cse::to_duration(simInfo.stepSize);
         algorithm = std::move(std::make_unique<cse::fixed_step_algorithm>(stepSize));
+    } else {
+        CSE_PANIC_M("No co-simulation algorithm specified!");
     }
 
     const auto startTime = overrideStartTime ? *overrideStartTime : get_default_start_time(parser);
@@ -333,14 +353,6 @@ std::pair<execution, simulator_map> load_ssp(
     }
 
     return std::make_pair(std::move(execution), std::move(simulatorMap));
-}
-
-std::pair<execution, simulator_map> load_ssp(
-    cse::model_uri_resolver& resolver,
-    const boost::filesystem::path& sspDir,
-    std::optional<cse::time_point> overrideStartTime)
-{
-    return load_ssp(resolver, sspDir, nullptr, overrideStartTime);
 }
 
 } // namespace cse
