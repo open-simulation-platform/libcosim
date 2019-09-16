@@ -144,8 +144,10 @@ cse_execution* cse_execution_create(
  *
  *  \param [in] sspDir
  *      Path to the directory holding SystemStructure.ssd
+ *  \param [in] startTimeDefined
+ *      Defines whether or not the following startTime variable should be ignored or not.
  *  \param [in] startTime
- *      The (logical) time point at which the simulation should start.
+ *      The (logical) time point at which the simulation should start. If startTimeDefined=true, this variable will be ignored.
  *  \returns
  *      A pointer to an object which holds the execution state,
  *      or NULL on error.
@@ -271,7 +273,7 @@ int cse_execution_enable_real_time_simulation(cse_execution* execution);
 int cse_execution_disable_real_time_simulation(cse_execution* execution);
 
 /// Sets a custom real time factor.
-int cse_execution_set_real_time_factor_target(cse_execution *execution, double realTimeFactor);
+int cse_execution_set_real_time_factor_target(cse_execution* execution, double realTimeFactor);
 
 
 /// Execution states.
