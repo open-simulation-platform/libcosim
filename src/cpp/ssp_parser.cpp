@@ -252,7 +252,8 @@ std::ostream& operator<<(std::ostream& os, streamer<std::variant<Ts...>> sv)
     return os;
 }
 
-cse::time_point get_default_start_time(const ssp_parser& parser) {
+cse::time_point get_default_start_time(const ssp_parser& parser)
+{
     return cse::to_time_point(parser.get_default_experiment().startTime);
 }
 
@@ -341,6 +342,5 @@ std::pair<execution, simulator_map> load_ssp(
 {
     return load_ssp(resolver, sspDir, nullptr, overrideStartTime);
 }
-
 
 } // namespace cse
