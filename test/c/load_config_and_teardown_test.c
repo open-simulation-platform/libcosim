@@ -38,7 +38,8 @@ int main()
         return 1;
     }
 
-    cse_execution* execution = cse_ssp_execution_create(sspDir, 1E-4, 0);
+    int64_t nanoStepSize = (int64_t)(1e-4 * 1.0e9);
+    cse_execution* execution = cse_ssp_execution_create(sspDir, nanoStepSize, 0);
     if (!execution) {
         print_last_error();
         return 1;

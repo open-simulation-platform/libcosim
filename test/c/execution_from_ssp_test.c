@@ -42,7 +42,8 @@ int main()
         goto Lfailure;
     }
 
-    execution = cse_ssp_execution_create(sspDir, 1e-4, 0);
+    int64_t nanoStepSize = (int64_t)(1e-4 * 1.0e9);
+    execution = cse_ssp_execution_create(sspDir, nanoStepSize, 0);
     if (!execution) { goto Lerror; }
 
     observer = cse_last_value_observer_create();

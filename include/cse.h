@@ -154,7 +154,7 @@ cse_execution* cse_execution_create(
  */
 cse_execution* cse_ssp_execution_create(
     const char* sspDir,
-    double stepSize,
+    cse_duration stepSize,
     cse_time_point startTime);
 
 /**
