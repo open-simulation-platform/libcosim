@@ -1,10 +1,10 @@
 #include "cse/ssp_parser.hpp"
 
 #include "cse/algorithm.hpp"
+#include "cse/error.hpp"
 #include "cse/exception.hpp"
 #include "cse/fmi/fmu.hpp"
 #include "cse/log/logger.hpp"
-#include "cse/error.hpp"
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
@@ -252,12 +252,16 @@ std::ostream& operator<<(std::ostream& os, streamer<std::variant<Ts...>> sv)
     return os;
 }
 
-} // namespace
+cse::time_point get_default_start_time(const ssp_parser& parser) {
+    return cse::to_time_point(parser.get_default_experiment().startTime);
+}
 
+} // namespace
 
 std::pair<execution, simulator_map> load_ssp(
     cse::model_uri_resolver& resolver,
     const boost::filesystem::path& sspDir,
+    std::shared_ptr<cse::algorithm> overrideAlgorithm,
     std::optional<cse::time_point> overrideStartTime)
 {
     simulator_map simulatorMap;
@@ -265,16 +269,19 @@ std::pair<execution, simulator_map> load_ssp(
     const auto baseURI = path_to_file_uri(ssdPath);
     const auto parser = ssp_parser(ssdPath);
 
-    const auto& simInfo = parser.get_simulation_information();
-    const cse::duration stepSize = cse::to_duration(simInfo.stepSize);
+    std::shared_ptr<cse::algorithm> algorithm;
+    if (overrideAlgorithm != nullptr) {
+        algorithm = overrideAlgorithm;
+    } else {
+        const auto& simInfo = parser.get_simulation_information();
+        const cse::duration stepSize = cse::to_duration(simInfo.stepSize);
+        algorithm = std::move(std::make_unique<cse::fixed_step_algorithm>(stepSize));
+    }
+
+    const auto startTime = overrideStartTime ? *overrideStartTime : get_default_start_time(parser);
+    auto execution = cse::execution(startTime, algorithm);
 
     auto elements = parser.get_elements();
-
-    const auto startTime = overrideStartTime ? *overrideStartTime : cse::to_time_point(parser.get_default_experiment().startTime);
-
-    auto execution = cse::execution(
-        startTime,
-        std::make_unique<cse::fixed_step_algorithm>(stepSize));
 
     std::map<std::string, slave_info> slaves;
     for (const auto& component : elements) {
@@ -326,5 +333,14 @@ std::pair<execution, simulator_map> load_ssp(
 
     return std::make_pair(std::move(execution), std::move(simulatorMap));
 }
+
+std::pair<execution, simulator_map> load_ssp(
+    cse::model_uri_resolver& resolver,
+    const boost::filesystem::path& sspDir,
+    std::optional<cse::time_point> overrideStartTime)
+{
+    return load_ssp(resolver, sspDir, nullptr, overrideStartTime);
+}
+
 
 } // namespace cse
