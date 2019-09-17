@@ -252,19 +252,22 @@ std::ostream& operator<<(std::ostream& os, streamer<std::variant<Ts...>> sv)
     return os;
 }
 
-cse::variable_id find_variable(std::map<std::string, slave_info> slaves, const std::string& element, const std::string& connector)
+cse::variable_id get_variable(
+    const std::map<std::string, slave_info>& slaves,
+    const std::string& element,
+    const std::string& connector)
 {
     auto slaveIt = slaves.find(element);
     if (slaveIt == slaves.end()) {
         std::ostringstream oss;
-        oss << "Problem adding connection: Cannot find slave: " << element;
+        oss << "Cannot find slave: " << element;
         throw std::out_of_range(oss.str());
     }
     auto slave = slaveIt->second;
     auto vdIt = slave.variables.find(connector);
     if (vdIt == slave.variables.end()) {
         std::ostringstream oss;
-        oss << "Problem adding connection: Cannot find variable: " << element << ":" << connector;
+        oss << "Cannot find variable: " << element << ":" << connector;
         throw std::out_of_range(oss.str());
     }
     auto variable = vdIt->second;
@@ -332,19 +335,21 @@ std::pair<execution, simulator_map> load_ssp(
 
     for (const auto& connection : parser.get_connections()) {
 
-        cse::variable_id output = find_variable(slaves, connection.startElement, connection.startConnector);
-        cse::variable_id input = find_variable(slaves, connection.endElement, connection.endConnector);
+        cse::variable_id output = get_variable(slaves, connection.startElement, connection.startConnector);
+        cse::variable_id input = get_variable(slaves, connection.endElement, connection.endConnector);
 
         const auto c = std::make_shared<scalar_connection>(output, input);
         try {
             execution.add_connection(c);
         } catch (const std::exception& e) {
-            BOOST_LOG_SEV(log::logger(), log::error)
-                << "Encountered error while adding connection from "
+            std::ostringstream oss;
+            oss << "Encountered error while adding connection from "
                 << connection.startElement << ":" << connection.startConnector << " to "
                 << connection.endElement << ":" << connection.endConnector
                 << ": " << e.what();
-            throw;
+
+            BOOST_LOG_SEV(log::logger(), log::error) << oss.str();
+            throw std::runtime_error(oss.str());
         }
     }
 
