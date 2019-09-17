@@ -50,7 +50,7 @@ int main()
     cse_execution_get_status(execution, &status);
 
     if (status.current_time != 0.0) {
-        fprintf(stderr, "Expected value 0.0, got %f\n", (double) (status.current_time / 1.0e9));
+        fprintf(stderr, "Expected value 0.0, got %f\n", (double)(status.current_time / 1.0e9));
         goto Lfailure;
     }
 
