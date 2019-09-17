@@ -31,11 +31,12 @@ int main()
         auto& simulator_map = simulation.second;
         REQUIRE(simulator_map.size() == 2);
 
-        REQUIRE( cse::to_double_time_point(execution.current_time()) == 5.0);
+        // ssp defaultExperiment startTime=5
+        REQUIRE(cse::to_double_time_point(execution.current_time()) == 5.0);
 
         auto obs = std::make_shared<cse::last_value_observer>();
         execution.add_observer(obs);
-        auto result = execution.simulate_until(cse::to_time_point(0.1));
+        auto result = execution.simulate_until(cse::to_time_point(1e-3));
         REQUIRE(result.get());
 
         cse::simulator_index i = simulator_map.at("KnuckleBoomCrane").index;
