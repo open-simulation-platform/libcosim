@@ -81,6 +81,45 @@ BOOST_AUTO_TEST_CASE(uri_parser)
 }
 
 
+BOOST_AUTO_TEST_CASE(uri_copy_and_move)
+{
+    auto orig = uri("http://user@example.com:1234/foo/bar?q=uux#frag");
+    const auto copy = orig;
+    const auto move = std::move(orig);
+    orig = uri();
+
+    BOOST_REQUIRE(copy.scheme().has_value());
+    BOOST_TEST(*copy.scheme() == "http");
+    BOOST_REQUIRE(copy.authority().has_value());
+    BOOST_TEST(*copy.authority() == "user@example.com:1234");
+    BOOST_TEST(copy.path() == "/foo/bar");
+    BOOST_REQUIRE(copy.query().has_value());
+    BOOST_TEST(*copy.query() == "q=uux");
+    BOOST_REQUIRE(copy.fragment().has_value());
+    BOOST_TEST(*copy.fragment() == "frag");
+
+    BOOST_REQUIRE(move.scheme().has_value());
+    BOOST_TEST(*move.scheme() == "http");
+    BOOST_REQUIRE(move.authority().has_value());
+    BOOST_TEST(*move.authority() == "user@example.com:1234");
+    BOOST_TEST(move.path() == "/foo/bar");
+    BOOST_REQUIRE(move.query().has_value());
+    BOOST_TEST(*move.query() == "q=uux");
+    BOOST_REQUIRE(move.fragment().has_value());
+    BOOST_TEST(*move.fragment() == "frag");
+
+    // Special case: Short strings which may be affected by the small-string
+    // optimisation (see issue #361)
+    auto small = uri("x");
+    const auto smallCopy = small;
+    const auto smallMove = std::move(small);
+    small = uri();
+
+    BOOST_TEST(smallCopy.path() == "x");
+    BOOST_TEST(smallMove.path() == "x");
+}
+
+
 BOOST_AUTO_TEST_CASE(uri_comparison)
 {
     const auto httpURI = uri("http://user@example.com:1234/foo/bar?q=uux#frag");
