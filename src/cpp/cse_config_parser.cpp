@@ -35,7 +35,9 @@ class cse_config_parser
 {
 
 public:
-    explicit cse_config_parser(const boost::filesystem::path& configPath);
+    cse_config_parser(
+        const boost::filesystem::path& configPath,
+        const boost::filesystem::path& schemaPath);
     ~cse_config_parser() noexcept;
 
     struct SimulationInformation
@@ -100,7 +102,9 @@ private:
     std::vector<ScalarConnection> bondConnections_;
 };
 
-cse_config_parser::cse_config_parser(const boost::filesystem::path& configPath)
+cse_config_parser::cse_config_parser(
+    const boost::filesystem::path& configPath,
+    const boost::filesystem::path& schemaPath)
 {
     // Root node
     xercesc::XMLPlatformUtils::Initialize();
@@ -109,6 +113,9 @@ cse_config_parser::cse_config_parser(const boost::filesystem::path& configPath)
     });
     const auto domImpl = xercesc::DOMImplementationRegistry::getDOMImplementation(tc("LS").get());
     const auto parser = static_cast<xercesc::DOMImplementationLS*>(domImpl)->createLSParser(xercesc::DOMImplementationLS::MODE_SYNCHRONOUS, 0);
+    parser->getDomConfig()->setParameter(xercesc::XMLUni::fgDOMValidate, true);
+    parser->getDomConfig()->setParameter(xercesc::XMLUni::fgDOMNamespaces, true);
+    parser->getDomConfig()->setParameter(xercesc::XMLUni::fgXercesSchemaExternalSchemaLocation, schemaPath.string().c_str()); // TODO: This doesn't work at all :(
     const auto doc = parser->parseURI(configPath.string().c_str());
 
     //    const auto rootElement = doc->getElementsByTagName(tc("OspSystemStructure"))->item(0);
@@ -431,6 +438,7 @@ void connect_sum(
 std::pair<execution, simulator_map> load_cse_config(
     cse::model_uri_resolver& resolver,
     const boost::filesystem::path& configPath,
+    const boost::filesystem::path& schemaPath,
     std::optional<cse::time_point> overrideStartTime)
 {
     simulator_map simulatorMap;
@@ -438,7 +446,7 @@ std::pair<execution, simulator_map> load_cse_config(
         ? configPath
         : configPath / "SystemStructure.xml";
     const auto baseURI = path_to_file_uri(configFile);
-    const auto parser = cse_config_parser(configFile);
+    const auto parser = cse_config_parser(configFile, schemaPath);
 
     const auto& simInfo = parser.get_simulation_information();
     const cse::duration stepSize = cse::to_duration(simInfo.stepSize);
