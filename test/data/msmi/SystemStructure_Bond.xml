@@ -16,20 +16,17 @@
         </Simulator>
         <Simulator name="KnuckleBoomCrane" source="../ssp/demo/KnuckleBoomCrane.fmu" decimationFactor="2"/>
     </Simulators>
-    <PlugSocketConnections/>
-    <BondConnections/>
-    <VariableConnections>
-        <ScalarConnection>
-            <Source simulator="CraneController" endpoint="p_Crane.e[1]"/>
-            <Target simulator="KnuckleBoomCrane" endpoint="p_Crane.e[1]"/>
-        </ScalarConnection>
-        <SumConnection>
-            <Sources>
-                <Source simulator="KnuckleBoomCrane" endpoint="p_Crane.f[1]"/>
-                <Source simulator="KnuckleBoomCrane" endpoint="p_Crane.f[2]"/>
-                <Source simulator="KnuckleBoomCrane" endpoint="p_Crane.f[3]"/>
-            </Sources>
-            <Target simulator="CraneController" endpoint="p_Crane.f[1]"/>
-        </SumConnection>
-    </VariableConnections>
+    <PlugSocketConnections>
+        <PlugSocketConnection>
+            <Source simulator="KnuckleBoomCrane" endpoint="actuatorLimits"/>
+            <Target simulator="CraneController" endpoint="actuatorLimits"/>
+        </PlugSocketConnection>
+    </PlugSocketConnections>
+    <BondConnections>
+        <BondConnection>
+            <Bond simulator="CraneController" endpoint="mechanical"/>
+            <Bond simulator="KnuckleBoomCrane" endpoint="mechanical"/>
+        </BondConnection>
+    </BondConnections>
+    <VariableConnections/>
 </OspSystemStructure>

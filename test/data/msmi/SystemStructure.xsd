@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified"
+           targetNamespace="http://opensimulationplatform.com/MSMI/OSPSystemStructure">
+    <xs:element name="OspSystemStructure">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="StartTime" minOccurs="0" default="0.0" type="xs:double"/>
+                <xs:element name="BaseStepSize" minOccurs="0" type="xs:double"/>
+                <xs:element name="Algorithm" minOccurs="0" default="fixedStepMaster" type="xs:string"/>
+                <xs:element name="Simulators" type="simulators"/>
+                <xs:element name="PlugSocketConnections" type="plugSocketConnections"/>
+                <xs:element name="BondConnections" type="bondConnections"/>
+                <xs:element name="VariableConnections" type="variableConnections"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:complexType name="plugSocketConnections">
+        <xs:sequence>
+            <xs:element name="PlugSocketConnection" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Source" type="connectionEndpoint"/>
+                        <xs:element name="Target" type="connectionEndpoint"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="bondConnections">
+        <xs:sequence>
+            <xs:element name="BondConnection" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                   <xs:sequence>
+                       <xs:element name="Bond" type="connectionEndpoint" minOccurs="2" maxOccurs="2"/>
+                   </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="variableConnections">
+        <xs:sequence>
+            <xs:element name="ScalarConnection" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Source" type="connectionEndpoint"/>
+                        <xs:element name="Target" type="connectionEndpoint"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SumConnection" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Sources">
+                            <xs:complexType>
+                                <xs:sequence>
+                                    <xs:element name="Source" maxOccurs="unbounded" type="connectionEndpoint"/>
+                                </xs:sequence>
+                            </xs:complexType>
+                        </xs:element>
+                        <xs:element name="Target" type="connectionEndpoint"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="connectionEndpoint">
+        <xs:attribute name="simulator" use="required" type="xs:string"/>
+        <xs:attribute name="endpoint" use="required" type="xs:string"/>
+    </xs:complexType>
+    <xs:complexType name="simulators">
+        <xs:sequence>
+            <xs:element name="Simulator" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="InitialValues" minOccurs="0">
+                            <xs:complexType>
+                                <xs:sequence>
+                                    <xs:element name="InitialValue" maxOccurs="unbounded">
+                                        <xs:complexType>
+                                            <xs:choice>
+                                                <xs:element name="Real">
+                                                    <xs:complexType>
+                                                        <xs:attribute name="value" type="xs:double" use="required"/>
+                                                    </xs:complexType>
+                                                </xs:element>
+                                                <xs:element name="Integer">
+                                                    <xs:complexType>
+                                                        <xs:attribute name="value" type="xs:int" use="required"/>
+                                                    </xs:complexType>
+                                                </xs:element>
+                                                <xs:element name="Boolean">
+                                                    <xs:complexType>
+                                                        <xs:attribute name="value" type="xs:boolean" use="required"/>
+                                                    </xs:complexType>
+                                                </xs:element>
+                                                <xs:element name="String">
+                                                    <xs:complexType>
+                                                        <xs:attribute name="value" type="xs:string" use="required"/>
+                                                    </xs:complexType>
+                                                </xs:element>
+                                            </xs:choice>
+                                            <xs:attribute name="variable" use="required"/>
+                                        </xs:complexType>
+                                    </xs:element>
+                                </xs:sequence>
+                            </xs:complexType>
+                        </xs:element>
+                    </xs:sequence>
+                    <xs:attribute name="name" type="xs:string" use="required"/>
+                    <xs:attribute name="source" type="xs:anyURI" use="required"/>
+                    <xs:attribute name="decimationFactor" default="1" type="xs:int"/>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+
+</xs:schema>
