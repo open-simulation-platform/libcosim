@@ -52,7 +52,7 @@ public:
         double stepSize;
     };
 
-    const bool has_simulation_information() const;
+    bool has_simulation_information() const;
     const SimulationInformation& get_simulation_information() const;
 
     struct SystemDescription
@@ -207,7 +207,7 @@ ssp_parser::ssp_parser(const boost::filesystem::path& xmlPath)
 
 ssp_parser::~ssp_parser() noexcept = default;
 
-const bool ssp_parser::has_simulation_information() const
+bool ssp_parser::has_simulation_information() const
 {
     return hasSimulationInformation_;
 }
