@@ -266,6 +266,28 @@ cse::time_point get_default_start_time(const ssp_parser& parser)
     return cse::to_time_point(parser.get_default_experiment().startTime);
 }
 
+cse::variable_id get_variable(
+    const std::map<std::string, slave_info>& slaves,
+    const std::string& element,
+    const std::string& connector)
+{
+    auto slaveIt = slaves.find(element);
+    if (slaveIt == slaves.end()) {
+        std::ostringstream oss;
+        oss << "Cannot find slave: " << element;
+        throw std::out_of_range(oss.str());
+    }
+    auto slave = slaveIt->second;
+    auto vdIt = slave.variables.find(connector);
+    if (vdIt == slave.variables.end()) {
+        std::ostringstream oss;
+        oss << "Cannot find variable: " << element << ":" << connector;
+        throw std::out_of_range(oss.str());
+    }
+    auto variable = vdIt->second;
+    return {slave.index, variable.type, variable.reference};
+}
+
 } // namespace
 
 
@@ -340,16 +362,23 @@ std::pair<execution, simulator_map> load_ssp(
     }
 
     for (const auto& connection : parser.get_connections()) {
-        cse::variable_id output = {slaves[connection.startElement].index,
-            slaves[connection.startElement].variables[connection.startConnector].type,
-            slaves[connection.startElement].variables[connection.startConnector].reference};
 
-        cse::variable_id input = {slaves[connection.endElement].index,
-            slaves[connection.endElement].variables[connection.endConnector].type,
-            slaves[connection.endElement].variables[connection.endConnector].reference};
+        cse::variable_id output = get_variable(slaves, connection.startElement, connection.startConnector);
+        cse::variable_id input = get_variable(slaves, connection.endElement, connection.endConnector);
 
         const auto c = std::make_shared<scalar_connection>(output, input);
-        execution.add_connection(c);
+        try {
+            execution.add_connection(c);
+        } catch (const std::exception& e) {
+            std::ostringstream oss;
+            oss << "Encountered error while adding connection from "
+                << connection.startElement << ":" << connection.startConnector << " to "
+                << connection.endElement << ":" << connection.endConnector
+                << ": " << e.what();
+
+            BOOST_LOG_SEV(log::logger(), log::error) << oss.str();
+            throw std::runtime_error(oss.str());
+        }
     }
 
     return std::make_pair(std::move(execution), std::move(simulatorMap));

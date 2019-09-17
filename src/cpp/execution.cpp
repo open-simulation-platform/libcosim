@@ -281,10 +281,10 @@ private:
             [=](const auto& var) { return var.causality == causality && var.type == variable.type && var.reference == variable.reference; });
         if (it == variables.end()) {
             std::ostringstream oss;
-            oss << "Cannot find variable with reference " << variable.reference
+            oss << "Problem adding connection: Cannot find variable with reference " << variable.reference
                 << ", causality " << cse::to_text(causality)
                 << " and type " << cse::to_text(variable.type)
-                << " for simulator with reference " << variable.simulator
+                << " for simulator with index " << variable.simulator
                 << " and name " << simulators_.at(variable.simulator)->name();
             throw std::out_of_range(oss.str());
         }

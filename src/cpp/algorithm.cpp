@@ -235,7 +235,7 @@ private:
         auto sim = simulators_.find(i);
         if (sim == simulators_.end()) {
             std::ostringstream oss;
-            oss << "Cannot find simulator with reference " << i;
+            oss << "Cannot find simulator with index " << i;
             throw std::out_of_range(oss.str());
         }
         return sim->second;
