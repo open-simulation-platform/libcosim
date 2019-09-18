@@ -455,9 +455,8 @@ std::pair<execution, simulator_map> load_cse_config(
 
     const auto startTime = overrideStartTime ? *overrideStartTime : cse::to_time_point(simInfo.startTime);
 
-    auto execution = cse::execution(
-        startTime,
-        std::make_unique<cse::fixed_step_algorithm>(stepSize));
+    auto algorithm = std::make_shared<cse::fixed_step_algorithm>(stepSize);
+    auto execution = cse::execution(startTime, algorithm);
 
     std::unordered_map<std::string, slave_info> slaves;
     std::unordered_map<std::string, extended_model_description> emds;
@@ -465,7 +464,7 @@ std::pair<execution, simulator_map> load_cse_config(
         auto model = resolver.lookup_model(baseURI, simulator.source);
         auto slave = model->instantiate(simulator.name);
         simulator_index index = slaves[simulator.name].index = execution.add_slave(slave, simulator.name);
-
+        algorithm->set_stepsize_decimation_factor(index, simulator.decimationFactor);
         simulatorMap[simulator.name] = simulator_map_entry{index, simulator.source, *model->description()};
 
         for (const auto& v : model->description()->variables) {
