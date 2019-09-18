@@ -52,6 +52,7 @@ public:
         double stepSize;
     };
 
+    bool has_simulation_information() const;
     const SimulationInformation& get_simulation_information() const;
 
     struct SystemDescription
@@ -97,6 +98,8 @@ public:
     const std::vector<Connection>& get_connections() const;
 
 private:
+    bool hasSimulationInformation_;
+
     boost::filesystem::path xmlPath_;
     boost::property_tree::ptree pt_;
 
@@ -108,7 +111,7 @@ private:
 };
 
 ssp_parser::ssp_parser(const boost::filesystem::path& xmlPath)
-    : xmlPath_(xmlPath)
+    : hasSimulationInformation_(false), xmlPath_(xmlPath)
 {
     // Root node
     std::string path = "ssd:SystemStructureDescription";
@@ -136,6 +139,7 @@ ssp_parser::ssp_parser(const boost::filesystem::path& xmlPath)
             const auto& annotationType = get_attribute<std::string>(annotation.second, "type");
             if (annotationType == "org.open-simulation-platform") {
                 for (const auto& infos : annotation.second.get_child("osp:SimulationInformation")) {
+                    hasSimulationInformation_ = true;
                     if (infos.first == "osp:FixedStepMaster") {
                         simulationInformation_.description = get_attribute<std::string>(infos.second, "description");
                         simulationInformation_.stepSize = get_attribute<double>(infos.second, "stepSize");
@@ -203,6 +207,11 @@ ssp_parser::ssp_parser(const boost::filesystem::path& xmlPath)
 
 ssp_parser::~ssp_parser() noexcept = default;
 
+bool ssp_parser::has_simulation_information() const
+{
+    return hasSimulationInformation_;
+}
+
 const ssp_parser::SimulationInformation& ssp_parser::get_simulation_information() const
 {
     return simulationInformation_;
@@ -252,6 +261,11 @@ std::ostream& operator<<(std::ostream& os, streamer<std::variant<Ts...>> sv)
     return os;
 }
 
+cse::time_point get_default_start_time(const ssp_parser& parser)
+{
+    return cse::to_time_point(parser.get_default_experiment().startTime);
+}
+
 cse::variable_id get_variable(
     const std::map<std::string, slave_info>& slaves,
     const std::string& element,
@@ -282,21 +296,35 @@ std::pair<execution, simulator_map> load_ssp(
     const boost::filesystem::path& sspDir,
     std::optional<cse::time_point> overrideStartTime)
 {
+    return load_ssp(resolver, sspDir, nullptr, overrideStartTime);
+}
+
+std::pair<execution, simulator_map> load_ssp(
+    cse::model_uri_resolver& resolver,
+    const boost::filesystem::path& sspDir,
+    std::shared_ptr<cse::algorithm> overrideAlgorithm,
+    std::optional<cse::time_point> overrideStartTime)
+{
     simulator_map simulatorMap;
     const auto ssdPath = boost::filesystem::absolute(sspDir) / "SystemStructure.ssd";
     const auto baseURI = path_to_file_uri(ssdPath);
     const auto parser = ssp_parser(ssdPath);
 
-    const auto& simInfo = parser.get_simulation_information();
-    const cse::duration stepSize = cse::to_duration(simInfo.stepSize);
+    std::shared_ptr<cse::algorithm> algorithm;
+    if (overrideAlgorithm != nullptr) {
+        algorithm = overrideAlgorithm;
+    } else if (parser.has_simulation_information()) {
+        const auto& simInfo = parser.get_simulation_information();
+        const cse::duration stepSize = cse::to_duration(simInfo.stepSize);
+        algorithm = std::move(std::make_unique<cse::fixed_step_algorithm>(stepSize));
+    } else {
+        CSE_PANIC_M("No co-simulation algorithm specified!");
+    }
+
+    const auto startTime = overrideStartTime ? *overrideStartTime : get_default_start_time(parser);
+    auto execution = cse::execution(startTime, algorithm);
 
     auto elements = parser.get_elements();
-
-    const auto startTime = overrideStartTime ? *overrideStartTime : cse::to_time_point(parser.get_default_experiment().startTime);
-
-    auto execution = cse::execution(
-        startTime,
-        std::make_unique<cse::fixed_step_algorithm>(stepSize));
 
     std::map<std::string, slave_info> slaves;
     for (const auto& component : elements) {

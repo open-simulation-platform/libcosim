@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ssd:SystemStructureDescription name="simple-cse-example" version="1.0"
+                                xmlns:ssd="http://ssp-standard.org/SSP1/SystemStructureDescription"
+                                xmlns:ssv="http://ssp-standard.org/SSP1/SystemStructureParameterValues">
+
+  <ssd:System name="cse-instance" description="An example of how to use Core Simulation Environment">
+
+    <ssd:Elements>
+      <ssd:Component name="CraneController" source="../CraneController.fmu"/>
+      <ssd:Component name="KnuckleBoomCrane" source="../KnuckleBoomCrane.fmu">
+          <ssd:ParameterBindings>
+              <ssd:ParameterBinding>
+                  <ssd:ParameterValues>
+                      <ssv:ParameterSet version="1.0" name="initialValues">
+                          <ssv:Parameters>
+                              <ssv:Parameter name="Spring_Joint.k">
+                                  <ssv:Real value="0.005" />
+                              </ssv:Parameter>
+                              <ssv:Parameter name="mt0_init">
+                                  <ssv:Real value="69" />
+                              </ssv:Parameter>
+                          </ssv:Parameters>
+                      </ssv:ParameterSet>
+                  </ssd:ParameterValues>
+              </ssd:ParameterBinding>
+          </ssd:ParameterBindings>
+      </ssd:Component>
+    </ssd:Elements>
+
+    <ssd:Connections>
+
+      <ssd:Connection startElement="CraneController" startConnector="p_Crane.e[1]" endElement="KnuckleBoomCrane" endConnector="p_Crane.e[1]"/>
+      <ssd:Connection startElement="CraneController" startConnector="p_Crane.e[2]" endElement="KnuckleBoomCrane" endConnector="p_Crane.e[2]"/>
+      <ssd:Connection startElement="CraneController" startConnector="p_Crane.e[3]" endElement="KnuckleBoomCrane" endConnector="p_Crane.e[3]"/>
+      <ssd:Connection startElement="KnuckleBoomCrane" startConnector="p_Crane.f[1]" endElement="CraneController" endConnector="p_Crane.f[1]"/>
+
+      <ssd:Connection startElement="KnuckleBoomCrane" startConnector="p_Crane.f[2]" endElement="CraneController" endConnector="p_Crane.f[2]"/>
+      <ssd:Connection startElement="KnuckleBoomCrane" startConnector="p_Crane.f[3]" endElement="CraneController" endConnector="p_Crane.f[3]"/>
+      <ssd:Connection startElement="KnuckleBoomCrane" startConnector="Act_Limits[1]" endElement="CraneController" endConnector="Act_Limits[1]"/>
+      <ssd:Connection startElement="KnuckleBoomCrane" startConnector="Act_Limits[2]" endElement="CraneController" endConnector="Act_Limits[2]"/>
+      <ssd:Connection startElement="KnuckleBoomCrane" startConnector="Act_Limits[3]" endElement="CraneController" endConnector="Act_Limits[3]"/>
+    </ssd:Connections>
+
+  </ssd:System>
+  <ssd:DefaultExperiment startTime="5.0"/>
+</ssd:SystemStructureDescription>

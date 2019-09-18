@@ -36,14 +36,23 @@ int main()
     }
 
     char sspDir[1024];
-    int rc = snprintf(sspDir, sizeof sspDir, "%s/ssp/demo", dataDir);
+    int rc = snprintf(sspDir, sizeof sspDir, "%s/ssp/demo/no_algorithm_element", dataDir);
     if (rc < 0) {
         perror(NULL);
         goto Lfailure;
     }
 
-    execution = cse_ssp_execution_create(sspDir, false, 0);
+    int64_t nanoStepSize = (int64_t)(0.1 * 1.0e9);
+    execution = cse_ssp_fixed_step_execution_create(sspDir, true, 0, true, nanoStepSize); // override ssp startTime
     if (!execution) { goto Lerror; }
+
+    cse_execution_status status;
+    cse_execution_get_status(execution, &status);
+
+    if (status.current_time != 0.0) {
+        fprintf(stderr, "Expected value 0.0, got %f\n", (double)(status.current_time / 1.0e9));
+        goto Lfailure;
+    }
 
     observer = cse_last_value_observer_create();
     if (!observer) { goto Lerror; }
