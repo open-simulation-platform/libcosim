@@ -7,11 +7,14 @@
 namespace cse
 {
 
+/**
+ *  A modifier implementation, applying a constant gain to the passed in scalar.
+ */
 class gain_modifier : public modifier
 {
 
 public:
-    gain_modifier(double gain);
+    explicit gain_modifier(double gain);
 
     scalar apply(variable_type, scalar value) override;
 
