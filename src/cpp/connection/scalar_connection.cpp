@@ -1,6 +1,7 @@
 
-#include "cse/error.hpp"
 #include "cse/connection/scalar_connection.hpp"
+
+#include "cse/error.hpp"
 
 namespace cse
 {
@@ -37,4 +38,4 @@ std::variant<double, int, bool, std::string_view> scalar_connection::get_destina
     return value_;
 }
 
-}
+} // namespace cse
