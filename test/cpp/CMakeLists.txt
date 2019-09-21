@@ -27,7 +27,7 @@ set(unittests
     "async_slave_unittest"
     "fmi_v1_fmu_unittest"
     "fmi_v2_fmu_unittest"
-    "gain_unittest"
+    "gain_modifier_unittest"
     "model_unittest"
     "orchestration_unittest"
     "uri_unittest"
