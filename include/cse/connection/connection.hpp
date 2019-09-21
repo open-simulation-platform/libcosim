@@ -2,7 +2,6 @@
 #ifndef CSECORE_CONNECTION_CONNECTION_HPP
 #define CSECORE_CONNECTION_CONNECTION_HPP
 
-
 #include "cse/execution.hpp"
 #include "cse/model.hpp"
 
