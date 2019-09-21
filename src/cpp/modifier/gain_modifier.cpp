@@ -17,7 +17,7 @@ scalar gain_modifier::apply(variable_type type, scalar value)
     if (type == variable_type::real) {
         return std::get<double>(value) * gain_;
     } else if (type == variable_type::integer) {
-        return std::get<int>(value) * gain_;
+        return static_cast<int>(round(std::get<int>(value) * gain_));
     } else {
         std::ostringstream oss;
         oss << "gain_modifier does not support variable_type: " << type;
