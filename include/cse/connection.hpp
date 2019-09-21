@@ -5,6 +5,7 @@
 
 #include "cse/execution.hpp"
 #include "cse/model.hpp"
+#include "cse/modifier/modifier.hpp"
 
 #include <gsl/span>
 
@@ -72,7 +73,11 @@ public:
 
     std::variant<double, int, bool, std::string_view> get_destination_value(variable_id) override;
 
+    void add_modifer(const std::shared_ptr<modifier>& modifier);
+
 private:
+    variable_type type_;
+    std::vector<std::shared_ptr<modifier>> modifiers_;
     std::variant<double, int, bool, std::string_view> value_;
 };
 

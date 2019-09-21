@@ -26,16 +26,25 @@ scalar_connection::scalar_connection(variable_id source, variable_id destination
         default:
             CSE_PANIC();
     }
+    type_ = destination.type;
 }
 
 void scalar_connection::set_source_value(variable_id, std::variant<double, int, bool, std::string_view> value)
 {
     value_ = value;
+    for (std::shared_ptr<modifier> modifier : modifiers_) {
+        value_ = modifier->apply(type_, value);
+    }
 }
 
 std::variant<double, int, bool, std::string_view> scalar_connection::get_destination_value(variable_id)
 {
     return value_;
+}
+
+void scalar_connection::add_modifer(const std::shared_ptr<modifier>& modifier)
+{
+    modifiers_.push_back(modifier);
 }
 
 
