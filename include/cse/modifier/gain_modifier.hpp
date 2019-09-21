@@ -1,6 +1,6 @@
 
-#ifndef CSECORE_GAIN_MODIFIER_HPP
-#define CSECORE_GAIN_MODIFIER_HPP
+#ifndef CSECORE_MODIFIER_GAIN_MODIFIER_HPP
+#define CSECORE_MODIFIER_GAIN_MODIFIER_HPP
 
 #include <cse/modifier/modifier.hpp>
 
@@ -13,7 +13,6 @@ class gain_modifier : public modifier
 public:
     gain_modifier(double gain);
 
-private:
     scalar apply(variable_type, scalar value) override;
 
 private:
