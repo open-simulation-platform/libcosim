@@ -33,7 +33,7 @@ void scalar_connection::set_source_value(variable_id, std::variant<double, int, 
 {
     value_ = value;
     for (std::shared_ptr<modifier> modifier : modifiers_) {
-        value_ = modifier->apply(type_, value);
+        value_ = modifier->apply(type_, value_);
     }
 }
 
