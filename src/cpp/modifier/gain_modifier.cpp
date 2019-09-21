@@ -3,6 +3,8 @@
 
 #include <cse/error.hpp>
 
+#include <sstream>
+
 namespace cse
 {
 
@@ -17,7 +19,9 @@ scalar gain_modifier::apply(variable_type type, scalar value)
     } else if (type == variable_type::integer) {
         return std::get<int>(value) * gain_;
     } else {
-        CSE_PANIC();
+        std::ostringstream oss;
+        oss << "gain_modifier does not support variable_type: " << type;
+        CSE_PANIC_M(oss.str().c_str());
     }
 }
 
