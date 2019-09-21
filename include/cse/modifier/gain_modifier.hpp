@@ -2,13 +2,12 @@
 #ifndef CSECORE_GAIN_MODIFIER_HPP
 #define CSECORE_GAIN_MODIFIER_HPP
 
-
 #include <cse/modifier/modifier.hpp>
 
 namespace cse
 {
 
-class gain_modifier : modifier
+class gain_modifier : public modifier
 {
 
 public:
