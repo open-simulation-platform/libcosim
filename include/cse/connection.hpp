@@ -73,7 +73,7 @@ public:
 
     std::variant<double, int, bool, std::string_view> get_destination_value(variable_id) override;
 
-    void add_modifer(const std::shared_ptr<modifier>& modifier);
+    void add_modifier(const std::shared_ptr<modifier>& modifier);
 
 private:
     variable_type type_;

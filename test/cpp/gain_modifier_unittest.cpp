@@ -33,7 +33,7 @@ BOOST_AUTO_TEST_CASE(test_gain_modifier)
         cse::variable_id realOut{0, cse::variable_type::real, 0};
         cse::variable_id realIn{1, cse::variable_type::real, 1};
         auto scalarConnection = std::make_shared<cse::scalar_connection>(realOut, realIn);
-        scalarConnection->add_modifer(std::make_shared<cse::gain_modifier>(1.5));
+        scalarConnection->add_modifier(std::make_shared<cse::gain_modifier>(1.5));
         execution.add_connection(scalarConnection);
     }
 
@@ -41,7 +41,7 @@ BOOST_AUTO_TEST_CASE(test_gain_modifier)
         cse::variable_id intOut{0, cse::variable_type::integer, 0};
         cse::variable_id intIn{1, cse::variable_type::integer, 1};
         auto scalarConnection = std::make_shared<cse::scalar_connection>(intOut, intIn);
-        scalarConnection->add_modifer(std::make_shared<cse::gain_modifier>(1.5));
+        scalarConnection->add_modifier(std::make_shared<cse::gain_modifier>(1.5));
         execution.add_connection(scalarConnection);
     }
 

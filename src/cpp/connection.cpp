@@ -42,7 +42,7 @@ std::variant<double, int, bool, std::string_view> scalar_connection::get_destina
     return value_;
 }
 
-void scalar_connection::add_modifer(const std::shared_ptr<modifier>& modifier)
+void scalar_connection::add_modifier(const std::shared_ptr<modifier>& modifier)
 {
     modifiers_.push_back(modifier);
 }
