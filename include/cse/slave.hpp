@@ -113,7 +113,7 @@ public:
      *  \pre `variables.size() == values.size()`
      */
     virtual void get_real_variables(
-        gsl::span<const variable_index> variables,
+        gsl::span<const value_reference> variables,
         gsl::span<double> values) const = 0;
 
     /**
@@ -125,7 +125,7 @@ public:
      *  \pre `variables.size() == values.size()`
      */
     virtual void get_integer_variables(
-        gsl::span<const variable_index> variables,
+        gsl::span<const value_reference> variables,
         gsl::span<int> values) const = 0;
 
     /**
@@ -137,7 +137,7 @@ public:
      *  \pre `variables.size() == values.size()`
      */
     virtual void get_boolean_variables(
-        gsl::span<const variable_index> variables,
+        gsl::span<const value_reference> variables,
         gsl::span<bool> values) const = 0;
 
     /**
@@ -149,7 +149,7 @@ public:
      *  \pre `variables.size() == values.size()`
      */
     virtual void get_string_variables(
-        gsl::span<const variable_index> variables,
+        gsl::span<const value_reference> variables,
         gsl::span<std::string> values) const = 0;
 
     /**
@@ -165,7 +165,7 @@ public:
      *  \pre `variables.size() == values.size()`
      */
     virtual void set_real_variables(
-        gsl::span<const variable_index> variables,
+        gsl::span<const value_reference> variables,
         gsl::span<const double> values) = 0;
 
     /**
@@ -181,7 +181,7 @@ public:
      *  \pre `variables.size() == values.size()`
      */
     virtual void set_integer_variables(
-        gsl::span<const variable_index> variables,
+        gsl::span<const value_reference> variables,
         gsl::span<const int> values) = 0;
 
     /**
@@ -197,7 +197,7 @@ public:
      *  \pre `variables.size() == values.size()`
      */
     virtual void set_boolean_variables(
-        gsl::span<const variable_index> variables,
+        gsl::span<const value_reference> variables,
         gsl::span<const bool> values) = 0;
 
     /**
@@ -213,7 +213,7 @@ public:
      *  \pre `variables.size() == values.size()`
      */
     virtual void set_string_variables(
-        gsl::span<const variable_index> variables,
+        gsl::span<const value_reference> variables,
         gsl::span<const std::string> values) = 0;
 };
 

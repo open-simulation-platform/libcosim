@@ -74,7 +74,7 @@ void run_test(std::shared_ptr<cse::async_slave> (*make_async)(std::shared_ptr<cs
         // slave's sole real output variable.
         std::vector<future<cse::async_slave::variable_values>> getResults;
         for (const auto& slave : asyncSlaves) {
-            const cse::variable_index realOutIndex = 0;
+            const cse::value_reference realOutIndex = 0;
             getResults.push_back(
                 slave->get_variables({&realOutIndex, 1}, {}, {}, {}));
         }
@@ -90,7 +90,7 @@ void run_test(std::shared_ptr<cse::async_slave> (*make_async)(std::shared_ptr<cs
 
         std::vector<future<void>> setResults;
         for (int i = 0; i < numSlaves; ++i) {
-            const cse::variable_index realInIndex = 1;
+            const cse::value_reference realInIndex = 1;
             setResults.push_back(
                 asyncSlaves[i]->set_variables(
                     {&realInIndex, 1}, {&values[i], 1},

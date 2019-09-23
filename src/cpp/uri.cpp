@@ -4,6 +4,7 @@
 
 #include <cassert>
 #include <cctype>
+#include <cstdint>
 #include <iomanip>
 #include <sstream>
 #include <stdexcept>
@@ -26,7 +27,8 @@ namespace
 
 bool is_scheme_char(char c) noexcept
 {
-    return std::isalnum(c) || c == '+' || c == '-' || c == '.';
+    return std::isalnum(static_cast<unsigned char>(c)) ||
+        c == '+' || c == '-' || c == '.';
 }
 
 std::optional<std::string_view> consume_scheme(std::string_view& input)
@@ -111,6 +113,43 @@ bool all_chars_satisfy(bool (*is_valid_char)(char), std::string_view string)
     return true;
 }
 
+detail::subrange to_subrange(const std::string& str, std::string_view substr)
+{
+    assert( // Check that substr is in fact a substring of str
+        reinterpret_cast<std::uintptr_t>(str.data()) <=
+            reinterpret_cast<std::uintptr_t>(substr.data()) &&
+        reinterpret_cast<std::uintptr_t>(substr.data()) + substr.size() <=
+            reinterpret_cast<std::uintptr_t>(str.data()) + str.size());
+    return {static_cast<std::size_t>(substr.data() - str.data()), substr.size()};
+}
+
+std::optional<detail::subrange> to_subrange(
+    const std::string& str,
+    std::optional<std::string_view> substr)
+{
+    if (substr) {
+        return to_subrange(str, *substr);
+    } else {
+        return std::nullopt;
+    }
+}
+
+std::string_view to_substring(const std::string& str, detail::subrange subrange)
+{
+    return std::string_view(str).substr(subrange.offset, subrange.size);
+}
+
+std::optional<std::string_view> to_substring(
+    const std::string& str,
+    std::optional<detail::subrange> subrange)
+{
+    if (subrange) {
+        return to_substring(str, *subrange);
+    } else {
+        return std::nullopt;
+    }
+}
+
 } // namespace
 
 
@@ -121,11 +160,11 @@ uri::uri() noexcept = default;
     : data_(std::move(string))
 {
     auto view = std::string_view(data_);
-    scheme_ = consume_scheme(view);
-    authority_ = consume_authority(view);
-    path_ = consume_path(view);
-    query_ = consume_query(view);
-    fragment_ = consume_fragment(view);
+    scheme_ = to_subrange(data_, consume_scheme(view));
+    authority_ = to_subrange(data_, consume_authority(view));
+    path_ = to_subrange(data_, consume_path(view));
+    query_ = to_subrange(data_, consume_query(view));
+    fragment_ = to_subrange(data_, consume_fragment(view));
     assert(view.empty());
 }
 
@@ -153,30 +192,72 @@ uri::uri(
     if (scheme) {
         data_ += *scheme;
         data_ += ':';
-        scheme_ = view.substr(0, scheme->size());
+        scheme_ = to_subrange(data_, view.substr(0, scheme->size()));
         view.remove_prefix(scheme->size() + 1);
     }
     if (authority) {
         data_ += "//";
         data_ += *authority;
-        authority_ = view.substr(2, authority->size());
+        authority_ = to_subrange(data_, view.substr(2, authority->size()));
         view.remove_prefix(2 + authority->size());
     }
     data_ += path;
-    path_ = view.substr(0, path.size());
+    path_ = to_subrange(data_, view.substr(0, path.size()));
     view.remove_prefix(path.size());
     if (query) {
         data_ += '?';
         data_ += *query;
-        query_ = view.substr(1, query->size());
+        query_ = to_subrange(data_, view.substr(1, query->size()));
         view.remove_prefix(1 + query->size());
     }
     if (fragment) {
         data_ += '#';
         data_ += *fragment;
-        fragment_ = view.substr(1, fragment->size());
+        fragment_ = to_subrange(data_, view.substr(1, fragment->size()));
         view.remove_prefix(1 + fragment->size());
     }
+}
+
+
+std::string_view uri::view() const noexcept
+{
+    return std::string_view(data_);
+}
+
+
+std::optional<std::string_view> uri::scheme() const noexcept
+{
+    return to_substring(data_, scheme_);
+}
+
+
+std::optional<std::string_view> uri::authority() const noexcept
+{
+    return to_substring(data_, authority_);
+}
+
+
+std::string_view uri::path() const noexcept
+{
+    return to_substring(data_, path_);
+}
+
+
+std::optional<std::string_view> uri::query() const noexcept
+{
+    return to_substring(data_, query_);
+}
+
+
+std::optional<std::string_view> uri::fragment() const noexcept
+{
+    return to_substring(data_, fragment_);
+}
+
+
+bool uri::empty() const noexcept
+{
+    return data_.empty();
 }
 
 

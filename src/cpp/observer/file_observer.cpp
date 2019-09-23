@@ -47,21 +47,21 @@ public:
     {
         if (++counter_ % decimationFactor_ == 0) {
 
-            if (!realIndexes_.empty()) realSamples_[timeStep].reserve(realIndexes_.size());
-            if (!intIndexes_.empty()) intSamples_[timeStep].reserve(intIndexes_.size());
-            if (!boolIndexes_.empty()) boolSamples_[timeStep].reserve(boolIndexes_.size());
-            if (!stringIndexes_.empty()) stringSamples_[timeStep].reserve(stringIndexes_.size());
+            if (!realReferences_.empty()) realSamples_[timeStep].reserve(realReferences_.size());
+            if (!intReferences_.empty()) intSamples_[timeStep].reserve(intReferences_.size());
+            if (!boolReferences_.empty()) boolSamples_[timeStep].reserve(boolReferences_.size());
+            if (!stringReferences_.empty()) stringSamples_[timeStep].reserve(stringReferences_.size());
 
-            for (const auto idx : realIndexes_) {
+            for (const auto idx : realReferences_) {
                 realSamples_[timeStep].push_back(observable_->get_real(idx));
             }
-            for (const auto idx : intIndexes_) {
+            for (const auto idx : intReferences_) {
                 intSamples_[timeStep].push_back(observable_->get_integer(idx));
             }
-            for (const auto idx : boolIndexes_) {
+            for (const auto idx : boolReferences_) {
                 boolSamples_[timeStep].push_back(observable_->get_boolean(idx));
             }
-            for (const auto idx : stringIndexes_) {
+            for (const auto idx : stringReferences_) {
                 stringSamples_[timeStep].push_back(observable_->get_string(idx));
             }
             timeSamples_[timeStep] = to_double_time_point(currentTime);
@@ -96,19 +96,19 @@ private:
         for (const auto& vd : observable_->model_description().variables) {
             if (vd.causality != variable_causality::local) {
 
-                observable_->expose_for_getting(vd.type, vd.index);
+                observable_->expose_for_getting(vd.type, vd.reference);
 
                 if (vd.type == variable_type::real) {
-                    realIndexes_.push_back(vd.index);
+                    realReferences_.push_back(vd.reference);
                 }
                 if (vd.type == variable_type::integer) {
-                    intIndexes_.push_back(vd.index);
+                    intReferences_.push_back(vd.reference);
                 }
                 if (vd.type == variable_type::boolean) {
-                    boolIndexes_.push_back(vd.index);
+                    boolReferences_.push_back(vd.reference);
                 }
                 if (vd.type == variable_type::string) {
-                    stringIndexes_.push_back(vd.index);
+                    stringReferences_.push_back(vd.reference);
                 }
 
                 switch (vd.type) {
@@ -138,26 +138,26 @@ private:
     void initialize_config(time_point currentTime)
     {
         for (const auto& variable : loggableRealVariables_) {
-            realIndexes_.push_back(variable.index);
-            observable_->expose_for_getting(variable_type::real, variable.index);
+            realReferences_.push_back(variable.reference);
+            observable_->expose_for_getting(variable_type::real, variable.reference);
             realVars_.push_back(variable);
         }
 
         for (const auto& variable : loggableIntVariables_) {
-            intIndexes_.push_back(variable.index);
-            observable_->expose_for_getting(variable_type::integer, variable.index);
+            intReferences_.push_back(variable.reference);
+            observable_->expose_for_getting(variable_type::integer, variable.reference);
             intVars_.push_back(variable);
         }
 
         for (const auto& variable : loggableBoolVariables_) {
-            boolIndexes_.push_back(variable.index);
-            observable_->expose_for_getting(variable_type::boolean, variable.index);
+            boolReferences_.push_back(variable.reference);
+            observable_->expose_for_getting(variable_type::boolean, variable.reference);
             boolVars_.push_back(variable);
         }
 
         for (const auto& variable : loggableStringVariables_) {
-            stringIndexes_.push_back(variable.index);
-            observable_->expose_for_getting(variable_type::string, variable.index);
+            stringReferences_.push_back(variable.reference);
+            observable_->expose_for_getting(variable_type::string, variable.reference);
             stringVars_.push_back(variable);
         }
 
@@ -177,16 +177,16 @@ private:
         ss_ << "Time,StepCount";
 
         for (const auto& vd : realVars_) {
-            ss_ << "," << vd.name << " [" << vd.index << " " << vd.type << " " << vd.causality << "]";
+            ss_ << "," << vd.name << " [" << vd.reference << " " << vd.type << " " << vd.causality << "]";
         }
         for (const auto& vd : intVars_) {
-            ss_ << "," << vd.name << " [" << vd.index << " " << vd.type << " " << vd.causality << "]";
+            ss_ << "," << vd.name << " [" << vd.reference << " " << vd.type << " " << vd.causality << "]";
         }
         for (const auto& vd : boolVars_) {
-            ss_ << "," << vd.name << " [" << vd.index << " " << vd.type << " " << vd.causality << "]";
+            ss_ << "," << vd.name << " [" << vd.reference << " " << vd.type << " " << vd.causality << "]";
         }
         for (const auto& vd : stringVars_) {
-            ss_ << "," << vd.name << " [" << vd.index << " " << vd.type << " " << vd.causality << "]";
+            ss_ << "," << vd.name << " [" << vd.reference << " " << vd.type << " " << vd.causality << "]";
         }
 
         ss_ << std::endl;
@@ -228,10 +228,10 @@ private:
     std::map<step_number, std::vector<int>> intSamples_;
     std::map<step_number, std::vector<bool>> boolSamples_;
     std::map<step_number, std::vector<std::string_view>> stringSamples_;
-    std::vector<variable_index> realIndexes_;
-    std::vector<variable_index> intIndexes_;
-    std::vector<variable_index> boolIndexes_;
-    std::vector<variable_index> stringIndexes_;
+    std::vector<value_reference> realReferences_;
+    std::vector<value_reference> intReferences_;
+    std::vector<value_reference> boolReferences_;
+    std::vector<value_reference> stringReferences_;
     std::map<step_number, double> timeSamples_;
     std::vector<variable_description> realVars_;
     std::vector<variable_description> intVars_;
@@ -250,13 +250,13 @@ private:
 };
 
 file_observer::file_observer(const boost::filesystem::path& logDir)
-    : logDir_(logDir)
+    : logDir_(boost::filesystem::absolute(logDir))
 {
 }
 
 file_observer::file_observer(const boost::filesystem::path& logDir, const boost::filesystem::path& configPath)
     : configPath_(configPath)
-    , logDir_(logDir)
+    , logDir_(boost::filesystem::absolute(logDir))
     , logFromConfig_(true)
 {
     boost::property_tree::read_xml(configPath_.string(), ptree_,

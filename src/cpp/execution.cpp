@@ -204,28 +204,28 @@ public:
         auto index = 0;
         for (const auto& sim : simulators_) {
 
-            const auto& realIndexes = sim->get_modified_real_indexes();
-            const auto& intIndexes = sim->get_modified_integer_indexes();
-            const auto& boolIndexes = sim->get_modified_boolean_indexes();
-            const auto& stringIndexes = sim->get_modified_string_indexes();
+            const auto& realRefs = sim->get_modified_real_variables();
+            const auto& integerRefs = sim->get_modified_integer_variables();
+            const auto& booleanRefs = sim->get_modified_boolean_variables();
+            const auto& stringRefs = sim->get_modified_string_variables();
 
-            for (const auto& varIndex : realIndexes) {
-                variable_id var = {index, variable_type::real, varIndex};
+            for (const auto& ref : realRefs) {
+                variable_id var = {index, variable_type::real, ref};
                 modifiedVariables.push_back(var);
             }
 
-            for (const auto& varIndex : intIndexes) {
-                variable_id var = {index, variable_type::integer, varIndex};
+            for (const auto& ref : integerRefs) {
+                variable_id var = {index, variable_type::integer, ref};
                 modifiedVariables.push_back(var);
             }
 
-            for (const auto& varIndex : boolIndexes) {
-                variable_id var = {index, variable_type::boolean, varIndex};
+            for (const auto& ref : booleanRefs) {
+                variable_id var = {index, variable_type::boolean, ref};
                 modifiedVariables.push_back(var);
             }
 
-            for (const auto& varIndex : stringIndexes) {
-                variable_id var = {index, variable_type::string, varIndex};
+            for (const auto& ref : stringRefs) {
+                variable_id var = {index, variable_type::string, ref};
                 modifiedVariables.push_back(var);
             }
 
@@ -235,7 +235,7 @@ public:
         return modifiedVariables;
     }
 
-    void set_real_initial_value(simulator_index sim, variable_index var, double value)
+    void set_real_initial_value(simulator_index sim, value_reference var, double value)
     {
         if (initialized_) {
             throw error(make_error_code(errc::unsupported_feature), "Initial values must be set before simulation is started");
@@ -244,7 +244,7 @@ public:
         simulators_.at(sim)->set_real(var, value);
     }
 
-    void set_integer_initial_value(simulator_index sim, variable_index var, int value)
+    void set_integer_initial_value(simulator_index sim, value_reference var, int value)
     {
         if (initialized_) {
             throw error(make_error_code(errc::unsupported_feature), "Initial values must be set before simulation is started");
@@ -253,7 +253,7 @@ public:
         simulators_.at(sim)->set_integer(var, value);
     }
 
-    void set_boolean_initial_value(simulator_index sim, variable_index var, bool value)
+    void set_boolean_initial_value(simulator_index sim, value_reference var, bool value)
     {
         if (initialized_) {
             throw error(make_error_code(errc::unsupported_feature), "Initial values must be set before simulation is started");
@@ -262,7 +262,7 @@ public:
         simulators_.at(sim)->set_boolean(var, value);
     }
 
-    void set_string_initial_value(simulator_index sim, variable_index var, const std::string& value)
+    void set_string_initial_value(simulator_index sim, value_reference var, const std::string& value)
     {
         if (initialized_) {
             throw error(make_error_code(errc::unsupported_feature), "Initial values must be set before simulation is started");
@@ -278,10 +278,10 @@ private:
         const auto it = std::find_if(
             variables.begin(),
             variables.end(),
-            [=](const auto& var) { return var.causality == causality && var.type == variable.type && var.index == variable.index; });
+            [=](const auto& var) { return var.causality == causality && var.type == variable.type && var.reference == variable.reference; });
         if (it == variables.end()) {
             std::ostringstream oss;
-            oss << "Cannot find variable with index " << variable.index
+            oss << "Problem adding connection: Cannot find variable with reference " << variable.reference
                 << ", causality " << cse::to_text(causality)
                 << " and type " << cse::to_text(variable.type)
                 << " for simulator with index " << variable.simulator
@@ -426,22 +426,22 @@ std::vector<variable_id> execution::get_modified_variables()
     return pimpl_->get_modified_variables();
 }
 
-void execution::set_real_initial_value(simulator_index sim, variable_index var, double value)
+void execution::set_real_initial_value(simulator_index sim, value_reference var, double value)
 {
     pimpl_->set_real_initial_value(sim, var, value);
 }
 
-void execution::set_integer_initial_value(simulator_index sim, variable_index var, int value)
+void execution::set_integer_initial_value(simulator_index sim, value_reference var, int value)
 {
     pimpl_->set_integer_initial_value(sim, var, value);
 }
 
-void execution::set_boolean_initial_value(simulator_index sim, variable_index var, bool value)
+void execution::set_boolean_initial_value(simulator_index sim, value_reference var, bool value)
 {
     pimpl_->set_boolean_initial_value(sim, var, value);
 }
 
-void execution::set_string_initial_value(simulator_index sim, variable_index var, const std::string& value)
+void execution::set_string_initial_value(simulator_index sim, value_reference var, const std::string& value)
 {
     pimpl_->set_string_initial_value(sim, var, value);
 }

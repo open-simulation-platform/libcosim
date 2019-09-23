@@ -23,15 +23,15 @@ struct visitor : Functors...
 cse::variable_causality find_variable_causality(
     const std::vector<variable_description>& variables,
     const cse::variable_type type,
-    const cse::variable_index index)
+    const cse::value_reference reference)
 {
     for (const auto& vd : variables) {
-        if ((vd.index == index) && (vd.type == type)) {
+        if ((vd.reference == reference) && (vd.type == type)) {
             return vd.causality;
         }
     }
     std::ostringstream oss;
-    oss << "Can't find variable with index: " << index
+    oss << "Can't find variable with reference: " << reference
         << " and type: " << to_text(type);
     throw std::invalid_argument(oss.str());
 }
@@ -121,7 +121,7 @@ void override_manipulator::step_commencing(time_point /*currentTime*/)
 
 void override_manipulator::add_action(
     simulator_index index,
-    variable_index variable,
+    value_reference variable,
     variable_type type,
     const std::variant<
         scenario::real_modifier,
@@ -139,7 +139,7 @@ void override_manipulator::add_action(
 
 void override_manipulator::override_real_variable(
     simulator_index index,
-    variable_index variable,
+    value_reference variable,
     double value)
 {
     auto f = [value](double /*original*/) { return value; };
@@ -148,7 +148,7 @@ void override_manipulator::override_real_variable(
 
 void override_manipulator::override_integer_variable(
     simulator_index index,
-    variable_index variable,
+    value_reference variable,
     int value)
 {
     auto f = [value](int /*original*/) { return value; };
@@ -157,7 +157,7 @@ void override_manipulator::override_integer_variable(
 
 void override_manipulator::override_boolean_variable(
     simulator_index index,
-    variable_index variable,
+    value_reference variable,
     bool value)
 {
     auto f = [value](bool /*original*/) { return value; };
@@ -166,7 +166,7 @@ void override_manipulator::override_boolean_variable(
 
 void override_manipulator::override_string_variable(
     simulator_index index,
-    variable_index variable,
+    value_reference variable,
     const std::string& value)
 {
     auto f = [value](std::string_view /*original*/) { return value; };
@@ -176,7 +176,7 @@ void override_manipulator::override_string_variable(
 void override_manipulator::reset_variable(
     simulator_index index,
     variable_type type,
-    variable_index variable)
+    value_reference variable)
 {
     switch (type) {
         case variable_type::real:

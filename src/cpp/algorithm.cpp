@@ -66,12 +66,12 @@ public:
     {
         for (const auto& source : c->get_sources()) {
             auto& simInfo = find_simulator(source.simulator);
-            simInfo.sim->expose_for_getting(source.type, source.index);
+            simInfo.sim->expose_for_getting(source.type, source.reference);
             simInfo.outgoingConnections[source].push_back(c);
         }
         for (const auto& destination : c->get_destinations()) {
             auto& simInfo = find_simulator(destination.simulator);
-            simInfo.sim->expose_for_setting(destination.type, destination.index);
+            simInfo.sim->expose_for_setting(destination.type, destination.reference);
             simInfo.incomingConnections[destination] = c;
         }
     }
@@ -247,16 +247,16 @@ private:
             for (const auto& c : connections) {
                 switch (sourceVar.type) {
                     case variable_type::real:
-                        c->set_source_value(sourceVar, simulators_.at(i).sim->get_real(sourceVar.index));
+                        c->set_source_value(sourceVar, simulators_.at(i).sim->get_real(sourceVar.reference));
                         break;
                     case variable_type::integer:
-                        c->set_source_value(sourceVar, simulators_.at(i).sim->get_integer(sourceVar.index));
+                        c->set_source_value(sourceVar, simulators_.at(i).sim->get_integer(sourceVar.reference));
                         break;
                     case variable_type::boolean:
-                        c->set_source_value(sourceVar, simulators_.at(i).sim->get_boolean(sourceVar.index));
+                        c->set_source_value(sourceVar, simulators_.at(i).sim->get_boolean(sourceVar.reference));
                         break;
                     case variable_type::string:
-                        c->set_source_value(sourceVar, simulators_.at(i).sim->get_string(sourceVar.index));
+                        c->set_source_value(sourceVar, simulators_.at(i).sim->get_string(sourceVar.reference));
                         break;
                     default:
                         CSE_PANIC();
@@ -282,16 +282,16 @@ private:
             if (decimation_factor_match(destVar, conn->get_sources())) {
                 switch (destVar.type) {
                     case variable_type::real:
-                        simulators_.at(i).sim->set_real(destVar.index, std::get<double>(conn->get_destination_value(destVar)));
+                        simulators_.at(i).sim->set_real(destVar.reference, std::get<double>(conn->get_destination_value(destVar)));
                         break;
                     case variable_type::integer:
-                        simulators_.at(i).sim->set_integer(destVar.index, std::get<int>(conn->get_destination_value(destVar)));
+                        simulators_.at(i).sim->set_integer(destVar.reference, std::get<int>(conn->get_destination_value(destVar)));
                         break;
                     case variable_type::boolean:
-                        simulators_.at(i).sim->set_boolean(destVar.index, std::get<bool>(conn->get_destination_value(destVar)));
+                        simulators_.at(i).sim->set_boolean(destVar.reference, std::get<bool>(conn->get_destination_value(destVar)));
                         break;
                     case variable_type::string:
-                        simulators_.at(i).sim->set_string(destVar.index, std::get<std::string_view>(conn->get_destination_value(destVar)));
+                        simulators_.at(i).sim->set_string(destVar.reference, std::get<std::string_view>(conn->get_destination_value(destVar)));
                         break;
                     default:
                         CSE_PANIC();

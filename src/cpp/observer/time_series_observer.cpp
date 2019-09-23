@@ -14,8 +14,8 @@ namespace
 {
 template<typename T>
 size_t get_samples(
-    variable_index variableIndex,
-    const std::map<variable_index, std::map<step_number, T>>& variables,
+    value_reference valueReference,
+    const std::map<value_reference, std::map<step_number, T>>& variables,
     std::map<step_number, time_point> timeSamples,
     step_number fromStep,
     gsl::span<T> values,
@@ -23,7 +23,7 @@ size_t get_samples(
     gsl::span<time_point> times)
 {
     size_t samplesRead = 0;
-    const auto& samplesIt = variables.find(variableIndex);
+    const auto& samplesIt = variables.find(valueReference);
     if (samplesIt != variables.end()) {
         const auto& samples = samplesIt->second;
         if (samples.empty()) {
@@ -88,54 +88,54 @@ public:
         adjustIfFull(timeSamples_, bufSize_);
     }
 
-    void start_observing(variable_type type, variable_index index)
+    void start_observing(variable_type type, value_reference reference)
     {
         std::lock_guard<std::mutex> lock(lock_);
         switch (type) {
             case variable_type::real:
-                realSamples_[index] = std::map<step_number, double>();
-                observable_->expose_for_getting(type, index);
+                realSamples_[reference] = std::map<step_number, double>();
+                observable_->expose_for_getting(type, reference);
                 break;
             case variable_type::integer:
-                intSamples_[index] = std::map<step_number, int>();
-                observable_->expose_for_getting(type, index);
+                intSamples_[reference] = std::map<step_number, int>();
+                observable_->expose_for_getting(type, reference);
                 break;
             default:
                 std::ostringstream oss;
                 oss << "No support for observing variable with type " << type
-                    << " and index " << index;
+                    << " and reference " << reference;
                 throw std::invalid_argument(oss.str());
         }
     }
 
-    void stop_observing(variable_type type, variable_index index)
+    void stop_observing(variable_type type, value_reference reference)
     {
         std::lock_guard<std::mutex> lock(lock_);
         switch (type) {
             case variable_type::real:
-                realSamples_.erase(index);
+                realSamples_.erase(reference);
                 break;
             case variable_type::integer:
-                intSamples_.erase(index);
+                intSamples_.erase(reference);
                 break;
             default:
                 std::ostringstream oss;
                 oss << "Could not stop observing variable with type " << type
-                    << " and index " << index;
+                    << " and reference " << reference;
                 throw std::invalid_argument(oss.str());
         }
     }
 
-    size_t get_real_samples(variable_index variableIndex, step_number fromStep, gsl::span<double> values, gsl::span<step_number> steps, gsl::span<time_point> times)
+    size_t get_real_samples(value_reference valueReference, step_number fromStep, gsl::span<double> values, gsl::span<step_number> steps, gsl::span<time_point> times)
     {
         std::lock_guard<std::mutex> lock(lock_);
-        return get_samples<double>(variableIndex, realSamples_, timeSamples_, fromStep, values, steps, times);
+        return get_samples<double>(valueReference, realSamples_, timeSamples_, fromStep, values, steps, times);
     }
 
-    size_t get_int_samples(variable_index variableIndex, step_number fromStep, gsl::span<int> values, gsl::span<step_number> steps, gsl::span<time_point> times)
+    size_t get_int_samples(value_reference valueReference, step_number fromStep, gsl::span<int> values, gsl::span<step_number> steps, gsl::span<time_point> times)
     {
         std::lock_guard<std::mutex> lock(lock_);
-        return get_samples<int>(variableIndex, intSamples_, timeSamples_, fromStep, values, steps, times);
+        return get_samples<int>(valueReference, intSamples_, timeSamples_, fromStep, values, steps, times);
     }
 
     void get_step_numbers(time_point tBegin, time_point tEnd, gsl::span<step_number> steps)
@@ -183,15 +183,15 @@ public:
         steps[1] = lastStep;
     }
 
-    const std::map<step_number, double> get_real_samples_map(variable_index idx)
+    const std::map<step_number, double> get_real_samples_map(value_reference idx)
     {
         std::lock_guard<std::mutex> lock(lock_);
         return realSamples_.at(idx);
     }
 
 private:
-    std::map<variable_index, std::map<step_number, double>> realSamples_;
-    std::map<variable_index, std::map<step_number, int>> intSamples_;
+    std::map<value_reference, std::map<step_number, double>> realSamples_;
+    std::map<value_reference, std::map<step_number, int>> intSamples_;
     std::map<step_number, time_point> timeSamples_;
     observable* observable_;
     size_t bufSize_;
@@ -244,17 +244,17 @@ void time_series_observer::simulator_step_complete(
 
 void time_series_observer::start_observing(variable_id id)
 {
-    slaveObservers_.at(id.simulator)->start_observing(id.type, id.index);
+    slaveObservers_.at(id.simulator)->start_observing(id.type, id.reference);
 }
 
 void time_series_observer::stop_observing(variable_id id)
 {
-    slaveObservers_.at(id.simulator)->stop_observing(id.type, id.index);
+    slaveObservers_.at(id.simulator)->stop_observing(id.type, id.reference);
 }
 
 std::size_t time_series_observer::get_real_samples(
     simulator_index sim,
-    variable_index variableIndex,
+    value_reference valueReference,
     step_number fromStep,
     gsl::span<double> values,
     gsl::span<step_number> steps,
@@ -262,12 +262,12 @@ std::size_t time_series_observer::get_real_samples(
 {
     CSE_INPUT_CHECK(values.size() == steps.size());
     CSE_INPUT_CHECK(times.size() == values.size());
-    return slaveObservers_.at(sim)->get_real_samples(variableIndex, fromStep, values, steps, times);
+    return slaveObservers_.at(sim)->get_real_samples(valueReference, fromStep, values, steps, times);
 }
 
 std::size_t time_series_observer::get_integer_samples(
     simulator_index sim,
-    variable_index variableIndex,
+    value_reference valueReference,
     step_number fromStep,
     gsl::span<int> values,
     gsl::span<step_number> steps,
@@ -275,7 +275,7 @@ std::size_t time_series_observer::get_integer_samples(
 {
     CSE_INPUT_CHECK(values.size() == steps.size());
     CSE_INPUT_CHECK(times.size() == values.size());
-    return slaveObservers_.at(sim)->get_int_samples(variableIndex, fromStep, values, steps, times);
+    return slaveObservers_.at(sim)->get_int_samples(valueReference, fromStep, values, steps, times);
 }
 
 void time_series_observer::get_step_numbers(
@@ -297,17 +297,17 @@ void time_series_observer::get_step_numbers(
 
 std::size_t time_series_observer::get_synchronized_real_series(
     simulator_index sim1,
-    variable_index variableIndex1,
+    value_reference valueReference1,
     simulator_index sim2,
-    variable_index variableIndex2,
+    value_reference valueReference2,
     step_number fromStep,
     gsl::span<double> values1,
     gsl::span<double> values2)
 {
     CSE_INPUT_CHECK(values1.size() == values2.size());
 
-    const auto realSamples1 = slaveObservers_.at(sim1)->get_real_samples_map(variableIndex1);
-    const auto realSamples2 = slaveObservers_.at(sim2)->get_real_samples_map(variableIndex2);
+    const auto realSamples1 = slaveObservers_.at(sim1)->get_real_samples_map(valueReference1);
+    const auto realSamples2 = slaveObservers_.at(sim2)->get_real_samples_map(valueReference2);
 
     if (realSamples1.empty() || realSamples2.empty()) {
         throw std::out_of_range("Samples for both variables not recorded yet!");

@@ -72,7 +72,7 @@ public:
 
     std::size_t get_real_samples(
         simulator_index sim,
-        variable_index variableIndex,
+        value_reference valueReference,
         step_number fromStep,
         gsl::span<double> values,
         gsl::span<step_number> steps,
@@ -80,7 +80,7 @@ public:
 
     std::size_t get_integer_samples(
         simulator_index sim,
-        variable_index variableIndex,
+        value_reference valueReference,
         step_number fromStep,
         gsl::span<int> values,
         gsl::span<step_number> steps,
@@ -99,9 +99,9 @@ public:
 
     std::size_t get_synchronized_real_series(
         simulator_index sim1,
-        variable_index variableIndex1,
+        value_reference valueReference1,
         simulator_index sim2,
-        variable_index variableIndex2,
+        value_reference valueReference2,
         step_number fromStep,
         gsl::span<double> values1,
         gsl::span<double> values2) override;

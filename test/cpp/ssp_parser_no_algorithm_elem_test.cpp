@@ -1,11 +1,12 @@
+#include <cse/algorithm.hpp>
 #include <cse/log/simple.hpp>
+#include <cse/observer/last_value_observer.hpp>
 #include <cse/ssp_parser.hpp>
 
 #include <boost/filesystem.hpp>
 
 #include <cstdlib>
 #include <exception>
-#include <cse/observer/last_value_observer.hpp>
 
 #define REQUIRE(test) \
     if (!(test)) throw std::runtime_error("Requirement not satisfied: " #test)
@@ -18,16 +19,20 @@ int main()
 
         const auto testDataDir = std::getenv("TEST_DATA_DIR");
         REQUIRE(testDataDir);
-        boost::filesystem::path xmlPath = boost::filesystem::path(testDataDir) / "ssp" / "demo";
+        boost::filesystem::path xmlPath = boost::filesystem::path(testDataDir) / "ssp" / "demo" / "no_algorithm_element";
 
         auto resolver = cse::default_model_uri_resolver();
-        auto simulation = cse::load_ssp(*resolver, xmlPath, cse::to_time_point(0.0));
+        auto simulation = cse::load_ssp(
+            *resolver,
+            xmlPath,
+            std::make_unique<cse::fixed_step_algorithm>(cse::to_duration(1e-4)));
         auto& execution = simulation.first;
 
         auto& simulator_map = simulation.second;
         REQUIRE(simulator_map.size() == 2);
-        REQUIRE(simulator_map.at("CraneController").source == "CraneController.fmu");
-        REQUIRE(simulator_map.at("KnuckleBoomCrane").source == "KnuckleBoomCrane.fmu");
+
+        // ssp defaultExperiment startTime=5
+        REQUIRE(cse::to_double_time_point(execution.current_time()) == 5.0);
 
         auto obs = std::make_shared<cse::last_value_observer>();
         execution.add_observer(obs);

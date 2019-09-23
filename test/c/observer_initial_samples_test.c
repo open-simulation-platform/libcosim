@@ -68,7 +68,7 @@ int main()
 
     // ===== Getting real before step
 
-    cse_variable_index realOutVar = 0;
+    cse_value_reference realOutVar = 0;
     double realOutVal = -1.0;
     rc = cse_observer_slave_get_real(observer, slave_index, &realOutVar, 1, &realOutVal);
     if (rc < 0) { goto Lerror; }

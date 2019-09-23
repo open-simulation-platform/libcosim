@@ -48,22 +48,22 @@ public:
 
     void get_real(
         simulator_index sim,
-        gsl::span<const variable_index> variables,
+        gsl::span<const value_reference> variables,
         gsl::span<double> values) override;
 
     void get_integer(
         simulator_index sim,
-        gsl::span<const variable_index> variables,
+        gsl::span<const value_reference> variables,
         gsl::span<int> values) override;
 
     void get_boolean(
         simulator_index sim,
-        gsl::span<const variable_index> variables,
+        gsl::span<const value_reference> variables,
         gsl::span<bool> values) override;
 
     void get_string(
         simulator_index sim,
-        gsl::span<const variable_index> variables,
+        gsl::span<const value_reference> variables,
         gsl::span<std::string> values) override;
 
     ~last_value_observer() noexcept override;

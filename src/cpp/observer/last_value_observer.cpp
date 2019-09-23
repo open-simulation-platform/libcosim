@@ -49,7 +49,7 @@ void last_value_observer::simulator_step_complete(
 
 void last_value_observer::get_real(
     simulator_index sim,
-    gsl::span<const variable_index> variables,
+    gsl::span<const value_reference> variables,
     gsl::span<double> values)
 {
     CSE_INPUT_CHECK(variables.size() == values.size());
@@ -58,7 +58,7 @@ void last_value_observer::get_real(
 
 void last_value_observer::get_integer(
     simulator_index sim,
-    gsl::span<const variable_index> variables,
+    gsl::span<const value_reference> variables,
     gsl::span<int> values)
 {
     CSE_INPUT_CHECK(variables.size() == values.size());
@@ -67,7 +67,7 @@ void last_value_observer::get_integer(
 
 void last_value_observer::get_boolean(
     simulator_index sim,
-    gsl::span<const variable_index> variables,
+    gsl::span<const value_reference> variables,
     gsl::span<bool> values)
 {
     CSE_INPUT_CHECK(variables.size() == values.size());
@@ -76,7 +76,7 @@ void last_value_observer::get_boolean(
 
 void last_value_observer::get_string(
     simulator_index sim,
-    gsl::span<const variable_index> variables,
+    gsl::span<const value_reference> variables,
     gsl::span<std::string> values)
 {
     CSE_INPUT_CHECK(variables.size() == values.size());

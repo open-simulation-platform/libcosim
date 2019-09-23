@@ -63,7 +63,7 @@ int main()
 
         for (auto var : modifiedVariables) {
             REQUIRE(var.type == cse::variable_type::integer);
-            REQUIRE(var.index == 0);
+            REQUIRE(var.reference == 0);
         }
 
     } catch (const std::exception& e) {

@@ -55,7 +55,7 @@ int main()
         REQUIRE(simResult.get());
 
         const int numSamples = 15;
-        const cse::variable_index varIndex = 0;
+        const cse::value_reference varIndex = 0;
         double realValues[numSamples];
         cse::step_number steps[numSamples];
         cse::time_point times[numSamples];
