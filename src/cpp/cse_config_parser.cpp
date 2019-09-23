@@ -108,7 +108,7 @@ cse_config_parser::cse_config_parser(
 {
     // Root node
     xercesc::XMLPlatformUtils::Initialize();
-    const auto xerces_cleanup = gsl::final_action([]() {
+    const auto xerces_cleanup = gsl::final_act([]() {
         xercesc::XMLPlatformUtils::Terminate();
     });
     const auto domImpl = xercesc::DOMImplementationRegistry::getDOMImplementation(tc("LS").get());
@@ -271,7 +271,7 @@ struct extended_model_description
     {
 
         xercesc::XMLPlatformUtils::Initialize();
-        const auto xerces_cleanup = gsl::final_action([]() {
+        const auto xerces_cleanup = gsl::final_act([]() {
             xercesc::XMLPlatformUtils::Terminate();
         });
         const auto domImpl = xercesc::DOMImplementationRegistry::getDOMImplementation(tc("LS").get());
