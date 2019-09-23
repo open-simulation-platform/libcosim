@@ -14,6 +14,7 @@ RUN apt-get update && \
     libzip-dev \
     libmsgsl-dev \
     nlohmann-json-dev \
+    libxerces-c-dev \
     libxerces-c3.2 \
     && rm -rf /var/lib/apt/lists/*
 
