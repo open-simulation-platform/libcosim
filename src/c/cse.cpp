@@ -169,7 +169,6 @@ cse_execution* cse_ssp_execution_create(
         auto sim = cse::load_ssp(
             *resolver,
             sspDir,
-            nullptr,
             startTimeDefined ? std::optional<cse::time_point>(to_time_point(startTime)) : std::nullopt);
 
         execution->cpp_execution = std::make_unique<cse::execution>(std::move(sim.first));
