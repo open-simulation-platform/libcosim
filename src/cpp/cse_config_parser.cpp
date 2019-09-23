@@ -344,11 +344,11 @@ void connect_variables(
     for (const auto& connection : variableConnections) {
         cse::variable_id output = {slaves.at(connection.sourceSimulator).index,
             slaves.at(connection.sourceSimulator).variables.at(connection.sourceConnector).type,
-            slaves.at(connection.sourceSimulator).variables.at(connection.sourceConnector).index};
+            slaves.at(connection.sourceSimulator).variables.at(connection.sourceConnector).reference};
 
         cse::variable_id input = {slaves.at(connection.targetSimulator).index,
             slaves.at(connection.targetSimulator).variables.at(connection.targetConnector).type,
-            slaves.at(connection.targetSimulator).variables.at(connection.targetConnector).index};
+            slaves.at(connection.targetSimulator).variables.at(connection.targetConnector).reference};
 
         auto c = std::make_shared<cse::scalar_connection>(output, input);
         execution.add_connection(c);
@@ -425,11 +425,11 @@ void connect_sum(
         for (const auto& [sim, var] : sumConnection.sources) {
             sources.push_back({slaves.at(sim).index,
                 slaves.at(sim).variables.at(var).type,
-                slaves.at(sim).variables.at(var).index});
+                slaves.at(sim).variables.at(var).reference});
         }
         auto target = variable_id{slaves.at(sumConnection.target.first).index,
             slaves.at(sumConnection.target.first).variables.at(sumConnection.target.second).type,
-            slaves.at(sumConnection.target.first).variables.at(sumConnection.target.second).index};
+            slaves.at(sumConnection.target.first).variables.at(sumConnection.target.second).reference};
         auto c = std::make_shared<sum_connection>(sources, target);
         execution.add_connection(c);
     }
