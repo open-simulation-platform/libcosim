@@ -42,6 +42,9 @@ enum class errc
     /// Simulation error
     simulation_error,
 
+    /// Invalid system structure (e.g. an invalid variable connection)
+    invalid_system_structure,
+
     /// ZIP file error
     zip_error
 };
