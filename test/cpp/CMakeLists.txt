@@ -7,6 +7,7 @@ set(tests
     "multi_connections_test"
     "multi_fixed_step_algorithm_test"
     "ssp_parser_test"
+    "ssp_parser_no_algorithm_elem_test"
     "time_series_observer_test"
     "trend_buffer_test"
     "monitor_modified_variables_test"

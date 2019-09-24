@@ -157,13 +157,30 @@ cse_execution* cse_execution_create(cse_time_point startTime, cse_duration stepS
     }
 }
 
-cse_execution* cse_ssp_execution_create(const char* sspDir, cse_time_point startTime)
+cse_execution* cse_ssp_execution_create(
+    const char* sspDir,
+    bool startTimeDefined,
+    cse_time_point startTime)
+{
+    return cse_ssp_fixed_step_execution_create(sspDir, startTimeDefined, startTime, false, 0);
+}
+
+cse_execution* cse_ssp_fixed_step_execution_create(
+    const char* sspDir,
+    bool startTimeDefined,
+    cse_time_point startTime,
+    bool stepSizeDefined,
+    cse_duration stepSize)
 {
     try {
         auto execution = std::make_unique<cse_execution>();
 
         auto resolver = cse::default_model_uri_resolver();
-        auto sim = cse::load_ssp(*resolver, sspDir, to_time_point(startTime));
+        auto sim = cse::load_ssp(
+            *resolver,
+            sspDir,
+            stepSizeDefined ? std::make_unique<cse::fixed_step_algorithm>(to_duration(stepSize)) : nullptr,
+            startTimeDefined ? std::optional<cse::time_point>(to_time_point(startTime)) : std::nullopt);
 
         execution->cpp_execution = std::make_unique<cse::execution>(std::move(sim.first));
         execution->simulators = std::move(sim.second);

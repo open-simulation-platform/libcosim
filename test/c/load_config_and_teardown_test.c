@@ -38,7 +38,7 @@ int main()
         return 1;
     }
 
-    cse_execution* execution = cse_ssp_execution_create(sspDir, 0);
+    cse_execution* execution = cse_ssp_execution_create(sspDir, false, 0);
     if (!execution) {
         print_last_error();
         return 1;
