@@ -108,7 +108,7 @@
                     </xs:sequence>
                     <xs:attribute name="name" type="xs:string" use="required"/>
                     <xs:attribute name="source" type="xs:anyURI" use="required"/>
-                    <xs:attribute name="decimationFactor" default="1" type="xs:int"/>
+                    <xs:attribute name="stepSize" type="xs:double"/>
                 </xs:complexType>
             </xs:element>
         </xs:sequence>

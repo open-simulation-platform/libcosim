@@ -2,6 +2,7 @@
 
 #include "cse/algorithm.hpp"
 #include "cse/fmi/fmu.hpp"
+#include <cse/log/logger.hpp>
 
 #include <boost/lexical_cast.hpp>
 #include <gsl/gsl_util>
@@ -68,7 +69,7 @@ public:
     {
         std::string name;
         std::string source;
-        int decimationFactor;
+        std::optional<double> stepSize;
     };
 
     const std::vector<Simulator>& get_elements() const;
@@ -126,14 +127,14 @@ cse_config_parser::cse_config_parser(
         std::string name = tc(element->getAttribute(tc("name").get())).get();
         std::string source = tc(element->getAttribute(tc("source").get())).get();
 
-        int decimationFactor = 1;
-        auto decFacNode = tc(element->getAttribute(tc("decimationFactor").get()));
-        if (*decFacNode) {
-            decimationFactor = boost::lexical_cast<int>(decFacNode);
+        std::optional<double> stepSize = std::nullopt;
+        auto stepSizeNode = tc(element->getAttribute(tc("stepSize").get()));
+        if (*stepSizeNode) {
+            stepSize = boost::lexical_cast<double>(stepSizeNode);
             //TODO: Possibly obsolete with schema?
         }
         //TODO: Initial values
-        simulators_.push_back({name, source, decimationFactor});
+        simulators_.push_back({name, source, stepSize});
     }
 
     auto descNodes = rootElement->getElementsByTagName(tc("Description").get());
@@ -435,6 +436,22 @@ void connect_sum(
     }
 }
 
+int calculate_decimation_factor(const std::string& name, duration baseStepSize, double modelStepSize)
+{
+    auto slaveStepSize = to_duration(modelStepSize);
+    auto result = std::div(slaveStepSize.count(), baseStepSize.count());
+    int factor = std::max<int>(1, static_cast<int>(result.quot));
+    if (result.rem > 0 || result.quot < 1) {
+        duration actualStepSize = baseStepSize * factor;
+        const auto startTime = time_point();
+        BOOST_LOG_SEV(log::logger(), log::warning)
+        << "Effective step size for " << name
+        << " will be " << to_double_duration(actualStepSize, startTime) << " s"
+        << " instead of configured value " << modelStepSize << " s";
+    }
+    return factor;
+}
+
 std::pair<execution, simulator_map> load_cse_config(
     cse::model_uri_resolver& resolver,
     const boost::filesystem::path& configPath,
@@ -449,6 +466,12 @@ std::pair<execution, simulator_map> load_cse_config(
     const auto parser = cse_config_parser(configFile, schemaPath);
 
     const auto& simInfo = parser.get_simulation_information();
+    if (simInfo.stepSize <= 0.0) {
+        std::ostringstream oss;
+        oss << "Configured base step size [" << simInfo.stepSize << "] must be nonzero and positive";
+        BOOST_LOG_SEV(log::logger(), log::error) << oss.str();
+        throw std::invalid_argument(oss.str());
+    }
     const cse::duration stepSize = cse::to_duration(simInfo.stepSize);
 
     auto simulators = parser.get_elements();
@@ -464,7 +487,9 @@ std::pair<execution, simulator_map> load_cse_config(
         auto model = resolver.lookup_model(baseURI, simulator.source);
         auto slave = model->instantiate(simulator.name);
         simulator_index index = slaves[simulator.name].index = execution.add_slave(slave, simulator.name);
-        algorithm->set_stepsize_decimation_factor(index, simulator.decimationFactor);
+        if (simulator.stepSize) {
+            algorithm->set_stepsize_decimation_factor(index, calculate_decimation_factor(simulator.name, stepSize, *simulator.stepSize));
+        }
         simulatorMap[simulator.name] = simulator_map_entry{index, simulator.source, *model->description()};
 
         for (const auto& v : model->description()->variables) {
