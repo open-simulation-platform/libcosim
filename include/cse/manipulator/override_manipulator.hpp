@@ -1,6 +1,7 @@
 #ifndef CSECORE_MANIPULATOR_OVERRIDE_MANIPULATOR_HPP
 #define CSECORE_MANIPULATOR_OVERRIDE_MANIPULATOR_HPP
 
+#include <cse/scenario.hpp>
 #include <cse/manipulator/manipulator.hpp>
 
 #include <mutex>
