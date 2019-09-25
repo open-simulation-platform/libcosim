@@ -1,4 +1,3 @@
-
 #ifndef CSECORE_MANIPULATOR_SCENARIO_MANAGER_HPP
 #define CSECORE_MANIPULATOR_SCENARIO_MANAGER_HPP
 
@@ -67,7 +66,6 @@ private:
     class impl;
     std::unique_ptr<impl> pimpl_;
 };
-
 
 } // namespace cse
 

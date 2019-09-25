@@ -8,7 +8,7 @@
 #define CSECORE_MANIPULATOR_HPP
 
 #include <cse/manipulator/manipulator.hpp>
-#include <cse/manipulator/scenario_manager.hpp>
 #include <cse/manipulator/override_manipulator.hpp>
+#include <cse/manipulator/scenario_manager.hpp>
 
 #endif
