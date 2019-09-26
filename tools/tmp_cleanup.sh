@@ -6,7 +6,7 @@
 # Works on Windows and Linux
 #
 
-cd $TMPDIR
+cd /tmp
 
 # cse-core and cse-core4j
 rm -rf cse_*
