@@ -43,7 +43,7 @@ int main()
     }
 
     int64_t nanoStepSize = (int64_t)(0.1 * 1.0e9);
-    execution = cse_ssp_fixed_step_execution_create(sspDir, true, 0, true, nanoStepSize); // override ssp startTime
+    execution = cse_ssp_fixed_step_execution_create(sspDir, true, 0, nanoStepSize); // override ssp startTime
     if (!execution) { goto Lerror; }
 
     cse_execution_status status;

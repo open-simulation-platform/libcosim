@@ -111,7 +111,8 @@ private:
 };
 
 ssp_parser::ssp_parser(const boost::filesystem::path& xmlPath)
-    : hasSimulationInformation_(false), xmlPath_(xmlPath)
+    : hasSimulationInformation_(false)
+    , xmlPath_(xmlPath)
 {
     // Root node
     std::string path = "ssd:SystemStructureDescription";
@@ -290,6 +291,13 @@ cse::variable_id get_variable(
 
 } // namespace
 
+
+std::pair<execution, simulator_map> load_ssp(
+    cse::model_uri_resolver& resolver,
+    const boost::filesystem::path& sspDir)
+{
+    return load_ssp(resolver, sspDir, nullptr, std::nullopt);
+}
 
 std::pair<execution, simulator_map> load_ssp(
     cse::model_uri_resolver& resolver,

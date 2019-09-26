@@ -6,6 +6,9 @@ set(publicHeaders
     "async_slave.hpp"
     "config.hpp"
     "connection.hpp"
+    "connection/connection.hpp"
+    "connection/scalar_connection.hpp"
+    "connection/sum_connection.hpp"
     "cse_config_parser.hpp"
     "exception.hpp"
     "execution.hpp"
@@ -47,6 +50,8 @@ set(privateHeaders
 set(sources
     "algorithm.cpp"
     "async_slave.cpp"
+    "connection/scalar_connection.cpp"
+    "connection/sum_connection.cpp"
     "connection.cpp"
     "cse_config_parser.cpp"
     "exception.cpp"
