@@ -28,7 +28,7 @@ IncludeBlocks: Regroup
 IncludeCategories:
   - Regex:      '^[<"]cse[/.]'
     Priority:   20
-  - Regex:      '^[<"](boost|event2|fmilib|gsl|nlohmann|zip|xercesc)[/.]'
+  - Regex:      '^[<"](boost|event2|fmilib|gsl|nlohmann|xercesc|zip)[/.]'
     Priority:   30
   - Regex:      '^"'
     Priority:   10
