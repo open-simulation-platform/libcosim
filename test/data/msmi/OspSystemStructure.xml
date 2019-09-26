@@ -2,7 +2,7 @@
 <OspSystemStructure xmlns="http://opensimulationplatform.com/MSMI/OSPSystemStructure">
     <StartTime>0.0</StartTime>
     <BaseStepSize>1e-4</BaseStepSize>
-    <Algorithm>fixedStepMaster</Algorithm>
+    <Algorithm>fixedStep</Algorithm>
     <Simulators>
         <Simulator name="CraneController" source="../ssp/demo/CraneController.fmu" stepSize="2e-4">
             <InitialValues>

@@ -14,7 +14,7 @@
 void test(const boost::filesystem::path& configPath)
 {
     auto resolver = cse::default_model_uri_resolver();
-    auto simulation = cse::load_cse_config(*resolver, configPath, "C:\\MC\\git\\cse-core\\test\\data\\msmi\\SystemStructure.xsd", cse::to_time_point(0.0));
+    auto simulation = cse::load_cse_config(*resolver, configPath, "C:\\MC\\git\\cse-core\\test\\data\\msmi\\OspSystemStructure.xsd", cse::to_time_point(0.0));
     auto& execution = simulation.first;
 
     auto& simulator_map = simulation.second;
@@ -35,7 +35,7 @@ int main()
         const auto testDataDir = std::getenv("TEST_DATA_DIR");
         REQUIRE(testDataDir);
         test(boost::filesystem::path(testDataDir) / "msmi");
-        test(boost::filesystem::path(testDataDir) / "msmi" / "SystemStructure_Bond.xml");
+        test(boost::filesystem::path(testDataDir) / "msmi" / "OspSystemStructure_Bond.xml");
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what();
         return 1;

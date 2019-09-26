@@ -544,7 +544,7 @@ std::pair<execution, simulator_map> load_cse_config(
     simulator_map simulatorMap;
     const auto configFile = boost::filesystem::is_regular_file(configPath)
         ? configPath
-        : configPath / "SystemStructure.xml";
+        : configPath / "OspSystemStructure.xml";
     const auto baseURI = path_to_file_uri(configFile);
     const auto parser = cse_config_parser(configFile, schemaPath);
 
@@ -579,7 +579,7 @@ std::pair<execution, simulator_map> load_cse_config(
             slaves[simulator.name].variables[v.name] = v;
         }
 
-        std::string msmiFileName = model->description()->name + ".xml";
+        std::string msmiFileName = model->description()->name + "_OspModelDescription.xml";
         const auto msmiFilePath = configFile.parent_path() / msmiFileName;
         emds.emplace(simulator.name, msmiFilePath);
     }

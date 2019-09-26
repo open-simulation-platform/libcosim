@@ -6,7 +6,7 @@
             <xs:sequence>
                 <xs:element name="StartTime" minOccurs="0" default="0.0" type="xs:double"/>
                 <xs:element name="BaseStepSize" minOccurs="0" type="xs:double"/>
-                <xs:element name="Algorithm" minOccurs="0" default="fixedStepMaster" type="xs:string"/>
+                <xs:element name="Algorithm" minOccurs="0" default="fixedStep" type="xs:string"/>
                 <xs:element name="Simulators" type="simulators"/>
                 <xs:element name="PlugSocketConnections" type="plugSocketConnections"/>
                 <xs:element name="BondConnections" type="bondConnections"/>
