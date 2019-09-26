@@ -17,7 +17,7 @@ rm -rf fmi4j_*
 # Other known FMI related files
 
 # sintef vessel model FMU
-rm -rf vesselFmu_*
+rm -rf vesselFmu*
 
 # JavaFMI & JNA
 rm -rf fmu_*
