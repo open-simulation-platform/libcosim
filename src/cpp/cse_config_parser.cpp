@@ -246,8 +246,8 @@ const std::vector<cse_config_parser::ScalarConnection>& cse_config_parser::get_b
 
 struct slave_info
 {
-    cse::simulator_index index;
-    std::map<std::string, cse::variable_description> variables;
+    simulator_index index;
+    std::map<std::string, variable_description> variables;
 };
 
 
@@ -334,7 +334,28 @@ struct extended_model_description
     std::unordered_map<std::string, bond_description> bonds;
 };
 
-} // namespace
+variable_id get_variable(
+    const std::unordered_map<std::string, slave_info>& slaves,
+    const std::string& element,
+    const std::string& connector)
+{
+    auto slaveIt = slaves.find(element);
+    if (slaveIt == slaves.end()) {
+        std::ostringstream oss;
+        oss << "Cannot find slave: " << element;
+        throw std::out_of_range(oss.str());
+    }
+    auto slave = slaveIt->second;
+    auto vdIt = slave.variables.find(connector);
+    if (vdIt == slave.variables.end()) {
+        std::ostringstream oss;
+        oss << "Cannot find variable: " << element << ":" << connector;
+        throw std::out_of_range(oss.str());
+    }
+    auto variable = vdIt->second;
+    return {slave.index, variable.type, variable.reference};
+}
+
 
 void connect_variables(
     const std::vector<cse_config_parser::ScalarConnection>& variableConnections,
@@ -343,17 +364,39 @@ void connect_variables(
 {
 
     for (const auto& connection : variableConnections) {
-        cse::variable_id output = {slaves.at(connection.sourceSimulator).index,
-            slaves.at(connection.sourceSimulator).variables.at(connection.sourceConnector).type,
-            slaves.at(connection.sourceSimulator).variables.at(connection.sourceConnector).reference};
-
-        cse::variable_id input = {slaves.at(connection.targetSimulator).index,
-            slaves.at(connection.targetSimulator).variables.at(connection.targetConnector).type,
-            slaves.at(connection.targetSimulator).variables.at(connection.targetConnector).reference};
+        cse::variable_id output = get_variable(slaves, connection.sourceSimulator, connection.sourceConnector);
+        cse::variable_id input = get_variable(slaves, connection.targetSimulator, connection.targetConnector);
 
         auto c = std::make_shared<cse::scalar_connection>(output, input);
         execution.add_connection(c);
     }
+}
+
+extended_model_description get_emd(
+    const std::unordered_map<std::string, extended_model_description>& emds,
+    const std::string& element)
+{
+    auto slaveIt = emds.find(element);
+    if (slaveIt == emds.end()) {
+        std::ostringstream oss;
+        oss << "Cannot find slave: " << element;
+        throw std::out_of_range(oss.str());
+    }
+    return slaveIt->second;
+}
+
+std::vector<std::string> get_plug_socket_variables(
+    const std::unordered_map<std::string, plug_socket_description>& descriptions,
+    const std::string& element,
+    const std::string& connector)
+{
+    auto psdIt = descriptions.find(connector);
+    if (psdIt == descriptions.end()) {
+        std::ostringstream oss;
+        oss << "Cannot find plug/socket description: " << element << ":" << connector;
+        throw std::out_of_range(oss.str());
+    }
+    return psdIt->second.variables;
 }
 
 void connect_plugs_and_sockets(
@@ -364,10 +407,19 @@ void connect_plugs_and_sockets(
 {
 
     for (const auto& connection : plugSocketConnections) {
-        const auto& plugVariables = emds.at(connection.sourceSimulator).plugs.at(connection.sourceConnector).variables;
-        const auto& socketVariables = emds.at(connection.targetSimulator).sockets.at(connection.targetConnector).variables;
+        const auto& sourceEmd = get_emd(emds, connection.sourceSimulator);
+        const auto& plugVariables = get_plug_socket_variables(sourceEmd.plugs, connection.sourceSimulator, connection.sourceConnector);
+        const auto& targetEmd = get_emd(emds, connection.targetSimulator);
+        const auto& socketVariables = get_plug_socket_variables(targetEmd.sockets, connection.targetSimulator, connection.targetConnector);
 
-        assert(plugVariables.size() == socketVariables.size());
+        if (plugVariables.size() != socketVariables.size()) {
+            std::ostringstream oss;
+            oss << "Plug " << connection.sourceSimulator << ":" << connection.sourceConnector
+                << " has different size [" << plugVariables.size() << "] than the targeted socket "
+                << connection.targetSimulator << ":" << connection.targetConnector
+                << " size [" << socketVariables.size() << "]";
+            throw std::runtime_error(oss.str());
+        }
 
         std::vector<cse_config_parser::ScalarConnection> variableConnections;
 
@@ -382,6 +434,20 @@ void connect_plugs_and_sockets(
     }
 }
 
+const bond_description& get_bond_description(
+    const std::unordered_map<std::string, bond_description>& descriptions,
+    const std::string& element,
+    const std::string& bondName)
+{
+    auto bondIt = descriptions.find(bondName);
+    if (bondIt == descriptions.end()) {
+        std::ostringstream oss;
+        oss << "Cannot find bond description: " << element << ":" << bondName;
+        throw std::out_of_range(oss.str());
+    }
+    return bondIt->second;
+}
+
 void connect_bonds(
     const std::vector<cse_config_parser::ScalarConnection>& bondConnections,
     const std::unordered_map<std::string, slave_info>& slaves,
@@ -390,9 +456,20 @@ void connect_bonds(
 {
 
     for (const auto& connection : bondConnections) {
-        auto const& bondAPlugs = emds.at(connection.sourceSimulator).bonds.at(connection.sourceConnector).plugs;
-        auto const& bondBSockets = emds.at(connection.targetSimulator).bonds.at(connection.targetConnector).sockets;
-        assert(bondAPlugs.size() == bondBSockets.size());
+        const auto& bondAEmd = get_emd(emds, connection.sourceSimulator);
+        auto const& bondAPlugs = get_bond_description(bondAEmd.bonds, connection.sourceSimulator, connection.sourceConnector).plugs;
+        const auto& bondBEmd = get_emd(emds, connection.targetSimulator);
+        auto const& bondBSockets = get_bond_description(bondBEmd.bonds, connection.targetSimulator, connection.targetConnector).sockets;
+
+        if (bondAPlugs.size() != bondBSockets.size()) {
+            std::ostringstream oss;
+            oss << "Bond " << connection.sourceSimulator << ":" << connection.sourceConnector
+                << " has different number of plugs [" << bondAPlugs.size() << "] "
+                << " than the number of sockets [" << bondBSockets.size() << "] for targeted bond "
+                << connection.targetSimulator << ":" << connection.targetConnector;
+            throw std::runtime_error(oss.str());
+        }
+
         std::vector<cse_config_parser::ScalarConnection> plugSocketConnectionsA;
         for (std::size_t i = 0; i < bondAPlugs.size(); ++i) {
             plugSocketConnectionsA.push_back({connection.sourceSimulator,
@@ -402,9 +479,17 @@ void connect_bonds(
         }
         connect_plugs_and_sockets(plugSocketConnectionsA, slaves, execution, emds);
 
-        auto const& bondASockets = emds.at(connection.sourceSimulator).bonds.at(connection.sourceConnector).sockets;
-        auto const& bondBPlugs = emds.at(connection.targetSimulator).bonds.at(connection.targetConnector).plugs;
-        assert(bondASockets.size() == bondBPlugs.size());
+        const auto& bondASockets = get_bond_description(bondAEmd.bonds, connection.sourceSimulator, connection.sourceConnector).sockets;
+        const auto& bondBPlugs = get_bond_description(bondBEmd.bonds, connection.targetSimulator, connection.targetConnector).plugs;
+
+        if (bondASockets.size() != bondBPlugs.size()) {
+            std::ostringstream oss;
+            oss << "Bond " << connection.sourceSimulator << ":" << connection.sourceConnector
+                << " has different number of sockets [" << bondASockets.size() << "] "
+                << " than the number of plugs [" << bondBPlugs.size() << "] for targeted bond "
+                << connection.targetSimulator << ":" << connection.targetConnector;
+            throw std::runtime_error(oss.str());
+        }
         std::vector<cse_config_parser::ScalarConnection> plugSocketConnectionsB;
         for (std::size_t i = 0; i < bondASockets.size(); ++i) {
             plugSocketConnectionsB.push_back({connection.targetSimulator,
@@ -424,13 +509,9 @@ void connect_sum(
     for (const auto& sumConnection : sumConnections) {
         std::vector<variable_id> sources;
         for (const auto& [sim, var] : sumConnection.sources) {
-            sources.push_back({slaves.at(sim).index,
-                slaves.at(sim).variables.at(var).type,
-                slaves.at(sim).variables.at(var).reference});
+            sources.push_back(get_variable(slaves, sim, var));
         }
-        auto target = variable_id{slaves.at(sumConnection.target.first).index,
-            slaves.at(sumConnection.target.first).variables.at(sumConnection.target.second).type,
-            slaves.at(sumConnection.target.first).variables.at(sumConnection.target.second).reference};
+        auto target = get_variable(slaves, sumConnection.target.first, sumConnection.target.second);
         auto c = std::make_shared<sum_connection>(sources, target);
         execution.add_connection(c);
     }
@@ -438,25 +519,27 @@ void connect_sum(
 
 int calculate_decimation_factor(const std::string& name, duration baseStepSize, double modelStepSize)
 {
-    auto slaveStepSize = to_duration(modelStepSize);
-    auto result = std::div(slaveStepSize.count(), baseStepSize.count());
-    int factor = std::max<int>(1, static_cast<int>(result.quot));
+    const auto slaveStepSize = to_duration(modelStepSize);
+    const auto result = std::div(slaveStepSize.count(), baseStepSize.count());
+    const int factor = std::max<int>(1, static_cast<int>(result.quot));
     if (result.rem > 0 || result.quot < 1) {
         duration actualStepSize = baseStepSize * factor;
         const auto startTime = time_point();
         BOOST_LOG_SEV(log::logger(), log::warning)
-        << "Effective step size for " << name
-        << " will be " << to_double_duration(actualStepSize, startTime) << " s"
-        << " instead of configured value " << modelStepSize << " s";
+            << "Effective step size for " << name
+            << " will be " << to_double_duration(actualStepSize, startTime) << " s"
+            << " instead of configured value " << modelStepSize << " s";
     }
     return factor;
 }
 
+} // namespace
+
 std::pair<execution, simulator_map> load_cse_config(
-    cse::model_uri_resolver& resolver,
+    model_uri_resolver& resolver,
     const boost::filesystem::path& configPath,
     const boost::filesystem::path& schemaPath,
-    std::optional<cse::time_point> overrideStartTime)
+    std::optional<time_point> overrideStartTime)
 {
     simulator_map simulatorMap;
     const auto configFile = boost::filesystem::is_regular_file(configPath)
@@ -472,23 +555,23 @@ std::pair<execution, simulator_map> load_cse_config(
         BOOST_LOG_SEV(log::logger(), log::error) << oss.str();
         throw std::invalid_argument(oss.str());
     }
-    const cse::duration stepSize = cse::to_duration(simInfo.stepSize);
+    const duration stepSize = to_duration(simInfo.stepSize);
 
     auto simulators = parser.get_elements();
 
-    const auto startTime = overrideStartTime ? *overrideStartTime : cse::to_time_point(simInfo.startTime);
+    const auto startTime = overrideStartTime ? *overrideStartTime : to_time_point(simInfo.startTime);
 
-    auto algorithm = std::make_shared<cse::fixed_step_algorithm>(stepSize);
-    auto execution = cse::execution(startTime, algorithm);
+    auto algo = std::make_shared<fixed_step_algorithm>(stepSize);
+    auto exec = execution(startTime, algo);
 
     std::unordered_map<std::string, slave_info> slaves;
     std::unordered_map<std::string, extended_model_description> emds;
     for (const auto& simulator : simulators) {
         auto model = resolver.lookup_model(baseURI, simulator.source);
         auto slave = model->instantiate(simulator.name);
-        simulator_index index = slaves[simulator.name].index = execution.add_slave(slave, simulator.name);
+        simulator_index index = slaves[simulator.name].index = exec.add_slave(slave, simulator.name);
         if (simulator.stepSize) {
-            algorithm->set_stepsize_decimation_factor(index, calculate_decimation_factor(simulator.name, stepSize, *simulator.stepSize));
+            algo->set_stepsize_decimation_factor(index, calculate_decimation_factor(simulator.name, stepSize, *simulator.stepSize));
         }
         simulatorMap[simulator.name] = simulator_map_entry{index, simulator.source, *model->description()};
 
@@ -501,12 +584,12 @@ std::pair<execution, simulator_map> load_cse_config(
         emds.emplace(simulator.name, msmiFilePath);
     }
 
-    connect_variables(parser.get_scalar_connections(), slaves, execution);
-    connect_sum(parser.get_sum_connections(), slaves, execution);
-    connect_plugs_and_sockets(parser.get_plug_socket_connections(), slaves, execution, emds);
-    connect_bonds(parser.get_bond_connections(), slaves, execution, emds);
+    connect_variables(parser.get_scalar_connections(), slaves, exec);
+    connect_sum(parser.get_sum_connections(), slaves, exec);
+    connect_plugs_and_sockets(parser.get_plug_socket_connections(), slaves, exec, emds);
+    connect_bonds(parser.get_bond_connections(), slaves, exec, emds);
 
-    return std::make_pair(std::move(execution), std::move(simulatorMap));
+    return std::make_pair(std::move(exec), std::move(simulatorMap));
 }
 
 } // namespace cse
