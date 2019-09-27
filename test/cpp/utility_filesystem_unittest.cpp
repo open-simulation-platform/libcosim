@@ -37,3 +37,20 @@ BOOST_AUTO_TEST_CASE(temp_dir)
     }
     BOOST_TEST(!fs::exists(d));
 }
+
+
+BOOST_AUTO_TEST_CASE(lock_file)
+{
+    const auto workDir = cse::utility::temp_dir();
+    const auto lockFilePath = workDir.path() / "lock";
+    auto lock1 = cse::utility::lock_file(lockFilePath);
+    {
+        auto lock2 = cse::utility::lock_file(lockFilePath);
+        lock1.lock();
+        BOOST_TEST_REQUIRE(!lock2.try_lock());
+        lock1.unlock();
+        BOOST_TEST_REQUIRE(lock2.try_lock());
+        BOOST_TEST_REQUIRE(!lock1.try_lock());
+    }
+    BOOST_TEST_REQUIRE(lock1.try_lock());
+}
