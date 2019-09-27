@@ -52,7 +52,6 @@ set(sources
     "async_slave.cpp"
     "connection/scalar_connection.cpp"
     "connection/sum_connection.cpp"
-    "connection.cpp"
     "cse_config_parser.cpp"
     "exception.cpp"
     "execution.cpp"
