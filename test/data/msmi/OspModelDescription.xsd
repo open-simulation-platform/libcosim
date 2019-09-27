@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified"
-           targetNamespace="http://opensimulationplatform.com/MSMI/OSPModelDescription">
+           targetNamespace="http://opensimulationplatform.com/MSMI/OSPModelDescription"
+           xmlns:osp="http://opensimulationplatform.com/MSMI/OSPModelDescription">
     <xs:element name="OspModelDescription">
         <xs:complexType>
             <xs:sequence>
-                <xs:element name="Sockets" type="sockets"/>
-                <xs:element name="Plugs" type="plugs"/>
-                <xs:element name="Bonds" type="bonds"/>
+                <xs:element name="Sockets" type="osp:sockets"/>
+                <xs:element name="Plugs" type="osp:plugs"/>
+                <xs:element name="Bonds" type="osp:bonds"/>
             </xs:sequence>
         </xs:complexType>
     </xs:element>
@@ -15,7 +16,7 @@
             <xs:element name="Socket" minOccurs="0" maxOccurs="unbounded">
                 <xs:complexType>
                     <xs:sequence>
-                        <xs:element name="Variables" type="variables"/>
+                        <xs:element name="Variables" type="osp:variables"/>
                     </xs:sequence>
                     <xs:attribute name="name"/>
                     <xs:attribute name="type"/>
@@ -28,7 +29,7 @@
             <xs:element name="Plug" minOccurs="0" maxOccurs="unbounded">
                 <xs:complexType>
                     <xs:sequence>
-                        <xs:element name="Variables" type="variables"/>
+                        <xs:element name="Variables" type="osp:variables"/>
                     </xs:sequence>
                     <xs:attribute name="name"/>
                     <xs:attribute name="type"/>
@@ -71,7 +72,7 @@
     </xs:complexType>
     <xs:complexType name="variables">
         <xs:sequence>
-            <xs:element name="Variable">
+            <xs:element name="Variable" maxOccurs="unbounded">
                 <xs:complexType>
                     <xs:attribute name="name"/>
                 </xs:complexType>

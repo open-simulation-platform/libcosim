@@ -1,16 +1,17 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified"
-           targetNamespace="http://opensimulationplatform.com/MSMI/OSPSystemStructure">
+           targetNamespace="http://opensimulationplatform.com/MSMI/OSPSystemStructure"
+           xmlns:osp="http://opensimulationplatform.com/MSMI/OSPSystemStructure">
     <xs:element name="OspSystemStructure">
         <xs:complexType>
             <xs:sequence>
                 <xs:element name="StartTime" minOccurs="0" default="0.0" type="xs:double"/>
                 <xs:element name="BaseStepSize" minOccurs="0" type="xs:double"/>
                 <xs:element name="Algorithm" minOccurs="0" default="fixedStep" type="xs:string"/>
-                <xs:element name="Simulators" type="simulators"/>
-                <xs:element name="PlugSocketConnections" type="plugSocketConnections"/>
-                <xs:element name="BondConnections" type="bondConnections"/>
-                <xs:element name="VariableConnections" type="variableConnections"/>
+                <xs:element name="Simulators" type="osp:simulators"/>
+                <xs:element name="PlugSocketConnections" type="osp:plugSocketConnections"/>
+                <xs:element name="BondConnections" type="osp:bondConnections"/>
+                <xs:element name="VariableConnections" type="osp:variableConnections"/>
             </xs:sequence>
         </xs:complexType>
     </xs:element>
@@ -19,8 +20,8 @@
             <xs:element name="PlugSocketConnection" minOccurs="0" maxOccurs="unbounded">
                 <xs:complexType>
                     <xs:sequence>
-                        <xs:element name="Source" type="connectionEndpoint"/>
-                        <xs:element name="Target" type="connectionEndpoint"/>
+                        <xs:element name="Source" type="osp:connectionEndpoint"/>
+                        <xs:element name="Target" type="osp:connectionEndpoint"/>
                     </xs:sequence>
                 </xs:complexType>
             </xs:element>
@@ -30,9 +31,9 @@
         <xs:sequence>
             <xs:element name="BondConnection" minOccurs="0" maxOccurs="unbounded">
                 <xs:complexType>
-                   <xs:sequence>
-                       <xs:element name="Bond" type="connectionEndpoint" minOccurs="2" maxOccurs="2"/>
-                   </xs:sequence>
+                    <xs:sequence>
+                        <xs:element name="Bond" type="osp:connectionEndpoint" minOccurs="2" maxOccurs="2"/>
+                    </xs:sequence>
                 </xs:complexType>
             </xs:element>
         </xs:sequence>
@@ -42,8 +43,8 @@
             <xs:element name="ScalarConnection" minOccurs="0" maxOccurs="unbounded">
                 <xs:complexType>
                     <xs:sequence>
-                        <xs:element name="Source" type="connectionEndpoint"/>
-                        <xs:element name="Target" type="connectionEndpoint"/>
+                        <xs:element name="Source" type="osp:connectionEndpoint"/>
+                        <xs:element name="Target" type="osp:connectionEndpoint"/>
                     </xs:sequence>
                 </xs:complexType>
             </xs:element>
@@ -53,11 +54,11 @@
                         <xs:element name="Sources">
                             <xs:complexType>
                                 <xs:sequence>
-                                    <xs:element name="Source" maxOccurs="unbounded" type="connectionEndpoint"/>
+                                    <xs:element name="Source" maxOccurs="unbounded" type="osp:connectionEndpoint"/>
                                 </xs:sequence>
                             </xs:complexType>
                         </xs:element>
-                        <xs:element name="Target" type="connectionEndpoint"/>
+                        <xs:element name="Target" type="osp:connectionEndpoint"/>
                     </xs:sequence>
                 </xs:complexType>
             </xs:element>
