@@ -100,6 +100,13 @@ file_uri_sub_resolver::file_uri_sub_resolver()
 }
 
 
+file_uri_sub_resolver::file_uri_sub_resolver(
+    const boost::filesystem::path& cacheDir)
+    : importer_(fmi::importer::create(cacheDir))
+{
+}
+
+
 std::shared_ptr<model> file_uri_sub_resolver::lookup_model(const uri& modelUri)
 {
     assert(modelUri.scheme().has_value());

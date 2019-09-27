@@ -168,6 +168,8 @@ class file_uri_sub_resolver : public model_uri_sub_resolver
 public:
     file_uri_sub_resolver();
 
+    explicit file_uri_sub_resolver(const boost::filesystem::path& cacheDir);
+
     std::shared_ptr<model> lookup_model(const uri& modelUri) override;
 
 private:
