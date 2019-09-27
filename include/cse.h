@@ -199,12 +199,14 @@ typedef struct cse_slave_s cse_slave;
  *
  *  \param [in] fmuPath
  *      Path to FMU.
+ *  \param [in] instanceName
+ *      Unique name of the instance.
  *
  *  \returns
  *      A pointer to an object which holds the local slave object,
  *      or NULL on error.
  */
-cse_slave* cse_local_slave_create(const char* fmuPath);
+cse_slave* cse_local_slave_create(const char* fmuPath, const char* instanceName);
 
 /**
  *  Destroys a local slave.

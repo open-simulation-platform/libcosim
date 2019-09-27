@@ -353,19 +353,21 @@ int cse_slave_get_variables(cse_execution* execution, cse_slave_index slave, cse
 struct cse_slave_s
 {
     std::string address;
-    std::string name;
+    std::string modelName;
+    std::string instanceName;
     std::string source;
     std::shared_ptr<cse::slave> instance;
 };
 
-cse_slave* cse_local_slave_create(const char* fmuPath)
+cse_slave* cse_local_slave_create(const char* fmuPath, const char* instanceName)
 {
     try {
         const auto importer = cse::fmi::importer::create();
         const auto fmu = importer->import(fmuPath);
         auto slave = std::make_unique<cse_slave>();
-        slave->name = fmu->model_description()->name;
-        slave->instance = fmu->instantiate_slave(slave->name);
+        slave->modelName = fmu->model_description()->name;
+        slave->instanceName = std::string(instanceName);
+        slave->instance = fmu->instantiate_slave(slave->instanceName);
         // slave address not in use yet. Should be something else than a string.
         slave->address = "local";
         slave->source = fmuPath;
@@ -393,8 +395,8 @@ cse_slave_index cse_execution_add_slave(
     cse_slave* slave)
 {
     try {
-        auto index = execution->cpp_execution->add_slave(cse::make_background_thread_slave(slave->instance), slave->name);
-        execution->simulators[slave->name] = cse::simulator_map_entry{index, slave->source, slave->instance->model_description()};
+        auto index = execution->cpp_execution->add_slave(cse::make_background_thread_slave(slave->instance), slave->instanceName);
+        execution->simulators[slave->instanceName] = cse::simulator_map_entry{index, slave->source, slave->instance->model_description()};
         return index;
     } catch (...) {
         handle_current_exception();

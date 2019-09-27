@@ -49,7 +49,7 @@ int main()
     execution = cse_execution_create(0, nanoStepSize);
     if (!execution) { goto Lerror; }
 
-    slave = cse_local_slave_create(fmuPath);
+    slave = cse_local_slave_create(fmuPath, "slave");
     if (!slave) { goto Lerror; }
 
     observer = cse_time_series_observer_create();
