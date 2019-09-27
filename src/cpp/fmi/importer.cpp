@@ -224,10 +224,11 @@ std::shared_ptr<fmu> importer::import(const boost::filesystem::path& fmuPath)
     if (git != end(guidCache_)) return git->second.lock();
 
     const auto fmuUnpackDir = fmuDir_ / sanitise_path(minModelDesc.guid);
-    if (!boost::filesystem::exists(fmuUnpackDir) ||
-        !boost::filesystem::exists(fmuUnpackDir / "modelDescription.xml") ||
+    boost::filesystem::create_directories(fmuUnpackDir);
+    auto fmuUnpackDirLock = utility::lock_file(fmuUnpackDir.string() + ".lock");
+    fmuUnpackDirLock.lock();
+    if (!boost::filesystem::exists(fmuUnpackDir / "modelDescription.xml") ||
         boost::filesystem::last_write_time(fmuPath) > boost::filesystem::last_write_time(fmuUnpackDir / "modelDescription.xml")) {
-        boost::filesystem::create_directories(fmuUnpackDir);
         try {
             zip.extract_all(fmuUnpackDir);
         } catch (...) {
@@ -236,6 +237,7 @@ std::shared_ptr<fmu> importer::import(const boost::filesystem::path& fmuPath)
             throw;
         }
     }
+    fmuUnpackDirLock.unlock();
 
     auto fmuObj = minModelDesc.fmiVersion == fmi_version::v1_0
         ? std::shared_ptr<fmu>(new v1::fmu(shared_from_this(), fmuUnpackDir))
