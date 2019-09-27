@@ -129,12 +129,20 @@ std::shared_ptr<model> file_uri_sub_resolver::lookup_model(const uri& modelUri)
 // misc
 // =============================================================================
 
-std::shared_ptr<model_uri_resolver> default_model_uri_resolver()
+std::shared_ptr<model_uri_resolver> default_model_uri_resolver(
+    const boost::filesystem::path* cacheDir)
 {
     auto resolver = std::make_shared<model_uri_resolver>();
-    resolver->add_sub_resolver(std::make_shared<file_uri_sub_resolver>());
+    if (cacheDir) {
+        resolver->add_sub_resolver(
+            std::make_shared<file_uri_sub_resolver>(*cacheDir / "fmus"));
+    } else {
+        resolver->add_sub_resolver(
+            std::make_shared<file_uri_sub_resolver>());
+    }
 #ifdef HAS_FMUPROXY
-    resolver->add_sub_resolver(std::make_shared<fmuproxy::fmuproxy_uri_sub_resolver>());
+    resolver->add_sub_resolver(
+        std::make_shared<fmuproxy::fmuproxy_uri_sub_resolver>());
 #endif
     return resolver;
 }

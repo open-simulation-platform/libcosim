@@ -177,8 +177,15 @@ private:
 };
 
 
-/// Returns a resolver for all URI schemes supported natively by CSE.
-std::shared_ptr<model_uri_resolver> default_model_uri_resolver();
+/**
+ *  Returns a resolver for all URI schemes supported natively by CSE.
+ *
+ *  If `cacheDir` is not null, it will be used for caching by the URI
+ *  resolvers that support it (e.g. for unpacking of FMUs by the `file`
+ *  URI resolver).
+ */
+std::shared_ptr<model_uri_resolver> default_model_uri_resolver(
+    const boost::filesystem::path* cacheDir = nullptr);
 
 
 } // namespace cse
