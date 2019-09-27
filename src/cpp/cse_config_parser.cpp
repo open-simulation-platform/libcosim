@@ -32,6 +32,35 @@ std::shared_ptr<char> tc(const XMLCh* str)
         [](char* ptr) { xercesc::XMLString::release(&ptr); });
 }
 
+class error_handler : public xercesc::DOMErrorHandler
+{
+public:
+    error_handler()
+        : failed_(false)
+    {}
+
+    bool failed() const { return failed_; }
+
+    bool handleError(const xercesc::DOMError& e) override
+    {
+        bool warn(e.getSeverity() == xercesc::DOMError::DOM_SEVERITY_WARNING);
+
+        if (!warn)
+            failed_ = true;
+
+        xercesc::DOMLocator* loc(e.getLocation());
+
+        BOOST_LOG_SEV(log::logger(), warn ? log::warning : log::error)
+            << tc(loc->getURI()).get() << ":"
+            << loc->getLineNumber() << ":" << loc->getColumnNumber() << " " << tc(e.getMessage()).get();
+
+        return true;
+    }
+
+private:
+    bool failed_;
+};
+
 class cse_config_parser
 {
 
@@ -112,12 +141,32 @@ cse_config_parser::cse_config_parser(
     const auto xerces_cleanup = gsl::final_act([]() {
         xercesc::XMLPlatformUtils::Terminate();
     });
+
+    error_handler errorHandler;
+
     const auto domImpl = xercesc::DOMImplementationRegistry::getDOMImplementation(tc("LS").get());
-    const auto parser = static_cast<xercesc::DOMImplementationLS*>(domImpl)->createLSParser(xercesc::DOMImplementationLS::MODE_SYNCHRONOUS, 0);
-    parser->getDomConfig()->setParameter(xercesc::XMLUni::fgDOMValidate, true);
+    const auto parser = static_cast<xercesc::DOMImplementationLS*>(domImpl)->createLSParser(xercesc::DOMImplementationLS::MODE_SYNCHRONOUS, tc("http://www.w3.org/2001/XMLSchema").get());
+    if (!parser->loadGrammar(schemaPath.string().c_str(), xercesc::Grammar::SchemaGrammarType)) {
+        throw std::runtime_error("Could not load grammar: " + schemaPath.filename().string());
+    }
+    parser->getDomConfig()->setParameter(xercesc::XMLUni::fgDOMErrorHandler, &errorHandler);
+    parser->getDomConfig()->setParameter(xercesc::XMLUni::fgDOMComments, false);
+    parser->getDomConfig()->setParameter(xercesc::XMLUni::fgDOMDatatypeNormalization, true);
+    parser->getDomConfig()->setParameter(xercesc::XMLUni::fgDOMEntities, false);
     parser->getDomConfig()->setParameter(xercesc::XMLUni::fgDOMNamespaces, true);
-    parser->getDomConfig()->setParameter(xercesc::XMLUni::fgXercesSchemaExternalSchemaLocation, schemaPath.string().c_str()); // TODO: This doesn't work at all :(
+    parser->getDomConfig()->setParameter(xercesc::XMLUni::fgDOMElementContentWhitespace, false);
+    parser->getDomConfig()->setParameter(xercesc::XMLUni::fgDOMValidate, true);
+    parser->getDomConfig()->setParameter(xercesc::XMLUni::fgXercesSchema, true);
+    parser->getDomConfig()->setParameter(xercesc::XMLUni::fgXercesSchemaFullChecking, false);
+    parser->getDomConfig()->setParameter(xercesc::XMLUni::fgXercesLoadSchema, false); // TODO: This doesn't work at all :(
     const auto doc = parser->parseURI(configPath.string().c_str());
+
+    if (errorHandler.failed()) {
+        std::ostringstream oss;
+        oss << "Validation of " << configPath.string() << " failed.";
+        BOOST_LOG_SEV(log::logger(), log::error) << oss.str();
+//        throw std::runtime_error(oss.str());
+    }
 
     //    const auto rootElement = doc->getElementsByTagName(tc("OspSystemStructure"))->item(0);
     const auto rootElement = doc->getDocumentElement();
@@ -210,6 +259,7 @@ cse_config_parser::cse_config_parser(
 
         bondConnections_.push_back({simulatorA, bondNameA, simulatorB, bondNameB});
     }
+    parser->release();
 }
 
 cse_config_parser::~cse_config_parser() noexcept = default;
@@ -276,7 +326,7 @@ struct extended_model_description
             xercesc::XMLPlatformUtils::Terminate();
         });
         const auto domImpl = xercesc::DOMImplementationRegistry::getDOMImplementation(tc("LS").get());
-        const auto parser = static_cast<xercesc::DOMImplementationLS*>(domImpl)->createLSParser(xercesc::DOMImplementationLS::MODE_SYNCHRONOUS, 0);
+        const auto parser = static_cast<xercesc::DOMImplementationLS*>(domImpl)->createLSParser(xercesc::DOMImplementationLS::MODE_SYNCHRONOUS, tc("http://www.w3.org/2001/XMLSchema").get());
         const auto doc = parser->parseURI(ospModelDescription.string().c_str());
         // TODO: Check return value for null
 
