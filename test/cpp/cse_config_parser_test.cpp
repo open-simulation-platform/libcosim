@@ -1,6 +1,6 @@
+#include <cse/cse_config_parser.hpp>
 #include <cse/log/simple.hpp>
 #include <cse/orchestration.hpp>
-#include <cse/cse_config_parser.hpp>
 
 #include <boost/filesystem.hpp>
 
@@ -13,8 +13,11 @@
 
 void test(const boost::filesystem::path& configPath)
 {
+    const auto testDataDir = std::getenv("TEST_DATA_DIR");
+    REQUIRE(testDataDir);
+
     auto resolver = cse::default_model_uri_resolver();
-    auto simulation = cse::load_cse_config(*resolver, configPath, "C:\\MC\\git\\cse-core\\test\\data\\msmi\\OspSystemStructure.xsd", cse::to_time_point(0.0));
+    auto simulation = cse::load_cse_config(*resolver, configPath, boost::filesystem::path(testDataDir) / "msmi/OspSystemStructure.xsd", cse::to_time_point(0.0));
     auto& execution = simulation.first;
 
     auto& simulator_map = simulation.second;

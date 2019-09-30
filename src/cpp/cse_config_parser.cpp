@@ -142,13 +142,14 @@ cse_config_parser::cse_config_parser(
         xercesc::XMLPlatformUtils::Terminate();
     });
 
-    error_handler errorHandler;
+    const auto extSchemaLocation = tc("http://opensimulationplatform.com/MSMI/OSPSystemStructure OspSystemStructure.xsd");
 
+    error_handler errorHandler;
     const auto domImpl = xercesc::DOMImplementationRegistry::getDOMImplementation(tc("LS").get());
     const auto parser = static_cast<xercesc::DOMImplementationLS*>(domImpl)->createLSParser(xercesc::DOMImplementationLS::MODE_SYNCHRONOUS, tc("http://www.w3.org/2001/XMLSchema").get());
-    if (!parser->loadGrammar(schemaPath.string().c_str(), xercesc::Grammar::SchemaGrammarType)) {
-        throw std::runtime_error("Could not load grammar: " + schemaPath.filename().string());
-    }
+
+    parser->loadGrammar(schemaPath.string().c_str(), xercesc::Grammar::SchemaGrammarType);
+
     parser->getDomConfig()->setParameter(xercesc::XMLUni::fgDOMErrorHandler, &errorHandler);
     parser->getDomConfig()->setParameter(xercesc::XMLUni::fgDOMComments, false);
     parser->getDomConfig()->setParameter(xercesc::XMLUni::fgDOMDatatypeNormalization, true);
@@ -157,18 +158,19 @@ cse_config_parser::cse_config_parser(
     parser->getDomConfig()->setParameter(xercesc::XMLUni::fgDOMElementContentWhitespace, false);
     parser->getDomConfig()->setParameter(xercesc::XMLUni::fgDOMValidate, true);
     parser->getDomConfig()->setParameter(xercesc::XMLUni::fgXercesSchema, true);
-    parser->getDomConfig()->setParameter(xercesc::XMLUni::fgXercesSchemaFullChecking, false);
-    parser->getDomConfig()->setParameter(xercesc::XMLUni::fgXercesLoadSchema, false); // TODO: This doesn't work at all :(
+    parser->getDomConfig()->setParameter(xercesc::XMLUni::fgXercesSchemaFullChecking, true);
+    parser->getDomConfig()->setParameter(xercesc::XMLUni::fgXercesSchemaExternalSchemaLocation, extSchemaLocation.get());
+    parser->getDomConfig()->setParameter(xercesc::XMLUni::fgXercesLoadSchema, true);
+
     const auto doc = parser->parseURI(configPath.string().c_str());
 
     if (errorHandler.failed()) {
         std::ostringstream oss;
         oss << "Validation of " << configPath.string() << " failed.";
         BOOST_LOG_SEV(log::logger(), log::error) << oss.str();
-//        throw std::runtime_error(oss.str());
+        throw std::runtime_error(oss.str());
     }
 
-    //    const auto rootElement = doc->getElementsByTagName(tc("OspSystemStructure"))->item(0);
     const auto rootElement = doc->getDocumentElement();
 
     const auto simulators = static_cast<xercesc::DOMElement*>(rootElement->getElementsByTagName(tc("Simulators").get())->item(0));
