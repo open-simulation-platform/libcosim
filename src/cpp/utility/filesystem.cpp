@@ -100,6 +100,17 @@ lock_file::lock_file(const boost::filesystem::path& path)
 }
 
 
+lock_file::~lock_file() noexcept
+{
+    unlock();
+#ifdef _WIN32
+    CloseHandle(file_);
+#else
+    close(file_);
+#endif
+}
+
+
 namespace
 {
 #ifdef _WIN32
@@ -173,17 +184,6 @@ bool lock_file::try_lock()
 void lock_file::unlock() noexcept
 {
     os_unlock_file(file_);
-}
-
-
-lock_file::~lock_file() noexcept
-{
-    unlock();
-#ifdef _WIN32
-    CloseHandle(file_);
-#else
-    close(file_);
-#endif
 }
 
 

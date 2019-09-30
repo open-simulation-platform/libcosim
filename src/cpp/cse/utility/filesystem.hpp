@@ -83,8 +83,20 @@ public:
      *  The file must be writable by the current process, but it will not be
      *  modified if it already exists.  If it does not exist, it will be
      *  created.
+     *
+     *  The constructor will not attempt to lock the file. Use `lock()` to
+     *  do this.
      */
     explicit lock_file(const boost::filesystem::path& path);
+
+    /// Calls `unlock()` and closes the file.
+    ~lock_file() noexcept;
+
+    // Copying and moving are not allowed
+    lock_file(const lock_file&) = delete;
+    lock_file& operator=(const lock_file&) = delete;
+    lock_file(lock_file&&) = delete;
+    lock_file& operator=(lock_file&&) = delete;
 
     /// Acquires a lock on the file, blocking if necessary.
     void lock();
@@ -97,13 +109,6 @@ public:
 
     /// Releases the lock, if one is held.
     void unlock() noexcept;
-
-    /**
-     *  Releases the lock, if one is held.
-     *
-     *  The file gets closed but not deleted.
-     */
-    ~lock_file() noexcept;
 
 private:
     boost::filesystem::path path_;
