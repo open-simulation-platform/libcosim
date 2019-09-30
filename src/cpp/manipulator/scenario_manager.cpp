@@ -1,6 +1,7 @@
+#include "cse/manipulator.hpp"
+
 #include "cse/algorithm.hpp"
 #include "cse/log/logger.hpp"
-#include "cse/manipulator.hpp"
 #include "cse/scenario.hpp"
 #include "cse/scenario_parser.hpp"
 
