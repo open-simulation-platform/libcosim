@@ -116,8 +116,7 @@ bool os_lock_file(
     std::memset(&overlapped, 0, sizeof overlapped);
     const auto locked = LockFileEx(file, flags, 0, 1, 0, &overlapped);
     if (!locked) {
-        // TODO: Check error code for non-blocking lock failure. ERROR_CANT_WAIT?
-        if (!block) return false;
+        if (!block && GetLastError() == ERROR_LOCK_VIOLATION) return false;
         throw std::system_error(
             GetLastError(),
             std::system_category(),
