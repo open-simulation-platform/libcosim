@@ -4,6 +4,7 @@
 
 #include <cse.h>
 #include <cse/algorithm.hpp>
+#include <cse/cse_config_parser.hpp>
 #include <cse/exception.hpp>
 #include <cse/execution.hpp>
 #include <cse/fmi/fmu.hpp>
@@ -149,6 +150,31 @@ cse_execution* cse_execution_create(cse_time_point startTime, cse_duration stepS
             std::make_unique<cse::fixed_step_algorithm>(to_duration(stepSize)));
         execution->error_code = CSE_ERRC_SUCCESS;
         execution->state = CSE_EXECUTION_STOPPED;
+
+        return execution.release();
+    } catch (...) {
+        handle_current_exception();
+        return nullptr;
+    }
+}
+
+cse_execution* cse_config_execution_create(
+    const char* configDir,
+    bool startTimeDefined,
+    cse_time_point startTime)
+{
+    try {
+        auto execution = std::make_unique<cse_execution>();
+
+        auto resolver = cse::default_model_uri_resolver();
+        auto sim = cse::load_cse_config(
+            *resolver,
+            configDir,
+            configDir,
+            startTimeDefined ? std::optional<cse::time_point>(to_time_point(startTime)) : std::nullopt);
+
+        execution->cpp_execution = std::make_unique<cse::execution>(std::move(sim.first));
+        execution->simulators = std::move(sim.second);
 
         return execution.release();
     } catch (...) {

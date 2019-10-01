@@ -140,6 +140,25 @@ cse_execution* cse_execution_create(
     cse_duration stepSize);
 
 /**
+ *  Creates a new execution based on an OspSystemStructure.xml file.
+ *
+ *  \param [in] sspDir
+ *      Path to an OspSystemStructure.xml file, or a directory holding OspSystemStructure.xml
+ *  \param [in] startTimeDefined
+ *      Defines whether or not the following startTime variable should be ignored or not.
+ *  \param [in] startTime
+ *      The (logical) time point at which the simulation should start.
+ *      If startTimeDefined=false, this variable will be ignored and a default value will be used.
+ *  \returns
+ *      A pointer to an object which holds the execution state,
+ *      or NULL on error.
+ */
+cse_execution* cse_config_execution_create(
+    const char* configDir,
+    bool startTimeDefined,
+    cse_time_point startTime);
+
+/**
  *  Creates a new execution based on a SystemStructure.ssd file.
  *
  *  \param [in] sspDir
