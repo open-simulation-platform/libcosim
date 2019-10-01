@@ -1,8 +1,8 @@
 #ifndef CSECORE_MANIPULATOR_OVERRIDE_MANIPULATOR_HPP
 #define CSECORE_MANIPULATOR_OVERRIDE_MANIPULATOR_HPP
 
-#include <cse/scenario.hpp>
 #include <cse/manipulator/manipulator.hpp>
+#include <cse/scenario.hpp>
 
 #include <mutex>
 #include <unordered_map>
@@ -16,7 +16,7 @@ namespace cse
 class override_manipulator : public manipulator
 {
 public:
-    void simulator_added(simulator_index, simulator*, time_point) override;
+    void simulator_added(simulator_index, manipulable*, time_point) override;
 
     void simulator_removed(simulator_index, time_point) override;
 
@@ -46,7 +46,7 @@ private:
             scenario::boolean_modifier,
             scenario::string_modifier>& m);
 
-    std::unordered_map<simulator_index, simulator*> simulators_;
+    std::unordered_map<simulator_index, manipulable*> simulators_;
     std::vector<scenario::variable_action> actions_;
     std::mutex lock_;
 };

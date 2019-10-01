@@ -7,7 +7,7 @@
 
 #include <cse/connection.hpp>
 #include <cse/execution.hpp>
-#include <cse/manipulator.hpp>
+#include <cse/manipulator/manipulator.hpp>
 #include <cse/model.hpp>
 #include <cse/observer/observer.hpp>
 
@@ -39,21 +39,9 @@ namespace cse
  *  `boost::fibers::future::get()` on the future returned from the previous
  *  function call.
  */
-class simulator : public observable
+class simulator : public observable, public manipulable
 {
 public:
-    /**
-     *  Exposes a variable for assignment with `set_xxx()`.
-     *
-     *  The purpose is fundamentally to select which variables get transferred
-     *  to remote simulators at each step, so that each individual `set_xxx()`
-     *  function call doesn't trigger a new data exchange.
-     *
-     *  Calling this function more than once for the same variable has no
-     *  effect.
-     */
-    virtual void expose_for_setting(variable_type type, value_reference reference) = 0;
-
     /**
      *  Sets the value of a real variable.
      *
@@ -81,78 +69,6 @@ public:
      *  The variable must previously have been exposed with `expose_for_setting()`.
      */
     virtual void set_string(value_reference reference, std::string_view value) = 0;
-
-    /**
-     *  Sets a modifier for the value of a real input variable.
-     *
-     *  The variable must previously have been exposed with `expose_for_setting()`.
-     */
-    virtual void set_real_input_modifier(
-        value_reference reference,
-        std::function<double(double)> modifier) = 0;
-
-    /**
-     *  Sets a modifier for the value of an integer input variable.
-     *
-     *  The variable must previously have been exposed with `expose_for_setting()`.
-     */
-    virtual void set_integer_input_modifier(
-        value_reference reference,
-        std::function<int(int)> modifier) = 0;
-
-    /**
-     *  Sets a modifier for the value of a boolean input variable.
-     *
-     *  The variable must previously have been exposed with `expose_for_setting()`.
-     */
-    virtual void set_boolean_input_modifier(
-        value_reference reference,
-        std::function<bool(bool)> modifier) = 0;
-
-    /**
-     *  Sets a modifier for the value of a string input variable.
-     *
-     *  The variable must previously have been exposed with `expose_for_setting()`.
-     */
-    virtual void set_string_input_modifier(
-        value_reference reference,
-        std::function<std::string(std::string_view)> modifier) = 0;
-
-    /**
-     *  Sets a modifier for the value of a real output variable.
-     *
-     *  The variable must previously have been exposed with `expose_for_setting()`.
-     */
-    virtual void set_real_output_modifier(
-        value_reference reference,
-        std::function<double(double)> modifier) = 0;
-
-    /**
-     *  Sets a modifier for the value of an integer output variable.
-     *
-     *  The variable must previously have been exposed with `expose_for_setting()`.
-     */
-    virtual void set_integer_output_modifier(
-        value_reference reference,
-        std::function<int(int)> modifier) = 0;
-
-    /**
-     *  Sets a modifier for the value of a boolean output variable.
-     *
-     *  The variable must previously have been exposed with `expose_for_setting()`.
-     */
-    virtual void set_boolean_output_modifier(
-        value_reference reference,
-        std::function<bool(bool)> modifier) = 0;
-
-    /**
-     *  Sets a modifier for the value of a string output variable.
-     *
-     *  The variable must previously have been exposed with `expose_for_setting()`.
-     */
-    virtual void set_string_output_modifier(
-        value_reference reference,
-        std::function<std::string(std::string_view)> modifier) = 0;
 
     /**
      *  Performs pre-simulation setup and enters initialisation mode.

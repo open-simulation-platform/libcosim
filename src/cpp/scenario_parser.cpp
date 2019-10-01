@@ -17,8 +17,8 @@ namespace cse
 namespace
 {
 
-std::pair<cse::simulator_index, cse::simulator*> find_simulator(
-    const std::unordered_map<simulator_index, simulator*>& simulators,
+std::pair<cse::simulator_index, cse::manipulable*> find_simulator(
+    const std::unordered_map<simulator_index, manipulable*>& simulators,
     const std::string& model)
 {
     for (const auto& [idx, simulator] : simulators) {
@@ -171,7 +171,7 @@ std::optional<cse::time_point> parse_end_time(const nlohmann::json& j)
 scenario::scenario parse_scenario(
     const boost::filesystem::path& scenarioFile,
     const std::unordered_map<simulator_index,
-        simulator*>& simulators)
+        manipulable*>& simulators)
 {
     boost::filesystem::ifstream i(scenarioFile);
     nlohmann::json j;

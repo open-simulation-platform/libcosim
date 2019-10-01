@@ -11,6 +11,7 @@ set(publicHeaders
     "connection/sum_connection.hpp"
     "exception.hpp"
     "execution.hpp"
+    "exposable.hpp"
     "ssp_parser.hpp"
     "fmi/fmu.hpp"
     "fmi/importer.hpp"
