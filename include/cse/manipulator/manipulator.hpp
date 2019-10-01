@@ -7,8 +7,8 @@
 #define CSECORE_MANIPULATOR_MANIPULATOR_HPP
 
 #include <cse/execution.hpp>
-#include <cse/exposable.hpp>
 #include <cse/model.hpp>
+#include <cse/observer/observer.hpp>
 
 #include <functional>
 #include <string>
@@ -17,9 +17,21 @@ namespace cse
 {
 
 /// Interface for manipulable entities in a simulation.
-class manipulable : virtual public exposable
+class manipulable : public observable
 {
 public:
+    /**
+     *  Exposes a variable for assignment with `set_xxx()`.
+     *
+     *  The purpose is fundamentally to select which variables get transferred
+     *  to remote simulators at each step, so that each individual `set_xxx()`
+     *  function call doesn't trigger a new data exchange.
+     *
+     *  Calling this function more than once for the same variable has no
+     *  effect.
+     */
+    virtual void expose_for_setting(variable_type, value_reference) = 0;
+
     /**
      *  Sets a modifier for the value of a real input variable.
      *

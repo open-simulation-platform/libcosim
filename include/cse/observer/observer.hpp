@@ -6,7 +6,6 @@
 #define CSE_OBSERVER_OBSERVER_HPP
 
 #include <cse/execution.hpp>
-#include <cse/exposable.hpp>
 #include <cse/model.hpp>
 
 #include <string>
@@ -17,9 +16,24 @@ namespace cse
 {
 
 /// Interface for observable entities in a simulation.
-class observable : virtual public exposable
+class observable
 {
 public:
+    /// Returns the entity's name.
+    virtual std::string name() const = 0;
+
+    /// Returns a description of the entity.
+    virtual cse::model_description model_description() const = 0;
+
+    /**
+     *  Exposes a variable for retrieval with `get_xxx()`.
+     *
+     *  The purpose is fundamentally to select which variables get transferred
+     *  from remote simulators at each step, so that each individual `get_xxx()`
+     *  function call doesn't trigger a separate RPC operation.
+     */
+    virtual void expose_for_getting(variable_type, value_reference) = 0;
+
     /**
      *  Returns the value of a real variable.
      *

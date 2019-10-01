@@ -39,7 +39,7 @@ namespace cse
  *  `boost::fibers::future::get()` on the future returned from the previous
  *  function call.
  */
-class simulator : public observable, public manipulable
+class simulator : public manipulable
 {
 public:
     /**
