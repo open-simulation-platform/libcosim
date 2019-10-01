@@ -140,7 +140,7 @@ cse_execution* cse_execution_create(
     cse_duration stepSize);
 
 /**
- *  Creates a new execution based on a OspSystemStructure.xml file.
+ *  Creates a new execution based on an OspSystemStructure.xml file.
  *
  *  \param [in] sspDir
  *      Path to an OspSystemStructure.xml file, or a directory holding OspSystemStructure.xml
