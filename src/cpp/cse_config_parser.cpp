@@ -633,7 +633,9 @@ std::pair<execution, simulator_map> load_cse_config(
 
         std::string msmiFileName = model->description()->name + "_OspModelDescription.xml";
         const auto msmiFilePath = configFile.parent_path() / msmiFileName;
-        emds.emplace(simulator.name, msmiFilePath);
+        if(boost::filesystem::exists(msmiFilePath)) {
+            emds.emplace(simulator.name, msmiFilePath);
+        }
     }
 
     connect_variables(parser.get_scalar_connections(), slaves, exec);
