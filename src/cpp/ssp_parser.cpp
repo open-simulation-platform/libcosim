@@ -294,29 +294,24 @@ cse::variable_id get_variable(
 
 std::pair<execution, simulator_map> load_ssp(
     cse::model_uri_resolver& resolver,
-    const boost::filesystem::path& sspDir)
-{
-    return load_ssp(resolver, sspDir, nullptr, std::nullopt);
-}
-
-std::pair<execution, simulator_map> load_ssp(
-    cse::model_uri_resolver& resolver,
-    const boost::filesystem::path& sspDir,
+    const boost::filesystem::path& configPath,
     std::optional<cse::time_point> overrideStartTime)
 {
-    return load_ssp(resolver, sspDir, nullptr, overrideStartTime);
+    return load_ssp(resolver, configPath, nullptr, overrideStartTime);
 }
 
 std::pair<execution, simulator_map> load_ssp(
     cse::model_uri_resolver& resolver,
-    const boost::filesystem::path& sspDir,
+    const boost::filesystem::path& configPath,
     std::shared_ptr<cse::algorithm> overrideAlgorithm,
     std::optional<cse::time_point> overrideStartTime)
 {
     simulator_map simulatorMap;
-    const auto ssdPath = boost::filesystem::absolute(sspDir) / "SystemStructure.ssd";
-    const auto baseURI = path_to_file_uri(ssdPath);
-    const auto parser = ssp_parser(ssdPath);
+    const auto configFile = boost::filesystem::is_regular_file(configPath)
+                            ? configPath
+                            : configPath / "SystemStructure.ssd";
+    const auto baseURI = path_to_file_uri(configFile);
+    const auto parser = ssp_parser(configFile);
 
     std::shared_ptr<cse::algorithm> algorithm;
     if (overrideAlgorithm != nullptr) {
