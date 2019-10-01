@@ -143,7 +143,7 @@ cse_execution* cse_execution_create(
  *  Creates a new execution based on a OspSystemStructure.xml file.
  *
  *  \param [in] sspDir
- *      Path to the directory holding OspSystemStructure.xml
+ *      Path to an OspSystemStructure.xml file, or a directory holding OspSystemStructure.xml
  *  \param [in] startTimeDefined
  *      Defines whether or not the following startTime variable should be ignored or not.
  *  \param [in] startTime
