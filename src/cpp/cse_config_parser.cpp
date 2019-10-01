@@ -428,13 +428,13 @@ extended_model_description get_emd(
     const std::unordered_map<std::string, extended_model_description>& emds,
     const std::string& element)
 {
-    auto slaveIt = emds.find(element);
-    if (slaveIt == emds.end()) {
+    auto emdIt = emds.find(element);
+    if (emdIt == emds.end()) {
         std::ostringstream oss;
-        oss << "Cannot find slave: " << element;
+        oss << "Cannot find extended model description for " << element;
         throw std::out_of_range(oss.str());
     }
-    return slaveIt->second;
+    return emdIt->second;
 }
 
 std::vector<std::string> get_plug_socket_variables(
@@ -633,7 +633,7 @@ std::pair<execution, simulator_map> load_cse_config(
 
         std::string msmiFileName = model->description()->name + "_OspModelDescription.xml";
         const auto msmiFilePath = configFile.parent_path() / msmiFileName;
-        if(boost::filesystem::exists(msmiFilePath)) {
+        if (boost::filesystem::exists(msmiFilePath)) {
             emds.emplace(simulator.name, msmiFilePath);
         }
     }
