@@ -9,6 +9,7 @@ set(publicHeaders
     "connection/connection.hpp"
     "connection/scalar_connection.hpp"
     "connection/sum_connection.hpp"
+    "cse_config_parser.hpp"
     "exception.hpp"
     "execution.hpp"
     "ssp_parser.hpp"
@@ -54,6 +55,7 @@ set(sources
     "async_slave.cpp"
     "connection/scalar_connection.cpp"
     "connection/sum_connection.cpp"
+    "cse_config_parser.cpp"
     "exception.cpp"
     "execution.cpp"
     "ssp_parser.cpp"
@@ -135,6 +137,7 @@ target_link_libraries(csecorecpp
         Boost::filesystem
         Boost::log
         gsl
+        XercesC::XercesC
     PRIVATE
         nlohmann_json
     )
