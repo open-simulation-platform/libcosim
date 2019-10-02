@@ -110,12 +110,10 @@ public:
             }
         }
 
-        ++stepCounter_;
-
-        std::unordered_set<simulator_index> finished;
         bool failed = false;
         std::stringstream errMessages;
-        for (auto& [idx, info] : simulators_) {
+        for (auto& s : simulators_) {
+            auto& info = s.second;
             if (stepCounter_ % info.decimationFactor == 0) {
                 if (auto ep = info.stepResult.get_exception_ptr()) {
                     errMessages
@@ -128,11 +126,20 @@ public:
                         << "Step not complete" << '\n';
                     failed = true;
                 }
-                finished.insert(idx);
             }
         }
+
         if (failed) {
             throw error(make_error_code(errc::simulation_error), errMessages.str());
+        }
+
+        ++stepCounter_;
+
+        std::unordered_set<simulator_index> finished;
+        for (auto& [idx, info] : simulators_) {
+            if (stepCounter_ % info.decimationFactor == 0) {
+                finished.insert(idx);
+            }
         }
 
         for (auto idx : finished) {

@@ -7,6 +7,7 @@ set(tests
     "observer_multiple_slaves_test"
     "real_time_test"
     "connections_test"
+    "execution_from_cse_config_test"
     "execution_from_ssp_test"
     "execution_from_ssp_custom_algo_test"
     "time_series_observer_test"
