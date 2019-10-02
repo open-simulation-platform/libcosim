@@ -19,7 +19,7 @@ int main()
 
         const auto testDataDir = std::getenv("TEST_DATA_DIR");
         REQUIRE(testDataDir);
-        boost::filesystem::path xmlPath = boost::filesystem::path(testDataDir) / "ssp" / "demo" / "no_algorithm_element";
+        boost::filesystem::path xmlPath = boost::filesystem::path(testDataDir) / "ssp" / "demo" / "no_algorithm_element" / "SystemStructure.ssd";
 
         auto resolver = cse::default_model_uri_resolver();
         auto simulation = cse::load_ssp(

@@ -162,7 +162,7 @@ cse_execution* cse_config_execution_create(
  *  Creates a new execution based on a SystemStructure.ssd file.
  *
  *  \param [in] sspDir
- *      Path to the directory holding SystemStructure.ssd
+ *      Path to an .ssd file, or a directory holding SystemStructure.ssd
  *  \param [in] startTimeDefined
  *      Defines whether or not the following startTime variable should be ignored or not.
  *  \param [in] startTime
