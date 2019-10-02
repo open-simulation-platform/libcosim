@@ -3,6 +3,29 @@ All notable changes to cse-core will be documented in this file. This includes n
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
+### [v0.5.0] – 2019-10-03 
+##### Added
+* Multi-variable connections ([PR#295](https://github.com/open-simulation-platform/cse-core/pull/295))
+* Support for MSMI extension to FMUs `<FMU-name>_OspModelDescription.xml`, that enables mapping of FMU variables into plugs, sockets and bonds ([PR#333](https://github.com/open-simulation-platform/cse-core/pull/333))
+* New CSE configuration format `OspSystemStructure.xml` ([PR#333](https://github.com/open-simulation-platform/cse-core/pull/333)), that enables configuration of: 
+    * Individual model step size
+    * Plug/socket and bond connections
+    * Multi-variable connections. Only sum connection included.
+* Can advance an execution to a specific point in time with `cse_execution_simulate_until` ([PR#325](https://github.com/open-simulation-platform/cse-core/pull/325))
+* Can override configured step size and start time for fixed-step algorithm in `cse_ssp_fixed_step_execution_create` and `cse_ssp_execution_create` ([PR#373](https://github.com/open-simulation-platform/cse-core/pull/373))
+
+##### Changed
+* Must provide instance name when creating local slaves with `cse_local_slave_create`. (Fixing [#381](https://github.com/open-simulation-platform/cse-core/issues/381), [PR#387](https://github.com/open-simulation-platform/cse-core/pull/387))
+* `cse_variable_index` renamed to `cse_value_reference` [PR#339](https://github.com/open-simulation-platform/cse-core/pull/339)
+   
+ ##### Fixed
+ * `cse_local_slave_create` is broken when adding more than one instance of the same FMU ([#381](https://github.com/open-simulation-platform/cse-core/issues/381))
+ * Memory error when moving a cse::uri ([#361](https://github.com/open-simulation-platform/cse-core/issues/361))
+ * Cryptic error message with ill-defined or missing osp:FixedStepMaster in SSP ([#338](https://github.com/open-simulation-platform/cse-core/issues/338))
+ * Invalid FMUs in SSP are not properly handled ([#337](https://github.com/open-simulation-platform/cse-core/issues/337))
+ * Invalid connections in SSP are not properly handled ([#336](https://github.com/open-simulation-platform/cse-core/issues/336))
+ * Cannot use "." as file_observer output directory ([#310](https://github.com/open-simulation-platform/cse-core/issues/310))
+
 ### [v0.4.0] – 2019-08-19 
 ##### Added
 * Initial variable values configurable from SSP ([PR#291](https://github.com/open-simulation-platform/cse-core/pull/291))
