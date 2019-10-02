@@ -94,11 +94,19 @@ public:
         std::string type;
     };
 
+    struct InitialValue
+    {
+        std::string name;
+        cse::variable_type type;
+        std::variant<double, int, bool, std::string> value;
+    };
+
     struct Simulator
     {
         std::string name;
         std::string source;
         std::optional<double> stepSize;
+        std::vector<InitialValue> initialValues;
     };
 
     const std::vector<Simulator>& get_elements() const;
@@ -185,6 +193,15 @@ cse_config_parser::cse_config_parser(
             //TODO: Possibly obsolete with schema?
         }
         //TODO: Initial values
+        auto initVals = element->getElementsByTagName(tc("InitialValues").get());
+        if (initVals->getLength() > 0) {
+            auto initValNodes = static_cast<xercesc::DOMElement*>(initVals->item(0))->getElementsByTagName(tc("InitialValue").get());
+            for (size_t i = 0; i < initValNodes->getLength(); i++) {
+                auto initVal = static_cast<xercesc::DOMElement*>(initValNodes->item(i));
+                std::string variableName = tc(initVal->getAttribute(tc("variable").get())).get();
+                std::cout << variableName << std::endl;
+            }
+        }
         simulators_.push_back({name, source, stepSize});
     }
 
