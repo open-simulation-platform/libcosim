@@ -17,7 +17,8 @@ void test(const boost::filesystem::path& configPath)
     REQUIRE(testDataDir);
 
     auto resolver = cse::default_model_uri_resolver();
-    auto simulation = cse::load_cse_config(*resolver, configPath, boost::filesystem::path(testDataDir) / "msmi/OspSystemStructure.xsd", cse::to_time_point(0.0));
+    const auto schemaPath = boost::filesystem::path(testDataDir) / "msmi" / "schema" / "OspSystemStructure.xsd";
+    auto simulation = cse::load_cse_config(*resolver, configPath, schemaPath, cse::to_time_point(0.0));
     auto& execution = simulation.first;
 
     auto& simulator_map = simulation.second;
