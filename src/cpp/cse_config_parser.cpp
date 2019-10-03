@@ -2,6 +2,7 @@
 
 #include "cse/algorithm.hpp"
 #include "cse/fmi/fmu.hpp"
+#include <cse/exception.hpp>
 #include <cse/log/logger.hpp>
 
 #include <boost/lexical_cast.hpp>
@@ -13,6 +14,30 @@
 #include <memory>
 #include <string>
 
+
+namespace boost
+{
+template<>
+cse::variable_type lexical_cast(const std::string& s)
+{
+    if ("Real" == s) {
+        return cse::variable_type::real;
+    }
+    if ("Integer" == s) {
+        return cse::variable_type::integer;
+    }
+    if ("Boolean" == s) {
+        return cse::variable_type::boolean;
+    }
+    if ("String" == s) {
+        return cse::variable_type::string;
+    }
+    if ("Enumeration" == s) {
+        return cse::variable_type::enumeration;
+    }
+    throw boost::bad_lexical_cast();
+}
+} // namespace boost
 
 namespace cse
 {
@@ -190,19 +215,19 @@ cse_config_parser::cse_config_parser(
         auto stepSizeNode = tc(element->getAttribute(tc("stepSize").get()));
         if (*stepSizeNode) {
             stepSize = boost::lexical_cast<double>(stepSizeNode);
-            //TODO: Possibly obsolete with schema?
         }
-        //TODO: Initial values
-        auto initVals = element->getElementsByTagName(tc("InitialValues").get());
-        if (initVals->getLength() > 0) {
-            auto initValNodes = static_cast<xercesc::DOMElement*>(initVals->item(0))->getElementsByTagName(tc("InitialValue").get());
-            for (size_t i = 0; i < initValNodes->getLength(); i++) {
-                auto initVal = static_cast<xercesc::DOMElement*>(initValNodes->item(i));
-                std::string variableName = tc(initVal->getAttribute(tc("variable").get())).get();
-                std::cout << variableName << std::endl;
+
+        std::vector<InitialValue> initialValues;
+        const auto initValsElement = static_cast<xercesc::DOMElement*>(element->getElementsByTagName(tc("InitialValues").get())->item(0));
+        if (initValsElement) {
+            for (auto initValElement = initValsElement->getFirstElementChild(); initValElement != nullptr; initValElement = initValElement->getNextElementSibling()) {
+                std::string varName = tc(initValElement->getAttribute(tc("variable").get())).get();
+                std::string varType = tc(initValElement->getFirstElementChild()->getNodeName()).get();
+                std::string varValue = tc(initValElement->getFirstElementChild()->getAttribute(tc("value").get())).get();
+                initialValues.push_back({varName, boost::lexical_cast<variable_type>(varType), boost::lexical_cast<double>(varValue)});
             }
         }
-        simulators_.push_back({name, source, stepSize});
+        simulators_.push_back({name, source, stepSize, initialValues});
     }
 
     auto descNodes = rootElement->getElementsByTagName(tc("Description").get());
@@ -602,6 +627,29 @@ int calculate_decimation_factor(const std::string& name, duration baseStepSize, 
     return factor;
 }
 
+template<class T>
+struct streamer
+{
+    const T& val;
+};
+
+template<class T>
+streamer(T)->streamer<T>;
+
+template<class T>
+std::ostream& operator<<(std::ostream& os, streamer<T> s)
+{
+    os << s.val;
+    return os;
+}
+
+template<class... Ts>
+std::ostream& operator<<(std::ostream& os, streamer<std::variant<Ts...>> sv)
+{
+    std::visit([&os](const auto& v) { os << streamer{v}; }, sv.val);
+    return os;
+}
+
 } // namespace
 
 std::pair<execution, simulator_map> load_cse_config(
@@ -646,6 +694,28 @@ std::pair<execution, simulator_map> load_cse_config(
 
         for (const auto& v : model->description()->variables) {
             slaves[simulator.name].variables[v.name] = v;
+        }
+
+        for (const auto& p : simulator.initialValues) {
+            auto reference = find_variable(*model->description(), p.name).reference;
+            BOOST_LOG_SEV(log::logger(), log::info)
+                << "Initializing variable " << simulator.name << ":" << p.name << " with value " << streamer{p.value};
+            switch (p.type) {
+                case variable_type::real:
+                    exec.set_real_initial_value(index, reference, std::get<double>(p.value));
+                    break;
+                case variable_type::integer:
+                    exec.set_integer_initial_value(index, reference, std::get<int>(p.value));
+                    break;
+                case variable_type::boolean:
+                    exec.set_boolean_initial_value(index, reference, std::get<bool>(p.value));
+                    break;
+                case variable_type::string:
+                    exec.set_string_initial_value(index, reference, std::get<std::string>(p.value));
+                    break;
+                default:
+                    throw error(make_error_code(errc::unsupported_feature), "Variable type not supported yet");
+            }
         }
 
         std::string msmiFileName = model->description()->name + "_OspModelDescription.xml";
