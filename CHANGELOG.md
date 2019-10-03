@@ -11,8 +11,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
     * Individual model step size
     * Plug/socket and bond connections
     * Multi-variable connections. Only sum connection included.
-* Can advance an execution to a specific point in time with `cse_execution_simulate_until` ([PR#325](https://github.com/open-simulation-platform/cse-core/pull/325))
-* Can override configured step size and start time for fixed-step algorithm in `cse_ssp_fixed_step_execution_create` and `cse_ssp_execution_create` ([PR#373](https://github.com/open-simulation-platform/cse-core/pull/373))
+* Can advance an execution to a specific point in time with `cse_execution_simulate_until` in C-API ([PR#325](https://github.com/open-simulation-platform/cse-core/pull/325))
+* Can override configured step size and start time for fixed-step algorithm in `cse_ssp_fixed_step_execution_create` and `cse_ssp_execution_create` in C-API ([PR#373](https://github.com/open-simulation-platform/cse-core/pull/373))
 
 ##### Changed
 * Must provide instance name when creating local slaves with `cse_local_slave_create`. (Fixing [#381](https://github.com/open-simulation-platform/cse-core/issues/381), [PR#387](https://github.com/open-simulation-platform/cse-core/pull/387))
@@ -22,7 +22,6 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
  * `cse_local_slave_create` is broken when adding more than one instance of the same FMU ([#381](https://github.com/open-simulation-platform/cse-core/issues/381))
  * Memory error when moving a cse::uri ([#361](https://github.com/open-simulation-platform/cse-core/issues/361))
  * Cryptic error message with ill-defined or missing osp:FixedStepMaster in SSP ([#338](https://github.com/open-simulation-platform/cse-core/issues/338))
- * Invalid FMUs in SSP are not properly handled ([#337](https://github.com/open-simulation-platform/cse-core/issues/337))
  * Invalid connections in SSP are not properly handled ([#336](https://github.com/open-simulation-platform/cse-core/issues/336))
  * Cannot use "." as file_observer output directory ([#310](https://github.com/open-simulation-platform/cse-core/issues/310))
 
