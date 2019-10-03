@@ -142,15 +142,15 @@ cse_config_parser::cse_config_parser(
         xercesc::XMLPlatformUtils::Terminate();
     });
 
-    const auto extSchemaLocation = tc("http://opensimulationplatform.com/MSMI/OSPSystemStructure OspSystemStructure.xsd");
-
-    error_handler errorHandler;
     const auto domImpl = xercesc::DOMImplementationRegistry::getDOMImplementation(tc("LS").get());
     const auto parser = static_cast<xercesc::DOMImplementationLS*>(domImpl)->createLSParser(xercesc::DOMImplementationLS::MODE_SYNCHRONOUS, tc("http://www.w3.org/2001/XMLSchema").get());
 
-    parser->loadGrammar(schemaPath.string().c_str(), xercesc::Grammar::SchemaGrammarType);
+    error_handler errorHandler;
+
+    parser->loadGrammar(schemaPath.string().c_str(), xercesc::Grammar::SchemaGrammarType, true);
 
     parser->getDomConfig()->setParameter(xercesc::XMLUni::fgDOMErrorHandler, &errorHandler);
+    parser->getDomConfig()->setParameter(xercesc::XMLUni::fgXercesUseCachedGrammarInParse, true);
     parser->getDomConfig()->setParameter(xercesc::XMLUni::fgDOMComments, false);
     parser->getDomConfig()->setParameter(xercesc::XMLUni::fgDOMDatatypeNormalization, true);
     parser->getDomConfig()->setParameter(xercesc::XMLUni::fgDOMEntities, false);
@@ -159,8 +159,7 @@ cse_config_parser::cse_config_parser(
     parser->getDomConfig()->setParameter(xercesc::XMLUni::fgDOMValidate, true);
     parser->getDomConfig()->setParameter(xercesc::XMLUni::fgXercesSchema, true);
     parser->getDomConfig()->setParameter(xercesc::XMLUni::fgXercesSchemaFullChecking, true);
-    parser->getDomConfig()->setParameter(xercesc::XMLUni::fgXercesSchemaExternalSchemaLocation, extSchemaLocation.get());
-    parser->getDomConfig()->setParameter(xercesc::XMLUni::fgXercesLoadSchema, true);
+    parser->getDomConfig()->setParameter(xercesc::XMLUni::fgXercesLoadSchema, false);
 
     const auto doc = parser->parseURI(configPath.string().c_str());
 
@@ -597,8 +596,19 @@ std::pair<execution, simulator_map> load_cse_config(
     const auto configFile = boost::filesystem::is_regular_file(configPath)
         ? configPath
         : configPath / "OspSystemStructure.xml";
+    const auto schemaFile = boost::filesystem::is_regular_file(schemaPath)
+        ? schemaPath
+        : schemaPath / "OspSystemStructure.xsd";
     const auto baseURI = path_to_file_uri(configFile);
-    const auto parser = cse_config_parser(configFile, schemaPath);
+
+    if (!boost::filesystem::exists(schemaFile) || schemaFile.extension() != ".xsd") {
+        std::ostringstream oss;
+        oss << "Specified schema file does not exist or has wrong extension (must be '.xsd'): "
+            << schemaFile;
+        BOOST_LOG_SEV(log::logger(), log::error) << oss.str();
+        throw std::runtime_error(oss.str());
+    }
+    const auto parser = cse_config_parser(configFile, schemaFile);
 
     const auto& simInfo = parser.get_simulation_information();
     if (simInfo.stepSize <= 0.0) {
