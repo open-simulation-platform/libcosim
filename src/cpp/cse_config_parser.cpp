@@ -222,9 +222,25 @@ cse_config_parser::cse_config_parser(
         if (initValsElement) {
             for (auto initValElement = initValsElement->getFirstElementChild(); initValElement != nullptr; initValElement = initValElement->getNextElementSibling()) {
                 std::string varName = tc(initValElement->getAttribute(tc("variable").get())).get();
-                std::string varType = tc(initValElement->getFirstElementChild()->getNodeName()).get();
+                variable_type varType = boost::lexical_cast<variable_type>(std::string(tc(initValElement->getFirstElementChild()->getNodeName()).get()));
                 std::string varValue = tc(initValElement->getFirstElementChild()->getAttribute(tc("value").get())).get();
-                initialValues.push_back({varName, boost::lexical_cast<variable_type>(varType), boost::lexical_cast<double>(varValue)});
+                switch (varType) {
+                    case variable_type::real:
+                        initialValues.push_back({varName, varType, boost::lexical_cast<double>(varValue)});
+                        break;
+                    case variable_type::integer:
+                        initialValues.push_back({varName, varType, boost::lexical_cast<int>(varValue)});
+                        break;
+                    case variable_type::boolean:
+                        initialValues.push_back({varName, varType, boost::lexical_cast<bool>(varValue)});
+                        break;
+                    case variable_type::string:
+                        initialValues.push_back({varName, varType, varValue});
+                        break;
+                    case variable_type::enumeration:
+                        initialValues.push_back({varName, varType, boost::lexical_cast<int>(varValue)});
+                        break;
+                }
             }
         }
         simulators_.push_back({name, source, stepSize, initialValues});
