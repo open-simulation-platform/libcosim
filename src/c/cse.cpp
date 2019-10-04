@@ -487,7 +487,7 @@ int cse_execution_start(cse_execution* execution)
             execution->state = CSE_EXECUTION_RUNNING;
             auto task = boost::fibers::packaged_task<bool()>([execution]() {
                 return execution->cpp_execution->simulate_until(std::nullopt).get();
-            });;
+            });
             execution->simulate_result = task.get_future();
             execution->t = std::thread(std::move(task));
             return success;
