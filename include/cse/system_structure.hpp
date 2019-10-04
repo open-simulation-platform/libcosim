@@ -17,25 +17,10 @@ namespace cse
 class system_structure
 {
 public:
-    system_structure() noexcept;
-
-    system_structure(const system_structure&) = delete;
-    system_structure& operator=(const system_structure&) = delete;
-    system_structure(system_structure&&) noexcept;
-    system_structure& operator=(system_structure&&) noexcept;
-
     struct simulator
     {
         std::string name;
         std::shared_ptr<model> model;
-    };
-
-    void add_simulator(const simulator& s);
-
-    struct variable_qname
-    {
-        std::string simulator_name;
-        std::string variable_name;
     };
 
     struct scalar_connection
@@ -43,6 +28,17 @@ public:
         variable_qname source;
         variable_qname target;
     };
+
+    system_structure() noexcept;
+
+    system_structure(const system_structure&) = delete;
+    system_structure& operator=(const system_structure&) = delete;
+    system_structure(system_structure&&) noexcept;
+    system_structure& operator=(system_structure&&) noexcept;
+
+    void add_simulator(const simulator& s);
+
+    const simulator& get_simulator(std::string_view name) const;
 
     void add_scalar_connection(const scalar_connection& c);
 
@@ -55,8 +51,8 @@ private:
 bool is_valid_simulator_name(std::string_view name) noexcept;
 
 bool is_valid_connection(
-    const variable_description& sourceVar,
-    const variable_description& targetVar,
+    const variable_description& source,
+    const variable_description& target,
     std::string* reason);
 
 
