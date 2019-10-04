@@ -25,7 +25,7 @@ void test(const boost::filesystem::path& configPath)
     REQUIRE(simulator_map.at("CraneController").source == "../ssp/demo/CraneController.fmu");
     REQUIRE(simulator_map.at("KnuckleBoomCrane").source == "../ssp/demo/KnuckleBoomCrane.fmu");
 
-    auto result = execution.simulate_until(cse::to_time_point(1));
+    auto result = execution.simulate_until(cse::to_time_point(1e-3));
     REQUIRE(result.get());
 }
 
