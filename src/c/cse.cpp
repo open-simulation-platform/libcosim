@@ -16,6 +16,8 @@
 #include <cse/orchestration.hpp>
 #include <cse/ssp_parser.hpp>
 
+#include <boost/fiber/future.hpp>
+
 #include <algorithm>
 #include <atomic>
 #include <cassert>
@@ -134,6 +136,7 @@ struct cse_execution_s
     cse::simulator_map simulators;
     std::unique_ptr<cse::execution> cpp_execution;
     std::thread t;
+    boost::fibers::future<bool> simulate_result;
     std::atomic<cse_execution_state> state;
     int error_code;
 };
@@ -482,10 +485,11 @@ int cse_execution_start(cse_execution* execution)
     } else {
         try {
             execution->state = CSE_EXECUTION_RUNNING;
-            execution->t = std::thread([execution]() {
-                auto future = execution->cpp_execution->simulate_until(std::nullopt);
-                future.get();
-            });
+            auto task = boost::fibers::packaged_task<bool()>([execution]() {
+                return execution->cpp_execution->simulate_until(std::nullopt).get();
+            });;
+            execution->simulate_result = task.get_future();
+            execution->t = std::thread(std::move(task));
             return success;
         } catch (...) {
             handle_current_exception();
@@ -500,6 +504,7 @@ int cse_execution_stop(cse_execution* execution)
     try {
         execution->cpp_execution->stop_simulation();
         if (execution->t.joinable()) {
+            execution->simulate_result.get();
             execution->t.join();
         }
         execution->state = CSE_EXECUTION_STOPPED;
