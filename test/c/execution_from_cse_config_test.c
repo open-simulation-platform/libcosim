@@ -56,7 +56,7 @@ int main()
     if (!observer) { goto Lerror; }
     cse_execution_add_observer(execution, observer);
 
-    rc = cse_execution_step(execution, 4);
+    rc = cse_execution_step(execution, 3);
     if (rc < 0) { goto Lerror; }
 
     size_t numSlaves = cse_execution_get_num_slaves(execution);
