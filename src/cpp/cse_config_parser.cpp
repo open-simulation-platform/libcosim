@@ -1,5 +1,7 @@
 #include "cse/cse_config_parser.hpp"
 
+#include "cse_system_structure.hpp"
+
 #include "cse/algorithm.hpp"
 #include "cse/fmi/fmu.hpp"
 #include <cse/log/logger.hpp>
@@ -147,6 +149,7 @@ cse_config_parser::cse_config_parser(
 
     error_handler errorHandler;
 
+    parser->loadGrammar(schemaPath.string().c_str(), xercesc::Grammar::SchemaGrammarType, true);
     parser->loadGrammar(schemaPath.string().c_str(), xercesc::Grammar::SchemaGrammarType, true);
 
     parser->getDomConfig()->setParameter(xercesc::XMLUni::fgDOMErrorHandler, &errorHandler);
