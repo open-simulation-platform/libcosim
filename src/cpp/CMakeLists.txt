@@ -128,9 +128,9 @@ set(allSources ${publicHeadersFull} ${privateHeadersFull} ${generatedHeadersFull
 
 add_executable(csexsdembedder cse_xsd_embedder.cpp)
 add_custom_command(
-        OUTPUT cse_system_structure.hpp
-        COMMAND csexsdembedder "${CMAKE_CURRENT_SOURCE_DIR}/xsd/OSPSystemStructure.xsd" cse_system_structure.hpp
-        DEPENDS xsd/OSPSystemStructure.xsd)
+    OUTPUT cse_system_structure.hpp
+    COMMAND csexsdembedder "${CMAKE_CURRENT_SOURCE_DIR}/xsd/OSPSystemStructure.xsd" cse_system_structure.hpp
+    DEPENDS xsd/OSPSystemStructure.xsd)
 
 message(STATUS "${CMAKE_BINARY_DIR}")
 message(STATUS "${CMAKE_CURRENT_BINARY_DIR}")

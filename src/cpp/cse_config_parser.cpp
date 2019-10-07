@@ -145,13 +145,18 @@ cse_config_parser::cse_config_parser(
     });
 
     const auto domImpl = xercesc::DOMImplementationRegistry::getDOMImplementation(tc("LS").get());
-    const auto parser = static_cast<xercesc::DOMImplementationLS*>(domImpl)->createLSParser(xercesc::DOMImplementationLS::MODE_SYNCHRONOUS, tc("http://www.w3.org/2001/XMLSchema").get());
+    const auto parser = static_cast<xercesc::DOMImplementationLS*>(domImpl)->createLSParser(
+        xercesc::DOMImplementationLS::MODE_SYNCHRONOUS,
+        tc("http://www.w3.org/2001/XMLSchema").get());
 
     error_handler errorHandler;
 
     std::string xsd_str = get_xsd();
 
-    xercesc::MemBufInputSource mis(reinterpret_cast<const XMLByte*>(xsd_str.c_str()), xsd_str.size(), "http://opensimulationplatform.com/MSMI/OSPSystemStructure");
+    xercesc::MemBufInputSource mis(
+        reinterpret_cast<const XMLByte*>(xsd_str.c_str()),
+        xsd_str.size(),
+        "http://opensimulationplatform.com/MSMI/OSPSystemStructure");
     xercesc::Wrapper4InputSource wmis(&mis, false);
 
     parser->loadGrammar(&wmis, xercesc::Grammar::SchemaGrammarType, true);
