@@ -151,7 +151,7 @@ cse_config_parser::cse_config_parser(
 
     error_handler errorHandler;
 
-    std::string xsd_str = get_xsd();
+    std::string xsd_str = get_embedded_cse_config_xsd();
 
     xercesc::MemBufInputSource mis(
         reinterpret_cast<const XMLByte*>(xsd_str.c_str()),

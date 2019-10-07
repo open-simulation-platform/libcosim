@@ -52,7 +52,7 @@ int main(int argc, char** argv)
             << std::endl
             << "namespace cse" << std::endl
             << "{" << std::endl
-            << "std::string get_xsd() {" << std::endl
+            << "std::string get_embedded_cse_config_xsd() {" << std::endl
             << "  std::string xsd_str(cse_system_structure_xsd);" << std::endl
             << "  xsd_str = std::regex_replace(xsd_str, std::regex(\"&amp;\"), \"&\");" << std::endl
             << "  xsd_str = std::regex_replace(xsd_str, std::regex(\"&quot;\"), \"\\\"\");" << std::endl
