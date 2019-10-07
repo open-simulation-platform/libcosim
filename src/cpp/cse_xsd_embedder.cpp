@@ -2,7 +2,7 @@
 #include <iostream>
 #include <sstream>
 
-void encode(std::string& data)
+std::string encode(std::string& data)
 {
     std::string buffer;
     buffer.reserve(data.size());
@@ -16,7 +16,7 @@ void encode(std::string& data)
             default: buffer.append(&data[pos], 1); break;
         }
     }
-    data.swap(buffer);
+    return buffer;
 }
 
 int main(int argc, char** argv)
@@ -26,7 +26,7 @@ int main(int argc, char** argv)
         std::cout << "csexsdembedder requires 2 arguments:" << std::endl;
         std::cout << " 1: Name of input file" << std::endl;
         std::cout << " 2: Name of output file" << std::endl;
-        return -1;
+        return 1;
     }
 
     std::string input = argv[1];
@@ -41,14 +41,14 @@ int main(int argc, char** argv)
         xsd_str += line;
     }
 
-    encode(xsd_str);
+    std::string encoded_xsd_str = encode(xsd_str);
 
     std::ofstream out_file(output);
     if (out_file) {
         out_file
             << "#include <string>" << std::endl
             << "#include <regex>" << std::endl
-            << "#define cse_system_structure_xsd \"" << xsd_str << "\"" << std::endl
+            << "#define cse_system_structure_xsd \"" << encoded_xsd_str << "\"" << std::endl
             << std::endl
             << "namespace cse" << std::endl
             << "{" << std::endl
@@ -64,7 +64,7 @@ int main(int argc, char** argv)
             << "}" << std::endl;
     } else {
         std::cerr << "Failure opening " << output << std::endl;
-        return -1;
+        return 1;
     }
 
     return 0;
