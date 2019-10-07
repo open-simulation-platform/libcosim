@@ -1,4 +1,3 @@
-#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -30,12 +29,12 @@ int main(int argc, char** argv)
         return -1;
     }
 
-    std::experimental::filesystem::path input = argv[1];
-    std::experimental::filesystem::path output = argv[2];
+    std::string input = argv[1];
+    std::string output = argv[2];
 
     std::cout << " Embedding: " << input << " -> " << output << std::endl;
 
-    std::ifstream xsd(argv[1]);
+    std::ifstream xsd(input);
     std::string xsd_str, line;
 
     while(std::getline(xsd, line))
@@ -43,7 +42,7 @@ int main(int argc, char** argv)
 
     encode(xsd_str);
 
-    std::ofstream out_file(argv[2]);
+    std::ofstream out_file(output);
     if (out_file) {
         out_file
             << "#include <string>" << std::endl
@@ -63,7 +62,7 @@ int main(int argc, char** argv)
             << "}" << std::endl
             << "}" << std::endl;
     } else {
-        std::cerr << "Failure opening " << argv[2] << std::endl;
+        std::cerr << "Failure opening " << output << std::endl;
         return -1;
     }
 
