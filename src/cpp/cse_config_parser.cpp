@@ -15,30 +15,6 @@
 #include <string>
 
 
-namespace boost
-{
-template<>
-cse::variable_type lexical_cast(const std::string& s)
-{
-    if ("Real" == s) {
-        return cse::variable_type::real;
-    }
-    if ("Integer" == s) {
-        return cse::variable_type::integer;
-    }
-    if ("Boolean" == s) {
-        return cse::variable_type::boolean;
-    }
-    if ("String" == s) {
-        return cse::variable_type::string;
-    }
-    if ("Enumeration" == s) {
-        return cse::variable_type::enumeration;
-    }
-    throw boost::bad_lexical_cast();
-}
-} // namespace boost
-
 namespace cse
 {
 
@@ -163,6 +139,7 @@ private:
     std::vector<ScalarConnection> scalarConnections_;
     std::vector<ScalarConnection> plugSocketConnections_;
     std::vector<ScalarConnection> bondConnections_;
+    const variable_type parse_variable_type(const std::string&);
 };
 
 cse_config_parser::cse_config_parser(
@@ -222,7 +199,7 @@ cse_config_parser::cse_config_parser(
         if (initValsElement) {
             for (auto initValElement = initValsElement->getFirstElementChild(); initValElement != nullptr; initValElement = initValElement->getNextElementSibling()) {
                 std::string varName = tc(initValElement->getAttribute(tc("variable").get())).get();
-                variable_type varType = boost::lexical_cast<variable_type>(std::string(tc(initValElement->getFirstElementChild()->getNodeName()).get()));
+                variable_type varType = parse_variable_type(std::string(tc(initValElement->getFirstElementChild()->getNodeName()).get()));
                 std::string varValue = tc(initValElement->getFirstElementChild()->getAttribute(tc("value").get())).get();
                 switch (varType) {
                     case variable_type::real:
@@ -352,6 +329,26 @@ const std::vector<cse_config_parser::ScalarConnection>& cse_config_parser::get_p
 const std::vector<cse_config_parser::ScalarConnection>& cse_config_parser::get_bond_connections() const
 {
     return bondConnections_;
+}
+
+const variable_type cse_config_parser::parse_variable_type(const std::string& str)
+{
+    if ("Real" == str) {
+        return cse::variable_type::real;
+    }
+    if ("Integer" == str) {
+        return cse::variable_type::integer;
+    }
+    if ("Boolean" == str) {
+        return cse::variable_type::boolean;
+    }
+    if ("String" == str) {
+        return cse::variable_type::string;
+    }
+    if ("Enumeration" == str) {
+        return cse::variable_type::enumeration;
+    }
+    throw std::runtime_error("Failed to parse variable type: " + str);
 }
 
 struct slave_info
