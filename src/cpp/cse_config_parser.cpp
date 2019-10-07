@@ -139,7 +139,7 @@ private:
     std::vector<ScalarConnection> scalarConnections_;
     std::vector<ScalarConnection> plugSocketConnections_;
     std::vector<ScalarConnection> bondConnections_;
-    const variable_type parse_variable_type(const std::string&);
+    variable_type parse_variable_type(const std::string&);
 };
 
 cse_config_parser::cse_config_parser(
@@ -331,7 +331,7 @@ const std::vector<cse_config_parser::ScalarConnection>& cse_config_parser::get_b
     return bondConnections_;
 }
 
-const variable_type cse_config_parser::parse_variable_type(const std::string& str)
+variable_type cse_config_parser::parse_variable_type(const std::string& str)
 {
     if ("Real" == str) {
         return cse::variable_type::real;
