@@ -37,8 +37,9 @@ int main(int argc, char** argv)
     std::ifstream xsd(input);
     std::string xsd_str, line;
 
-    while(std::getline(xsd, line))
-        xsd_str+=line;
+    while (std::getline(xsd, line)) {
+        xsd_str += line;
+    }
 
     encode(xsd_str);
 
