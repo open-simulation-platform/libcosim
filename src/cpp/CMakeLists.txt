@@ -127,20 +127,13 @@ endforeach()
 set(allSources ${publicHeadersFull} ${privateHeadersFull} ${generatedHeadersFull} ${sources})
 
 add_executable(csexsdembedder cse_xsd_embedder.cpp)
-#target_link_libraries(csexsdembedder
-#    PUBLIC
-#        Boost::boost
-#        Boost::filesystem)
 add_custom_command(
         OUTPUT cse_system_structure.hpp
         COMMAND csexsdembedder "${CMAKE_CURRENT_SOURCE_DIR}/xsd/OSPSystemStructure.xsd" cse_system_structure.hpp
-        DEPENDS csexsdembedder xsd/OSPSystemStructure.xsd)
+        DEPENDS xsd/OSPSystemStructure.xsd)
 
 message(STATUS "${CMAKE_BINARY_DIR}")
 message(STATUS "${CMAKE_CURRENT_BINARY_DIR}")
-
-#file(READ xsd/OspSystemStructure.xsd CSE_SYSTEM_STRUCTURE_XSD_STRING)
-#configure_file(xsd/embedded_xsd.hpp.in include/embedded_xsd.hpp)
 
 add_library(csecorecpp ${allSources})
 target_compile_definitions(csecorecpp PUBLIC "BOOST_ALL_DYN_LINK=1" "BOOST_ALL_NO_LIB=1" "BOOST_CONFIG_SUPPRESS_OUTDATED_MESSAGE=1")

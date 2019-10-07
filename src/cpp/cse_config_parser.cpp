@@ -9,6 +9,8 @@
 #include <boost/lexical_cast.hpp>
 #include <gsl/gsl_util>
 #include <xercesc/dom/DOM.hpp>
+#include <xercesc/framework/MemBufInputSource.hpp>
+#include <xercesc/framework/Wrapper4InputSource.hpp>
 #include <xercesc/util/PlatformUtils.hpp>
 #include <xercesc/util/XMLString.hpp>
 
@@ -68,8 +70,7 @@ class cse_config_parser
 
 public:
     cse_config_parser(
-        const boost::filesystem::path& configPath,
-        const boost::filesystem::path& schemaPath);
+        const boost::filesystem::path& configPath);
     ~cse_config_parser() noexcept;
 
     struct SimulationInformation
@@ -135,8 +136,7 @@ private:
 };
 
 cse_config_parser::cse_config_parser(
-    const boost::filesystem::path& configPath,
-    const boost::filesystem::path& schemaPath)
+    const boost::filesystem::path& configPath)
 {
     // Root node
     xercesc::XMLPlatformUtils::Initialize();
@@ -149,8 +149,12 @@ cse_config_parser::cse_config_parser(
 
     error_handler errorHandler;
 
-    parser->loadGrammar(schemaPath.string().c_str(), xercesc::Grammar::SchemaGrammarType, true);
-    parser->loadGrammar(schemaPath.string().c_str(), xercesc::Grammar::SchemaGrammarType, true);
+    std::string xsd_str = get_xsd();
+
+    xercesc::MemBufInputSource mis(reinterpret_cast<const XMLByte*>(xsd_str.c_str()), xsd_str.size(), "http://opensimulationplatform.com/MSMI/OSPSystemStructure");
+    xercesc::Wrapper4InputSource wmis(&mis, false);
+
+    parser->loadGrammar(&wmis, xercesc::Grammar::SchemaGrammarType, true);
 
     parser->getDomConfig()->setParameter(xercesc::XMLUni::fgDOMErrorHandler, &errorHandler);
     parser->getDomConfig()->setParameter(xercesc::XMLUni::fgXercesUseCachedGrammarInParse, true);
@@ -263,7 +267,6 @@ cse_config_parser::cse_config_parser(
 
         bondConnections_.push_back({simulatorA, bondNameA, simulatorB, bondNameB});
     }
-    parser->release();
 }
 
 cse_config_parser::~cse_config_parser() noexcept = default;
@@ -592,26 +595,15 @@ int calculate_decimation_factor(const std::string& name, duration baseStepSize, 
 std::pair<execution, simulator_map> load_cse_config(
     model_uri_resolver& resolver,
     const boost::filesystem::path& configPath,
-    const boost::filesystem::path& schemaPath,
     std::optional<time_point> overrideStartTime)
 {
     simulator_map simulatorMap;
     const auto configFile = boost::filesystem::is_regular_file(configPath)
         ? configPath
         : configPath / "OspSystemStructure.xml";
-    const auto schemaFile = boost::filesystem::is_regular_file(schemaPath)
-        ? schemaPath
-        : schemaPath / "OspSystemStructure.xsd";
     const auto baseURI = path_to_file_uri(configFile);
 
-    if (!boost::filesystem::exists(schemaFile) || schemaFile.extension() != ".xsd") {
-        std::ostringstream oss;
-        oss << "Specified schema file does not exist or has wrong extension (must be '.xsd'): "
-            << schemaFile;
-        BOOST_LOG_SEV(log::logger(), log::error) << oss.str();
-        throw std::runtime_error(oss.str());
-    }
-    const auto parser = cse_config_parser(configFile, schemaFile);
+    const auto parser = cse_config_parser(configFile);
 
     const auto& simInfo = parser.get_simulation_information();
     if (simInfo.stepSize <= 0.0) {

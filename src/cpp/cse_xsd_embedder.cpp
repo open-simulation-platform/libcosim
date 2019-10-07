@@ -3,8 +3,25 @@
 #include <iostream>
 #include <sstream>
 
-int main(int argc, char** argv) {
-    std::cout << "Hello world!" << std::endl;
+void encode(std::string& data)
+{
+    std::string buffer;
+    buffer.reserve(data.size());
+    for (size_t pos = 0; pos != data.size(); ++pos) {
+        switch (data[pos]) {
+            case '&': buffer.append("&amp;"); break;
+            case '\"': buffer.append("&quot;"); break;
+            case '\'': buffer.append("&apos;"); break;
+            case '<': buffer.append("&lt;"); break;
+            case '>': buffer.append("&gt;"); break;
+            default: buffer.append(&data[pos], 1); break;
+        }
+    }
+    data.swap(buffer);
+}
+
+int main(int argc, char** argv)
+{
     if (argc != 3) {
         std::cerr << "Wrong number of arguments!" << std::endl;
         std::cout << "csexsdembedder requires 2 arguments:" << std::endl;
@@ -13,37 +30,39 @@ int main(int argc, char** argv) {
         return -1;
     }
 
-    std::experimental::filesystem::path input = argv[1] ;
+    std::experimental::filesystem::path input = argv[1];
     std::experimental::filesystem::path output = argv[2];
 
-    std::cout << " --- ---" << std::endl;
-    std::cout << " --- --- Embedding: " << input << " -> " << output << std::endl;
-    std::cout << " --- --- Current dir: " << std::experimental::filesystem::current_path() << std::endl;
-    std::cout << " --- ---" << std::endl;
+    std::cout << " Embedding: " << input << " -> " << output << std::endl;
 
     std::ifstream xsd(argv[1]);
-    std::string all, line;
+    std::string xsd_str, line;
 
     while(std::getline(xsd, line))
-        all+=line+"\n";
+        xsd_str+=line;
 
-    std::stringstream ss;
-    ss.write((const char*)&all, sizeof(all));
+    encode(xsd_str);
 
     std::ofstream out_file(argv[2]);
     if (out_file) {
         out_file
-        << "#include <iostream>" << std::endl
-        << "#include <string>" << std::endl
-        << "#define cse_system_structure_xsd \"" << ss.rdbuf() << "\";" << std::endl
-        << "std::string get_xsd() {" << std::endl
-        << "std::stringstream ss;" << std::endl
-        << "ss.read((char*) &cse_system_structure_xsd, sizeof(cse_system_structure_xsd)));" << std::endl
-        << "return ret; }" << std::endl
-        << std::endl;
-    }
-    else
-    {
+            << "#include <string>" << std::endl
+            << "#include <regex>" << std::endl
+            << "#define cse_system_structure_xsd \"" << xsd_str << "\"" << std::endl
+            << std::endl
+            << "namespace cse" << std::endl
+            << "{" << std::endl
+            << "std::string get_xsd() {" << std::endl
+            << "  std::string xsd_str(cse_system_structure_xsd);" << std::endl
+            << "  xsd_str = std::regex_replace(xsd_str, std::regex(\"&amp;\"), \"&\");" << std::endl
+            << "  xsd_str = std::regex_replace(xsd_str, std::regex(\"&quot;\"), \"\\\"\");" << std::endl
+            << "  xsd_str = std::regex_replace(xsd_str, std::regex(\"&apos;\"), \"\'\");" << std::endl
+            << "  xsd_str = std::regex_replace(xsd_str, std::regex(\"&lt;\"), \"<\");" << std::endl
+            << "  xsd_str = std::regex_replace(xsd_str, std::regex(\"&gt;\"), \">\");" << std::endl
+            << "  return xsd_str;" << std::endl
+            << "}" << std::endl
+            << "}" << std::endl;
+    } else {
         std::cerr << "Failure opening " << argv[2] << std::endl;
         return -1;
     }
