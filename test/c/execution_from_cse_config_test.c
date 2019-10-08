@@ -42,14 +42,7 @@ int main()
         goto Lfailure;
     }
 
-    char schemaDir[1024];
-    rc = snprintf(schemaDir, sizeof schemaDir, "%s/msmi/schema", dataDir);
-    if (rc < 0) {
-        perror(NULL);
-        goto Lfailure;
-    }
-
-    execution = cse_config_execution_create(msmiDir, schemaDir, false, 0);
+    execution = cse_config_execution_create(msmiDir, false, 0);
     if (!execution) { goto Lerror; }
 
     observer = cse_last_value_observer_create();

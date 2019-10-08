@@ -1,5 +1,6 @@
 set(publicHeaderDir "${CMAKE_SOURCE_DIR}/include/cse")
 set(privateHeaderDir "${CMAKE_CURRENT_SOURCE_DIR}/cse")
+set(generatedHeaderDir "${CMAKE_CURRENT_BINARY_DIR}")
 
 set(publicHeaders
     "algorithm.hpp"
@@ -49,6 +50,9 @@ set(privateHeaders
     "utility/filesystem.hpp"
     "utility/uuid.hpp"
     "utility/zip.hpp"
+)
+set(generatedHeaders
+    "cse_system_structure.hpp"
 )
 set(sources
     "algorithm.cpp"
@@ -116,7 +120,19 @@ set(privateHeadersFull)
 foreach(h IN LISTS privateHeaders)
     list(APPEND privateHeadersFull "${privateHeaderDir}/${h}")
 endforeach()
-set(allSources ${publicHeadersFull} ${privateHeadersFull} ${sources})
+set(generatedHeadersFull)
+foreach(h IN LISTS generatedHeaders)
+    list(APPEND generatedHeadersFull "${generatedHeaderDir}/${h}")
+endforeach()
+set(allSources ${publicHeadersFull} ${privateHeadersFull} ${generatedHeadersFull} ${sources})
+
+add_custom_command(
+    OUTPUT cse_system_structure.hpp
+    COMMAND csexsdembedder "${CMAKE_CURRENT_SOURCE_DIR}/xsd/OspSystemStructure.xsd" cse_system_structure.hpp
+    DEPENDS xsd/OspSystemStructure.xsd)
+
+message(STATUS "${CMAKE_BINARY_DIR}")
+message(STATUS "${CMAKE_CURRENT_BINARY_DIR}")
 
 add_library(csecorecpp ${allSources})
 target_compile_definitions(csecorecpp PUBLIC "BOOST_ALL_DYN_LINK=1" "BOOST_ALL_NO_LIB=1" "BOOST_CONFIG_SUPPRESS_OUTDATED_MESSAGE=1")
@@ -126,6 +142,7 @@ target_include_directories(csecorecpp
         "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>"
     PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}"
+        "${CMAKE_CURRENT_BINARY_DIR}"
 )
 target_link_libraries(csecorecpp
     PUBLIC
