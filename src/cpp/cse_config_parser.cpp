@@ -139,7 +139,7 @@ private:
     std::vector<ScalarConnection> scalarConnections_;
     std::vector<ScalarConnection> plugSocketConnections_;
     std::vector<ScalarConnection> bondConnections_;
-    variable_type parse_variable_type(const std::string&);
+    static variable_type parse_variable_type(const std::string&);
 };
 
 cse_config_parser::cse_config_parser(
