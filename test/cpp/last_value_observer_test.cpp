@@ -4,6 +4,7 @@
 #include <cse/async_slave.hpp>
 #include <cse/execution.hpp>
 #include <cse/log/simple.hpp>
+#include <cse/manipulator/override_manipulator.hpp>
 #include <cse/observer/last_value_observer.hpp>
 
 #include <cmath>

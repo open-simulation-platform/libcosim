@@ -59,7 +59,7 @@ bool is_input(cse::variable_causality causality)
 
 void override_manipulator::simulator_added(
     simulator_index index,
-    simulator* sim,
+    manipulable* sim,
     time_point /*currentTime*/)
 {
     simulators_[index] = sim;
