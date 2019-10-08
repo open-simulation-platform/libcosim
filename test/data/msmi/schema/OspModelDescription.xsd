@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified"
+           targetNamespace="http://opensimulationplatform.com/MSMI/OSPModelDescription"
+           xmlns:osp="http://opensimulationplatform.com/MSMI/OSPModelDescription">
+    <xs:element name="OspModelDescription">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="Sockets" type="osp:sockets"/>
+                <xs:element name="Plugs" type="osp:plugs"/>
+                <xs:element name="Bonds" type="osp:bonds"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:complexType name="sockets">
+        <xs:sequence>
+            <xs:element name="Socket" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Variables" type="osp:variables"/>
+                    </xs:sequence>
+                    <xs:attribute name="name"/>
+                    <xs:attribute name="type"/>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="plugs">
+        <xs:sequence>
+            <xs:element name="Plug" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Variables" type="osp:variables"/>
+                    </xs:sequence>
+                    <xs:attribute name="name"/>
+                    <xs:attribute name="type"/>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="bonds">
+        <xs:sequence>
+            <xs:element name="Bond" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="BondPlugs">
+                            <xs:complexType>
+                                <xs:sequence>
+                                    <xs:element name="BondPlug" maxOccurs="unbounded">
+                                        <xs:complexType>
+                                            <xs:attribute name="name"/>
+                                        </xs:complexType>
+                                    </xs:element>
+                                </xs:sequence>
+                            </xs:complexType>
+                        </xs:element>
+                        <xs:element name="BondSockets">
+                            <xs:complexType>
+                                <xs:sequence>
+                                    <xs:element name="BondSocket" maxOccurs="unbounded">
+                                        <xs:complexType>
+                                            <xs:attribute name="name"/>
+                                        </xs:complexType>
+                                    </xs:element>
+                                </xs:sequence>
+                            </xs:complexType>
+                        </xs:element>
+                    </xs:sequence>
+                    <xs:attribute name="name"/>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="variables">
+        <xs:sequence>
+            <xs:element name="Variable" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:attribute name="name"/>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+</xs:schema>

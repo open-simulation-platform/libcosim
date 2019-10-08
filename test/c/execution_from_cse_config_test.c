@@ -35,24 +35,15 @@ int main()
         goto Lfailure;
     }
 
-    char sspDir[1024];
-    int rc = snprintf(sspDir, sizeof sspDir, "%s/ssp/demo/no_algorithm_element", dataDir);
+    char msmiDir[1024];
+    int rc = snprintf(msmiDir, sizeof msmiDir, "%s/msmi/OspSystemStructure.xml", dataDir);
     if (rc < 0) {
         perror(NULL);
         goto Lfailure;
     }
 
-    int64_t nanoStepSize = (int64_t)(0.1 * 1.0e9);
-    execution = cse_ssp_fixed_step_execution_create(sspDir, true, 0, nanoStepSize); // override ssp startTime
+    execution = cse_config_execution_create(msmiDir, false, 0);
     if (!execution) { goto Lerror; }
-
-    cse_execution_status status;
-    cse_execution_get_status(execution, &status);
-
-    if (status.current_time != 0.0) {
-        fprintf(stderr, "Expected value 0.0, got %f\n", (double)(status.current_time / 1.0e9));
-        goto Lfailure;
-    }
 
     observer = cse_last_value_observer_create();
     if (!observer) { goto Lerror; }
@@ -84,8 +75,9 @@ int main()
     }
 
     cse_execution_start(execution);
-    Sleep(100);
+    Sleep(200);
     cse_execution_stop(execution);
+
 
     goto Lcleanup;
 

@@ -140,10 +140,29 @@ cse_execution* cse_execution_create(
     cse_duration stepSize);
 
 /**
+ *  Creates a new execution based on an OspSystemStructure.xml file.
+ *
+ *  \param [in] configPath
+ *      Path to an OspSystemStructure.xml file, or a directory holding OspSystemStructure.xml
+ *  \param [in] startTimeDefined
+ *      Defines whether or not the following startTime variable should be ignored or not.
+ *  \param [in] startTime
+ *      The (logical) time point at which the simulation should start.
+ *      If startTimeDefined=false, this variable will be ignored and a default value will be used.
+ *  \returns
+ *      A pointer to an object which holds the execution state,
+ *      or NULL on error.
+ */
+cse_execution* cse_config_execution_create(
+    const char* configPath,
+    bool startTimeDefined,
+    cse_time_point startTime);
+
+/**
  *  Creates a new execution based on a SystemStructure.ssd file.
  *
  *  \param [in] sspDir
- *      Path to the directory holding SystemStructure.ssd
+ *      Path to an .ssd file, or a directory holding SystemStructure.ssd
  *  \param [in] startTimeDefined
  *      Defines whether or not the following startTime variable should be ignored or not.
  *  \param [in] startTime
@@ -168,11 +187,8 @@ cse_execution* cse_ssp_execution_create(
  *  \param [in] startTime
  *      The (logical) time point at which the simulation should start.
  *      If startTimeDefined=false, this variable will be ignored and a default value will be used.
- *  \param [in] stepSizeDefined
- *      Defines whether or not the following stepSize variable should be ignored or not.
- *      Must evaluate to `true` when loaded SSP does not contain a osp:FixedStepMaster annotation providing a default step size.
  *  \param [in] stepSize
- *      If stepSizeDefined=true, this value will be used by the (fixed-step) co-simulation algorithm.
+ *      The stepSize that will be used by the (fixed-step) co-simulation algorithm.
  *  \returns
  *      A pointer to an object which holds the execution state,
  *      or NULL on error.
@@ -181,7 +197,6 @@ cse_execution* cse_ssp_fixed_step_execution_create(
     const char* sspDir,
     bool startTimeDefined,
     cse_time_point startTime,
-    bool stepSizeDefined,
     cse_duration stepSize);
 
 /**
@@ -203,12 +218,14 @@ typedef struct cse_slave_s cse_slave;
  *
  *  \param [in] fmuPath
  *      Path to FMU.
+ *  \param [in] instanceName
+ *      Unique name of the instance.
  *
  *  \returns
  *      A pointer to an object which holds the local slave object,
  *      or NULL on error.
  */
-cse_slave* cse_local_slave_create(const char* fmuPath);
+cse_slave* cse_local_slave_create(const char* fmuPath, const char* instanceName);
 
 /**
  *  Destroys a local slave.

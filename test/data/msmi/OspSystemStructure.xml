@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<OspSystemStructure
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://opensimulationplatform.com/MSMI/OSPSystemStructure schema/OspSystemStructure.xsd"
+        xmlns="http://opensimulationplatform.com/MSMI/OSPSystemStructure">
+    <StartTime>0.0</StartTime>
+    <BaseStepSize>1e-4</BaseStepSize>
+    <Algorithm>fixedStep</Algorithm>
+    <Simulators>
+        <Simulator name="CraneController" source="../ssp/demo/CraneController.fmu" stepSize="2e-4">
+            <InitialValues>
+                <InitialValue variable="cl1_min">
+                    <Real value="2.2"/>
+                </InitialValue>
+                <InitialValue variable="cl1_max">
+                    <Real value="3.8"/>
+                </InitialValue>
+            </InitialValues>
+        </Simulator>
+        <Simulator name="KnuckleBoomCrane" source="../ssp/demo/KnuckleBoomCrane.fmu" stepSize="2.03e-4"/>
+    </Simulators>
+    <PlugSocketConnections/>
+    <BondConnections/>
+    <VariableConnections>
+        <ScalarConnection>
+            <Source simulator="CraneController" endpoint="p_Crane.e[1]"/>
+            <Target simulator="KnuckleBoomCrane" endpoint="p_Crane.e[1]"/>
+        </ScalarConnection>
+        <SumConnection>
+            <Sources>
+                <Source simulator="KnuckleBoomCrane" endpoint="p_Crane.f[1]"/>
+                <Source simulator="KnuckleBoomCrane" endpoint="p_Crane.f[2]"/>
+                <Source simulator="KnuckleBoomCrane" endpoint="p_Crane.f[3]"/>
+            </Sources>
+            <Target simulator="CraneController" endpoint="p_Crane.f[1]"/>
+        </SumConnection>
+    </VariableConnections>
+</OspSystemStructure>

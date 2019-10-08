@@ -10,6 +10,7 @@ find_dependency(Boost REQUIRED COMPONENTS date_time fiber filesystem log)
 find_dependency(FMILibrary REQUIRED)
 find_dependency(LIBZIP REQUIRED)
 find_dependency(yaml-cpp REQUIRED)
+find_dependency(XercesC REQUIRED)
 
 if(@CSECORE_WITH_FMUPROXY@)
     find_dependency(THRIFT REQUIRED)

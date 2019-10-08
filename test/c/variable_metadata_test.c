@@ -45,7 +45,7 @@ int main()
     execution = cse_execution_create(0, nanoStepSize);
     if (!execution) { goto Lerror; }
 
-    slave = cse_local_slave_create(fmuPath);
+    slave = cse_local_slave_create(fmuPath, "slave");
     if (!slave) { goto Lerror; }
 
     cse_slave_index slaveIndex = cse_execution_add_slave(execution, slave);
