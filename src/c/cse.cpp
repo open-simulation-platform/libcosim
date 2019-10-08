@@ -163,7 +163,6 @@ cse_execution* cse_execution_create(cse_time_point startTime, cse_duration stepS
 
 cse_execution* cse_config_execution_create(
     const char* configPath,
-    const char* schemaPath,
     bool startTimeDefined,
     cse_time_point startTime)
 {
@@ -174,7 +173,6 @@ cse_execution* cse_config_execution_create(
         auto sim = cse::load_cse_config(
             *resolver,
             configPath,
-            schemaPath,
             startTimeDefined ? std::optional<cse::time_point>(to_time_point(startTime)) : std::nullopt);
 
         execution->cpp_execution = std::make_unique<cse::execution>(std::move(sim.first));

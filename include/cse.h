@@ -144,8 +144,6 @@ cse_execution* cse_execution_create(
  *
  *  \param [in] configPath
  *      Path to an OspSystemStructure.xml file, or a directory holding OspSystemStructure.xml
- *  \param [in] schemaPath
- *      Path to an OspSystemStructure.xsd schema file, or a directory holding OspSystemStructure.xsd
  *  \param [in] startTimeDefined
  *      Defines whether or not the following startTime variable should be ignored or not.
  *  \param [in] startTime
@@ -157,7 +155,6 @@ cse_execution* cse_execution_create(
  */
 cse_execution* cse_config_execution_create(
     const char* configPath,
-    const char* schemaPath,
     bool startTimeDefined,
     cse_time_point startTime);
 
