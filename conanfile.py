@@ -38,7 +38,7 @@ class CSECoreConan(ConanFile):
     def requirements(self):
         if self.options.fmuproxy:
             self.requires("OpenSSL/1.0.2o@conan/stable")
-            self.requires("thrift/0.12.0@helmesjo/stable")
+            self.requires("thrift/0.12.0@bincrafters/stable")
 
     def configure_cmake(self):
         cmake = CMake(self)
