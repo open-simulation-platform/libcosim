@@ -16,7 +16,7 @@ namespace cse
 class scenario_manager : public manipulator
 {
 public:
-    void simulator_added(simulator_index, simulator*, time_point) override;
+    void simulator_added(simulator_index, manipulable*, time_point) override;
 
     void simulator_removed(simulator_index, time_point) override;
 
