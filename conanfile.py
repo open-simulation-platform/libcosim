@@ -20,7 +20,7 @@ class CSECoreConan(ConanFile):
         "gsl_microsoft/20171020@bincrafters/stable",
         "libzip/1.5.2@bincrafters/stable",
         "xerces-c/3.2.2@bincrafters/stable",
-        "yaml-cpp/0.6.3@conan/stable",
+        "yaml-cpp/0.6.2@bincrafters/stable",
         "bzip2/1.0.8@conan/stable"
         )
 
