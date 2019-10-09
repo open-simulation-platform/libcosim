@@ -307,9 +307,10 @@ std::pair<execution, simulator_map> load_ssp(
     std::optional<cse::time_point> overrideStartTime)
 {
     simulator_map simulatorMap;
-    const auto configFile = boost::filesystem::is_regular_file(configPath)
-                            ? configPath
-                            : configPath / "SystemStructure.ssd";
+    const auto absolutePath = boost::filesystem::absolute(configPath);
+    const auto configFile = boost::filesystem::is_regular_file(absolutePath)
+        ? absolutePath
+        : absolutePath / "SystemStructure.ssd";
     const auto baseURI = path_to_file_uri(configFile);
     const auto parser = ssp_parser(configFile);
 

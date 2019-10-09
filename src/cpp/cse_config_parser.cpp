@@ -681,9 +681,10 @@ std::pair<execution, simulator_map> load_cse_config(
     std::optional<time_point> overrideStartTime)
 {
     simulator_map simulatorMap;
-    const auto configFile = boost::filesystem::is_regular_file(configPath)
-        ? configPath
-        : configPath / "OspSystemStructure.xml";
+    const auto absolutePath = boost::filesystem::absolute(configPath);
+    const auto configFile = boost::filesystem::is_regular_file(absolutePath)
+        ? absolutePath
+        : absolutePath / "OspSystemStructure.xml";
     const auto baseURI = path_to_file_uri(configFile);
 
     const auto parser = cse_config_parser(configFile);
