@@ -118,6 +118,14 @@ constexpr cse::time_point to_time_point(cse_time_point nanos)
     return cse::time_point(to_duration(nanos));
 }
 
+// A wrapper for `std::strncpy()` which ensures that `dest` is always
+// null terminated.
+void safe_strncpy(char* dest, const char* src, std::size_t count)
+{
+    std::strncpy(dest, src, count - 1);
+    dest[count - 1] = '\0';
+}
+
 } // namespace
 
 
@@ -261,8 +269,8 @@ int cse_execution_get_slave_infos(cse_execution* execution, cse_slave_info infos
         auto ids = execution->simulators;
         size_t slave = 0;
         for (const auto& [name, entry] : ids) {
-            std::strncpy(infos[slave].name, name.c_str(), SLAVE_NAME_MAX_SIZE);
-            std::strncpy(infos[slave].source, entry.source.c_str(), SLAVE_NAME_MAX_SIZE);
+            safe_strncpy(infos[slave].name, name.c_str(), SLAVE_NAME_MAX_SIZE);
+            safe_strncpy(infos[slave].source, entry.source.c_str(), SLAVE_NAME_MAX_SIZE);
             infos[slave].index = entry.index;
             if (++slave >= numSlaves) {
                 break;
@@ -347,7 +355,7 @@ cse_variable_type to_c_variable_type(const cse::variable_type& vt)
 
 void translate_variable_description(const cse::variable_description& vd, cse_variable_description& cvd)
 {
-    std::strncpy(cvd.name, vd.name.c_str(), SLAVE_NAME_MAX_SIZE);
+    safe_strncpy(cvd.name, vd.name.c_str(), SLAVE_NAME_MAX_SIZE);
     cvd.reference = vd.reference;
     cvd.type = to_c_variable_type(vd.type);
     cvd.causality = to_variable_causality(vd.causality);
