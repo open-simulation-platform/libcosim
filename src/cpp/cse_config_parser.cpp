@@ -143,6 +143,7 @@ private:
     std::vector<ScalarConnection> plugSocketConnections_;
     std::vector<ScalarConnection> bondConnections_;
     static variable_type parse_variable_type(const std::string&);
+    static bool parse_boolean_value(const std::string& s);
 };
 
 cse_config_parser::cse_config_parser(
@@ -220,7 +221,7 @@ cse_config_parser::cse_config_parser(
                         initialValues.push_back({varName, varType, boost::lexical_cast<int>(varValue)});
                         break;
                     case variable_type::boolean:
-                        initialValues.push_back({varName, varType, boost::lexical_cast<bool>(varValue)});
+                        initialValues.push_back({varName, varType, parse_boolean_value(varValue)});
                         break;
                     case variable_type::string:
                         initialValues.push_back({varName, varType, varValue});
@@ -359,6 +360,23 @@ variable_type cse_config_parser::parse_variable_type(const std::string& str)
         return cse::variable_type::enumeration;
     }
     throw std::runtime_error("Failed to parse variable type: " + str);
+}
+
+bool cse_config_parser::parse_boolean_value(const std::string& s)
+{
+    bool bool_value;
+    std::istringstream iss(s);
+    iss >> bool_value;
+
+    if (iss.fail()) {
+        iss.clear();
+        iss >> std::boolalpha >> bool_value;
+        if (iss.fail()) {
+            throw std::invalid_argument("Value: '" + s + "' is not convertable to bool");
+        }
+    }
+
+    return bool_value;
 }
 
 struct slave_info
