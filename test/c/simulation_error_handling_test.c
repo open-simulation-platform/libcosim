@@ -27,9 +27,8 @@ int main()
 
     int exitCode = 0;
     cse_execution* execution = NULL;
-    cse_observer* observer = NULL;
     cse_manipulator* manipulator = NULL;
-
+    cse_slave* slave = NULL;
 
     const char* dataDir = getenv("TEST_DATA_DIR");
     if (!dataDir) {
@@ -37,19 +36,22 @@ int main()
         goto Lfailure;
     }
 
-    char sspDir[1024];
-    int rc = snprintf(sspDir, sizeof sspDir, "%s/ssp/controller", dataDir);
+    char fmuPath[1024];
+    int rc = snprintf(fmuPath, sizeof fmuPath, "%s/fmi2/fail.fmu", dataDir);
     if (rc < 0) {
         perror(NULL);
         goto Lfailure;
     }
 
-    execution = cse_ssp_execution_create(sspDir, false, 0);
+    int64_t nanoStepSize = (int64_t)(0.1 * 1.0e9);
+    execution = cse_execution_create(0, nanoStepSize);
     if (!execution) { goto Lerror; }
 
-    observer = cse_last_value_observer_create();
-    if (!observer) { goto Lerror; }
-    cse_execution_add_observer(execution, observer);
+    slave = cse_local_slave_create(fmuPath, "slave");
+    if (!slave) { goto Lerror; }
+
+    cse_slave_index slave_index = cse_execution_add_slave(execution, slave);
+    if (slave_index < 0) { goto Lerror; }
 
     manipulator = cse_override_manipulator_create();
     if (!manipulator) { goto Lerror; }
@@ -65,10 +67,10 @@ int main()
 
     Sleep(100);
 
-    cse_value_reference ref = 2;
+    cse_value_reference ref = 0;
     const bool val = true;
     // Produces a model error in the subsequent step
-    rc = cse_manipulator_slave_set_boolean(manipulator, 0, &ref, 1, &val);
+    rc = cse_manipulator_slave_set_boolean(manipulator, slave_index, &ref, 1, &val);
     if (rc < 0) { goto Lerror; }
 
     // Need to wait a bit due to stepping (and failure) happening in another thread.
@@ -95,10 +97,10 @@ int main()
         goto Lfailure;
     }
 
-// What do we expect should happen if calling further methods?
-//    Sleep(100);
-//    rc = cse_execution_stop(execution);
-//    if (rc = 0) { goto Lfailure; }
+    // What do we expect should happen if calling further methods?
+    //    Sleep(100);
+    //    rc = cse_execution_stop(execution);
+    //    if (rc = 0) { goto Lfailure; }
 
     goto Lcleanup;
 
@@ -109,8 +111,8 @@ Lfailure:
     exitCode = 1;
 
 Lcleanup:
-    cse_observer_destroy(observer);
     cse_manipulator_destroy(manipulator);
+    cse_local_slave_destroy(slave);
     cse_execution_destroy(execution);
     return exitCode;
 }
