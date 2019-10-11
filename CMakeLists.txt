@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.9)
-project("csecore" VERSION "0.6.0")
+project("csecore" VERSION "0.5.1")
 
 # ==============================================================================
 # Build settings
