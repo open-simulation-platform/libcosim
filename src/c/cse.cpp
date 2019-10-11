@@ -47,6 +47,8 @@ cse_errc cpp_to_c_error_code(std::error_code ec)
         return CSE_ERRC_DL_LOAD_ERROR;
     else if (ec == cse::errc::model_error)
         return CSE_ERRC_MODEL_ERROR;
+    else if (ec == cse::errc::simulation_error)
+        return CSE_ERRC_SIMULATION_ERROR;
     else if (ec == cse::errc::zip_error)
         return CSE_ERRC_ZIP_ERROR;
     else if (ec.category() == std::generic_category()) {
@@ -60,12 +62,14 @@ cse_errc cpp_to_c_error_code(std::error_code ec)
 // These hold information about the last reported error.
 // They should only be set through `set_last_error()` and
 // `handle_current_exception()`.
-thread_local cse_errc g_lastErrorCode;
-thread_local std::string g_lastErrorMessage;
+static cse_errc g_lastErrorCode;
+static std::string g_lastErrorMessage;
+static std::mutex g_lock;
 
 // Sets the last error code and message directly.
 void set_last_error(cse_errc ec, std::string message)
 {
+    std::lock_guard<std::mutex> lock(g_lock);
     g_lastErrorCode = ec;
     g_lastErrorMessage = std::move(message);
 }
@@ -131,11 +135,13 @@ void safe_strncpy(char* dest, const char* src, std::size_t count)
 
 cse_errc cse_last_error_code()
 {
+    std::lock_guard<std::mutex> lock(g_lock);
     return g_lastErrorCode;
 }
 
 const char* cse_last_error_message()
 {
+    std::lock_guard<std::mutex> lock(g_lock);
     return g_lastErrorMessage.c_str();
 }
 
@@ -492,7 +498,17 @@ int cse_execution_start(cse_execution* execution)
         try {
             execution->state = CSE_EXECUTION_RUNNING;
             auto task = boost::fibers::packaged_task<bool()>([execution]() {
-                return execution->cpp_execution->simulate_until(std::nullopt).get();
+                auto future = execution->cpp_execution->simulate_until(std::nullopt);
+                if (auto ep = future.get_exception_ptr()) {
+                    try {
+                        std::rethrow_exception(ep);
+                    } catch (...) {
+                        handle_current_exception();
+                        execution->state = CSE_EXECUTION_ERROR;
+                        return false;
+                    }
+                }
+                return future.get();
             });
             execution->simulate_result = task.get_future();
             execution->t = std::thread(std::move(task));
