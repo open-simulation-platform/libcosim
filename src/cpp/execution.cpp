@@ -446,4 +446,31 @@ void execution::set_string_initial_value(simulator_index sim, value_reference va
     pimpl_->set_string_initial_value(sim, var, value);
 }
 
+
+std::unordered_map<std::string, simulator_index> apply_system_structure(
+    const system_structure& sys, execution& exe)
+{
+    std::unordered_map<std::string, simulator_index> indexMap;
+    for (const auto& sim : sys.simulators()) {
+        const auto index =
+            exe.add_slave(sim.model->instantiate(sim.name), sim.name);
+        indexMap.emplace(std::string(sim.name), index);
+    }
+    for (const auto& conn : sys.scalar_connections()) {
+        const auto& sourceVarDesc = sys.get_variable_description(conn.source);
+        const auto& targetVarDesc = sys.get_variable_description(conn.target);
+        exe.add_connection(std::make_shared<scalar_connection>(
+            variable_id{
+                indexMap.at(conn.source.simulator_name),
+                sourceVarDesc.type,
+                sourceVarDesc.reference},
+            variable_id{
+                indexMap.at(conn.target.simulator_name),
+                targetVarDesc.type,
+                targetVarDesc.reference}));
+    }
+    return indexMap;
+}
+
+
 } // namespace cse

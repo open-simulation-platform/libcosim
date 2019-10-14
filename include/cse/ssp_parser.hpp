@@ -6,6 +6,7 @@
 #include <cse/execution.hpp>
 #include <cse/model.hpp>
 #include <cse/orchestration.hpp>
+#include <cse/system_structure.hpp>
 
 #include <boost/filesystem/path.hpp>
 
@@ -51,6 +52,10 @@ std::pair<execution, simulator_map> load_ssp(
     const boost::filesystem::path& configPath,
     std::shared_ptr<cse::algorithm> overrideAlgorithm = nullptr,
     std::optional<cse::time_point> overrideStartTime = std::nullopt);
+
+system_structure load_ssp_new(
+    cse::model_uri_resolver&,
+    const boost::filesystem::path& sspDir);
 
 } // namespace cse
 

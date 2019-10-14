@@ -7,6 +7,7 @@
 
 #include <cse/async_slave.hpp>
 #include <cse/model.hpp>
+#include <cse/system_structure.hpp>
 
 #include <boost/fiber/future.hpp>
 #include <boost/functional/hash.hpp>
@@ -14,6 +15,7 @@
 #include <memory>
 #include <optional>
 #include <sstream>
+#include <unordered_map>
 
 
 namespace cse
@@ -251,6 +253,9 @@ private:
     std::unique_ptr<impl> pimpl_;
 };
 
+
+std::unordered_map<std::string, simulator_index> apply_system_structure(
+    const system_structure& sys, execution& exe);
 
 } // namespace cse
 #endif // header guard

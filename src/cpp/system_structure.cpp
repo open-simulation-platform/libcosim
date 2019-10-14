@@ -101,10 +101,20 @@ void system_structure::add_scalar_connection(const scalar_connection& c)
 }
 
 
+namespace
+{
+    system_structure::scalar_connection to_scalar_connection(
+        const std::pair<const variable_qname, variable_qname>& varPair)
+    {
+        return {varPair.second, varPair.first};
+    }
+}
+
+
 system_structure::scalar_connection_range system_structure::scalar_connections()
     const
 {
-    return boost::adaptors::values(scalarConnections_);
+    return boost::adaptors::transform(scalarConnections_, to_scalar_connection);
 }
 
 

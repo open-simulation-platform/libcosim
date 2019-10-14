@@ -4,6 +4,8 @@
 
 #include <boost/test/unit_test.hpp>
 
+#include <algorithm>
+
 
 class mock_model : public cse::model
 {
@@ -61,4 +63,25 @@ BOOST_AUTO_TEST_CASE(system_structure_basic_use)
     BOOST_CHECK_THROW(
         ss.add_scalar_connection({"simA", "realOut"}, {"simB", "intIn"}),
         cse::error); // incompatible variables
+
+    const auto sims = ss.simulators();
+    BOOST_TEST_REQUIRE(std::distance(sims.begin(), sims.end()) == 2);
+    const auto& firstSim = *sims.begin();
+    const auto& secondSim = *(++sims.begin());
+    BOOST_CHECK(
+        (firstSim.name == "simA" && secondSim.name == "simB") ||
+        (firstSim.name == "simB" && secondSim.name == "simA"));
+
+    const auto conns = ss.scalar_connections();
+    BOOST_TEST_REQUIRE(std::distance(conns.begin(), conns.end()) == 2);
+    const auto& firstConn = *conns.begin();
+    const auto& secondConn = *(++conns.begin());
+    BOOST_CHECK((
+        firstConn.source == cse::variable_qname{"simA", "realOut"} &&
+        secondConn.source == cse::variable_qname{"simA", "realOut"}));
+    BOOST_CHECK((
+        (firstConn.target == cse::variable_qname{"simA", "realIn"} &&
+            secondConn.target == cse::variable_qname{"simB", "realIn"}) ||
+        (firstConn.target == cse::variable_qname{"simB", "realIn"} &&
+            secondConn.target == cse::variable_qname{"simA", "realIn"})));
 }

@@ -6,6 +6,7 @@
 
 #include <boost/functional/hash.hpp>
 #include <boost/range/adaptor/map.hpp>
+#include <boost/range/adaptor/transformed.hpp>
 #include <gsl/span>
 
 #include <memory>
@@ -24,7 +25,7 @@ struct variable_qname
 };
 
 
-bool operator==(const variable_qname& a, const variable_qname& b)
+inline bool operator==(const variable_qname& a, const variable_qname& b)
 {
     return a.simulator_name == b.simulator_name &&
         a.variable_name == b.variable_name;
@@ -69,11 +70,14 @@ private:
     using simulator_map = std::unordered_map<std::string, simulator>;
     using scalar_connection_map =
         std::unordered_map<variable_qname, variable_qname>;
+    using scalar_connection_transform =
+        scalar_connection (*)(const scalar_connection_map::value_type&);
 
 public:
     using simulator_range = boost::select_second_const_range<simulator_map>;
     using scalar_connection_range =
-        boost::select_second_const_range<scalar_connection_map>;
+        boost::transformed_range<
+            scalar_connection_transform, const scalar_connection_map>;
 
     void add_simulator(const simulator& s);
 
