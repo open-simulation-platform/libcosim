@@ -30,6 +30,7 @@ set(unittests
     "fmi_v2_fmu_unittest"
     "model_unittest"
     "orchestration_unittest"
+    "system_structure_unittest"
     "uri_unittest"
     "utility_concurrency_unittest"
     "utility_filesystem_unittest"

@@ -12,9 +12,16 @@
 
 namespace cse
 {
+
+
+// =============================================================================
+// system_structure
+// =============================================================================
+
+
 namespace
 {
-std::unordered_map<std::string, variable_description*>
+std::unordered_map<std::string, variable_description>
 make_variable_lookup_table(const model_description& md)
 {
     std::unordered_map<std::string, variable_description> table;
@@ -36,7 +43,8 @@ std::string to_text(const variable_qname& v)
     return s.str();
 }
 
-error make_connection_error(const scalar_connection& c, const std::string& e)
+error make_connection_error(
+    const system_structure::scalar_connection& c, const std::string& e)
 {
     std::ostringstream msg;
     msg << "Cannot establish connection between variables "
@@ -46,92 +54,87 @@ error make_connection_error(const scalar_connection& c, const std::string& e)
 } // namespace
 
 
-class system_structure::impl
+void system_structure::add_simulator(const simulator& s)
 {
-public:
-    impl(const impl&) = delete;
-    impl& operator=(const impl&) = delete;
-    impl(impl&&) noexcept = delete;
-    impl& operator=(impl&&) = delete;
-
-    void add_simulator(const simulator& s)
-    {
-        if (!is_valid_simulator_name(s.name)) {
-            throw error(
-                make_error_code(errc::invalid_system_structure),
-                "Illegal simulator name: " + s.name);
-        }
-        if (simulators_.count(s.name)) {
-            throw error(
-                make_error_code(errc::invalid_system_structure),
-                "Duplicate simulator name: " + s.name);
-        }
-        simulators_.emplace(s.name, s);
-        if (modelCache_.count(s.model->model_description()->uuid) == 0) {
-            modelCache_.emplace(
-                s.model->model_description()->uuid,
-                make_variable_lookup_table(*s.model->model_description()));
-        }
+    if (!is_valid_simulator_name(s.name)) {
+        throw error(
+            make_error_code(errc::invalid_system_structure),
+            "Illegal simulator name: " + s.name);
     }
-
-    void add_scalar_connection(const scalar_connection& c)
-    {
-        std::string validationError;
-        const auto valid = is_valid_connection(
-            get_variable_description(c.source),
-            get_variable_description(c.target),
-            &validationError);
-        if (!valid) {
-            throw make_connection_error(c, validationError);
-        }
-        const auto cit = scalarConnections_.find(c.target);
-        if (cit != scalarConnections_.end()) {
-            throw make_connection_error(
-                c,
-                "Target variable is already connected to " +
-                    to_text(cit->second));
-        }
-        scalarConnections_.emplace(c.target, c.source);
+    if (simulators_.count(s.name)) {
+        throw error(
+            make_error_code(errc::invalid_system_structure),
+            "Duplicate simulator name: " + s.name);
     }
-
-private:
-    // Simulators, indexed by name.
-    std::unordered_map<std::string, simulator> simulators_;
-
-    // Scalar connections. Target is key, source is value.
-    std::unordered_map<variable_qname, variable_qname> scalarConnections_;
-
-    // Cache for fast lookup of model info, indexed by model UUID.
-    struct model_info
-    {
-        std::unordered_map<std::string, variable_description> variables;
-    };
-    std::unordered_map<std::string, model_info> modelCache_;
-
-    // Looks up the description of a variable by its qualified name.
-    const variable_description& get_variable_description(
-        const variable_qname& v) const
-    {
-        const auto sit = simulators_.find(v.simulator_name);
-        if (sit == simulators_.end()) {
-            throw error(
-                make_error_code(errc::invalid_system_structure),
-                "Unknown simulator name: " + v.simulator_name);
-        }
-        const auto& modelInfo =
-            modelCache_.at(sit->second.model->model_description()->uuid);
-
-        const auto vit = modelInfo.variables.find(v.variable_name);
-        if (vit == sit->second.variables.end()) {
-            throw error(
-                make_error_code(errc::invalid_system_structure),
-                "Simulator '" + v.simulator_name +
-                    "' of type '" + sim.model->model_description()->name +
-                    "' does not have a variable named '" + v.variable_name + "'");
-        }
-        return vit->second;
+    simulators_.emplace(s.name, s);
+    if (modelCache_.count(s.model->description()->uuid) == 0) {
+        modelCache_[s.model->description()->uuid] =
+            {make_variable_lookup_table(*s.model->description())};
     }
-};
+}
+
+
+system_structure::simulator_range system_structure::simulators() const
+{
+    return boost::adaptors::values(simulators_);
+}
+
+
+void system_structure::add_scalar_connection(const scalar_connection& c)
+{
+    std::string validationError;
+    const auto valid = is_valid_connection(
+        get_variable_description(c.source),
+        get_variable_description(c.target),
+        &validationError);
+    if (!valid) {
+        throw make_connection_error(c, validationError);
+    }
+    const auto cit = scalarConnections_.find(c.target);
+    if (cit != scalarConnections_.end()) {
+        throw make_connection_error(
+            c,
+            "Target variable is already connected to " +
+                to_text(cit->second));
+    }
+    scalarConnections_.emplace(c.target, c.source);
+}
+
+
+system_structure::scalar_connection_range system_structure::scalar_connections()
+    const
+{
+    return boost::adaptors::values(scalarConnections_);
+}
+
+
+const variable_description& system_structure::get_variable_description(
+    const variable_qname& v) const
+{
+    const auto sit = simulators_.find(v.simulator_name);
+    if (sit == simulators_.end()) {
+        throw error(
+            make_error_code(errc::invalid_system_structure),
+            "Unknown simulator name: " + v.simulator_name);
+    }
+    const auto& modelInfo =
+        modelCache_.at(sit->second.model->description()->uuid);
+
+    const auto vit = modelInfo.variables.find(v.variable_name);
+    if (vit == modelInfo.variables.end()) {
+        throw error(
+            make_error_code(errc::invalid_system_structure),
+            "Simulator '" + v.simulator_name +
+                "' of type '" + sit->second.model->description()->name +
+                "' does not have a variable named '" + v.variable_name + "'");
+    }
+    return vit->second;
+}
+
+
+// =============================================================================
+// Free functions
+// =============================================================================
 
 
 bool is_valid_simulator_name(std::string_view name) noexcept
@@ -147,6 +150,14 @@ bool is_valid_simulator_name(std::string_view name) noexcept
     }
     return true;
 }
+
+
+//bool is_valid_variable_value(
+//    const variable_description& variable,
+//    const scalar_value& value,
+//    std::string* reason)
+//{
+//}
 
 
 bool is_valid_connection(

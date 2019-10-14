@@ -34,6 +34,7 @@ set(publicHeaders
     "observer/time_series_provider.hpp"
     "orchestration.hpp"
     "slave.hpp"
+    "system_structure.hpp"
     "timer.hpp"
     "scenario.hpp"
     "scenario_parser.hpp"
@@ -75,6 +76,7 @@ set(sources
     "observer/time_series_observer.cpp"
     "orchestration.cpp"
     "scenario_parser.cpp"
+    "system_structure.cpp"
     "uri.cpp"
 
     "error.cpp"
