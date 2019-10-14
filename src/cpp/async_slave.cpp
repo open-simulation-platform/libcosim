@@ -3,6 +3,7 @@
 #include "cse/error.hpp"
 #include "cse/exception.hpp"
 #include "cse/utility/concurrency.hpp"
+#include "cse/utility/utility.hpp"
 
 #include <boost/container/vector.hpp>
 #include <boost/fiber/fixedsize_stack.hpp>
@@ -452,23 +453,6 @@ T get_reply(reply_channel& replyChannel)
         CSE_PANIC_M("Unexpected reply type");
     }
 }
-
-/*
- *  A generic visitor that can be constructed on the fly from a set of lambdas.
- *
- *  Inspired by:
- *  https://arne-mertz.de/2018/05/overload-build-a-variant-visitor-on-the-fly/
- */
-template<typename... Functors>
-struct visitor : Functors...
-{
-    visitor(const Functors&... functors)
-        : Functors(functors)...
-    {
-    }
-
-    using Functors::operator()...;
-};
 
 // An exception which signals normal shutdown of the background thread.
 struct shutdown_background_thread
