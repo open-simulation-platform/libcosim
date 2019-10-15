@@ -532,16 +532,13 @@ int cse_execution_stop(cse_execution* execution)
     try {
         execution->cpp_execution->stop_simulation();
         if (execution->t.joinable()) {
+            execution->simulate_result.get();
             execution->t.join();
-            if (auto ep = execution->simulate_result.get_exception_ptr()) {
-                std::rethrow_exception(ep);
-            } else {
-                execution->simulate_result.get();
-            }
         }
         execution->state = CSE_EXECUTION_STOPPED;
         return success;
     } catch (...) {
+        execution->t.join();
         handle_current_exception();
         execution->state = CSE_EXECUTION_ERROR;
         return failure;
