@@ -114,13 +114,6 @@ int main()
     rc = cse_execution_stop(execution);
     if (rc >= 0) { goto Lfailure; }
 
-    Sleep(100);
-
-    rc = cse_execution_start(execution);
-    if (rc < 0) { goto Lerror; }
-
-    Sleep(1000);
-
     goto Lcleanup;
 
 Lerror:

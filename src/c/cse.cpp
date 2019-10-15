@@ -147,7 +147,6 @@ struct cse_execution_s
     std::unique_ptr<cse::execution> cpp_execution;
     std::thread t;
     boost::fibers::future<bool> simulate_result;
-    std::exception_ptr simulate_exception_ptr;
     std::atomic<cse_execution_state> state;
     int error_code;
 };
@@ -495,12 +494,7 @@ int cse_execution_start(cse_execution* execution)
         try {
             execution->state = CSE_EXECUTION_RUNNING;
             auto task = boost::fibers::packaged_task<bool()>([execution]() {
-                auto future = execution->cpp_execution->simulate_until(std::nullopt);
-                if (auto ep = future.get_exception_ptr()) {
-                    execution->simulate_exception_ptr = ep;
-                    return false;
-                }
-                return future.get();
+                return execution->cpp_execution->simulate_until(std::nullopt).get();
             });
             execution->simulate_result = task.get_future();
             execution->t = std::thread(std::move(task));
@@ -520,9 +514,9 @@ int cse_execution_get_simulation_status(cse_execution* execution)
     }
     const auto status = execution->simulate_result.wait_for(std::chrono::duration<int64_t>());
     if (boost::fibers::future_status::ready == status) {
-        if (execution->simulate_exception_ptr) {
+        if (auto ep = execution->simulate_result.get_exception_ptr()) {
             try {
-                std::rethrow_exception(execution->simulate_exception_ptr);
+                std::rethrow_exception(ep);
             } catch (...) {
                 handle_current_exception();
                 execution->state = CSE_EXECUTION_ERROR;
@@ -538,10 +532,11 @@ int cse_execution_stop(cse_execution* execution)
     try {
         execution->cpp_execution->stop_simulation();
         if (execution->t.joinable()) {
-            execution->simulate_result.get();
             execution->t.join();
-            if (execution->simulate_exception_ptr) {
-                std::rethrow_exception(execution->simulate_exception_ptr);
+            if (auto ep = execution->simulate_result.get_exception_ptr()) {
+                std::rethrow_exception(ep);
+            } else {
+                execution->simulate_result.get();
             }
         }
         execution->state = CSE_EXECUTION_STOPPED;
