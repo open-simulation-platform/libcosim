@@ -62,14 +62,12 @@ cse_errc cpp_to_c_error_code(std::error_code ec)
 // These hold information about the last reported error.
 // They should only be set through `set_last_error()` and
 // `handle_current_exception()`.
-static cse_errc g_lastErrorCode;
-static std::string g_lastErrorMessage;
-static std::mutex g_lock;
+thread_local cse_errc g_lastErrorCode;
+thread_local std::string g_lastErrorMessage;
 
 // Sets the last error code and message directly.
 void set_last_error(cse_errc ec, std::string message)
 {
-    std::lock_guard<std::mutex> lock(g_lock);
     g_lastErrorCode = ec;
     g_lastErrorMessage = std::move(message);
 }
@@ -135,13 +133,11 @@ void safe_strncpy(char* dest, const char* src, std::size_t count)
 
 cse_errc cse_last_error_code()
 {
-    std::lock_guard<std::mutex> lock(g_lock);
     return g_lastErrorCode;
 }
 
 const char* cse_last_error_message()
 {
-    std::lock_guard<std::mutex> lock(g_lock);
     return g_lastErrorMessage.c_str();
 }
 
@@ -151,6 +147,7 @@ struct cse_execution_s
     std::unique_ptr<cse::execution> cpp_execution;
     std::thread t;
     boost::fibers::future<bool> simulate_result;
+    std::exception_ptr simulate_exception_ptr;
     std::atomic<cse_execution_state> state;
     int error_code;
 };
@@ -500,13 +497,8 @@ int cse_execution_start(cse_execution* execution)
             auto task = boost::fibers::packaged_task<bool()>([execution]() {
                 auto future = execution->cpp_execution->simulate_until(std::nullopt);
                 if (auto ep = future.get_exception_ptr()) {
-                    try {
-                        std::rethrow_exception(ep);
-                    } catch (...) {
-                        handle_current_exception();
-                        execution->state = CSE_EXECUTION_ERROR;
-                        return false;
-                    }
+                    execution->simulate_exception_ptr = ep;
+                    return false;
                 }
                 return future.get();
             });
@@ -521,6 +513,26 @@ int cse_execution_start(cse_execution* execution)
     }
 }
 
+int cse_execution_get_simulation_status(cse_execution* execution)
+{
+    if (execution->state != CSE_EXECUTION_RUNNING) {
+        return success;
+    }
+    const auto status = execution->simulate_result.wait_for(std::chrono::duration<int64_t>());
+    if (boost::fibers::future_status::ready == status) {
+        if (execution->simulate_exception_ptr) {
+            try {
+                std::rethrow_exception(execution->simulate_exception_ptr);
+            } catch (...) {
+                handle_current_exception();
+                execution->state = CSE_EXECUTION_ERROR;
+                return failure;
+            }
+        }
+    }
+    return success;
+}
+
 int cse_execution_stop(cse_execution* execution)
 {
     try {
@@ -528,6 +540,9 @@ int cse_execution_stop(cse_execution* execution)
         if (execution->t.joinable()) {
             execution->simulate_result.get();
             execution->t.join();
+            if (execution->simulate_exception_ptr) {
+                std::rethrow_exception(execution->simulate_exception_ptr);
+            }
         }
         execution->state = CSE_EXECUTION_STOPPED;
         return success;

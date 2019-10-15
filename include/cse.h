@@ -272,7 +272,7 @@ cse_slave_index cse_execution_add_slave(
 int cse_execution_step(cse_execution* execution, size_t numSteps);
 
 /**
- *  Advances an execution to a specific point in time.
+ *  Advances an execution to a specific point in time (blocking).
  *
  *  \param [in] execution
  *      The execution to be stepped.
@@ -287,9 +287,10 @@ int cse_execution_simulate_until(cse_execution* execution, cse_time_point target
 
 
 /**
- *  Starts an execution.
+ *  Starts an execution (non blocking).
  *
- *  The execution will run until `cse_execution_stop()` is called.
+ *  The execution will run until `cse_execution_stop()` is called. The status of the
+ *  simulation can be polled with `cse_execution_get_simulation_status()`.
  *
  *  \param [in] execution
  *      The execution to be started.
@@ -298,6 +299,19 @@ int cse_execution_simulate_until(cse_execution* execution, cse_time_point target
  *      0 on success and -1 on error.
  */
 int cse_execution_start(cse_execution* execution);
+
+
+/**
+ * Polls an execution for its simulation status.
+ *
+ * his method can be used to poll the status of the asynchronous simulation
+ * execution started by calling `cse_execution_start()`. Will return failure
+ * if an error occurred during the simulation execution.
+ *
+ * \returns
+ *      0 on success and -1 on error.
+ */
+int cse_execution_get_simulation_status(cse_execution* execution);
 
 
 /**

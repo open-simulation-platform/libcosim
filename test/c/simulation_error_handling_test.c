@@ -67,6 +67,12 @@ int main()
 
     Sleep(100);
 
+    rc = cse_execution_get_simulation_status(execution);
+    if (rc < 0) {
+        fprintf(stderr, "Expected call to cse_execution_get_simulation_status() to return success.");
+        goto Lfailure;
+    }
+
     cse_value_reference ref = 0;
     const bool val = true;
     // Produces a model error in the subsequent step
@@ -75,6 +81,12 @@ int main()
 
     // Need to wait a bit due to stepping (and failure) happening in another thread.
     Sleep(400);
+
+    rc = cse_execution_get_simulation_status(execution);
+    if (rc >= 0) {
+        fprintf(stderr, "Expected call to cse_execution_get_simulation_status() to return failure.");
+        goto Lfailure;
+    }
 
     cse_execution_status executionStatus;
     rc = cse_execution_get_status(execution, &executionStatus);
@@ -98,9 +110,16 @@ int main()
     }
 
     // What do we expect should happen if calling further methods?
-    //    Sleep(100);
-    //    rc = cse_execution_stop(execution);
-    //    if (rc = 0) { goto Lfailure; }
+    Sleep(100);
+    rc = cse_execution_stop(execution);
+    if (rc >= 0) { goto Lfailure; }
+
+    Sleep(100);
+
+    rc = cse_execution_start(execution);
+    if (rc < 0) { goto Lerror; }
+
+    Sleep(1000);
 
     goto Lcleanup;
 
