@@ -304,9 +304,9 @@ int cse_execution_start(cse_execution* execution);
 /**
  * Polls an execution for its simulation status.
  *
- * his method can be used to poll the status of the asynchronous simulation
- * execution started by calling `cse_execution_start()`. Will return failure
- * if an error occurred during the simulation execution.
+ * This method can be used to poll the status of the asynchronous execution
+ * started by calling `cse_execution_start()`. Will return failure if an error
+ * occurred during the execution.
  *
  * \returns
  *      0 on success and -1 on error.
