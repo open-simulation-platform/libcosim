@@ -139,14 +139,16 @@ private:
                     }
                 },
                 [=](const scenario::time_dependent_real_modifier& m) {
+                    auto orgFn = m.f;
+                    std::function<double(double)> newFn = [&orgFn, &relativeTime](double d){
+                        return orgFn(d, relativeTime);};
+
                     if (a.is_input) {
-                        auto tmpFn = m.f;
-                        std::function<double(double)> fn = [&tmpFn, &relativeTime](double d){
-                            return tmpFn(d, relativeTime);};
                         sim->expose_for_setting(variable_type::real, a.variable);
-                        sim->set_time_dependent_real_output_modifier(a.variable, fn);
+                        sim->set_real_output_modifier(a.variable, newFn);
                     } else {
                         sim->expose_for_getting(variable_type::real, a.variable);
+                        sim->set_real_input_modifier(a.variable, newFn);
                     }
                 },
                 [=](const scenario::integer_modifier& m) {
@@ -208,9 +210,9 @@ private:
                 },
                 [=](const scenario::time_dependent_real_modifier& /*m*/) {
                     if (a.is_input) {
-
+                        sim->set_real_input_modifier(a.variable, nullptr);
                     } else {
-                        sim->set_time_dependent_real_output_modifier(a.variable, nullptr);
+                        sim->set_real_output_modifier(a.variable, nullptr);
                     }
                 },
                 [=](const scenario::integer_modifier& /*m*/) {

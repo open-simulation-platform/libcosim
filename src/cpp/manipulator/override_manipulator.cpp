@@ -70,7 +70,7 @@ void override_manipulator::simulator_removed(simulator_index index, time_point)
     simulators_.erase(index);
 }
 
-void override_manipulator::step_commencing(time_point currentTime)
+void override_manipulator::step_commencing(time_point /*currentTime*/)
 {
     std::lock_guard<std::mutex> lock(lock_);
     if (!actions_.empty()) {

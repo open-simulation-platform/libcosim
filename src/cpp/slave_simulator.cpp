@@ -357,15 +357,6 @@ public:
         set_modified_reference(modifiedRealVariables_, ref, modifier ? true : false);
     }
 
-    void set_time_dependent_real_output_modifier(
-        value_reference ref,
-        std::function<double(double)> modifier)
-    {
-        (void)ref;
-        (void)modifier;
-        std::cout << "Current time point: " << std::endl;
-    }
-
     void set_integer_output_modifier(
         value_reference ref,
         std::function<int(int)> modifier)
@@ -652,13 +643,6 @@ void slave_simulator::set_real_output_modifier(
     std::function<double(double)> modifier)
 {
     pimpl_->set_real_output_modifier(ref, modifier);
-}
-
-void slave_simulator::set_time_dependent_real_output_modifier(
-    value_reference ref,
-    std::function<double(double)> modifier)
-{
-    pimpl_->set_time_dependent_real_output_modifier(ref, modifier);
 }
 
 void slave_simulator::set_integer_output_modifier(
