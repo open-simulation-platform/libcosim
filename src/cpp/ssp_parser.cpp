@@ -38,22 +38,20 @@ public:
     explicit ssp_parser(const boost::filesystem::path& xmlPath);
     ~ssp_parser() noexcept;
 
-    struct DefaultExperiment
-    {
-        double startTime = 0.0;
-        std::optional<double> stopTime;
-    };
-
-    const DefaultExperiment& get_default_experiment() const;
-
     struct SimulationInformation
     {
         std::string description;
         double stepSize;
     };
 
-    bool has_simulation_information() const;
-    const SimulationInformation& get_simulation_information() const;
+    struct DefaultExperiment
+    {
+        double startTime = 0.0;
+        std::optional<double> stopTime;
+        std::shared_ptr<cse::algorithm> algorithm;
+    };
+
+    const DefaultExperiment& get_default_experiment() const;
 
     struct SystemDescription
     {
@@ -98,21 +96,18 @@ public:
     const std::vector<Connection>& get_connections() const;
 
 private:
-    bool hasSimulationInformation_;
-
     boost::filesystem::path xmlPath_;
     boost::property_tree::ptree pt_;
 
     SystemDescription systemDescription_;
     DefaultExperiment defaultExperiment_;
-    SimulationInformation simulationInformation_;
+
     std::vector<Component> elements_;
     std::vector<Connection> connections_;
 };
 
 ssp_parser::ssp_parser(const boost::filesystem::path& xmlPath)
-    : hasSimulationInformation_(false)
-    , xmlPath_(xmlPath)
+    : xmlPath_(xmlPath)
 {
     // Root node
     std::string path = "ssd:SystemStructureDescription";
@@ -128,27 +123,29 @@ ssp_parser::ssp_parser(const boost::filesystem::path& xmlPath)
     if (const auto defaultExperiment = tmpTree.get_child_optional("ssd:DefaultExperiment")) {
         defaultExperiment_.startTime = get_attribute<double>(*defaultExperiment, "startTime", 0.0);
         defaultExperiment_.stopTime = get_optional_attribute<double>(*defaultExperiment, "stopTime");
-    }
 
-
-    tmpTree = pt_.get_child(path + ".ssd:System");
-    systemDescription_.systemName = get_attribute<std::string>(tmpTree, "name");
-    systemDescription_.systemDescription = get_attribute<std::string>(tmpTree, "description");
-
-    if (const auto annotations = tmpTree.get_child_optional("ssd:Annotations")) {
-        for (const auto& annotation : *annotations) {
-            const auto& annotationType = get_attribute<std::string>(annotation.second, "type");
-            if (annotationType == "org.open-simulation-platform") {
-                for (const auto& infos : annotation.second.get_child("osp:SimulationInformation")) {
-                    hasSimulationInformation_ = true;
-                    if (infos.first == "osp:FixedStepMaster") {
-                        simulationInformation_.description = get_attribute<std::string>(infos.second, "description");
-                        simulationInformation_.stepSize = get_attribute<double>(infos.second, "stepSize");
+        if (const auto annotations = defaultExperiment->get_child_optional("ssd:Annotations")) {
+            for (const auto& annotation : *annotations) {
+                const auto& annotationType = get_attribute<std::string>(annotation.second, "type");
+                if (annotationType == "org.open-simulation-platform") {
+                    for (const auto& algorithm : annotation.second.get_child("osp:Algorithm")) {
+                        if (algorithm.first == "osp:FixedStepAlgorithm") {
+                            double stepSize = get_attribute<double>(algorithm.second, "stepSize");
+                            defaultExperiment_.algorithm = std::move(std::make_unique<cse::fixed_step_algorithm>(cse::to_duration(stepSize)));
+                        } else {
+                            std::string msg("Unknown algorithm: " + algorithm.first);
+                            CSE_PANIC_M(msg.c_str());
+                        }
                     }
                 }
             }
         }
+
     }
+
+    tmpTree = pt_.get_child(path + ".ssd:System");
+    systemDescription_.systemName = get_attribute<std::string>(tmpTree, "name");
+    systemDescription_.systemDescription = get_attribute<std::string>(tmpTree, "description");
 
     for (const auto& component : tmpTree.get_child("ssd:Elements")) {
 
@@ -207,16 +204,6 @@ ssp_parser::ssp_parser(const boost::filesystem::path& xmlPath)
 }
 
 ssp_parser::~ssp_parser() noexcept = default;
-
-bool ssp_parser::has_simulation_information() const
-{
-    return hasSimulationInformation_;
-}
-
-const ssp_parser::SimulationInformation& ssp_parser::get_simulation_information() const
-{
-    return simulationInformation_;
-}
 
 const std::vector<ssp_parser::Component>& ssp_parser::get_elements() const
 {
@@ -317,10 +304,8 @@ std::pair<execution, simulator_map> load_ssp(
     std::shared_ptr<cse::algorithm> algorithm;
     if (overrideAlgorithm != nullptr) {
         algorithm = overrideAlgorithm;
-    } else if (parser.has_simulation_information()) {
-        const auto& simInfo = parser.get_simulation_information();
-        const cse::duration stepSize = cse::to_duration(simInfo.stepSize);
-        algorithm = std::move(std::make_unique<cse::fixed_step_algorithm>(stepSize));
+    } else if (parser.get_default_experiment().algorithm != nullptr) {
+        algorithm = parser.get_default_experiment().algorithm;
     } else {
         CSE_PANIC_M("No co-simulation algorithm specified!");
     }
