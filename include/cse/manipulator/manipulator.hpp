@@ -41,6 +41,7 @@ public:
         value_reference reference,
         std::function<double(double)> modifier) = 0;
 
+
     /**
      *  Sets a modifier for the value of an integer input variable.
      *
@@ -74,6 +75,16 @@ public:
      *  The variable must previously have been exposed with `expose_for_setting()`.
      */
     virtual void set_real_output_modifier(
+        value_reference reference,
+        std::function<double(double)> modifier) = 0;
+
+    /**
+     *  Sets a modifier for the value of a real output variable. Modifier may include use of the current time point
+     *  from step_commencing.
+     *
+     *  The variable must previously have been exposed with `expose_for_setting()`.
+     */
+    virtual void set_time_dependent_real_output_modifier(
         value_reference reference,
         std::function<double(double)> modifier) = 0;
 

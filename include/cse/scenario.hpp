@@ -22,6 +22,11 @@ struct real_modifier
     std::function<double(double)> f;
 };
 
+struct time_dependent_real_modifier
+{
+    std::function<double(double, time_point)> f;
+};
+
 /// The modification of the value of a variable with type `integer`.
 struct integer_modifier
 {
@@ -53,6 +58,7 @@ struct variable_action
     /// The modification to be done to the variable's value.
     std::variant<
         real_modifier,
+        time_dependent_real_modifier,
         integer_modifier,
         boolean_modifier,
         string_modifier>

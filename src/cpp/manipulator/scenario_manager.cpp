@@ -1,7 +1,6 @@
-#include "cse/manipulator.hpp"
-
 #include "cse/algorithm.hpp"
 #include "cse/log/logger.hpp"
+#include "cse/manipulator.hpp"
 #include "cse/scenario.hpp"
 #include "cse/scenario_parser.hpp"
 
@@ -126,11 +125,11 @@ private:
         bool running = false;
     };
 
-    void execute_action(manipulable* sim, const scenario::variable_action& a)
+    void execute_action(manipulable* sim, const scenario::variable_action& a, time_point relativeTime)
     {
         std::visit(
             visitor(
-                [=](scenario::real_modifier m) {
+                [=](const scenario::real_modifier& m) {
                     if (a.is_input) {
                         sim->expose_for_setting(variable_type::real, a.variable);
                         sim->set_real_input_modifier(a.variable, m.f);
@@ -139,7 +138,18 @@ private:
                         sim->set_real_output_modifier(a.variable, m.f);
                     }
                 },
-                [=](scenario::integer_modifier m) {
+                [=](const scenario::time_dependent_real_modifier& m) {
+                    if (a.is_input) {
+                        auto tmpFn = m.f;
+                        std::function<double(double)> fn = [&tmpFn, &relativeTime](double d){
+                            return tmpFn(d, relativeTime);};
+                        sim->expose_for_setting(variable_type::real, a.variable);
+                        sim->set_time_dependent_real_output_modifier(a.variable, fn);
+                    } else {
+                        sim->expose_for_getting(variable_type::real, a.variable);
+                    }
+                },
+                [=](const scenario::integer_modifier& m) {
                     if (a.is_input) {
                         sim->expose_for_setting(variable_type::integer, a.variable);
                         sim->set_integer_input_modifier(a.variable, m.f);
@@ -148,7 +158,7 @@ private:
                         sim->set_integer_output_modifier(a.variable, m.f);
                     }
                 },
-                [=](scenario::boolean_modifier m) {
+                [=](const scenario::boolean_modifier& m) {
                     if (a.is_input) {
                         sim->expose_for_setting(variable_type::boolean, a.variable);
                         sim->set_boolean_input_modifier(a.variable, m.f);
@@ -157,7 +167,7 @@ private:
                         sim->set_boolean_output_modifier(a.variable, m.f);
                     }
                 },
-                [=](scenario::string_modifier m) {
+                [=](const scenario::string_modifier& m) {
                     if (a.is_input) {
                         sim->expose_for_setting(variable_type::string, a.variable);
                         sim->set_string_input_modifier(a.variable, m.f);
@@ -176,7 +186,7 @@ private:
                 << "Executing action for simulator " << e.action.simulator
                 << ", variable " << e.action.variable
                 << ", at relative time " << to_double_time_point(relativeTime);
-            execute_action(simulators_[e.action.simulator], e.action);
+            execute_action(simulators_[e.action.simulator], e.action, relativeTime);
             return true;
         }
         return false;
@@ -189,28 +199,35 @@ private:
             << ", variable " << a.variable;
         std::visit(
             visitor(
-                [=](scenario::real_modifier /*m*/) {
+                [=](const scenario::real_modifier& /*m*/) {
                     if (a.is_input) {
                         sim->set_real_input_modifier(a.variable, nullptr);
                     } else {
                         sim->set_real_output_modifier(a.variable, nullptr);
                     }
                 },
-                [=](scenario::integer_modifier /*m*/) {
+                [=](const scenario::time_dependent_real_modifier& /*m*/) {
+                    if (a.is_input) {
+
+                    } else {
+                        sim->set_time_dependent_real_output_modifier(a.variable, nullptr);
+                    }
+                },
+                [=](const scenario::integer_modifier& /*m*/) {
                     if (a.is_input) {
                         sim->set_integer_input_modifier(a.variable, nullptr);
                     } else {
                         sim->set_integer_output_modifier(a.variable, nullptr);
                     }
                 },
-                [=](scenario::boolean_modifier /*m*/) {
+                [=](const scenario::boolean_modifier& /*m*/) {
                     if (a.is_input) {
                         sim->set_boolean_input_modifier(a.variable, nullptr);
                     } else {
                         sim->set_boolean_output_modifier(a.variable, nullptr);
                     }
                 },
-                [=](scenario::string_modifier /*m*/) {
+                [=](const scenario::string_modifier& /*m*/) {
                     if (a.is_input) {
                         sim->set_string_input_modifier(a.variable, nullptr);
                     } else {

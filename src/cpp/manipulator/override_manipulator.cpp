@@ -1,6 +1,6 @@
 
-#include <cse/manipulator.hpp>
 #include <cse/error.hpp>
+#include <cse/manipulator.hpp>
 
 #include <sstream>
 
@@ -70,7 +70,7 @@ void override_manipulator::simulator_removed(simulator_index index, time_point)
     simulators_.erase(index);
 }
 
-void override_manipulator::step_commencing(time_point /*currentTime*/)
+void override_manipulator::step_commencing(time_point currentTime)
 {
     std::lock_guard<std::mutex> lock(lock_);
     if (!actions_.empty()) {
@@ -86,6 +86,9 @@ void override_manipulator::step_commencing(time_point /*currentTime*/)
                             sim->expose_for_getting(variable_type::real, a.variable);
                             sim->set_real_output_modifier(a.variable, m.f);
                         }
+                    },
+                    [=](scenario::time_dependent_real_modifier m) {
+                        std::cout << "Is time dependent" << std::endl;
                     },
                     [=](scenario::integer_modifier m) {
                         if (a.is_input) {
@@ -126,6 +129,7 @@ void override_manipulator::add_action(
     variable_type type,
     const std::variant<
         scenario::real_modifier,
+        scenario::time_dependent_real_modifier,
         scenario::integer_modifier,
         scenario::boolean_modifier,
         scenario::string_modifier>& m)

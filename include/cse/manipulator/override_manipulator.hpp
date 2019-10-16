@@ -42,6 +42,7 @@ private:
         variable_type type,
         const std::variant<
             scenario::real_modifier,
+            scenario::time_dependent_real_modifier,
             scenario::integer_modifier,
             scenario::boolean_modifier,
             scenario::string_modifier>& m);

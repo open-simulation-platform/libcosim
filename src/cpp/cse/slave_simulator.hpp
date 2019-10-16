@@ -61,6 +61,9 @@ public:
     void set_real_output_modifier(
         value_reference reference,
         std::function<double(double)> modifier) override;
+    void set_time_dependent_real_output_modifier(
+        value_reference reference,
+        std::function<double(double)> modifier) override;
     void set_integer_output_modifier(
         value_reference reference,
         std::function<int(int)> modifier) override;
