@@ -2,87 +2,84 @@
 <ssd:SystemStructureDescription name="fmuproxy-cse-example" version="1.0"
                                 xmlns:ssd="http://ssp-standard.org/SSP1/SystemStructureDescription"
                                 xmlns:ssc="http://ssp-standard.org/SSP1/SystemStructureCommon">
-  <!-- This is a comment -->
-  <ssd:System name="cse-instance" description="An example of how to use Core Simulation Environment">
-    <!-- This is a comment -->
-    <ssd:Annotations>
-      <ssc:Annotation type="org.open-simulation-platform">
-        <osp:SimulationInformation>
-          <osp:FixedStepMaster description="FixedStepAlgorithm" stepSize="1e-4"/>
-        </osp:SimulationInformation>
-      </ssc:Annotation>
-    </ssd:Annotations>
 
-    <ssd:Elements>
-      <!-- This is a comment -->
-      <ssd:Component name="CraneController" source="fmu-proxy://localhost:9090?file=../CraneController.fmu">
-        <!-- This is a comment -->
-        <ssd:Connectors>
-          <!-- Seems to match nicely with our consept of "expose" -->
-          <ssd:Connector name="p_Crane.e[1]" kind="output">
-            <ssc:Real/>
-          </ssd:Connector>
-          <ssd:Connector name="p_Crane.e[2]" kind="output">
-            <ssc:Real/>
-          </ssd:Connector>
-          <ssd:Connector name="p_Crane.e[3]" kind="output">
-            <ssc:Real/>
-          </ssd:Connector>
-          <ssd:Connector name="p_Crane.f[1]" kind="input">
-            <ssc:Real/>
-          </ssd:Connector>
-          <!-- This is a comment -->
-          <ssd:Connector name="p_Crane.f[2]" kind="input">
-            <ssc:Real/>
-          </ssd:Connector>
-          <ssd:Connector name="p_Crane.f[3]" kind="input">
-            <ssc:Real/>
-          </ssd:Connector>
-        </ssd:Connectors>
-      </ssd:Component>
-      <ssd:Component name="KnuckleBoomCrane" source="fmu-proxy://localhost:9090?file=../KnuckleBoomCrane.fmu">
-        <!-- This is a comment -->
-        <ssd:Connectors>
-          <!-- This is a comment -->
-          <ssd:Connector name="p_Crane.e[1]" kind="input">
-        <ssc:Real/></ssd:Connector>
-          <ssd:Connector name="p_Crane.e[2]" kind="input">
-            <ssc:Real/>
-          </ssd:Connector>
-          <ssd:Connector name="p_Crane.e[3]" kind="input">
-            <ssc:Real/>
-          </ssd:Connector>
-          <ssd:Connector name="p_Crane.f[1]" kind="output">
-            <ssc:Real/>
-          </ssd:Connector>
-          <!-- This is a comment -->
-          <ssd:Connector name="p_Crane.f[2]" kind="output">
-            <ssc:Real/>
-          </ssd:Connector>
-          <ssd:Connector name="p_Crane.f[3]" kind="output">
-            <ssc:Real/>
-          </ssd:Connector>
-          <!-- This is a comment -->
-        </ssd:Connectors>
-      </ssd:Component>
-    </ssd:Elements>
+    <ssd:System name="cse-instance" description="An example of how to use Core Simulation Environment">
 
-    <ssd:Connections>
-      <!-- This is a comment -->
-      <ssd:Connection startElement="CraneController" startConnector="p_Crane.e[1]" endElement="KnuckleBoomCrane" endConnector="p_Crane.e[1]"/>
-      <ssd:Connection startElement="CraneController" startConnector="p_Crane.e[2]" endElement="KnuckleBoomCrane" endConnector="p_Crane.e[2]"/>
-      <ssd:Connection startElement="CraneController" startConnector="p_Crane.e[3]" endElement="KnuckleBoomCrane" endConnector="p_Crane.e[3]"/>
-      <ssd:Connection startElement="KnuckleBoomCrane" startConnector="p_Crane.f[1]" endElement="CraneController" endConnector="p_Crane.f[1]"/>
-      <!-- This is a comment -->
-      <ssd:Connection startElement="KnuckleBoomCrane" startConnector="p_Crane.f[2]" endElement="CraneController" endConnector="p_Crane.f[2]"/>
-      <ssd:Connection startElement="KnuckleBoomCrane" startConnector="p_Crane.f[3]" endElement="CraneController" endConnector="p_Crane.f[3]"/>
-      <ssd:Connection startElement="KnuckleBoomCrane" startConnector="Act_Limits[1]" endElement="CraneController" endConnector="Act_Limits[1]"/>
-      <ssd:Connection startElement="KnuckleBoomCrane" startConnector="Act_Limits[2]" endElement="CraneController" endConnector="Act_Limits[2]"/>
-      <ssd:Connection startElement="KnuckleBoomCrane" startConnector="Act_Limits[3]" endElement="CraneController" endConnector="Act_Limits[3]"/>
-    </ssd:Connections>
+        <ssd:Elements>
 
-  </ssd:System>
+            <ssd:Component name="CraneController" source="fmu-proxy://localhost:9090?file=../CraneController.fmu">
 
-  <ssd:DefaultExperiment startTime="0.0" stopTime="2e-4"/>
+                <ssd:Connectors>
+                    <!-- Seems to match nicely with our consept of "expose" -->
+                    <ssd:Connector name="p_Crane.e[1]" kind="output">
+                        <ssc:Real/>
+                    </ssd:Connector>
+                    <ssd:Connector name="p_Crane.e[2]" kind="output">
+                        <ssc:Real/>
+                    </ssd:Connector>
+                    <ssd:Connector name="p_Crane.e[3]" kind="output">
+                        <ssc:Real/>
+                    </ssd:Connector>
+                    <ssd:Connector name="p_Crane.f[1]" kind="input">
+                        <ssc:Real/>
+                    </ssd:Connector>
+                    <ssd:Connector name="p_Crane.f[2]" kind="input">
+                        <ssc:Real/>
+                    </ssd:Connector>
+                    <ssd:Connector name="p_Crane.f[3]" kind="input">
+                        <ssc:Real/>
+                    </ssd:Connector>
+                </ssd:Connectors>
+            </ssd:Component>
+            <ssd:Component name="KnuckleBoomCrane" source="fmu-proxy://localhost:9090?file=../KnuckleBoomCrane.fmu">
+
+                <ssd:Connectors>
+                    <ssd:Connector name="p_Crane.e[1]" kind="input">
+                        <ssc:Real/>
+                    </ssd:Connector>
+                    <ssd:Connector name="p_Crane.e[2]" kind="input">
+                        <ssc:Real/>
+                    </ssd:Connector>
+                    <ssd:Connector name="p_Crane.e[3]" kind="input">
+                        <ssc:Real/>
+                    </ssd:Connector>
+                    <ssd:Connector name="p_Crane.f[1]" kind="output">
+                        <ssc:Real/>
+                    </ssd:Connector>
+                    <ssd:Connector name="p_Crane.f[2]" kind="output">
+                        <ssc:Real/>
+                    </ssd:Connector>
+                    <ssd:Connector name="p_Crane.f[3]" kind="output">
+                        <ssc:Real/>
+                    </ssd:Connector>
+                </ssd:Connectors>
+            </ssd:Component>
+        </ssd:Elements>
+
+        <ssd:Connections>
+            <ssd:Connection startElement="CraneController" startConnector="p_Crane.e[1]" endElement="KnuckleBoomCrane" endConnector="p_Crane.e[1]"/>
+            <ssd:Connection startElement="CraneController" startConnector="p_Crane.e[2]" endElement="KnuckleBoomCrane" endConnector="p_Crane.e[2]"/>
+            <ssd:Connection startElement="CraneController" startConnector="p_Crane.e[3]" endElement="KnuckleBoomCrane" endConnector="p_Crane.e[3]"/>
+
+            <ssd:Connection startElement="KnuckleBoomCrane" startConnector="p_Crane.f[1]" endElement="CraneController" endConnector="p_Crane.f[1]"/>
+            <ssd:Connection startElement="KnuckleBoomCrane" startConnector="p_Crane.f[2]" endElement="CraneController" endConnector="p_Crane.f[2]"/>
+            <ssd:Connection startElement="KnuckleBoomCrane" startConnector="p_Crane.f[3]" endElement="CraneController" endConnector="p_Crane.f[3]"/>
+
+            <ssd:Connection startElement="KnuckleBoomCrane" startConnector="Act_Limits[1]" endElement="CraneController" endConnector="Act_Limits[1]"/>
+            <ssd:Connection startElement="KnuckleBoomCrane" startConnector="Act_Limits[2]" endElement="CraneController" endConnector="Act_Limits[2]"/>
+            <ssd:Connection startElement="KnuckleBoomCrane" startConnector="Act_Limits[3]" endElement="CraneController" endConnector="Act_Limits[3]"/>
+        </ssd:Connections>
+
+    </ssd:System>
+
+    <ssd:DefaultExperiment startTime="0.0" stopTime="2e-4">
+        <ssd:Annotations>
+            <ssc:Annotation type="org.open-simulation-platform">
+                <osp:Algorithm>
+                    <osp:FixedStepAlgorithm stepSize="1e-4"/>
+                </osp:Algorithm>
+            </ssc:Annotation>
+        </ssd:Annotations>
+    </ssd:DefaultExperiment>
 
 </ssd:SystemStructureDescription>
