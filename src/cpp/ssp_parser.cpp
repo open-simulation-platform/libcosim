@@ -38,12 +38,6 @@ public:
     explicit ssp_parser(const boost::filesystem::path& xmlPath);
     ~ssp_parser() noexcept;
 
-    struct SimulationInformation
-    {
-        std::string description;
-        double stepSize;
-    };
-
     struct DefaultExperiment
     {
         double startTime = 0.0;
