@@ -28,6 +28,13 @@ public:
     /// Returns a description of this model.
     virtual std::shared_ptr<const model_description> description() const noexcept = 0;
 
+    /**
+     *  Returns a URI that specifies the source/location of the model.
+     *
+     *  If the model has no well-defined source, the returned URI is empty.
+     */
+    virtual uri source() const noexcept = 0;
+
     /// Instantiates a slave.
     virtual std::shared_ptr<async_slave> instantiate(std::string_view name) = 0;
 };

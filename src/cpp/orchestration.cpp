@@ -74,13 +74,18 @@ namespace
 class fmu_model : public model
 {
 public:
-    fmu_model(std::shared_ptr<fmi::fmu> fmu)
-        : fmu_(fmu)
+    fmu_model(std::shared_ptr<fmi::fmu> fmu, const uri& modelUri)
+        : fmu_(fmu), uri_(modelUri)
     {}
 
     std::shared_ptr<const model_description> description() const noexcept
     {
         return fmu_->model_description();
+    }
+
+    uri source() const noexcept override
+    {
+        return uri_;
     }
 
     std::shared_ptr<async_slave> instantiate(std::string_view name) override
@@ -90,6 +95,7 @@ public:
 
 private:
     std::shared_ptr<fmi::fmu> fmu_;
+    uri uri_;
 };
 } // namespace
 
@@ -114,7 +120,7 @@ std::shared_ptr<model> file_uri_sub_resolver::lookup_model(const uri& modelUri)
             << modelUri;
     }
     auto fmu = importer_->import(file_uri_to_path(modelUri));
-    return std::make_shared<fmu_model>(fmu);
+    return std::make_shared<fmu_model>(fmu, modelUri);
 }
 
 

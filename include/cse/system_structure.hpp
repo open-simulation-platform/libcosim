@@ -120,15 +120,25 @@ private:
 
 bool is_valid_simulator_name(std::string_view name) noexcept;
 
-//bool is_valid_variable_value(
-//    const variable_description& variable,
-//    const scalar_value& value,
-//    std::string* reason);
+bool is_valid_variable_value(
+    const variable_description& variable,
+    const scalar_value& value,
+    std::string* reason);
 
 bool is_valid_connection(
     const variable_description& source,
     const variable_description& target,
     std::string* reason);
+
+
+using parameter_set = std::unordered_map<std::string, scalar_value>;
+
+
+void add_parameter_value(
+    parameter_set& parameterSet,
+    const system_structure& systemStructure,
+    variable_qname variable,
+    scalar_value value);
 
 
 } // namespace cse

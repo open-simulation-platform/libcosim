@@ -2,6 +2,7 @@
 
 #include "cse/exception.hpp"
 #include "cse/model.hpp"
+#include "cse/utility/utility.hpp"
 
 #include <cctype>
 #include <cstddef>
@@ -162,12 +163,29 @@ bool is_valid_simulator_name(std::string_view name) noexcept
 }
 
 
-//bool is_valid_variable_value(
-//    const variable_description& variable,
-//    const scalar_value& value,
-//    std::string* reason)
-//{
-//}
+bool is_valid_variable_value(
+    const variable_description& variable,
+    const scalar_value& value,
+    std::string* reason)
+{
+    const auto valueType = std::visit(
+        visitor(
+            [=](double) { return variable_type::real; },
+            [=](int) { return variable_type::integer; },
+            [=](const std::string&) { return variable_type::string; },
+            [=](bool) { return variable_type::boolean; }),
+        value);
+    if (valueType != variable.type) {
+        if (reason != nullptr) {
+            *reason = "Cannot assign a value of type '" +
+                to_text(valueType) + "' to a variable of type '" +
+                to_text(variable.type) + "'.";
+        }
+        return false;
+    }
+    // TODO: Check min/max value too.
+    return true;
+}
 
 
 bool is_valid_connection(
@@ -203,5 +221,23 @@ bool is_valid_connection(
     }
     return true;
 }
+
+
+void add_parameter_value(
+    parameter_set& parameterSet,
+    const system_structure& systemStructure,
+    variable_qname variable,
+    scalar_value value)
+{
+    const auto& varDescription = systemStructure.get_variable_description(variable);
+    std::string failReason;
+    if (!is_valid_variable_value(varDescription, value, &failReason)) {
+        std::ostringstream msg;
+        msg << "Invalid value for variable '" << variable << "': " << failReason;
+        throw error(make_error_code(errc::invalid_system_structure), msg.str());
+    }
+    parameterSet.insert_or_assign(std::string(parameterName), value);
+}
+
 
 } // namespace cse

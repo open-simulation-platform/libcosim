@@ -23,7 +23,8 @@ using namespace apache::thrift::protocol;
 
 cse::fmuproxy::remote_fmu::remote_fmu(
     const FmuId& fmuId,
-    std::shared_ptr<thrift_state> state)
+    std::shared_ptr<thrift_state> state,
+    uri
     : fmuId_(fmuId)
     , state_(std::move(state))
 {
@@ -35,6 +36,12 @@ cse::fmuproxy::remote_fmu::remote_fmu(
 std::shared_ptr<const cse::model_description> cse::fmuproxy::remote_fmu::description() const noexcept
 {
     return modelDescription_;
+}
+
+cse::uri cse::fmuproxy::remote_fmu::source() const noexcept
+{
+    // TODO: something!
+    return uri();
 }
 
 std::shared_ptr<cse::slave> cse::fmuproxy::remote_fmu::instantiate_slave()

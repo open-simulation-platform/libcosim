@@ -74,7 +74,7 @@ public:
     {
         std::string name;
         cse::variable_type type;
-        std::variant<double, int, bool, std::string> value;
+        scalar_value value;
     };
 
     struct Component
@@ -398,65 +398,28 @@ system_structure load_ssp_new(
     const auto parser = ssp_parser(ssdPath);
 
     system_structure sys;
+    parameter_set params;
 
+    /*
     const auto startTime = overrideStartTime ? *overrideStartTime : get_default_start_time(parser);
     auto execution = cse::execution(startTime, algorithm);
-
+    */
     auto elements = parser.get_elements();
 
-    std::map<std::string, slave_info> slaves;
     for (const auto& component : elements) {
-        auto model = resolver.lookup_model(baseURI, component.source);
-        auto slave = model->instantiate(component.name);
-        simulator_index index = slaves[component.name].index = execution.add_slave(slave, component.name);
-
-        simulatorMap[component.name] = simulator_map_entry{index, component.source, *model->description()};
-
-        for (const auto& v : model->description()->variables) {
-            slaves[component.name].variables[v.name] = v;
-        }
+        sys.add_simulator(
+            component.name,
+            resolver.lookup_model(baseURI, component.source));
 
         for (const auto& p : component.parameters) {
-            auto reference = find_variable(*model->description(), p.name).reference;
-            BOOST_LOG_SEV(log::logger(), log::info)
-                << "Initializing variable " << component.name << ":" << p.name << " with value " << streamer{p.value};
-            switch (p.type) {
-                case variable_type::real:
-                    execution.set_real_initial_value(index, reference, std::get<double>(p.value));
-                    break;
-                case variable_type::integer:
-                    execution.set_integer_initial_value(index, reference, std::get<int>(p.value));
-                    break;
-                case variable_type::boolean:
-                    execution.set_boolean_initial_value(index, reference, std::get<bool>(p.value));
-                    break;
-                case variable_type::string:
-                    execution.set_string_initial_value(index, reference, std::get<std::string>(p.value));
-                    break;
-                default:
-                    throw error(make_error_code(errc::unsupported_feature), "Variable type not supported yet");
-            }
+            add_parameter_value(params, sys, {component.name, p.name}, p.value);
         }
     }
 
     for (const auto& connection : parser.get_connections()) {
-
-        cse::variable_id output = get_variable(slaves, connection.startElement, connection.startConnector);
-        cse::variable_id input = get_variable(slaves, connection.endElement, connection.endConnector);
-
-        const auto c = std::make_shared<scalar_connection>(output, input);
-        try {
-            execution.add_connection(c);
-        } catch (const std::exception& e) {
-            std::ostringstream oss;
-            oss << "Encountered error while adding connection from "
-                << connection.startElement << ":" << connection.startConnector << " to "
-                << connection.endElement << ":" << connection.endConnector
-                << ": " << e.what();
-
-            BOOST_LOG_SEV(log::logger(), log::error) << oss.str();
-            throw std::runtime_error(oss.str());
-        }
+        sys.add_scalar_connection(
+            {connection.startElement, connection.startConnector},
+            {connection.endElement, connection.endConnector});
     }
 
     return std::make_pair(std::move(execution), std::move(simulatorMap));
