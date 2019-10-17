@@ -389,12 +389,16 @@ std::pair<execution, simulator_map> load_ssp(
 }
 
 
-std::tuple<system_structure, parameter_set, ssp_default_experiment>
-load_ssp_v2(cse::model_uri_resolver& resolver, const boost::filesystem::path& sspDir)
+std::tuple<system_structure, parameter_set, ssp_default_experiment> load_ssp_v2(
+    cse::model_uri_resolver& resolver,
+    const boost::filesystem::path& configPath)
 {
-    const auto ssdPath = boost::filesystem::absolute(sspDir) / "SystemStructure.ssd";
-    const auto baseURI = path_to_file_uri(ssdPath);
-    const auto parser = ssp_parser(ssdPath);
+    const auto absolutePath = boost::filesystem::absolute(configPath);
+    const auto configFile = boost::filesystem::is_regular_file(absolutePath)
+        ? absolutePath
+        : absolutePath / "SystemStructure.ssd";
+    const auto baseURI = path_to_file_uri(configFile);
+    const auto parser = ssp_parser(configFile);
 
     system_structure sys;
     parameter_set params;

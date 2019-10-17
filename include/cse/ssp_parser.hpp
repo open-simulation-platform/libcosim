@@ -79,8 +79,9 @@ struct ssp_default_experiment
  *      A tuple consisting of the system structure (simulators and connections),
  *      a set of initial values, and default experiment settings.
  */
-std::tuple<system_structure, parameter_set, ssp_default_experiment>
-load_ssp_v2(cse::model_uri_resolver& resolver, const boost::filesystem::path& sspDir);
+std::tuple<system_structure, parameter_set, ssp_default_experiment> load_ssp_v2(
+    cse::model_uri_resolver& resolver,
+    const boost::filesystem::path& configPath);
 
 
 } // namespace cse
