@@ -42,7 +42,10 @@ struct get_variable_cache
 
     void expose(value_reference r)
     {
-        if (indexMapping.count(r)) return;
+        if (indexMapping.count(r)) {
+            std::cout << "Variable " << r << " not found" << std::endl;
+            return;
+        }
         references.push_back(r);
         originalValues.push_back(T()); // TODO: Use start value from model description
         modifiedValues.push_back(T());

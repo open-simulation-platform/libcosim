@@ -142,6 +142,7 @@ private:
                     auto orgFn = m.f;
                     std::function<double(double)> newFn = [&orgFn, &relativeTime](double d){
                         return orgFn(d, relativeTime);};
+                    std::cout << "MANAGER: Exposing variable " << a.variable << std::endl;
 
                     if (a.is_input) {
                         sim->expose_for_setting(variable_type::real, a.variable);

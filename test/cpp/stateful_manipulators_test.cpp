@@ -40,8 +40,6 @@ int main()
 
         observer->start_observing(cse::variable_id{simIndex, cse::variable_type::real, 0});
         observer->start_observing(cse::variable_id{simIndex, cse::variable_type::real, 1});
-        observer->start_observing(cse::variable_id{simIndex, cse::variable_type::integer, 0});
-        observer->start_observing(cse::variable_id{simIndex, cse::variable_type::integer, 1});
 
         constexpr bool input = true;
         constexpr bool output = false;
@@ -86,7 +84,6 @@ int main()
             std::cout << realOutputValues[i] << " ";
             //REQUIRE(std::fabs(realOutputValues[i] - expectedRealOutputs[i]) < 1.0e-9);
         }
-
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
