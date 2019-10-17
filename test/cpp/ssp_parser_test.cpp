@@ -23,16 +23,14 @@ int main()
         boost::filesystem::path xmlPath = boost::filesystem::path(testDataDir) / "ssp" / "demo";
 
         auto resolver = cse::default_model_uri_resolver();
-        auto [system, params, simInfo] = cse::load_ssp_v2(*resolver, xmlPath);
+        auto [system, params, defaults] = cse::load_ssp_v2(*resolver, xmlPath);
 
-        REQUIRE(*simInfo.algorithmDescription == "FixedStepAlgorithm");
-        REQUIRE(*simInfo.stepSize == cse::to_duration(1e-4));
-        REQUIRE(*simInfo.startTime == cse::time_point());
-        REQUIRE(*simInfo.stopTime == cse::to_time_point(2e-4));
+        REQUIRE(*defaults.start_time == cse::time_point());
+        REQUIRE(*defaults.stop_time == cse::to_time_point(2e-4));
+        REQUIRE(*defaults.step_size == cse::to_duration(1e-4));
+        REQUIRE(defaults.algorithm != nullptr);
 
-        auto execution = cse::execution(
-            *simInfo.startTime,
-            std::make_shared<cse::fixed_step_algorithm>(*simInfo.stepSize));
+        auto execution = cse::execution(*defaults.start_time, std::move(defaults.algorithm));
         auto simulatorMap = cse::inject_system_structure(execution, system, params);
 
         REQUIRE(simulatorMap.size() == 2);

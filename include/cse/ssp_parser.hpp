@@ -2,6 +2,7 @@
 #ifndef CSECORE_SSP_PARSER_HPP
 #define CSECORE_SSP_PARSER_HPP
 
+#include <cse/algorithm.hpp>
 #include <cse/cse_config.hpp>
 #include <cse/execution.hpp>
 #include <cse/model.hpp>
@@ -56,13 +57,13 @@ std::pair<execution, simulator_map> load_ssp(
     std::optional<cse::time_point> overrideStartTime = std::nullopt);
 
 
-/// Information from an SSP file, not including system structure and parameters.
-struct ssp_simulation_info
+/// Default simulation settings from an SSP file.
+struct ssp_default_experiment
 {
-    std::optional<std::string> algorithmDescription;
-    std::optional<duration> stepSize;
-    std::optional<time_point> startTime;
-    std::optional<time_point> stopTime;
+    std::optional<time_point> start_time;
+    std::optional<time_point> stop_time;
+    std::optional<duration> step_size;
+    std::unique_ptr<cse::algorithm> algorithm;
 };
 
 
@@ -76,9 +77,9 @@ struct ssp_simulation_info
  *
  *  \returns
  *      A tuple consisting of the system structure (simulators and connections),
- *      a set of initial values, and additional information.
+ *      a set of initial values, and default experiment settings.
  */
-std::tuple<system_structure, parameter_set, ssp_simulation_info>
+std::tuple<system_structure, parameter_set, ssp_default_experiment>
 load_ssp_v2(cse::model_uri_resolver& resolver, const boost::filesystem::path& sspDir);
 
 
