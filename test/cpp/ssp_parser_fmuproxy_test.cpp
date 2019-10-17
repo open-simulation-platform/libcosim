@@ -3,6 +3,7 @@
 #include <cse/ssp_parser.hpp>
 
 #include <boost/filesystem.hpp>
+#include <boost/range/distance.hpp>
 
 #include <cstdlib>
 #include <exception>
@@ -22,11 +23,13 @@ int main()
 
         auto resolver = cse::default_model_uri_resolver();
         resolver->add_sub_resolver(std::make_shared<cse::fmuproxy::fmuproxy_uri_sub_resolver>());
-        auto simulation = cse::load_ssp(*resolver, xmlPath, cse::to_time_point(0.0));
-        auto& execution = simulation.first;
+        auto [system, params, defaults] = cse::load_ssp_v2(*resolver, xmlPath);
+        REQUIRE(distance(system.simulators()) == 2);
 
-        auto& simulator_map = simulation.second;
-        REQUIRE(simulator_map.size() == 2);
+        auto execution = cse::execution(
+            defaults.start_time.value_or(cse::time_point()),
+            std::move(defaults.algorithm));
+        cse::inject_system_structure(execution, system, params);
 
         auto result = execution.simulate_until(cse::to_time_point(1e-3));
         REQUIRE(result.get());
