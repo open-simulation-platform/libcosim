@@ -75,7 +75,7 @@ void system_structure::add_simulator(const simulator& s)
 }
 
 
-system_structure::simulator_range system_structure::simulators() const
+system_structure::simulator_range system_structure::simulators() const noexcept
 {
     return boost::adaptors::values(simulators_);
 }
@@ -113,7 +113,7 @@ namespace
 
 
 system_structure::scalar_connection_range system_structure::scalar_connections()
-    const
+    const noexcept
 {
     return boost::adaptors::transform(scalarConnections_, to_scalar_connection);
 }
@@ -177,9 +177,11 @@ bool is_valid_variable_value(
         value);
     if (valueType != variable.type) {
         if (reason != nullptr) {
-            *reason = "Cannot assign a value of type '" +
-                to_text(valueType) + "' to a variable of type '" +
-                to_text(variable.type) + "'.";
+            std::ostringstream msg;
+            msg << "Cannot assign a value of type '" << to_text(valueType)
+                << "' to a variable of type '" << to_text(variable.type)
+                << "'.";
+            *reason = msg.str();
         }
         return false;
     }
@@ -236,7 +238,7 @@ void add_parameter_value(
         msg << "Invalid value for variable '" << variable << "': " << failReason;
         throw error(make_error_code(errc::invalid_system_structure), msg.str());
     }
-    parameterSet.insert_or_assign(std::string(parameterName), value);
+    parameterSet.insert_or_assign(variable, value);
 }
 
 

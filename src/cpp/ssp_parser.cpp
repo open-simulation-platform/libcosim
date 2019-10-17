@@ -389,9 +389,8 @@ std::pair<execution, simulator_map> load_ssp(
 }
 
 
-system_structure load_ssp_new(
-    cse::model_uri_resolver& resolver,
-    const boost::filesystem::path& sspDir)
+std::tuple<system_structure, parameter_set, ssp_simulation_info>
+load_ssp_v2(cse::model_uri_resolver& resolver, const boost::filesystem::path& sspDir)
 {
     const auto ssdPath = boost::filesystem::absolute(sspDir) / "SystemStructure.ssd";
     const auto baseURI = path_to_file_uri(ssdPath);
@@ -400,12 +399,7 @@ system_structure load_ssp_new(
     system_structure sys;
     parameter_set params;
 
-    /*
-    const auto startTime = overrideStartTime ? *overrideStartTime : get_default_start_time(parser);
-    auto execution = cse::execution(startTime, algorithm);
-    */
     auto elements = parser.get_elements();
-
     for (const auto& component : elements) {
         sys.add_simulator(
             component.name,
@@ -422,6 +416,16 @@ system_structure load_ssp_new(
             {connection.endElement, connection.endConnector});
     }
 
-    return std::make_pair(std::move(execution), std::move(simulatorMap));
+    ssp_simulation_info info;
+    if (parser.has_simulation_information()) {
+        info.algorithmDescription = parser.get_simulation_information().description;
+        info.stepSize = to_duration(parser.get_simulation_information().stepSize);
+    }
+    info.startTime = to_time_point(parser.get_default_experiment().startTime);
+    if (parser.get_default_experiment().stopTime) {
+        info.stopTime = to_time_point(*parser.get_default_experiment().stopTime);
+    }
+
+    return {std::move(sys), std::move(params), std::move(info)};
 }
 } // namespace cse

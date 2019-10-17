@@ -4,6 +4,7 @@
 #include "cse/exception.hpp"
 #include "cse/slave_simulator.hpp"
 #include "cse/timer.hpp"
+#include "cse/utility/utility.hpp"
 
 #include <algorithm>
 #include <sstream>
@@ -447,8 +448,10 @@ void execution::set_string_initial_value(simulator_index sim, value_reference va
 }
 
 
-std::unordered_map<std::string, simulator_index> apply_system_structure(
-    const system_structure& sys, execution& exe)
+std::unordered_map<std::string, simulator_index> inject_system_structure(
+    execution& exe,
+    const system_structure& sys,
+    const parameter_set& initialValues)
 {
     std::unordered_map<std::string, simulator_index> indexMap;
     for (const auto& sim : sys.simulators()) {
@@ -468,6 +471,18 @@ std::unordered_map<std::string, simulator_index> apply_system_structure(
                 indexMap.at(conn.target.simulator_name),
                 targetVarDesc.type,
                 targetVarDesc.reference}));
+    }
+    for (const auto& [var, val] : initialValues) {
+        const auto& varDesc = sys.get_variable_description(var);
+        const auto simIdx = indexMap.at(var.simulator_name);
+        const auto valRef = varDesc.reference;
+        std::visit(
+            visitor(
+                [&](double v) { exe.set_real_initial_value(simIdx, valRef, v); },
+                [&](int v) { exe.set_integer_initial_value(simIdx, valRef, v); },
+                [&](bool v) { exe.set_boolean_initial_value(simIdx, valRef, v); },
+                [&](const std::string& v) { exe.set_string_initial_value(simIdx, valRef, v); }),
+            val);
     }
     return indexMap;
 }

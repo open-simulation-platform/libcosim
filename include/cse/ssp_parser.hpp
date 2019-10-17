@@ -13,13 +13,13 @@
 #include <map>
 #include <optional>
 #include <string>
+#include <tuple>
 
 
 namespace cse
 {
 
 using simulator_map = std::map<std::string, simulator_map_entry>;
-
 
 
 /**
@@ -55,9 +55,32 @@ std::pair<execution, simulator_map> load_ssp(
     std::shared_ptr<cse::algorithm> overrideAlgorithm = nullptr,
     std::optional<cse::time_point> overrideStartTime = std::nullopt);
 
-system_structure load_ssp_new(
-    cse::model_uri_resolver&,
-    const boost::filesystem::path& sspDir);
+
+/// Information from an SSP file, not including system structure and parameters.
+struct ssp_simulation_info
+{
+    std::optional<std::string> algorithmDescription;
+    std::optional<duration> stepSize;
+    std::optional<time_point> startTime;
+    std::optional<time_point> stopTime;
+};
+
+
+/**
+ *  Loads an SSP system structure description.
+ *
+ *  \param [in] resolver
+ *      An URI resolver that will be used for lookup of component "source" URIs.
+ *  \param[in] sspDir
+ *      The path to a directory that contains `SystemStructure.ssd`.
+ *
+ *  \returns
+ *      A tuple consisting of the system structure (simulators and connections),
+ *      a set of initial values, and additional information.
+ */
+std::tuple<system_structure, parameter_set, ssp_simulation_info>
+load_ssp_v2(cse::model_uri_resolver resolver&, const boost::filesystem::path& sspDir);
+
 
 } // namespace cse
 

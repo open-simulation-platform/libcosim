@@ -254,8 +254,18 @@ private:
 };
 
 
-std::unordered_map<std::string, simulator_index> apply_system_structure(
-    const system_structure& sys, execution& exe);
+/**
+ *  Adds simulators and connections to an execution, and sets initial values,
+ *  according to a predefined system structure description.
+ *
+ *  This function may be called multiple times for the same `execution`, as
+ *  long as there is no conflict between the different `system_structure`
+ *  objects.
+ */
+std::unordered_map<std::string, simulator_index> inject_system_structure(
+    execution& exe,
+    const system_structure& sys,
+    const parameter_set& initialValues);
 
 } // namespace cse
 #endif // header guard
