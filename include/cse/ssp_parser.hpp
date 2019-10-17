@@ -79,7 +79,7 @@ struct ssp_simulation_info
  *      a set of initial values, and additional information.
  */
 std::tuple<system_structure, parameter_set, ssp_simulation_info>
-load_ssp_v2(cse::model_uri_resolver resolver&, const boost::filesystem::path& sspDir);
+load_ssp_v2(cse::model_uri_resolver& resolver, const boost::filesystem::path& sspDir);
 
 
 } // namespace cse
