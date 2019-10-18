@@ -61,6 +61,8 @@ public:
 
     void step_commencing(time_point currentTime)
     {
+        std::cout << "Commencing step at " << std::endl;
+
         if (!state.running) {
             return;
         }
@@ -146,11 +148,11 @@ private:
                     if (a.is_input) {
                         std::cout << "Expose for setting" << std::endl;
                         sim->expose_for_setting(variable_type::real, a.variable);
-                        sim->set_real_output_modifier(a.variable, newFn);
+                        sim->set_real_input_modifier(a.variable, newFn);
                     } else {
                         std::cout << "Expose for getting" << std::endl;
                         sim->expose_for_getting(variable_type::real, a.variable);
-                        sim->set_real_input_modifier(a.variable, newFn);
+                        sim->set_real_output_modifier(a.variable, newFn);
                     }
                 },
                 [=](const scenario::integer_modifier& m) {

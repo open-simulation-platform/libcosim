@@ -67,6 +67,7 @@ struct get_variable_cache
     void set_modifier(value_reference r, std::function<T(T)> m)
     {
         modifiers[indexMapping[r]] = m;
+        std::cout << "Set modifier on " << r << std::endl;
     }
 
     void run_modifiers()
@@ -88,7 +89,6 @@ class set_variable_cache
 public:
     void expose(value_reference r, T startValue)
     {
-        std::cout << "Set_cache expose " << r << std::endl;
         exposedVariables_.emplace(r, exposed_variable{startValue, -1});
     }
 
