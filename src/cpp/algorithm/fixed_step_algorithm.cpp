@@ -1,4 +1,5 @@
-#include "cse/algorithm.hpp"
+#include "cse/algorithm/fixed_step_algorithm.hpp"
+
 #include "cse/error.hpp"
 #include "cse/exception.hpp"
 

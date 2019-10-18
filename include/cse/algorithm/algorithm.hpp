@@ -1,6 +1,7 @@
 #ifndef CSECORE_ALGORITHM_ALGORITHM_HPP
 #define CSECORE_ALGORITHM_ALGORITHM_HPP
 
+#include <cse/algorithm/simulator.hpp>
 #include <cse/connection.hpp>
 #include <cse/execution.hpp>
 #include <cse/model.hpp>
