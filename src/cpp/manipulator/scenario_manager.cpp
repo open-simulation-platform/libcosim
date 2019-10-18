@@ -142,12 +142,13 @@ private:
                     auto orgFn = m.f;
                     std::function<double(double)> newFn = [&orgFn, &relativeTime](double d){
                         return orgFn(d, relativeTime);};
-                    std::cout << "MANAGER: Exposing variable " << a.variable << std::endl;
 
                     if (a.is_input) {
+                        std::cout << "Expose for setting" << std::endl;
                         sim->expose_for_setting(variable_type::real, a.variable);
                         sim->set_real_output_modifier(a.variable, newFn);
                     } else {
+                        std::cout << "Expose for getting" << std::endl;
                         sim->expose_for_getting(variable_type::real, a.variable);
                         sim->set_real_input_modifier(a.variable, newFn);
                     }

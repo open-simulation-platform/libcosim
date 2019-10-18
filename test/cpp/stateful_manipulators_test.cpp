@@ -44,19 +44,13 @@ int main()
         constexpr bool input = true;
         constexpr bool output = false;
 
-        auto timeDepRealModifier1 = cse::scenario::time_dependent_real_modifier{
-            [](double val, cse::time_point /*time*/){return val + 1.23;}};
-        auto timeDepRealAction1 = cse::scenario::variable_action{simIndex, 0, timeDepRealModifier1, output};
-        auto timeDepEvent1 = cse::scenario::event{cse::to_time_point(0.5), timeDepRealAction1};
-
-        auto timeDepRealModifier2 = cse::scenario::time_dependent_real_modifier{
-            [](double val, cse::time_point /*time*/){return val + 1.23;}};
-        auto timeDepRealAction2 = cse::scenario::variable_action{simIndex, 0, timeDepRealModifier2, output};
-        auto timeDepEvent2 = cse::scenario::event{cse::to_time_point(0.8), timeDepRealAction2};
+        auto realModifier1 = cse::scenario::time_dependent_real_modifier{[](double original, cse::time_point /*time*/) {
+            return original + 1.001; }};
+        auto realAction1 = cse::scenario::variable_action{simIndex, 0, realModifier1, output};
+        auto realEvent1 = cse::scenario::event{cse::to_time_point(0.5), realAction1};
 
         auto events = std::vector<cse::scenario::event>();
-        events.push_back(timeDepEvent1);
-        events.push_back(timeDepEvent2);
+        events.push_back(realEvent1);
 
         auto end = cse::to_time_point(1.0);
 

@@ -42,10 +42,8 @@ struct get_variable_cache
 
     void expose(value_reference r)
     {
-        if (indexMapping.count(r)) {
-            std::cout << "Variable " << r << " not found" << std::endl;
-            return;
-        }
+        if (indexMapping.count(r)) return;
+
         references.push_back(r);
         originalValues.push_back(T()); // TODO: Use start value from model description
         modifiedValues.push_back(T());
@@ -90,6 +88,7 @@ class set_variable_cache
 public:
     void expose(value_reference r, T startValue)
     {
+        std::cout << "Set_cache expose " << r << std::endl;
         exposedVariables_.emplace(r, exposed_variable{startValue, -1});
     }
 
@@ -118,6 +117,7 @@ public:
     void set_modifier(value_reference r, std::function<T(T)> m)
     {
         assert(!hasRunModifiers_);
+
         const auto it = exposedVariables_.find(r);
         if (it == exposedVariables_.end()) {
             std::ostringstream oss;
@@ -281,6 +281,7 @@ public:
 
     void expose_for_setting(variable_type type, value_reference ref)
     {
+        std::cout << "Expose for setting: " << ref << std::endl;
         const auto vd = find_variable_description(ref, type);
         switch (type) {
             case variable_type::real:
