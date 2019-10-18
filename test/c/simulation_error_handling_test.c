@@ -62,14 +62,21 @@ int main()
     rc = cse_execution_step(execution, 1);
     if (rc < 0) { goto Lerror; }
 
+    cse_execution_status status;
+    rc = cse_execution_get_status(execution, &status);
+    if (rc < 0) {
+        fprintf(stderr, "Expected call to cse_execution_get_status() 1 to return success.");
+        goto Lfailure;
+    }
+
     rc = cse_execution_start(execution);
     if (rc < 0) { goto Lerror; }
 
     Sleep(100);
 
-    rc = cse_execution_get_simulation_status(execution);
+    rc = cse_execution_get_status(execution, &status);
     if (rc < 0) {
-        fprintf(stderr, "Expected call to cse_execution_get_simulation_status() to return success.");
+        fprintf(stderr, "Expected call to cse_execution_get_status() 2 to return success.");
         goto Lfailure;
     }
 
@@ -82,18 +89,20 @@ int main()
     // Need to wait a bit due to stepping (and failure) happening in another thread.
     Sleep(400);
 
-    rc = cse_execution_get_simulation_status(execution);
+    rc = cse_execution_get_status(execution, &status);
     if (rc >= 0) {
-        fprintf(stderr, "Expected call to cse_execution_get_simulation_status() to return failure.");
+        fprintf(stderr, "Expected call to cse_execution_get_status() 3 to return failure.");
         goto Lfailure;
     }
 
-    cse_execution_status executionStatus;
-    rc = cse_execution_get_status(execution, &executionStatus);
-    if (rc < 0) { goto Lerror; }
+    rc = cse_execution_get_status(execution, &status);
+    if (rc >= 0) {
+        fprintf(stderr, "Expected call to cse_execution_get_status() 4 to return failure.");
+        goto Lfailure;
+    }
 
-    if (executionStatus.state != CSE_EXECUTION_ERROR) {
-        fprintf(stderr, "Expected state == %i, got %i\n", CSE_EXECUTION_ERROR, executionStatus.state);
+    if (status.state != CSE_EXECUTION_ERROR) {
+        fprintf(stderr, "Expected state == %i, got %i\n", CSE_EXECUTION_ERROR, status.state);
         goto Lfailure;
     }
 

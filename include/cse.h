@@ -290,7 +290,7 @@ int cse_execution_simulate_until(cse_execution* execution, cse_time_point target
  *  Starts an execution (non blocking).
  *
  *  The execution will run until `cse_execution_stop()` is called. The status of the
- *  simulation can be polled with `cse_execution_get_simulation_status()`.
+ *  simulation can be polled with `cse_execution_get_status()`.
  *
  *  \param [in] execution
  *      The execution to be started.
@@ -299,20 +299,6 @@ int cse_execution_simulate_until(cse_execution* execution, cse_time_point target
  *      0 on success and -1 on error.
  */
 int cse_execution_start(cse_execution* execution);
-
-
-/**
- * Polls an execution for its simulation status.
- *
- * This method can be used to poll the status of the asynchronous execution
- * started by calling `cse_execution_start()`. Will return failure if an error
- * occurred during the execution.
- *
- * \returns
- *      0 on success and -1 on error.
- */
-int cse_execution_get_simulation_status(cse_execution* execution);
-
 
 /**
  *  Stops an execution.
@@ -363,7 +349,12 @@ typedef struct
 } cse_execution_status;
 
 /**
- *  Returns execution status.
+ * Returns execution status.
+ *
+ * This method will also poll the status of any asynchronous execution started
+ * by calling `cse_execution_start()`. Will return failure if a simulation
+ * error occured during the execution, in which case the `status` parameter
+ * will still be valid.
  *
  *  \param [in] execution
  *      The execution to get status from.
