@@ -83,11 +83,6 @@ public:
         return fmu_->model_description();
     }
 
-    uri source() const noexcept override
-    {
-        return uri_;
-    }
-
     std::shared_ptr<async_slave> instantiate(std::string_view name) override
     {
         return make_background_thread_slave(fmu_->instantiate_slave(name));

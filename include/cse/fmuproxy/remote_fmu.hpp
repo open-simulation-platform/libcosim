@@ -34,8 +34,6 @@ public:
 
     std::shared_ptr<const cse::model_description> description() const noexcept override;
 
-    uri source() const noexcept override;
-
     std::shared_ptr<cse::slave> instantiate_slave();
 
     std::shared_ptr<cse::async_slave> instantiate(std::string_view name = "") override;

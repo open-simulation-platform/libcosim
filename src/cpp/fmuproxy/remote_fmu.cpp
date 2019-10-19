@@ -37,12 +37,6 @@ std::shared_ptr<const cse::model_description> cse::fmuproxy::remote_fmu::descrip
     return modelDescription_;
 }
 
-cse::uri cse::fmuproxy::remote_fmu::source() const noexcept
-{
-    // TODO: something!
-    return uri();
-}
-
 std::shared_ptr<cse::slave> cse::fmuproxy::remote_fmu::instantiate_slave()
 {
     InstanceId instanceId;

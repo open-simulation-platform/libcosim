@@ -37,11 +37,6 @@ public:
         return md;
     }
 
-    cse::uri source() const noexcept override
-    {
-        return {};
-    }
-
     std::shared_ptr<cse::async_slave> instantiate(std::string_view /*name*/)
         override
     {
