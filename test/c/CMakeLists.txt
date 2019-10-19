@@ -10,6 +10,7 @@ set(tests
     "execution_from_ssp_test"
     "execution_from_ssp_custom_algo_test"
     "execution_from_cse_config_test"
+    "simulation_error_handling_test"
     "time_series_observer_test"
     "variable_metadata_test"
 )
