@@ -2,7 +2,8 @@
 <ssd:SystemStructureDescription name="simple-cse-example" version="1.0"
                                 xmlns:ssd="http://ssp-standard.org/SSP1/SystemStructureDescription"
                                 xmlns:ssc="http://ssp-standard.org/SSP1/SystemStructureCommon"
-                                xmlns:ssv="http://ssp-standard.org/SSP1/SystemStructureParameterValues">
+                                xmlns:ssv="http://ssp-standard.org/SSP1/SystemStructureParameterValues"
+                                xmlns:osp="http://opensimulationplatform.com/SSP/OSPAnnotations">
 
     <ssd:System name="cse-instance" description="An example of how to use Core Simulation Environment">
 
@@ -88,9 +89,9 @@
 
     <ssd:DefaultExperiment startTime="0.0" stopTime="2e-4">
         <ssd:Annotations>
-            <ssc:Annotation type="org.open-simulation-platform">
+            <ssc:Annotation type="com.opensimulationplatform">
                 <osp:Algorithm>
-                    <osp:FixedStepAlgorithm stepSize="1e-4"/>
+                   <osp:FixedStepAlgorithm stepSize="1e-4"/>
                 </osp:Algorithm>
             </ssc:Annotation>
         </ssd:Annotations>
