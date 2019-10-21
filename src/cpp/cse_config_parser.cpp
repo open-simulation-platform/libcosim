@@ -268,7 +268,7 @@ cse_config_parser::cse_config_parser(
     for (size_t i = 0; i < sumConnections->getLength(); i++) {
         SumConnection s;
         auto sumConnection = static_cast<xercesc::DOMElement*>(sumConnections->item(i));
-        auto sources = static_cast<xercesc::DOMElement*>(sumConnection->getElementsByTagName(tc("Source").get())->item(0));
+        auto sources = static_cast<xercesc::DOMElement*>(sumConnection->getElementsByTagName(tc("Sources").get())->item(0));
         for (auto sourceElement = sources->getFirstElementChild(); sourceElement != nullptr; sourceElement = sourceElement->getNextElementSibling()) {
             auto& source = s.sources.emplace_back();
             source.first = tc(sourceElement->getAttribute(tc("simulator").get())).get();
