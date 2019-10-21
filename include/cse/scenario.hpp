@@ -24,6 +24,7 @@ struct real_modifier
 
 struct time_dependent_real_modifier
 {
+    time_point startTime;
     std::function<double(double, time_point)> f;
 };
 

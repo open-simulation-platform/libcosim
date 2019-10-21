@@ -44,8 +44,11 @@ int main()
         constexpr bool input = true;
         constexpr bool output = false;
 
-        auto realModifier1 = cse::scenario::time_dependent_real_modifier{[](double original, cse::time_point /*time*/) {
-            return original + 1.001; }};
+        auto realModifier1 = cse::scenario::time_dependent_real_modifier{
+            startTime,
+            [](double original, cse::time_point time) {
+                (void)time;
+                return original * 2.0; }};
         auto realAction1 = cse::scenario::variable_action{simIndex, 0, realModifier1, output};
         auto realEvent1 = cse::scenario::event{cse::to_time_point(0.5), realAction1};
 

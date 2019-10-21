@@ -142,8 +142,9 @@ private:
                 },
                 [=](const scenario::time_dependent_real_modifier& m) {
                     auto orgFn = m.f;
-                    std::function<double(double)> newFn = [&orgFn, &relativeTime](double d){
-                        return orgFn(d, relativeTime);};
+                    time_point eventTime = relativeTime - m.startTime.time_since_epoch();
+                    std::function<double(double)> newFn = [&orgFn, &eventTime](double d){
+                        return orgFn(d, eventTime);};
 
                     if (a.is_input) {
                         std::cout << "Expose for setting" << std::endl;
@@ -192,6 +193,7 @@ private:
                 << "Executing action for simulator " << e.action.simulator
                 << ", variable " << e.action.variable
                 << ", at relative time " << to_double_time_point(relativeTime);
+
             execute_action(simulators_[e.action.simulator], e.action, relativeTime);
             return true;
         }
