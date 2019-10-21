@@ -44,6 +44,7 @@ private:
             scenario::real_modifier,
             scenario::time_dependent_real_modifier,
             scenario::integer_modifier,
+            scenario::time_dependent_integer_modifier,
             scenario::boolean_modifier,
             scenario::string_modifier>& m);
 

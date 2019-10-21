@@ -39,7 +39,7 @@ int main()
             "slave uno");
 
         observer->start_observing(cse::variable_id{simIndex, cse::variable_type::real, 0});
-        observer->start_observing(cse::variable_id{simIndex, cse::variable_type::real, 1});
+        observer->start_observing(cse::variable_id{simIndex, cse::variable_type::integer, 0});
 
         constexpr bool input = true;
         constexpr bool output = false;
@@ -52,8 +52,17 @@ int main()
         auto realAction1 = cse::scenario::variable_action{simIndex, 0, realModifier1, output};
         auto realEvent1 = cse::scenario::event{cse::to_time_point(0.5), realAction1};
 
+        auto intModifier1 = cse::scenario::time_dependent_integer_modifier{
+            startTime,
+            [](int original, cse::time_point time) {
+                (void)time;
+                return original + 1; }};
+        auto intAction1 = cse::scenario::variable_action{simIndex, 0, intModifier1, output};
+        auto intEvent1 = cse::scenario::event{cse::to_time_point(0.5), intAction1};
+
         auto events = std::vector<cse::scenario::event>();
         events.push_back(realEvent1);
+        events.push_back(intEvent1);
 
         auto end = cse::to_time_point(1.0);
 
@@ -65,21 +74,23 @@ int main()
         REQUIRE(simResult.get());
 
         const int numSamples = 11;
-        double realInputValues[numSamples];
         double realOutputValues[numSamples];
+        int intOutputValues[numSamples];
         cse::step_number steps[numSamples];
         cse::time_point times[numSamples];
 
-        size_t samplesRead = observer->get_real_samples(simIndex, 1, 1, gsl::make_span(realInputValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
-        REQUIRE(samplesRead == 11);
-        samplesRead = observer->get_real_samples(simIndex, 0, 1, gsl::make_span(realOutputValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
-        REQUIRE(samplesRead == 11);
+        size_t realSamplesRead = observer->get_real_samples(simIndex, 0, 1, gsl::make_span(realOutputValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
+        size_t intSamplesRead = observer->get_integer_samples(simIndex, 0, 1, gsl::make_span(intOutputValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
+        std::cout << intSamplesRead << std::endl;
+        REQUIRE(realSamplesRead == 11);
+        REQUIRE(intSamplesRead == 11);
 
         double expectedRealOutputs[] = {1.234, 1.234, 1.234, 1.234, 1.234, 2.468, 2.468, 2.468, 2.468, 2.468, 1.234};
+        double expectedIntOutputs[] = {2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 2};
 
-        for (size_t i = 0; i < samplesRead; i++) {
-            std::cout << realOutputValues[i] << " ";
+        for (size_t i = 0; i < realSamplesRead; i++) {
             REQUIRE(std::fabs(realOutputValues[i] - expectedRealOutputs[i]) < 1.0e-9);
+            REQUIRE(std::fabs(intOutputValues[i] - expectedIntOutputs[i]) < 1.0e-9);
         }
 
     } catch (const std::exception& e) {

@@ -35,6 +35,12 @@ struct integer_modifier
     std::function<int(int)> f;
 };
 
+struct time_dependent_integer_modifier
+{
+    time_point startTime;
+    std::function<int(int, time_point)> f;
+};
+
 /// The modification of the value of a variable with type `boolean`.
 struct boolean_modifier
 {
@@ -61,6 +67,7 @@ struct variable_action
         real_modifier,
         time_dependent_real_modifier,
         integer_modifier,
+        time_dependent_integer_modifier,
         boolean_modifier,
         string_modifier>
         modifier;

@@ -140,8 +140,7 @@ private:
                 },
                 [=](const scenario::time_dependent_real_modifier& m) {
                     const auto orgFn = m.f;
-                    std::function<double(double)> newFn = [orgFn, relativeTime](double d){
-                        return orgFn(d, relativeTime);};
+                    std::function<double(double)> newFn = [orgFn, relativeTime](double d) { return orgFn(d, relativeTime); };
 
                     if (a.is_input) {
                         sim->expose_for_setting(variable_type::real, a.variable);
@@ -158,6 +157,18 @@ private:
                     } else {
                         sim->expose_for_getting(variable_type::integer, a.variable);
                         sim->set_integer_output_modifier(a.variable, m.f);
+                    }
+                },
+                [=](const scenario::time_dependent_integer_modifier& m) {
+                    const auto orgFn = m.f;
+                    std::function<int(int)> newFn = [orgFn, relativeTime](int i) { return orgFn(i, relativeTime); };
+
+                    if (a.is_input) {
+                        sim->expose_for_setting(variable_type::integer, a.variable);
+                        sim->set_integer_input_modifier(a.variable, newFn);
+                    } else {
+                        sim->expose_for_getting(variable_type::integer, a.variable);
+                        sim->set_integer_output_modifier(a.variable, newFn);
                     }
                 },
                 [=](const scenario::boolean_modifier& m) {
@@ -217,6 +228,13 @@ private:
                     }
                 },
                 [=](const scenario::integer_modifier& /*m*/) {
+                    if (a.is_input) {
+                        sim->set_integer_input_modifier(a.variable, nullptr);
+                    } else {
+                        sim->set_integer_output_modifier(a.variable, nullptr);
+                    }
+                },
+                [=](const scenario::time_dependent_integer_modifier& /*m*/) {
                     if (a.is_input) {
                         sim->set_integer_input_modifier(a.variable, nullptr);
                     } else {
