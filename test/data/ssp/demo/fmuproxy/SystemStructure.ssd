@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ssd:SystemStructureDescription name="fmuproxy-cse-example" version="1.0"
                                 xmlns:ssd="http://ssp-standard.org/SSP1/SystemStructureDescription"
-                                xmlns:ssc="http://ssp-standard.org/SSP1/SystemStructureCommon">
+                                xmlns:ssc="http://ssp-standard.org/SSP1/SystemStructureCommon"
+                                xmlns:osp="http://opensimulationplatform.com/SSP/OSPAnnotations">
 
     <ssd:System name="cse-instance" description="An example of how to use Core Simulation Environment">
 
