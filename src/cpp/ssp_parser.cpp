@@ -121,7 +121,7 @@ ssp_parser::ssp_parser(const boost::filesystem::path& xmlPath)
         if (const auto annotations = defaultExperiment->get_child_optional("ssd:Annotations")) {
             for (const auto& annotation : *annotations) {
                 const auto& annotationType = get_attribute<std::string>(annotation.second, "type");
-                if (annotationType == "org.open-simulation-platform") {
+                if (annotationType == "com.opensimulationplatform") {
                     for (const auto& algorithm : annotation.second.get_child("osp:Algorithm")) {
                         if (algorithm.first == "osp:FixedStepAlgorithm") {
                             double stepSize = get_attribute<double>(algorithm.second, "stepSize");
