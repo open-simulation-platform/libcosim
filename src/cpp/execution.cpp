@@ -155,7 +155,6 @@ public:
             timer_.start(currentTime_);
             duration stepSize;
             do {
-                std::cout << "Stepping" << std::endl;
                 stepSize = step();
                 timer_.sleep(currentTime_);
             } while (!stopped_ && !timed_out(endTime, currentTime_, stepSize));

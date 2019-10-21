@@ -62,7 +62,7 @@ int main()
         scenarioManager->load_scenario(scenario, startTime);
 
         auto simResult = execution.simulate_until(endTime);
-        /*REQUIRE(simResult.get());
+        REQUIRE(simResult.get());
 
         const int numSamples = 11;
         double realInputValues[numSamples];
@@ -75,12 +75,12 @@ int main()
         samplesRead = observer->get_real_samples(simIndex, 0, 1, gsl::make_span(realOutputValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
         REQUIRE(samplesRead == 11);
 
-        double expectedRealOutputs[] = {1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234, 1.234};
+        double expectedRealOutputs[] = {1.234, 1.234, 1.234, 1.234, 1.234, 2.468, 2.468, 2.468, 2.468, 2.468, 1.234};
 
         for (size_t i = 0; i < samplesRead; i++) {
             std::cout << realOutputValues[i] << " ";
-            //REQUIRE(std::fabs(realOutputValues[i] - expectedRealOutputs[i]) < 1.0e-9);
-        }*/
+            REQUIRE(std::fabs(realOutputValues[i] - expectedRealOutputs[i]) < 1.0e-9);
+        }
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;

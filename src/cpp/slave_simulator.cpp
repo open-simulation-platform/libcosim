@@ -67,7 +67,6 @@ struct get_variable_cache
     void set_modifier(value_reference r, std::function<T(T)> m)
     {
         modifiers[indexMapping[r]] = m;
-        std::cout << "Set modifier on " << r << std::endl;
     }
 
     void run_modifiers()

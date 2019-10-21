@@ -61,8 +61,6 @@ public:
 
     void step_commencing(time_point currentTime)
     {
-        std::cout << "Commencing step at " << std::endl;
-
         if (!state.running) {
             return;
         }
@@ -141,17 +139,14 @@ private:
                     }
                 },
                 [=](const scenario::time_dependent_real_modifier& m) {
-                    auto orgFn = m.f;
-                    time_point eventTime = relativeTime - m.startTime.time_since_epoch();
-                    std::function<double(double)> newFn = [&orgFn, &eventTime](double d){
-                        return orgFn(d, eventTime);};
+                    const auto orgFn = m.f;
+                    std::function<double(double)> newFn = [orgFn, relativeTime](double d){
+                        return orgFn(d, relativeTime);};
 
                     if (a.is_input) {
-                        std::cout << "Expose for setting" << std::endl;
                         sim->expose_for_setting(variable_type::real, a.variable);
                         sim->set_real_input_modifier(a.variable, newFn);
                     } else {
-                        std::cout << "Expose for getting" << std::endl;
                         sim->expose_for_getting(variable_type::real, a.variable);
                         sim->set_real_output_modifier(a.variable, newFn);
                     }
