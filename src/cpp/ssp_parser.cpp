@@ -6,7 +6,6 @@
 #include "cse/fmi/fmu.hpp"
 #include "cse/log/logger.hpp"
 
-#include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 
 #include <string>
@@ -35,7 +34,9 @@ class ssp_parser
 {
 
 public:
-    explicit ssp_parser(const boost::filesystem::path& xmlPath);
+    ssp_parser(
+        const boost::filesystem::path& xmlPath,
+        cse::algorithm_resolver& algorithmResolver);
     ~ssp_parser() noexcept;
 
     struct DefaultExperiment
@@ -100,7 +101,7 @@ private:
     std::vector<Connection> connections_;
 };
 
-ssp_parser::ssp_parser(const boost::filesystem::path& xmlPath)
+ssp_parser::ssp_parser(const boost::filesystem::path& xmlPath, cse::algorithm_resolver& algorithmResolver)
     : xmlPath_(xmlPath)
 {
     // Root node
@@ -123,18 +124,11 @@ ssp_parser::ssp_parser(const boost::filesystem::path& xmlPath)
                 const auto& annotationType = get_attribute<std::string>(annotation.second, "type");
                 if (annotationType == "com.opensimulationplatform") {
                     for (const auto& algorithm : annotation.second.get_child("osp:Algorithm")) {
-                        if (algorithm.first == "osp:FixedStepAlgorithm") {
-                            double stepSize = get_attribute<double>(algorithm.second, "stepSize");
-                            defaultExperiment_.algorithm = std::move(std::make_unique<cse::fixed_step_algorithm>(cse::to_duration(stepSize)));
-                        } else {
-                            std::string msg("Unknown algorithm: " + algorithm.first);
-                            CSE_PANIC_M(msg.c_str());
-                        }
+                        defaultExperiment_.algorithm = algorithmResolver.resolve(algorithm.first, algorithm.second);
                     }
                 }
             }
         }
-
     }
 
     tmpTree = pt_.get_child(path + ".ssd:System");
@@ -274,15 +268,17 @@ cse::variable_id get_variable(
 
 
 std::pair<execution, simulator_map> load_ssp(
-    cse::model_uri_resolver& resolver,
+    cse::model_uri_resolver& modelResolver,
+    cse::algorithm_resolver& algorithmResolver,
     const boost::filesystem::path& configPath,
     std::optional<cse::time_point> overrideStartTime)
 {
-    return load_ssp(resolver, configPath, nullptr, overrideStartTime);
+    return load_ssp(modelResolver, algorithmResolver, configPath, nullptr, overrideStartTime);
 }
 
 std::pair<execution, simulator_map> load_ssp(
-    cse::model_uri_resolver& resolver,
+    cse::model_uri_resolver& modelResolver,
+    cse::algorithm_resolver& algorithmResolver,
     const boost::filesystem::path& configPath,
     std::shared_ptr<cse::algorithm> overrideAlgorithm,
     std::optional<cse::time_point> overrideStartTime)
@@ -293,7 +289,7 @@ std::pair<execution, simulator_map> load_ssp(
         ? absolutePath
         : absolutePath / "SystemStructure.ssd";
     const auto baseURI = path_to_file_uri(configFile);
-    const auto parser = ssp_parser(configFile);
+    const auto parser = ssp_parser(configFile, algorithmResolver);
 
     std::shared_ptr<cse::algorithm> algorithm;
     if (overrideAlgorithm != nullptr) {
@@ -311,7 +307,7 @@ std::pair<execution, simulator_map> load_ssp(
 
     std::map<std::string, slave_info> slaves;
     for (const auto& component : elements) {
-        auto model = resolver.lookup_model(baseURI, component.source);
+        auto model = modelResolver.lookup_model(baseURI, component.source);
         auto slave = model->instantiate(component.name);
         simulator_index index = slaves[component.name].index = execution.add_slave(slave, component.name);
 
@@ -365,6 +361,39 @@ std::pair<execution, simulator_map> load_ssp(
     }
 
     return std::make_pair(std::move(execution), std::move(simulatorMap));
+}
+
+/// Adds a sub-resolver.
+void algorithm_resolver::add_resolver(std::shared_ptr<algorithm_sub_resolver> resolver)
+{
+    subResolvers_.push_back(resolver);
+}
+
+std::shared_ptr<cse::algorithm> algorithm_resolver::resolve(const std::string& algorithmName, const boost::property_tree::ptree& tree)
+{
+    for (auto sr : subResolvers_) {
+        if (auto algorithm = sr->parse(algorithmName, tree)) {
+            return algorithm;
+        }
+    }
+    throw std::runtime_error(
+        "No resolvers available to handle Algorithm: " + algorithmName);
+}
+
+std::shared_ptr<cse::algorithm> fixed_step_algorithm_resolver::parse(
+    const std::string& algorithmName,
+    const boost::property_tree::ptree& tree) {
+    if (algorithmName == "osp:FixedStepAlgorithm") {
+        auto stepSize = get_attribute<double>(tree, "baseStepSize");
+        return std::make_shared<cse::fixed_step_algorithm>(cse::to_duration(stepSize));
+    }
+    return nullptr;
+}
+
+std::shared_ptr<algorithm_resolver> default_algorithm_resolver() {
+    auto resolver = std::make_shared<algorithm_resolver>();
+    resolver->add_resolver(std::make_shared<fixed_step_algorithm_resolver>());
+    return resolver;
 }
 
 } // namespace cse
