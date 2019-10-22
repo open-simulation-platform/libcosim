@@ -20,8 +20,9 @@ int main()
         REQUIRE(testDataDir);
         boost::filesystem::path xmlPath = boost::filesystem::path(testDataDir) / "ssp" / "demo";
 
-        auto resolver = cse::default_model_uri_resolver();
-        auto simulation = cse::load_ssp(*resolver, xmlPath, cse::to_time_point(0.0));
+        auto modelResolver = cse::default_model_uri_resolver();
+        auto algorithmResolver = cse::default_algorithm_resolver();
+        auto simulation = cse::load_ssp(*modelResolver, *algorithmResolver, xmlPath, cse::to_time_point(0.0));
         auto& execution = simulation.first;
 
         auto& simulator_map = simulation.second;
