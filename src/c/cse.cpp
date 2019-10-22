@@ -47,6 +47,8 @@ cse_errc cpp_to_c_error_code(std::error_code ec)
         return CSE_ERRC_DL_LOAD_ERROR;
     else if (ec == cse::errc::model_error)
         return CSE_ERRC_MODEL_ERROR;
+    else if (ec == cse::errc::simulation_error)
+        return CSE_ERRC_SIMULATION_ERROR;
     else if (ec == cse::errc::zip_error)
         return CSE_ERRC_ZIP_ERROR;
     else if (ec.category() == std::generic_category()) {
@@ -145,6 +147,7 @@ struct cse_execution_s
     std::unique_ptr<cse::execution> cpp_execution;
     std::thread t;
     boost::fibers::future<bool> simulate_result;
+    std::exception_ptr simulate_exception_ptr;
     std::atomic<cse_execution_state> state;
     int error_code;
 };
@@ -505,6 +508,21 @@ int cse_execution_start(cse_execution* execution)
     }
 }
 
+void execution_async_health_check(cse_execution* execution)
+{
+    if (execution->simulate_result.valid()) {
+        const auto status = execution->simulate_result.wait_for(std::chrono::duration<int64_t>());
+        if (boost::fibers::future_status::ready == status) {
+            if (auto ep = execution->simulate_result.get_exception_ptr()) {
+                execution->simulate_exception_ptr = ep;
+            }
+        }
+    }
+    if (auto ep = execution->simulate_exception_ptr) {
+        std::rethrow_exception(ep);
+    }
+}
+
 int cse_execution_stop(cse_execution* execution)
 {
     try {
@@ -516,6 +534,7 @@ int cse_execution_stop(cse_execution* execution)
         execution->state = CSE_EXECUTION_STOPPED;
         return success;
     } catch (...) {
+        execution->t.join();
         handle_current_exception();
         execution->state = CSE_EXECUTION_ERROR;
         return failure;
@@ -531,9 +550,14 @@ int cse_execution_get_status(cse_execution* execution, cse_execution_status* sta
         status->real_time_factor = execution->cpp_execution->get_measured_real_time_factor();
         status->real_time_factor_target = execution->cpp_execution->get_real_time_factor_target();
         status->is_real_time_simulation = execution->cpp_execution->is_real_time_simulation() ? 1 : 0;
+        execution_async_health_check(execution);
         return success;
     } catch (...) {
         handle_current_exception();
+        execution->error_code = cse_last_error_code();
+        execution->state = CSE_EXECUTION_ERROR;
+        status->error_code = execution->error_code;
+        status->state = execution->state;
         return failure;
     }
 }
