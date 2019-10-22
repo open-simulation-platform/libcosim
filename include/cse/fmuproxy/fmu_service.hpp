@@ -4,8 +4,8 @@
  * DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
  *  @generated
  */
-#ifndef CSE_FMUPROXY_FMU_SERVICE_HPP
-#define CSE_FMUPROXY_FMU_SERVICE_HPP
+#ifndef CSECORE_FMUPROXY_FMU_SERVICE_HPP
+#define CSECORE_FMUPROXY_FMU_SERVICE_HPP
 
 #include <thrift/TDispatchProcessor.h>
 #include <thrift/async/TConcurrentClientSyncInfo.h>
@@ -24,11 +24,7 @@ class FmuServiceIf {
   virtual void load_from_url(FmuId& _return, const std::string& url) = 0;
   virtual void load_from_file(FmuId& _return, const std::string& name, const std::string& data) = 0;
   virtual void get_model_description(ModelDescription& _return, const FmuId& fmuId) = 0;
-  virtual void get_co_simulation_attributes(CoSimulationAttributes& _return, const InstanceId& instanceId) = 0;
-  virtual bool can_create_instance_from_cs(const FmuId& fmuId) = 0;
-  virtual bool can_create_instance_from_me(const FmuId& fmuId) = 0;
-  virtual void create_instance_from_cs(InstanceId& _return, const FmuId& fmuId) = 0;
-  virtual void create_instance_from_me(InstanceId& _return, const FmuId& fmuId, const Solver& solver) = 0;
+  virtual void create_instance(InstanceId& _return, const FmuId& fmuId) = 0;
   virtual Status::type setup_experiment(const InstanceId& instanceId, const double start, const double stop, const double tolerance) = 0;
   virtual Status::type enter_initialization_mode(const InstanceId& instanceId) = 0;
   virtual Status::type exit_initialization_mode(const InstanceId& instanceId) = 0;
@@ -82,21 +78,7 @@ class FmuServiceNull : virtual public FmuServiceIf {
   void get_model_description(ModelDescription& /* _return */, const FmuId& /* fmuId */) {
     return;
   }
-  void get_co_simulation_attributes(CoSimulationAttributes& /* _return */, const InstanceId& /* instanceId */) {
-    return;
-  }
-  bool can_create_instance_from_cs(const FmuId& /* fmuId */) {
-    bool _return = false;
-    return _return;
-  }
-  bool can_create_instance_from_me(const FmuId& /* fmuId */) {
-    bool _return = false;
-    return _return;
-  }
-  void create_instance_from_cs(InstanceId& /* _return */, const FmuId& /* fmuId */) {
-    return;
-  }
-  void create_instance_from_me(InstanceId& /* _return */, const FmuId& /* fmuId */, const Solver& /* solver */) {
+  void create_instance(InstanceId& /* _return */, const FmuId& /* fmuId */) {
     return;
   }
   Status::type setup_experiment(const InstanceId& /* instanceId */, const double /* start */, const double /* stop */, const double /* tolerance */) {
@@ -482,149 +464,37 @@ class FmuService_get_model_description_presult {
 
 };
 
-typedef struct _FmuService_get_co_simulation_attributes_args__isset {
-  _FmuService_get_co_simulation_attributes_args__isset() : instanceId(false) {}
-  bool instanceId :1;
-} _FmuService_get_co_simulation_attributes_args__isset;
-
-class FmuService_get_co_simulation_attributes_args {
- public:
-
-  FmuService_get_co_simulation_attributes_args(const FmuService_get_co_simulation_attributes_args&);
-  FmuService_get_co_simulation_attributes_args& operator=(const FmuService_get_co_simulation_attributes_args&);
-  FmuService_get_co_simulation_attributes_args() : instanceId() {
-  }
-
-  virtual ~FmuService_get_co_simulation_attributes_args() throw();
-  InstanceId instanceId;
-
-  _FmuService_get_co_simulation_attributes_args__isset __isset;
-
-  void __set_instanceId(const InstanceId& val);
-
-  bool operator == (const FmuService_get_co_simulation_attributes_args & rhs) const
-  {
-    if (!(instanceId == rhs.instanceId))
-      return false;
-    return true;
-  }
-  bool operator != (const FmuService_get_co_simulation_attributes_args &rhs) const {
-    return !(*this == rhs);
-  }
-
-  bool operator < (const FmuService_get_co_simulation_attributes_args & ) const;
-
-  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
-  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
-
-};
-
-
-class FmuService_get_co_simulation_attributes_pargs {
- public:
-
-
-  virtual ~FmuService_get_co_simulation_attributes_pargs() throw();
-  const InstanceId* instanceId;
-
-  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
-
-};
-
-typedef struct _FmuService_get_co_simulation_attributes_result__isset {
-  _FmuService_get_co_simulation_attributes_result__isset() : success(false), ex(false) {}
-  bool success :1;
-  bool ex :1;
-} _FmuService_get_co_simulation_attributes_result__isset;
-
-class FmuService_get_co_simulation_attributes_result {
- public:
-
-  FmuService_get_co_simulation_attributes_result(const FmuService_get_co_simulation_attributes_result&);
-  FmuService_get_co_simulation_attributes_result& operator=(const FmuService_get_co_simulation_attributes_result&);
-  FmuService_get_co_simulation_attributes_result() {
-  }
-
-  virtual ~FmuService_get_co_simulation_attributes_result() throw();
-  CoSimulationAttributes success;
-  NoSuchInstanceException ex;
-
-  _FmuService_get_co_simulation_attributes_result__isset __isset;
-
-  void __set_success(const CoSimulationAttributes& val);
-
-  void __set_ex(const NoSuchInstanceException& val);
-
-  bool operator == (const FmuService_get_co_simulation_attributes_result & rhs) const
-  {
-    if (!(success == rhs.success))
-      return false;
-    if (!(ex == rhs.ex))
-      return false;
-    return true;
-  }
-  bool operator != (const FmuService_get_co_simulation_attributes_result &rhs) const {
-    return !(*this == rhs);
-  }
-
-  bool operator < (const FmuService_get_co_simulation_attributes_result & ) const;
-
-  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
-  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
-
-};
-
-typedef struct _FmuService_get_co_simulation_attributes_presult__isset {
-  _FmuService_get_co_simulation_attributes_presult__isset() : success(false), ex(false) {}
-  bool success :1;
-  bool ex :1;
-} _FmuService_get_co_simulation_attributes_presult__isset;
-
-class FmuService_get_co_simulation_attributes_presult {
- public:
-
-
-  virtual ~FmuService_get_co_simulation_attributes_presult() throw();
-  CoSimulationAttributes* success;
-  NoSuchInstanceException ex;
-
-  _FmuService_get_co_simulation_attributes_presult__isset __isset;
-
-  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
-
-};
-
-typedef struct _FmuService_can_create_instance_from_cs_args__isset {
-  _FmuService_can_create_instance_from_cs_args__isset() : fmuId(false) {}
+typedef struct _FmuService_create_instance_args__isset {
+  _FmuService_create_instance_args__isset() : fmuId(false) {}
   bool fmuId :1;
-} _FmuService_can_create_instance_from_cs_args__isset;
+} _FmuService_create_instance_args__isset;
 
-class FmuService_can_create_instance_from_cs_args {
+class FmuService_create_instance_args {
  public:
 
-  FmuService_can_create_instance_from_cs_args(const FmuService_can_create_instance_from_cs_args&);
-  FmuService_can_create_instance_from_cs_args& operator=(const FmuService_can_create_instance_from_cs_args&);
-  FmuService_can_create_instance_from_cs_args() : fmuId() {
+  FmuService_create_instance_args(const FmuService_create_instance_args&);
+  FmuService_create_instance_args& operator=(const FmuService_create_instance_args&);
+  FmuService_create_instance_args() : fmuId() {
   }
 
-  virtual ~FmuService_can_create_instance_from_cs_args() throw();
+  virtual ~FmuService_create_instance_args() throw();
   FmuId fmuId;
 
-  _FmuService_can_create_instance_from_cs_args__isset __isset;
+  _FmuService_create_instance_args__isset __isset;
 
   void __set_fmuId(const FmuId& val);
 
-  bool operator == (const FmuService_can_create_instance_from_cs_args & rhs) const
+  bool operator == (const FmuService_create_instance_args & rhs) const
   {
     if (!(fmuId == rhs.fmuId))
       return false;
     return true;
   }
-  bool operator != (const FmuService_can_create_instance_from_cs_args &rhs) const {
+  bool operator != (const FmuService_create_instance_args &rhs) const {
     return !(*this == rhs);
   }
 
-  bool operator < (const FmuService_can_create_instance_from_cs_args & ) const;
+  bool operator < (const FmuService_create_instance_args & ) const;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
@@ -632,262 +502,38 @@ class FmuService_can_create_instance_from_cs_args {
 };
 
 
-class FmuService_can_create_instance_from_cs_pargs {
+class FmuService_create_instance_pargs {
  public:
 
 
-  virtual ~FmuService_can_create_instance_from_cs_pargs() throw();
+  virtual ~FmuService_create_instance_pargs() throw();
   const FmuId* fmuId;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
-typedef struct _FmuService_can_create_instance_from_cs_result__isset {
-  _FmuService_can_create_instance_from_cs_result__isset() : success(false), ex(false) {}
-  bool success :1;
-  bool ex :1;
-} _FmuService_can_create_instance_from_cs_result__isset;
-
-class FmuService_can_create_instance_from_cs_result {
- public:
-
-  FmuService_can_create_instance_from_cs_result(const FmuService_can_create_instance_from_cs_result&);
-  FmuService_can_create_instance_from_cs_result& operator=(const FmuService_can_create_instance_from_cs_result&);
-  FmuService_can_create_instance_from_cs_result() : success(0) {
-  }
-
-  virtual ~FmuService_can_create_instance_from_cs_result() throw();
-  bool success;
-  NoSuchFmuException ex;
-
-  _FmuService_can_create_instance_from_cs_result__isset __isset;
-
-  void __set_success(const bool val);
-
-  void __set_ex(const NoSuchFmuException& val);
-
-  bool operator == (const FmuService_can_create_instance_from_cs_result & rhs) const
-  {
-    if (!(success == rhs.success))
-      return false;
-    if (!(ex == rhs.ex))
-      return false;
-    return true;
-  }
-  bool operator != (const FmuService_can_create_instance_from_cs_result &rhs) const {
-    return !(*this == rhs);
-  }
-
-  bool operator < (const FmuService_can_create_instance_from_cs_result & ) const;
-
-  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
-  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
-
-};
-
-typedef struct _FmuService_can_create_instance_from_cs_presult__isset {
-  _FmuService_can_create_instance_from_cs_presult__isset() : success(false), ex(false) {}
-  bool success :1;
-  bool ex :1;
-} _FmuService_can_create_instance_from_cs_presult__isset;
-
-class FmuService_can_create_instance_from_cs_presult {
- public:
-
-
-  virtual ~FmuService_can_create_instance_from_cs_presult() throw();
-  bool* success;
-  NoSuchFmuException ex;
-
-  _FmuService_can_create_instance_from_cs_presult__isset __isset;
-
-  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
-
-};
-
-typedef struct _FmuService_can_create_instance_from_me_args__isset {
-  _FmuService_can_create_instance_from_me_args__isset() : fmuId(false) {}
-  bool fmuId :1;
-} _FmuService_can_create_instance_from_me_args__isset;
-
-class FmuService_can_create_instance_from_me_args {
- public:
-
-  FmuService_can_create_instance_from_me_args(const FmuService_can_create_instance_from_me_args&);
-  FmuService_can_create_instance_from_me_args& operator=(const FmuService_can_create_instance_from_me_args&);
-  FmuService_can_create_instance_from_me_args() : fmuId() {
-  }
-
-  virtual ~FmuService_can_create_instance_from_me_args() throw();
-  FmuId fmuId;
-
-  _FmuService_can_create_instance_from_me_args__isset __isset;
-
-  void __set_fmuId(const FmuId& val);
-
-  bool operator == (const FmuService_can_create_instance_from_me_args & rhs) const
-  {
-    if (!(fmuId == rhs.fmuId))
-      return false;
-    return true;
-  }
-  bool operator != (const FmuService_can_create_instance_from_me_args &rhs) const {
-    return !(*this == rhs);
-  }
-
-  bool operator < (const FmuService_can_create_instance_from_me_args & ) const;
-
-  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
-  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
-
-};
-
-
-class FmuService_can_create_instance_from_me_pargs {
- public:
-
-
-  virtual ~FmuService_can_create_instance_from_me_pargs() throw();
-  const FmuId* fmuId;
-
-  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
-
-};
-
-typedef struct _FmuService_can_create_instance_from_me_result__isset {
-  _FmuService_can_create_instance_from_me_result__isset() : success(false), ex(false) {}
-  bool success :1;
-  bool ex :1;
-} _FmuService_can_create_instance_from_me_result__isset;
-
-class FmuService_can_create_instance_from_me_result {
- public:
-
-  FmuService_can_create_instance_from_me_result(const FmuService_can_create_instance_from_me_result&);
-  FmuService_can_create_instance_from_me_result& operator=(const FmuService_can_create_instance_from_me_result&);
-  FmuService_can_create_instance_from_me_result() : success(0) {
-  }
-
-  virtual ~FmuService_can_create_instance_from_me_result() throw();
-  bool success;
-  NoSuchFmuException ex;
-
-  _FmuService_can_create_instance_from_me_result__isset __isset;
-
-  void __set_success(const bool val);
-
-  void __set_ex(const NoSuchFmuException& val);
-
-  bool operator == (const FmuService_can_create_instance_from_me_result & rhs) const
-  {
-    if (!(success == rhs.success))
-      return false;
-    if (!(ex == rhs.ex))
-      return false;
-    return true;
-  }
-  bool operator != (const FmuService_can_create_instance_from_me_result &rhs) const {
-    return !(*this == rhs);
-  }
-
-  bool operator < (const FmuService_can_create_instance_from_me_result & ) const;
-
-  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
-  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
-
-};
-
-typedef struct _FmuService_can_create_instance_from_me_presult__isset {
-  _FmuService_can_create_instance_from_me_presult__isset() : success(false), ex(false) {}
-  bool success :1;
-  bool ex :1;
-} _FmuService_can_create_instance_from_me_presult__isset;
-
-class FmuService_can_create_instance_from_me_presult {
- public:
-
-
-  virtual ~FmuService_can_create_instance_from_me_presult() throw();
-  bool* success;
-  NoSuchFmuException ex;
-
-  _FmuService_can_create_instance_from_me_presult__isset __isset;
-
-  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
-
-};
-
-typedef struct _FmuService_create_instance_from_cs_args__isset {
-  _FmuService_create_instance_from_cs_args__isset() : fmuId(false) {}
-  bool fmuId :1;
-} _FmuService_create_instance_from_cs_args__isset;
-
-class FmuService_create_instance_from_cs_args {
- public:
-
-  FmuService_create_instance_from_cs_args(const FmuService_create_instance_from_cs_args&);
-  FmuService_create_instance_from_cs_args& operator=(const FmuService_create_instance_from_cs_args&);
-  FmuService_create_instance_from_cs_args() : fmuId() {
-  }
-
-  virtual ~FmuService_create_instance_from_cs_args() throw();
-  FmuId fmuId;
-
-  _FmuService_create_instance_from_cs_args__isset __isset;
-
-  void __set_fmuId(const FmuId& val);
-
-  bool operator == (const FmuService_create_instance_from_cs_args & rhs) const
-  {
-    if (!(fmuId == rhs.fmuId))
-      return false;
-    return true;
-  }
-  bool operator != (const FmuService_create_instance_from_cs_args &rhs) const {
-    return !(*this == rhs);
-  }
-
-  bool operator < (const FmuService_create_instance_from_cs_args & ) const;
-
-  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
-  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
-
-};
-
-
-class FmuService_create_instance_from_cs_pargs {
- public:
-
-
-  virtual ~FmuService_create_instance_from_cs_pargs() throw();
-  const FmuId* fmuId;
-
-  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
-
-};
-
-typedef struct _FmuService_create_instance_from_cs_result__isset {
-  _FmuService_create_instance_from_cs_result__isset() : success(false), ex1(false), ex2(false) {}
+typedef struct _FmuService_create_instance_result__isset {
+  _FmuService_create_instance_result__isset() : success(false), ex1(false), ex2(false) {}
   bool success :1;
   bool ex1 :1;
   bool ex2 :1;
-} _FmuService_create_instance_from_cs_result__isset;
+} _FmuService_create_instance_result__isset;
 
-class FmuService_create_instance_from_cs_result {
+class FmuService_create_instance_result {
  public:
 
-  FmuService_create_instance_from_cs_result(const FmuService_create_instance_from_cs_result&);
-  FmuService_create_instance_from_cs_result& operator=(const FmuService_create_instance_from_cs_result&);
-  FmuService_create_instance_from_cs_result() : success() {
+  FmuService_create_instance_result(const FmuService_create_instance_result&);
+  FmuService_create_instance_result& operator=(const FmuService_create_instance_result&);
+  FmuService_create_instance_result() : success() {
   }
 
-  virtual ~FmuService_create_instance_from_cs_result() throw();
+  virtual ~FmuService_create_instance_result() throw();
   InstanceId success;
   UnsupportedOperationException ex1;
   NoSuchFmuException ex2;
 
-  _FmuService_create_instance_from_cs_result__isset __isset;
+  _FmuService_create_instance_result__isset __isset;
 
   void __set_success(const InstanceId& val);
 
@@ -895,7 +541,7 @@ class FmuService_create_instance_from_cs_result {
 
   void __set_ex2(const NoSuchFmuException& val);
 
-  bool operator == (const FmuService_create_instance_from_cs_result & rhs) const
+  bool operator == (const FmuService_create_instance_result & rhs) const
   {
     if (!(success == rhs.success))
       return false;
@@ -905,161 +551,34 @@ class FmuService_create_instance_from_cs_result {
       return false;
     return true;
   }
-  bool operator != (const FmuService_create_instance_from_cs_result &rhs) const {
+  bool operator != (const FmuService_create_instance_result &rhs) const {
     return !(*this == rhs);
   }
 
-  bool operator < (const FmuService_create_instance_from_cs_result & ) const;
+  bool operator < (const FmuService_create_instance_result & ) const;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
-typedef struct _FmuService_create_instance_from_cs_presult__isset {
-  _FmuService_create_instance_from_cs_presult__isset() : success(false), ex1(false), ex2(false) {}
+typedef struct _FmuService_create_instance_presult__isset {
+  _FmuService_create_instance_presult__isset() : success(false), ex1(false), ex2(false) {}
   bool success :1;
   bool ex1 :1;
   bool ex2 :1;
-} _FmuService_create_instance_from_cs_presult__isset;
+} _FmuService_create_instance_presult__isset;
 
-class FmuService_create_instance_from_cs_presult {
+class FmuService_create_instance_presult {
  public:
 
 
-  virtual ~FmuService_create_instance_from_cs_presult() throw();
+  virtual ~FmuService_create_instance_presult() throw();
   InstanceId* success;
   UnsupportedOperationException ex1;
   NoSuchFmuException ex2;
 
-  _FmuService_create_instance_from_cs_presult__isset __isset;
-
-  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
-
-};
-
-typedef struct _FmuService_create_instance_from_me_args__isset {
-  _FmuService_create_instance_from_me_args__isset() : fmuId(false), solver(false) {}
-  bool fmuId :1;
-  bool solver :1;
-} _FmuService_create_instance_from_me_args__isset;
-
-class FmuService_create_instance_from_me_args {
- public:
-
-  FmuService_create_instance_from_me_args(const FmuService_create_instance_from_me_args&);
-  FmuService_create_instance_from_me_args& operator=(const FmuService_create_instance_from_me_args&);
-  FmuService_create_instance_from_me_args() : fmuId() {
-  }
-
-  virtual ~FmuService_create_instance_from_me_args() throw();
-  FmuId fmuId;
-  Solver solver;
-
-  _FmuService_create_instance_from_me_args__isset __isset;
-
-  void __set_fmuId(const FmuId& val);
-
-  void __set_solver(const Solver& val);
-
-  bool operator == (const FmuService_create_instance_from_me_args & rhs) const
-  {
-    if (!(fmuId == rhs.fmuId))
-      return false;
-    if (!(solver == rhs.solver))
-      return false;
-    return true;
-  }
-  bool operator != (const FmuService_create_instance_from_me_args &rhs) const {
-    return !(*this == rhs);
-  }
-
-  bool operator < (const FmuService_create_instance_from_me_args & ) const;
-
-  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
-  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
-
-};
-
-
-class FmuService_create_instance_from_me_pargs {
- public:
-
-
-  virtual ~FmuService_create_instance_from_me_pargs() throw();
-  const FmuId* fmuId;
-  const Solver* solver;
-
-  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
-
-};
-
-typedef struct _FmuService_create_instance_from_me_result__isset {
-  _FmuService_create_instance_from_me_result__isset() : success(false), ex1(false), ex2(false) {}
-  bool success :1;
-  bool ex1 :1;
-  bool ex2 :1;
-} _FmuService_create_instance_from_me_result__isset;
-
-class FmuService_create_instance_from_me_result {
- public:
-
-  FmuService_create_instance_from_me_result(const FmuService_create_instance_from_me_result&);
-  FmuService_create_instance_from_me_result& operator=(const FmuService_create_instance_from_me_result&);
-  FmuService_create_instance_from_me_result() : success() {
-  }
-
-  virtual ~FmuService_create_instance_from_me_result() throw();
-  InstanceId success;
-  UnsupportedOperationException ex1;
-  NoSuchFmuException ex2;
-
-  _FmuService_create_instance_from_me_result__isset __isset;
-
-  void __set_success(const InstanceId& val);
-
-  void __set_ex1(const UnsupportedOperationException& val);
-
-  void __set_ex2(const NoSuchFmuException& val);
-
-  bool operator == (const FmuService_create_instance_from_me_result & rhs) const
-  {
-    if (!(success == rhs.success))
-      return false;
-    if (!(ex1 == rhs.ex1))
-      return false;
-    if (!(ex2 == rhs.ex2))
-      return false;
-    return true;
-  }
-  bool operator != (const FmuService_create_instance_from_me_result &rhs) const {
-    return !(*this == rhs);
-  }
-
-  bool operator < (const FmuService_create_instance_from_me_result & ) const;
-
-  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
-  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
-
-};
-
-typedef struct _FmuService_create_instance_from_me_presult__isset {
-  _FmuService_create_instance_from_me_presult__isset() : success(false), ex1(false), ex2(false) {}
-  bool success :1;
-  bool ex1 :1;
-  bool ex2 :1;
-} _FmuService_create_instance_from_me_presult__isset;
-
-class FmuService_create_instance_from_me_presult {
- public:
-
-
-  virtual ~FmuService_create_instance_from_me_presult() throw();
-  InstanceId* success;
-  UnsupportedOperationException ex1;
-  NoSuchFmuException ex2;
-
-  _FmuService_create_instance_from_me_presult__isset __isset;
+  _FmuService_create_instance_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
@@ -2984,21 +2503,9 @@ class FmuServiceClient : virtual public FmuServiceIf {
   void get_model_description(ModelDescription& _return, const FmuId& fmuId);
   void send_get_model_description(const FmuId& fmuId);
   void recv_get_model_description(ModelDescription& _return);
-  void get_co_simulation_attributes(CoSimulationAttributes& _return, const InstanceId& instanceId);
-  void send_get_co_simulation_attributes(const InstanceId& instanceId);
-  void recv_get_co_simulation_attributes(CoSimulationAttributes& _return);
-  bool can_create_instance_from_cs(const FmuId& fmuId);
-  void send_can_create_instance_from_cs(const FmuId& fmuId);
-  bool recv_can_create_instance_from_cs();
-  bool can_create_instance_from_me(const FmuId& fmuId);
-  void send_can_create_instance_from_me(const FmuId& fmuId);
-  bool recv_can_create_instance_from_me();
-  void create_instance_from_cs(InstanceId& _return, const FmuId& fmuId);
-  void send_create_instance_from_cs(const FmuId& fmuId);
-  void recv_create_instance_from_cs(InstanceId& _return);
-  void create_instance_from_me(InstanceId& _return, const FmuId& fmuId, const Solver& solver);
-  void send_create_instance_from_me(const FmuId& fmuId, const Solver& solver);
-  void recv_create_instance_from_me(InstanceId& _return);
+  void create_instance(InstanceId& _return, const FmuId& fmuId);
+  void send_create_instance(const FmuId& fmuId);
+  void recv_create_instance(InstanceId& _return);
   Status::type setup_experiment(const InstanceId& instanceId, const double start, const double stop, const double tolerance);
   void send_setup_experiment(const InstanceId& instanceId, const double start, const double stop, const double tolerance);
   Status::type recv_setup_experiment();
@@ -3062,11 +2569,7 @@ class FmuServiceProcessor : public ::apache::thrift::TDispatchProcessor {
   void process_load_from_url(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_load_from_file(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_get_model_description(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
-  void process_get_co_simulation_attributes(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
-  void process_can_create_instance_from_cs(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
-  void process_can_create_instance_from_me(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
-  void process_create_instance_from_cs(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
-  void process_create_instance_from_me(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_create_instance(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_setup_experiment(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_enter_initialization_mode(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_exit_initialization_mode(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
@@ -3088,11 +2591,7 @@ class FmuServiceProcessor : public ::apache::thrift::TDispatchProcessor {
     processMap_["load_from_url"] = &FmuServiceProcessor::process_load_from_url;
     processMap_["load_from_file"] = &FmuServiceProcessor::process_load_from_file;
     processMap_["get_model_description"] = &FmuServiceProcessor::process_get_model_description;
-    processMap_["get_co_simulation_attributes"] = &FmuServiceProcessor::process_get_co_simulation_attributes;
-    processMap_["can_create_instance_from_cs"] = &FmuServiceProcessor::process_can_create_instance_from_cs;
-    processMap_["can_create_instance_from_me"] = &FmuServiceProcessor::process_can_create_instance_from_me;
-    processMap_["create_instance_from_cs"] = &FmuServiceProcessor::process_create_instance_from_cs;
-    processMap_["create_instance_from_me"] = &FmuServiceProcessor::process_create_instance_from_me;
+    processMap_["create_instance"] = &FmuServiceProcessor::process_create_instance;
     processMap_["setup_experiment"] = &FmuServiceProcessor::process_setup_experiment;
     processMap_["enter_initialization_mode"] = &FmuServiceProcessor::process_enter_initialization_mode;
     processMap_["exit_initialization_mode"] = &FmuServiceProcessor::process_exit_initialization_mode;
@@ -3166,51 +2665,13 @@ class FmuServiceMultiface : virtual public FmuServiceIf {
     return;
   }
 
-  void get_co_simulation_attributes(CoSimulationAttributes& _return, const InstanceId& instanceId) {
+  void create_instance(InstanceId& _return, const FmuId& fmuId) {
     size_t sz = ifaces_.size();
     size_t i = 0;
     for (; i < (sz - 1); ++i) {
-      ifaces_[i]->get_co_simulation_attributes(_return, instanceId);
+      ifaces_[i]->create_instance(_return, fmuId);
     }
-    ifaces_[i]->get_co_simulation_attributes(_return, instanceId);
-    return;
-  }
-
-  bool can_create_instance_from_cs(const FmuId& fmuId) {
-    size_t sz = ifaces_.size();
-    size_t i = 0;
-    for (; i < (sz - 1); ++i) {
-      ifaces_[i]->can_create_instance_from_cs(fmuId);
-    }
-    return ifaces_[i]->can_create_instance_from_cs(fmuId);
-  }
-
-  bool can_create_instance_from_me(const FmuId& fmuId) {
-    size_t sz = ifaces_.size();
-    size_t i = 0;
-    for (; i < (sz - 1); ++i) {
-      ifaces_[i]->can_create_instance_from_me(fmuId);
-    }
-    return ifaces_[i]->can_create_instance_from_me(fmuId);
-  }
-
-  void create_instance_from_cs(InstanceId& _return, const FmuId& fmuId) {
-    size_t sz = ifaces_.size();
-    size_t i = 0;
-    for (; i < (sz - 1); ++i) {
-      ifaces_[i]->create_instance_from_cs(_return, fmuId);
-    }
-    ifaces_[i]->create_instance_from_cs(_return, fmuId);
-    return;
-  }
-
-  void create_instance_from_me(InstanceId& _return, const FmuId& fmuId, const Solver& solver) {
-    size_t sz = ifaces_.size();
-    size_t i = 0;
-    for (; i < (sz - 1); ++i) {
-      ifaces_[i]->create_instance_from_me(_return, fmuId, solver);
-    }
-    ifaces_[i]->create_instance_from_me(_return, fmuId, solver);
+    ifaces_[i]->create_instance(_return, fmuId);
     return;
   }
 
@@ -3394,21 +2855,9 @@ class FmuServiceConcurrentClient : virtual public FmuServiceIf {
   void get_model_description(ModelDescription& _return, const FmuId& fmuId);
   int32_t send_get_model_description(const FmuId& fmuId);
   void recv_get_model_description(ModelDescription& _return, const int32_t seqid);
-  void get_co_simulation_attributes(CoSimulationAttributes& _return, const InstanceId& instanceId);
-  int32_t send_get_co_simulation_attributes(const InstanceId& instanceId);
-  void recv_get_co_simulation_attributes(CoSimulationAttributes& _return, const int32_t seqid);
-  bool can_create_instance_from_cs(const FmuId& fmuId);
-  int32_t send_can_create_instance_from_cs(const FmuId& fmuId);
-  bool recv_can_create_instance_from_cs(const int32_t seqid);
-  bool can_create_instance_from_me(const FmuId& fmuId);
-  int32_t send_can_create_instance_from_me(const FmuId& fmuId);
-  bool recv_can_create_instance_from_me(const int32_t seqid);
-  void create_instance_from_cs(InstanceId& _return, const FmuId& fmuId);
-  int32_t send_create_instance_from_cs(const FmuId& fmuId);
-  void recv_create_instance_from_cs(InstanceId& _return, const int32_t seqid);
-  void create_instance_from_me(InstanceId& _return, const FmuId& fmuId, const Solver& solver);
-  int32_t send_create_instance_from_me(const FmuId& fmuId, const Solver& solver);
-  void recv_create_instance_from_me(InstanceId& _return, const int32_t seqid);
+  void create_instance(InstanceId& _return, const FmuId& fmuId);
+  int32_t send_create_instance(const FmuId& fmuId);
+  void recv_create_instance(InstanceId& _return, const int32_t seqid);
   Status::type setup_experiment(const InstanceId& instanceId, const double start, const double stop, const double tolerance);
   int32_t send_setup_experiment(const InstanceId& instanceId, const double start, const double stop, const double tolerance);
   Status::type recv_setup_experiment(const int32_t seqid);

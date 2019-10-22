@@ -1192,7 +1192,7 @@ uint32_t Unknown::write(::apache::thrift::protocol::TProtocol* oprot) const {
   ::apache::thrift::protocol::TOutputRecursionTracker tracker(*oprot);
   xfer += oprot->writeStructBegin("Unknown");
 
-  xfer += oprot->writeFieldBegin("reference", ::apache::thrift::protocol::T_I32, 1);
+  xfer += oprot->writeFieldBegin("index", ::apache::thrift::protocol::T_I32, 1);
   xfer += oprot->writeI32(this->index);
   xfer += oprot->writeFieldEnd();
 
@@ -1249,7 +1249,7 @@ Unknown& Unknown::operator=(const Unknown& other27) {
 void Unknown::printTo(std::ostream& out) const {
   using ::apache::thrift::to_string;
   out << "Unknown(";
-  out << "reference=" << to_string(index);
+  out << "index=" << to_string(index);
   out << ", " << "dependencies=" << to_string(dependencies);
   out << ", " << "dependencies_kind=" << to_string(dependencies_kind);
   out << ")";
@@ -2250,118 +2250,6 @@ void BooleanRead::printTo(std::ostream& out) const {
 }
 
 
-Solver::~Solver() throw() {
-}
-
-
-void Solver::__set_name(const std::string& val) {
-  this->name = val;
-}
-
-void Solver::__set_settings(const std::string& val) {
-  this->settings = val;
-}
-std::ostream& operator<<(std::ostream& out, const Solver& obj)
-{
-  obj.printTo(out);
-  return out;
-}
-
-
-uint32_t Solver::read(::apache::thrift::protocol::TProtocol* iprot) {
-
-  ::apache::thrift::protocol::TInputRecursionTracker tracker(*iprot);
-  uint32_t xfer = 0;
-  std::string fname;
-  ::apache::thrift::protocol::TType ftype;
-  int16_t fid;
-
-  xfer += iprot->readStructBegin(fname);
-
-  using ::apache::thrift::protocol::TProtocolException;
-
-
-  while (true)
-  {
-    xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == ::apache::thrift::protocol::T_STOP) {
-      break;
-    }
-    switch (fid)
-    {
-      case 1:
-        if (ftype == ::apache::thrift::protocol::T_STRING) {
-          xfer += iprot->readString(this->name);
-          this->__isset.name = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      case 2:
-        if (ftype == ::apache::thrift::protocol::T_STRING) {
-          xfer += iprot->readString(this->settings);
-          this->__isset.settings = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      default:
-        xfer += iprot->skip(ftype);
-        break;
-    }
-    xfer += iprot->readFieldEnd();
-  }
-
-  xfer += iprot->readStructEnd();
-
-  return xfer;
-}
-
-uint32_t Solver::write(::apache::thrift::protocol::TProtocol* oprot) const {
-  uint32_t xfer = 0;
-  ::apache::thrift::protocol::TOutputRecursionTracker tracker(*oprot);
-  xfer += oprot->writeStructBegin("Solver");
-
-  xfer += oprot->writeFieldBegin("name", ::apache::thrift::protocol::T_STRING, 1);
-  xfer += oprot->writeString(this->name);
-  xfer += oprot->writeFieldEnd();
-
-  xfer += oprot->writeFieldBegin("settings", ::apache::thrift::protocol::T_STRING, 2);
-  xfer += oprot->writeString(this->settings);
-  xfer += oprot->writeFieldEnd();
-
-  xfer += oprot->writeFieldStop();
-  xfer += oprot->writeStructEnd();
-  return xfer;
-}
-
-void swap(Solver &a, Solver &b) {
-  using ::std::swap;
-  swap(a.name, b.name);
-  swap(a.settings, b.settings);
-  swap(a.__isset, b.__isset);
-}
-
-Solver::Solver(const Solver& other89) {
-  name = other89.name;
-  settings = other89.settings;
-  __isset = other89.__isset;
-}
-Solver& Solver::operator=(const Solver& other90) {
-  name = other90.name;
-  settings = other90.settings;
-  __isset = other90.__isset;
-  return *this;
-}
-void Solver::printTo(std::ostream& out) const {
-  using ::apache::thrift::to_string;
-  out << "Solver(";
-  out << "name=" << to_string(name);
-  out << ", " << "settings=" << to_string(settings);
-  out << ")";
-}
-
-
 ModelDescription::~ModelDescription() throw() {
 }
 
@@ -2429,6 +2317,34 @@ void ModelDescription::__set_model_variables(const ModelVariables& val) {
 
 void ModelDescription::__set_model_structure(const ModelStructure& val) {
   this->model_structure = val;
+}
+
+void ModelDescription::__set_model_identifier(const std::string& val) {
+  this->model_identifier = val;
+}
+
+void ModelDescription::__set_can_get_and_set_fmu_state(const bool val) {
+  this->can_get_and_set_fmu_state = val;
+}
+
+void ModelDescription::__set_can_serialize_fmu_state(const bool val) {
+  this->can_serialize_fmu_state = val;
+}
+
+void ModelDescription::__set_provides_directional_derivative(const bool val) {
+  this->provides_directional_derivative = val;
+}
+
+void ModelDescription::__set_can_handle_variable_communication_step_size(const bool val) {
+  this->can_handle_variable_communication_step_size = val;
+}
+
+void ModelDescription::__set_can_interpolate_inputs(const bool val) {
+  this->can_interpolate_inputs = val;
+}
+
+void ModelDescription::__set_max_output_derivative_order(const int32_t val) {
+  this->max_output_derivative_order = val;
 }
 std::ostream& operator<<(std::ostream& out, const ModelDescription& obj)
 {
@@ -2558,14 +2474,14 @@ uint32_t ModelDescription::read(::apache::thrift::protocol::TProtocol* iprot) {
         if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
             this->model_variables.clear();
-            uint32_t _size91;
-            ::apache::thrift::protocol::TType _etype94;
-            xfer += iprot->readListBegin(_etype94, _size91);
-            this->model_variables.resize(_size91);
-            uint32_t _i95;
-            for (_i95 = 0; _i95 < _size91; ++_i95)
+            uint32_t _size89;
+            ::apache::thrift::protocol::TType _etype92;
+            xfer += iprot->readListBegin(_etype92, _size89);
+            this->model_variables.resize(_size89);
+            uint32_t _i93;
+            for (_i93 = 0; _i93 < _size89; ++_i93)
             {
-              xfer += this->model_variables[_i95].read(iprot);
+              xfer += this->model_variables[_i93].read(iprot);
             }
             xfer += iprot->readListEnd();
           }
@@ -2578,6 +2494,62 @@ uint32_t ModelDescription::read(::apache::thrift::protocol::TProtocol* iprot) {
         if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->model_structure.read(iprot);
           this->__isset.model_structure = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 15:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->model_identifier);
+          this->__isset.model_identifier = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 16:
+        if (ftype == ::apache::thrift::protocol::T_BOOL) {
+          xfer += iprot->readBool(this->can_get_and_set_fmu_state);
+          this->__isset.can_get_and_set_fmu_state = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 17:
+        if (ftype == ::apache::thrift::protocol::T_BOOL) {
+          xfer += iprot->readBool(this->can_serialize_fmu_state);
+          this->__isset.can_serialize_fmu_state = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 18:
+        if (ftype == ::apache::thrift::protocol::T_BOOL) {
+          xfer += iprot->readBool(this->provides_directional_derivative);
+          this->__isset.provides_directional_derivative = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 19:
+        if (ftype == ::apache::thrift::protocol::T_BOOL) {
+          xfer += iprot->readBool(this->can_handle_variable_communication_step_size);
+          this->__isset.can_handle_variable_communication_step_size = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 20:
+        if (ftype == ::apache::thrift::protocol::T_BOOL) {
+          xfer += iprot->readBool(this->can_interpolate_inputs);
+          this->__isset.can_interpolate_inputs = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 21:
+        if (ftype == ::apache::thrift::protocol::T_I32) {
+          xfer += iprot->readI32(this->max_output_derivative_order);
+          this->__isset.max_output_derivative_order = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -2659,10 +2631,10 @@ uint32_t ModelDescription::write(::apache::thrift::protocol::TProtocol* oprot) c
   xfer += oprot->writeFieldBegin("model_variables", ::apache::thrift::protocol::T_LIST, 13);
   {
     xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRUCT, static_cast<uint32_t>(this->model_variables.size()));
-    std::vector<ScalarVariable> ::const_iterator _iter96;
-    for (_iter96 = this->model_variables.begin(); _iter96 != this->model_variables.end(); ++_iter96)
+    std::vector<ScalarVariable> ::const_iterator _iter94;
+    for (_iter94 = this->model_variables.begin(); _iter94 != this->model_variables.end(); ++_iter94)
     {
-      xfer += (*_iter96).write(oprot);
+      xfer += (*_iter94).write(oprot);
     }
     xfer += oprot->writeListEnd();
   }
@@ -2670,6 +2642,34 @@ uint32_t ModelDescription::write(::apache::thrift::protocol::TProtocol* oprot) c
 
   xfer += oprot->writeFieldBegin("model_structure", ::apache::thrift::protocol::T_STRUCT, 14);
   xfer += this->model_structure.write(oprot);
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldBegin("model_identifier", ::apache::thrift::protocol::T_STRING, 15);
+  xfer += oprot->writeString(this->model_identifier);
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldBegin("can_get_and_set_fmu_state", ::apache::thrift::protocol::T_BOOL, 16);
+  xfer += oprot->writeBool(this->can_get_and_set_fmu_state);
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldBegin("can_serialize_fmu_state", ::apache::thrift::protocol::T_BOOL, 17);
+  xfer += oprot->writeBool(this->can_serialize_fmu_state);
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldBegin("provides_directional_derivative", ::apache::thrift::protocol::T_BOOL, 18);
+  xfer += oprot->writeBool(this->provides_directional_derivative);
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldBegin("can_handle_variable_communication_step_size", ::apache::thrift::protocol::T_BOOL, 19);
+  xfer += oprot->writeBool(this->can_handle_variable_communication_step_size);
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldBegin("can_interpolate_inputs", ::apache::thrift::protocol::T_BOOL, 20);
+  xfer += oprot->writeBool(this->can_interpolate_inputs);
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldBegin("max_output_derivative_order", ::apache::thrift::protocol::T_I32, 21);
+  xfer += oprot->writeI32(this->max_output_derivative_order);
   xfer += oprot->writeFieldEnd();
 
   xfer += oprot->writeFieldStop();
@@ -2693,42 +2693,63 @@ void swap(ModelDescription &a, ModelDescription &b) {
   swap(a.variable_naming_convention, b.variable_naming_convention);
   swap(a.model_variables, b.model_variables);
   swap(a.model_structure, b.model_structure);
+  swap(a.model_identifier, b.model_identifier);
+  swap(a.can_get_and_set_fmu_state, b.can_get_and_set_fmu_state);
+  swap(a.can_serialize_fmu_state, b.can_serialize_fmu_state);
+  swap(a.provides_directional_derivative, b.provides_directional_derivative);
+  swap(a.can_handle_variable_communication_step_size, b.can_handle_variable_communication_step_size);
+  swap(a.can_interpolate_inputs, b.can_interpolate_inputs);
+  swap(a.max_output_derivative_order, b.max_output_derivative_order);
   swap(a.__isset, b.__isset);
 }
 
-ModelDescription::ModelDescription(const ModelDescription& other97) {
-  guid = other97.guid;
-  fmi_version = other97.fmi_version;
-  modelName = other97.modelName;
-  license = other97.license;
-  copyright = other97.copyright;
-  author = other97.author;
-  version = other97.version;
-  description = other97.description;
-  generation_tool = other97.generation_tool;
-  generation_date_and_time = other97.generation_date_and_time;
-  default_experiment = other97.default_experiment;
-  variable_naming_convention = other97.variable_naming_convention;
-  model_variables = other97.model_variables;
-  model_structure = other97.model_structure;
-  __isset = other97.__isset;
+ModelDescription::ModelDescription(const ModelDescription& other95) {
+  guid = other95.guid;
+  fmi_version = other95.fmi_version;
+  modelName = other95.modelName;
+  license = other95.license;
+  copyright = other95.copyright;
+  author = other95.author;
+  version = other95.version;
+  description = other95.description;
+  generation_tool = other95.generation_tool;
+  generation_date_and_time = other95.generation_date_and_time;
+  default_experiment = other95.default_experiment;
+  variable_naming_convention = other95.variable_naming_convention;
+  model_variables = other95.model_variables;
+  model_structure = other95.model_structure;
+  model_identifier = other95.model_identifier;
+  can_get_and_set_fmu_state = other95.can_get_and_set_fmu_state;
+  can_serialize_fmu_state = other95.can_serialize_fmu_state;
+  provides_directional_derivative = other95.provides_directional_derivative;
+  can_handle_variable_communication_step_size = other95.can_handle_variable_communication_step_size;
+  can_interpolate_inputs = other95.can_interpolate_inputs;
+  max_output_derivative_order = other95.max_output_derivative_order;
+  __isset = other95.__isset;
 }
-ModelDescription& ModelDescription::operator=(const ModelDescription& other98) {
-  guid = other98.guid;
-  fmi_version = other98.fmi_version;
-  modelName = other98.modelName;
-  license = other98.license;
-  copyright = other98.copyright;
-  author = other98.author;
-  version = other98.version;
-  description = other98.description;
-  generation_tool = other98.generation_tool;
-  generation_date_and_time = other98.generation_date_and_time;
-  default_experiment = other98.default_experiment;
-  variable_naming_convention = other98.variable_naming_convention;
-  model_variables = other98.model_variables;
-  model_structure = other98.model_structure;
-  __isset = other98.__isset;
+ModelDescription& ModelDescription::operator=(const ModelDescription& other96) {
+  guid = other96.guid;
+  fmi_version = other96.fmi_version;
+  modelName = other96.modelName;
+  license = other96.license;
+  copyright = other96.copyright;
+  author = other96.author;
+  version = other96.version;
+  description = other96.description;
+  generation_tool = other96.generation_tool;
+  generation_date_and_time = other96.generation_date_and_time;
+  default_experiment = other96.default_experiment;
+  variable_naming_convention = other96.variable_naming_convention;
+  model_variables = other96.model_variables;
+  model_structure = other96.model_structure;
+  model_identifier = other96.model_identifier;
+  can_get_and_set_fmu_state = other96.can_get_and_set_fmu_state;
+  can_serialize_fmu_state = other96.can_serialize_fmu_state;
+  provides_directional_derivative = other96.provides_directional_derivative;
+  can_handle_variable_communication_step_size = other96.can_handle_variable_communication_step_size;
+  can_interpolate_inputs = other96.can_interpolate_inputs;
+  max_output_derivative_order = other96.max_output_derivative_order;
+  __isset = other96.__isset;
   return *this;
 }
 void ModelDescription::printTo(std::ostream& out) const {
@@ -2748,212 +2769,7 @@ void ModelDescription::printTo(std::ostream& out) const {
   out << ", " << "variable_naming_convention="; (__isset.variable_naming_convention ? (out << to_string(variable_naming_convention)) : (out << "<null>"));
   out << ", " << "model_variables=" << to_string(model_variables);
   out << ", " << "model_structure=" << to_string(model_structure);
-  out << ")";
-}
-
-
-CoSimulationAttributes::~CoSimulationAttributes() throw() {
-}
-
-
-void CoSimulationAttributes::__set_model_identifier(const std::string& val) {
-  this->model_identifier = val;
-}
-
-void CoSimulationAttributes::__set_can_get_and_set_fmu_state(const bool val) {
-  this->can_get_and_set_fmu_state = val;
-}
-
-void CoSimulationAttributes::__set_can_serialize_fmu_state(const bool val) {
-  this->can_serialize_fmu_state = val;
-}
-
-void CoSimulationAttributes::__set_provides_directional_derivative(const bool val) {
-  this->provides_directional_derivative = val;
-}
-
-void CoSimulationAttributes::__set_can_handle_variable_communication_step_size(const bool val) {
-  this->can_handle_variable_communication_step_size = val;
-}
-
-void CoSimulationAttributes::__set_can_interpolate_inputs(const bool val) {
-  this->can_interpolate_inputs = val;
-}
-
-void CoSimulationAttributes::__set_max_output_derivative_order(const int32_t val) {
-  this->max_output_derivative_order = val;
-}
-std::ostream& operator<<(std::ostream& out, const CoSimulationAttributes& obj)
-{
-  obj.printTo(out);
-  return out;
-}
-
-
-uint32_t CoSimulationAttributes::read(::apache::thrift::protocol::TProtocol* iprot) {
-
-  ::apache::thrift::protocol::TInputRecursionTracker tracker(*iprot);
-  uint32_t xfer = 0;
-  std::string fname;
-  ::apache::thrift::protocol::TType ftype;
-  int16_t fid;
-
-  xfer += iprot->readStructBegin(fname);
-
-  using ::apache::thrift::protocol::TProtocolException;
-
-
-  while (true)
-  {
-    xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == ::apache::thrift::protocol::T_STOP) {
-      break;
-    }
-    switch (fid)
-    {
-      case 1:
-        if (ftype == ::apache::thrift::protocol::T_STRING) {
-          xfer += iprot->readString(this->model_identifier);
-          this->__isset.model_identifier = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      case 2:
-        if (ftype == ::apache::thrift::protocol::T_BOOL) {
-          xfer += iprot->readBool(this->can_get_and_set_fmu_state);
-          this->__isset.can_get_and_set_fmu_state = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      case 3:
-        if (ftype == ::apache::thrift::protocol::T_BOOL) {
-          xfer += iprot->readBool(this->can_serialize_fmu_state);
-          this->__isset.can_serialize_fmu_state = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      case 4:
-        if (ftype == ::apache::thrift::protocol::T_BOOL) {
-          xfer += iprot->readBool(this->provides_directional_derivative);
-          this->__isset.provides_directional_derivative = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      case 5:
-        if (ftype == ::apache::thrift::protocol::T_BOOL) {
-          xfer += iprot->readBool(this->can_handle_variable_communication_step_size);
-          this->__isset.can_handle_variable_communication_step_size = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      case 6:
-        if (ftype == ::apache::thrift::protocol::T_BOOL) {
-          xfer += iprot->readBool(this->can_interpolate_inputs);
-          this->__isset.can_interpolate_inputs = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      case 7:
-        if (ftype == ::apache::thrift::protocol::T_I32) {
-          xfer += iprot->readI32(this->max_output_derivative_order);
-          this->__isset.max_output_derivative_order = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      default:
-        xfer += iprot->skip(ftype);
-        break;
-    }
-    xfer += iprot->readFieldEnd();
-  }
-
-  xfer += iprot->readStructEnd();
-
-  return xfer;
-}
-
-uint32_t CoSimulationAttributes::write(::apache::thrift::protocol::TProtocol* oprot) const {
-  uint32_t xfer = 0;
-  ::apache::thrift::protocol::TOutputRecursionTracker tracker(*oprot);
-  xfer += oprot->writeStructBegin("CoSimulationAttributes");
-
-  xfer += oprot->writeFieldBegin("model_identifier", ::apache::thrift::protocol::T_STRING, 1);
-  xfer += oprot->writeString(this->model_identifier);
-  xfer += oprot->writeFieldEnd();
-
-  xfer += oprot->writeFieldBegin("can_get_and_set_fmu_state", ::apache::thrift::protocol::T_BOOL, 2);
-  xfer += oprot->writeBool(this->can_get_and_set_fmu_state);
-  xfer += oprot->writeFieldEnd();
-
-  xfer += oprot->writeFieldBegin("can_serialize_fmu_state", ::apache::thrift::protocol::T_BOOL, 3);
-  xfer += oprot->writeBool(this->can_serialize_fmu_state);
-  xfer += oprot->writeFieldEnd();
-
-  xfer += oprot->writeFieldBegin("provides_directional_derivative", ::apache::thrift::protocol::T_BOOL, 4);
-  xfer += oprot->writeBool(this->provides_directional_derivative);
-  xfer += oprot->writeFieldEnd();
-
-  xfer += oprot->writeFieldBegin("can_handle_variable_communication_step_size", ::apache::thrift::protocol::T_BOOL, 5);
-  xfer += oprot->writeBool(this->can_handle_variable_communication_step_size);
-  xfer += oprot->writeFieldEnd();
-
-  xfer += oprot->writeFieldBegin("can_interpolate_inputs", ::apache::thrift::protocol::T_BOOL, 6);
-  xfer += oprot->writeBool(this->can_interpolate_inputs);
-  xfer += oprot->writeFieldEnd();
-
-  xfer += oprot->writeFieldBegin("max_output_derivative_order", ::apache::thrift::protocol::T_I32, 7);
-  xfer += oprot->writeI32(this->max_output_derivative_order);
-  xfer += oprot->writeFieldEnd();
-
-  xfer += oprot->writeFieldStop();
-  xfer += oprot->writeStructEnd();
-  return xfer;
-}
-
-void swap(CoSimulationAttributes &a, CoSimulationAttributes &b) {
-  using ::std::swap;
-  swap(a.model_identifier, b.model_identifier);
-  swap(a.can_get_and_set_fmu_state, b.can_get_and_set_fmu_state);
-  swap(a.can_serialize_fmu_state, b.can_serialize_fmu_state);
-  swap(a.provides_directional_derivative, b.provides_directional_derivative);
-  swap(a.can_handle_variable_communication_step_size, b.can_handle_variable_communication_step_size);
-  swap(a.can_interpolate_inputs, b.can_interpolate_inputs);
-  swap(a.max_output_derivative_order, b.max_output_derivative_order);
-  swap(a.__isset, b.__isset);
-}
-
-CoSimulationAttributes::CoSimulationAttributes(const CoSimulationAttributes& other99) {
-  model_identifier = other99.model_identifier;
-  can_get_and_set_fmu_state = other99.can_get_and_set_fmu_state;
-  can_serialize_fmu_state = other99.can_serialize_fmu_state;
-  provides_directional_derivative = other99.provides_directional_derivative;
-  can_handle_variable_communication_step_size = other99.can_handle_variable_communication_step_size;
-  can_interpolate_inputs = other99.can_interpolate_inputs;
-  max_output_derivative_order = other99.max_output_derivative_order;
-  __isset = other99.__isset;
-}
-CoSimulationAttributes& CoSimulationAttributes::operator=(const CoSimulationAttributes& other100) {
-  model_identifier = other100.model_identifier;
-  can_get_and_set_fmu_state = other100.can_get_and_set_fmu_state;
-  can_serialize_fmu_state = other100.can_serialize_fmu_state;
-  provides_directional_derivative = other100.provides_directional_derivative;
-  can_handle_variable_communication_step_size = other100.can_handle_variable_communication_step_size;
-  can_interpolate_inputs = other100.can_interpolate_inputs;
-  max_output_derivative_order = other100.max_output_derivative_order;
-  __isset = other100.__isset;
-  return *this;
-}
-void CoSimulationAttributes::printTo(std::ostream& out) const {
-  using ::apache::thrift::to_string;
-  out << "CoSimulationAttributes(";
-  out << "model_identifier=" << to_string(model_identifier);
+  out << ", " << "model_identifier=" << to_string(model_identifier);
   out << ", " << "can_get_and_set_fmu_state=" << to_string(can_get_and_set_fmu_state);
   out << ", " << "can_serialize_fmu_state=" << to_string(can_serialize_fmu_state);
   out << ", " << "provides_directional_derivative=" << to_string(provides_directional_derivative);
@@ -3039,13 +2855,13 @@ void swap(NoSuchFmuException &a, NoSuchFmuException &b) {
   swap(a.__isset, b.__isset);
 }
 
-NoSuchFmuException::NoSuchFmuException(const NoSuchFmuException& other101) : TException() {
-  message = other101.message;
-  __isset = other101.__isset;
+NoSuchFmuException::NoSuchFmuException(const NoSuchFmuException& other97) : TException() {
+  message = other97.message;
+  __isset = other97.__isset;
 }
-NoSuchFmuException& NoSuchFmuException::operator=(const NoSuchFmuException& other102) {
-  message = other102.message;
-  __isset = other102.__isset;
+NoSuchFmuException& NoSuchFmuException::operator=(const NoSuchFmuException& other98) {
+  message = other98.message;
+  __isset = other98.__isset;
   return *this;
 }
 void NoSuchFmuException::printTo(std::ostream& out) const {
@@ -3142,13 +2958,13 @@ void swap(NoSuchInstanceException &a, NoSuchInstanceException &b) {
   swap(a.__isset, b.__isset);
 }
 
-NoSuchInstanceException::NoSuchInstanceException(const NoSuchInstanceException& other103) : TException() {
-  message = other103.message;
-  __isset = other103.__isset;
+NoSuchInstanceException::NoSuchInstanceException(const NoSuchInstanceException& other99) : TException() {
+  message = other99.message;
+  __isset = other99.__isset;
 }
-NoSuchInstanceException& NoSuchInstanceException::operator=(const NoSuchInstanceException& other104) {
-  message = other104.message;
-  __isset = other104.__isset;
+NoSuchInstanceException& NoSuchInstanceException::operator=(const NoSuchInstanceException& other100) {
+  message = other100.message;
+  __isset = other100.__isset;
   return *this;
 }
 void NoSuchInstanceException::printTo(std::ostream& out) const {
@@ -3245,13 +3061,13 @@ void swap(NoSuchVariableException &a, NoSuchVariableException &b) {
   swap(a.__isset, b.__isset);
 }
 
-NoSuchVariableException::NoSuchVariableException(const NoSuchVariableException& other105) : TException() {
-  message = other105.message;
-  __isset = other105.__isset;
+NoSuchVariableException::NoSuchVariableException(const NoSuchVariableException& other101) : TException() {
+  message = other101.message;
+  __isset = other101.__isset;
 }
-NoSuchVariableException& NoSuchVariableException::operator=(const NoSuchVariableException& other106) {
-  message = other106.message;
-  __isset = other106.__isset;
+NoSuchVariableException& NoSuchVariableException::operator=(const NoSuchVariableException& other102) {
+  message = other102.message;
+  __isset = other102.__isset;
   return *this;
 }
 void NoSuchVariableException::printTo(std::ostream& out) const {
@@ -3348,13 +3164,13 @@ void swap(UnsupportedOperationException &a, UnsupportedOperationException &b) {
   swap(a.__isset, b.__isset);
 }
 
-UnsupportedOperationException::UnsupportedOperationException(const UnsupportedOperationException& other107) : TException() {
-  message = other107.message;
-  __isset = other107.__isset;
+UnsupportedOperationException::UnsupportedOperationException(const UnsupportedOperationException& other103) : TException() {
+  message = other103.message;
+  __isset = other103.__isset;
 }
-UnsupportedOperationException& UnsupportedOperationException::operator=(const UnsupportedOperationException& other108) {
-  message = other108.message;
-  __isset = other108.__isset;
+UnsupportedOperationException& UnsupportedOperationException::operator=(const UnsupportedOperationException& other104) {
+  message = other104.message;
+  __isset = other104.__isset;
   return *this;
 }
 void UnsupportedOperationException::printTo(std::ostream& out) const {
@@ -3419,14 +3235,14 @@ uint32_t DirectionalDerivativeResult::read(::apache::thrift::protocol::TProtocol
         if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
             this->dv_unknown_ref.clear();
-            uint32_t _size109;
-            ::apache::thrift::protocol::TType _etype112;
-            xfer += iprot->readListBegin(_etype112, _size109);
-            this->dv_unknown_ref.resize(_size109);
-            uint32_t _i113;
-            for (_i113 = 0; _i113 < _size109; ++_i113)
+            uint32_t _size105;
+            ::apache::thrift::protocol::TType _etype108;
+            xfer += iprot->readListBegin(_etype108, _size105);
+            this->dv_unknown_ref.resize(_size105);
+            uint32_t _i109;
+            for (_i109 = 0; _i109 < _size105; ++_i109)
             {
-              xfer += iprot->readDouble(this->dv_unknown_ref[_i113]);
+              xfer += iprot->readDouble(this->dv_unknown_ref[_i109]);
             }
             xfer += iprot->readListEnd();
           }
@@ -3437,9 +3253,9 @@ uint32_t DirectionalDerivativeResult::read(::apache::thrift::protocol::TProtocol
         break;
       case 2:
         if (ftype == ::apache::thrift::protocol::T_I32) {
-          int32_t ecast114;
-          xfer += iprot->readI32(ecast114);
-          this->status = (Status::type)ecast114;
+          int32_t ecast110;
+          xfer += iprot->readI32(ecast110);
+          this->status = (Status::type)ecast110;
           this->__isset.status = true;
         } else {
           xfer += iprot->skip(ftype);
@@ -3465,10 +3281,10 @@ uint32_t DirectionalDerivativeResult::write(::apache::thrift::protocol::TProtoco
   xfer += oprot->writeFieldBegin("dv_unknown_ref", ::apache::thrift::protocol::T_LIST, 1);
   {
     xfer += oprot->writeListBegin(::apache::thrift::protocol::T_DOUBLE, static_cast<uint32_t>(this->dv_unknown_ref.size()));
-    std::vector<double> ::const_iterator _iter115;
-    for (_iter115 = this->dv_unknown_ref.begin(); _iter115 != this->dv_unknown_ref.end(); ++_iter115)
+    std::vector<double> ::const_iterator _iter111;
+    for (_iter111 = this->dv_unknown_ref.begin(); _iter111 != this->dv_unknown_ref.end(); ++_iter111)
     {
-      xfer += oprot->writeDouble((*_iter115));
+      xfer += oprot->writeDouble((*_iter111));
     }
     xfer += oprot->writeListEnd();
   }
@@ -3490,15 +3306,15 @@ void swap(DirectionalDerivativeResult &a, DirectionalDerivativeResult &b) {
   swap(a.__isset, b.__isset);
 }
 
-DirectionalDerivativeResult::DirectionalDerivativeResult(const DirectionalDerivativeResult& other116) {
-  dv_unknown_ref = other116.dv_unknown_ref;
-  status = other116.status;
-  __isset = other116.__isset;
+DirectionalDerivativeResult::DirectionalDerivativeResult(const DirectionalDerivativeResult& other112) {
+  dv_unknown_ref = other112.dv_unknown_ref;
+  status = other112.status;
+  __isset = other112.__isset;
 }
-DirectionalDerivativeResult& DirectionalDerivativeResult::operator=(const DirectionalDerivativeResult& other117) {
-  dv_unknown_ref = other117.dv_unknown_ref;
-  status = other117.status;
-  __isset = other117.__isset;
+DirectionalDerivativeResult& DirectionalDerivativeResult::operator=(const DirectionalDerivativeResult& other113) {
+  dv_unknown_ref = other113.dv_unknown_ref;
+  status = other113.status;
+  __isset = other113.__isset;
   return *this;
 }
 void DirectionalDerivativeResult::printTo(std::ostream& out) const {
