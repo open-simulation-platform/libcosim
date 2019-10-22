@@ -231,9 +231,11 @@ cse_execution* cse_ssp_fixed_step_execution_create(
     try {
         auto execution = std::make_unique<cse_execution>();
 
-        auto resolver = cse::default_model_uri_resolver();
+        auto modelResolver = cse::default_model_uri_resolver();
+        auto algorithmResolver = cse::default_algorithm_resolver();
         auto sim = cse::load_ssp(
-            *resolver,
+            *modelResolver,
+            *algorithmResolver,
             sspDir,
             std::make_unique<cse::fixed_step_algorithm>(to_duration(stepSize)),
             startTimeDefined ? std::optional<cse::time_point>(to_time_point(startTime)) : std::nullopt);
