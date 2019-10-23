@@ -91,7 +91,11 @@
         <ssd:Annotations>
             <ssc:Annotation type="com.opensimulationplatform">
                 <osp:Algorithm>
-                   <osp:FixedStepAlgorithm baseStepSize="1e-4"/>
+                   <osp:FixedStepAlgorithm baseStepSize="1e-4">
+                       <osp:StepSizes>
+                           <osp:StepSize component="CraneController" multipleOf="2"/>
+                       </osp:StepSizes>
+                   </osp:FixedStepAlgorithm>
                 </osp:Algorithm>
             </ssc:Annotation>
         </ssd:Annotations>

@@ -12,8 +12,22 @@
 
     <xs:element name="FixedStepAlgorithm">
         <xs:complexType>
+            <xs:sequence>
+                <xs:element name="StepSizes" type="StepSizes"/>
+            </xs:sequence>
             <xs:attribute name="baseStepSize" type="xs:double" use="required"/>
         </xs:complexType>
     </xs:element>
+
+    <xs:complexType name="StepSizes">
+        <xs:sequence>
+            <xs:element name="StepSize" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:attribute name="component" type="xs:string" use="required"/>
+                    <xs:attribute name="multipleOf" type="xs:unsignedInt" use="required"/>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
 
 </xs:schema>

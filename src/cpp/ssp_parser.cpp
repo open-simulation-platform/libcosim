@@ -393,7 +393,17 @@ std::shared_ptr<cse::algorithm> fixed_step_algorithm_resolver::parse(
 {
     if (algorithmName == "osp:FixedStepAlgorithm") {
         auto stepSize = get_attribute<double>(tree, "baseStepSize");
-        return std::make_shared<cse::fixed_step_algorithm>(cse::to_duration(stepSize));
+        auto algorithm = std::make_shared<cse::fixed_step_algorithm>(cse::to_duration(stepSize));
+
+        if (const auto stepSizes = tree.get_child_optional("osp:StepSizes")) {
+            for (const auto& stepSizeNode : *stepSizes) {
+                auto component = get_attribute<std::string>(stepSizeNode.second, "component");
+                auto multipleOf = get_attribute<int>(stepSizeNode.second, "multipleOf");
+                algorithm->set_stepsize_decimation_factor(component, multipleOf);
+            }
+        }
+
+        return algorithm;
     }
     return nullptr;
 }
