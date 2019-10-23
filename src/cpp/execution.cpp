@@ -271,6 +271,17 @@ public:
         simulators_.at(sim)->set_string(var, value);
     }
 
+    simulator_index get_index(const std::string& name) {
+        int index = 0;
+        for (const auto& sim : simulators_) {
+            if (sim->name() == name) {
+                return index;
+            }
+            index++;
+        }
+        return -1;
+    }
+
 private:
     void validate_variable(variable_id variable, variable_causality causality)
     {
@@ -444,6 +455,11 @@ void execution::set_boolean_initial_value(simulator_index sim, value_reference v
 void execution::set_string_initial_value(simulator_index sim, value_reference var, const std::string& value)
 {
     pimpl_->set_string_initial_value(sim, var, value);
+}
+
+simulator_index execution::get_index(const std::string& name)
+{
+    return pimpl_->get_index(name);
 }
 
 } // namespace cse

@@ -245,6 +245,7 @@ public:
     /// Set initial value for a variable of type string. Must be called before simulation is started.
     void set_string_initial_value(simulator_index sim, value_reference var, const std::string& value);
 
+    simulator_index get_index(const std::string& name);
 
 private:
     class impl;
