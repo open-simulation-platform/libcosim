@@ -245,15 +245,18 @@ void archive::extract_all(
     const auto entryCount = entry_count();
     for (entry_index index = 0; index < entryCount; ++index) {
         const auto entryName = entry_name(index);
-        if (!entryName.empty() && entryName.back() != '/') {
+        if (!entryName.empty()) {
             const auto entryPath = boost::filesystem::path(entryName);
             if (entryPath.has_root_path()) {
                 throw error(
                     "Archive contains an entry with an absolute path: " + entryName);
             }
             const auto targetPath = targetDir / entryPath;
-            boost::filesystem::create_directories(targetPath.parent_path());
-            extract_file_as(m_archive, index, targetPath, buffer);
+            if (entryName.back() == '/') {
+                boost::filesystem::create_directories(targetPath);
+            } else {
+                extract_file_as(m_archive, index, targetPath, buffer);
+            }
         }
     }
 }
