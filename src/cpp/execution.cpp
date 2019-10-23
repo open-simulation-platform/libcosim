@@ -271,8 +271,8 @@ public:
         simulators_.at(sim)->set_string(var, value);
     }
 
-    simulator_index get_index(const std::string& name) {
-        int index = 0;
+    simulator_index get_simulator_index(const std::string& name) {
+        auto index = 0;
         for (const auto& sim : simulators_) {
             if (sim->name() == name) {
                 return index;
@@ -457,9 +457,9 @@ void execution::set_string_initial_value(simulator_index sim, value_reference va
     pimpl_->set_string_initial_value(sim, var, value);
 }
 
-simulator_index execution::get_index(const std::string& name)
+simulator_index execution::get_simulator_index(const std::string& name)
 {
-    return pimpl_->get_index(name);
+    return pimpl_->get_simulator_index(name);
 }
 
 } // namespace cse
