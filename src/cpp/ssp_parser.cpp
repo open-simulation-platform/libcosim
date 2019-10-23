@@ -284,12 +284,13 @@ void ssp_loader::set_algorithm_resolver(std::shared_ptr<cse::algorithm_resolver>
     algorithmResolver_ = resolver;
 }
 
-std::pair<execution, simulator_map> ssp_loader::load(const boost::filesystem::path& configPath) {
+std::pair<execution, simulator_map> ssp_loader::load(const boost::filesystem::path& configPath)
+{
     simulator_map simulatorMap;
     const auto absolutePath = boost::filesystem::absolute(configPath);
     const auto configFile = boost::filesystem::is_regular_file(absolutePath)
-                            ? absolutePath
-                            : absolutePath / "SystemStructure.ssd";
+        ? absolutePath
+        : absolutePath / "SystemStructure.ssd";
     const auto baseURI = path_to_file_uri(configFile);
 
     auto modelResolver = modelResolver_ == nullptr ? cse::default_model_uri_resolver() : modelResolver_;
@@ -388,7 +389,8 @@ std::shared_ptr<cse::algorithm> algorithm_resolver::resolve(const std::string& a
 
 std::shared_ptr<cse::algorithm> fixed_step_algorithm_resolver::parse(
     const std::string& algorithmName,
-    const boost::property_tree::ptree& tree) {
+    const boost::property_tree::ptree& tree)
+{
     if (algorithmName == "osp:FixedStepAlgorithm") {
         auto stepSize = get_attribute<double>(tree, "baseStepSize");
         return std::make_shared<cse::fixed_step_algorithm>(cse::to_duration(stepSize));
@@ -396,7 +398,8 @@ std::shared_ptr<cse::algorithm> fixed_step_algorithm_resolver::parse(
     return nullptr;
 }
 
-std::shared_ptr<algorithm_resolver> default_algorithm_resolver() {
+std::shared_ptr<algorithm_resolver> default_algorithm_resolver()
+{
     auto resolver = std::make_shared<algorithm_resolver>();
     resolver->add_resolver(std::make_shared<fixed_step_algorithm_resolver>());
     return resolver;
