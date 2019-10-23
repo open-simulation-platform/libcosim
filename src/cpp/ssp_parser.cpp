@@ -267,47 +267,53 @@ cse::variable_id get_variable(
 } // namespace
 
 
-std::pair<execution, simulator_map> load_ssp(
-    cse::model_uri_resolver& modelResolver,
-    cse::algorithm_resolver& algorithmResolver,
-    const boost::filesystem::path& configPath,
-    std::optional<cse::time_point> overrideStartTime)
+void ssp_loader::set_start_time(cse::time_point timePoint)
 {
-    return load_ssp(modelResolver, algorithmResolver, configPath, nullptr, overrideStartTime);
+    overrideStartTime_ = timePoint;
+}
+void ssp_loader::set_algorithm(std::shared_ptr<cse::algorithm> algorithm)
+{
+    overrideAlgorithm_ = algorithm;
+}
+void ssp_loader::set_model_resolver(std::shared_ptr<cse::model_uri_resolver> resolver)
+{
+    modelResolver_ = resolver;
+}
+void ssp_loader::set_algorithm_resolver(std::shared_ptr<cse::algorithm_resolver> resolver)
+{
+    algorithmResolver_ = resolver;
 }
 
-std::pair<execution, simulator_map> load_ssp(
-    cse::model_uri_resolver& modelResolver,
-    cse::algorithm_resolver& algorithmResolver,
-    const boost::filesystem::path& configPath,
-    std::shared_ptr<cse::algorithm> overrideAlgorithm,
-    std::optional<cse::time_point> overrideStartTime)
-{
+std::pair<execution, simulator_map> ssp_loader::load(const boost::filesystem::path& configPath) {
     simulator_map simulatorMap;
     const auto absolutePath = boost::filesystem::absolute(configPath);
     const auto configFile = boost::filesystem::is_regular_file(absolutePath)
-        ? absolutePath
-        : absolutePath / "SystemStructure.ssd";
+                            ? absolutePath
+                            : absolutePath / "SystemStructure.ssd";
     const auto baseURI = path_to_file_uri(configFile);
-    const auto parser = ssp_parser(configFile, algorithmResolver);
+
+    auto modelResolver = modelResolver_ == nullptr ? cse::default_model_uri_resolver() : modelResolver_;
+    auto algorithmResolver = algorithmResolver_ == nullptr ? cse::default_algorithm_resolver() : algorithmResolver_;
+
+    const auto parser = ssp_parser(configFile, *algorithmResolver);
 
     std::shared_ptr<cse::algorithm> algorithm;
-    if (overrideAlgorithm != nullptr) {
-        algorithm = overrideAlgorithm;
+    if (overrideAlgorithm_ != nullptr) {
+        algorithm = overrideAlgorithm_;
     } else if (parser.get_default_experiment().algorithm != nullptr) {
         algorithm = parser.get_default_experiment().algorithm;
     } else {
         CSE_PANIC_M("No co-simulation algorithm specified!");
     }
 
-    const auto startTime = overrideStartTime ? *overrideStartTime : get_default_start_time(parser);
+    const auto startTime = overrideStartTime_ ? *overrideStartTime_ : get_default_start_time(parser);
     auto execution = cse::execution(startTime, algorithm);
 
     auto elements = parser.get_elements();
 
     std::map<std::string, slave_info> slaves;
     for (const auto& component : elements) {
-        auto model = modelResolver.lookup_model(baseURI, component.source);
+        auto model = modelResolver->lookup_model(baseURI, component.source);
         auto slave = model->instantiate(component.name);
         simulator_index index = slaves[component.name].index = execution.add_slave(slave, component.name);
 

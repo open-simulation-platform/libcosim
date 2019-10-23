@@ -20,9 +20,8 @@ int main()
         REQUIRE(testDataDir);
         boost::filesystem::path xmlPath = boost::filesystem::path(testDataDir) / "ssp" / "demo" / "fmuproxy";
 
-        auto modelResolver = cse::default_model_uri_resolver();
-        auto algorithmResolver = cse::default_algorithm_resolver();
-        auto simulation = cse::load_ssp(*modelResolver, *algorithmResolver, xmlPath, cse::to_time_point(0.0));
+        cse::ssp_loader loader;
+        auto simulation = loader.load(xmlPath);
         auto& execution = simulation.first;
 
         auto& simulator_map = simulation.second;
