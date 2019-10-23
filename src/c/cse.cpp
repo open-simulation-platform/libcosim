@@ -204,13 +204,9 @@ cse_execution* cse_ssp_execution_create(
     try {
         auto execution = std::make_unique<cse_execution>();
 
-        auto modelResolver = cse::default_model_uri_resolver();
-        auto algorithmResolver = cse::default_algorithm_resolver();
-        auto sim = cse::load_ssp(
-            *modelResolver,
-            *algorithmResolver,
-            sspDir,
-            startTimeDefined ? std::optional<cse::time_point>(to_time_point(startTime)) : std::nullopt);
+        cse::ssp_loader loader;
+        if (startTimeDefined) loader.set_start_time(to_time_point(startTime));
+        auto sim = loader.load(sspDir);
 
         execution->cpp_execution = std::make_unique<cse::execution>(std::move(sim.first));
         execution->simulators = std::move(sim.second);
@@ -231,14 +227,10 @@ cse_execution* cse_ssp_fixed_step_execution_create(
     try {
         auto execution = std::make_unique<cse_execution>();
 
-        auto modelResolver = cse::default_model_uri_resolver();
-        auto algorithmResolver = cse::default_algorithm_resolver();
-        auto sim = cse::load_ssp(
-            *modelResolver,
-            *algorithmResolver,
-            sspDir,
-            std::make_unique<cse::fixed_step_algorithm>(to_duration(stepSize)),
-            startTimeDefined ? std::optional<cse::time_point>(to_time_point(startTime)) : std::nullopt);
+        cse::ssp_loader loader;
+        if (startTimeDefined) loader.set_start_time(cse::time_point(to_time_point(startTime)));
+        loader.set_algorithm(std::make_unique<cse::fixed_step_algorithm>(to_duration(stepSize)));
+        auto sim = loader.load(sspDir);
 
         execution->cpp_execution = std::make_unique<cse::execution>(std::move(sim.first));
         execution->simulators = std::move(sim.second);

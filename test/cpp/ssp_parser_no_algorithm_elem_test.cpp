@@ -21,13 +21,9 @@ int main()
         REQUIRE(testDataDir);
         boost::filesystem::path xmlPath = boost::filesystem::path(testDataDir) / "ssp" / "demo" / "no_algorithm_element" / "SystemStructure.ssd";
 
-        auto modelResolver = cse::default_model_uri_resolver();
-        auto algorithmResolver = cse::default_algorithm_resolver();
-        auto simulation = cse::load_ssp(
-            *modelResolver,
-            *algorithmResolver,
-            xmlPath,
-            std::make_unique<cse::fixed_step_algorithm>(cse::to_duration(1e-4)));
+        cse::ssp_loader loader;
+        loader.set_algorithm(std::make_unique<cse::fixed_step_algorithm>(cse::to_duration(1e-4)));
+        auto simulation = loader.load(xmlPath);
         auto& execution = simulation.first;
 
         auto& simulator_map = simulation.second;
