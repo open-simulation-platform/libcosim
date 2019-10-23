@@ -68,14 +68,42 @@ public:
 std::shared_ptr<algorithm_resolver> default_algorithm_resolver();
 
 
-class ssp_loader {
+class ssp_loader
+{
 
 public:
-
+    /**
+     *  Explicitly specify the simulation start time
+     *  Will override any value found in the ssp.
+     *
+     *  \param [in] timePoint
+     *      The (logical) time point at which the simulation should start
+     */
     void set_start_time(cse::time_point timePoint);
+
+    /**
+     *  Explicitly specify the co-simulation algorithm to use.
+     *  Will override any value found in the ssp.
+     *
+     *  \param [in] algorithm
+     *      The co-simulation algorithm to be used in the execution.
+     */
     void set_algorithm(std::shared_ptr<cse::algorithm> algorithm);
 
+    /**
+     *  Assign a non-default model_uri_resolver resolver.
+     *
+     *  \param [in] resolver
+     *      The new resolver to use.
+     */
     void set_model_resolver(std::shared_ptr<cse::model_uri_resolver> resolver);
+
+    /**
+     *  Assign a non-default algorithm_resolver resolver.
+     *
+     *  \param [in] resolver
+     *      The new resolver to use.
+     */
     void set_algorithm_resolver(std::shared_ptr<cse::algorithm_resolver> resolver);
 
     /**
@@ -87,14 +115,11 @@ public:
     std::pair<execution, simulator_map> load(const boost::filesystem::path& configPath);
 
 private:
-
     std::optional<cse::time_point> overrideStartTime_;
     std::shared_ptr<cse::algorithm> overrideAlgorithm_;
 
     std::shared_ptr<cse::model_uri_resolver> modelResolver_;
     std::shared_ptr<cse::algorithm_resolver> algorithmResolver_;
-
-
 };
 
 } // namespace cse
