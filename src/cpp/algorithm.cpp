@@ -13,6 +13,7 @@
 #include <sstream>
 #include <unordered_map>
 #include <vector>
+#include <queue>
 
 namespace
 {
@@ -90,6 +91,20 @@ public:
 
     void initialize()
     {
+        if (!initialized) {
+            initialized = true;
+            auto count = 0;
+            auto size = simulators_.size();
+            while (!decimationFactorsQueue_.empty()) {
+                std::pair<std::string, int> value = decimationFactorsQueue_.front();
+                set_stepsize_decimation_factor(value.first, value.second);
+                decimationFactorsQueue_.pop();
+                if (count++ > size) {
+                    CSE_PANIC();
+                }
+            }
+        }
+
         setup_simulators();
         for (std::size_t i = 0; i < simulators_.size(); ++i) {
             iterate_simulators();
@@ -142,6 +157,17 @@ public:
         return std::pair(baseStepSize_, std::move(finished));
     }
 
+    void set_stepsize_decimation_factor(const std::string& name, int factor)
+    {
+        CSE_INPUT_CHECK(factor > 0);
+        if (!initialized) {
+            decimationFactorsQueue_.push(std::make_pair(name, factor));
+        } else {
+            auto idx = get_simulator_index(name);
+            set_stepsize_decimation_factor(idx, factor);
+        }
+    }
+
     void set_stepsize_decimation_factor(cse::simulator_index i, int factor)
     {
         CSE_INPUT_CHECK(factor > 0);
@@ -158,6 +184,15 @@ private:
         std::unordered_map<variable_id, std::vector<std::shared_ptr<connection>>> outgoingConnections;
         std::unordered_map<variable_id, std::shared_ptr<connection>> incomingConnections;
     };
+
+    cse::simulator_index get_simulator_index(const std::string& name) {
+        for (const auto& [index, info] : simulators_) {
+            if (info.sim->name() == name) {
+                return index;
+            }
+        }
+        return -1;
+    }
 
     template<typename F>
     void for_all_simulators(F f)
@@ -305,6 +340,8 @@ private:
     std::optional<time_point> stopTime_;
     std::unordered_map<simulator_index, simulator_info> simulators_;
     int64_t stepCounter_ = 0;
+    bool initialized = false;
+    std::queue<std::pair<std::string, int>> decimationFactorsQueue_;
 };
 
 
@@ -373,6 +410,11 @@ std::pair<duration, std::unordered_set<simulator_index>> fixed_step_algorithm::d
     time_point currentT)
 {
     return pimpl_->do_step(currentT);
+}
+
+void fixed_step_algorithm::set_stepsize_decimation_factor(const std::string& simulatorName, int factor)
+{
+    pimpl_->set_stepsize_decimation_factor(simulatorName, factor);
 }
 
 void fixed_step_algorithm::set_stepsize_decimation_factor(cse::simulator_index simulator, int factor)
