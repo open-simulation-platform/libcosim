@@ -67,18 +67,18 @@ public:
 
         const auto relativeTime = currentTime - state.startTime.time_since_epoch();
 
-        bool timedOut = state.endTime ? relativeTime >= *state.endTime : true;
-        if (state.remainingEvents.empty() && timedOut) {
+        if (state.endTime && (relativeTime >= *state.endTime)) {
             BOOST_LOG_SEV(log::logger(), log::info)
                 << "Scenario finished at relative time "
                 << to_double_time_point(relativeTime)
                 << ", performing cleanup";
             state.running = false;
-            cleanup(state.executedEvents);
+            cleanup();
             return;
         }
 
         auto executedEvents = std::map<int, scenario::event>();
+
         for (const auto& [index, event] : state.remainingEvents) {
             if (maybe_run_event(relativeTime, event)) {
                 executedEvents[index] = event;
@@ -110,7 +110,7 @@ public:
         BOOST_LOG_SEV(log::logger(), log::info)
             << "Scenario aborted, performing cleanup";
         state.running = false;
-        cleanup(state.executedEvents);
+        cleanup();
         state.remainingEvents.clear();
         state.executedEvents.clear();
     }
@@ -125,7 +125,7 @@ private:
         bool running = false;
     };
 
-    void execute_action(manipulable* sim, const scenario::variable_action& a, time_point relativeTime)
+    void execute_action(manipulable* sim, const scenario::variable_action& a, time_point eventTime)
     {
         std::visit(
             visitor(
@@ -139,8 +139,8 @@ private:
                     }
                 },
                 [=](const scenario::time_dependent_real_modifier& m) {
-                    const auto orgFn = m.f;
-                    std::function<double(double)> newFn = [orgFn, relativeTime](double d) { return orgFn(d, relativeTime); };
+                    const auto& orgFn = m.f;
+                    const auto& newFn = [orgFn, eventTime](double d) { return orgFn(d, eventTime); };
 
                     if (a.is_input) {
                         sim->expose_for_setting(variable_type::real, a.variable);
@@ -161,7 +161,7 @@ private:
                 },
                 [=](const scenario::time_dependent_integer_modifier& m) {
                     const auto orgFn = m.f;
-                    std::function<int(int)> newFn = [orgFn, relativeTime](int i) { return orgFn(i, relativeTime); };
+                    std::function<int(int)> newFn = [orgFn, eventTime](int i) { return orgFn(i, eventTime); };
 
                     if (a.is_input) {
                         sim->expose_for_setting(variable_type::integer, a.variable);
@@ -192,22 +192,24 @@ private:
             a.modifier);
     }
 
+    void execute_event(time_point relativeTime, const scenario::event& e)
+    {
+        BOOST_LOG_SEV(log::logger(), log::info)
+            << "Executing action for simulator " << e.action.simulator
+            << ", variable " << e.action.variable
+            << ", at relative time " << to_double_time_point(relativeTime);
+
+        const auto eventTime = time_point(relativeTime - e.time);
+        execute_action(simulators_[e.action.simulator], e.action, eventTime);
+    }
+
+
     bool maybe_run_event(time_point relativeTime, const scenario::event& e)
     {
         if (relativeTime >= e.time) {
-            BOOST_LOG_SEV(log::logger(), log::info)
-                << "Executing action for simulator " << e.action.simulator
-                << ", variable " << e.action.variable
-                << ", at relative time " << to_double_time_point(relativeTime);
+            execute_event(relativeTime, e);
 
-            const auto eventTime = time_point(relativeTime - e.time);
-            execute_action(simulators_[e.action.simulator], e.action, eventTime);
-
-            if ((e.action.modifier.index() == scenario::time_dependent_real_modifier_index) ||
-                (e.action.modifier.index() == scenario::time_dependent_integer_modifier_index))
-            {
-                return false;
-            }
+            if (e.action.is_time_dependent) return false;
 
             return true;
         }
@@ -266,9 +268,9 @@ private:
             a.modifier);
     }
 
-    void cleanup(const std::unordered_map<int, scenario::event>& executedEvents)
+    void cleanup()
     {
-        for (const auto& entry : executedEvents) {
+        for (const auto& entry : state.executedEvents) {
             auto e = entry.second;
             cleanup_action(simulators_[e.action.simulator], e.action);
         }

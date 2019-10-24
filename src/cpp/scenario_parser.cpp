@@ -74,7 +74,32 @@ std::function<T(T)> generate_modifier(
         return [value](T original) { return original + value; };
     } else if ("override" == kind) {
         return [value](T /*original*/) { return value; };
+    } else if ("transform" == kind) {
+        T a = event.at("a").get<T>();
+        T b = event.at("b").get<T>();
+        return [a, b](T original) { return a * original + b; };
     }
+    std::ostringstream oss;
+    oss << "Can't process unrecognized modifier kind: " << kind;
+    throw std::invalid_argument(oss.str());
+}
+
+template<typename T>
+std::function<T(T, time_point)> generate_time_dependent_modifier(
+    const std::string& kind,
+    const nlohmann::json& /*event*/)
+{
+    if ("reset" == kind) {
+        return nullptr;
+    }
+
+    // Mathematical ramp function y = max(0,t), for t in ms
+    if ("ramp" == kind) {
+        return [](T /*original*/, time_point timePoint) {
+            auto timeInMs = std::chrono::time_point_cast<std::chrono::milliseconds>(timePoint);
+            return static_cast<T>(timeInMs.time_since_epoch().count()); };
+    }
+
     std::ostringstream oss;
     oss << "Can't process unrecognized modifier kind: " << kind;
     throw std::invalid_argument(oss.str());
@@ -86,18 +111,31 @@ cse::scenario::variable_action generate_action(
     cse::simulator_index sim,
     cse::variable_type type,
     bool isInput,
+    bool isTimeDependent,
     cse::value_reference var)
 {
     switch (type) {
         case cse::variable_type::real: {
-            auto f = generate_modifier<double>(mode, event);
-            return cse::scenario::variable_action{
-                sim, var, cse::scenario::real_modifier{f}, isInput};
+            if (isTimeDependent) {
+                auto f = generate_time_dependent_modifier<double>(mode, event);
+                return cse::scenario::variable_action{
+                    sim, var, cse::scenario::time_dependent_real_modifier{f}, isInput, isTimeDependent};
+            } else {
+                auto f = generate_modifier<double>(mode, event);
+                return cse::scenario::variable_action{
+                    sim, var, cse::scenario::real_modifier{f}, isInput};
+            }
         }
         case cse::variable_type::integer: {
-            auto f = generate_modifier<int>(mode, event);
-            return cse::scenario::variable_action{
-                sim, var, cse::scenario::integer_modifier{f}, isInput};
+            if (isTimeDependent) {
+                auto f = generate_time_dependent_modifier<int>(mode, event);
+                return cse::scenario::variable_action{
+                    sim, var, cse::scenario::time_dependent_integer_modifier{f}, isInput, isTimeDependent};
+            } else {
+                auto f = generate_modifier<int>(mode, event);
+                return cse::scenario::variable_action{
+                    sim, var, cse::scenario::integer_modifier{f}, isInput};
+            }
         }
         case cse::variable_type::boolean: {
             auto f = generate_modifier<bool>(mode, event);
@@ -194,7 +232,15 @@ scenario::scenario parse_scenario(
 
         auto mode = specified_or_default(event, "action", defaultOpts.action);
         bool isInput = is_input(var.causality);
-        scenario::variable_action a = generate_action(event, mode, index, var.type, isInput, var.reference);
+        bool isTimeDependent = false;
+
+        if (event.find("action") != event.end()) {
+            if (event.at("action") == "ramp") {
+                isTimeDependent = true;
+            }
+        }
+
+        scenario::variable_action a = generate_action(event, mode, index, var.type, isInput, isTimeDependent, var.reference);
         events.emplace_back(scenario::event{time, a});
     }
 

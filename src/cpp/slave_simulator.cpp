@@ -280,7 +280,6 @@ public:
 
     void expose_for_setting(variable_type type, value_reference ref)
     {
-        std::cout << "Expose for setting: " << ref << std::endl;
         const auto vd = find_variable_description(ref, type);
         switch (type) {
             case variable_type::real:

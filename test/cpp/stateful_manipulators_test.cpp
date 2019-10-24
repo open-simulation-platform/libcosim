@@ -45,7 +45,6 @@ int main()
         constexpr bool output = false;
 
         auto rampModifier = cse::scenario::time_dependent_real_modifier{
-            startTime,
             [](double original, cse::time_point time) {
                 (void)original;
 
@@ -55,7 +54,6 @@ int main()
         auto rampEvent = cse::scenario::event{cse::to_time_point(0.5), rampAction};
 
         auto intModifier1 = cse::scenario::time_dependent_integer_modifier{
-            startTime,
             [](int original, cse::time_point time) {
                 (void)time;
 
