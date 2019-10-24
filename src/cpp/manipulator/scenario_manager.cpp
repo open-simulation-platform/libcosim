@@ -200,7 +200,8 @@ private:
                 << ", variable " << e.action.variable
                 << ", at relative time " << to_double_time_point(relativeTime);
 
-            execute_action(simulators_[e.action.simulator], e.action, relativeTime);
+            const auto eventTime = time_point(relativeTime - e.time);
+            execute_action(simulators_[e.action.simulator], e.action, eventTime);
 
             if ((e.action.modifier.index() == scenario::time_dependent_real_modifier_index) ||
                 (e.action.modifier.index() == scenario::time_dependent_integer_modifier_index))

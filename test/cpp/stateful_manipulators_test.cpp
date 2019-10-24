@@ -22,7 +22,7 @@ int main()
         cse::log::set_global_output_level(cse::log::trace);
 
         constexpr cse::time_point startTime = cse::to_time_point(0.0);
-        constexpr cse::time_point endTime = cse::to_time_point(1.1);
+        constexpr cse::time_point endTime = cse::to_time_point(1.5);
         constexpr cse::duration stepSize = cse::to_duration(0.1);
 
         auto execution = cse::execution(startTime, std::make_unique<cse::fixed_step_algorithm>(stepSize));
@@ -44,15 +44,15 @@ int main()
         constexpr bool input = true;
         constexpr bool output = false;
 
-        auto realModifier1 = cse::scenario::time_dependent_real_modifier{
+        auto rampModifier = cse::scenario::time_dependent_real_modifier{
             startTime,
             [](double original, cse::time_point time) {
                 (void)original;
 
                 std::chrono::duration<double, std::ratio<1>> dur = time.time_since_epoch();
                 return static_cast<double>(dur.count()); }};
-        auto realAction1 = cse::scenario::variable_action{simIndex, 0, realModifier1, output};
-        auto realEvent1 = cse::scenario::event{cse::to_time_point(0.5), realAction1};
+        auto rampAction = cse::scenario::variable_action{simIndex, 0, rampModifier, output};
+        auto rampEvent = cse::scenario::event{cse::to_time_point(0.5), rampAction};
 
         auto intModifier1 = cse::scenario::time_dependent_integer_modifier{
             startTime,
@@ -64,7 +64,7 @@ int main()
         auto intEvent1 = cse::scenario::event{cse::to_time_point(0.5), intAction1};
 
         auto events = std::vector<cse::scenario::event>();
-        events.push_back(realEvent1);
+        events.push_back(rampEvent);
         //events.push_back(intEvent1);
 
         auto end = cse::to_time_point(1.0);
@@ -76,7 +76,7 @@ int main()
         auto simResult = execution.simulate_until(endTime);
         REQUIRE(simResult.get());
 
-        const int numSamples = 11;
+        const int numSamples = 15;
         double realOutputValues[numSamples];
         //int intOutputValues[numSamples];
         cse::step_number steps[numSamples];
@@ -84,10 +84,10 @@ int main()
 
         size_t realSamplesRead = observer->get_real_samples(simIndex, 0, 1, gsl::make_span(realOutputValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
         //size_t intSamplesRead = observer->get_integer_samples(simIndex, 0, 1, gsl::make_span(intOutputValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
-        REQUIRE(realSamplesRead == 11);
-        //REQUIRE(intSamplesRead == 11);
+        REQUIRE(realSamplesRead == numSamples);
+        //REQUIRE(intSamplesRead == numSamples);
 
-        //double expectedRealOutputs[] = {1.234, 1.234, 1.234, 1.234, 1.234, 2.468, 2.468, 2.468, 2.468, 2.468, 1.234};
+        //double expectedRealOutputs[] = {1.234, 1.234, 1.234, 1.234, 1.234, 0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9};
         //double expectedIntOutputs[] = {2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 2};
 
         for (size_t i = 0; i < realSamplesRead; i++) {
