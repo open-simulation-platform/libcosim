@@ -46,6 +46,21 @@ public:
      *
      * This will effectively set the simulator step size to a multiple
      * of the algorithm's base step size. The default decimation factor is 1.
+     * Can be called both *before* and *after* the simulator has been added to the algorithm with `add_simulator()`.
+     *
+     * \param simulatorName
+     *      The name of the simulator.
+     *
+     * \param factor
+     *      The stepsize decimation factor.
+     */
+    void set_stepsize_decimation_factor(const std::string& simulatorName, int factor);
+    
+    /**
+     * Sets step size decimation factor for a simulator.
+     *
+     * This will effectively set the simulator step size to a multiple
+     * of the algorithm's base step size. The default decimation factor is 1.
      * Must be called *after* the simulator has been added to the algorithm with `add_simulator()`.
      *
      * \param simulator
