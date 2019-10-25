@@ -255,6 +255,7 @@ void archive::extract_all(
             if (entryName.back() == '/') {
                 boost::filesystem::create_directories(targetPath);
             } else {
+                boost::filesystem::create_directories(targetPath.parent_path());
                 extract_file_as(m_archive, index, targetPath, buffer);
             }
         }
