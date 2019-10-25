@@ -1,7 +1,6 @@
 #include "cse/manipulator/scenario_manager.hpp"
 
 #include "cse/algorithm.hpp"
-#include "cse/error.hpp"
 #include "cse/log/logger.hpp"
 #include "cse/scenario.hpp"
 #include "cse/scenario_parser.hpp"
