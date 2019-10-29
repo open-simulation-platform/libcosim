@@ -114,7 +114,6 @@ std::shared_ptr<model> fmu_file_uri_sub_resolver::lookup_model(const uri& modelU
             << modelUri;
     }
     const auto path = file_uri_to_path(modelUri);
-    if (!path.has_extension()) return nullptr;
     if (path.extension() != ".fmu") return nullptr;
     auto fmu = importer_->import(path);
     return std::make_shared<fmu_model>(fmu);
