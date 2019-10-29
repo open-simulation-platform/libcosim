@@ -162,7 +162,7 @@ private:
 };
 
 
-/// A resolver for `file://` model URIs.
+/// A resolver for `file://` model URIs with .fmu file extension.
 class fmu_file_uri_sub_resolver : public model_uri_sub_resolver
 {
 public:
