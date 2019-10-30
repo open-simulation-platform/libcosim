@@ -38,7 +38,7 @@ class CSECoreConan(ConanFile):
 
     def requirements(self):
         if self.options.fmuproxy:
-            self.requires("thrift/0.12.0@bincrafters/stable")
+            self.requires("thrift/0.12.0@osp/testing")
 
     def configure_cmake(self):
         cmake = CMake(self)
