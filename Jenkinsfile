@@ -24,7 +24,6 @@ pipeline {
                         stage('Configure Conan') {
                             steps {
                                 sh 'conan remote add osp https://osp-conan.azurewebsites.net/artifactory/api/conan/public --force'
-                                sh 'conan remote remove bincrafters'
                                 sh 'conan user -p $OSP_CONAN_CREDS_PSW -r osp $OSP_CONAN_CREDS_USR'
                             }
                         }
@@ -119,7 +118,6 @@ pipeline {
                         stage('Configure Conan') {
                             steps {
                                 sh 'conan remote add osp https://osp-conan.azurewebsites.net/artifactory/api/conan/public --force'
-                                sh 'conan remote remove bincrafters'
                                 sh 'conan user -p $OSP_CONAN_CREDS_PSW -r osp $OSP_CONAN_CREDS_USR'
                             }
                         }
@@ -182,7 +180,6 @@ pipeline {
                         stage('Configure Conan') {
                             steps {
                                 sh 'conan remote add osp https://osp-conan.azurewebsites.net/artifactory/api/conan/public --force'
-                                sh 'conan remote remove bincrafters'
                                 sh 'conan user -p $OSP_CONAN_CREDS_PSW -r osp $OSP_CONAN_CREDS_USR'
                             }
                         }
@@ -284,7 +281,6 @@ pipeline {
                         stage('Configure Conan') {
                             steps {
                                 sh 'conan remote add osp https://osp-conan.azurewebsites.net/artifactory/api/conan/public --force'
-                                sh 'conan remote remove bincrafters'
                                 sh 'conan user -p $OSP_CONAN_CREDS_PSW -r osp $OSP_CONAN_CREDS_USR'
                             }
                         }
