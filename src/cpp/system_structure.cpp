@@ -35,7 +35,7 @@ make_variable_lookup_table(const model_description& md)
 
 std::ostream& operator<<(std::ostream& s, const variable_qname& v)
 {
-    return s << v.simulator_name << '.' << v.variable_name;
+    return s << v.simulator_name << ':' << v.variable_name;
 }
 
 std::string to_text(const variable_qname& v)
