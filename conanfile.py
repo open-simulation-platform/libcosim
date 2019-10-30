@@ -19,8 +19,9 @@ class CSECoreConan(ConanFile):
         "FMILibrary/2.0.3@kyllingstad/testing",
         "gsl_microsoft/20171020@bincrafters/stable",
         "libzip/1.5.2@bincrafters/stable",
+        "zlib/1.2.11",
         "jsonformoderncpp/3.5.0@vthiery/stable",
-        "bzip2/1.0.8@conan/stable",
+        "bzip2/1.0.8",
         "xerces-c/3.2.2@bincrafters/stable"
         )
 
