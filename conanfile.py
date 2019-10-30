@@ -22,7 +22,7 @@ class CSECoreConan(ConanFile):
         "zlib/1.2.11",
         "jsonformoderncpp/3.5.0@vthiery/stable",
         "bzip2/1.0.8",
-        "xerces-c/3.2.2@bincrafters/stable"
+        "xerces-c/3.2.2"
         )
 
     options = {"fmuproxy": [True, False]}
