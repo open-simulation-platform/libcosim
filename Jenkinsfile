@@ -23,7 +23,7 @@ pipeline {
                     stages {
                         stage('Configure Conan') {
                             steps {
-                                sh 'conan remote add osp https://osp-conan.azurewebsites.net/artifactory/api/conan/conan-local --force'
+                                sh 'conan remote add osp https://osp-conan.azurewebsites.net/artifactory/api/conan/public --force'
                                 sh 'conan user -p $OSP_CONAN_CREDS_PSW -r osp $OSP_CONAN_CREDS_USR'
                             }
                         }
@@ -119,8 +119,7 @@ pipeline {
                     stages {
                         stage('Configure Conan') {
                             steps {
-                                sh 'conan remote add osp https://osp-conan.azurewebsites.net/artifactory/api/conan/conan-local --force'
-                                sh 'conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan --force'
+                                sh 'conan remote add osp https://osp-conan.azurewebsites.net/artifactory/api/conan/public --force'
                                 sh 'conan user -p $OSP_CONAN_CREDS_PSW -r osp $OSP_CONAN_CREDS_USR'
                             }
                         }
@@ -185,7 +184,7 @@ pipeline {
                             steps {
                                 sh 'conan --version'
                                 sh 'cmake --version'
-                                sh 'conan remote add osp https://osp-conan.azurewebsites.net/artifactory/api/conan/conan-local --force'
+                                sh 'conan remote add osp https://osp-conan.azurewebsites.net/artifactory/api/conan/public --force'
                                 sh 'conan user -p $OSP_CONAN_CREDS_PSW -r osp $OSP_CONAN_CREDS_USR'
                             }
                         }
@@ -290,8 +289,7 @@ pipeline {
                     stages {
                         stage('Configure Conan') {
                             steps {
-                                sh 'conan remote add osp https://osp-conan.azurewebsites.net/artifactory/api/conan/conan-local --force'
-                                sh 'conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan --force'
+                                sh 'conan remote add osp https://osp-conan.azurewebsites.net/artifactory/api/conan/public --force'
                                 sh 'conan user -p $OSP_CONAN_CREDS_PSW -r osp $OSP_CONAN_CREDS_USR'
                             }
                         }
