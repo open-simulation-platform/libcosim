@@ -176,7 +176,7 @@ scenario::scenario parse_scenario(
     boost::filesystem::ifstream i(scenarioFile);
     if (!i) {
         std::ostringstream oss;
-        oss << "Cannot load scenario. Failed to open file '" << scenarioFile << "'";
+        oss << "Cannot load scenario. Failed to open file " << scenarioFile;
         throw std::system_error(errno, std::system_category(), oss.str());
     }
     nlohmann::json j;
