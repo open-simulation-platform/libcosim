@@ -24,7 +24,7 @@ namespace cse
  *  The validity of the qualified name can only be determined in the context
  *  of a specific system structure (see `system_structure`).
  */
-struct variable_qname
+struct full_variable_name
 {
     /// The name of a simulator.
     std::string simulator_name;
@@ -34,13 +34,15 @@ struct variable_qname
 };
 
 
-inline bool operator==(const variable_qname& a, const variable_qname& b) noexcept
+inline bool operator==(
+    const full_variable_name& a, const full_variable_name& b) noexcept
 {
     return a.simulator_name == b.simulator_name &&
         a.variable_name == b.variable_name;
 }
 
-inline bool operator!=(const variable_qname& a, const variable_qname& b) noexcept
+inline bool operator!=(
+    const full_variable_name& a, const full_variable_name& b) noexcept
 {
     return !operator==(a, b);
 }
@@ -50,13 +52,13 @@ inline bool operator!=(const variable_qname& a, const variable_qname& b) noexcep
 namespace std
 {
 template<>
-struct hash<cse::variable_qname>
+struct hash<cse::full_variable_name>
 {
-    std::size_t operator()(const cse::variable_qname& vqn) const noexcept
+    std::size_t operator()(const cse::full_variable_name& v) const noexcept
     {
         std::size_t seed = 0;
-        boost::hash_combine(seed, vqn.simulator_name);
-        boost::hash_combine(seed, vqn.variable_name);
+        boost::hash_combine(seed, v.simulator_name);
+        boost::hash_combine(seed, v.variable_name);
         return seed;
     }
 };
@@ -92,16 +94,16 @@ public:
     struct scalar_connection
     {
         /// The source variable.
-        variable_qname source;
+        full_variable_name source;
 
         /// The target variable.
-        variable_qname target;
+        full_variable_name target;
     };
 
 private:
     using simulator_map = std::unordered_map<std::string, simulator>;
     using scalar_connection_map =
-        std::unordered_map<variable_qname, variable_qname>;
+        std::unordered_map<full_variable_name, full_variable_name>;
     using scalar_connection_transform =
         scalar_connection (*)(const scalar_connection_map::value_type&);
 
@@ -141,7 +143,7 @@ public:
 
     /// \overload
     void add_scalar_connection(
-        const variable_qname& source, const variable_qname& target)
+        const full_variable_name& source, const full_variable_name& target)
     {
         add_scalar_connection({source, target});
     }
@@ -161,7 +163,7 @@ public:
      *  (O(1) on average).
      */
     const variable_description& get_variable_description(
-        const variable_qname& v) const;
+        const full_variable_name& v) const;
 
 private:
     // Simulators, indexed by name.
@@ -225,7 +227,7 @@ bool is_valid_connection(
  *  A container that holds a set of variable values.
  *
  *  This is a simple container that associates qualified variable names,
- *  of type `variable_qname`, to scalar values of type `scalar_value`.
+ *  of type `full_variable_name`, to scalar values of type `scalar_value`.
  *  Being a plain map (`std::unordered_map`, to be precise) it is not
  *  linked to a particular `system_structure` instance, and does not
  *  perform any validation of variable names or values.
@@ -234,7 +236,7 @@ bool is_valid_connection(
  *  convenient method for populating a `parameter_set` with verified
  *  values.
  */
-using parameter_set = std::unordered_map<variable_qname, scalar_value>;
+using parameter_set = std::unordered_map<full_variable_name, scalar_value>;
 
 
 /**
@@ -251,7 +253,7 @@ using parameter_set = std::unordered_map<variable_qname, scalar_value>;
 void add_parameter_value(
     parameter_set& parameterSet,
     const system_structure& systemStructure,
-    variable_qname variable,
+    const full_variable_name& variable,
     scalar_value value);
 
 

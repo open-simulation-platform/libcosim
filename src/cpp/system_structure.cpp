@@ -33,12 +33,12 @@ make_variable_lookup_table(const model_description& md)
     return table;
 }
 
-std::ostream& operator<<(std::ostream& s, const variable_qname& v)
+std::ostream& operator<<(std::ostream& s, const full_variable_name& v)
 {
     return s << v.simulator_name << ':' << v.variable_name;
 }
 
-std::string to_text(const variable_qname& v)
+std::string to_text(const full_variable_name& v)
 {
     std::ostringstream s;
     s << v;
@@ -106,7 +106,7 @@ void system_structure::add_scalar_connection(const scalar_connection& c)
 namespace
 {
 system_structure::scalar_connection to_scalar_connection(
-    const std::pair<const variable_qname, variable_qname>& varPair)
+    const std::pair<const full_variable_name, full_variable_name>& varPair)
 {
     return {varPair.second, varPair.first};
 }
@@ -121,7 +121,7 @@ system_structure::scalar_connection_range system_structure::scalar_connections()
 
 
 const variable_description& system_structure::get_variable_description(
-    const variable_qname& v) const
+    const full_variable_name& v) const
 {
     const auto sit = simulators_.find(v.simulator_name);
     if (sit == simulators_.end()) {
@@ -252,7 +252,7 @@ bool is_valid_connection(
 void add_parameter_value(
     parameter_set& parameterSet,
     const system_structure& systemStructure,
-    variable_qname variable,
+    const full_variable_name& variable,
     scalar_value value)
 {
     const auto& varDescription = systemStructure.get_variable_description(variable);

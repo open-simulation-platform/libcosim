@@ -78,11 +78,11 @@ BOOST_AUTO_TEST_CASE(system_structure_basic_use)
     const auto& firstConn = *conns.begin();
     const auto& secondConn = *(++conns.begin());
     BOOST_CHECK((
-        firstConn.source == cse::variable_qname{"simA", "realOut"} &&
-        secondConn.source == cse::variable_qname{"simA", "realOut"}));
+        firstConn.source == cse::full_variable_name{"simA", "realOut"} &&
+        secondConn.source == cse::full_variable_name{"simA", "realOut"}));
     BOOST_CHECK((
-        (firstConn.target == cse::variable_qname{"simA", "realIn"} &&
-            secondConn.target == cse::variable_qname{"simB", "realIn"}) ||
-        (firstConn.target == cse::variable_qname{"simB", "realIn"} &&
-            secondConn.target == cse::variable_qname{"simA", "realIn"})));
+        (firstConn.target == cse::full_variable_name{"simA", "realIn"} &&
+            secondConn.target == cse::full_variable_name{"simB", "realIn"}) ||
+        (firstConn.target == cse::full_variable_name{"simB", "realIn"} &&
+            secondConn.target == cse::full_variable_name{"simA", "realIn"})));
 }
