@@ -72,8 +72,8 @@ struct ssp_default_experiment
  *
  *  \param [in] resolver
  *      An URI resolver that will be used for lookup of component "source" URIs.
- *  \param[in] sspDir
- *      The path to a directory that contains `SystemStructure.ssd`.
+ *  \param [in] configPath
+ *      Path to an .ssd file, or a directory holding SystemStructure.ssd
  *
  *  \returns
  *      A tuple consisting of the system structure (simulators and connections),
