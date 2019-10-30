@@ -179,8 +179,18 @@ private:
 };
 
 
-/// Checks whether `name` is a valid simulator name.
-bool is_valid_simulator_name(std::string_view name) noexcept;
+/**
+ *  Checks whether `name` is a valid simulator name.
+ *
+ *  The rules are the same as for C(++) identifiers:  The name may only
+ *  consist of ASCII letters, numbers and underscores, and the first
+ *  character must be a letter or an underscore.
+ *
+ *  If `reason` is non-null and the function returns `false`, a
+ *  human-readable reason will be stored in the string pointed to by
+ *  `reason`.
+ */
+bool is_valid_simulator_name(std::string_view name, std::string* reason) noexcept;
 
 
 /**

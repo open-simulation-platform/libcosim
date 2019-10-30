@@ -6,6 +6,7 @@
 
 #include <cctype>
 #include <cstddef>
+#include <iomanip>
 #include <ostream>
 #include <sstream>
 #include <unordered_map>
@@ -57,10 +58,10 @@ error make_connection_error(
 
 void system_structure::add_simulator(const simulator& s)
 {
-    if (!is_valid_simulator_name(s.name)) {
+    if (std::string e; !is_valid_simulator_name(s.name, &e)) {
         throw error(
             make_error_code(errc::invalid_system_structure),
-            "Illegal simulator name: " + s.name);
+            "Illegal simulator name '" + s.name + "': " + e);
     }
     if (simulators_.count(s.name)) {
         throw error(
@@ -104,12 +105,12 @@ void system_structure::add_scalar_connection(const scalar_connection& c)
 
 namespace
 {
-    system_structure::scalar_connection to_scalar_connection(
-        const std::pair<const variable_qname, variable_qname>& varPair)
-    {
-        return {varPair.second, varPair.first};
-    }
+system_structure::scalar_connection to_scalar_connection(
+    const std::pair<const variable_qname, variable_qname>& varPair)
+{
+    return {varPair.second, varPair.first};
 }
+} // namespace
 
 
 system_structure::scalar_connection_range system_structure::scalar_connections()
@@ -147,15 +148,38 @@ const variable_description& system_structure::get_variable_description(
 // Free functions
 // =============================================================================
 
+namespace
+{
+constexpr bool is_printable(char c) noexcept
+{
+    return c >= 0x20 && c <= 0x7e;
+}
 
-bool is_valid_simulator_name(std::string_view name) noexcept
+std::string illegal_char_err_msg(char c)
+{
+    std::stringstream msg;
+    msg << "Illegal character: ";
+    if (is_printable(c)) {
+        msg << c;
+    } else {
+        msg << "(unprintable: 0x"
+            << std::hex << std::setw(2) << std::setfill('0') << std::uppercase
+            << static_cast<int>(c) << ')';
+    }
+    return msg.str();
+}
+} // namespace
+
+bool is_valid_simulator_name(std::string_view name, std::string* reason) noexcept
 {
     if (name.empty()) return false;
     if (!std::isalpha(static_cast<unsigned char>(name[0])) && name[0] != '_') {
+        if (reason != nullptr) *reason = illegal_char_err_msg(name[0]);
         return false;
     }
     for (std::size_t i = 1; i < name.size(); ++i) {
         if (!std::isalnum(static_cast<unsigned char>(name[i])) && name[i] != '_') {
+            if (reason != nullptr) *reason = illegal_char_err_msg(name[i]);
             return false;
         }
     }

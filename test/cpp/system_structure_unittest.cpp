@@ -54,6 +54,7 @@ BOOST_AUTO_TEST_CASE(system_structure_basic_use)
     ss.add_simulator("simA", model);
     ss.add_simulator("simB", model);
     BOOST_CHECK_THROW(ss.add_simulator("simB", model), cse::error); // simB exists
+    BOOST_CHECK_THROW(ss.add_simulator("sim\nB", model), cse::error); // invalid name
 
     ss.add_scalar_connection({"simA", "realOut"}, {"simB", "realIn"});
     ss.add_scalar_connection({"simA", "realOut"}, {"simA", "realIn"}); // self connection
