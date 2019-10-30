@@ -6,7 +6,6 @@
 #include "cse/scenario_parser.hpp"
 #include "cse/utility/utility.hpp"
 
-#include <boost/filesystem.hpp>
 
 namespace cse
 {
@@ -41,11 +40,6 @@ public:
 
     void load_scenario(const boost::filesystem::path& scenarioFile, time_point currentTime)
     {
-        if (!boost::filesystem::exists(scenarioFile)) {
-            std::ostringstream oss;
-            oss << "Error loading scenario. No such file '" << scenarioFile << "'";
-            throw std::invalid_argument(oss.str());
-        }
         BOOST_LOG_SEV(log::logger(), log::info) << "Loading scenario from " << scenarioFile;
         auto scenario = parse_scenario(scenarioFile, simulators_);
         load_scenario(scenario, currentTime);
