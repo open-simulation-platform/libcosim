@@ -256,10 +256,9 @@ void add_parameter_value(
     scalar_value value)
 {
     const auto& varDescription = systemStructure.get_variable_description(variable);
-    std::string failReason;
-    if (!is_valid_variable_value(varDescription, value, &failReason)) {
+    if (std::string e; !is_valid_variable_value(varDescription, value, &e)) {
         std::ostringstream msg;
-        msg << "Invalid value for variable '" << variable << "': " << failReason;
+        msg << "Invalid value for variable '" << variable << "': " << e;
         throw error(make_error_code(errc::invalid_system_structure), msg.str());
     }
     parameterSet.insert_or_assign(variable, value);
