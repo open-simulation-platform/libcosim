@@ -1,15 +1,16 @@
 #include "cse/scenario_parser.hpp"
 
-#include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
 #include <nlohmann/json.hpp>
 
+#include <cstdlib>
 #include <functional>
 #include <iostream>
 #include <optional>
-#include <sstream>
 #include <stdexcept>
 #include <string>
+#include <system_error>
+
 
 namespace cse
 {
