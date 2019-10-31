@@ -254,6 +254,7 @@ pipeline {
                                 }
                                 success {
                                     dir('release-build-conan') {
+                                        sh "conan remove cse-core --force"
                                         sh "conan export-pkg ../cse-core osp/${CSE_CONAN_CHANNEL} -pf package/linux/release --force"
                                         sh "conan upload cse-core/*@osp/${CSE_CONAN_CHANNEL} --all -r=osp --confirm --force"
                                     }
