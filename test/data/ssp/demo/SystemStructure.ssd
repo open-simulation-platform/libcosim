@@ -88,7 +88,9 @@
 
     <ssd:Connections>
       <!-- This is a comment -->
-      <ssd:Connection startElement="CraneController" startConnector="p_Crane.e[1]" endElement="KnuckleBoomCrane" endConnector="p_Crane.e[1]"/>
+      <ssd:Connection startElement="CraneController" startConnector="p_Crane.e[1]" endElement="KnuckleBoomCrane" endConnector="p_Crane.e[1]">
+        <ssc:LinearTransformation factor="10.0"/>
+      </ssd:Connection>
       <ssd:Connection startElement="CraneController" startConnector="p_Crane.e[2]" endElement="KnuckleBoomCrane" endConnector="p_Crane.e[2]"/>
       <ssd:Connection startElement="CraneController" startConnector="p_Crane.e[3]" endElement="KnuckleBoomCrane" endConnector="p_Crane.e[3]"/>
       <ssd:Connection startElement="KnuckleBoomCrane" startConnector="p_Crane.f[1]" endElement="CraneController" endConnector="p_Crane.f[1]"/>
