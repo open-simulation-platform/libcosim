@@ -4,16 +4,15 @@
 
     <xs:element name="Algorithm">
         <xs:complexType>
-            <xs:sequence>
+            <xs:choice>
+                <xs:element name="FixedStepAlgorithm" type="FixedStepAlgorithm"/>
                 <xs:any processContents="skip"/>
-            </xs:sequence>
+            </xs:choice>
         </xs:complexType>
     </xs:element>
 
-    <xs:element name="FixedStepAlgorithm">
-        <xs:complexType>
+    <xs:complexType name="FixedStepAlgorithm">
             <xs:attribute name="stepSize" type="xs:double" use="required"/>
-        </xs:complexType>
-    </xs:element>
+    </xs:complexType>
 
 </xs:schema>
