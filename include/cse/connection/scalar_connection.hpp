@@ -23,7 +23,7 @@ public:
 
     std::variant<double, int, bool, std::string_view> get_destination_value(variable_id) override;
 
-private:
+protected:
     std::variant<double, int, bool, std::string_view> value_;
 };
 

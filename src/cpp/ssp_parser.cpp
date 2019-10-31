@@ -248,7 +248,6 @@ const ssp_parser::DefaultExperiment& ssp_parser::get_default_experiment() const
 struct slave_info
 {
     cse::simulator_index index;
-    std::shared_ptr<cse::async_slave> slave;
     std::map<std::string, cse::variable_description> variables;
 };
 
@@ -347,7 +346,6 @@ std::pair<execution, simulator_map> load_ssp(
     for (const auto& component : elements) {
         auto model = resolver.lookup_model(baseURI, component.source);
         auto slave = model->instantiate(component.name);
-        slaves[component.name].slave = slave;
         simulator_index index = slaves[component.name].index = execution.add_slave(slave, component.name);
 
         simulatorMap[component.name] = simulator_map_entry{index, component.source, *model->description()};
@@ -384,15 +382,12 @@ std::pair<execution, simulator_map> load_ssp(
         cse::variable_id output = get_variable(slaves, connection.startElement, connection.startConnector);
         cse::variable_id input = get_variable(slaves, connection.endElement, connection.endConnector);
 
-       if (connection.linearTransformation) {
-           const auto& l = *connection.linearTransformation;
-           std::shared_ptr<cse::async_slave> slave = slaves.at(connection.startElement).slave;
-//           slave->set_real_output_modifier(output.reference, [l](double o){
-//               return o * l.factor + l.offset;
-//           });
-       }
-
-        const auto c = std::make_shared<scalar_connection>(output, input);
+        std::shared_ptr<cse::scalar_connection> c;
+        if (const auto& l = connection.linearTransformation) {
+            c = std::make_shared<linear_transformation_connection>(output, input, l->offset, l->factor);
+        } else {
+            c = std::make_shared<scalar_connection>(output, input);
+        }
         try {
             execution.add_connection(c);
         } catch (const std::exception& e) {
