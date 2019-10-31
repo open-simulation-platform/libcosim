@@ -209,7 +209,7 @@ ssp_parser::ssp_parser(const boost::filesystem::path& xmlPath)
             c.startConnector = get_attribute<std::string>(connection.second, "startConnector");
             c.endElement = get_attribute<std::string>(connection.second, "endElement");
             c.endConnector = get_attribute<std::string>(connection.second, "endConnector");
-            if (const auto l = connection.second.get_child_optional("ssc:LinearTransformation>")) {
+            if (const auto l = connection.second.get_child_optional("ssc:LinearTransformation")) {
                 auto offset = get_attribute<double>(*l, "offset");
                 auto factor = get_attribute<double>(*l, "factor");
                 c.linearTransformation = {offset, factor};
