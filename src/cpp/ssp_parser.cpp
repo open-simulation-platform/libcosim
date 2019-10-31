@@ -202,7 +202,7 @@ ssp_parser::ssp_parser(const boost::filesystem::path& xmlPath)
         }
     }
 
-    if (const auto connections = tmpTree.get_child_optional("ssc:Connections")) {
+    if (const auto connections = tmpTree.get_child_optional("ssd:Connections")) {
         for (const auto& connection : *connections) {
             auto& c = connections_.emplace_back();
             c.startElement = get_attribute<std::string>(connection.second, "startElement");
@@ -210,8 +210,8 @@ ssp_parser::ssp_parser(const boost::filesystem::path& xmlPath)
             c.endElement = get_attribute<std::string>(connection.second, "endElement");
             c.endConnector = get_attribute<std::string>(connection.second, "endConnector");
             if (const auto l = connection.second.get_child_optional("ssc:LinearTransformation")) {
-                auto offset = get_attribute<double>(*l, "offset");
-                auto factor = get_attribute<double>(*l, "factor");
+                auto offset = get_attribute<double>(*l, "offset", 0);
+                auto factor = get_attribute<double>(*l, "factor", 0);
                 c.linearTransformation = {offset, factor};
             }
         }
@@ -248,6 +248,7 @@ const ssp_parser::DefaultExperiment& ssp_parser::get_default_experiment() const
 struct slave_info
 {
     cse::simulator_index index;
+    std::shared_ptr<cse::async_slave> slave;
     std::map<std::string, cse::variable_description> variables;
 };
 
@@ -346,6 +347,7 @@ std::pair<execution, simulator_map> load_ssp(
     for (const auto& component : elements) {
         auto model = resolver.lookup_model(baseURI, component.source);
         auto slave = model->instantiate(component.name);
+        slaves[component.name].slave = slave;
         simulator_index index = slaves[component.name].index = execution.add_slave(slave, component.name);
 
         simulatorMap[component.name] = simulator_map_entry{index, component.source, *model->description()};
@@ -381,6 +383,14 @@ std::pair<execution, simulator_map> load_ssp(
 
         cse::variable_id output = get_variable(slaves, connection.startElement, connection.startConnector);
         cse::variable_id input = get_variable(slaves, connection.endElement, connection.endConnector);
+
+       if (connection.linearTransformation) {
+           const auto& l = *connection.linearTransformation;
+           std::shared_ptr<cse::async_slave> slave = slaves.at(connection.startElement).slave;
+//           slave->set_real_output_modifier(output.reference, [l](double o){
+//               return o * l.factor + l.offset;
+//           });
+       }
 
         const auto c = std::make_shared<scalar_connection>(output, input);
         try {
