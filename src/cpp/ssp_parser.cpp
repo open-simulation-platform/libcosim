@@ -125,16 +125,14 @@ ssp_parser::ssp_parser(const boost::filesystem::path& xmlPath)
                     for (const auto& algorithm : annotation.second.get_child("osp:Algorithm")) {
                         if (algorithm.first == "osp:FixedStepAlgorithm") {
                             double stepSize = get_attribute<double>(algorithm.second, "stepSize");
-                            defaultExperiment_.algorithm = std::move(std::make_unique<cse::fixed_step_algorithm>(cse::to_duration(stepSize)));
+                            defaultExperiment_.algorithm = std::make_unique<cse::fixed_step_algorithm>(cse::to_duration(stepSize));
                         } else {
-                            std::string msg("Unknown algorithm: " + algorithm.first);
-                            CSE_PANIC_M(msg.c_str());
+                            throw std::runtime_error("Unknown algorithm: " + algorithm.first);
                         }
                     }
                 }
             }
         }
-
     }
 
     tmpTree = pt_.get_child(path + ".ssd:System");
@@ -301,7 +299,7 @@ std::pair<execution, simulator_map> load_ssp(
     } else if (parser.get_default_experiment().algorithm != nullptr) {
         algorithm = parser.get_default_experiment().algorithm;
     } else {
-        CSE_PANIC_M("No co-simulation algorithm specified!");
+        throw std::invalid_argument("SSP contains no default co-simulation algorithm, nor has one been explicitly specified!");
     }
 
     const auto startTime = overrideStartTime ? *overrideStartTime : get_default_start_time(parser);
