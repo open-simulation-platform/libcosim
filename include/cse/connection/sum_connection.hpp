@@ -21,12 +21,12 @@ public:
     /// Constructor which takes a number of source variables and one destination variable.
     sum_connection(const std::vector<variable_id>& sources, variable_id destination);
 
-    void set_source_value(variable_id id, std::variant<double, int, bool, std::string_view> value) override;
+    void set_source_value(variable_id id, scalar_value_view value) override;
 
-    std::variant<double, int, bool, std::string_view> get_destination_value(variable_id id) override;
+    scalar_value_view get_destination_value(variable_id id) override;
 
 private:
-    std::unordered_map<variable_id, std::variant<double, int, bool, std::string_view>> values_;
+    std::unordered_map<variable_id, scalar_value_view> values_;
 };
 
 } // namespace cse
