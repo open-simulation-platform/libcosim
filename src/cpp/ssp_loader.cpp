@@ -277,8 +277,7 @@ ssp_loader::ssp_loader()
 
 ssp_loader::ssp_loader(const std::shared_ptr<cse::model_uri_resolver>& modelResolver)
     : modelResolver_(modelResolver == nullptr ? cse::default_model_uri_resolver() : modelResolver)
-{
-}
+{}
 
 void ssp_loader::set_start_time(cse::time_point timePoint)
 {
