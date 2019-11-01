@@ -2,12 +2,14 @@
 
 #include <boost/filesystem/fstream.hpp>
 
+#include <cstdlib>
 #include <functional>
 #include <iostream>
 #include <optional>
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <system_error>
 
 #ifdef _MSC_VER
 #    pragma warning(push)
@@ -18,14 +20,15 @@
 #    pragma warning(pop)
 #endif
 
+
 namespace cse
 {
 
 namespace
 {
 
-std::pair<cse::simulator_index, cse::simulator*> find_simulator(
-    const std::unordered_map<simulator_index, simulator*>& simulators,
+std::pair<cse::simulator_index, cse::manipulable*> find_simulator(
+    const std::unordered_map<simulator_index, manipulable*>& simulators,
     const std::string& model)
 {
     for (const auto& [idx, simulator] : simulators) {
@@ -87,6 +90,22 @@ std::function<T(T)> generate_modifier(
     throw std::invalid_argument(oss.str());
 }
 
+std::function<std::string(std::string_view)> generate_string_modifier(
+    const std::string& kind,
+    const YAML::Node& event)
+{
+    if ("reset" == kind) {
+        return nullptr;
+    }
+    auto value = event["value"].as<T>();
+    if ("override" == kind) {
+        return [value](std::string_view /*original*/) { return value; };
+    }
+    std::ostringstream oss;
+    oss << "Can't process unsupported modifier kind: " << kind << " for type " << to_text(cse::variable_type::string);
+    throw std::invalid_argument(oss.str());
+}
+
 cse::scenario::variable_action generate_action(
     const YAML::Node& event,
     const std::string& mode,
@@ -110,6 +129,11 @@ cse::scenario::variable_action generate_action(
             auto f = generate_modifier<bool>(mode, event);
             return cse::scenario::variable_action{
                 sim, var, cse::scenario::boolean_modifier{f}, isInput};
+        }
+        case cse::variable_type::string: {
+            auto f = generate_string_modifier(mode, event);
+            return cse::scenario::variable_action{
+                sim, var, cse::scenario::string_modifier{f}, isInput};
         }
         default:
             std::ostringstream oss;
@@ -178,9 +202,14 @@ std::optional<cse::time_point> parse_end_time(const YAML::Node& j)
 scenario::scenario parse_scenario(
     const boost::filesystem::path& scenarioFile,
     const std::unordered_map<simulator_index,
-        simulator*>& simulators)
+        manipulable*>& simulators)
 {
     boost::filesystem::ifstream i(scenarioFile);
+    if (!i) {
+        std::ostringstream oss;
+        oss << "Cannot load scenario. Failed to open file " << scenarioFile;
+        throw std::system_error(errno, std::system_category(), oss.str());
+    }
     YAML::Node j = YAML::Load(i);
 
     std::vector<scenario::event> events;

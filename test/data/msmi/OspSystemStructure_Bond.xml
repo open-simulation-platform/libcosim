@@ -15,6 +15,20 @@
             </InitialValues>
         </Simulator>
         <Simulator name="KnuckleBoomCrane" source="../ssp/demo/KnuckleBoomCrane.fmu" stepSize="2e-4"/>
+        <Simulator name="TrueIdentity" source="../fmi1/identity.fmu" stepSize="2.03e-4">
+            <InitialValues>
+                <InitialValue variable="booleanIn">
+                    <Boolean value="true"/>
+                </InitialValue>
+            </InitialValues>
+        </Simulator>
+        <Simulator name="1Identity" source="../fmi1/identity.fmu" stepSize="2.03e-4">
+            <InitialValues>
+                <InitialValue variable="booleanIn">
+                    <Boolean value="1"/>
+                </InitialValue>
+            </InitialValues>
+        </Simulator>
     </Simulators>
     <PlugSocketConnections>
         <PlugSocketConnection>

@@ -4,14 +4,12 @@
 #include "cse/async_slave.hpp"
 #include "cse/execution.hpp"
 #include "cse/log/simple.hpp"
+#include "cse/manipulator/override_manipulator.hpp"
 #include "cse/observer/time_series_observer.hpp"
 
-#include <inttypes.h>
 #include <exception>
 #include <memory>
 #include <stdexcept>
-#include <vector>
-#include <cse/observer/last_value_observer.hpp>
 
 #define REQUIRE(test) \
     if (!(test)) throw std::runtime_error("Requirement not satisfied: " #test)
@@ -34,14 +32,14 @@ int main()
         execution.add_manipulator(manipulator);
 
         auto simIndex = execution.add_slave(
-                cse::make_pseudo_async(std::make_unique<mock_slave>(
-                        [](double x) { return x + 1.234; },
-                        [](int y) { return y + 2; })),
-                "Slave");
+            cse::make_pseudo_async(std::make_unique<mock_slave>(
+                [](double x) { return x + 1.234; },
+                [](int y) { return y + 2; })),
+            "Slave");
 
         observer->start_observing(cse::variable_id{simIndex, cse::variable_type::integer, 0});
 
-        manipulator->override_integer_variable(simIndex,0,1);
+        manipulator->override_integer_variable(simIndex, 0, 1);
 
         auto simResult = execution.simulate_until(endTime);
         REQUIRE(simResult.get());
@@ -54,7 +52,7 @@ int main()
         size_t samplesRead = observer->get_integer_samples(simIndex, 0, 1, gsl::make_span(intOutputValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
         REQUIRE(samplesRead == 10);
 
-        for (size_t i=0; i<samplesRead; i++) {
+        for (size_t i = 0; i < samplesRead; i++) {
             REQUIRE(intOutputValues[i] == 1);
         }
 
@@ -73,4 +71,3 @@ int main()
 
     return 0;
 }
-

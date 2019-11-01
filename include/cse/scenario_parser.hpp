@@ -19,7 +19,7 @@ namespace cse
  */
 scenario::scenario parse_scenario(
     const boost::filesystem::path& scenarioFile,
-    const std::unordered_map<simulator_index, simulator*>& simulators);
+    const std::unordered_map<simulator_index, manipulable*>& simulators);
 } // namespace cse
 
 #endif //CSECORE_SCENARIO_PARSER_H

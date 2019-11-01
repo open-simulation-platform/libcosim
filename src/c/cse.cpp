@@ -47,6 +47,8 @@ cse_errc cpp_to_c_error_code(std::error_code ec)
         return CSE_ERRC_DL_LOAD_ERROR;
     else if (ec == cse::errc::model_error)
         return CSE_ERRC_MODEL_ERROR;
+    else if (ec == cse::errc::simulation_error)
+        return CSE_ERRC_SIMULATION_ERROR;
     else if (ec == cse::errc::zip_error)
         return CSE_ERRC_ZIP_ERROR;
     else if (ec.category() == std::generic_category()) {
@@ -118,6 +120,14 @@ constexpr cse::time_point to_time_point(cse_time_point nanos)
     return cse::time_point(to_duration(nanos));
 }
 
+// A wrapper for `std::strncpy()` which ensures that `dest` is always
+// null terminated.
+void safe_strncpy(char* dest, const char* src, std::size_t count)
+{
+    std::strncpy(dest, src, count - 1);
+    dest[count - 1] = '\0';
+}
+
 } // namespace
 
 
@@ -137,6 +147,7 @@ struct cse_execution_s
     std::unique_ptr<cse::execution> cpp_execution;
     std::thread t;
     boost::fibers::future<bool> simulate_result;
+    std::exception_ptr simulate_exception_ptr;
     std::atomic<cse_execution_state> state;
     int error_code;
 };
@@ -261,8 +272,8 @@ int cse_execution_get_slave_infos(cse_execution* execution, cse_slave_info infos
         auto ids = execution->simulators;
         size_t slave = 0;
         for (const auto& [name, entry] : ids) {
-            std::strncpy(infos[slave].name, name.c_str(), SLAVE_NAME_MAX_SIZE);
-            std::strncpy(infos[slave].source, entry.source.c_str(), SLAVE_NAME_MAX_SIZE);
+            safe_strncpy(infos[slave].name, name.c_str(), SLAVE_NAME_MAX_SIZE);
+            safe_strncpy(infos[slave].source, entry.source.c_str(), SLAVE_NAME_MAX_SIZE);
             infos[slave].index = entry.index;
             if (++slave >= numSlaves) {
                 break;
@@ -347,7 +358,7 @@ cse_variable_type to_c_variable_type(const cse::variable_type& vt)
 
 void translate_variable_description(const cse::variable_description& vd, cse_variable_description& cvd)
 {
-    std::strncpy(cvd.name, vd.name.c_str(), SLAVE_NAME_MAX_SIZE);
+    safe_strncpy(cvd.name, vd.name.c_str(), SLAVE_NAME_MAX_SIZE);
     cvd.reference = vd.reference;
     cvd.type = to_c_variable_type(vd.type);
     cvd.causality = to_variable_causality(vd.causality);
@@ -497,6 +508,21 @@ int cse_execution_start(cse_execution* execution)
     }
 }
 
+void execution_async_health_check(cse_execution* execution)
+{
+    if (execution->simulate_result.valid()) {
+        const auto status = execution->simulate_result.wait_for(std::chrono::duration<int64_t>());
+        if (boost::fibers::future_status::ready == status) {
+            if (auto ep = execution->simulate_result.get_exception_ptr()) {
+                execution->simulate_exception_ptr = ep;
+            }
+        }
+    }
+    if (auto ep = execution->simulate_exception_ptr) {
+        std::rethrow_exception(ep);
+    }
+}
+
 int cse_execution_stop(cse_execution* execution)
 {
     try {
@@ -508,6 +534,7 @@ int cse_execution_stop(cse_execution* execution)
         execution->state = CSE_EXECUTION_STOPPED;
         return success;
     } catch (...) {
+        execution->t.join();
         handle_current_exception();
         execution->state = CSE_EXECUTION_ERROR;
         return failure;
@@ -523,9 +550,14 @@ int cse_execution_get_status(cse_execution* execution, cse_execution_status* sta
         status->real_time_factor = execution->cpp_execution->get_measured_real_time_factor();
         status->real_time_factor_target = execution->cpp_execution->get_real_time_factor_target();
         status->is_real_time_simulation = execution->cpp_execution->is_real_time_simulation() ? 1 : 0;
+        execution_async_health_check(execution);
         return success;
     } catch (...) {
         handle_current_exception();
+        execution->error_code = cse_last_error_code();
+        execution->state = CSE_EXECUTION_ERROR;
+        status->error_code = execution->error_code;
+        status->state = execution->state;
         return failure;
     }
 }

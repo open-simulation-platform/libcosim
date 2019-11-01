@@ -143,6 +143,7 @@ private:
     std::vector<ScalarConnection> plugSocketConnections_;
     std::vector<ScalarConnection> bondConnections_;
     static variable_type parse_variable_type(const std::string&);
+    static bool parse_boolean_value(const std::string& s);
 };
 
 cse_config_parser::cse_config_parser(
@@ -220,7 +221,7 @@ cse_config_parser::cse_config_parser(
                         initialValues.push_back({varName, varType, boost::lexical_cast<int>(varValue)});
                         break;
                     case variable_type::boolean:
-                        initialValues.push_back({varName, varType, boost::lexical_cast<bool>(varValue)});
+                        initialValues.push_back({varName, varType, parse_boolean_value(varValue)});
                         break;
                     case variable_type::string:
                         initialValues.push_back({varName, varType, varValue});
@@ -268,7 +269,7 @@ cse_config_parser::cse_config_parser(
     for (size_t i = 0; i < sumConnections->getLength(); i++) {
         SumConnection s;
         auto sumConnection = static_cast<xercesc::DOMElement*>(sumConnections->item(i));
-        auto sources = static_cast<xercesc::DOMElement*>(sumConnection->getElementsByTagName(tc("Source").get())->item(0));
+        auto sources = static_cast<xercesc::DOMElement*>(sumConnection->getElementsByTagName(tc("Sources").get())->item(0));
         for (auto sourceElement = sources->getFirstElementChild(); sourceElement != nullptr; sourceElement = sourceElement->getNextElementSibling()) {
             auto& source = s.sources.emplace_back();
             source.first = tc(sourceElement->getAttribute(tc("simulator").get())).get();
@@ -359,6 +360,23 @@ variable_type cse_config_parser::parse_variable_type(const std::string& str)
         return cse::variable_type::enumeration;
     }
     throw std::runtime_error("Failed to parse variable type: " + str);
+}
+
+bool cse_config_parser::parse_boolean_value(const std::string& s)
+{
+    bool bool_value;
+    std::istringstream iss(s);
+    iss >> bool_value;
+
+    if (iss.fail()) {
+        iss.clear();
+        iss >> std::boolalpha >> bool_value;
+        if (iss.fail()) {
+            throw std::invalid_argument("Value: '" + s + "' is not convertable to bool");
+        }
+    }
+
+    return bool_value;
 }
 
 struct slave_info
@@ -681,9 +699,10 @@ std::pair<execution, simulator_map> load_cse_config(
     std::optional<time_point> overrideStartTime)
 {
     simulator_map simulatorMap;
-    const auto configFile = boost::filesystem::is_regular_file(configPath)
-        ? configPath
-        : configPath / "OspSystemStructure.xml";
+    const auto absolutePath = boost::filesystem::absolute(configPath);
+    const auto configFile = boost::filesystem::is_regular_file(absolutePath)
+        ? absolutePath
+        : absolutePath / "OspSystemStructure.xml";
     const auto baseURI = path_to_file_uri(configFile);
 
     const auto parser = cse_config_parser(configFile);

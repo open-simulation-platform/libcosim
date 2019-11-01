@@ -4,6 +4,9 @@ set(generatedHeaderDir "${CMAKE_CURRENT_BINARY_DIR}")
 
 set(publicHeaders
     "algorithm.hpp"
+    "algorithm/algorithm.hpp"
+    "algorithm/fixed_step_algorithm.hpp"
+    "algorithm/simulator.hpp"
     "async_slave.hpp"
     "config.hpp"
     "connection.hpp"
@@ -55,7 +58,7 @@ set(generatedHeaders
     "cse_system_structure.hpp"
 )
 set(sources
-    "algorithm.cpp"
+    "algorithm/fixed_step_algorithm.cpp"
     "async_slave.cpp"
     "connection/scalar_connection.cpp"
     "connection/sum_connection.cpp"
