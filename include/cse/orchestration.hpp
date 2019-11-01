@@ -162,11 +162,11 @@ private:
 };
 
 
-/// A resolver for `file://` model URIs.
-class file_uri_sub_resolver : public model_uri_sub_resolver
+/// A resolver for `file://` model URIs with .fmu file extension.
+class fmu_file_uri_sub_resolver : public model_uri_sub_resolver
 {
 public:
-    file_uri_sub_resolver();
+    fmu_file_uri_sub_resolver();
 
     std::shared_ptr<model> lookup_model(const uri& modelUri) override;
 

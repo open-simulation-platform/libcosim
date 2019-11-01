@@ -3,6 +3,19 @@ All notable changes to cse-core will be documented in this file. This includes n
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
+### [v0.5.1] – 2019-11-01
+##### Changed
+* Move `visitor` to utility header ([PR#425](https://github.com/open-simulation-platform/cse-core/pull/425))
+
+##### Fixed
+* Warning about string truncation in newer GCCs ([#418](https://github.com/open-simulation-platform/cse-core/issues/418))
+* Simulation errors are not propagated when using `cse_execution_start()` ([#415](https://github.com/open-simulation-platform/cse-core/issues/415))
+* Sum connections not parsed properly from `OspSystemStructure.xml` ([#429](https://github.com/open-simulation-platform/cse-core/issues/429))
+* True/false boolean initial values not supported in `OspSystemStructure.xml` ([#420](https://github.com/open-simulation-platform/cse-core/issues/420))
+* Fails to load FMU with empty folders in the `resources` directory ([#440](https://github.com/open-simulation-platform/cse-core/issues/440))
+* Conflicting Conan dependencies ([#450](https://github.com/open-simulation-platform/cse-core/issues/450)) 
+* Scenario does not support string values ([#354](https://github.com/open-simulation-platform/cse-core/issues/354))
+
 ### [v0.5.0] – 2019-10-03 
 ##### Added
 * Multi-variable connections ([PR#295](https://github.com/open-simulation-platform/cse-core/pull/295))
@@ -66,3 +79,4 @@ First OSP JIP partner release
 [v0.3.0]: https://github.com/open-simulation-platform/cse-core/compare/v0.2.0...v0.3.0
 [v0.4.0]: https://github.com/open-simulation-platform/cse-core/compare/v0.3.0...v0.4.0
 [v0.5.0]: https://github.com/open-simulation-platform/cse-core/compare/v0.4.0...v0.5.0
+[v0.5.1]: https://github.com/open-simulation-platform/cse-core/compare/v0.5.0...v0.5.1

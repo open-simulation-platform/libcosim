@@ -55,7 +55,7 @@ public:
      *      The stepsize decimation factor.
      */
     void set_stepsize_decimation_factor(const std::string& simulatorName, int factor);
-    
+
     /**
      * Sets step size decimation factor for a simulator.
      *
