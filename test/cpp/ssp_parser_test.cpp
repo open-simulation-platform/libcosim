@@ -1,11 +1,11 @@
 #include <cse/log/simple.hpp>
-#include <cse/ssp_parser.hpp>
+#include <cse/observer/last_value_observer.hpp>
+#include <cse/ssp_loader.hpp>
 
 #include <boost/filesystem.hpp>
 
 #include <cstdlib>
 #include <exception>
-#include <cse/observer/last_value_observer.hpp>
 
 #define REQUIRE(test) \
     if (!(test)) throw std::runtime_error("Requirement not satisfied: " #test)
@@ -20,8 +20,8 @@ int main()
         REQUIRE(testDataDir);
         boost::filesystem::path xmlPath = boost::filesystem::path(testDataDir) / "ssp" / "demo";
 
-        auto resolver = cse::default_model_uri_resolver();
-        auto simulation = cse::load_ssp(*resolver, xmlPath, cse::to_time_point(0.0));
+        cse::ssp_loader loader;
+        auto simulation = loader.load(xmlPath);
         auto& execution = simulation.first;
 
         auto& simulator_map = simulation.second;

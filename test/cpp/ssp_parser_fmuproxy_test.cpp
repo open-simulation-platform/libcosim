@@ -1,6 +1,6 @@
 #include <cse/fmuproxy/fmuproxy_uri_sub_resolver.hpp>
 #include <cse/log/simple.hpp>
-#include <cse/ssp_parser.hpp>
+#include <cse/ssp_loader.hpp>
 
 #include <boost/filesystem.hpp>
 
@@ -20,9 +20,9 @@ int main()
         REQUIRE(testDataDir);
         boost::filesystem::path xmlPath = boost::filesystem::path(testDataDir) / "ssp" / "demo" / "fmuproxy";
 
-        auto resolver = cse::default_model_uri_resolver();
-        resolver->add_sub_resolver(std::make_shared<cse::fmuproxy::fmuproxy_uri_sub_resolver>());
-        auto simulation = cse::load_ssp(*resolver, xmlPath, cse::to_time_point(0.0));
+        cse::ssp_loader loader;
+        loader.set_algorithm(std::make_unique<cse::fixed_step_algorithm>(cse::to_duration(1e-4)));
+        auto simulation = loader.load(xmlPath);
         auto& execution = simulation.first;
 
         auto& simulator_map = simulation.second;
