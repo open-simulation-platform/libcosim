@@ -3,13 +3,14 @@
 #include <boost/filesystem/fstream.hpp>
 #include <nlohmann/json.hpp>
 
+#include <cstdlib>
 #include <functional>
 #include <iostream>
 #include <optional>
 #include <sstream>
 #include <stdexcept>
 #include <string>
-
+#include <system_error>
 
 namespace cse
 {
@@ -195,6 +196,11 @@ scenario::scenario parse_scenario(
         manipulable*>& simulators)
 {
     boost::filesystem::ifstream i(scenarioFile);
+    if (!i) {
+        std::ostringstream oss;
+        oss << "Cannot load scenario. Failed to open file " << scenarioFile;
+        throw std::system_error(errno, std::system_category(), oss.str());
+    }
     nlohmann::json j;
     i >> j;
 
