@@ -271,6 +271,15 @@ cse::variable_id get_variable(
 } // namespace
 
 
+ssp_loader::ssp_loader()
+    : modelResolver_(cse::default_model_uri_resolver())
+{}
+
+ssp_loader::ssp_loader(const std::shared_ptr<cse::model_uri_resolver>& modelResolver)
+    : modelResolver_(modelResolver == nullptr ? cse::default_model_uri_resolver() : modelResolver)
+{
+}
+
 void ssp_loader::set_start_time(cse::time_point timePoint)
 {
     overrideStartTime_ = timePoint;
@@ -279,11 +288,6 @@ void ssp_loader::set_start_time(cse::time_point timePoint)
 void ssp_loader::set_algorithm(std::shared_ptr<cse::algorithm> algorithm)
 {
     overrideAlgorithm_ = algorithm;
-}
-
-void ssp_loader::set_model_resolver(std::shared_ptr<cse::model_uri_resolver> resolver)
-{
-    modelResolver_ = resolver;
 }
 
 std::pair<execution, simulator_map> ssp_loader::load(
@@ -295,8 +299,6 @@ std::pair<execution, simulator_map> ssp_loader::load(
         ? absolutePath
         : absolutePath / "SystemStructure.ssd";
     const auto baseURI = path_to_file_uri(configFile);
-
-    const auto modelResolver = modelResolver_ == nullptr ? cse::default_model_uri_resolver() : modelResolver_;
     const auto parser = ssp_parser(configFile);
 
     std::shared_ptr<cse::algorithm> algorithm;
@@ -315,7 +317,7 @@ std::pair<execution, simulator_map> ssp_loader::load(
 
     std::map<std::string, slave_info> slaves;
     for (const auto& component : elements) {
-        auto model = modelResolver->lookup_model(baseURI, component.source);
+        auto model = modelResolver_->lookup_model(baseURI, component.source);
         auto slave = model->instantiate(component.name);
         simulator_index index = slaves[component.name].index = execution.add_slave(slave, component.name);
 

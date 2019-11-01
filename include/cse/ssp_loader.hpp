@@ -26,6 +26,20 @@ class ssp_loader
 {
 
 public:
+
+    /**
+     * Constructs a `ssp_loader` with default values
+     */
+    ssp_loader();
+
+    /**
+     * Constructs a `ssp_loader` using a custom `model_uri_resolver`
+     *
+     * \param [in] modelResolver
+     *      The `model_uri_resolver` to use.
+     */
+    explicit ssp_loader(const std::shared_ptr<cse::model_uri_resolver>& modelResolver);
+
     /**
      *  Explicitly specify the simulation start time
      *  Will override any value found in the ssp.
@@ -45,14 +59,6 @@ public:
     void set_algorithm(std::shared_ptr<cse::algorithm> algorithm);
 
     /**
-     *  Assign a non-default model_uri_resolver resolver.
-     *
-     *  \param [in] resolver
-     *      The new resolver to use.
-     */
-    void set_model_resolver(std::shared_ptr<cse::model_uri_resolver> resolver);
-
-    /**
      *  Creates an execution based on a SystemStructure.ssd file.
      *
      *  \param [in] configPath
@@ -63,7 +69,7 @@ public:
 private:
     std::optional<cse::time_point> overrideStartTime_;
     std::shared_ptr<cse::algorithm> overrideAlgorithm_;
-    std::shared_ptr<cse::model_uri_resolver> modelResolver_;
+    const std::shared_ptr<cse::model_uri_resolver> modelResolver_;
 
 };
 
