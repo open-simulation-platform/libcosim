@@ -1,10 +1,11 @@
-#include "cse/manipulator.hpp"
+#include "cse/manipulator/scenario_manager.hpp"
 
 #include "cse/algorithm.hpp"
 #include "cse/log/logger.hpp"
 #include "cse/scenario.hpp"
 #include "cse/scenario_parser.hpp"
 #include "cse/utility/utility.hpp"
+
 
 namespace cse
 {
