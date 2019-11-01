@@ -652,21 +652,6 @@ void connect_sum(
     }
 }
 
-int calculate_decimation_factor(const std::string& name, duration baseStepSize, double modelStepSize)
-{
-    const auto slaveStepSize = to_duration(modelStepSize);
-    const auto result = std::div(slaveStepSize.count(), baseStepSize.count());
-    const int factor = std::max<int>(1, static_cast<int>(result.quot));
-    if (result.rem > 0 || result.quot < 1) {
-        duration actualStepSize = baseStepSize * factor;
-        const auto startTime = time_point();
-        BOOST_LOG_SEV(log::logger(), log::warning)
-            << "Effective step size for " << name
-            << " will be " << to_double_duration(actualStepSize, startTime) << " s"
-            << " instead of configured value " << modelStepSize << " s";
-    }
-    return factor;
-}
 
 template<class T>
 struct streamer
@@ -719,19 +704,17 @@ std::pair<execution, simulator_map> load_cse_config(
     auto simulators = parser.get_elements();
 
     const auto startTime = overrideStartTime ? *overrideStartTime : to_time_point(simInfo.startTime);
-
-    auto algo = std::make_shared<fixed_step_algorithm>(stepSize);
-    auto exec = execution(startTime, algo);
+    auto exec = execution(startTime, std::make_shared<fixed_step_algorithm>(stepSize));
 
     std::unordered_map<std::string, slave_info> slaves;
     std::unordered_map<std::string, extended_model_description> emds;
     for (const auto& simulator : simulators) {
         auto model = resolver.lookup_model(baseURI, simulator.source);
         auto slave = model->instantiate(simulator.name);
-        simulator_index index = slaves[simulator.name].index = exec.add_slave(slave, simulator.name);
-        if (simulator.stepSize) {
-            algo->set_stepsize_decimation_factor(index, calculate_decimation_factor(simulator.name, stepSize, *simulator.stepSize));
-        }
+        simulator_index index = slaves[simulator.name].index = exec.add_slave(
+            slave,
+            simulator.name,
+            simulator.stepSize ? to_duration(*simulator.stepSize) : duration::zero());
         simulatorMap[simulator.name] = simulator_map_entry{index, simulator.source, *model->description()};
 
         for (const auto& v : model->description()->variables) {

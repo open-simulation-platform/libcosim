@@ -126,10 +126,15 @@ public:
      *      An object that provides asynchronous communication with the slave.
      *  \param name
      *      An execution-specific name for the slave.
+     *  \param stepSizeHint
+     *      The recommended co-simulation step size for this slave.
+     *      Whether and how this is taken into account is algorithm dependent.
+     *      If zero, the algorithm will attempt to choose a sensible default.
      */
     simulator_index add_slave(
         std::shared_ptr<async_slave> slave,
-        std::string_view name);
+        std::string_view name,
+        duration stepSizeHint = duration::zero());
 
     /// Adds an observer to the execution.
     void add_observer(std::shared_ptr<observer> obs);

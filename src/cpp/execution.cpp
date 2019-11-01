@@ -39,11 +39,12 @@ public:
 
     simulator_index add_slave(
         std::shared_ptr<async_slave> slave,
-        std::string_view name)
+        std::string_view name,
+        duration stepSizeHint)
     {
         const auto index = static_cast<simulator_index>(simulators_.size());
         simulators_.push_back(std::make_unique<slave_simulator>(slave, name));
-        algorithm_->add_simulator(index, simulators_.back().get());
+        algorithm_->add_simulator(index, simulators_.back().get(), stepSizeHint);
 
         for (const auto& obs : observers_) {
             obs->simulator_added(index, simulators_.back().get(), currentTime_);
@@ -336,9 +337,10 @@ execution& execution::operator=(execution&& other) noexcept = default;
 
 simulator_index execution::add_slave(
     std::shared_ptr<async_slave> slave,
-    std::string_view name)
+    std::string_view name,
+    duration stepSizeHint)
 {
-    return pimpl_->add_slave(std::move(slave), name);
+    return pimpl_->add_slave(std::move(slave), name, stepSizeHint);
 }
 
 void execution::add_observer(std::shared_ptr<observer> obs)
