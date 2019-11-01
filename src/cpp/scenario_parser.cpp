@@ -97,7 +97,7 @@ std::function<std::string(std::string_view)> generate_string_modifier(
     if ("reset" == kind) {
         return nullptr;
     }
-    T value = event["value"].as<std::string>();
+    auto value = event["value"].as<std::string>();
     if ("override" == kind) {
         return [value](std::string_view /*original*/) { return value; };
     }
