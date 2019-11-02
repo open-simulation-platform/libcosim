@@ -47,8 +47,6 @@ set(privateHeaders
     "fmi/fmilib.h"
     "fmi/glue.hpp"
     "fmi/windows.hpp"
-    "fmuproxy/fmuproxy_helper.hpp"
-    "fmuproxy/remote_slave.hpp"
     "slave_simulator.hpp"
     "observer/slave_value_provider.hpp"
     "utility/concurrency.hpp"
