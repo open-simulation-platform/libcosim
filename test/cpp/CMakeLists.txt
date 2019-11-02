@@ -1,14 +1,14 @@
 set(tests
     "async_slave_mockup_test"
-    "cse_config_parser_test"
+    "cse_config_loader_test"
     "fixed_step_algorithm_test"
     "file_observer_logging_test"
     "file_observer_logging_from_config_test"
     "last_value_observer_test"
     "multi_connections_test"
     "multi_fixed_step_algorithm_test"
-    "ssp_parser_test"
-    "ssp_parser_no_algorithm_elem_test"
+    "ssp_loader_test"
+    "ssp_loader_no_algorithm_elem_test"
     "time_series_observer_test"
     "trend_buffer_test"
     "monitor_modified_variables_test"
@@ -20,7 +20,7 @@ set(tests
 if(CSECORE_WITH_FMUPROXY AND CSECORE_TEST_FMUPROXY)
     list(APPEND tests
         "fmuproxy_test"
-        "ssp_parser_fmuproxy_test"
+        "ssp_loader_fmuproxy_test"
     )
 endif()
 

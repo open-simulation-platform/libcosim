@@ -271,24 +271,6 @@ cse::variable_id get_variable(
 } // namespace
 
 
-ssp_loader::ssp_loader()
-    : modelResolver_(cse::default_model_uri_resolver())
-{}
-
-ssp_loader::ssp_loader(const std::shared_ptr<cse::model_uri_resolver>& modelResolver)
-    : modelResolver_(modelResolver == nullptr ? cse::default_model_uri_resolver() : modelResolver)
-{}
-
-void ssp_loader::set_start_time(cse::time_point timePoint)
-{
-    overrideStartTime_ = timePoint;
-}
-
-void ssp_loader::set_algorithm(std::shared_ptr<cse::algorithm> algorithm)
-{
-    overrideAlgorithm_ = algorithm;
-}
-
 std::pair<execution, simulator_map> ssp_loader::load(
     const boost::filesystem::path& configPath)
 {

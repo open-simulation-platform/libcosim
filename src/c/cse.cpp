@@ -4,7 +4,7 @@
 
 #include <cse.h>
 #include <cse/algorithm.hpp>
-#include <cse/cse_config_parser.hpp>
+#include <cse/cse_config_loader.hpp>
 #include <cse/exception.hpp>
 #include <cse/execution.hpp>
 #include <cse/fmi/fmu.hpp>
@@ -180,11 +180,9 @@ cse_execution* cse_config_execution_create(
     try {
         auto execution = std::make_unique<cse_execution>();
 
-        auto resolver = cse::default_model_uri_resolver();
-        auto sim = cse::load_cse_config(
-            *resolver,
-            configPath,
-            startTimeDefined ? std::optional<cse::time_point>(to_time_point(startTime)) : std::nullopt);
+        cse::cse_config_loader loader;
+        if (startTimeDefined) loader.override_start_time(to_time_point(startTime));
+        auto sim = loader.load(configPath);
 
         execution->cpp_execution = std::make_unique<cse::execution>(std::move(sim.first));
         execution->simulators = std::move(sim.second);
@@ -205,7 +203,7 @@ cse_execution* cse_ssp_execution_create(
         auto execution = std::make_unique<cse_execution>();
 
         cse::ssp_loader loader;
-        if (startTimeDefined) loader.set_start_time(to_time_point(startTime));
+        if (startTimeDefined) loader.override_start_time(to_time_point(startTime));
         auto sim = loader.load(sspDir);
 
         execution->cpp_execution = std::make_unique<cse::execution>(std::move(sim.first));
@@ -228,8 +226,8 @@ cse_execution* cse_ssp_fixed_step_execution_create(
         auto execution = std::make_unique<cse_execution>();
 
         cse::ssp_loader loader;
-        if (startTimeDefined) loader.set_start_time(to_time_point(startTime));
-        loader.set_algorithm(std::make_unique<cse::fixed_step_algorithm>(to_duration(stepSize)));
+        if (startTimeDefined) loader.override_start_time(to_time_point(startTime));
+        loader.override_algorithm(std::make_unique<cse::fixed_step_algorithm>(to_duration(stepSize)));
         auto sim = loader.load(sspDir);
 
         execution->cpp_execution = std::make_unique<cse::execution>(std::move(sim.first));

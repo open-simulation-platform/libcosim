@@ -21,7 +21,7 @@ int main()
         boost::filesystem::path xmlPath = boost::filesystem::path(testDataDir) / "ssp" / "demo" / "fmuproxy";
 
         cse::ssp_loader loader;
-        loader.set_algorithm(std::make_unique<cse::fixed_step_algorithm>(cse::to_duration(1e-4)));
+        loader.override_algorithm(std::make_unique<cse::fixed_step_algorithm>(cse::to_duration(1e-4)));
         auto simulation = loader.load(xmlPath);
         auto& execution = simulation.first;
 

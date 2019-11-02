@@ -1,4 +1,4 @@
-#include "cse/cse_config_parser.hpp"
+#include "cse/cse_config_loader.hpp"
 
 #include "cse_system_structure.hpp"
 
@@ -693,10 +693,8 @@ std::ostream& operator<<(std::ostream& os, streamer<std::variant<Ts...>> sv)
 
 } // namespace
 
-std::pair<execution, simulator_map> load_cse_config(
-    model_uri_resolver& resolver,
-    const boost::filesystem::path& configPath,
-    std::optional<time_point> overrideStartTime)
+std::pair<execution, simulator_map> cse_config_loader::load(
+    const boost::filesystem::path& configPath)
 {
     simulator_map simulatorMap;
     const auto absolutePath = boost::filesystem::absolute(configPath);
@@ -718,7 +716,7 @@ std::pair<execution, simulator_map> load_cse_config(
 
     auto simulators = parser.get_elements();
 
-    const auto startTime = overrideStartTime ? *overrideStartTime : to_time_point(simInfo.startTime);
+    const auto startTime = overrideStartTime_ ? *overrideStartTime_ : to_time_point(simInfo.startTime);
 
     auto algo = std::make_shared<fixed_step_algorithm>(stepSize);
     auto exec = execution(startTime, algo);
@@ -726,7 +724,7 @@ std::pair<execution, simulator_map> load_cse_config(
     std::unordered_map<std::string, slave_info> slaves;
     std::unordered_map<std::string, extended_model_description> emds;
     for (const auto& simulator : simulators) {
-        auto model = resolver.lookup_model(baseURI, simulator.source);
+        auto model = modelResolver_->lookup_model(baseURI, simulator.source);
         auto slave = model->instantiate(simulator.name);
         simulator_index index = slaves[simulator.name].index = exec.add_slave(slave, simulator.name);
         if (simulator.stepSize) {

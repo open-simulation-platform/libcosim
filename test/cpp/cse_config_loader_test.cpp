@@ -1,5 +1,5 @@
 #include <cse/connection/sum_connection.hpp>
-#include <cse/cse_config_parser.hpp>
+#include <cse/cse_config_loader.hpp>
 #include <cse/log/simple.hpp>
 #include <cse/observer/last_value_observer.hpp>
 #include <cse/orchestration.hpp>
@@ -15,8 +15,8 @@
 
 void test(const boost::filesystem::path& configPath)
 {
-    auto resolver = cse::default_model_uri_resolver();
-    auto simulation = cse::load_cse_config(*resolver, configPath, cse::to_time_point(0.0));
+    cse::cse_config_loader loader;
+    auto simulation = loader.load(configPath);
     auto& execution = simulation.first;
     auto& simulator_map = simulation.second;
 
