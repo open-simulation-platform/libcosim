@@ -93,25 +93,25 @@ set(sources
 
 if(CSECORE_WITH_FMUPROXY)
     list(APPEND publicHeaders
-            "fmuproxy/remote_fmu.hpp"
-            "fmuproxy/service_types.hpp"
-            "fmuproxy/thrift_state.hpp"
             "fmuproxy/fmu_service.hpp"
             "fmuproxy/fmuproxy_client.hpp"
             "fmuproxy/fmuproxy_uri_sub_resolver.hpp"
+            "fmuproxy/remote_fmu.hpp"
+            "fmuproxy/service_types.hpp"
+            "fmuproxy/thrift_state.hpp"
     )
     list(APPEND privateHeaders
             "fmuproxy/fmuproxy_helper.hpp"
             "fmuproxy/remote_slave.hpp"
     )
     list(APPEND sources
+            "fmuproxy/fmu_service.cpp"
+            "fmuproxy/fmuproxy_client.cpp"
+            "fmuproxy/fmuproxy_uri_sub_resolver.cpp"
             "fmuproxy/remote_slave.cpp"
             "fmuproxy/remote_fmu.cpp"
             "fmuproxy/service_types.cpp"
             "fmuproxy/thrift_state.cpp"
-            "fmuproxy/fmu_service.cpp"
-            "fmuproxy/fmuproxy_client.cpp"
-            "fmuproxy/fmuproxy_uri_sub_resolver.cpp"
     )
 endif()
 
