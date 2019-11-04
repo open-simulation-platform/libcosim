@@ -79,8 +79,8 @@ public:
 
         auto executedEvents = std::map<int, scenario::event>();
 
-        for (const auto& [index, event] : state.remainingEvents) {
-            if (maybe_run_event(relativeTime, event)) {
+        for (auto& [index, event] : state.remainingEvents) {
+            if (event_execution_complete(relativeTime, event)) {
                 executedEvents[index] = event;
             }
         }
@@ -125,7 +125,7 @@ private:
         bool running = false;
     };
 
-    void execute_action(manipulable* sim, const scenario::variable_action& a, time_point eventTime)
+    void execute_action(manipulable* sim, scenario::variable_action& a, time_point eventTime)
     {
         std::visit(
             visitor(
@@ -138,9 +138,9 @@ private:
                         sim->set_real_output_modifier(a.variable, m.f);
                     }
                 },
-                [=](const scenario::time_dependent_real_modifier& m) {
+                [=](scenario::time_dependent_real_modifier& m) {
                     const auto& orgFn = m.f;
-                    const auto& newFn = [orgFn, eventTime](double d) { return orgFn(d, eventTime); };
+                    const auto& newFn = orgFn ? static_cast<std::function<double(double)>>([orgFn, eventTime] (double d) { return orgFn(d, eventTime); }) : nullptr;
 
                     if (a.is_input) {
                         sim->expose_for_setting(variable_type::real, a.variable);
@@ -192,7 +192,7 @@ private:
             a.modifier);
     }
 
-    void execute_event(time_point relativeTime, const scenario::event& e)
+    void execute_event(time_point relativeTime, scenario::event& e)
     {
         BOOST_LOG_SEV(log::logger(), log::info)
             << "Executing action for simulator " << e.action.simulator
@@ -203,17 +203,12 @@ private:
         execute_action(simulators_[e.action.simulator], e.action, eventTime);
     }
 
-    bool maybe_run_event(time_point relativeTime, const scenario::event& e)
+    bool event_execution_complete(time_point relativeTime, scenario::event& e)
     {
-        if (std::holds_alternative<cse::scenario::time_dependent_real_modifier>(e.action.modifier) ||
-            std::holds_alternative<cse::scenario::time_dependent_integer_modifier>(e.action.modifier)) {
-            return false;
-        }
-
         if (relativeTime >= e.time) {
             execute_event(relativeTime, e);
 
-            return true;
+            return !e.action.is_time_dependent;
         }
 
         return false;
@@ -331,6 +326,7 @@ bool scenario_manager::is_scenario_running()
 {
     return pimpl_->is_scenario_running();
 }
+
 
 void scenario_manager::abort_scenario()
 {

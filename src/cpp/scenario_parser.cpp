@@ -69,15 +69,16 @@ std::function<T(T)> generate_modifier(
     if ("reset" == kind) {
         return nullptr;
     }
+
     T value = event.value<T>("value", 0);
     if ("bias" == kind) {
         return [value](T original) { return original + value; };
     } else if ("override" == kind) {
         return [value](T /*original*/) { return value; };
     } else if ("transform" == kind) {
-        T a = event.at("a").get<T>();
-        T b = event.at("b").get<T>();
-        return [a, b](T original) { return a * original + b; };
+        T factor = event.at("factor").get<T>();
+        T offset = event.at("offset").get<T>();
+        return [factor, offset](T original) { return factor * original + offset; };
     }
     std::ostringstream oss;
     oss << "Can't process unrecognized modifier kind: " << kind;
@@ -87,17 +88,18 @@ std::function<T(T)> generate_modifier(
 template<typename T>
 std::function<T(T, time_point)> generate_time_dependent_modifier(
     const std::string& kind,
-    const nlohmann::json& /*event*/)
+    const nlohmann::json& event)
 {
     if ("reset" == kind) {
         return nullptr;
     }
 
-    // Mathematical ramp function y = max(0,t), for t in seconds
+    // Ramp function y(x,t) = x + a*max(0,t), for t in seconds
     if ("ramp" == kind) {
-        return [](T /*original*/, time_point timePoint) {
+        T factor = event.at("factor").get<T>();
+        return [factor](T original, time_point timePoint) {
             auto t = std::chrono::time_point_cast<std::chrono::milliseconds>(timePoint).time_since_epoch().count()/1000.0;
-            return static_cast<T>(t); };
+            return static_cast<T>(original + factor*t); };
     }
 
     std::ostringstream oss;
@@ -109,42 +111,41 @@ cse::scenario::variable_action generate_action(
     const nlohmann::json& event,
     const std::string& mode,
     cse::simulator_index sim,
-    cse::variable_type type,
+    cse::variable_id id,
     bool isInput,
-    bool isTimeDependent,
-    cse::value_reference var)
+    bool isTimeDependent)
 {
-    switch (type) {
+    switch (id.type) {
         case cse::variable_type::real: {
             if (isTimeDependent) {
                 auto f = generate_time_dependent_modifier<double>(mode, event);
                 return cse::scenario::variable_action{
-                    sim, var, cse::scenario::time_dependent_real_modifier{f}, isInput};
+                    sim, id.reference, cse::scenario::time_dependent_real_modifier{f}, isInput, isTimeDependent};
             } else {
                 auto f = generate_modifier<double>(mode, event);
                 return cse::scenario::variable_action{
-                    sim, var, cse::scenario::real_modifier{f}, isInput};
+                    sim, id.reference, cse::scenario::real_modifier{f}, isInput};
             }
         }
         case cse::variable_type::integer: {
             if (isTimeDependent) {
                 auto f = generate_time_dependent_modifier<int>(mode, event);
                 return cse::scenario::variable_action{
-                    sim, var, cse::scenario::time_dependent_integer_modifier{f}, isInput};
+                    sim, id.reference, cse::scenario::time_dependent_integer_modifier{f}, isInput, isTimeDependent};
             } else {
                 auto f = generate_modifier<int>(mode, event);
                 return cse::scenario::variable_action{
-                    sim, var, cse::scenario::integer_modifier{f}, isInput};
+                    sim, id.reference, cse::scenario::integer_modifier{f}, isInput};
             }
         }
         case cse::variable_type::boolean: {
             auto f = generate_modifier<bool>(mode, event);
             return cse::scenario::variable_action{
-                sim, var, cse::scenario::boolean_modifier{f}, isInput};
+                sim, id.reference, cse::scenario::boolean_modifier{f}, isInput};
         }
         default:
             std::ostringstream oss;
-            oss << "No scenario action support for variable type: " << to_text(type);
+            oss << "No scenario action support for variable type: " << to_text(id.type);
             throw std::invalid_argument(oss.str());
     }
 }
@@ -216,6 +217,8 @@ scenario::scenario parse_scenario(
     i >> j;
 
     std::vector<scenario::event> events;
+    std::vector<variable_id> tmpVars;
+
     defaults defaultOpts = parse_defaults(j);
 
     for (auto& event : j.at("events")) {
@@ -234,13 +237,20 @@ scenario::scenario parse_scenario(
         bool isInput = is_input(var.causality);
         bool isTimeDependent = false;
 
+        auto id = variable_id{index, var.type, var.reference};
+
         if (event.find("action") != event.end()) {
             if (event.at("action") == "ramp") {
+                tmpVars.emplace_back(id);
+                isTimeDependent = true;
+            }
+            if (event.at("action") == "reset" && std::find(tmpVars.begin(), tmpVars.end(), id) != tmpVars.end()) {
+                std::cout << "Time dependent var is being reset " << std::endl;
                 isTimeDependent = true;
             }
         }
 
-        scenario::variable_action a = generate_action(event, mode, index, var.type, isInput, isTimeDependent, var.reference);
+        scenario::variable_action a = generate_action(event, mode, index, id, isInput, isTimeDependent);
         events.emplace_back(scenario::event{time, a});
     }
 

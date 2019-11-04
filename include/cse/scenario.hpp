@@ -25,6 +25,7 @@ struct real_modifier
 
 struct time_dependent_real_modifier
 {
+    /// A function which may be called any number of times. Can be `nullptr`.
     std::function<double(double, time_point)> f;
 };
 
@@ -37,6 +38,7 @@ struct integer_modifier
 
 struct time_dependent_integer_modifier
 {
+    /// A function which may be called any number of times. Can be `nullptr`.
     std::function<int(int, time_point)> f;
 };
 
@@ -82,6 +84,7 @@ struct variable_action
      * an *output* from a slave (i.e. causality output or calculatedParameter).
      */
     bool is_input;
+    bool is_time_dependent = false;
 };
 
 /// A struct representing an event.

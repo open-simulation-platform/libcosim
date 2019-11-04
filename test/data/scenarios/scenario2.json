@@ -8,17 +8,19 @@
     {
       "time": 0.2,
       "action": "transform",
-      "a": 2,
-      "b": 1
+      "factor": 2,
+      "offset": 1
     },
     {
       "time": 0.3,
       "variable": "intOut",
-      "action": "ramp"
+      "action": "ramp",
+      "factor": 1.0
     },
     {
       "time": 0.5,
-      "action": "ramp"
+      "action": "ramp",
+      "factor": 1.0
     },
     {
       "time": 0.9,
