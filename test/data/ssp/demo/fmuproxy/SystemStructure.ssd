@@ -77,7 +77,7 @@
         <ssd:Annotations>
             <ssc:Annotation type="org.open-simulation-platform">
                 <osp:Algorithm>
-                    <osp:FixedStepAlgorithm stepSize="1e-4"/>
+                    <osp:FixedStepAlgorithm baseStepSize="1e-4"/>
                 </osp:Algorithm>
             </ssc:Annotation>
         </ssd:Annotations>

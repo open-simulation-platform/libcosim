@@ -66,7 +66,7 @@ public:
     {
         std::string name;
         cse::variable_type type;
-        std::variant<double, int, bool, std::string> value;
+        scalar_value value;
     };
 
     struct Component
@@ -124,8 +124,8 @@ ssp_parser::ssp_parser(const boost::filesystem::path& xmlPath)
                 if (annotationType == "com.opensimulationplatform") {
                     for (const auto& algorithm : annotation.second.get_child("osp:Algorithm")) {
                         if (algorithm.first == "osp:FixedStepAlgorithm") {
-                            double stepSize = get_attribute<double>(algorithm.second, "stepSize");
-                            defaultExperiment_.algorithm = std::make_unique<cse::fixed_step_algorithm>(cse::to_duration(stepSize));
+                            auto baseStepSize = get_attribute<double>(algorithm.second, "baseStepSize");
+                            defaultExperiment_.algorithm = std::make_unique<cse::fixed_step_algorithm>(cse::to_duration(baseStepSize));
                         } else {
                             throw std::runtime_error("Unknown algorithm: " + algorithm.first);
                         }

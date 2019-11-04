@@ -102,7 +102,7 @@ public:
     {
         std::string name;
         cse::variable_type type;
-        std::variant<double, int, bool, std::string> value;
+        scalar_value value;
     };
 
     struct Simulator

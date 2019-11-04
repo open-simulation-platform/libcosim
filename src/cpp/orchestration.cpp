@@ -66,7 +66,7 @@ std::shared_ptr<model> model_uri_resolver::lookup_model(const uri& modelUri)
 
 
 // =============================================================================
-// class file_uri_sub_resolver
+// class fmu_file_uri_sub_resolver
 // =============================================================================
 
 namespace
@@ -94,13 +94,13 @@ private:
 } // namespace
 
 
-file_uri_sub_resolver::file_uri_sub_resolver()
+fmu_file_uri_sub_resolver::fmu_file_uri_sub_resolver()
     : importer_(fmi::importer::create())
 {
 }
 
 
-std::shared_ptr<model> file_uri_sub_resolver::lookup_model(const uri& modelUri)
+std::shared_ptr<model> fmu_file_uri_sub_resolver::lookup_model(const uri& modelUri)
 {
     assert(modelUri.scheme().has_value());
     if (*modelUri.scheme() != "file") return nullptr;
@@ -113,7 +113,9 @@ std::shared_ptr<model> file_uri_sub_resolver::lookup_model(const uri& modelUri)
             << "Query and/or fragment component(s) in a file:// URI were ignored: "
             << modelUri;
     }
-    auto fmu = importer_->import(file_uri_to_path(modelUri));
+    const auto path = file_uri_to_path(modelUri);
+    if (path.extension() != ".fmu") return nullptr;
+    auto fmu = importer_->import(path);
     return std::make_shared<fmu_model>(fmu);
 }
 
@@ -125,7 +127,7 @@ std::shared_ptr<model> file_uri_sub_resolver::lookup_model(const uri& modelUri)
 std::shared_ptr<model_uri_resolver> default_model_uri_resolver()
 {
     auto resolver = std::make_shared<model_uri_resolver>();
-    resolver->add_sub_resolver(std::make_shared<file_uri_sub_resolver>());
+    resolver->add_sub_resolver(std::make_shared<fmu_file_uri_sub_resolver>());
 #ifdef HAS_FMUPROXY
     resolver->add_sub_resolver(std::make_shared<fmuproxy::fmuproxy_uri_sub_resolver>());
 #endif
