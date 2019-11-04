@@ -13,6 +13,7 @@
 #include <ostream>
 #include <ratio>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -253,6 +254,23 @@ inline std::ostream& operator<<(std::ostream& stream, variable_variability v)
 }
 
 
+/**
+ *  An algebraic type that can hold a scalar value of one of the supported
+ *  variable types.
+ */
+using scalar_value = std::variant<double, int, bool, std::string>;
+
+
+/**
+ *  An algebraic type that can hold a (possibly) non-owning, read-only view
+ *  of a scalar value of one of the supported variable types.
+ *
+ *  In practice, it's only for strings that this type is a view; for all
+ *  other types it holds a copy.
+ */
+using scalar_value_view = std::variant<double, int, bool, std::string_view>;
+
+
 /// A description of a model variable.
 struct variable_description
 {
@@ -284,7 +302,7 @@ struct variable_description
     variable_variability variability;
 
     /// The variable's start value.
-    std::optional<std::variant<double, int, bool, std::string>> start;
+    std::optional<scalar_value> start;
 };
 
 

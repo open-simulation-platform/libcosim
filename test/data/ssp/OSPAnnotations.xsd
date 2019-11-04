@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified"
+           targetNamespace="http://opensimulationplatform.com/SSP/OSPAnnotations">
+
+    <xs:element name="Algorithm">
+        <xs:complexType>
+            <xs:choice>
+                <xs:element name="FixedStepAlgorithm" type="FixedStepAlgorithm"/>
+                <xs:any processContents="skip"/>
+            </xs:choice>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:complexType name="FixedStepAlgorithm">
+            <xs:attribute name="baseStepSize" type="xs:double" use="required"/>
+    </xs:complexType>
+
+</xs:schema>

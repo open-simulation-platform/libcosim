@@ -22,19 +22,19 @@ sum_connection::sum_connection(const std::vector<variable_id>& sources, variable
             oss << "Mixing of variable types for sum_connection not supported: "
                 << destination.type << " does not match " << id.type;
         }
-        values_[id] = std::variant<double, int, bool, std::string_view>();
+        values_[id] = scalar_value_view();
     }
     if (failed) {
         throw error(make_error_code(errc::unsupported_feature), oss.str());
     }
 }
 
-void sum_connection::set_source_value(variable_id id, std::variant<double, int, bool, std::string_view> value)
+void sum_connection::set_source_value(variable_id id, scalar_value_view value)
 {
     values_.at(id) = value;
 }
 
-std::variant<double, int, bool, std::string_view> sum_connection::get_destination_value(variable_id id)
+scalar_value_view sum_connection::get_destination_value(variable_id id)
 {
     switch (id.type) {
         case variable_type::real: {
