@@ -102,7 +102,7 @@ variable_variability to_variable_variability(fmi2_variability_enu_t v)
 }
 
 
-std::optional<std::variant<double, int, bool, std::string>> fmi1_to_start_value(fmi1_import_variable_t* fmiVariable, variable_type type)
+std::optional<scalar_value> fmi1_to_start_value(fmi1_import_variable_t* fmiVariable, variable_type type)
 {
     if (!fmi1_import_get_variable_has_start(fmiVariable)) {
         return std::nullopt;
@@ -139,7 +139,7 @@ variable_description to_variable_description(fmi1_import_variable_t* fmiVariable
 }
 
 
-std::optional<std::variant<double, int, bool, std::string>> fmi2_to_start_value(fmi2_import_variable_t* fmiVariable, variable_type type)
+std::optional<scalar_value> fmi2_to_start_value(fmi2_import_variable_t* fmiVariable, variable_type type)
 {
     if (!fmi2_import_get_variable_has_start(fmiVariable)) {
         return std::nullopt;

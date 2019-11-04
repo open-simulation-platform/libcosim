@@ -12,6 +12,8 @@
 #    define Sleep(x) usleep((x)*1000)
 #endif
 
+#define MAX_NUMBER_OF_SLAVES 10
+
 void print_last_error()
 {
     fprintf(
@@ -53,8 +55,12 @@ int main()
     if (rc < 0) { goto Lerror; }
 
     size_t numSlaves = cse_execution_get_num_slaves(execution);
+    if (numSlaves > MAX_NUMBER_OF_SLAVES) {
+        printf("Number of slaves in configuration exceeds max number of slaves(%d) supported in test", MAX_NUMBER_OF_SLAVES);
+        goto Lfailure;
+    }
 
-    cse_slave_info infos[2];
+    cse_slave_info infos[MAX_NUMBER_OF_SLAVES];
     rc = cse_execution_get_slave_infos(execution, &infos[0], numSlaves);
     if (rc < 0) { goto Lerror; }
 

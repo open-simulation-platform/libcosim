@@ -1,3 +1,4 @@
+#include <cse/connection/sum_connection.hpp>
 #include <cse/cse_config_parser.hpp>
 #include <cse/log/simple.hpp>
 #include <cse/observer/last_value_observer.hpp>
@@ -14,17 +15,20 @@
 
 void test(const boost::filesystem::path& configPath)
 {
-    const auto testDataDir = std::getenv("TEST_DATA_DIR");
-    REQUIRE(testDataDir);
-
     auto resolver = cse::default_model_uri_resolver();
     auto simulation = cse::load_cse_config(*resolver, configPath, cse::to_time_point(0.0));
     auto& execution = simulation.first;
     auto& simulator_map = simulation.second;
 
-    REQUIRE(simulator_map.size() == 2);
+    REQUIRE(simulator_map.size() == 4);
     REQUIRE(simulator_map.at("CraneController").source == "../ssp/demo/CraneController.fmu");
     REQUIRE(simulator_map.at("KnuckleBoomCrane").source == "../ssp/demo/KnuckleBoomCrane.fmu");
+
+    for (const auto& connection : execution.get_connections()) {
+        if (const auto sum = std::dynamic_pointer_cast<cse::sum_connection>(connection)) {
+            REQUIRE(sum->get_sources().length() == 3);
+        }
+    }
 
     auto obs = std::make_shared<cse::last_value_observer>();
     execution.add_observer(obs);
