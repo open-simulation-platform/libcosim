@@ -23,7 +23,7 @@ public:
 
     scalar_value_view get_destination_value(variable_id) override;
 
-protected:
+private:
     scalar_value_view value_;
 };
 
