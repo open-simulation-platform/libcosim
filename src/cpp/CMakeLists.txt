@@ -37,10 +37,10 @@ set(publicHeaders
     "observer/time_series_observer.hpp"
     "observer/time_series_provider.hpp"
     "orchestration.hpp"
-    "slave.hpp"
-    "timer.hpp"
     "scenario.hpp"
     "scenario_parser.hpp"
+    "slave.hpp"
+    "timer.hpp"
     "uri.hpp"
 )
 set(privateHeaders
@@ -48,10 +48,11 @@ set(privateHeaders
     "fmi/fmilib.h"
     "fmi/glue.hpp"
     "fmi/windows.hpp"
-    "slave_simulator.hpp"
     "observer/slave_value_provider.hpp"
+    "slave_simulator.hpp"
     "utility/concurrency.hpp"
     "utility/filesystem.hpp"
+    "utility/utility.hpp"
     "utility/uuid.hpp"
     "utility/zip.hpp"
 )
@@ -65,29 +66,28 @@ set(sources
     "connection/sum_connection.cpp"
     "config_loader.cpp"
     "cse_config_loader.cpp"
+    "error.cpp"
     "exception.cpp"
     "execution.cpp"
+    "fmi/glue.cpp"
     "fmi/importer.cpp"
     "fmi/v1/fmu.cpp"
     "fmi/v2/fmu.cpp"
+    "fmi/windows.cpp"
     "log/logger.cpp"
     "manipulator/scenario_manager.cpp"
     "manipulator/override_manipulator.cpp"
     "model.cpp"
     "observer/file_observer.cpp"
     "observer/last_value_observer.cpp"
+    "observer/slave_value_provider.cpp"
     "observer/time_series_observer.cpp"
     "orchestration.cpp"
     "scenario_parser.cpp"
-    "ssp_loader.cpp"
-    "uri.cpp"
-
-    "error.cpp"
-    "fmi/glue.cpp"
-    "fmi/windows.cpp"
-    "observer/slave_value_provider.cpp"
     "slave_simulator.cpp"
+    "ssp_loader.cpp"
     "timer.cpp"
+    "uri.cpp"
     "utility/filesystem.cpp"
     "utility/uuid.cpp"
     "utility/zip.cpp"
@@ -95,25 +95,25 @@ set(sources
 
 if(CSECORE_WITH_FMUPROXY)
     list(APPEND publicHeaders
-            "fmuproxy/remote_fmu.hpp"
-            "fmuproxy/service_types.hpp"
-            "fmuproxy/thrift_state.hpp"
             "fmuproxy/fmu_service.hpp"
             "fmuproxy/fmuproxy_client.hpp"
             "fmuproxy/fmuproxy_uri_sub_resolver.hpp"
+            "fmuproxy/remote_fmu.hpp"
+            "fmuproxy/service_types.hpp"
+            "fmuproxy/thrift_state.hpp"
     )
     list(APPEND privateHeaders
             "fmuproxy/fmuproxy_helper.hpp"
             "fmuproxy/remote_slave.hpp"
     )
     list(APPEND sources
+            "fmuproxy/fmu_service.cpp"
+            "fmuproxy/fmuproxy_client.cpp"
+            "fmuproxy/fmuproxy_uri_sub_resolver.cpp"
             "fmuproxy/remote_slave.cpp"
             "fmuproxy/remote_fmu.cpp"
             "fmuproxy/service_types.cpp"
             "fmuproxy/thrift_state.cpp"
-            "fmuproxy/fmu_service.cpp"
-            "fmuproxy/fmuproxy_client.cpp"
-            "fmuproxy/fmuproxy_uri_sub_resolver.cpp"
     )
 endif()
 
