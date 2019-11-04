@@ -140,7 +140,7 @@ private:
                 },
                 [=](scenario::time_dependent_real_modifier& m) {
                     const auto& orgFn = m.f;
-                    const auto& newFn = orgFn ? static_cast<std::function<double(double)>>([orgFn, eventTime] (double d) { return orgFn(d, eventTime); }) : nullptr;
+                    const auto& newFn = orgFn ? [orgFn, eventTime](double d) { return orgFn(d, eventTime); } : std::function<double(double)>(nullptr);
 
                     if (a.is_input) {
                         sim->expose_for_setting(variable_type::real, a.variable);
@@ -160,8 +160,8 @@ private:
                     }
                 },
                 [=](const scenario::time_dependent_integer_modifier& m) {
-                    const auto orgFn = m.f;
-                    std::function<int(int)> newFn = [orgFn, eventTime](int i) { return orgFn(i, eventTime); };
+                    const auto& orgFn = m.f;
+                    const auto& newFn = orgFn ? [orgFn, eventTime](int i) { return orgFn(i, eventTime); } : std::function<int(int)>(nullptr);
 
                     if (a.is_input) {
                         sim->expose_for_setting(variable_type::integer, a.variable);
