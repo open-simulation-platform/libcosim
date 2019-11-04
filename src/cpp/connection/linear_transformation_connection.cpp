@@ -12,7 +12,7 @@ linear_transformation_connection::linear_transformation_connection(variable_id s
     CSE_INPUT_CHECK(source.type == variable_type::real);
 }
 
-void linear_transformation_connection::set_source_value(variable_id id, std::variant<double, int, bool, std::string_view> value)
+void linear_transformation_connection::set_source_value(variable_id id, scalar_value_view value)
 {
     scalar_connection::set_source_value(id, std::get<double>(value) * factor_ + offset_);
 }
