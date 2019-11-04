@@ -81,11 +81,6 @@ struct variable_action
      * an *output* from a slave (i.e. causality output or calculatedParameter).
      */
     bool is_input;
-    /**
-     * Should be true if the modifier is time-dependent, i.e. a function of
-     * value *and* time. Default false.
-     */
-    bool is_time_dependent = false;
 };
 
 /// A struct representing an event.

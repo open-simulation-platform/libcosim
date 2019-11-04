@@ -20,10 +20,6 @@
       "action": "reset"
     },
     {
-      "time": 0.4,
-      "action": "ramp"
-    },
-    {
       "time": 0.65,
       "variable": "intIn",
       "value": 2

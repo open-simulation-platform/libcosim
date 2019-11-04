@@ -1,0 +1,29 @@
+{
+  "defaults": {
+    "model": "slave uno",
+    "variable": "realOut",
+    "action": "override"
+  },
+  "events": [
+    {
+      "time": 0.2,
+      "action": "transform",
+      "a": 2,
+      "b": 1
+    },
+    {
+      "time": 0.3,
+      "variable": "intOut",
+      "action": "ramp"
+    },
+    {
+      "time": 0.5,
+      "action": "ramp"
+    },
+    {
+      "time": 0.9,
+      "action": "reset"
+    }
+  ],
+  "end": 1.3
+}

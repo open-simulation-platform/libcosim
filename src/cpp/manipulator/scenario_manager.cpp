@@ -203,16 +203,19 @@ private:
         execute_action(simulators_[e.action.simulator], e.action, eventTime);
     }
 
-
     bool maybe_run_event(time_point relativeTime, const scenario::event& e)
     {
+        if (std::holds_alternative<cse::scenario::time_dependent_real_modifier>(e.action.modifier) ||
+            std::holds_alternative<cse::scenario::time_dependent_integer_modifier>(e.action.modifier)) {
+            return false;
+        }
+
         if (relativeTime >= e.time) {
             execute_event(relativeTime, e);
 
-            if (e.action.is_time_dependent) return false;
-
             return true;
         }
+
         return false;
     }
 

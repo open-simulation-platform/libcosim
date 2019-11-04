@@ -69,7 +69,7 @@ std::function<T(T)> generate_modifier(
     if ("reset" == kind) {
         return nullptr;
     }
-    T value = event.at("value").get<T>();
+    T value = event.value<T>("value", 0);
     if ("bias" == kind) {
         return [value](T original) { return original + value; };
     } else if ("override" == kind) {
@@ -93,11 +93,11 @@ std::function<T(T, time_point)> generate_time_dependent_modifier(
         return nullptr;
     }
 
-    // Mathematical ramp function y = max(0,t), for t in ms
+    // Mathematical ramp function y = max(0,t), for t in seconds
     if ("ramp" == kind) {
         return [](T /*original*/, time_point timePoint) {
-            auto timeInMs = std::chrono::time_point_cast<std::chrono::milliseconds>(timePoint);
-            return static_cast<T>(timeInMs.time_since_epoch().count()); };
+            auto t = std::chrono::time_point_cast<std::chrono::milliseconds>(timePoint).time_since_epoch().count()/1000.0;
+            return static_cast<T>(t); };
     }
 
     std::ostringstream oss;
@@ -119,7 +119,7 @@ cse::scenario::variable_action generate_action(
             if (isTimeDependent) {
                 auto f = generate_time_dependent_modifier<double>(mode, event);
                 return cse::scenario::variable_action{
-                    sim, var, cse::scenario::time_dependent_real_modifier{f}, isInput, isTimeDependent};
+                    sim, var, cse::scenario::time_dependent_real_modifier{f}, isInput};
             } else {
                 auto f = generate_modifier<double>(mode, event);
                 return cse::scenario::variable_action{
@@ -130,7 +130,7 @@ cse::scenario::variable_action generate_action(
             if (isTimeDependent) {
                 auto f = generate_time_dependent_modifier<int>(mode, event);
                 return cse::scenario::variable_action{
-                    sim, var, cse::scenario::time_dependent_integer_modifier{f}, isInput, isTimeDependent};
+                    sim, var, cse::scenario::time_dependent_integer_modifier{f}, isInput};
             } else {
                 auto f = generate_modifier<int>(mode, event);
                 return cse::scenario::variable_action{

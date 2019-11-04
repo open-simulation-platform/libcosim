@@ -41,35 +41,13 @@ int main()
         observer->start_observing(cse::variable_id{simIndex, cse::variable_type::real, 0});
         observer->start_observing(cse::variable_id{simIndex, cse::variable_type::integer, 0});
 
+        const auto testDataDir = std::getenv("TEST_DATA_DIR");
+        REQUIRE(testDataDir);
+        boost::filesystem::path jsonPath = boost::filesystem::path(testDataDir) / "scenarios" / "scenario2.json";
+        scenarioManager->load_scenario(jsonPath, startTime);
+
         constexpr bool input = true;
         constexpr bool output = false;
-
-        auto rampModifier = cse::scenario::time_dependent_real_modifier{
-            [](double original, cse::time_point time) {
-                (void)original;
-
-                std::chrono::duration<double, std::ratio<1>> dur = time.time_since_epoch();
-                return static_cast<double>(dur.count()); }};
-        auto rampAction = cse::scenario::variable_action{simIndex, 0, rampModifier, output};
-        auto rampEvent = cse::scenario::event{cse::to_time_point(0.5), rampAction};
-
-        auto intModifier1 = cse::scenario::time_dependent_integer_modifier{
-            [](int original, cse::time_point time) {
-                (void)time;
-
-                return original + 1; }};
-        auto intAction1 = cse::scenario::variable_action{simIndex, 0, intModifier1, output};
-        auto intEvent1 = cse::scenario::event{cse::to_time_point(0.5), intAction1};
-
-        auto events = std::vector<cse::scenario::event>();
-        events.push_back(rampEvent);
-        //events.push_back(intEvent1);
-
-        auto end = cse::to_time_point(1.0);
-
-        auto scenario = cse::scenario::scenario{events, end};
-
-        scenarioManager->load_scenario(scenario, startTime);
 
         auto simResult = execution.simulate_until(endTime);
         REQUIRE(simResult.get());
