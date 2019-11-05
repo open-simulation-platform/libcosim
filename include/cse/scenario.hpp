@@ -56,12 +56,6 @@ struct string_modifier
     std::function<std::string(std::string_view)> f;
 };
 
-/// The index of time_dependent_real_modifier in the modifier variant.
-constexpr int time_dependent_real_modifier_index = 1;
-
-/// The index of time_dependent_integer_modifier in the modifier variant.
-constexpr int time_dependent_integer_modifier_index = 3;
-
 /// A struct specifying a variable and the modification of its value.
 struct variable_action
 {
