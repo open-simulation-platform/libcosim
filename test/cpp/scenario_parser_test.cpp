@@ -66,16 +66,15 @@ int main()
         REQUIRE(samplesRead == 11);
 
         double expectedRealInputs[] = {0.0, 0.0, 0.0, 0.0, 0.0, 2.001, 2.001, 2.001, 2.001, 2.001, 1.0};
-        double expectedRealOutputs[] = {1.234, 1.234, -1.0, 1.234, 0, 100, 200, 300, 400, 500, 2.234};
+        double expectedRealOutputs[] = {1.234, 1.234, -1, 1.234, 1.234, 3.235, 3.235, 3.235, 3.235, 3.235, 2.234};
         int expectedIntInputs[] = {0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 1};
         int expectedIntOutputs[] = {0, 0, 0, 0, 0, 0, 0, 2, 5, 5, 1};
 
         for (size_t i = 0; i < samplesRead; i++) {
-            std::cout << realOutputValues[i] << ", ";
-            //REQUIRE(std::fabs(realInputValues[i] - expectedRealInputs[i]) < 1.0e-9);
-            //REQUIRE(std::fabs(realOutputValues[i] - expectedRealOutputs[i]) < 1.0e-9);
-            //REQUIRE(intInputValues[i] == expectedIntInputs[i]);
-            //REQUIRE(intOutputValues[i] == expectedIntOutputs[i]);
+            REQUIRE(std::fabs(realInputValues[i] - expectedRealInputs[i]) < 1.0e-9);
+            REQUIRE(std::fabs(realOutputValues[i] - expectedRealOutputs[i]) < 1.0e-9);
+            REQUIRE(intInputValues[i] == expectedIntInputs[i]);
+            REQUIRE(intOutputValues[i] == expectedIntOutputs[i]);
         }
 
         std::cout << std::endl;
