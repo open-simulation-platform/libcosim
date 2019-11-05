@@ -70,7 +70,7 @@ void override_manipulator::simulator_removed(simulator_index index, time_point)
     simulators_.erase(index);
 }
 
-void override_manipulator::step_commencing(time_point currentTime)
+void override_manipulator::step_commencing(time_point eventTime)
 {
     std::lock_guard<std::mutex> lock(lock_);
     if (!actions_.empty()) {
@@ -78,7 +78,7 @@ void override_manipulator::step_commencing(time_point currentTime)
             auto sim = simulators_.at(a.simulator);
             std::visit(
                 visitor(
-                    [=](scenario::real_modifier m) {
+                    [=](const scenario::real_modifier& m) {
                         if (a.is_input) {
                             sim->expose_for_setting(variable_type::real, a.variable);
                             sim->set_real_input_modifier(a.variable, m.f);
@@ -87,9 +87,9 @@ void override_manipulator::step_commencing(time_point currentTime)
                             sim->set_real_output_modifier(a.variable, m.f);
                         }
                     },
-                    [=](scenario::time_dependent_real_modifier m) {
+                    [=](const scenario::time_dependent_real_modifier& m) {
                         const auto orgFn = m.f;
-                        std::function<double(double)> newFn = [orgFn, currentTime](double d) { return orgFn(d, currentTime); };
+                        const auto& newFn = orgFn ? [orgFn, eventTime](double d) { return orgFn(d, eventTime); } : std::function<double(double)>(nullptr);
 
                         if (a.is_input) {
                             sim->expose_for_setting(variable_type::real, a.variable);
@@ -99,7 +99,7 @@ void override_manipulator::step_commencing(time_point currentTime)
                             sim->set_real_output_modifier(a.variable, newFn);
                         }
                     },
-                    [=](scenario::integer_modifier m) {
+                    [=](const scenario::integer_modifier& m) {
                         if (a.is_input) {
                             sim->expose_for_setting(variable_type::integer, a.variable);
                             sim->set_integer_input_modifier(a.variable, m.f);
@@ -108,9 +108,9 @@ void override_manipulator::step_commencing(time_point currentTime)
                             sim->set_integer_output_modifier(a.variable, m.f);
                         }
                     },
-                    [=](scenario::time_dependent_integer_modifier m) {
+                    [=](const scenario::time_dependent_integer_modifier& m) {
                         const auto orgFn = m.f;
-                        std::function<int(int)> newFn = [orgFn, currentTime](int i) { return orgFn(i, currentTime); };
+                        const auto& newFn = orgFn ? [orgFn, eventTime](int i) { return orgFn(i, eventTime); } : std::function<int(int)>(nullptr);
 
                         if (a.is_input) {
                             sim->expose_for_setting(variable_type::integer, a.variable);
@@ -120,7 +120,7 @@ void override_manipulator::step_commencing(time_point currentTime)
                             sim->set_integer_output_modifier(a.variable, newFn);
                         }
                     },
-                    [=](scenario::boolean_modifier m) {
+                    [=](const scenario::boolean_modifier& m) {
                         if (a.is_input) {
                             sim->expose_for_setting(variable_type::boolean, a.variable);
                             sim->set_boolean_input_modifier(a.variable, m.f);
@@ -129,7 +129,7 @@ void override_manipulator::step_commencing(time_point currentTime)
                             sim->set_boolean_output_modifier(a.variable, m.f);
                         }
                     },
-                    [=](scenario::string_modifier m) {
+                    [=](const scenario::string_modifier& m) {
                         if (a.is_input) {
                             sim->expose_for_setting(variable_type::string, a.variable);
                             sim->set_string_input_modifier(a.variable, m.f);
