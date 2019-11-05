@@ -1,3 +1,4 @@
+#include "cse/utility/utility.hpp"
 
 #include <cse/error.hpp>
 #include <cse/manipulator.hpp>
@@ -9,17 +10,6 @@ namespace cse
 
 namespace
 {
-
-template<typename... Functors>
-struct visitor : Functors...
-{
-    visitor(const Functors&... functors)
-        : Functors(functors)...
-    {
-    }
-
-    using Functors::operator()...;
-};
 
 cse::variable_causality find_variable_causality(
     const std::vector<variable_description>& variables,
