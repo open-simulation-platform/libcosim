@@ -45,9 +45,6 @@ int main()
         boost::filesystem::path jsonPath = boost::filesystem::path(testDataDir) / "scenarios" / "scenario2.json";
         scenarioManager->load_scenario(jsonPath, startTime);
 
-        constexpr bool input = true;
-        constexpr bool output = false;
-
         auto simResult = execution.simulate_until(endTime);
         REQUIRE(simResult.get());
 

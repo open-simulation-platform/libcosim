@@ -14,7 +14,7 @@ set(tests
     "monitor_modified_variables_test"
     "time_dependent_manipulators_test"
     "scenario_manager_test"
-    "scenario_parser_test"ja
+    "scenario_parser_test"
     "synchronized_xy_series_test"
 )
 
