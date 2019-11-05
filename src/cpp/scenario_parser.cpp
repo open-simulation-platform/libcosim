@@ -3,12 +3,14 @@
 #include <boost/filesystem/fstream.hpp>
 #include <nlohmann/json.hpp>
 
+#include <cstdlib>
 #include <functional>
 #include <iostream>
 #include <optional>
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <system_error>
 
 
 namespace cse
@@ -85,6 +87,25 @@ std::function<T(T)> generate_modifier(
     throw std::invalid_argument(oss.str());
 }
 
+std::function<std::string(std::string_view)> generate_string_modifier(
+    const std::string& kind,
+    const nlohmann::json& event)
+{
+    if ("reset" == kind) {
+        return nullptr;
+    }
+
+    auto value = event.at("value").get<std::string>();
+
+    if ("override" == kind) {
+        return [value](std::string_view /*original*/) { return value; };
+    }
+
+    std::ostringstream oss;
+    oss << "Can't process unsupported modifier kind: " << kind << " for type " << to_text(cse::variable_type::string);
+    throw std::invalid_argument(oss.str());
+}
+
 template<typename T>
 std::function<T(T, time_point)> generate_time_dependent_modifier(
     const std::string& kind,
@@ -137,6 +158,11 @@ cse::scenario::variable_action generate_action(
                 return cse::scenario::variable_action{
                     sim, id.reference, cse::scenario::integer_modifier{f}, isInput};
             }
+        }
+        case cse::variable_type::string: {
+            auto f = generate_string_modifier(mode, event);
+            return cse::scenario::variable_action{
+                sim, id.reference, cse::scenario::string_modifier{f}, isInput};
         }
         case cse::variable_type::boolean: {
             auto f = generate_modifier<bool>(mode, event);
@@ -213,6 +239,13 @@ scenario::scenario parse_scenario(
         manipulable*>& simulators)
 {
     boost::filesystem::ifstream i(scenarioFile);
+
+    if (!i) {
+        std::ostringstream oss;
+        oss << "Cannot load scenario. Failed to open file " << scenarioFile;
+        throw std::system_error(errno, std::system_category(), oss.str());
+    }
+
     nlohmann::json j;
     i >> j;
 
