@@ -12,18 +12,12 @@
       "offset": 1
     },
     {
-      "time": 0.3,
-      "variable": "intOut",
-      "action": "ramp",
-      "factor": 1.0
-    },
-    {
       "time": 0.5,
       "action": "ramp",
-      "factor": 1.0
+      "factor": 2.0
     },
     {
-      "time": 0.9,
+      "time": 1.2,
       "action": "reset"
     }
   ],

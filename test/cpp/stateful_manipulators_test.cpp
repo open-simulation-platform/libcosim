@@ -39,7 +39,6 @@ int main()
             "slave uno");
 
         observer->start_observing(cse::variable_id{simIndex, cse::variable_type::real, 0});
-        observer->start_observing(cse::variable_id{simIndex, cse::variable_type::integer, 0});
 
         const auto testDataDir = std::getenv("TEST_DATA_DIR");
         REQUIRE(testDataDir);
@@ -54,24 +53,17 @@ int main()
 
         const int numSamples = 15;
         double realOutputValues[numSamples];
-        //int intOutputValues[numSamples];
         cse::step_number steps[numSamples];
         cse::time_point times[numSamples];
 
         size_t realSamplesRead = observer->get_real_samples(simIndex, 0, 1, gsl::make_span(realOutputValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
-        //size_t intSamplesRead = observer->get_integer_samples(simIndex, 0, 1, gsl::make_span(intOutputValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
         REQUIRE(realSamplesRead == numSamples);
-        //REQUIRE(intSamplesRead == numSamples);
 
-        //double expectedRealOutputs[] = {1.234, 1.234, 1.234, 1.234, 1.234, 0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9};
-        //double expectedIntOutputs[] = {2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 2};
+        double expectedRealOutputs[] = {1.234, 1.234, 3.468, 3.468, 3.468, 1.234, 1.434, 1.634, 1.834, 2.034, 2.234, 2.434, 1.234, 1.234, 1.234,};
 
         for (size_t i = 0; i < realSamplesRead; i++) {
-            std::cout << realOutputValues[i] << ", ";
-            //REQUIRE(std::fabs(realOutputValues[i] - expectedRealOutputs[i]) < 1.0e-9);
-            //REQUIRE(std::fabs(intOutputValues[i] - expectedIntOutputs[i]) < 1.0e-9);
+            REQUIRE(std::fabs(realOutputValues[i] - expectedRealOutputs[i]) < 1.0e-9);
         }
-        std::cout << std::endl;
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;

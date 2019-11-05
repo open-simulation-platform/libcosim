@@ -245,7 +245,6 @@ scenario::scenario parse_scenario(
                 isTimeDependent = true;
             }
             if (event.at("action") == "reset" && std::find(tmpVars.begin(), tmpVars.end(), id) != tmpVars.end()) {
-                std::cout << "Time dependent var is being reset " << std::endl;
                 isTimeDependent = true;
             }
         }
