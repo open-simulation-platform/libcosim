@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ssd:SystemStructureDescription name="simple-cse-example" version="1.0"
+                                xmlns:ssd="http://ssp-standard.org/SSP1/SystemStructureDescription"
+                                xmlns:ssc="http://ssp-standard.org/SSP1/SystemStructureCommon"
+                                xmlns:ssv="http://ssp-standard.org/SSP1/SystemStructureParameterValues">
+
+    <ssd:System name="test-linear-transformation" description="An example of how to use Core Simulation Environment">
+
+        <ssd:Elements>
+            <ssd:Component name="identity1" source="../../fmi1/identity.fmu">
+                <ssd:ParameterBindings>
+                    <ssd:ParameterBinding>
+                        <ssd:ParameterValues>
+                            <ssv:ParameterSet version="1.0" name="initialValues">
+                                <ssv:Parameters>
+                                    <ssv:Parameter name="realOut">
+                                        <ssv:Real value="2" />
+                                    </ssv:Parameter>
+                                </ssv:Parameters>
+                            </ssv:ParameterSet>
+                        </ssd:ParameterValues>
+                    </ssd:ParameterBinding>
+                </ssd:ParameterBindings>
+            </ssd:Component>
+            <ssd:Component name="identity2" source="../../fmi1/identity.fmu"/>
+        </ssd:Elements>
+
+        <ssd:Connections>
+            <ssd:Connection startElement="identity1" startConnector="realOut" endElement="identity2" endConnector="realIn">
+                <ssc:LinearTransformation offset="50" factor="1.3"/>
+            </ssd:Connection>
+        </ssd:Connections>
+
+
+    </ssd:System>
+
+</ssd:SystemStructureDescription>
