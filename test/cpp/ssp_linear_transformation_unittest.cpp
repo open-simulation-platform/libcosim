@@ -35,5 +35,6 @@ BOOST_AUTO_TEST_CASE(test_ssp_linear_transformation)
 
     double offset = 50;
     double factor = 1.3;
-    BOOST_TEST_REQUIRE(transformedValue == (factor * initialValue + offset));
+    double target = factor * initialValue + offset;
+    BOOST_REQUIRE_CLOSE(transformedValue, target, 1e-9);
 }
