@@ -56,7 +56,7 @@ int main()
         size_t realSamplesRead = observer->get_real_samples(simIndex, 0, 1, gsl::make_span(realOutputValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
         REQUIRE(realSamplesRead == numSamples);
 
-        double expectedRealOutputs[] = {1.234, 1.234, 3.468, 3.468, 3.468, 1.234, 1.434, 1.634, 1.834, 2.034, 2.234, 2.434, 1.234, 1.234, 1.234,};
+        double expectedRealOutputs[] = {1.234, 1.234, 3.468, 3.468, 3.468, 1.234, 1.434, 1.634, 1.834, 2.034, 2.234, 2.434, 1.234, 1.234, 1.234};
 
         for (size_t i = 0; i < realSamplesRead; i++) {
             REQUIRE(std::fabs(realOutputValues[i] - expectedRealOutputs[i]) < 1.0e-9);
