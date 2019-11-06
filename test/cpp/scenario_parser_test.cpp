@@ -77,8 +77,6 @@ int main()
             REQUIRE(intOutputValues[i] == expectedIntOutputs[i]);
         }
 
-        std::cout << std::endl;
-
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
         return 1;
