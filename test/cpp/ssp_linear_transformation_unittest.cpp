@@ -28,8 +28,6 @@ BOOST_AUTO_TEST_CASE(test_ssp_linear_transformation)
     observer->get_real(slave1.index, gsl::make_span(&v1Ref, 1), gsl::make_span(&initialValue, 1));
     BOOST_TEST_REQUIRE(initialValue == 2.0);
 
-    exec.step();
-
     double transformedValue;
     auto slave2 = simulator_map.at("identity2");
     cse::value_reference v2Ref = cse::find_variable(slave2.description, "realIn").reference;
