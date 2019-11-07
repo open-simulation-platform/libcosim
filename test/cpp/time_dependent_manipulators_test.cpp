@@ -22,7 +22,7 @@ int main()
         cse::log::set_global_output_level(cse::log::trace);
 
         constexpr cse::time_point startTime = cse::to_time_point(0.0);
-        constexpr cse::time_point endTime = cse::to_time_point(1.5);
+        constexpr cse::time_point endTime = cse::to_time_point(1.2);
         constexpr cse::duration stepSize = cse::to_duration(0.1);
 
         auto execution = cse::execution(startTime, std::make_unique<cse::fixed_step_algorithm>(stepSize));
@@ -48,7 +48,7 @@ int main()
         auto simResult = execution.simulate_until(endTime);
         REQUIRE(simResult.get());
 
-        const int numSamples = 15;
+        const int numSamples = 12;
         double realOutputValues[numSamples];
         cse::step_number steps[numSamples];
         cse::time_point times[numSamples];
@@ -56,7 +56,7 @@ int main()
         size_t realSamplesRead = observer->get_real_samples(simIndex, 0, 1, gsl::make_span(realOutputValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
         REQUIRE(realSamplesRead == numSamples);
 
-        double expectedRealOutputs[] = {1.234, 1.234, 3.468, 3.468, 3.468, 1.234, 1.434, 1.634, 1.834, 2.034, 2.234, 2.434, 1.234, 1.234, 1.234};
+        double expectedRealOutputs[] = {1.234, 1.234, 3.468, 3.468, 3.468, 1.234, 1.434, 1.634, 1.834, 1.234, 1.234, 1.234};
 
         for (size_t i = 0; i < realSamplesRead; i++) {
             std::cout << realOutputValues[i] << ", ";

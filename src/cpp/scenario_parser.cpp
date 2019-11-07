@@ -250,7 +250,6 @@ scenario::scenario parse_scenario(
     i >> j;
 
     std::vector<scenario::event> events;
-    std::vector<variable_id> tmpVars;
 
     defaults defaultOpts = parse_defaults(j);
 
@@ -258,6 +257,7 @@ scenario::scenario parse_scenario(
         auto trigger = event.at("time");
         auto triggerTime = trigger.get<double>();
         auto time = to_time_point(triggerTime);
+
 
         const auto& [index, simulator] =
             find_simulator(simulators, specified_or_default(event, "model", defaultOpts.model));
@@ -272,18 +272,20 @@ scenario::scenario parse_scenario(
 
         auto id = variable_id{index, var.type, var.reference};
 
+        std::optional<time_point> resetTimePoint = std::nullopt;
+        if (event.count("resetTime") != 0) {
+            auto resetTime = event.at("resetTime").get<double>();
+            resetTimePoint = to_time_point(resetTime);
+        }
+
         if (event.find("action") != event.end()) {
             if (event.at("action") == "ramp") {
-                tmpVars.emplace_back(id);
-                isTimeDependent = true;
-            }
-            if (event.at("action") == "reset" && std::find(tmpVars.begin(), tmpVars.end(), id) != tmpVars.end()) {
                 isTimeDependent = true;
             }
         }
 
         scenario::variable_action a = generate_action(event, mode, index, id, isInput, isTimeDependent);
-        events.emplace_back(scenario::event{time, a});
+        events.emplace_back(scenario::event{time, resetTimePoint, a});
     }
 
     auto end = parse_end_time(j);

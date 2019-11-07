@@ -1,6 +1,7 @@
+#include "cse/manipulator/scenario_manager.hpp"
+
 #include "cse/algorithm.hpp"
 #include "cse/log/logger.hpp"
-#include "cse/manipulator/scenario_manager.hpp"
 #include "cse/scenario.hpp"
 #include "cse/scenario_parser.hpp"
 #include "cse/utility/utility.hpp"
@@ -104,13 +105,14 @@ private:
     struct scenario_state
     {
         std::unordered_map<int, scenario::event> remainingEvents;
+        std::unordered_map<int, scenario::event> executingEvents;
         std::unordered_map<int, scenario::event> executedEvents;
         time_point startTime;
         std::optional<time_point> endTime;
         bool running = false;
     };
 
-    void execute_action(manipulable* sim, scenario::variable_action& a, time_point eventTime)
+    void execute_action(manipulable* sim, scenario::variable_action& a, time_point eventTime, const bool& shouldReset)
     {
         std::visit(
             visitor(
@@ -125,7 +127,7 @@ private:
                 },
                 [=](scenario::time_dependent_real_modifier& m) {
                     const auto& orgFn = m.f;
-                    const auto& newFn = orgFn ? [orgFn, eventTime](double d) { return orgFn(d, eventTime); } : std::function<double(double)>(nullptr);
+                    const auto& newFn = shouldReset ? std::function<double(double)>(nullptr) : [orgFn, eventTime](double d) { return orgFn(d, eventTime); };
 
                     if (a.is_input) {
                         sim->expose_for_setting(variable_type::real, a.variable);
@@ -146,7 +148,7 @@ private:
                 },
                 [=](const scenario::time_dependent_integer_modifier& m) {
                     const auto& orgFn = m.f;
-                    const auto& newFn = orgFn ? [orgFn, eventTime](int i) { return orgFn(i, eventTime); } : std::function<int(int)>(nullptr);
+                    const auto& newFn = shouldReset ? std::function<int(int)>(nullptr) : [orgFn, eventTime](int i) { return orgFn(i, eventTime); };
 
                     if (a.is_input) {
                         sim->expose_for_setting(variable_type::integer, a.variable);
@@ -177,7 +179,7 @@ private:
             a.modifier);
     }
 
-    void execute_event(time_point relativeTime, scenario::event& e)
+    void execute_event(time_point relativeTime, scenario::event& e, const bool& shouldReset)
     {
         BOOST_LOG_SEV(log::logger(), log::info)
             << "Executing action for simulator " << e.action.simulator
@@ -185,14 +187,18 @@ private:
             << ", at relative time " << to_double_time_point(relativeTime);
 
         const auto eventTime = time_point(relativeTime - e.time);
-        execute_action(simulators_[e.action.simulator], e.action, eventTime);
+        execute_action(simulators_[e.action.simulator], e.action, eventTime, shouldReset);
     }
 
     bool event_execution_complete(time_point relativeTime, scenario::event& e)
     {
-        if (relativeTime >= e.time) {
-            execute_event(relativeTime, e);
+        if (e.resetTime.has_value() && relativeTime >= e.resetTime) {
+            execute_event(relativeTime, e, true);
+            return true;
+        }
 
+        if (relativeTime >= e.time) {
+            execute_event(relativeTime, e, false);
             return !e.action.is_time_dependent;
         }
 

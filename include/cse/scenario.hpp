@@ -86,6 +86,8 @@ struct event
 {
     /// The time point at which the event should trigger.
     time_point time;
+    /// The time point at which the event should reset.
+    std::optional<time_point> resetTime;
     /// Something which should happen to a variable.
     variable_action action;
 };
