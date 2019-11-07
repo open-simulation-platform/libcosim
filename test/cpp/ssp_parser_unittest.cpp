@@ -11,7 +11,9 @@
 namespace
 {
 
-constexpr double tolerance = 1e-9;
+// Defines the tolerance for the comparison in percentage units.
+// See https://www.boost.org/doc/libs/1_65_0/libs/test/doc/html/boost_test/utf_reference/testing_tool_ref/assertion_boost_level_close.html
+constexpr double tolerance = 0.0001;
 
 }
 
