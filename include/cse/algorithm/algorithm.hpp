@@ -43,8 +43,16 @@ public:
      *      A pointer to an object that is used to control the simulator.
      *      Note that the algorithm does not have resource ownership of
      *      the object it points to (i.e., should not try to delete it).
+     *  \param stepSizeHint
+     *      The recommended co-simulation step size for this simulator.
+     *      The algorithm is free to choose whether and how this is taken
+     *      into account.  The algorithm is also responsible for selecting
+     *      a sensible default if this is zero.
      */
-    virtual void add_simulator(simulator_index index, simulator* sim) = 0;
+    virtual void add_simulator(
+        simulator_index index,
+        simulator* sim,
+        duration stepSizeHint) = 0;
 
     /**
      *  Removes a simulator from the co-simulation.
