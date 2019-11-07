@@ -79,12 +79,19 @@ public:
 
     const std::vector<Component>& get_elements() const;
 
+    struct LinearTransformation
+    {
+        double offset;
+        double factor;
+    };
+
     struct Connection
     {
         std::string startElement;
         std::string startConnector;
         std::string endElement;
         std::string endConnector;
+        std::optional<LinearTransformation> linearTransformation;
     };
 
     const std::vector<Connection>& get_connections() const;
@@ -184,13 +191,18 @@ ssp_parser::ssp_parser(const boost::filesystem::path& xmlPath)
         }
     }
 
-    if (tmpTree.get_child_optional("ssd:Connections")) {
-        for (const auto& connection : tmpTree.get_child("ssd:Connections")) {
+    if (const auto connections = tmpTree.get_child_optional("ssd:Connections")) {
+        for (const auto& connection : *connections) {
             auto& c = connections_.emplace_back();
             c.startElement = get_attribute<std::string>(connection.second, "startElement");
             c.startConnector = get_attribute<std::string>(connection.second, "startConnector");
             c.endElement = get_attribute<std::string>(connection.second, "endElement");
             c.endConnector = get_attribute<std::string>(connection.second, "endConnector");
+            if (const auto l = connection.second.get_child_optional("ssc:LinearTransformation")) {
+                auto offset = get_attribute<double>(*l, "offset", 0);
+                auto factor = get_attribute<double>(*l, "factor", 1.0);
+                c.linearTransformation = {offset, factor};
+            }
         }
     }
 }
@@ -347,7 +359,12 @@ std::pair<execution, simulator_map> load_ssp(
         cse::variable_id output = get_variable(slaves, connection.startElement, connection.startConnector);
         cse::variable_id input = get_variable(slaves, connection.endElement, connection.endConnector);
 
-        const auto c = std::make_shared<scalar_connection>(output, input);
+        std::shared_ptr<cse::scalar_connection> c;
+        if (const auto& l = connection.linearTransformation) {
+            c = std::make_shared<linear_transformation_connection>(output, input, l->offset, l->factor);
+        } else {
+            c = std::make_shared<scalar_connection>(output, input);
+        }
         try {
             execution.add_connection(c);
         } catch (const std::exception& e) {
