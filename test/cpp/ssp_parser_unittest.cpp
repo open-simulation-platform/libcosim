@@ -16,7 +16,6 @@ constexpr double tolerance = 1e-9;
 
 BOOST_AUTO_TEST_CASE(basic_test)
 {
-
     cse::log::setup_simple_console_logging();
     cse::log::set_global_output_level(cse::log::info);
 
@@ -25,10 +24,8 @@ BOOST_AUTO_TEST_CASE(basic_test)
     boost::filesystem::path xmlPath = boost::filesystem::path(testDataDir) / "ssp" / "demo";
 
     auto resolver = cse::default_model_uri_resolver();
-    auto simulation = cse::load_ssp(*resolver, xmlPath);
-    auto& execution = simulation.first;
+    auto [execution, simulator_map] = cse::load_ssp(*resolver, xmlPath);
 
-    auto& simulator_map = simulation.second;
     BOOST_REQUIRE(simulator_map.size() == 2);
 
     auto craneController = simulator_map.at("CraneController");
@@ -47,18 +44,17 @@ BOOST_AUTO_TEST_CASE(basic_test)
     obs->get_real(knuckleBoomCrane.index, gsl::make_span(&reference, 1), gsl::make_span(&realValue, 1));
 
     double magicNumberFromSsdFile = 0.005;
-    BOOST_REQUIRE_CLOSE(realValue, magicNumberFromSsdFile, tolerance);
+    BOOST_CHECK_CLOSE(realValue, magicNumberFromSsdFile, tolerance);
 
     cse::value_reference reference2 = cse::find_variable(knuckleBoomCrane.description, "mt0_init").reference;
     obs->get_real(knuckleBoomCrane.index, gsl::make_span(&reference2, 1), gsl::make_span(&realValue, 1));
 
     magicNumberFromSsdFile = 69.0;
-    BOOST_REQUIRE_CLOSE(realValue, magicNumberFromSsdFile, tolerance);
+    BOOST_CHECK_CLOSE(realValue, magicNumberFromSsdFile, tolerance);
 }
 
 BOOST_AUTO_TEST_CASE(no_algorithm_test)
 {
-
     cse::log::setup_simple_console_logging();
     cse::log::set_global_output_level(cse::log::info);
 
@@ -68,16 +64,14 @@ BOOST_AUTO_TEST_CASE(no_algorithm_test)
 
     auto resolver = cse::default_model_uri_resolver();
     auto algorithm = std::make_unique<cse::fixed_step_algorithm>(cse::to_duration(1e-4));
-    auto simulation = cse::load_ssp(*resolver, xmlPath, std::move(algorithm));
-    auto& execution = simulation.first;
+    auto [execution, simulator_map] = cse::load_ssp(*resolver, xmlPath, std::move(algorithm));
 
-    auto& simulator_map = simulation.second;
     BOOST_REQUIRE(simulator_map.size() == 2);
 
     auto knuckleBoomCrane = simulator_map.at("KnuckleBoomCrane");
 
-    // ssp defaultExperiment startTime=5
-    BOOST_REQUIRE_CLOSE(cse::to_double_time_point(execution.current_time()), 5.0, tolerance);
+    double startTimeDefinedInSsp = 5.0;
+    BOOST_CHECK_CLOSE(cse::to_double_time_point(execution.current_time()), startTimeDefinedInSsp, tolerance);
 
     auto obs = std::make_shared<cse::last_value_observer>();
     execution.add_observer(obs);
@@ -89,11 +83,11 @@ BOOST_AUTO_TEST_CASE(no_algorithm_test)
     obs->get_real(knuckleBoomCrane.index, gsl::make_span(&reference, 1), gsl::make_span(&realValue, 1));
 
     double magicNumberFromSsdFile = 0.005;
-    BOOST_REQUIRE_CLOSE(realValue, magicNumberFromSsdFile, tolerance);
+    BOOST_CHECK_CLOSE(realValue, magicNumberFromSsdFile, tolerance);
 
     cse::value_reference reference2 = cse::find_variable(knuckleBoomCrane.description, "mt0_init").reference;
     obs->get_real(knuckleBoomCrane.index, gsl::make_span(&reference2, 1), gsl::make_span(&realValue, 1));
 
     magicNumberFromSsdFile = 69.0;
-    BOOST_REQUIRE_CLOSE(realValue, magicNumberFromSsdFile, tolerance);
+    BOOST_CHECK_CLOSE(realValue, magicNumberFromSsdFile, tolerance);
 }
