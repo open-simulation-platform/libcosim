@@ -73,6 +73,7 @@ public:
     {
         std::string name;
         std::string source;
+        std::optional<double> stepSizeHint;
         std::vector<Connector> connectors;
         std::vector<Parameter> parameters;
     };
@@ -178,6 +179,17 @@ ssp_parser::ssp_parser(const boost::filesystem::path& xmlPath)
                         } else {
                             CSE_PANIC();
                         }
+                    }
+                }
+            }
+        }
+
+        if (const auto annotations = component.second.get_child_optional("ssd:Annotations")) {
+            for (const auto& annotation : *annotations) {
+                const auto& annotationType = get_attribute<std::string>(annotation.second, "type");
+                if (annotationType == "com.opensimulationplatform") {
+                    if (const auto& stepSizeHint = annotation.second.get_child_optional("osp:StepSizeHint")) {
+                        e.stepSizeHint = get_attribute<double>(*stepSizeHint, "value");
                     }
                 }
             }
@@ -311,7 +323,8 @@ std::pair<execution, simulator_map> load_ssp(
     for (const auto& component : elements) {
         auto model = resolver.lookup_model(baseURI, component.source);
         auto slave = model->instantiate(component.name);
-        simulator_index index = slaves[component.name].index = execution.add_slave(slave, component.name);
+        auto stepSizeHint = cse::to_duration(component.stepSizeHint.value_or(0));
+        simulator_index index = slaves[component.name].index = execution.add_slave(slave, component.name, stepSizeHint);
 
         simulatorMap[component.name] = simulator_map_entry{index, component.source, *model->description()};
 
