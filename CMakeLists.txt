@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.9)
 file(READ "conanfile.py" conanfile)
-string(REGEX MATCHALL "[ ]*version[ ]*=[ ]*\"([0-9. ]*)\"" _ ${conanfile})
+string(REGEX MATCH "[ ]*version[ ]*=[ ]*\"([0-9. ]*)\"" _ ${conanfile})
 project("csecore" VERSION "${CMAKE_MATCH_1}")
 message("Current cse-core version: ${CMAKE_PROJECT_VERSION}\n")
 
