@@ -36,6 +36,7 @@ int calculate_decimation_factor(
     duration baseStepSize,
     duration simulatorStepSize)
 {
+    if (simulatorStepSize == duration::zero()) return 1;
     const auto result = std::div(simulatorStepSize.count(), baseStepSize.count());
     const int factor = std::max<int>(1, static_cast<int>(result.quot));
     if (result.rem > 0 || result.quot < 1) {
