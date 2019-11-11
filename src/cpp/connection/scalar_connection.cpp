@@ -28,12 +28,12 @@ scalar_connection::scalar_connection(variable_id source, variable_id destination
     }
 }
 
-void scalar_connection::set_source_value(variable_id, std::variant<double, int, bool, std::string_view> value)
+void scalar_connection::set_source_value(variable_id, scalar_value_view value)
 {
     value_ = value;
 }
 
-std::variant<double, int, bool, std::string_view> scalar_connection::get_destination_value(variable_id)
+scalar_value_view scalar_connection::get_destination_value(variable_id)
 {
     return value_;
 }

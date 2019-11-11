@@ -19,12 +19,12 @@ public:
     /// Constructor which takes one source and one destination variable.
     scalar_connection(variable_id source, variable_id destination);
 
-    void set_source_value(variable_id, std::variant<double, int, bool, std::string_view> value) override;
+    void set_source_value(variable_id, scalar_value_view value) override;
 
-    std::variant<double, int, bool, std::string_view> get_destination_value(variable_id) override;
+    scalar_value_view get_destination_value(variable_id) override;
 
 private:
-    std::variant<double, int, bool, std::string_view> value_;
+    scalar_value_view value_;
 };
 
 } // namespace cse

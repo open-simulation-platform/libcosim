@@ -7,8 +7,6 @@
 
 #include <gsl/span>
 
-#include <string_view>
-#include <variant>
 #include <vector>
 
 namespace cse
@@ -32,7 +30,7 @@ public:
     }
 
     /// Sets the value of a source variable.
-    virtual void set_source_value(variable_id id, std::variant<double, int, bool, std::string_view> value) = 0;
+    virtual void set_source_value(variable_id id, scalar_value_view value) = 0;
 
     /// Returns the destination variables of the connection.
     gsl::span<variable_id> get_destinations()
@@ -41,7 +39,7 @@ public:
     }
 
     /// Returns the value of a destination variable.
-    virtual std::variant<double, int, bool, std::string_view> get_destination_value(variable_id id) = 0;
+    virtual scalar_value_view get_destination_value(variable_id id) = 0;
 
 protected:
     /// Base class constructor.

@@ -33,7 +33,7 @@ public:
     fixed_step_algorithm& operator=(fixed_step_algorithm&&) noexcept;
 
     // `algorithm` methods
-    void add_simulator(simulator_index i, simulator* s) override;
+    void add_simulator(simulator_index i, simulator* s, duration stepSizeHint) override;
     void remove_simulator(simulator_index i) override;
     void add_connection(std::shared_ptr<connection> c) override;
     void remove_connection(std::shared_ptr<connection> c) override;
