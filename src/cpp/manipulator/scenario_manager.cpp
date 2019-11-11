@@ -105,7 +105,6 @@ private:
     struct scenario_state
     {
         std::unordered_map<int, scenario::event> remainingEvents;
-        std::unordered_map<int, scenario::event> executingEvents;
         std::unordered_map<int, scenario::event> executedEvents;
         time_point startTime;
         std::optional<time_point> endTime;

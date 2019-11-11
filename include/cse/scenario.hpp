@@ -78,6 +78,9 @@ struct variable_action
      * an *output* from a slave (i.e. causality output or calculatedParameter).
      */
     bool is_input;
+    /** Flag which should be set to `true` if the modifier is time dependent.
+     * The modifier will then receive the current event time as an input. Default false.
+     */
     bool is_time_dependent = false;
 };
 

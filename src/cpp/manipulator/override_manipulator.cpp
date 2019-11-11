@@ -1,7 +1,7 @@
+#include "cse/error.hpp"
+#include "cse/exception.hpp"
+#include "cse/manipulator.hpp"
 #include "cse/utility/utility.hpp"
-
-#include <cse/error.hpp>
-#include <cse/manipulator.hpp>
 
 #include <sstream>
 
@@ -78,16 +78,8 @@ void override_manipulator::step_commencing(time_point eventTime)
                         }
                     },
                     [=](const scenario::time_dependent_real_modifier& m) {
-                        const auto orgFn = m.f;
-                        const auto& newFn = orgFn ? [orgFn, eventTime](double d) { return orgFn(d, eventTime); } : std::function<double(double)>(nullptr);
-
-                        if (a.is_input) {
-                            sim->expose_for_setting(variable_type::real, a.variable);
-                            sim->set_real_input_modifier(a.variable, newFn);
-                        } else {
-                            sim->expose_for_getting(variable_type::real, a.variable);
-                            sim->set_real_output_modifier(a.variable, newFn);
-                        }
+                        throw error(make_error_code(errc::unsupported_feature),
+                            "Time dependent modifiers not supported in override_manipulator");
                     },
                     [=](const scenario::integer_modifier& m) {
                         if (a.is_input) {
@@ -99,16 +91,8 @@ void override_manipulator::step_commencing(time_point eventTime)
                         }
                     },
                     [=](const scenario::time_dependent_integer_modifier& m) {
-                        const auto orgFn = m.f;
-                        const auto& newFn = orgFn ? [orgFn, eventTime](int i) { return orgFn(i, eventTime); } : std::function<int(int)>(nullptr);
-
-                        if (a.is_input) {
-                            sim->expose_for_setting(variable_type::integer, a.variable);
-                            sim->set_integer_input_modifier(a.variable, newFn);
-                        } else {
-                            sim->expose_for_getting(variable_type::integer, a.variable);
-                            sim->set_integer_output_modifier(a.variable, newFn);
-                        }
+                        throw error(make_error_code(errc::unsupported_feature),
+                            "Time dependent modifiers not supported in override_manipulator");
                     },
                     [=](const scenario::boolean_modifier& m) {
                         if (a.is_input) {

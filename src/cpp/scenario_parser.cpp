@@ -274,8 +274,7 @@ scenario::scenario parse_scenario(
 
         std::optional<time_point> resetTimePoint = std::nullopt;
         if (event.count("resetTime") != 0) {
-            auto resetTime = event.at("resetTime").get<double>();
-            resetTimePoint = to_time_point(resetTime);
+            resetTimePoint = to_time_point(event.at("resetTime").get<double>());
         }
 
         if (event.find("action") != event.end()) {

@@ -9,17 +9,14 @@
       "time": 0.2,
       "action": "transform",
       "factor": 2,
-      "offset": 1
+      "offset": 1,
+      "resetTime": 0.4
     },
     {
       "time": 0.5,
       "action": "ramp",
       "factor": 2.0,
       "resetTime": 0.9
-    },
-    {
-      "time": 1.0,
-      "action": "reset"
     }
   ],
   "end": 1.2

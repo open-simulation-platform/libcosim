@@ -59,7 +59,7 @@ int main()
         double expectedRealOutputs[] = {1.234, 1.234, 3.468, 3.468, 3.468, 1.234, 1.434, 1.634, 1.834, 1.234, 1.234, 1.234};
 
         for (size_t i = 0; i < realSamplesRead; i++) {
-            std::cout << realOutputValues[i] << ", ";
+            //std::cout << realOutputValues[i] << ", ";
             REQUIRE(std::fabs(realOutputValues[i] - expectedRealOutputs[i]) < 1.0e-9);
         }
 
