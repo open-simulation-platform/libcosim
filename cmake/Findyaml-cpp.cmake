@@ -3,7 +3,7 @@
 # Find the native yaml-cpp headers and libraries.
 #
 #   YAML_CPP_INCLUDE_DIRS   - where to find yaml-cpp/yaml.h
-#   YAML_CPP_LIBRARIES      - List of libraries when using Thrift.
+#   YAML_CPP_LIBRARIES      - List of libraries when using yaml-cpp.
 #   YAML_CPP_FOUND          - True if yaml-cpp found.
 #
 
