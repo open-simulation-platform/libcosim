@@ -11,7 +11,6 @@ set(tests
     "trend_buffer_test"
     "monitor_modified_variables_test"
     "scenario_manager_test"
-    "scenario_parser_test"
     "synchronized_xy_series_test"
 )
 
@@ -28,6 +27,7 @@ set(unittests
     "fmi_v2_fmu_unittest"
     "model_unittest"
     "orchestration_unittest"
+    "scenario_parser_unittest"
     "ssp_parser_unittest"
     "uri_unittest"
     "utility_concurrency_unittest"

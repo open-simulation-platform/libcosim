@@ -122,7 +122,7 @@ find_package(MS_GSL REQUIRED)
 find_package(Boost REQUIRED COMPONENTS ${Boost_components})
 find_package(FMILibrary REQUIRED)
 find_package(LIBZIP REQUIRED)
-find_package(nlohmann_json REQUIRED)
+find_package(yaml-cpp REQUIRED)
 find_package(XercesC REQUIRED)
 if(CSECORE_WITH_FMUPROXY)
     find_package(THRIFT REQUIRED)
@@ -225,7 +225,6 @@ install(FILES
         "${CMAKE_SOURCE_DIR}/cmake/FindFMILibrary.cmake"
         "${CMAKE_SOURCE_DIR}/cmake/FindLIBZIP.cmake"
         "${CMAKE_SOURCE_DIR}/cmake/FindMS_GSL.cmake"
-        "${CMAKE_SOURCE_DIR}/cmake/Findnlohmann_json.cmake"
         "${CMAKE_SOURCE_DIR}/cmake/FindTHRIFT.cmake"
         DESTINATION
         "${CSECORE_CMAKE_INSTALL_DIR}"

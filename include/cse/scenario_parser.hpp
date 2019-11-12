@@ -12,7 +12,7 @@ namespace cse
  * Parses a scenario from file.
  *
  * \param scenarioFile
- *  The path to a proprietary `json` file defining the scenario.
+ *  The path to a proprietary `json` or `yaml` file defining the scenario.
  *
  * \param simulators
  *  A map containing the simulators currently loaded in the execution.
