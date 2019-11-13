@@ -226,6 +226,7 @@ install(FILES
         "${CMAKE_SOURCE_DIR}/cmake/FindLIBZIP.cmake"
         "${CMAKE_SOURCE_DIR}/cmake/FindMS_GSL.cmake"
         "${CMAKE_SOURCE_DIR}/cmake/FindTHRIFT.cmake"
+        "${CMAKE_SOURCE_DIR}/cmake/Findyaml-cpp.cmake"
         DESTINATION
         "${CSECORE_CMAKE_INSTALL_DIR}"
 )
