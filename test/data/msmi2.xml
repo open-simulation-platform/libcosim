@@ -1,0 +1,246 @@
+<!--
+
+<VariableGroups>
+  - Has a collection of <VariableGroup> elements
+
+<VariableGroup>
+  - Has a collection of <Variable> elements
+  - Has attribute 'type' which is a type defined in the ontology (force, velocity, pressure, etc)
+  - Has attribute 'name' which is an arbitrary name used when referring to the given <VariableGroup>
+    in a <VariableGroupContainment> element in OspModelDescription.xml or <VariableGroupConnection>
+    element in OspSystemStructure.xml
+
+<Variable>
+  - Has a 'name' attribute which must match with the name of the <ScalarVariable> element in 
+    modelDescription.xml it is supposed to represent
+  - The unit will also be defined for each <Variable>. Format still not decided but some examples
+    are given below in <VariableGroup> 'B'
+
+<VariableGroupContainments>
+  - Has a collection of <VariableGroupContainment> elements
+ 
+<VariableGroupContainment>
+  - Has attribute 'group' which referes to a <VariableGroup> by its 'name' attribute
+  - Has attribute 'contains' which referes to a <VariableGroup> by its 'name' attribute  
+  
+  These elements describe the containment relationships between the <VariableGroup> elements.
+  Not decided on the name of this element or its attributes. We separated this information out
+  from the <VariableGroup> elements, because it enables the possibility to use <VariableGroup>
+  elements in connections WITHOUT their containments. E.g: If <VariableGroup> 'A' defines that
+  it contains <VariableGroup> 'B', INSIDE the <VariableGroup> element, it would not be possible
+  to use <VariableGroup> 'A' in a connection, without also including <VariableGroup> 'B'.
+
+<VariableGroupConnections>
+  - Has a collection of <VariableGroupConnection> elements
+
+<VariableGroupConnection>
+  - Has exactly one <VariableGroupA> element
+  - Has exactly one <VariableGroupB> element
+  
+  Specifies that <VariableGroupA> and <VariableGroupB> are connected
+
+<VariableGroupA>
+  - Has attribute 'simulator' which referes to the 'name' attribute of a defined <Simulator>
+    element in OspSystemStructure.xml
+  - Has attribute 'name' which referes to the 'name' attribute of the <VariableGroup> element 
+    defined in the OspModelDescription.xml which describes the <Simulator> refered to by the 
+    'simulator' attribute
+
+<VariableGroupB>
+  - Has attribute 'simulator' which referes to the 'name' attribute of a defined <Simulator>
+    element in OspSystemStructure.xml
+  - Has attribute 'name' which referes to the 'name' attribute of the <VariableGroup> element 
+    defined in the OspModelDescription.xml which describes the <Simulator> refered to by the 
+    'simulator' attribute
+-->
+
+<MSMI>
+
+    <OspModelDescription>
+        <VariableGroups>
+
+            <VariableGroup type="A" name="A">
+                <Variable name="V1"/>
+            </VariableGroup>
+
+            <VariableGroup type="B" name="B">
+                <Variable name="V2" dimension="Force" factor="60"/>
+                <Variable name="V3" baseUnit="N" factor="60"/>
+                <Variable name="V4" dimension="Force" baseUnit="N" factor="60"/>
+                <Variable name="V5" unit="[kg]*[m]*[s]^(-2)*[s]^(2)"/>
+                <Variable name="V6" unit="[kg]*[m]"/>
+                <Variable name="V6" unit="[kg]*[1000*m]"/>
+                <Variable name="V7"/>
+            </VariableGroup>
+
+            <VariableGroup type="C" name="C">
+                <Variable name="V8"/>
+            </VariableGroup>
+
+            <VariableGroup type="D" name="D">
+                <Variable name="V9"/>
+            </VariableGroup>
+
+        </VariableGroups>
+
+        <VariableGroupContainments>
+
+            <VariableGroupContainment group="A" contains="B"/>
+            <VariableGroupContainment group="A" contains="C"/>
+            <VariableGroupContainment group="B" contains="D"/>
+
+        </VariableGroupContainments>
+    </OspModelDescription>
+
+    <!--  OspSystemStructure.xml -->
+    <OspSystemStructure>
+		<Functions>
+			<!-- FU Switch -->
+			<Function type="Switch" name="mySwitch">
+				<Signals>
+					<Signal type="Boolean" causality="input" name="predicate"/>
+					<Signal type="Real" causality="input" name="true"/>
+					<Signal type="Real" causality="input" name="false"/>
+					<Signal type="Real" causality="output" name="result"/>
+				</Signals>
+			</Function>
+
+			<!-- FU Switch vector -->
+			<Function type="Sum" name="myVecSummation">
+				<Signals>
+					<!-- Should these use same elements as in FMI: ScalarVariable -->
+					<Signal type="Boolean" causality="input" name="predicate"/>
+					<Signal type="Real" causality="input" name="true[0]"/>
+					<Signal type="Real" causality="input" name="true[1]"/>
+					<Signal type="Real" causality="input" name="false[0]"/>
+					<Signal type="Real" causality="input" name="false[1]"/>
+					<Signal type="Real" causality="output" name="result[0]"/>
+					<Signal type="Real" causality="output" name="result[1]"/>
+				</Signals>
+				<SignalGroups>
+					<SignalGroup name="true">
+						<Signal name="true[0]"/>
+						<Signal name="true[1]"/>
+					</SignalGroup>
+					<SignalGroup name="false">
+						<Signal name="false[0]"/>
+						<Signal name="false[1]"/>
+					</SignalGroup>
+					<SignalGroup name="result">
+						<Signal name="result[0]"/>
+						<Signal name="result[1]"/>
+					</SignalGroup>
+				</SignalGroups>
+			</Function>
+
+			<!-- FU Sum scalar -->
+			<Function type="Sum" name="mySummation">
+				<Signals>
+					<Signal type="Real" causality="input" name="in1"/>
+					<Signal type="Real" causality="input" name="in2"/>
+					<Signal type="Real" causality="output" name="out"/>
+				</Signals>
+			</Function>
+
+			<!-- FU Sum vector -->
+			<Function type="Sum" name="myVecSummation">
+				<Signals>
+					<Signal type="Real" causality="input" name="in1[0]"/>
+					<Signal type="Real" causality="input" name="in1[1]"/>
+					<Signal type="Real" causality="input" name="in2[0]"/>
+					<Signal type="Real" causality="input" name="in2[1]"/>
+					<Signal type="Real" causality="output" name="out[0]"/>
+					<Signal type="Real" causality="output" name="out[1]"/>
+				</Signals>
+				<SignalGroups>
+					<SignalGroup name="in1">
+						<Signal name="in1[0]"/>
+						<Signal name="in1[1]"/>
+					</SignalGroup>
+					<SignalGroup name="in2">
+						<Signal name="in2[0]"/>
+						<Signal name="in2[1]"/>
+					</SignalGroup>
+					<SignalGroup name="out">
+						<Signal name="out[0]"/>
+						<Signal name="out[1]"/>
+					</SignalGroup>
+				</SignalGroups>
+			</Function>
+		</Functions>
+
+		<!--
+			- LinearTransformation as Function
+		    - Consider naming of xml elements
+		    - Evaluate how far we are from ssp. Will it at some point make sense to "merge"?
+		-->
+
+        <Connections>
+            <VariableConnection>
+                <Variable simulator="simA" name="out"/>
+                <Variable simulator="simB" name="in"/>
+                <LinearTransformation factor="0.1" offset="6669"/>
+            </VariableConnection>
+
+            <VariableGroupConnection>
+                <VariableGroup simulator="simA" name="A"/>
+                <VariableGroup simulator="simB" name="B"/>
+                <Transformation matrix="1 2 3 0 0 3 2 5 1"/>
+            </VariableGroupConnection>
+
+            <VariableGroupConnection>
+                <VariableGroup simulator="simA" name="A"/>
+                <VariableGroup simulator="simB" name="B"/>
+				<LinearTransformation factor="0.2" offset="2.2"/>
+			</VariableGroupConnection>
+
+			<!-- FU Switch -->
+            <VariableConnection>
+                <Variable simulator="simA" name="out"/>
+                <Signal function="mySwitch" name="predicate"/>
+            </VariableConnection>
+            <VariableConnection>
+                <Variable simulator="simB" name="out"/>
+                <Signal function="mySwitch" name="true"/>
+            </VariableConnection>
+            <VariableConnection>
+                <Variable simulator="simC" name="out"/>
+                <Signal function="mySwitch" name="false"/>
+            </VariableConnection>
+            <VariableConnection>
+                <Signal function="mySwitch" name="result"/>
+                <Variable simulator="simD" name="in"/>
+            </VariableConnection>
+
+            <VariableConnection>
+                <Variable simulator="simA" name="out"/>
+                <Signal function="mySummation" index="0"/>
+            </VariableConnection>
+            <VariableConnection>
+                <Variable simulator="simB" name="out"/>
+                <Signal function="mySummation" name="in2"/>
+            </VariableConnection>
+            <VariableConnection>
+                <Signal function="mySummation" name="out"/>
+                <Variable simulator="simC" name="in"/>
+            </VariableConnection>
+            <VariableConnection>
+                <Variable simulator="simA" name="out"/>
+                <Signal function="mySummation" name="in1"/>
+            </VariableConnection>
+
+            <VariableGroupConnection>
+                <SignalGroup function="myVecSummation" name="in1"/>
+                <VariableGroup simulator="simA" name="outVec"/>
+            </VariableGroupConnection>
+            <VariableGroupConnection>
+                <SignalGroup function="myVecSummation" name="in2"/>
+                <VariableGroup simulator="simB" name="outVec"/>
+            </VariableGroupConnection>
+            <VariableGroupConnection>
+                <SignalGroup function="myVecSummation" name="out"/>
+                <VariableGroup simulator="simC" name="inVec"/>
+            </VariableGroupConnection>
+        </Connections>
+    </OspSystemStructure>
+</MSMI>
