@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ssv:ParameterSet version="1.0" name="initialValues"
+        xmlns:ssv="http://ssp-standard.org/SSP1/SystemStructureParameterValues">
+    <ssv:Parameters>
+        <ssv:Parameter name="realOut">
+            <ssv:Real value="2" />
+        </ssv:Parameter>
+    </ssv:Parameters>
+</ssv:ParameterSet>
