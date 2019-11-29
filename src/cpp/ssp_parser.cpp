@@ -88,11 +88,6 @@ public:
         scalar_value value;
     };
 
-    struct ParameterBinding
-    {
-        std::string source;
-    };
-
     struct Component
     {
         std::string name;
