@@ -30,6 +30,24 @@ std::optional<T> get_optional_attribute(const boost::property_tree::ptree& tree,
     return result ? *result : std::optional<T>();
 }
 
+variable_type parse_connector_type(const boost::property_tree::ptree& tree)
+{
+    if (tree.get_child_optional("ssc:Real")) {
+        return variable_type::real;
+    } else if (tree.get_child_optional("ssc:Integer")) {
+        return variable_type::integer;
+    } else if (tree.get_child_optional("ssc:Boolean")) {
+        return variable_type::boolean;
+    } else if (tree.get_child_optional("ssc:String")) {
+        return variable_type::string;
+    } else if (tree.get_child_optional("ssc:Enumeration")) {
+        CSE_PANIC_M("Don't know how to handle Enumeration type!");
+    } else if (tree.get_child_optional("ssc:Binary")) {
+        CSE_PANIC_M("Don't know how to handle Binary type!");
+    } else {
+        throw std::invalid_argument("A valid connector type was not found!");
+    }
+}
 
 class ssp_parser
 {
@@ -59,7 +77,7 @@ public:
     {
         std::string name;
         std::string kind;
-        std::string type;
+        cse::variable_type type;
     };
 
     struct Parameter
@@ -154,11 +172,11 @@ ssp_parser::ssp_parser(const boost::filesystem::path& xmlPath)
 
         if (component.second.get_child_optional("ssd:Connectors")) {
             for (const auto& connector : component.second.get_child("ssd:Connectors")) {
-                if (connector.first == "ssd::Connector") {
+                if (connector.first == "ssd:Connector") {
                     auto& c = e.connectors.emplace_back();
                     c.name = get_attribute<std::string>(connector.second, "name");
                     c.kind = get_attribute<std::string>(connector.second, "kind");
-                    c.type = get_attribute<std::string>(connector.second, "type");
+                    c.type = parse_connector_type(connector.second);
                 }
             }
         }
