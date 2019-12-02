@@ -138,7 +138,8 @@ BOOST_AUTO_TEST_CASE(ssp_archive)
 
     auto resolver = cse::default_model_uri_resolver();
     auto algorithm = std::make_shared<cse::fixed_step_algorithm>(cse::to_duration(1e-3));
-    auto [exec, simulator_map] = cse::load_ssp(*resolver, sspDir, algorithm);
+    auto load = cse::load_ssp(*resolver, sspDir, algorithm);
+    auto& exec = load.first;
 
     auto observer = std::make_shared<cse::last_value_observer>();
     exec.add_observer(observer);
