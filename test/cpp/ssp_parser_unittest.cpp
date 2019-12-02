@@ -126,3 +126,23 @@ BOOST_AUTO_TEST_CASE(ssp_linear_transformation_test)
     double target = factor * initialValue + offset;
     BOOST_REQUIRE_CLOSE(transformedValue, target, tolerance);
 }
+
+BOOST_AUTO_TEST_CASE(ssp_archive)
+{
+    cse::log::setup_simple_console_logging();
+    cse::log::set_global_output_level(cse::log::debug);
+
+    const auto testDataDir = std::getenv("TEST_DATA_DIR");
+    BOOST_TEST_REQUIRE(testDataDir != nullptr);
+    const auto sspDir = boost::filesystem::path(testDataDir) / "ssp" / "ControlledDrivetrain.ssp";
+
+    auto resolver = cse::default_model_uri_resolver();
+    auto algorithm = std::make_shared<cse::fixed_step_algorithm>(cse::to_duration(1e-3));
+    auto [exec, simulator_map] = cse::load_ssp(*resolver, sspDir, algorithm);
+
+    auto observer = std::make_shared<cse::last_value_observer>();
+    exec.add_observer(observer);
+
+    exec.step();
+
+}
