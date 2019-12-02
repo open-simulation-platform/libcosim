@@ -15,27 +15,11 @@ namespace
 // See https://www.boost.org/doc/libs/1_65_0/libs/test/doc/html/boost_test/utf_reference/testing_tool_ref/assertion_boost_level_close.html
 constexpr double tolerance = 0.0001;
 
-}
-
-BOOST_AUTO_TEST_CASE(basic_test)
+void common_demo_case_tests(cse::execution& execution, cse::simulator_map simulatorMap)
 {
-    cse::log::setup_simple_console_logging();
-    cse::log::set_global_output_level(cse::log::info);
-
-    const auto testDataDir = std::getenv("TEST_DATA_DIR");
-    BOOST_REQUIRE(testDataDir != nullptr);
-    boost::filesystem::path xmlPath = boost::filesystem::path(testDataDir) / "ssp" / "demo";
-
-    auto resolver = cse::default_model_uri_resolver();
-    auto [execution, simulator_map] = cse::load_ssp(*resolver, xmlPath);
-
-    BOOST_REQUIRE(simulator_map.size() == 2);
-
-    auto craneController = simulator_map.at("CraneController");
-    auto knuckleBoomCrane = simulator_map.at("KnuckleBoomCrane");
-
-    BOOST_REQUIRE(craneController.source == "CraneController.fmu");
-    BOOST_REQUIRE(knuckleBoomCrane.source == "KnuckleBoomCrane.fmu");
+    BOOST_REQUIRE(simulatorMap.size() == 2);
+    auto craneController = simulatorMap.at("CraneController");
+    auto knuckleBoomCrane = simulatorMap.at("KnuckleBoomCrane");
 
     auto obs = std::make_shared<cse::last_value_observer>();
     execution.add_observer(obs);
@@ -54,6 +38,29 @@ BOOST_AUTO_TEST_CASE(basic_test)
 
     magicNumberFromSsdFile = 69.0;
     BOOST_CHECK_CLOSE(realValue, magicNumberFromSsdFile, tolerance);
+}
+
+} // namespace
+
+BOOST_AUTO_TEST_CASE(basic_test)
+{
+    cse::log::setup_simple_console_logging();
+    cse::log::set_global_output_level(cse::log::info);
+
+    const auto testDataDir = std::getenv("TEST_DATA_DIR");
+    BOOST_REQUIRE(testDataDir != nullptr);
+    boost::filesystem::path xmlPath = boost::filesystem::path(testDataDir) / "ssp" / "demo";
+
+    auto resolver = cse::default_model_uri_resolver();
+    auto [execution, simulatorMap] = cse::load_ssp(*resolver, xmlPath);
+
+    auto craneController = simulatorMap.at("CraneController");
+    auto knuckleBoomCrane = simulatorMap.at("KnuckleBoomCrane");
+
+    BOOST_REQUIRE(craneController.source == "CraneController.fmu");
+    BOOST_REQUIRE(knuckleBoomCrane.source == "KnuckleBoomCrane.fmu");
+
+    common_demo_case_tests(execution, simulatorMap);
 }
 
 BOOST_AUTO_TEST_CASE(no_algorithm_test)
@@ -67,32 +74,26 @@ BOOST_AUTO_TEST_CASE(no_algorithm_test)
 
     auto resolver = cse::default_model_uri_resolver();
     auto algorithm = std::make_unique<cse::fixed_step_algorithm>(cse::to_duration(1e-4));
-    auto [execution, simulator_map] = cse::load_ssp(*resolver, xmlPath, std::move(algorithm));
-
-    BOOST_REQUIRE(simulator_map.size() == 2);
-
-    auto knuckleBoomCrane = simulator_map.at("KnuckleBoomCrane");
+    auto [execution, simulatorMap] = cse::load_ssp(*resolver, xmlPath, std::move(algorithm));
 
     double startTimeDefinedInSsp = 5.0;
     BOOST_CHECK_CLOSE(cse::to_double_time_point(execution.current_time()), startTimeDefinedInSsp, tolerance);
 
-    auto obs = std::make_shared<cse::last_value_observer>();
-    execution.add_observer(obs);
-    auto result = execution.simulate_until(cse::to_time_point(1e-3));
-    BOOST_REQUIRE(result.get());
+    common_demo_case_tests(execution, simulatorMap);
+}
 
-    double realValue = -1.0;
-    cse::value_reference reference = cse::find_variable(knuckleBoomCrane.description, "Spring_Joint.k").reference;
-    obs->get_real(knuckleBoomCrane.index, gsl::make_span(&reference, 1), gsl::make_span(&realValue, 1));
+BOOST_AUTO_TEST_CASE(ssp_archive)
+{
+    cse::log::setup_simple_console_logging();
+    cse::log::set_global_output_level(cse::log::info);
 
-    double magicNumberFromSsdFile = 0.005;
-    BOOST_CHECK_CLOSE(realValue, magicNumberFromSsdFile, tolerance);
+    const auto testDataDir = std::getenv("TEST_DATA_DIR");
+    BOOST_TEST_REQUIRE(testDataDir != nullptr);
+    const auto sspFile = boost::filesystem::path(testDataDir) / "ssp" / "demo" / "demo.ssp";
 
-    cse::value_reference reference2 = cse::find_variable(knuckleBoomCrane.description, "mt0_init").reference;
-    obs->get_real(knuckleBoomCrane.index, gsl::make_span(&reference2, 1), gsl::make_span(&realValue, 1));
-
-    magicNumberFromSsdFile = 69.0;
-    BOOST_CHECK_CLOSE(realValue, magicNumberFromSsdFile, tolerance);
+    auto resolver = cse::default_model_uri_resolver();
+    auto [execution, simulatorMap] = cse::load_ssp(*resolver, sspFile);
+    common_demo_case_tests(execution, simulatorMap);
 }
 
 BOOST_AUTO_TEST_CASE(ssp_linear_transformation_test)
@@ -103,7 +104,7 @@ BOOST_AUTO_TEST_CASE(ssp_linear_transformation_test)
 
     auto resolver = cse::default_model_uri_resolver();
     auto algorithm = std::make_shared<cse::fixed_step_algorithm>(cse::to_duration(1e-3));
-    auto [exec, simulator_map] = cse::load_ssp(*resolver, sspDir, algorithm);
+    auto [exec, simulatorMap] = cse::load_ssp(*resolver, sspDir, algorithm);
 
     auto observer = std::make_shared<cse::last_value_observer>();
     exec.add_observer(observer);
@@ -111,13 +112,13 @@ BOOST_AUTO_TEST_CASE(ssp_linear_transformation_test)
     exec.step();
 
     double initialValue;
-    auto slave1 = simulator_map.at("identity1");
+    auto slave1 = simulatorMap.at("identity1");
     cse::value_reference v1Ref = cse::find_variable(slave1.description, "realOut").reference;
     observer->get_real(slave1.index, gsl::make_span(&v1Ref, 1), gsl::make_span(&initialValue, 1));
     BOOST_REQUIRE_CLOSE(initialValue, 2.0, tolerance);
 
     double transformedValue;
-    auto slave2 = simulator_map.at("identity2");
+    auto slave2 = simulatorMap.at("identity2");
     cse::value_reference v2Ref = cse::find_variable(slave2.description, "realIn").reference;
     observer->get_real(slave2.index, gsl::make_span(&v2Ref, 1), gsl::make_span(&transformedValue, 1));
 
@@ -125,25 +126,4 @@ BOOST_AUTO_TEST_CASE(ssp_linear_transformation_test)
     double factor = 1.3;
     double target = factor * initialValue + offset;
     BOOST_REQUIRE_CLOSE(transformedValue, target, tolerance);
-}
-
-BOOST_AUTO_TEST_CASE(ssp_archive)
-{
-    cse::log::setup_simple_console_logging();
-    cse::log::set_global_output_level(cse::log::debug);
-
-    const auto testDataDir = std::getenv("TEST_DATA_DIR");
-    BOOST_TEST_REQUIRE(testDataDir != nullptr);
-    const auto sspDir = boost::filesystem::path(testDataDir) / "ssp" / "ControlledDrivetrain.ssp";
-
-    auto resolver = cse::default_model_uri_resolver();
-    auto algorithm = std::make_shared<cse::fixed_step_algorithm>(cse::to_duration(1e-3));
-    auto load = cse::load_ssp(*resolver, sspDir, algorithm);
-    auto& exec = load.first;
-
-    auto observer = std::make_shared<cse::last_value_observer>();
-    exec.add_observer(observer);
-
-    exec.step();
-
 }
