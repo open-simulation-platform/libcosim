@@ -147,14 +147,11 @@ private:
 
 ssp_parser::ssp_parser(const boost::filesystem::path& ssdPath)
 {
-    // Root node
-    std::string path = "ssd:SystemStructureDescription";
-
     boost::property_tree::ptree root;
     boost::property_tree::read_xml(ssdPath.string(), root,
         boost::property_tree::xml_parser::no_comments | boost::property_tree::xml_parser::trim_whitespace);
 
-    boost::property_tree::ptree ssd = root.get_child(path);
+    boost::property_tree::ptree ssd = root.get_child("ssd:SystemStructureDescription");
     systemDescription_.name = get_attribute<std::string>(ssd, "name");
     systemDescription_.version = get_attribute<std::string>(ssd, "version");
 
@@ -179,11 +176,11 @@ ssp_parser::ssp_parser(const boost::filesystem::path& ssdPath)
         }
     }
 
-    ssd = root.get_child(path + ".ssd:System");
-    systemDescription_.systemName = get_attribute<std::string>(ssd, "name");
-    systemDescription_.systemDescription = get_attribute<std::string>(ssd, "description");
+    boost::property_tree::ptree system = ssd.get_child("ssd:System");
+    systemDescription_.systemName = get_attribute<std::string>(system, "name");
+    systemDescription_.systemDescription = get_attribute<std::string>(system, "description");
 
-    for (const auto& component : ssd.get_child("ssd:Elements")) {
+    for (const auto& component : system.get_child("ssd:Elements")) {
 
         auto& e = elements_.emplace_back();
         e.name = get_attribute<std::string>(component.second, "name");
@@ -222,7 +219,7 @@ ssp_parser::ssp_parser(const boost::filesystem::path& ssdPath)
         }
     }
 
-    if (const auto connections = ssd.get_child_optional("ssd:Connections")) {
+    if (const auto connections = system.get_child_optional("ssd:Connections")) {
         for (const auto& connection : *connections) {
             auto& c = connections_.emplace_back();
             c.startElement = get_attribute<std::string>(connection.second, "startElement");
