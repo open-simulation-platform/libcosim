@@ -161,7 +161,7 @@ target_link_libraries(csecorecpp
         gsl
         XercesC::XercesC
     PRIVATE
-        nlohmann_json
+        yaml-cpp
     )
 
 if(CSECORE_WITH_FMUPROXY)
