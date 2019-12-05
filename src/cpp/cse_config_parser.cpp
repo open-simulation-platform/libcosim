@@ -91,13 +91,6 @@ public:
         std::string systemDescription;
     };
 
-    struct Connector
-    {
-        std::string name;
-        std::string kind;
-        std::string type;
-    };
-
     struct InitialValue
     {
         std::string name;
@@ -114,6 +107,56 @@ public:
     };
 
     const std::vector<Simulator>& get_elements() const;
+
+    struct Parameter
+    {
+        std::string name;
+        cse::variable_type type;
+        scalar_value value;
+    };
+
+    struct Signal
+    {
+        std::string name;
+        cse::variable_type type;
+        cse::variable_causality causality;
+    };
+
+    struct SignalGroupSignal
+    {
+        std::string name;
+    };
+
+    struct SignalGroup
+    {
+        std::string name;
+        std::vector<SignalGroupSignal> signals;
+    };
+
+    struct Function
+    {
+        std::string type;
+        std::string name;
+        std::vector<Parameter> parameters;
+        std::vector<Signal> signals;
+        std::vector<SignalGroup> signalGroups;
+    };
+
+    struct VariableConnection
+    {
+        std::string sourceSimulator;
+        std::string sourceConnector;
+        std::string targetSimulator;
+        std::string targetConnector;
+    };
+
+    struct SignalConnection
+    {
+        std::string simulator;
+        std::string variable;
+        std::string function;
+        std::string signal;
+    };
 
     struct ScalarConnection
     {
