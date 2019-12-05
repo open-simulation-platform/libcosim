@@ -106,7 +106,7 @@
             </Function>
 
             <!-- Function Switch vector -->
-            <Function type="Sum" name="myVecSummation">
+            <Function type="VectorSwitch" name="myVecSwitch">
                 <Signals>
                     <!-- Should these use same elements as in FMI: ScalarVariable -->
                     <Signal type="boolean" causality="input" name="predicate"/>
@@ -172,8 +172,8 @@
             <Function type="LinearTransformation" name="myScaling">
                 <!-- A linear transformation is parameterized -->
                 <Parameters>
-                    <Parameter name="factor" value="0.1"/>  <!-- Key, Value -->
-                    <Parameter name="offset" value="123.4"/>
+                    <Parameter name="factor" type="real" value="0.1"/>  <!-- Key, Value -->
+                    <Parameter name="offset" type="real" value="123.4"/>
                 </Parameters>
                 <Signals>
                     <Signal type="real" causality="input" name="in"/>
@@ -298,7 +298,7 @@
 
             <VariableConnection>
                 <Variable simulator="simA" name="out"/>
-                <Signal function="mySummation" index="0"/>
+                <Signal function="mySummation" name="0"/>
             </VariableConnection>
             <VariableConnection>
                 <Variable simulator="simB" name="out"/>
