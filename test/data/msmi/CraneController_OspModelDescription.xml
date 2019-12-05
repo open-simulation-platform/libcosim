@@ -1,38 +1,30 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<OspModelDescription>
-    <Sockets>
-        <Socket type="flow" name="velocity">
-            <Variables>
-                <Variable name="p_Crane.f[1]"/>
-                <Variable name="p_Crane.f[2]"/>
-                <Variable name="p_Crane.f[3]"/>
-            </Variables>
-        </Socket>
-        <Socket type="abstract" name="actuatorLimits">
-            <Variables>
-                <Variable name="Act_Limits[1]"/>
-                <Variable name="Act_Limits[2]"/>
-                <Variable name="Act_Limits[3]"/>
-            </Variables>
-        </Socket>
-    </Sockets>
-    <Plugs>
-        <Plug type="effort" name="force">
-            <Variables>
-                <Variable name="p_Crane.e[1]"/>
-                <Variable name="p_Crane.e[2]"/>
-                <Variable name="p_Crane.e[3]"/>
-            </Variables>
-        </Plug>
-    </Plugs>
-    <Bonds>
-        <Bond name="mechanical">
+<OspModelDescription xmlns="http://opensimulationplatform.com/MSMI/OSPModelDescription">
+    <VariableGroups>
+        <VariableGroup type="flow" name="velocity" causality="input">
+            <Variable name="p_Crane.f[1]"/>
+            <Variable name="p_Crane.f[2]"/>
+            <Variable name="p_Crane.f[3]"/>
+        </VariableGroup>
+        <VariableGroup type="abstract" name="actuatorLimits" causality="input">
+            <Variable name="Act_Limits[1]"/>
+            <Variable name="Act_Limits[2]"/>
+            <Variable name="Act_Limits[3]"/>
+        </VariableGroup>
+        <VariableGroup type="effort" name="force" causality="output">
+            <Variable name="p_Crane.e[1]"/>
+            <Variable name="p_Crane.e[2]"/>
+            <Variable name="p_Crane.e[3]"/>
+        </VariableGroup>
+
+        <!--<Bond name="mechanical">
             <BondSockets>
                 <BondSocket name="velocity"/>
             </BondSockets>
             <BondPlugs>
                 <BondPlug name="force"/>
             </BondPlugs>
-        </Bond>
-    </Bonds>
+        </Bond>-->
+
+    </VariableGroups>
 </OspModelDescription>

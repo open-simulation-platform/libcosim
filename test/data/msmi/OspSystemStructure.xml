@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <OspSystemStructure
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="http://opensimulationplatform.com/MSMI/OSPSystemStructure schema/OspSystemStructure.xsd"
+        xsi:schemaLocation="http://opensimulationplatform.com/MSMI/OSPSystemStructure ../../../src/cpp/xsd/OspSystemStructure.xsd"
         xmlns="http://opensimulationplatform.com/MSMI/OSPSystemStructure">
     <StartTime>0.0</StartTime>
     <BaseStepSize>1e-4</BaseStepSize>
@@ -28,25 +28,42 @@
         <Simulator name="1Identity" source="../fmi1/identity.fmu" stepSize="2.03e-4">
             <InitialValues>
                 <InitialValue variable="booleanIn">
-                    <Boolean value="1"/>
+                    <Boolean value="true"/>
                 </InitialValue>
             </InitialValues>
         </Simulator>
     </Simulators>
-    <PlugSocketConnections/>
-    <BondConnections/>
-    <VariableConnections>
-        <ScalarConnection>
-            <Source simulator="CraneController" endpoint="p_Crane.e[1]"/>
-            <Target simulator="KnuckleBoomCrane" endpoint="p_Crane.e[1]"/>
-        </ScalarConnection>
-        <SumConnection>
-            <Sources>
-                <Source simulator="KnuckleBoomCrane" endpoint="p_Crane.f[1]"/>
-                <Source simulator="KnuckleBoomCrane" endpoint="p_Crane.f[2]"/>
-                <Source simulator="KnuckleBoomCrane" endpoint="p_Crane.f[3]"/>
-            </Sources>
-            <Target simulator="CraneController" endpoint="p_Crane.f[1]"/>
-        </SumConnection>
-    </VariableConnections>
+    <Functions>
+        <Function name="mySum" type="sum">
+            <Signals>
+                <Signal name="0" type="real" causality="input"/>
+                <Signal name="1" type="real" causality="input"/>
+                <Signal name="2" type="real" causality="input"/>
+                <Signal name="sum" type="real" causality="output"/>
+            </Signals>
+        </Function>
+    </Functions>
+    <Connections>
+        <VariableConnection>
+            <Variable simulator="CraneController" name="p_Crane.e[1]"/>
+            <Variable simulator="KnuckleBoomCrane" name="p_Crane.e[1]"/>
+        </VariableConnection>
+
+        <SignalConnection>
+            <Variable simulator="KnuckleBoomCrane" name="p_Crane.f[1]"/>
+            <Signal function="mySum" name="0"/>
+        </SignalConnection>
+        <SignalConnection>
+            <Variable simulator="KnuckleBoomCrane" name="p_Crane.f[2]"/>
+            <Signal function="mySum" name="1"/>
+        </SignalConnection>
+        <SignalConnection>
+            <Variable simulator="KnuckleBoomCrane" name="p_Crane.f[3]"/>
+            <Signal function="mySum" name="1"/>
+        </SignalConnection>
+        <SignalConnection>
+            <Signal function="mySum" name="sum"/>
+            <Variable simulator="CraneController" name="p_Crane.f[1]"/>
+        </SignalConnection>
+    </Connections>
 </OspSystemStructure>
