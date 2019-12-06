@@ -122,15 +122,10 @@ public:
         cse::variable_causality causality;
     };
 
-    struct SignalGroupSignal
-    {
-        std::string name;
-    };
-
     struct SignalGroup
     {
         std::string name;
-        std::vector<SignalGroupSignal> signals;
+        std::vector<std::string> signals;
     };
 
     struct Function
@@ -181,6 +176,7 @@ private:
     SystemDescription systemDescription_;
     SimulationInformation simulationInformation_;
     std::vector<Simulator> simulators_;
+    std::unordered_map<std::string, Function> functions_;
     std::vector<SumConnection> sumConnections_;
     std::vector<ScalarConnection> scalarConnections_;
     std::vector<ScalarConnection> plugSocketConnections_;
@@ -188,6 +184,41 @@ private:
     static variable_type parse_variable_type(const std::string&);
     static bool parse_boolean_value(const std::string& s);
 };
+
+namespace
+{
+
+variable_type to_variable_type(const std::string& str)
+{
+    if ("real" == str) {
+        return cse::variable_type::real;
+    }
+    if ("integer" == str) {
+        return cse::variable_type::integer;
+    }
+    if ("boolean" == str) {
+        return cse::variable_type::boolean;
+    }
+    if ("string" == str) {
+        return cse::variable_type::string;
+    }
+    if ("enumeration" == str) {
+        return cse::variable_type::enumeration;
+    }
+    throw std::runtime_error("Failed to parse variable type: " + str);
+}
+
+variable_causality to_variable_causality(const std::string& str)
+{
+    if ("input" == str) {
+        return cse::variable_causality::input;
+    }
+    if ("output" == str) {
+        return cse::variable_causality::output;
+    }
+    throw std::runtime_error("Don't know how to handle variable causality: " + str);
+}
+} // namespace
 
 cse_config_parser::cse_config_parser(
     const boost::filesystem::path& configPath)
@@ -276,6 +307,73 @@ cse_config_parser::cse_config_parser(
             }
         }
         simulators_.push_back({name, source, stepSize, initialValues});
+    }
+
+    const auto functionsElement = static_cast<xercesc::DOMElement*>(rootElement->getElementsByTagName(tc("Functions").get())->item(0));
+    for (auto functionElement = functionsElement->getFirstElementChild(); functionElement != nullptr; functionElement = functionElement->getNextElementSibling()) {
+
+        Function function;
+
+        std::string functionName = tc(functionElement->getAttribute(tc("name").get())).get();
+        function.name = functionName;
+        std::string type = tc(functionElement->getAttribute(tc("type").get())).get();
+        function.type = type;
+
+        const auto parametersElement = static_cast<xercesc::DOMElement*>(functionElement->getElementsByTagName(tc("Parameters").get())->item(0));
+        if (parametersElement) {
+            for (auto parameterElement = parametersElement->getFirstElementChild(); parameterElement != nullptr; parameterElement = parameterElement->getNextElementSibling()) {
+
+                Parameter p = function.parameters.emplace_back();
+                p.name = tc(parameterElement->getAttribute(tc("name").get())).get();
+                std::string typeStr = tc(parameterElement->getAttribute(tc("type").get())).get();
+                p.type = to_variable_type(typeStr);
+                std::string varValue = tc(parameterElement->getAttribute(tc("value").get())).get();
+
+                switch (p.type) {
+                    case variable_type::real:
+                        p.value = boost::lexical_cast<double>(varValue);
+                        break;
+                    case variable_type::integer:
+                        p.value = boost::lexical_cast<int>(varValue);
+                        break;
+                    case variable_type::boolean:
+                        p.value = parse_boolean_value(varValue);
+                        break;
+                    case variable_type::string:
+                        p.value = varValue;
+                        break;
+                    default:
+                        std::ostringstream oss;
+                        oss << "Can't parse parameter value " << varValue
+                            << " into type " << p.type;
+                        throw std::runtime_error(oss.str());
+                }
+            }
+        }
+        const auto signalsElement = static_cast<xercesc::DOMElement*>(functionElement->getElementsByTagName(tc("Signals").get())->item(0));
+        if (signalsElement) {
+            for (auto signalElement = signalsElement->getFirstElementChild(); signalElement != nullptr; signalElement = signalElement->getNextElementSibling()) {
+                std::string name = tc(signalElement->getAttribute(tc("name").get())).get();
+                std::string typeStr = tc(signalElement->getAttribute(tc("type").get())).get();
+                auto sigType = to_variable_type(typeStr);
+                std::string causalityStr = tc(signalElement->getAttribute(tc("causality").get())).get();
+                auto sigCausality = to_variable_causality(causalityStr);
+
+                function.signals.push_back({name, sigType, sigCausality});
+            }
+        }
+
+        const auto signalGroupsElement = static_cast<xercesc::DOMElement*>(functionElement->getElementsByTagName(tc("SignalGroups").get())->item(0));
+        if (signalGroupsElement) {
+            for (auto signalGroupElement = signalGroupsElement->getFirstElementChild(); signalGroupElement != nullptr; signalGroupElement = signalGroupElement->getNextElementSibling()) {
+                SignalGroup signalGroup = function.signalGroups.emplace_back();
+                signalGroup.name = tc(signalGroupElement->getAttribute(tc("name").get())).get();
+                for (auto signalGroupSignalElement = signalGroupElement->getFirstElementChild(); signalGroupSignalElement != nullptr; signalGroupSignalElement = signalGroupSignalElement->getNextElementSibling()) {
+                    signalGroup.signals.emplace_back(tc(signalGroupSignalElement->getAttribute(tc("name").get())).get());
+                }
+            }
+        }
+        functions_[functionName] = function;
     }
 
     auto descNodes = rootElement->getElementsByTagName(tc("Description").get());

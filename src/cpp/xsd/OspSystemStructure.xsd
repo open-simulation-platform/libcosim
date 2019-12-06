@@ -150,17 +150,16 @@
                         <xs:element name="SignalGroups" minOccurs="0">
                             <xs:complexType>
                                 <xs:sequence>
-                                    <xs:element name="SignalGroup">
+                                    <xs:element name="SignalGroup" maxOccurs="unbounded">
                                         <xs:complexType>
                                             <xs:sequence>
                                                 <xs:element name="Signal" maxOccurs="unbounded">
                                                     <xs:complexType>
                                                         <xs:attribute name="name" type="xs:string" use="required"/>
-                                                        <xs:attribute name="type" type="xs:string" use="required"/>
-                                                        <xs:attribute name="causality" type="xs:string" use="required"/>
                                                     </xs:complexType>
                                                 </xs:element>
                                             </xs:sequence>
+                                            <xs:attribute name="name" use="required"/>
                                         </xs:complexType>
                                     </xs:element>
                                 </xs:sequence>

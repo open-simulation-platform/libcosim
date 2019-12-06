@@ -42,6 +42,28 @@
                 <Signal name="sum" type="real" causality="output"/>
             </Signals>
         </Function>
+        <Function type="LinearTransformation" name="myVectorScaling">
+            <Parameters>
+                <Parameter name="factor" value="0.1" type="real"/>
+                <Parameter name="offset" value="123.4" type="real"/>
+            </Parameters>
+            <Signals>
+                <Signal type="real" causality="input" name="in[0]"/>
+                <Signal type="real" causality="input" name="in[1]"/>
+                <Signal type="real" causality="output" name="out[0]"/>
+                <Signal type="real" causality="output" name="out[1]"/>
+            </Signals>
+            <SignalGroups>
+                <SignalGroup name="in">
+                    <Signal name="in[0]"/>
+                    <Signal name="in[1]"/>
+                </SignalGroup>
+                <SignalGroup name="out">
+                    <Signal name="out[0]"/>
+                    <Signal name="out[1]"/>
+                </SignalGroup>
+            </SignalGroups>
+        </Function>
     </Functions>
     <Connections>
         <VariableConnection>
