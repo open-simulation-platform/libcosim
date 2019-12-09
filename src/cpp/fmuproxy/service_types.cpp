@@ -4,7 +4,7 @@
  * DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
  *  @generated
  */
-#include <cse/fmuproxy/service_types.hpp>
+#include <cse/fmuproxy//service_types.hpp>
 
 #include <algorithm>
 #include <ostream>

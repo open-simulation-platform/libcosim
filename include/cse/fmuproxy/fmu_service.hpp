@@ -31,6 +31,7 @@ class FmuServiceIf {
   virtual void step(StepResult& _return, const InstanceId& instanceId, const double stepSize) = 0;
   virtual Status::type reset(const InstanceId& instanceId) = 0;
   virtual Status::type terminate(const InstanceId& instanceId) = 0;
+  virtual void freeInstance(const InstanceId& instanceId) = 0;
   virtual void read_integer(IntegerRead& _return, const InstanceId& instanceId, const ValueReferences& vr) = 0;
   virtual void read_real(RealRead& _return, const InstanceId& instanceId, const ValueReferences& vr) = 0;
   virtual void read_string(StringRead& _return, const InstanceId& instanceId, const ValueReferences& vr) = 0;
@@ -103,6 +104,9 @@ class FmuServiceNull : virtual public FmuServiceIf {
   Status::type terminate(const InstanceId& /* instanceId */) {
     Status::type _return = (Status::type)0;
     return _return;
+  }
+  void freeInstance(const InstanceId& /* instanceId */) {
+    return;
   }
   void read_integer(IntegerRead& /* _return */, const InstanceId& /* instanceId */, const ValueReferences& /* vr */) {
     return;
@@ -1279,6 +1283,110 @@ class FmuService_terminate_presult {
   NoSuchInstanceException ex;
 
   _FmuService_terminate_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+typedef struct _FmuService_freeInstance_args__isset {
+  _FmuService_freeInstance_args__isset() : instanceId(false) {}
+  bool instanceId :1;
+} _FmuService_freeInstance_args__isset;
+
+class FmuService_freeInstance_args {
+ public:
+
+  FmuService_freeInstance_args(const FmuService_freeInstance_args&);
+  FmuService_freeInstance_args& operator=(const FmuService_freeInstance_args&);
+  FmuService_freeInstance_args() : instanceId() {
+  }
+
+  virtual ~FmuService_freeInstance_args() throw();
+  InstanceId instanceId;
+
+  _FmuService_freeInstance_args__isset __isset;
+
+  void __set_instanceId(const InstanceId& val);
+
+  bool operator == (const FmuService_freeInstance_args & rhs) const
+  {
+    if (!(instanceId == rhs.instanceId))
+      return false;
+    return true;
+  }
+  bool operator != (const FmuService_freeInstance_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const FmuService_freeInstance_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class FmuService_freeInstance_pargs {
+ public:
+
+
+  virtual ~FmuService_freeInstance_pargs() throw();
+  const InstanceId* instanceId;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _FmuService_freeInstance_result__isset {
+  _FmuService_freeInstance_result__isset() : ex(false) {}
+  bool ex :1;
+} _FmuService_freeInstance_result__isset;
+
+class FmuService_freeInstance_result {
+ public:
+
+  FmuService_freeInstance_result(const FmuService_freeInstance_result&);
+  FmuService_freeInstance_result& operator=(const FmuService_freeInstance_result&);
+  FmuService_freeInstance_result() {
+  }
+
+  virtual ~FmuService_freeInstance_result() throw();
+  NoSuchInstanceException ex;
+
+  _FmuService_freeInstance_result__isset __isset;
+
+  void __set_ex(const NoSuchInstanceException& val);
+
+  bool operator == (const FmuService_freeInstance_result & rhs) const
+  {
+    if (!(ex == rhs.ex))
+      return false;
+    return true;
+  }
+  bool operator != (const FmuService_freeInstance_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const FmuService_freeInstance_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _FmuService_freeInstance_presult__isset {
+  _FmuService_freeInstance_presult__isset() : ex(false) {}
+  bool ex :1;
+} _FmuService_freeInstance_presult__isset;
+
+class FmuService_freeInstance_presult {
+ public:
+
+
+  virtual ~FmuService_freeInstance_presult() throw();
+  NoSuchInstanceException ex;
+
+  _FmuService_freeInstance_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
@@ -2524,6 +2632,9 @@ class FmuServiceClient : virtual public FmuServiceIf {
   Status::type terminate(const InstanceId& instanceId);
   void send_terminate(const InstanceId& instanceId);
   Status::type recv_terminate();
+  void freeInstance(const InstanceId& instanceId);
+  void send_freeInstance(const InstanceId& instanceId);
+  void recv_freeInstance();
   void read_integer(IntegerRead& _return, const InstanceId& instanceId, const ValueReferences& vr);
   void send_read_integer(const InstanceId& instanceId, const ValueReferences& vr);
   void recv_read_integer(IntegerRead& _return);
@@ -2576,6 +2687,7 @@ class FmuServiceProcessor : public ::apache::thrift::TDispatchProcessor {
   void process_step(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_reset(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_terminate(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_freeInstance(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_read_integer(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_read_real(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_read_string(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
@@ -2598,6 +2710,7 @@ class FmuServiceProcessor : public ::apache::thrift::TDispatchProcessor {
     processMap_["step"] = &FmuServiceProcessor::process_step;
     processMap_["reset"] = &FmuServiceProcessor::process_reset;
     processMap_["terminate"] = &FmuServiceProcessor::process_terminate;
+    processMap_["freeInstance"] = &FmuServiceProcessor::process_freeInstance;
     processMap_["read_integer"] = &FmuServiceProcessor::process_read_integer;
     processMap_["read_real"] = &FmuServiceProcessor::process_read_real;
     processMap_["read_string"] = &FmuServiceProcessor::process_read_string;
@@ -2728,6 +2841,15 @@ class FmuServiceMultiface : virtual public FmuServiceIf {
       ifaces_[i]->terminate(instanceId);
     }
     return ifaces_[i]->terminate(instanceId);
+  }
+
+  void freeInstance(const InstanceId& instanceId) {
+    size_t sz = ifaces_.size();
+    size_t i = 0;
+    for (; i < (sz - 1); ++i) {
+      ifaces_[i]->freeInstance(instanceId);
+    }
+    ifaces_[i]->freeInstance(instanceId);
   }
 
   void read_integer(IntegerRead& _return, const InstanceId& instanceId, const ValueReferences& vr) {
@@ -2876,6 +2998,9 @@ class FmuServiceConcurrentClient : virtual public FmuServiceIf {
   Status::type terminate(const InstanceId& instanceId);
   int32_t send_terminate(const InstanceId& instanceId);
   Status::type recv_terminate(const int32_t seqid);
+  void freeInstance(const InstanceId& instanceId);
+  int32_t send_freeInstance(const InstanceId& instanceId);
+  void recv_freeInstance(const int32_t seqid);
   void read_integer(IntegerRead& _return, const InstanceId& instanceId, const ValueReferences& vr);
   int32_t send_read_integer(const InstanceId& instanceId, const ValueReferences& vr);
   void recv_read_integer(IntegerRead& _return, const int32_t seqid);
