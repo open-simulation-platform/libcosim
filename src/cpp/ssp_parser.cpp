@@ -13,8 +13,7 @@
 
 #include <string>
 #include <variant>
-#include <vector>
-#include <memory>
+#include <optional>
 
 namespace cse
 {
@@ -334,9 +333,9 @@ std::pair<execution, simulator_map> load_ssp(
     std::optional<cse::time_point> overrideStartTime)
 {
     auto sspFile = configPath;
-    std::unique_ptr<cse::utility::temp_dir> temp_ssp_dir;
+    std::optional<cse::utility::temp_dir> temp_ssp_dir;
     if (sspFile.extension() == ".ssp") {
-        temp_ssp_dir = std::make_unique<cse::utility::temp_dir>();
+        temp_ssp_dir = cse::utility::temp_dir();
         auto archive = cse::utility::zip::archive(sspFile);
         archive.extract_all(temp_ssp_dir->path());
         sspFile = temp_ssp_dir->path();
