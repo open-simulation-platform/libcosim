@@ -1,13 +1,73 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ssd:SystemStructureDescription name="simple-cse-example" version="1.0"
                                 xmlns:ssd="http://ssp-standard.org/SSP1/SystemStructureDescription"
+                                xmlns:ssc="http://ssp-standard.org/SSP1/SystemStructureCommon"
                                 xmlns:ssv="http://ssp-standard.org/SSP1/SystemStructureParameterValues">
 
   <ssd:System name="cse-instance" description="An example of how to use Core Simulation Environment">
 
     <ssd:Elements>
-      <ssd:Component name="CraneController" source="../CraneController.fmu"/>
+      <ssd:Component name="CraneController" source="../CraneController.fmu">
+          <ssd:Connectors>
+              <ssd:Connector name="p_Crane.e[1]" kind="output">
+                  <ssc:Real/>
+              </ssd:Connector>
+              <ssd:Connector name="p_Crane.e[2]" kind="output">
+                  <ssc:Real/>
+              </ssd:Connector>
+              <ssd:Connector name="p_Crane.e[3]" kind="output">
+                  <ssc:Real/>
+              </ssd:Connector>
+              <ssd:Connector name="Act_Limits[1]" kind="input">
+                  <ssc:Real/>
+              </ssd:Connector>
+              <ssd:Connector name="Act_Limits[2]" kind="input">
+                  <ssc:Real/>
+              </ssd:Connector>
+              <ssd:Connector name="Act_Limits[3]" kind="input">
+                  <ssc:Real/>
+              </ssd:Connector>
+              <ssd:Connector name="p_Crane.f[1]" kind="input">
+                  <ssc:Real/>
+              </ssd:Connector>
+              <ssd:Connector name="p_Crane.f[2]" kind="input">
+                  <ssc:Real/>
+              </ssd:Connector>
+              <ssd:Connector name="p_Crane.f[3]" kind="input">
+                  <ssc:Real/>
+              </ssd:Connector>
+          </ssd:Connectors>
+      </ssd:Component>
       <ssd:Component name="KnuckleBoomCrane" source="../KnuckleBoomCrane.fmu">
+          <ssd:Connectors>
+              <ssd:Connector name="p_Crane.e[1]" kind="input">
+                  <ssc:Real/>
+              </ssd:Connector>
+              <ssd:Connector name="p_Crane.e[2]" kind="input">
+                  <ssc:Real/>
+              </ssd:Connector>
+              <ssd:Connector name="p_Crane.e[3]" kind="input">
+                  <ssc:Real/>
+              </ssd:Connector>
+              <ssd:Connector name="Act_Limits[1]" kind="output">
+                  <ssc:Real/>
+              </ssd:Connector>
+              <ssd:Connector name="Act_Limits[2]" kind="output">
+                  <ssc:Real/>
+              </ssd:Connector>
+              <ssd:Connector name="Act_Limits[3]" kind="output">
+                  <ssc:Real/>
+              </ssd:Connector>
+              <ssd:Connector name="p_Crane.f[1]" kind="output">
+                  <ssc:Real/>
+              </ssd:Connector>
+              <ssd:Connector name="p_Crane.f[2]" kind="output">
+                  <ssc:Real/>
+              </ssd:Connector>
+              <ssd:Connector name="p_Crane.f[3]" kind="output">
+                  <ssc:Real/>
+              </ssd:Connector>
+          </ssd:Connectors>
           <ssd:ParameterBindings>
               <ssd:ParameterBinding>
                   <ssd:ParameterValues>
