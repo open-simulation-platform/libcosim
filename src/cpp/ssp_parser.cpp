@@ -5,12 +5,15 @@
 #include "cse/exception.hpp"
 #include "cse/fmi/fmu.hpp"
 #include "cse/log/logger.hpp"
+#include <cse/utility/filesystem.hpp>
+#include <cse/utility/zip.hpp>
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 
 #include <string>
 #include <variant>
+#include <optional>
 
 namespace cse
 {
@@ -30,12 +33,31 @@ std::optional<T> get_optional_attribute(const boost::property_tree::ptree& tree,
     return result ? *result : std::optional<T>();
 }
 
+variable_type parse_connector_type(const boost::property_tree::ptree& tree)
+{
+    if (tree.get_child_optional("ssc:Real")) {
+        return variable_type::real;
+    } else if (tree.get_child_optional("ssc:Integer")) {
+        return variable_type::integer;
+    } else if (tree.get_child_optional("ssc:Boolean")) {
+        return variable_type::boolean;
+    } else if (tree.get_child_optional("ssc:String")) {
+        return variable_type::string;
+    } else if (tree.get_child_optional("ssc:Enumeration")) {
+        CSE_PANIC_M("Don't know how to handle Enumeration type!");
+    } else if (tree.get_child_optional("ssc:Binary")) {
+        CSE_PANIC_M("Don't know how to handle Binary type!");
+    } else {
+        throw std::invalid_argument("A valid connector type was not found!");
+    }
+}
+
 
 class ssp_parser
 {
 
 public:
-    explicit ssp_parser(const boost::filesystem::path& xmlPath);
+    explicit ssp_parser(const boost::filesystem::path& ssdPath);
     ~ssp_parser() noexcept;
 
     struct DefaultExperiment
@@ -47,19 +69,23 @@ public:
 
     const DefaultExperiment& get_default_experiment() const;
 
+    struct System {
+        std::string name;
+        std::optional<std::string> description;
+    };
+
     struct SystemDescription
     {
         std::string name;
         std::string version;
-        std::string systemName;
-        std::string systemDescription;
+        System system;
     };
 
     struct Connector
     {
         std::string name;
         std::string kind;
-        std::string type;
+        cse::variable_type type;
     };
 
     struct Parameter
@@ -80,42 +106,64 @@ public:
 
     const std::vector<Component>& get_elements() const;
 
+    struct LinearTransformation
+    {
+        double offset;
+        double factor;
+    };
+
     struct Connection
     {
         std::string startElement;
         std::string startConnector;
         std::string endElement;
         std::string endConnector;
+        std::optional<LinearTransformation> linearTransformation;
     };
 
     const std::vector<Connection>& get_connections() const;
 
 private:
-    boost::filesystem::path xmlPath_;
-    boost::property_tree::ptree pt_;
-
     SystemDescription systemDescription_;
     DefaultExperiment defaultExperiment_;
 
     std::vector<Component> elements_;
     std::vector<Connection> connections_;
+
+    static void parse_parameter_set(Component& e, const boost::property_tree::ptree& parameterSet)
+    {
+        for (const auto& parameter : parameterSet.get_child("ssv:Parameters")) {
+            const auto name = get_attribute<std::string>(parameter.second, "name");
+            if (const auto realParameter = parameter.second.get_child_optional("ssv:Real")) {
+                const auto value = get_attribute<double>(*realParameter, "value");
+                e.parameters.push_back({name, variable_type::real, value});
+            } else if (const auto intParameter = parameter.second.get_child_optional("ssv:Integer")) {
+                const auto value = get_attribute<int>(*intParameter, "value");
+                e.parameters.push_back({name, variable_type::integer, value});
+            } else if (const auto boolParameter = parameter.second.get_child_optional("ssv:Boolean")) {
+                const auto value = get_attribute<bool>(*boolParameter, "value");
+                e.parameters.push_back({name, variable_type::boolean, value});
+            } else if (const auto stringParameter = parameter.second.get_child_optional("ssv:String")) {
+                const auto value = get_attribute<std::string>(*stringParameter, "value");
+                e.parameters.push_back({name, variable_type::string, value});
+            } else {
+                CSE_PANIC();
+            }
+        }
+    }
 };
 
-ssp_parser::ssp_parser(const boost::filesystem::path& xmlPath)
-    : xmlPath_(xmlPath)
+ssp_parser::ssp_parser(const boost::filesystem::path& ssdPath)
 {
-    // Root node
-    std::string path = "ssd:SystemStructureDescription";
-
-    boost::property_tree::ptree tmpTree;
-    boost::property_tree::read_xml(xmlPath.string(), pt_,
+    boost::property_tree::ptree root;
+    boost::property_tree::read_xml(ssdPath.string(), root,
         boost::property_tree::xml_parser::no_comments | boost::property_tree::xml_parser::trim_whitespace);
 
-    tmpTree = pt_.get_child(path);
-    systemDescription_.name = get_attribute<std::string>(tmpTree, "name");
-    systemDescription_.version = get_attribute<std::string>(tmpTree, "version");
+    boost::property_tree::ptree ssd = root.get_child("ssd:SystemStructureDescription");
+    systemDescription_.name = get_attribute<std::string>(ssd, "name");
+    systemDescription_.version = get_attribute<std::string>(ssd, "version");
 
-    if (const auto defaultExperiment = tmpTree.get_child_optional("ssd:DefaultExperiment")) {
+    if (const auto defaultExperiment = ssd.get_child_optional("ssd:DefaultExperiment")) {
         defaultExperiment_.startTime = get_attribute<double>(*defaultExperiment, "startTime", 0.0);
         defaultExperiment_.stopTime = get_optional_attribute<double>(*defaultExperiment, "stopTime");
 
@@ -136,11 +184,11 @@ ssp_parser::ssp_parser(const boost::filesystem::path& xmlPath)
         }
     }
 
-    tmpTree = pt_.get_child(path + ".ssd:System");
-    systemDescription_.systemName = get_attribute<std::string>(tmpTree, "name");
-    systemDescription_.systemDescription = get_attribute<std::string>(tmpTree, "description");
+    boost::property_tree::ptree system = ssd.get_child("ssd:System");
+    systemDescription_.system.name = get_attribute<std::string>(system, "name");
+    systemDescription_.system.description = get_optional_attribute<std::string>(system, "description");
 
-    for (const auto& component : tmpTree.get_child("ssd:Elements")) {
+    for (const auto& component : system.get_child("ssd:Elements")) {
 
         auto& e = elements_.emplace_back();
         e.name = get_attribute<std::string>(component.second, "name");
@@ -148,37 +196,31 @@ ssp_parser::ssp_parser(const boost::filesystem::path& xmlPath)
 
         if (component.second.get_child_optional("ssd:Connectors")) {
             for (const auto& connector : component.second.get_child("ssd:Connectors")) {
-                if (connector.first == "ssd::Connector") {
+                if (connector.first == "ssd:Connector") {
                     auto& c = e.connectors.emplace_back();
                     c.name = get_attribute<std::string>(connector.second, "name");
                     c.kind = get_attribute<std::string>(connector.second, "kind");
-                    c.type = get_attribute<std::string>(connector.second, "type");
+                    c.type = parse_connector_type(connector.second);
                 }
             }
         }
 
         if (const auto parameterBindings = component.second.get_child_optional("ssd:ParameterBindings")) {
             for (const auto& parameterBinding : *parameterBindings) {
-                if (const auto parameterValues = parameterBinding.second.get_child_optional("ssd:ParameterValues")) {
-                    const auto parameterSet = parameterValues->get_child("ssv:ParameterSet");
-                    const auto parameters = parameterSet.get_child("ssv:Parameters");
-                    for (const auto& parameter : parameters) {
-                        const auto name = get_attribute<std::string>(parameter.second, "name");
-                        if (const auto realParameter = parameter.second.get_child_optional("ssv:Real")) {
-                            const auto value = get_attribute<double>(*realParameter, "value");
-                            e.parameters.push_back({name, variable_type::real, value});
-                        } else if (const auto intParameter = parameter.second.get_child_optional("ssv:Integer")) {
-                            const auto value = get_attribute<int>(*intParameter, "value");
-                            e.parameters.push_back({name, variable_type::integer, value});
-                        } else if (const auto boolParameter = parameter.second.get_child_optional("ssv:Boolean")) {
-                            const auto value = get_attribute<bool>(*boolParameter, "value");
-                            e.parameters.push_back({name, variable_type::boolean, value});
-                        } else if (const auto stringParameter = parameter.second.get_child_optional("ssv:String")) {
-                            const auto value = get_attribute<std::string>(*stringParameter, "value");
-                            e.parameters.push_back({name, variable_type::string, value});
-                        } else {
-                            CSE_PANIC();
-                        }
+                if (const auto& source = get_optional_attribute<std::string>(parameterBinding.second, "source")) {
+                    boost::property_tree::ptree binding;
+                    boost::filesystem::path ssvPath = ssdPath.parent_path() / *source;
+                    if (!boost::filesystem::exists(ssvPath)) {
+                        std::ostringstream oss;
+                        oss << "File '" << ssvPath << "' does not exists!";
+                        throw std::runtime_error(oss.str());
+                    }
+                    boost::property_tree::read_xml(ssvPath.string(), binding,
+                        boost::property_tree::xml_parser::no_comments | boost::property_tree::xml_parser::trim_whitespace);
+                    parse_parameter_set(e, binding.get_child("ssv:ParameterSet"));
+                } else {
+                    if (const auto parameterValues = parameterBinding.second.get_child_optional("ssd:ParameterValues")) {
+                        parse_parameter_set(e, parameterValues->get_child("ssv:ParameterSet"));
                     }
                 }
             }
@@ -196,13 +238,18 @@ ssp_parser::ssp_parser(const boost::filesystem::path& xmlPath)
         }
     }
 
-    if (tmpTree.get_child_optional("ssd:Connections")) {
-        for (const auto& connection : tmpTree.get_child("ssd:Connections")) {
+    if (const auto connections = system.get_child_optional("ssd:Connections")) {
+        for (const auto& connection : *connections) {
             auto& c = connections_.emplace_back();
             c.startElement = get_attribute<std::string>(connection.second, "startElement");
             c.startConnector = get_attribute<std::string>(connection.second, "startConnector");
             c.endElement = get_attribute<std::string>(connection.second, "endElement");
             c.endConnector = get_attribute<std::string>(connection.second, "endConnector");
+            if (const auto l = connection.second.get_child_optional("ssc:LinearTransformation")) {
+                auto offset = get_attribute<double>(*l, "offset", 0);
+                auto factor = get_attribute<double>(*l, "factor", 1.0);
+                c.linearTransformation = {offset, factor};
+            }
         }
     }
 }
@@ -297,8 +344,17 @@ std::pair<execution, simulator_map> load_ssp(
     std::shared_ptr<cse::algorithm> overrideAlgorithm,
     std::optional<cse::time_point> overrideStartTime)
 {
+    auto sspFile = configPath;
+    std::optional<cse::utility::temp_dir> temp_ssp_dir;
+    if (sspFile.extension() == ".ssp") {
+        temp_ssp_dir = cse::utility::temp_dir();
+        auto archive = cse::utility::zip::archive(sspFile);
+        archive.extract_all(temp_ssp_dir->path());
+        sspFile = temp_ssp_dir->path();
+    }
+
     simulator_map simulatorMap;
-    const auto absolutePath = boost::filesystem::absolute(configPath);
+    const auto absolutePath = boost::filesystem::absolute(sspFile);
     const auto configFile = boost::filesystem::is_regular_file(absolutePath)
         ? absolutePath
         : absolutePath / "SystemStructure.ssd";
@@ -360,7 +416,12 @@ std::pair<execution, simulator_map> load_ssp(
         cse::variable_id output = get_variable(slaves, connection.startElement, connection.startConnector);
         cse::variable_id input = get_variable(slaves, connection.endElement, connection.endConnector);
 
-        const auto c = std::make_shared<scalar_connection>(output, input);
+        std::shared_ptr<cse::scalar_connection> c;
+        if (const auto& l = connection.linearTransformation) {
+            c = std::make_shared<linear_transformation_connection>(output, input, l->offset, l->factor);
+        } else {
+            c = std::make_shared<scalar_connection>(output, input);
+        }
         try {
             execution.add_connection(c);
         } catch (const std::exception& e) {

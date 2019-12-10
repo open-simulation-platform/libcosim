@@ -11,6 +11,7 @@ set(publicHeaders
     "config.hpp"
     "connection.hpp"
     "connection/connection.hpp"
+    "connection/linear_transformation_connection.hpp"
     "connection/scalar_connection.hpp"
     "connection/sum_connection.hpp"
     "cse_config_parser.hpp"
@@ -61,6 +62,7 @@ set(generatedHeaders
 set(sources
     "algorithm/fixed_step_algorithm.cpp"
     "async_slave.cpp"
+    "connection/linear_transformation_connection.cpp"
     "connection/scalar_connection.cpp"
     "connection/sum_connection.cpp"
     "cse_config_parser.cpp"
@@ -159,7 +161,7 @@ target_link_libraries(csecorecpp
         gsl
         XercesC::XercesC
     PRIVATE
-        nlohmann_json
+        yaml-cpp
     )
 
 if(CSECORE_WITH_FMUPROXY)

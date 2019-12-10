@@ -13,7 +13,7 @@ RUN apt-get update && \
     libevent-dev \
     libzip-dev \
     libmsgsl-dev \
-    nlohmann-json-dev \
+    libyaml-cpp-dev \
     libxerces-c-dev \
     libxerces-c3.2 \
     && rm -rf /var/lib/apt/lists/*

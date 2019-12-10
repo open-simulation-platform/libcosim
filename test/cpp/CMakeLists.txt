@@ -7,19 +7,15 @@ set(tests
     "last_value_observer_test"
     "multi_connections_test"
     "multi_fixed_step_algorithm_test"
-    "ssp_parser_test"
-    "ssp_parser_no_algorithm_elem_test"
     "time_series_observer_test"
     "trend_buffer_test"
     "monitor_modified_variables_test"
     "scenario_manager_test"
-    "scenario_parser_test"
     "synchronized_xy_series_test"
 )
 
 if(CSECORE_WITH_FMUPROXY AND CSECORE_TEST_FMUPROXY)
     list(APPEND tests
-        "fmuproxy_test"
         "ssp_parser_fmuproxy_test"
     )
 endif()
@@ -30,6 +26,8 @@ set(unittests
     "fmi_v2_fmu_unittest"
     "model_unittest"
     "orchestration_unittest"
+    "scenario_parser_unittest"
+    "ssp_parser_unittest"
     "uri_unittest"
     "utility_concurrency_unittest"
     "utility_filesystem_unittest"

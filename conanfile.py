@@ -20,7 +20,7 @@ class CSECoreConan(ConanFile):
         "gsl_microsoft/20171020@bincrafters/stable",
         "libzip/1.5.2@bincrafters/stable",
         "zlib/1.2.11",
-        "jsonformoderncpp/3.5.0@vthiery/stable",
+        "yaml-cpp/0.6.3",
         "bzip2/1.0.8",
         "xerces-c/3.2.2"
         )
@@ -38,7 +38,7 @@ class CSECoreConan(ConanFile):
 
     def requirements(self):
         if self.options.fmuproxy:
-            self.requires("thrift/0.12.0@osp/testing")
+            self.requires("thrift/0.12.0@bincrafters/stable")
 
     def configure_cmake(self):
         cmake = CMake(self)
