@@ -157,7 +157,8 @@ public:
         VariableEndpoint variableB;
     };
 
-    struct SignalConnection {
+    struct SignalConnection
+    {
         SignalEndpoint signal;
         VariableEndpoint variable;
     };
@@ -457,7 +458,6 @@ cse_config_parser::cse_config_parser(
             signalGroupConnections_.push_back({signal, variable});
         }
     }
-
 }
 
 cse_config_parser::~cse_config_parser() noexcept = default;
@@ -585,7 +585,7 @@ struct extended_model_description
     std::unordered_map<std::string, variable_group_description> variableGroups;
 };
 
-variable_id get_variable(
+std::pair<variable_id, variable_causality> get_variable(
     const std::unordered_map<std::string, slave_info>& slaves,
     const std::string& element,
     const std::string& connector)
@@ -604,19 +604,35 @@ variable_id get_variable(
         throw std::out_of_range(oss.str());
     }
     auto variable = vdIt->second;
-    return {slave.index, variable.type, variable.reference};
+    return {{slave.index, variable.type, variable.reference}, variable.causality};
 }
 
 
 void connect_variables(
-    const std::vector<cse_config_parser::ScalarConnection>& variableConnections,
+    const std::vector<cse_config_parser::VariableConnection>& variableConnections,
     const std::unordered_map<std::string, slave_info>& slaves,
     cse::execution& execution)
 {
 
     for (const auto& connection : variableConnections) {
-        cse::variable_id output = get_variable(slaves, connection.sourceSimulator, connection.sourceConnector);
-        cse::variable_id input = get_variable(slaves, connection.targetSimulator, connection.targetConnector);
+        auto [variableIdA, causalityA] = get_variable(slaves, connection.variableA.simulator, connection.variableA.name);
+        auto [variableIdB, causalityB] = get_variable(slaves, connection.variableB.simulator, connection.variableB.name);
+
+        variable_id output;
+        variable_id input;
+        if (variable_causality::input == causalityA && variable_causality::output == causalityB) {
+            output = variableIdB;
+            input = variableIdA;
+        } else if (variable_causality::output == causalityA && variable_causality::input == causalityB) {
+            output = variableIdA;
+            input = variableIdB;
+        } else {
+            std::ostringstream oss;
+            oss << "Cannot create connection. There is a causality mismatch between variables "
+                << connection.variableA.simulator << ":" << connection.variableA.name << " (" << causalityA << ") and "
+                << connection.variableA.simulator << ":" << connection.variableA.name << " (" << causalityB << ").";
+            throw std::runtime_error(oss.str());
+        }
 
         auto c = std::make_shared<cse::scalar_connection>(output, input);
         execution.add_connection(c);
@@ -636,50 +652,52 @@ extended_model_description get_emd(
     return emdIt->second;
 }
 
-std::vector<std::string> get_plug_socket_variables(
-    const std::unordered_map<std::string, plug_socket_description>& descriptions,
+std::vector<std::string> get_variable_group_variables(
+    const std::unordered_map<std::string, variable_group_description>& descriptions,
     const std::string& element,
     const std::string& connector)
 {
-    auto psdIt = descriptions.find(connector);
-    if (psdIt == descriptions.end()) {
+    auto groupIt = descriptions.find(connector);
+    if (groupIt == descriptions.end()) {
         std::ostringstream oss;
-        oss << "Cannot find plug/socket description: " << element << ":" << connector;
+        oss << "Cannot find variable group description: " << element << ":" << connector;
         throw std::out_of_range(oss.str());
     }
-    return psdIt->second.variables;
+    return groupIt->second.variables;
 }
 
-void connect_plugs_and_sockets(
-    const std::vector<cse_config_parser::ScalarConnection>& plugSocketConnections,
+void connect_variable_groups(
+    const std::vector<cse_config_parser::VariableConnection>& variableGroupConnections,
     const std::unordered_map<std::string, slave_info>& slaves,
     cse::execution& execution,
     const std::unordered_map<std::string, extended_model_description>& emds)
 {
 
-    for (const auto& connection : plugSocketConnections) {
-        const auto& sourceEmd = get_emd(emds, connection.sourceSimulator);
-        const auto& plugVariables = get_plug_socket_variables(sourceEmd.plugs, connection.sourceSimulator, connection.sourceConnector);
-        const auto& targetEmd = get_emd(emds, connection.targetSimulator);
-        const auto& socketVariables = get_plug_socket_variables(targetEmd.sockets, connection.targetSimulator, connection.targetConnector);
+    for (const auto& connection : variableGroupConnections) {
+        const auto& emdA = get_emd(emds, connection.variableA.simulator);
+        const auto& variablesA = get_variable_group_variables(emdA.variableGroups, connection.variableA.simulator, connection.variableA.name);
+        const auto& emdB = get_emd(emds, connection.variableB.simulator);
+        const auto& variablesB = get_variable_group_variables(emdB.variableGroups, connection.variableB.simulator, connection.variableB.name);
 
-        if (plugVariables.size() != socketVariables.size()) {
+        if (variablesA.size() != variablesB.size()) {
             std::ostringstream oss;
-            oss << "Plug " << connection.sourceSimulator << ":" << connection.sourceConnector
-                << " has different size [" << plugVariables.size() << "] than the targeted socket "
-                << connection.targetSimulator << ":" << connection.targetConnector
-                << " size [" << socketVariables.size() << "]";
+            oss << "Cannot create connection between variable groups. Variable group "
+                << connection.variableA.simulator << ":" << connection.variableA.name
+                << " has different size [" << variablesA.size() << "] than variable group "
+                << connection.variableB.simulator << ":" << connection.variableB.name
+                << " size [" << variablesB.size() << "]";
             throw std::runtime_error(oss.str());
         }
 
-        std::vector<cse_config_parser::ScalarConnection> variableConnections;
+        std::vector<cse_config_parser::VariableConnection> variableConnections;
 
-        for (std::size_t i = 0; i < plugVariables.size(); ++i) {
-            variableConnections.push_back({connection.sourceSimulator,
-                plugVariables.at(i),
-                connection.targetSimulator,
-                socketVariables.at(i)});
+        // clang-format off
+        for (std::size_t i = 0; i < variablesA.size(); ++i) {
+            variableConnections.push_back({
+                {connection.variableA.simulator, variablesA.at(i)},
+                {connection.variableB.simulator, variablesB.at(i)}});
         }
+        // clang-format on
 
         connect_variables(variableConnections, slaves, execution);
     }
@@ -728,7 +746,7 @@ void connect_bonds(
                 connection.targetSimulator,
                 bondBSockets.at(i)});
         }
-        connect_plugs_and_sockets(plugSocketConnectionsA, slaves, execution, emds);
+        connect_variable_groups(plugSocketConnectionsA, slaves, execution, emds);
 
         const auto& bondASockets = get_bond_description(bondAEmd.bonds, connection.sourceSimulator, connection.sourceConnector).sockets;
         const auto& bondBPlugs = get_bond_description(bondBEmd.bonds, connection.targetSimulator, connection.targetConnector).plugs;
@@ -748,7 +766,7 @@ void connect_bonds(
                 connection.sourceSimulator,
                 bondASockets.at(i)});
         }
-        connect_plugs_and_sockets(plugSocketConnectionsB, slaves, execution, emds);
+        connect_variable_groups(plugSocketConnectionsB, slaves, execution, emds);
     }
 }
 
@@ -866,9 +884,10 @@ std::pair<execution, simulator_map> load_cse_config(
         }
     }
 
-    connect_variables(parser.get_scalar_connections(), slaves, exec);
+    connect_variables(parser.get_variable_connections(), slaves, exec);
+    connect_variable_groups(parser.get_variable_group_connections(), slaves, exec, emds);
+    // TODO: Connect functions
     connect_sum(parser.get_sum_connections(), slaves, exec);
-    connect_plugs_and_sockets(parser.get_plug_socket_connections(), slaves, exec, emds);
     connect_bonds(parser.get_bond_connections(), slaves, exec, emds);
 
     return std::make_pair(std::move(exec), std::move(simulatorMap));
