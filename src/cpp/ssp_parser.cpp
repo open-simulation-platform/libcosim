@@ -5,12 +5,15 @@
 #include "cse/exception.hpp"
 #include "cse/fmi/fmu.hpp"
 #include "cse/log/logger.hpp"
+#include <cse/utility/filesystem.hpp>
+#include <cse/utility/zip.hpp>
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 
 #include <string>
 #include <variant>
+#include <optional>
 
 namespace cse
 {
@@ -66,12 +69,16 @@ public:
 
     const DefaultExperiment& get_default_experiment() const;
 
+    struct System {
+        std::string name;
+        std::optional<std::string> description;
+    };
+
     struct SystemDescription
     {
         std::string name;
         std::string version;
-        std::string systemName;
-        std::string systemDescription;
+        System system;
     };
 
     struct Connector
@@ -177,8 +184,8 @@ ssp_parser::ssp_parser(const boost::filesystem::path& ssdPath)
     }
 
     boost::property_tree::ptree system = ssd.get_child("ssd:System");
-    systemDescription_.systemName = get_attribute<std::string>(system, "name");
-    systemDescription_.systemDescription = get_attribute<std::string>(system, "description");
+    systemDescription_.system.name = get_attribute<std::string>(system, "name");
+    systemDescription_.system.description = get_optional_attribute<std::string>(system, "description");
 
     for (const auto& component : system.get_child("ssd:Elements")) {
 
@@ -325,8 +332,17 @@ std::pair<execution, simulator_map> load_ssp(
     std::shared_ptr<cse::algorithm> overrideAlgorithm,
     std::optional<cse::time_point> overrideStartTime)
 {
+    auto sspFile = configPath;
+    std::optional<cse::utility::temp_dir> temp_ssp_dir;
+    if (sspFile.extension() == ".ssp") {
+        temp_ssp_dir = cse::utility::temp_dir();
+        auto archive = cse::utility::zip::archive(sspFile);
+        archive.extract_all(temp_ssp_dir->path());
+        sspFile = temp_ssp_dir->path();
+    }
+
     simulator_map simulatorMap;
-    const auto absolutePath = boost::filesystem::absolute(configPath);
+    const auto absolutePath = boost::filesystem::absolute(sspFile);
     const auto configFile = boost::filesystem::is_regular_file(absolutePath)
         ? absolutePath
         : absolutePath / "SystemStructure.ssd";
