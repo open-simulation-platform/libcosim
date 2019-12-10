@@ -53,7 +53,6 @@ variable_type parse_connector_type(const boost::property_tree::ptree& tree)
     }
 }
 
-std::vector<std::unique_ptr<cse::utility::temp_dir>> temp_dirs__;
 
 class ssp_parser
 {
@@ -335,12 +334,12 @@ std::pair<execution, simulator_map> load_ssp(
     std::optional<cse::time_point> overrideStartTime)
 {
     auto sspFile = configPath;
+    std::unique_ptr<cse::utility::temp_dir> temp_ssp_dir;
     if (sspFile.extension() == ".ssp") {
-        auto temp = std::make_unique<cse::utility::temp_dir>();
+        temp_ssp_dir = std::make_unique<cse::utility::temp_dir>();
         auto archive = cse::utility::zip::archive(sspFile);
-        archive.extract_all(temp->path());
-        sspFile = temp->path();
-        temp_dirs__.push_back(std::move(temp)); //avoid deletion until program exit
+        archive.extract_all(temp_ssp_dir->path());
+        sspFile = temp_ssp_dir->path();
     }
 
     simulator_map simulatorMap;
