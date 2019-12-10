@@ -891,7 +891,13 @@ std::pair<execution, simulator_map> load_cse_config(
     connect_signals(parser.get_functions(), parser.get_signal_connections(), slaves, exec);
 
     // TODO: Connect signal groups - probably needs to be flattened and merged with signals
-
+    const auto& signalGroupConnections = parser.get_signal_group_connections();
+    if (!signalGroupConnections.empty()) {
+        std::ostringstream oss;
+        oss << "Found " << signalGroupConnections.size() << " signal group connections, "
+            << "but don't know how to handle these yet";
+        throw std::invalid_argument(oss.str());
+    }
 
     return std::make_pair(std::move(exec), std::move(simulatorMap));
 }
