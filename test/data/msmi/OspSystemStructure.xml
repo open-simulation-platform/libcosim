@@ -81,7 +81,7 @@
         </SignalConnection>
         <SignalConnection>
             <Variable simulator="KnuckleBoomCrane" name="p_Crane.f[3]"/>
-            <Signal function="mySum" name="1"/>
+            <Signal function="mySum" name="2"/>
         </SignalConnection>
         <SignalConnection>
             <Signal function="mySum" name="sum"/>
