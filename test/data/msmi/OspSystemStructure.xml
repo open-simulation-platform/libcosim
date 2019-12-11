@@ -42,27 +42,15 @@
                 <Signal name="sum" type="real" causality="output"/>
             </Signals>
         </Function>
-        <Function type="LinearTransformation" name="myVectorScaling">
+        <Function type="lineartransformation" name="myScaling">
             <Parameters>
                 <Parameter name="factor" value="0.1" type="real"/>
                 <Parameter name="offset" value="123.4" type="real"/>
             </Parameters>
             <Signals>
-                <Signal type="real" causality="input" name="in[0]"/>
-                <Signal type="real" causality="input" name="in[1]"/>
-                <Signal type="real" causality="output" name="out[0]"/>
-                <Signal type="real" causality="output" name="out[1]"/>
+                <Signal type="real" causality="input" name="in"/>
+                <Signal type="real" causality="output" name="out"/>
             </Signals>
-            <SignalGroups>
-                <SignalGroup name="in">
-                    <Signal name="in[0]"/>
-                    <Signal name="in[1]"/>
-                </SignalGroup>
-                <SignalGroup name="out">
-                    <Signal name="out[0]"/>
-                    <Signal name="out[1]"/>
-                </SignalGroup>
-            </SignalGroups>
         </Function>
     </Functions>
     <Connections>
@@ -86,6 +74,15 @@
         <SignalConnection>
             <Signal function="mySum" name="sum"/>
             <Variable simulator="CraneController" name="p_Crane.f[1]"/>
+        </SignalConnection>
+
+        <SignalConnection>
+            <Variable simulator="TrueIdentity" name="realOut"/>
+            <Signal function="myScaling" name="in"/>
+        </SignalConnection>
+        <SignalConnection>
+            <Signal function="myScaling" name="out"/>
+            <Variable simulator="1Identity" name="realIn"/>
         </SignalConnection>
     </Connections>
 </OspSystemStructure>

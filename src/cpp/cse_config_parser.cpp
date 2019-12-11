@@ -735,6 +735,20 @@ cse_config_parser::Signal get_signal(
     return *signalIt;
 }
 
+std::optional<cse_config_parser::Parameter> find_parameter(
+    std::vector<cse_config_parser::Parameter> params,
+    const std::string& parameterName)
+{
+    auto paramIt = std::find_if(
+        params.begin(),
+        params.end(),
+        [&parameterName](const auto& param) { return parameterName == param.name; });
+    if (paramIt == params.end()) {
+        return std::nullopt;
+    }
+    return *paramIt;
+}
+
 void connect_signals(
     const std::unordered_map<std::string, cse_config_parser::Function>& functions,
     const std::vector<cse_config_parser::SignalConnection>& signalConnections,
@@ -749,7 +763,8 @@ void connect_signals(
         auto [variableId, variableCausality] =
             get_variable(slaves, signalConnection.variable.simulator, signalConnection.variable.name);
 
-        // This is a reduction of available information to fit with the current cse::connection classes.
+        // This is a reduction of available information to fit the current architecture.
+        // Signal names are ignored because they do not exist in the cse::connection classes.
         if (variable_causality::input == signal.causality && variable_causality::output == variableCausality) {
             functionSources[signalConnection.signal.function].push_back(variableId);
         } else if (variable_causality::output == signal.causality && variable_causality::input == variableCausality) {
@@ -779,6 +794,20 @@ void connect_signals(
                 }
                 auto sumConnection = std::make_shared<sum_connection>(sources, targets.front());
                 execution.add_connection(sumConnection);
+            } else if ("lineartransformation" == function.type) {
+                if (targets.size() != 1 || sources.size() != 1) {
+                    std::ostringstream oss;
+                    oss << "Linear transforation functions only support single input and output, "
+                        << " but found " << sources.size() << " inputs and " << targets.size() << " outputs";
+                    throw std::runtime_error(oss.str());
+                }
+                auto factor = find_parameter(function.parameters, "factor");
+                double factorValue = factor ? std::get<double>((*factor).value) : 0.0;
+                auto offset = find_parameter(function.parameters, "offset");
+                double offsetValue = factor ? std::get<double>((*offset).value) : 0.0;
+                auto ltConnection = std::make_shared<linear_transformation_connection>(
+                    sources.front(), targets.front(), offsetValue, factorValue);
+                execution.add_connection(ltConnection);
             } else {
                 std::ostringstream oss;
                 oss << "Unkown function type " << function.type << " for function with name " << functionName;
@@ -890,7 +919,7 @@ std::pair<execution, simulator_map> load_cse_config(
     connect_variable_groups(parser.get_variable_group_connections(), slaves, exec, emds);
     connect_signals(parser.get_functions(), parser.get_signal_connections(), slaves, exec);
 
-    // TODO: Connect signal groups - probably needs to be flattened and merged with signals
+    // TODO: Connect signal groups - but need cse::connection classes that can handle this
     const auto& signalGroupConnections = parser.get_signal_group_connections();
     if (!signalGroupConnections.empty()) {
         std::ostringstream oss;
