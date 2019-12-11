@@ -1,21 +1,7 @@
-
-#include "cse/fmuproxy/fmuproxy_helper.hpp"
 #include <cse/error.hpp>
+#include <cse/fmuproxy/fmuproxy_helper.hpp>
 #include <cse/fmuproxy/remote_fmu.hpp>
 #include <cse/fmuproxy/remote_slave.hpp>
-
-#ifdef _MSC_VER
-#    pragma warning(push)
-#    pragma warning(disable : 4245)
-#endif
-
-#include <thrift/protocol/TBinaryProtocol.h>
-#include <thrift/transport/TSocketPool.h>
-#include <thrift/transport/TTransportUtils.h>
-
-#ifdef _MSC_VER
-#    pragma warning(pop)
-#endif
 
 using namespace fmuproxy::thrift;
 using namespace apache::thrift::transport;
@@ -40,7 +26,7 @@ std::shared_ptr<const cse::model_description> cse::fmuproxy::remote_fmu::descrip
 std::shared_ptr<cse::slave> cse::fmuproxy::remote_fmu::instantiate_slave()
 {
     InstanceId instanceId;
-    state_->client().create_instance_from_cs(instanceId, fmuId_);
+    state_->client().create_instance(instanceId, fmuId_);
     return std::make_shared<cse::fmuproxy::remote_slave>(instanceId, state_, modelDescription_);
 }
 

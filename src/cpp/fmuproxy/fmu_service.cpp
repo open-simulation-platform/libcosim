@@ -606,218 +606,11 @@ uint32_t FmuService_get_model_description_presult::read(::apache::thrift::protoc
 }
 
 
-FmuService_get_co_simulation_attributes_args::~FmuService_get_co_simulation_attributes_args() throw() {
+FmuService_create_instance_args::~FmuService_create_instance_args() throw() {
 }
 
 
-uint32_t FmuService_get_co_simulation_attributes_args::read(::apache::thrift::protocol::TProtocol* iprot) {
-
-  ::apache::thrift::protocol::TInputRecursionTracker tracker(*iprot);
-  uint32_t xfer = 0;
-  std::string fname;
-  ::apache::thrift::protocol::TType ftype;
-  int16_t fid;
-
-  xfer += iprot->readStructBegin(fname);
-
-  using ::apache::thrift::protocol::TProtocolException;
-
-
-  while (true)
-  {
-    xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == ::apache::thrift::protocol::T_STOP) {
-      break;
-    }
-    switch (fid)
-    {
-      case 1:
-        if (ftype == ::apache::thrift::protocol::T_STRING) {
-          xfer += iprot->readString(this->instanceId);
-          this->__isset.instanceId = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      default:
-        xfer += iprot->skip(ftype);
-        break;
-    }
-    xfer += iprot->readFieldEnd();
-  }
-
-  xfer += iprot->readStructEnd();
-
-  return xfer;
-}
-
-uint32_t FmuService_get_co_simulation_attributes_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
-  uint32_t xfer = 0;
-  ::apache::thrift::protocol::TOutputRecursionTracker tracker(*oprot);
-  xfer += oprot->writeStructBegin("FmuService_get_co_simulation_attributes_args");
-
-  xfer += oprot->writeFieldBegin("instanceId", ::apache::thrift::protocol::T_STRING, 1);
-  xfer += oprot->writeString(this->instanceId);
-  xfer += oprot->writeFieldEnd();
-
-  xfer += oprot->writeFieldStop();
-  xfer += oprot->writeStructEnd();
-  return xfer;
-}
-
-
-FmuService_get_co_simulation_attributes_pargs::~FmuService_get_co_simulation_attributes_pargs() throw() {
-}
-
-
-uint32_t FmuService_get_co_simulation_attributes_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
-  uint32_t xfer = 0;
-  ::apache::thrift::protocol::TOutputRecursionTracker tracker(*oprot);
-  xfer += oprot->writeStructBegin("FmuService_get_co_simulation_attributes_pargs");
-
-  xfer += oprot->writeFieldBegin("instanceId", ::apache::thrift::protocol::T_STRING, 1);
-  xfer += oprot->writeString((*(this->instanceId)));
-  xfer += oprot->writeFieldEnd();
-
-  xfer += oprot->writeFieldStop();
-  xfer += oprot->writeStructEnd();
-  return xfer;
-}
-
-
-FmuService_get_co_simulation_attributes_result::~FmuService_get_co_simulation_attributes_result() throw() {
-}
-
-
-uint32_t FmuService_get_co_simulation_attributes_result::read(::apache::thrift::protocol::TProtocol* iprot) {
-
-  ::apache::thrift::protocol::TInputRecursionTracker tracker(*iprot);
-  uint32_t xfer = 0;
-  std::string fname;
-  ::apache::thrift::protocol::TType ftype;
-  int16_t fid;
-
-  xfer += iprot->readStructBegin(fname);
-
-  using ::apache::thrift::protocol::TProtocolException;
-
-
-  while (true)
-  {
-    xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == ::apache::thrift::protocol::T_STOP) {
-      break;
-    }
-    switch (fid)
-    {
-      case 0:
-        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
-          xfer += this->success.read(iprot);
-          this->__isset.success = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      case 1:
-        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
-          xfer += this->ex.read(iprot);
-          this->__isset.ex = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      default:
-        xfer += iprot->skip(ftype);
-        break;
-    }
-    xfer += iprot->readFieldEnd();
-  }
-
-  xfer += iprot->readStructEnd();
-
-  return xfer;
-}
-
-uint32_t FmuService_get_co_simulation_attributes_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
-
-  uint32_t xfer = 0;
-
-  xfer += oprot->writeStructBegin("FmuService_get_co_simulation_attributes_result");
-
-  if (this->__isset.success) {
-    xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_STRUCT, 0);
-    xfer += this->success.write(oprot);
-    xfer += oprot->writeFieldEnd();
-  } else if (this->__isset.ex) {
-    xfer += oprot->writeFieldBegin("ex", ::apache::thrift::protocol::T_STRUCT, 1);
-    xfer += this->ex.write(oprot);
-    xfer += oprot->writeFieldEnd();
-  }
-  xfer += oprot->writeFieldStop();
-  xfer += oprot->writeStructEnd();
-  return xfer;
-}
-
-
-FmuService_get_co_simulation_attributes_presult::~FmuService_get_co_simulation_attributes_presult() throw() {
-}
-
-
-uint32_t FmuService_get_co_simulation_attributes_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
-
-  ::apache::thrift::protocol::TInputRecursionTracker tracker(*iprot);
-  uint32_t xfer = 0;
-  std::string fname;
-  ::apache::thrift::protocol::TType ftype;
-  int16_t fid;
-
-  xfer += iprot->readStructBegin(fname);
-
-  using ::apache::thrift::protocol::TProtocolException;
-
-
-  while (true)
-  {
-    xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == ::apache::thrift::protocol::T_STOP) {
-      break;
-    }
-    switch (fid)
-    {
-      case 0:
-        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
-          xfer += (*(this->success)).read(iprot);
-          this->__isset.success = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      case 1:
-        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
-          xfer += this->ex.read(iprot);
-          this->__isset.ex = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      default:
-        xfer += iprot->skip(ftype);
-        break;
-    }
-    xfer += iprot->readFieldEnd();
-  }
-
-  xfer += iprot->readStructEnd();
-
-  return xfer;
-}
-
-
-FmuService_can_create_instance_from_cs_args::~FmuService_can_create_instance_from_cs_args() throw() {
-}
-
-
-uint32_t FmuService_can_create_instance_from_cs_args::read(::apache::thrift::protocol::TProtocol* iprot) {
+uint32_t FmuService_create_instance_args::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   ::apache::thrift::protocol::TInputRecursionTracker tracker(*iprot);
   uint32_t xfer = 0;
@@ -858,10 +651,10 @@ uint32_t FmuService_can_create_instance_from_cs_args::read(::apache::thrift::pro
   return xfer;
 }
 
-uint32_t FmuService_can_create_instance_from_cs_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t FmuService_create_instance_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   ::apache::thrift::protocol::TOutputRecursionTracker tracker(*oprot);
-  xfer += oprot->writeStructBegin("FmuService_can_create_instance_from_cs_args");
+  xfer += oprot->writeStructBegin("FmuService_create_instance_args");
 
   xfer += oprot->writeFieldBegin("fmuId", ::apache::thrift::protocol::T_STRING, 1);
   xfer += oprot->writeString(this->fmuId);
@@ -873,14 +666,14 @@ uint32_t FmuService_can_create_instance_from_cs_args::write(::apache::thrift::pr
 }
 
 
-FmuService_can_create_instance_from_cs_pargs::~FmuService_can_create_instance_from_cs_pargs() throw() {
+FmuService_create_instance_pargs::~FmuService_create_instance_pargs() throw() {
 }
 
 
-uint32_t FmuService_can_create_instance_from_cs_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t FmuService_create_instance_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   ::apache::thrift::protocol::TOutputRecursionTracker tracker(*oprot);
-  xfer += oprot->writeStructBegin("FmuService_can_create_instance_from_cs_pargs");
+  xfer += oprot->writeStructBegin("FmuService_create_instance_pargs");
 
   xfer += oprot->writeFieldBegin("fmuId", ::apache::thrift::protocol::T_STRING, 1);
   xfer += oprot->writeString((*(this->fmuId)));
@@ -892,425 +685,11 @@ uint32_t FmuService_can_create_instance_from_cs_pargs::write(::apache::thrift::p
 }
 
 
-FmuService_can_create_instance_from_cs_result::~FmuService_can_create_instance_from_cs_result() throw() {
+FmuService_create_instance_result::~FmuService_create_instance_result() throw() {
 }
 
 
-uint32_t FmuService_can_create_instance_from_cs_result::read(::apache::thrift::protocol::TProtocol* iprot) {
-
-  ::apache::thrift::protocol::TInputRecursionTracker tracker(*iprot);
-  uint32_t xfer = 0;
-  std::string fname;
-  ::apache::thrift::protocol::TType ftype;
-  int16_t fid;
-
-  xfer += iprot->readStructBegin(fname);
-
-  using ::apache::thrift::protocol::TProtocolException;
-
-
-  while (true)
-  {
-    xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == ::apache::thrift::protocol::T_STOP) {
-      break;
-    }
-    switch (fid)
-    {
-      case 0:
-        if (ftype == ::apache::thrift::protocol::T_BOOL) {
-          xfer += iprot->readBool(this->success);
-          this->__isset.success = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      case 1:
-        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
-          xfer += this->ex.read(iprot);
-          this->__isset.ex = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      default:
-        xfer += iprot->skip(ftype);
-        break;
-    }
-    xfer += iprot->readFieldEnd();
-  }
-
-  xfer += iprot->readStructEnd();
-
-  return xfer;
-}
-
-uint32_t FmuService_can_create_instance_from_cs_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
-
-  uint32_t xfer = 0;
-
-  xfer += oprot->writeStructBegin("FmuService_can_create_instance_from_cs_result");
-
-  if (this->__isset.success) {
-    xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_BOOL, 0);
-    xfer += oprot->writeBool(this->success);
-    xfer += oprot->writeFieldEnd();
-  } else if (this->__isset.ex) {
-    xfer += oprot->writeFieldBegin("ex", ::apache::thrift::protocol::T_STRUCT, 1);
-    xfer += this->ex.write(oprot);
-    xfer += oprot->writeFieldEnd();
-  }
-  xfer += oprot->writeFieldStop();
-  xfer += oprot->writeStructEnd();
-  return xfer;
-}
-
-
-FmuService_can_create_instance_from_cs_presult::~FmuService_can_create_instance_from_cs_presult() throw() {
-}
-
-
-uint32_t FmuService_can_create_instance_from_cs_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
-
-  ::apache::thrift::protocol::TInputRecursionTracker tracker(*iprot);
-  uint32_t xfer = 0;
-  std::string fname;
-  ::apache::thrift::protocol::TType ftype;
-  int16_t fid;
-
-  xfer += iprot->readStructBegin(fname);
-
-  using ::apache::thrift::protocol::TProtocolException;
-
-
-  while (true)
-  {
-    xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == ::apache::thrift::protocol::T_STOP) {
-      break;
-    }
-    switch (fid)
-    {
-      case 0:
-        if (ftype == ::apache::thrift::protocol::T_BOOL) {
-          xfer += iprot->readBool((*(this->success)));
-          this->__isset.success = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      case 1:
-        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
-          xfer += this->ex.read(iprot);
-          this->__isset.ex = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      default:
-        xfer += iprot->skip(ftype);
-        break;
-    }
-    xfer += iprot->readFieldEnd();
-  }
-
-  xfer += iprot->readStructEnd();
-
-  return xfer;
-}
-
-
-FmuService_can_create_instance_from_me_args::~FmuService_can_create_instance_from_me_args() throw() {
-}
-
-
-uint32_t FmuService_can_create_instance_from_me_args::read(::apache::thrift::protocol::TProtocol* iprot) {
-
-  ::apache::thrift::protocol::TInputRecursionTracker tracker(*iprot);
-  uint32_t xfer = 0;
-  std::string fname;
-  ::apache::thrift::protocol::TType ftype;
-  int16_t fid;
-
-  xfer += iprot->readStructBegin(fname);
-
-  using ::apache::thrift::protocol::TProtocolException;
-
-
-  while (true)
-  {
-    xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == ::apache::thrift::protocol::T_STOP) {
-      break;
-    }
-    switch (fid)
-    {
-      case 1:
-        if (ftype == ::apache::thrift::protocol::T_STRING) {
-          xfer += iprot->readString(this->fmuId);
-          this->__isset.fmuId = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      default:
-        xfer += iprot->skip(ftype);
-        break;
-    }
-    xfer += iprot->readFieldEnd();
-  }
-
-  xfer += iprot->readStructEnd();
-
-  return xfer;
-}
-
-uint32_t FmuService_can_create_instance_from_me_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
-  uint32_t xfer = 0;
-  ::apache::thrift::protocol::TOutputRecursionTracker tracker(*oprot);
-  xfer += oprot->writeStructBegin("FmuService_can_create_instance_from_me_args");
-
-  xfer += oprot->writeFieldBegin("fmuId", ::apache::thrift::protocol::T_STRING, 1);
-  xfer += oprot->writeString(this->fmuId);
-  xfer += oprot->writeFieldEnd();
-
-  xfer += oprot->writeFieldStop();
-  xfer += oprot->writeStructEnd();
-  return xfer;
-}
-
-
-FmuService_can_create_instance_from_me_pargs::~FmuService_can_create_instance_from_me_pargs() throw() {
-}
-
-
-uint32_t FmuService_can_create_instance_from_me_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
-  uint32_t xfer = 0;
-  ::apache::thrift::protocol::TOutputRecursionTracker tracker(*oprot);
-  xfer += oprot->writeStructBegin("FmuService_can_create_instance_from_me_pargs");
-
-  xfer += oprot->writeFieldBegin("fmuId", ::apache::thrift::protocol::T_STRING, 1);
-  xfer += oprot->writeString((*(this->fmuId)));
-  xfer += oprot->writeFieldEnd();
-
-  xfer += oprot->writeFieldStop();
-  xfer += oprot->writeStructEnd();
-  return xfer;
-}
-
-
-FmuService_can_create_instance_from_me_result::~FmuService_can_create_instance_from_me_result() throw() {
-}
-
-
-uint32_t FmuService_can_create_instance_from_me_result::read(::apache::thrift::protocol::TProtocol* iprot) {
-
-  ::apache::thrift::protocol::TInputRecursionTracker tracker(*iprot);
-  uint32_t xfer = 0;
-  std::string fname;
-  ::apache::thrift::protocol::TType ftype;
-  int16_t fid;
-
-  xfer += iprot->readStructBegin(fname);
-
-  using ::apache::thrift::protocol::TProtocolException;
-
-
-  while (true)
-  {
-    xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == ::apache::thrift::protocol::T_STOP) {
-      break;
-    }
-    switch (fid)
-    {
-      case 0:
-        if (ftype == ::apache::thrift::protocol::T_BOOL) {
-          xfer += iprot->readBool(this->success);
-          this->__isset.success = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      case 1:
-        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
-          xfer += this->ex.read(iprot);
-          this->__isset.ex = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      default:
-        xfer += iprot->skip(ftype);
-        break;
-    }
-    xfer += iprot->readFieldEnd();
-  }
-
-  xfer += iprot->readStructEnd();
-
-  return xfer;
-}
-
-uint32_t FmuService_can_create_instance_from_me_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
-
-  uint32_t xfer = 0;
-
-  xfer += oprot->writeStructBegin("FmuService_can_create_instance_from_me_result");
-
-  if (this->__isset.success) {
-    xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_BOOL, 0);
-    xfer += oprot->writeBool(this->success);
-    xfer += oprot->writeFieldEnd();
-  } else if (this->__isset.ex) {
-    xfer += oprot->writeFieldBegin("ex", ::apache::thrift::protocol::T_STRUCT, 1);
-    xfer += this->ex.write(oprot);
-    xfer += oprot->writeFieldEnd();
-  }
-  xfer += oprot->writeFieldStop();
-  xfer += oprot->writeStructEnd();
-  return xfer;
-}
-
-
-FmuService_can_create_instance_from_me_presult::~FmuService_can_create_instance_from_me_presult() throw() {
-}
-
-
-uint32_t FmuService_can_create_instance_from_me_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
-
-  ::apache::thrift::protocol::TInputRecursionTracker tracker(*iprot);
-  uint32_t xfer = 0;
-  std::string fname;
-  ::apache::thrift::protocol::TType ftype;
-  int16_t fid;
-
-  xfer += iprot->readStructBegin(fname);
-
-  using ::apache::thrift::protocol::TProtocolException;
-
-
-  while (true)
-  {
-    xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == ::apache::thrift::protocol::T_STOP) {
-      break;
-    }
-    switch (fid)
-    {
-      case 0:
-        if (ftype == ::apache::thrift::protocol::T_BOOL) {
-          xfer += iprot->readBool((*(this->success)));
-          this->__isset.success = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      case 1:
-        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
-          xfer += this->ex.read(iprot);
-          this->__isset.ex = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      default:
-        xfer += iprot->skip(ftype);
-        break;
-    }
-    xfer += iprot->readFieldEnd();
-  }
-
-  xfer += iprot->readStructEnd();
-
-  return xfer;
-}
-
-
-FmuService_create_instance_from_cs_args::~FmuService_create_instance_from_cs_args() throw() {
-}
-
-
-uint32_t FmuService_create_instance_from_cs_args::read(::apache::thrift::protocol::TProtocol* iprot) {
-
-  ::apache::thrift::protocol::TInputRecursionTracker tracker(*iprot);
-  uint32_t xfer = 0;
-  std::string fname;
-  ::apache::thrift::protocol::TType ftype;
-  int16_t fid;
-
-  xfer += iprot->readStructBegin(fname);
-
-  using ::apache::thrift::protocol::TProtocolException;
-
-
-  while (true)
-  {
-    xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == ::apache::thrift::protocol::T_STOP) {
-      break;
-    }
-    switch (fid)
-    {
-      case 1:
-        if (ftype == ::apache::thrift::protocol::T_STRING) {
-          xfer += iprot->readString(this->fmuId);
-          this->__isset.fmuId = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      default:
-        xfer += iprot->skip(ftype);
-        break;
-    }
-    xfer += iprot->readFieldEnd();
-  }
-
-  xfer += iprot->readStructEnd();
-
-  return xfer;
-}
-
-uint32_t FmuService_create_instance_from_cs_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
-  uint32_t xfer = 0;
-  ::apache::thrift::protocol::TOutputRecursionTracker tracker(*oprot);
-  xfer += oprot->writeStructBegin("FmuService_create_instance_from_cs_args");
-
-  xfer += oprot->writeFieldBegin("fmuId", ::apache::thrift::protocol::T_STRING, 1);
-  xfer += oprot->writeString(this->fmuId);
-  xfer += oprot->writeFieldEnd();
-
-  xfer += oprot->writeFieldStop();
-  xfer += oprot->writeStructEnd();
-  return xfer;
-}
-
-
-FmuService_create_instance_from_cs_pargs::~FmuService_create_instance_from_cs_pargs() throw() {
-}
-
-
-uint32_t FmuService_create_instance_from_cs_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
-  uint32_t xfer = 0;
-  ::apache::thrift::protocol::TOutputRecursionTracker tracker(*oprot);
-  xfer += oprot->writeStructBegin("FmuService_create_instance_from_cs_pargs");
-
-  xfer += oprot->writeFieldBegin("fmuId", ::apache::thrift::protocol::T_STRING, 1);
-  xfer += oprot->writeString((*(this->fmuId)));
-  xfer += oprot->writeFieldEnd();
-
-  xfer += oprot->writeFieldStop();
-  xfer += oprot->writeStructEnd();
-  return xfer;
-}
-
-
-FmuService_create_instance_from_cs_result::~FmuService_create_instance_from_cs_result() throw() {
-}
-
-
-uint32_t FmuService_create_instance_from_cs_result::read(::apache::thrift::protocol::TProtocol* iprot) {
+uint32_t FmuService_create_instance_result::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   ::apache::thrift::protocol::TInputRecursionTracker tracker(*iprot);
   uint32_t xfer = 0;
@@ -1367,11 +746,11 @@ uint32_t FmuService_create_instance_from_cs_result::read(::apache::thrift::proto
   return xfer;
 }
 
-uint32_t FmuService_create_instance_from_cs_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
+uint32_t FmuService_create_instance_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
 
   uint32_t xfer = 0;
 
-  xfer += oprot->writeStructBegin("FmuService_create_instance_from_cs_result");
+  xfer += oprot->writeStructBegin("FmuService_create_instance_result");
 
   if (this->__isset.success) {
     xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_STRING, 0);
@@ -1392,254 +771,11 @@ uint32_t FmuService_create_instance_from_cs_result::write(::apache::thrift::prot
 }
 
 
-FmuService_create_instance_from_cs_presult::~FmuService_create_instance_from_cs_presult() throw() {
+FmuService_create_instance_presult::~FmuService_create_instance_presult() throw() {
 }
 
 
-uint32_t FmuService_create_instance_from_cs_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
-
-  ::apache::thrift::protocol::TInputRecursionTracker tracker(*iprot);
-  uint32_t xfer = 0;
-  std::string fname;
-  ::apache::thrift::protocol::TType ftype;
-  int16_t fid;
-
-  xfer += iprot->readStructBegin(fname);
-
-  using ::apache::thrift::protocol::TProtocolException;
-
-
-  while (true)
-  {
-    xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == ::apache::thrift::protocol::T_STOP) {
-      break;
-    }
-    switch (fid)
-    {
-      case 0:
-        if (ftype == ::apache::thrift::protocol::T_STRING) {
-          xfer += iprot->readString((*(this->success)));
-          this->__isset.success = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      case 1:
-        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
-          xfer += this->ex1.read(iprot);
-          this->__isset.ex1 = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      case 2:
-        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
-          xfer += this->ex2.read(iprot);
-          this->__isset.ex2 = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      default:
-        xfer += iprot->skip(ftype);
-        break;
-    }
-    xfer += iprot->readFieldEnd();
-  }
-
-  xfer += iprot->readStructEnd();
-
-  return xfer;
-}
-
-
-FmuService_create_instance_from_me_args::~FmuService_create_instance_from_me_args() throw() {
-}
-
-
-uint32_t FmuService_create_instance_from_me_args::read(::apache::thrift::protocol::TProtocol* iprot) {
-
-  ::apache::thrift::protocol::TInputRecursionTracker tracker(*iprot);
-  uint32_t xfer = 0;
-  std::string fname;
-  ::apache::thrift::protocol::TType ftype;
-  int16_t fid;
-
-  xfer += iprot->readStructBegin(fname);
-
-  using ::apache::thrift::protocol::TProtocolException;
-
-
-  while (true)
-  {
-    xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == ::apache::thrift::protocol::T_STOP) {
-      break;
-    }
-    switch (fid)
-    {
-      case 1:
-        if (ftype == ::apache::thrift::protocol::T_STRING) {
-          xfer += iprot->readString(this->fmuId);
-          this->__isset.fmuId = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      case 2:
-        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
-          xfer += this->solver.read(iprot);
-          this->__isset.solver = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      default:
-        xfer += iprot->skip(ftype);
-        break;
-    }
-    xfer += iprot->readFieldEnd();
-  }
-
-  xfer += iprot->readStructEnd();
-
-  return xfer;
-}
-
-uint32_t FmuService_create_instance_from_me_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
-  uint32_t xfer = 0;
-  ::apache::thrift::protocol::TOutputRecursionTracker tracker(*oprot);
-  xfer += oprot->writeStructBegin("FmuService_create_instance_from_me_args");
-
-  xfer += oprot->writeFieldBegin("fmuId", ::apache::thrift::protocol::T_STRING, 1);
-  xfer += oprot->writeString(this->fmuId);
-  xfer += oprot->writeFieldEnd();
-
-  xfer += oprot->writeFieldBegin("solver", ::apache::thrift::protocol::T_STRUCT, 2);
-  xfer += this->solver.write(oprot);
-  xfer += oprot->writeFieldEnd();
-
-  xfer += oprot->writeFieldStop();
-  xfer += oprot->writeStructEnd();
-  return xfer;
-}
-
-
-FmuService_create_instance_from_me_pargs::~FmuService_create_instance_from_me_pargs() throw() {
-}
-
-
-uint32_t FmuService_create_instance_from_me_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
-  uint32_t xfer = 0;
-  ::apache::thrift::protocol::TOutputRecursionTracker tracker(*oprot);
-  xfer += oprot->writeStructBegin("FmuService_create_instance_from_me_pargs");
-
-  xfer += oprot->writeFieldBegin("fmuId", ::apache::thrift::protocol::T_STRING, 1);
-  xfer += oprot->writeString((*(this->fmuId)));
-  xfer += oprot->writeFieldEnd();
-
-  xfer += oprot->writeFieldBegin("solver", ::apache::thrift::protocol::T_STRUCT, 2);
-  xfer += (*(this->solver)).write(oprot);
-  xfer += oprot->writeFieldEnd();
-
-  xfer += oprot->writeFieldStop();
-  xfer += oprot->writeStructEnd();
-  return xfer;
-}
-
-
-FmuService_create_instance_from_me_result::~FmuService_create_instance_from_me_result() throw() {
-}
-
-
-uint32_t FmuService_create_instance_from_me_result::read(::apache::thrift::protocol::TProtocol* iprot) {
-
-  ::apache::thrift::protocol::TInputRecursionTracker tracker(*iprot);
-  uint32_t xfer = 0;
-  std::string fname;
-  ::apache::thrift::protocol::TType ftype;
-  int16_t fid;
-
-  xfer += iprot->readStructBegin(fname);
-
-  using ::apache::thrift::protocol::TProtocolException;
-
-
-  while (true)
-  {
-    xfer += iprot->readFieldBegin(fname, ftype, fid);
-    if (ftype == ::apache::thrift::protocol::T_STOP) {
-      break;
-    }
-    switch (fid)
-    {
-      case 0:
-        if (ftype == ::apache::thrift::protocol::T_STRING) {
-          xfer += iprot->readString(this->success);
-          this->__isset.success = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      case 1:
-        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
-          xfer += this->ex1.read(iprot);
-          this->__isset.ex1 = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      case 2:
-        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
-          xfer += this->ex2.read(iprot);
-          this->__isset.ex2 = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      default:
-        xfer += iprot->skip(ftype);
-        break;
-    }
-    xfer += iprot->readFieldEnd();
-  }
-
-  xfer += iprot->readStructEnd();
-
-  return xfer;
-}
-
-uint32_t FmuService_create_instance_from_me_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
-
-  uint32_t xfer = 0;
-
-  xfer += oprot->writeStructBegin("FmuService_create_instance_from_me_result");
-
-  if (this->__isset.success) {
-    xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_STRING, 0);
-    xfer += oprot->writeString(this->success);
-    xfer += oprot->writeFieldEnd();
-  } else if (this->__isset.ex1) {
-    xfer += oprot->writeFieldBegin("ex1", ::apache::thrift::protocol::T_STRUCT, 1);
-    xfer += this->ex1.write(oprot);
-    xfer += oprot->writeFieldEnd();
-  } else if (this->__isset.ex2) {
-    xfer += oprot->writeFieldBegin("ex2", ::apache::thrift::protocol::T_STRUCT, 2);
-    xfer += this->ex2.write(oprot);
-    xfer += oprot->writeFieldEnd();
-  }
-  xfer += oprot->writeFieldStop();
-  xfer += oprot->writeStructEnd();
-  return xfer;
-}
-
-
-FmuService_create_instance_from_me_presult::~FmuService_create_instance_from_me_presult() throw() {
-}
-
-
-uint32_t FmuService_create_instance_from_me_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
+uint32_t FmuService_create_instance_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
 
   ::apache::thrift::protocol::TInputRecursionTracker tracker(*iprot);
   uint32_t xfer = 0;
@@ -1851,9 +987,9 @@ uint32_t FmuService_setup_experiment_result::read(::apache::thrift::protocol::TP
     {
       case 0:
         if (ftype == ::apache::thrift::protocol::T_I32) {
-          int32_t ecast118;
-          xfer += iprot->readI32(ecast118);
-          this->success = (Status::type)ecast118;
+          int32_t ecast114;
+          xfer += iprot->readI32(ecast114);
+          this->success = (Status::type)ecast114;
           this->__isset.success = true;
         } else {
           xfer += iprot->skip(ftype);
@@ -1927,9 +1063,9 @@ uint32_t FmuService_setup_experiment_presult::read(::apache::thrift::protocol::T
     {
       case 0:
         if (ftype == ::apache::thrift::protocol::T_I32) {
-          int32_t ecast119;
-          xfer += iprot->readI32(ecast119);
-          (*(this->success)) = (Status::type)ecast119;
+          int32_t ecast115;
+          xfer += iprot->readI32(ecast115);
+          (*(this->success)) = (Status::type)ecast115;
           this->__isset.success = true;
         } else {
           xfer += iprot->skip(ftype);
@@ -2062,9 +1198,9 @@ uint32_t FmuService_enter_initialization_mode_result::read(::apache::thrift::pro
     {
       case 0:
         if (ftype == ::apache::thrift::protocol::T_I32) {
-          int32_t ecast120;
-          xfer += iprot->readI32(ecast120);
-          this->success = (Status::type)ecast120;
+          int32_t ecast116;
+          xfer += iprot->readI32(ecast116);
+          this->success = (Status::type)ecast116;
           this->__isset.success = true;
         } else {
           xfer += iprot->skip(ftype);
@@ -2138,9 +1274,9 @@ uint32_t FmuService_enter_initialization_mode_presult::read(::apache::thrift::pr
     {
       case 0:
         if (ftype == ::apache::thrift::protocol::T_I32) {
-          int32_t ecast121;
-          xfer += iprot->readI32(ecast121);
-          (*(this->success)) = (Status::type)ecast121;
+          int32_t ecast117;
+          xfer += iprot->readI32(ecast117);
+          (*(this->success)) = (Status::type)ecast117;
           this->__isset.success = true;
         } else {
           xfer += iprot->skip(ftype);
@@ -2273,9 +1409,9 @@ uint32_t FmuService_exit_initialization_mode_result::read(::apache::thrift::prot
     {
       case 0:
         if (ftype == ::apache::thrift::protocol::T_I32) {
-          int32_t ecast122;
-          xfer += iprot->readI32(ecast122);
-          this->success = (Status::type)ecast122;
+          int32_t ecast118;
+          xfer += iprot->readI32(ecast118);
+          this->success = (Status::type)ecast118;
           this->__isset.success = true;
         } else {
           xfer += iprot->skip(ftype);
@@ -2349,9 +1485,9 @@ uint32_t FmuService_exit_initialization_mode_presult::read(::apache::thrift::pro
     {
       case 0:
         if (ftype == ::apache::thrift::protocol::T_I32) {
-          int32_t ecast123;
-          xfer += iprot->readI32(ecast123);
-          (*(this->success)) = (Status::type)ecast123;
+          int32_t ecast119;
+          xfer += iprot->readI32(ecast119);
+          (*(this->success)) = (Status::type)ecast119;
           this->__isset.success = true;
         } else {
           xfer += iprot->skip(ftype);
@@ -2707,9 +1843,9 @@ uint32_t FmuService_reset_result::read(::apache::thrift::protocol::TProtocol* ip
     {
       case 0:
         if (ftype == ::apache::thrift::protocol::T_I32) {
-          int32_t ecast124;
-          xfer += iprot->readI32(ecast124);
-          this->success = (Status::type)ecast124;
+          int32_t ecast120;
+          xfer += iprot->readI32(ecast120);
+          this->success = (Status::type)ecast120;
           this->__isset.success = true;
         } else {
           xfer += iprot->skip(ftype);
@@ -2783,9 +1919,9 @@ uint32_t FmuService_reset_presult::read(::apache::thrift::protocol::TProtocol* i
     {
       case 0:
         if (ftype == ::apache::thrift::protocol::T_I32) {
-          int32_t ecast125;
-          xfer += iprot->readI32(ecast125);
-          (*(this->success)) = (Status::type)ecast125;
+          int32_t ecast121;
+          xfer += iprot->readI32(ecast121);
+          (*(this->success)) = (Status::type)ecast121;
           this->__isset.success = true;
         } else {
           xfer += iprot->skip(ftype);
@@ -2918,9 +2054,9 @@ uint32_t FmuService_terminate_result::read(::apache::thrift::protocol::TProtocol
     {
       case 0:
         if (ftype == ::apache::thrift::protocol::T_I32) {
-          int32_t ecast126;
-          xfer += iprot->readI32(ecast126);
-          this->success = (Status::type)ecast126;
+          int32_t ecast122;
+          xfer += iprot->readI32(ecast122);
+          this->success = (Status::type)ecast122;
           this->__isset.success = true;
         } else {
           xfer += iprot->skip(ftype);
@@ -2994,14 +2130,201 @@ uint32_t FmuService_terminate_presult::read(::apache::thrift::protocol::TProtoco
     {
       case 0:
         if (ftype == ::apache::thrift::protocol::T_I32) {
-          int32_t ecast127;
-          xfer += iprot->readI32(ecast127);
-          (*(this->success)) = (Status::type)ecast127;
+          int32_t ecast123;
+          xfer += iprot->readI32(ecast123);
+          (*(this->success)) = (Status::type)ecast123;
           this->__isset.success = true;
         } else {
           xfer += iprot->skip(ftype);
         }
         break;
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->ex.read(iprot);
+          this->__isset.ex = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+
+FmuService_freeInstance_args::~FmuService_freeInstance_args() throw() {
+}
+
+
+uint32_t FmuService_freeInstance_args::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  ::apache::thrift::protocol::TInputRecursionTracker tracker(*iprot);
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->instanceId);
+          this->__isset.instanceId = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t FmuService_freeInstance_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  ::apache::thrift::protocol::TOutputRecursionTracker tracker(*oprot);
+  xfer += oprot->writeStructBegin("FmuService_freeInstance_args");
+
+  xfer += oprot->writeFieldBegin("instanceId", ::apache::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeString(this->instanceId);
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+
+FmuService_freeInstance_pargs::~FmuService_freeInstance_pargs() throw() {
+}
+
+
+uint32_t FmuService_freeInstance_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
+  uint32_t xfer = 0;
+  ::apache::thrift::protocol::TOutputRecursionTracker tracker(*oprot);
+  xfer += oprot->writeStructBegin("FmuService_freeInstance_pargs");
+
+  xfer += oprot->writeFieldBegin("instanceId", ::apache::thrift::protocol::T_STRING, 1);
+  xfer += oprot->writeString((*(this->instanceId)));
+  xfer += oprot->writeFieldEnd();
+
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+
+FmuService_freeInstance_result::~FmuService_freeInstance_result() throw() {
+}
+
+
+uint32_t FmuService_freeInstance_result::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  ::apache::thrift::protocol::TInputRecursionTracker tracker(*iprot);
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->ex.read(iprot);
+          this->__isset.ex = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      default:
+        xfer += iprot->skip(ftype);
+        break;
+    }
+    xfer += iprot->readFieldEnd();
+  }
+
+  xfer += iprot->readStructEnd();
+
+  return xfer;
+}
+
+uint32_t FmuService_freeInstance_result::write(::apache::thrift::protocol::TProtocol* oprot) const {
+
+  uint32_t xfer = 0;
+
+  xfer += oprot->writeStructBegin("FmuService_freeInstance_result");
+
+  if (this->__isset.ex) {
+    xfer += oprot->writeFieldBegin("ex", ::apache::thrift::protocol::T_STRUCT, 1);
+    xfer += this->ex.write(oprot);
+    xfer += oprot->writeFieldEnd();
+  }
+  xfer += oprot->writeFieldStop();
+  xfer += oprot->writeStructEnd();
+  return xfer;
+}
+
+
+FmuService_freeInstance_presult::~FmuService_freeInstance_presult() throw() {
+}
+
+
+uint32_t FmuService_freeInstance_presult::read(::apache::thrift::protocol::TProtocol* iprot) {
+
+  ::apache::thrift::protocol::TInputRecursionTracker tracker(*iprot);
+  uint32_t xfer = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TType ftype;
+  int16_t fid;
+
+  xfer += iprot->readStructBegin(fname);
+
+  using ::apache::thrift::protocol::TProtocolException;
+
+
+  while (true)
+  {
+    xfer += iprot->readFieldBegin(fname, ftype, fid);
+    if (ftype == ::apache::thrift::protocol::T_STOP) {
+      break;
+    }
+    switch (fid)
+    {
       case 1:
         if (ftype == ::apache::thrift::protocol::T_STRUCT) {
           xfer += this->ex.read(iprot);
@@ -3060,14 +2383,14 @@ uint32_t FmuService_read_integer_args::read(::apache::thrift::protocol::TProtoco
         if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
             this->vr.clear();
-            uint32_t _size128;
-            ::apache::thrift::protocol::TType _etype131;
-            xfer += iprot->readListBegin(_etype131, _size128);
-            this->vr.resize(_size128);
-            uint32_t _i132;
-            for (_i132 = 0; _i132 < _size128; ++_i132)
+            uint32_t _size124;
+            ::apache::thrift::protocol::TType _etype127;
+            xfer += iprot->readListBegin(_etype127, _size124);
+            this->vr.resize(_size124);
+            uint32_t _i128;
+            for (_i128 = 0; _i128 < _size124; ++_i128)
             {
-              xfer += iprot->readI64(this->vr[_i132]);
+              xfer += iprot->readI64(this->vr[_i128]);
             }
             xfer += iprot->readListEnd();
           }
@@ -3100,10 +2423,10 @@ uint32_t FmuService_read_integer_args::write(::apache::thrift::protocol::TProtoc
   xfer += oprot->writeFieldBegin("vr", ::apache::thrift::protocol::T_LIST, 2);
   {
     xfer += oprot->writeListBegin(::apache::thrift::protocol::T_I64, static_cast<uint32_t>(this->vr.size()));
-    std::vector<ValueReference> ::const_iterator _iter133;
-    for (_iter133 = this->vr.begin(); _iter133 != this->vr.end(); ++_iter133)
+    std::vector<ValueReference> ::const_iterator _iter129;
+    for (_iter129 = this->vr.begin(); _iter129 != this->vr.end(); ++_iter129)
     {
-      xfer += oprot->writeI64((*_iter133));
+      xfer += oprot->writeI64((*_iter129));
     }
     xfer += oprot->writeListEnd();
   }
@@ -3131,10 +2454,10 @@ uint32_t FmuService_read_integer_pargs::write(::apache::thrift::protocol::TProto
   xfer += oprot->writeFieldBegin("vr", ::apache::thrift::protocol::T_LIST, 2);
   {
     xfer += oprot->writeListBegin(::apache::thrift::protocol::T_I64, static_cast<uint32_t>((*(this->vr)).size()));
-    std::vector<ValueReference> ::const_iterator _iter134;
-    for (_iter134 = (*(this->vr)).begin(); _iter134 != (*(this->vr)).end(); ++_iter134)
+    std::vector<ValueReference> ::const_iterator _iter130;
+    for (_iter130 = (*(this->vr)).begin(); _iter130 != (*(this->vr)).end(); ++_iter130)
     {
-      xfer += oprot->writeI64((*_iter134));
+      xfer += oprot->writeI64((*_iter130));
     }
     xfer += oprot->writeListEnd();
   }
@@ -3331,14 +2654,14 @@ uint32_t FmuService_read_real_args::read(::apache::thrift::protocol::TProtocol* 
         if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
             this->vr.clear();
-            uint32_t _size135;
-            ::apache::thrift::protocol::TType _etype138;
-            xfer += iprot->readListBegin(_etype138, _size135);
-            this->vr.resize(_size135);
-            uint32_t _i139;
-            for (_i139 = 0; _i139 < _size135; ++_i139)
+            uint32_t _size131;
+            ::apache::thrift::protocol::TType _etype134;
+            xfer += iprot->readListBegin(_etype134, _size131);
+            this->vr.resize(_size131);
+            uint32_t _i135;
+            for (_i135 = 0; _i135 < _size131; ++_i135)
             {
-              xfer += iprot->readI64(this->vr[_i139]);
+              xfer += iprot->readI64(this->vr[_i135]);
             }
             xfer += iprot->readListEnd();
           }
@@ -3371,10 +2694,10 @@ uint32_t FmuService_read_real_args::write(::apache::thrift::protocol::TProtocol*
   xfer += oprot->writeFieldBegin("vr", ::apache::thrift::protocol::T_LIST, 2);
   {
     xfer += oprot->writeListBegin(::apache::thrift::protocol::T_I64, static_cast<uint32_t>(this->vr.size()));
-    std::vector<ValueReference> ::const_iterator _iter140;
-    for (_iter140 = this->vr.begin(); _iter140 != this->vr.end(); ++_iter140)
+    std::vector<ValueReference> ::const_iterator _iter136;
+    for (_iter136 = this->vr.begin(); _iter136 != this->vr.end(); ++_iter136)
     {
-      xfer += oprot->writeI64((*_iter140));
+      xfer += oprot->writeI64((*_iter136));
     }
     xfer += oprot->writeListEnd();
   }
@@ -3402,10 +2725,10 @@ uint32_t FmuService_read_real_pargs::write(::apache::thrift::protocol::TProtocol
   xfer += oprot->writeFieldBegin("vr", ::apache::thrift::protocol::T_LIST, 2);
   {
     xfer += oprot->writeListBegin(::apache::thrift::protocol::T_I64, static_cast<uint32_t>((*(this->vr)).size()));
-    std::vector<ValueReference> ::const_iterator _iter141;
-    for (_iter141 = (*(this->vr)).begin(); _iter141 != (*(this->vr)).end(); ++_iter141)
+    std::vector<ValueReference> ::const_iterator _iter137;
+    for (_iter137 = (*(this->vr)).begin(); _iter137 != (*(this->vr)).end(); ++_iter137)
     {
-      xfer += oprot->writeI64((*_iter141));
+      xfer += oprot->writeI64((*_iter137));
     }
     xfer += oprot->writeListEnd();
   }
@@ -3602,14 +2925,14 @@ uint32_t FmuService_read_string_args::read(::apache::thrift::protocol::TProtocol
         if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
             this->vr.clear();
-            uint32_t _size142;
-            ::apache::thrift::protocol::TType _etype145;
-            xfer += iprot->readListBegin(_etype145, _size142);
-            this->vr.resize(_size142);
-            uint32_t _i146;
-            for (_i146 = 0; _i146 < _size142; ++_i146)
+            uint32_t _size138;
+            ::apache::thrift::protocol::TType _etype141;
+            xfer += iprot->readListBegin(_etype141, _size138);
+            this->vr.resize(_size138);
+            uint32_t _i142;
+            for (_i142 = 0; _i142 < _size138; ++_i142)
             {
-              xfer += iprot->readI64(this->vr[_i146]);
+              xfer += iprot->readI64(this->vr[_i142]);
             }
             xfer += iprot->readListEnd();
           }
@@ -3642,10 +2965,10 @@ uint32_t FmuService_read_string_args::write(::apache::thrift::protocol::TProtoco
   xfer += oprot->writeFieldBegin("vr", ::apache::thrift::protocol::T_LIST, 2);
   {
     xfer += oprot->writeListBegin(::apache::thrift::protocol::T_I64, static_cast<uint32_t>(this->vr.size()));
-    std::vector<ValueReference> ::const_iterator _iter147;
-    for (_iter147 = this->vr.begin(); _iter147 != this->vr.end(); ++_iter147)
+    std::vector<ValueReference> ::const_iterator _iter143;
+    for (_iter143 = this->vr.begin(); _iter143 != this->vr.end(); ++_iter143)
     {
-      xfer += oprot->writeI64((*_iter147));
+      xfer += oprot->writeI64((*_iter143));
     }
     xfer += oprot->writeListEnd();
   }
@@ -3673,10 +2996,10 @@ uint32_t FmuService_read_string_pargs::write(::apache::thrift::protocol::TProtoc
   xfer += oprot->writeFieldBegin("vr", ::apache::thrift::protocol::T_LIST, 2);
   {
     xfer += oprot->writeListBegin(::apache::thrift::protocol::T_I64, static_cast<uint32_t>((*(this->vr)).size()));
-    std::vector<ValueReference> ::const_iterator _iter148;
-    for (_iter148 = (*(this->vr)).begin(); _iter148 != (*(this->vr)).end(); ++_iter148)
+    std::vector<ValueReference> ::const_iterator _iter144;
+    for (_iter144 = (*(this->vr)).begin(); _iter144 != (*(this->vr)).end(); ++_iter144)
     {
-      xfer += oprot->writeI64((*_iter148));
+      xfer += oprot->writeI64((*_iter144));
     }
     xfer += oprot->writeListEnd();
   }
@@ -3873,14 +3196,14 @@ uint32_t FmuService_read_boolean_args::read(::apache::thrift::protocol::TProtoco
         if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
             this->vr.clear();
-            uint32_t _size149;
-            ::apache::thrift::protocol::TType _etype152;
-            xfer += iprot->readListBegin(_etype152, _size149);
-            this->vr.resize(_size149);
-            uint32_t _i153;
-            for (_i153 = 0; _i153 < _size149; ++_i153)
+            uint32_t _size145;
+            ::apache::thrift::protocol::TType _etype148;
+            xfer += iprot->readListBegin(_etype148, _size145);
+            this->vr.resize(_size145);
+            uint32_t _i149;
+            for (_i149 = 0; _i149 < _size145; ++_i149)
             {
-              xfer += iprot->readI64(this->vr[_i153]);
+              xfer += iprot->readI64(this->vr[_i149]);
             }
             xfer += iprot->readListEnd();
           }
@@ -3913,10 +3236,10 @@ uint32_t FmuService_read_boolean_args::write(::apache::thrift::protocol::TProtoc
   xfer += oprot->writeFieldBegin("vr", ::apache::thrift::protocol::T_LIST, 2);
   {
     xfer += oprot->writeListBegin(::apache::thrift::protocol::T_I64, static_cast<uint32_t>(this->vr.size()));
-    std::vector<ValueReference> ::const_iterator _iter154;
-    for (_iter154 = this->vr.begin(); _iter154 != this->vr.end(); ++_iter154)
+    std::vector<ValueReference> ::const_iterator _iter150;
+    for (_iter150 = this->vr.begin(); _iter150 != this->vr.end(); ++_iter150)
     {
-      xfer += oprot->writeI64((*_iter154));
+      xfer += oprot->writeI64((*_iter150));
     }
     xfer += oprot->writeListEnd();
   }
@@ -3944,10 +3267,10 @@ uint32_t FmuService_read_boolean_pargs::write(::apache::thrift::protocol::TProto
   xfer += oprot->writeFieldBegin("vr", ::apache::thrift::protocol::T_LIST, 2);
   {
     xfer += oprot->writeListBegin(::apache::thrift::protocol::T_I64, static_cast<uint32_t>((*(this->vr)).size()));
-    std::vector<ValueReference> ::const_iterator _iter155;
-    for (_iter155 = (*(this->vr)).begin(); _iter155 != (*(this->vr)).end(); ++_iter155)
+    std::vector<ValueReference> ::const_iterator _iter151;
+    for (_iter151 = (*(this->vr)).begin(); _iter151 != (*(this->vr)).end(); ++_iter151)
     {
-      xfer += oprot->writeI64((*_iter155));
+      xfer += oprot->writeI64((*_iter151));
     }
     xfer += oprot->writeListEnd();
   }
@@ -4144,14 +3467,14 @@ uint32_t FmuService_write_integer_args::read(::apache::thrift::protocol::TProtoc
         if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
             this->vr.clear();
-            uint32_t _size156;
-            ::apache::thrift::protocol::TType _etype159;
-            xfer += iprot->readListBegin(_etype159, _size156);
-            this->vr.resize(_size156);
-            uint32_t _i160;
-            for (_i160 = 0; _i160 < _size156; ++_i160)
+            uint32_t _size152;
+            ::apache::thrift::protocol::TType _etype155;
+            xfer += iprot->readListBegin(_etype155, _size152);
+            this->vr.resize(_size152);
+            uint32_t _i156;
+            for (_i156 = 0; _i156 < _size152; ++_i156)
             {
-              xfer += iprot->readI64(this->vr[_i160]);
+              xfer += iprot->readI64(this->vr[_i156]);
             }
             xfer += iprot->readListEnd();
           }
@@ -4164,14 +3487,14 @@ uint32_t FmuService_write_integer_args::read(::apache::thrift::protocol::TProtoc
         if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
             this->value.clear();
-            uint32_t _size161;
-            ::apache::thrift::protocol::TType _etype164;
-            xfer += iprot->readListBegin(_etype164, _size161);
-            this->value.resize(_size161);
-            uint32_t _i165;
-            for (_i165 = 0; _i165 < _size161; ++_i165)
+            uint32_t _size157;
+            ::apache::thrift::protocol::TType _etype160;
+            xfer += iprot->readListBegin(_etype160, _size157);
+            this->value.resize(_size157);
+            uint32_t _i161;
+            for (_i161 = 0; _i161 < _size157; ++_i161)
             {
-              xfer += iprot->readI32(this->value[_i165]);
+              xfer += iprot->readI32(this->value[_i161]);
             }
             xfer += iprot->readListEnd();
           }
@@ -4204,10 +3527,10 @@ uint32_t FmuService_write_integer_args::write(::apache::thrift::protocol::TProto
   xfer += oprot->writeFieldBegin("vr", ::apache::thrift::protocol::T_LIST, 2);
   {
     xfer += oprot->writeListBegin(::apache::thrift::protocol::T_I64, static_cast<uint32_t>(this->vr.size()));
-    std::vector<ValueReference> ::const_iterator _iter166;
-    for (_iter166 = this->vr.begin(); _iter166 != this->vr.end(); ++_iter166)
+    std::vector<ValueReference> ::const_iterator _iter162;
+    for (_iter162 = this->vr.begin(); _iter162 != this->vr.end(); ++_iter162)
     {
-      xfer += oprot->writeI64((*_iter166));
+      xfer += oprot->writeI64((*_iter162));
     }
     xfer += oprot->writeListEnd();
   }
@@ -4216,10 +3539,10 @@ uint32_t FmuService_write_integer_args::write(::apache::thrift::protocol::TProto
   xfer += oprot->writeFieldBegin("value", ::apache::thrift::protocol::T_LIST, 3);
   {
     xfer += oprot->writeListBegin(::apache::thrift::protocol::T_I32, static_cast<uint32_t>(this->value.size()));
-    std::vector<int32_t> ::const_iterator _iter167;
-    for (_iter167 = this->value.begin(); _iter167 != this->value.end(); ++_iter167)
+    std::vector<int32_t> ::const_iterator _iter163;
+    for (_iter163 = this->value.begin(); _iter163 != this->value.end(); ++_iter163)
     {
-      xfer += oprot->writeI32((*_iter167));
+      xfer += oprot->writeI32((*_iter163));
     }
     xfer += oprot->writeListEnd();
   }
@@ -4247,10 +3570,10 @@ uint32_t FmuService_write_integer_pargs::write(::apache::thrift::protocol::TProt
   xfer += oprot->writeFieldBegin("vr", ::apache::thrift::protocol::T_LIST, 2);
   {
     xfer += oprot->writeListBegin(::apache::thrift::protocol::T_I64, static_cast<uint32_t>((*(this->vr)).size()));
-    std::vector<ValueReference> ::const_iterator _iter168;
-    for (_iter168 = (*(this->vr)).begin(); _iter168 != (*(this->vr)).end(); ++_iter168)
+    std::vector<ValueReference> ::const_iterator _iter164;
+    for (_iter164 = (*(this->vr)).begin(); _iter164 != (*(this->vr)).end(); ++_iter164)
     {
-      xfer += oprot->writeI64((*_iter168));
+      xfer += oprot->writeI64((*_iter164));
     }
     xfer += oprot->writeListEnd();
   }
@@ -4259,10 +3582,10 @@ uint32_t FmuService_write_integer_pargs::write(::apache::thrift::protocol::TProt
   xfer += oprot->writeFieldBegin("value", ::apache::thrift::protocol::T_LIST, 3);
   {
     xfer += oprot->writeListBegin(::apache::thrift::protocol::T_I32, static_cast<uint32_t>((*(this->value)).size()));
-    std::vector<int32_t> ::const_iterator _iter169;
-    for (_iter169 = (*(this->value)).begin(); _iter169 != (*(this->value)).end(); ++_iter169)
+    std::vector<int32_t> ::const_iterator _iter165;
+    for (_iter165 = (*(this->value)).begin(); _iter165 != (*(this->value)).end(); ++_iter165)
     {
-      xfer += oprot->writeI32((*_iter169));
+      xfer += oprot->writeI32((*_iter165));
     }
     xfer += oprot->writeListEnd();
   }
@@ -4301,9 +3624,9 @@ uint32_t FmuService_write_integer_result::read(::apache::thrift::protocol::TProt
     {
       case 0:
         if (ftype == ::apache::thrift::protocol::T_I32) {
-          int32_t ecast170;
-          xfer += iprot->readI32(ecast170);
-          this->success = (Status::type)ecast170;
+          int32_t ecast166;
+          xfer += iprot->readI32(ecast166);
+          this->success = (Status::type)ecast166;
           this->__isset.success = true;
         } else {
           xfer += iprot->skip(ftype);
@@ -4389,9 +3712,9 @@ uint32_t FmuService_write_integer_presult::read(::apache::thrift::protocol::TPro
     {
       case 0:
         if (ftype == ::apache::thrift::protocol::T_I32) {
-          int32_t ecast171;
-          xfer += iprot->readI32(ecast171);
-          (*(this->success)) = (Status::type)ecast171;
+          int32_t ecast167;
+          xfer += iprot->readI32(ecast167);
+          (*(this->success)) = (Status::type)ecast167;
           this->__isset.success = true;
         } else {
           xfer += iprot->skip(ftype);
@@ -4463,14 +3786,14 @@ uint32_t FmuService_write_real_args::read(::apache::thrift::protocol::TProtocol*
         if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
             this->vr.clear();
-            uint32_t _size172;
-            ::apache::thrift::protocol::TType _etype175;
-            xfer += iprot->readListBegin(_etype175, _size172);
-            this->vr.resize(_size172);
-            uint32_t _i176;
-            for (_i176 = 0; _i176 < _size172; ++_i176)
+            uint32_t _size168;
+            ::apache::thrift::protocol::TType _etype171;
+            xfer += iprot->readListBegin(_etype171, _size168);
+            this->vr.resize(_size168);
+            uint32_t _i172;
+            for (_i172 = 0; _i172 < _size168; ++_i172)
             {
-              xfer += iprot->readI64(this->vr[_i176]);
+              xfer += iprot->readI64(this->vr[_i172]);
             }
             xfer += iprot->readListEnd();
           }
@@ -4483,14 +3806,14 @@ uint32_t FmuService_write_real_args::read(::apache::thrift::protocol::TProtocol*
         if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
             this->value.clear();
-            uint32_t _size177;
-            ::apache::thrift::protocol::TType _etype180;
-            xfer += iprot->readListBegin(_etype180, _size177);
-            this->value.resize(_size177);
-            uint32_t _i181;
-            for (_i181 = 0; _i181 < _size177; ++_i181)
+            uint32_t _size173;
+            ::apache::thrift::protocol::TType _etype176;
+            xfer += iprot->readListBegin(_etype176, _size173);
+            this->value.resize(_size173);
+            uint32_t _i177;
+            for (_i177 = 0; _i177 < _size173; ++_i177)
             {
-              xfer += iprot->readDouble(this->value[_i181]);
+              xfer += iprot->readDouble(this->value[_i177]);
             }
             xfer += iprot->readListEnd();
           }
@@ -4523,10 +3846,10 @@ uint32_t FmuService_write_real_args::write(::apache::thrift::protocol::TProtocol
   xfer += oprot->writeFieldBegin("vr", ::apache::thrift::protocol::T_LIST, 2);
   {
     xfer += oprot->writeListBegin(::apache::thrift::protocol::T_I64, static_cast<uint32_t>(this->vr.size()));
-    std::vector<ValueReference> ::const_iterator _iter182;
-    for (_iter182 = this->vr.begin(); _iter182 != this->vr.end(); ++_iter182)
+    std::vector<ValueReference> ::const_iterator _iter178;
+    for (_iter178 = this->vr.begin(); _iter178 != this->vr.end(); ++_iter178)
     {
-      xfer += oprot->writeI64((*_iter182));
+      xfer += oprot->writeI64((*_iter178));
     }
     xfer += oprot->writeListEnd();
   }
@@ -4535,10 +3858,10 @@ uint32_t FmuService_write_real_args::write(::apache::thrift::protocol::TProtocol
   xfer += oprot->writeFieldBegin("value", ::apache::thrift::protocol::T_LIST, 3);
   {
     xfer += oprot->writeListBegin(::apache::thrift::protocol::T_DOUBLE, static_cast<uint32_t>(this->value.size()));
-    std::vector<double> ::const_iterator _iter183;
-    for (_iter183 = this->value.begin(); _iter183 != this->value.end(); ++_iter183)
+    std::vector<double> ::const_iterator _iter179;
+    for (_iter179 = this->value.begin(); _iter179 != this->value.end(); ++_iter179)
     {
-      xfer += oprot->writeDouble((*_iter183));
+      xfer += oprot->writeDouble((*_iter179));
     }
     xfer += oprot->writeListEnd();
   }
@@ -4566,10 +3889,10 @@ uint32_t FmuService_write_real_pargs::write(::apache::thrift::protocol::TProtoco
   xfer += oprot->writeFieldBegin("vr", ::apache::thrift::protocol::T_LIST, 2);
   {
     xfer += oprot->writeListBegin(::apache::thrift::protocol::T_I64, static_cast<uint32_t>((*(this->vr)).size()));
-    std::vector<ValueReference> ::const_iterator _iter184;
-    for (_iter184 = (*(this->vr)).begin(); _iter184 != (*(this->vr)).end(); ++_iter184)
+    std::vector<ValueReference> ::const_iterator _iter180;
+    for (_iter180 = (*(this->vr)).begin(); _iter180 != (*(this->vr)).end(); ++_iter180)
     {
-      xfer += oprot->writeI64((*_iter184));
+      xfer += oprot->writeI64((*_iter180));
     }
     xfer += oprot->writeListEnd();
   }
@@ -4578,10 +3901,10 @@ uint32_t FmuService_write_real_pargs::write(::apache::thrift::protocol::TProtoco
   xfer += oprot->writeFieldBegin("value", ::apache::thrift::protocol::T_LIST, 3);
   {
     xfer += oprot->writeListBegin(::apache::thrift::protocol::T_DOUBLE, static_cast<uint32_t>((*(this->value)).size()));
-    std::vector<double> ::const_iterator _iter185;
-    for (_iter185 = (*(this->value)).begin(); _iter185 != (*(this->value)).end(); ++_iter185)
+    std::vector<double> ::const_iterator _iter181;
+    for (_iter181 = (*(this->value)).begin(); _iter181 != (*(this->value)).end(); ++_iter181)
     {
-      xfer += oprot->writeDouble((*_iter185));
+      xfer += oprot->writeDouble((*_iter181));
     }
     xfer += oprot->writeListEnd();
   }
@@ -4620,9 +3943,9 @@ uint32_t FmuService_write_real_result::read(::apache::thrift::protocol::TProtoco
     {
       case 0:
         if (ftype == ::apache::thrift::protocol::T_I32) {
-          int32_t ecast186;
-          xfer += iprot->readI32(ecast186);
-          this->success = (Status::type)ecast186;
+          int32_t ecast182;
+          xfer += iprot->readI32(ecast182);
+          this->success = (Status::type)ecast182;
           this->__isset.success = true;
         } else {
           xfer += iprot->skip(ftype);
@@ -4708,9 +4031,9 @@ uint32_t FmuService_write_real_presult::read(::apache::thrift::protocol::TProtoc
     {
       case 0:
         if (ftype == ::apache::thrift::protocol::T_I32) {
-          int32_t ecast187;
-          xfer += iprot->readI32(ecast187);
-          (*(this->success)) = (Status::type)ecast187;
+          int32_t ecast183;
+          xfer += iprot->readI32(ecast183);
+          (*(this->success)) = (Status::type)ecast183;
           this->__isset.success = true;
         } else {
           xfer += iprot->skip(ftype);
@@ -4782,14 +4105,14 @@ uint32_t FmuService_write_string_args::read(::apache::thrift::protocol::TProtoco
         if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
             this->vr.clear();
-            uint32_t _size188;
-            ::apache::thrift::protocol::TType _etype191;
-            xfer += iprot->readListBegin(_etype191, _size188);
-            this->vr.resize(_size188);
-            uint32_t _i192;
-            for (_i192 = 0; _i192 < _size188; ++_i192)
+            uint32_t _size184;
+            ::apache::thrift::protocol::TType _etype187;
+            xfer += iprot->readListBegin(_etype187, _size184);
+            this->vr.resize(_size184);
+            uint32_t _i188;
+            for (_i188 = 0; _i188 < _size184; ++_i188)
             {
-              xfer += iprot->readI64(this->vr[_i192]);
+              xfer += iprot->readI64(this->vr[_i188]);
             }
             xfer += iprot->readListEnd();
           }
@@ -4802,14 +4125,14 @@ uint32_t FmuService_write_string_args::read(::apache::thrift::protocol::TProtoco
         if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
             this->value.clear();
-            uint32_t _size193;
-            ::apache::thrift::protocol::TType _etype196;
-            xfer += iprot->readListBegin(_etype196, _size193);
-            this->value.resize(_size193);
-            uint32_t _i197;
-            for (_i197 = 0; _i197 < _size193; ++_i197)
+            uint32_t _size189;
+            ::apache::thrift::protocol::TType _etype192;
+            xfer += iprot->readListBegin(_etype192, _size189);
+            this->value.resize(_size189);
+            uint32_t _i193;
+            for (_i193 = 0; _i193 < _size189; ++_i193)
             {
-              xfer += iprot->readString(this->value[_i197]);
+              xfer += iprot->readString(this->value[_i193]);
             }
             xfer += iprot->readListEnd();
           }
@@ -4842,10 +4165,10 @@ uint32_t FmuService_write_string_args::write(::apache::thrift::protocol::TProtoc
   xfer += oprot->writeFieldBegin("vr", ::apache::thrift::protocol::T_LIST, 2);
   {
     xfer += oprot->writeListBegin(::apache::thrift::protocol::T_I64, static_cast<uint32_t>(this->vr.size()));
-    std::vector<ValueReference> ::const_iterator _iter198;
-    for (_iter198 = this->vr.begin(); _iter198 != this->vr.end(); ++_iter198)
+    std::vector<ValueReference> ::const_iterator _iter194;
+    for (_iter194 = this->vr.begin(); _iter194 != this->vr.end(); ++_iter194)
     {
-      xfer += oprot->writeI64((*_iter198));
+      xfer += oprot->writeI64((*_iter194));
     }
     xfer += oprot->writeListEnd();
   }
@@ -4854,10 +4177,10 @@ uint32_t FmuService_write_string_args::write(::apache::thrift::protocol::TProtoc
   xfer += oprot->writeFieldBegin("value", ::apache::thrift::protocol::T_LIST, 3);
   {
     xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRING, static_cast<uint32_t>(this->value.size()));
-    std::vector<std::string> ::const_iterator _iter199;
-    for (_iter199 = this->value.begin(); _iter199 != this->value.end(); ++_iter199)
+    std::vector<std::string> ::const_iterator _iter195;
+    for (_iter195 = this->value.begin(); _iter195 != this->value.end(); ++_iter195)
     {
-      xfer += oprot->writeString((*_iter199));
+      xfer += oprot->writeString((*_iter195));
     }
     xfer += oprot->writeListEnd();
   }
@@ -4885,10 +4208,10 @@ uint32_t FmuService_write_string_pargs::write(::apache::thrift::protocol::TProto
   xfer += oprot->writeFieldBegin("vr", ::apache::thrift::protocol::T_LIST, 2);
   {
     xfer += oprot->writeListBegin(::apache::thrift::protocol::T_I64, static_cast<uint32_t>((*(this->vr)).size()));
-    std::vector<ValueReference> ::const_iterator _iter200;
-    for (_iter200 = (*(this->vr)).begin(); _iter200 != (*(this->vr)).end(); ++_iter200)
+    std::vector<ValueReference> ::const_iterator _iter196;
+    for (_iter196 = (*(this->vr)).begin(); _iter196 != (*(this->vr)).end(); ++_iter196)
     {
-      xfer += oprot->writeI64((*_iter200));
+      xfer += oprot->writeI64((*_iter196));
     }
     xfer += oprot->writeListEnd();
   }
@@ -4897,10 +4220,10 @@ uint32_t FmuService_write_string_pargs::write(::apache::thrift::protocol::TProto
   xfer += oprot->writeFieldBegin("value", ::apache::thrift::protocol::T_LIST, 3);
   {
     xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRING, static_cast<uint32_t>((*(this->value)).size()));
-    std::vector<std::string> ::const_iterator _iter201;
-    for (_iter201 = (*(this->value)).begin(); _iter201 != (*(this->value)).end(); ++_iter201)
+    std::vector<std::string> ::const_iterator _iter197;
+    for (_iter197 = (*(this->value)).begin(); _iter197 != (*(this->value)).end(); ++_iter197)
     {
-      xfer += oprot->writeString((*_iter201));
+      xfer += oprot->writeString((*_iter197));
     }
     xfer += oprot->writeListEnd();
   }
@@ -4939,9 +4262,9 @@ uint32_t FmuService_write_string_result::read(::apache::thrift::protocol::TProto
     {
       case 0:
         if (ftype == ::apache::thrift::protocol::T_I32) {
-          int32_t ecast202;
-          xfer += iprot->readI32(ecast202);
-          this->success = (Status::type)ecast202;
+          int32_t ecast198;
+          xfer += iprot->readI32(ecast198);
+          this->success = (Status::type)ecast198;
           this->__isset.success = true;
         } else {
           xfer += iprot->skip(ftype);
@@ -5027,9 +4350,9 @@ uint32_t FmuService_write_string_presult::read(::apache::thrift::protocol::TProt
     {
       case 0:
         if (ftype == ::apache::thrift::protocol::T_I32) {
-          int32_t ecast203;
-          xfer += iprot->readI32(ecast203);
-          (*(this->success)) = (Status::type)ecast203;
+          int32_t ecast199;
+          xfer += iprot->readI32(ecast199);
+          (*(this->success)) = (Status::type)ecast199;
           this->__isset.success = true;
         } else {
           xfer += iprot->skip(ftype);
@@ -5101,14 +4424,14 @@ uint32_t FmuService_write_boolean_args::read(::apache::thrift::protocol::TProtoc
         if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
             this->vr.clear();
-            uint32_t _size204;
-            ::apache::thrift::protocol::TType _etype207;
-            xfer += iprot->readListBegin(_etype207, _size204);
-            this->vr.resize(_size204);
-            uint32_t _i208;
-            for (_i208 = 0; _i208 < _size204; ++_i208)
+            uint32_t _size200;
+            ::apache::thrift::protocol::TType _etype203;
+            xfer += iprot->readListBegin(_etype203, _size200);
+            this->vr.resize(_size200);
+            uint32_t _i204;
+            for (_i204 = 0; _i204 < _size200; ++_i204)
             {
-              xfer += iprot->readI64(this->vr[_i208]);
+              xfer += iprot->readI64(this->vr[_i204]);
             }
             xfer += iprot->readListEnd();
           }
@@ -5121,14 +4444,14 @@ uint32_t FmuService_write_boolean_args::read(::apache::thrift::protocol::TProtoc
         if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
             this->value.clear();
-            uint32_t _size209;
-            ::apache::thrift::protocol::TType _etype212;
-            xfer += iprot->readListBegin(_etype212, _size209);
-            this->value.resize(_size209);
-            uint32_t _i213;
-            for (_i213 = 0; _i213 < _size209; ++_i213)
+            uint32_t _size205;
+            ::apache::thrift::protocol::TType _etype208;
+            xfer += iprot->readListBegin(_etype208, _size205);
+            this->value.resize(_size205);
+            uint32_t _i209;
+            for (_i209 = 0; _i209 < _size205; ++_i209)
             {
-              xfer += iprot->readBool(this->value[_i213]);
+              xfer += iprot->readBool(this->value[_i209]);
             }
             xfer += iprot->readListEnd();
           }
@@ -5161,10 +4484,10 @@ uint32_t FmuService_write_boolean_args::write(::apache::thrift::protocol::TProto
   xfer += oprot->writeFieldBegin("vr", ::apache::thrift::protocol::T_LIST, 2);
   {
     xfer += oprot->writeListBegin(::apache::thrift::protocol::T_I64, static_cast<uint32_t>(this->vr.size()));
-    std::vector<ValueReference> ::const_iterator _iter214;
-    for (_iter214 = this->vr.begin(); _iter214 != this->vr.end(); ++_iter214)
+    std::vector<ValueReference> ::const_iterator _iter210;
+    for (_iter210 = this->vr.begin(); _iter210 != this->vr.end(); ++_iter210)
     {
-      xfer += oprot->writeI64((*_iter214));
+      xfer += oprot->writeI64((*_iter210));
     }
     xfer += oprot->writeListEnd();
   }
@@ -5173,10 +4496,10 @@ uint32_t FmuService_write_boolean_args::write(::apache::thrift::protocol::TProto
   xfer += oprot->writeFieldBegin("value", ::apache::thrift::protocol::T_LIST, 3);
   {
     xfer += oprot->writeListBegin(::apache::thrift::protocol::T_BOOL, static_cast<uint32_t>(this->value.size()));
-    std::vector<bool> ::const_iterator _iter215;
-    for (_iter215 = this->value.begin(); _iter215 != this->value.end(); ++_iter215)
+    std::vector<bool> ::const_iterator _iter211;
+    for (_iter211 = this->value.begin(); _iter211 != this->value.end(); ++_iter211)
     {
-      xfer += oprot->writeBool((*_iter215));
+      xfer += oprot->writeBool((*_iter211));
     }
     xfer += oprot->writeListEnd();
   }
@@ -5204,10 +4527,10 @@ uint32_t FmuService_write_boolean_pargs::write(::apache::thrift::protocol::TProt
   xfer += oprot->writeFieldBegin("vr", ::apache::thrift::protocol::T_LIST, 2);
   {
     xfer += oprot->writeListBegin(::apache::thrift::protocol::T_I64, static_cast<uint32_t>((*(this->vr)).size()));
-    std::vector<ValueReference> ::const_iterator _iter216;
-    for (_iter216 = (*(this->vr)).begin(); _iter216 != (*(this->vr)).end(); ++_iter216)
+    std::vector<ValueReference> ::const_iterator _iter212;
+    for (_iter212 = (*(this->vr)).begin(); _iter212 != (*(this->vr)).end(); ++_iter212)
     {
-      xfer += oprot->writeI64((*_iter216));
+      xfer += oprot->writeI64((*_iter212));
     }
     xfer += oprot->writeListEnd();
   }
@@ -5216,10 +4539,10 @@ uint32_t FmuService_write_boolean_pargs::write(::apache::thrift::protocol::TProt
   xfer += oprot->writeFieldBegin("value", ::apache::thrift::protocol::T_LIST, 3);
   {
     xfer += oprot->writeListBegin(::apache::thrift::protocol::T_BOOL, static_cast<uint32_t>((*(this->value)).size()));
-    std::vector<bool> ::const_iterator _iter217;
-    for (_iter217 = (*(this->value)).begin(); _iter217 != (*(this->value)).end(); ++_iter217)
+    std::vector<bool> ::const_iterator _iter213;
+    for (_iter213 = (*(this->value)).begin(); _iter213 != (*(this->value)).end(); ++_iter213)
     {
-      xfer += oprot->writeBool((*_iter217));
+      xfer += oprot->writeBool((*_iter213));
     }
     xfer += oprot->writeListEnd();
   }
@@ -5258,9 +4581,9 @@ uint32_t FmuService_write_boolean_result::read(::apache::thrift::protocol::TProt
     {
       case 0:
         if (ftype == ::apache::thrift::protocol::T_I32) {
-          int32_t ecast218;
-          xfer += iprot->readI32(ecast218);
-          this->success = (Status::type)ecast218;
+          int32_t ecast214;
+          xfer += iprot->readI32(ecast214);
+          this->success = (Status::type)ecast214;
           this->__isset.success = true;
         } else {
           xfer += iprot->skip(ftype);
@@ -5346,9 +4669,9 @@ uint32_t FmuService_write_boolean_presult::read(::apache::thrift::protocol::TPro
     {
       case 0:
         if (ftype == ::apache::thrift::protocol::T_I32) {
-          int32_t ecast219;
-          xfer += iprot->readI32(ecast219);
-          (*(this->success)) = (Status::type)ecast219;
+          int32_t ecast215;
+          xfer += iprot->readI32(ecast215);
+          (*(this->success)) = (Status::type)ecast215;
           this->__isset.success = true;
         } else {
           xfer += iprot->skip(ftype);
@@ -5420,14 +4743,14 @@ uint32_t FmuService_get_directional_derivative_args::read(::apache::thrift::prot
         if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
             this->vUnknownRef.clear();
-            uint32_t _size220;
-            ::apache::thrift::protocol::TType _etype223;
-            xfer += iprot->readListBegin(_etype223, _size220);
-            this->vUnknownRef.resize(_size220);
-            uint32_t _i224;
-            for (_i224 = 0; _i224 < _size220; ++_i224)
+            uint32_t _size216;
+            ::apache::thrift::protocol::TType _etype219;
+            xfer += iprot->readListBegin(_etype219, _size216);
+            this->vUnknownRef.resize(_size216);
+            uint32_t _i220;
+            for (_i220 = 0; _i220 < _size216; ++_i220)
             {
-              xfer += iprot->readI64(this->vUnknownRef[_i224]);
+              xfer += iprot->readI64(this->vUnknownRef[_i220]);
             }
             xfer += iprot->readListEnd();
           }
@@ -5440,14 +4763,14 @@ uint32_t FmuService_get_directional_derivative_args::read(::apache::thrift::prot
         if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
             this->vKnownRef.clear();
-            uint32_t _size225;
-            ::apache::thrift::protocol::TType _etype228;
-            xfer += iprot->readListBegin(_etype228, _size225);
-            this->vKnownRef.resize(_size225);
-            uint32_t _i229;
-            for (_i229 = 0; _i229 < _size225; ++_i229)
+            uint32_t _size221;
+            ::apache::thrift::protocol::TType _etype224;
+            xfer += iprot->readListBegin(_etype224, _size221);
+            this->vKnownRef.resize(_size221);
+            uint32_t _i225;
+            for (_i225 = 0; _i225 < _size221; ++_i225)
             {
-              xfer += iprot->readI64(this->vKnownRef[_i229]);
+              xfer += iprot->readI64(this->vKnownRef[_i225]);
             }
             xfer += iprot->readListEnd();
           }
@@ -5460,14 +4783,14 @@ uint32_t FmuService_get_directional_derivative_args::read(::apache::thrift::prot
         if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
             this->dvKnownRef.clear();
-            uint32_t _size230;
-            ::apache::thrift::protocol::TType _etype233;
-            xfer += iprot->readListBegin(_etype233, _size230);
-            this->dvKnownRef.resize(_size230);
-            uint32_t _i234;
-            for (_i234 = 0; _i234 < _size230; ++_i234)
+            uint32_t _size226;
+            ::apache::thrift::protocol::TType _etype229;
+            xfer += iprot->readListBegin(_etype229, _size226);
+            this->dvKnownRef.resize(_size226);
+            uint32_t _i230;
+            for (_i230 = 0; _i230 < _size226; ++_i230)
             {
-              xfer += iprot->readDouble(this->dvKnownRef[_i234]);
+              xfer += iprot->readDouble(this->dvKnownRef[_i230]);
             }
             xfer += iprot->readListEnd();
           }
@@ -5500,10 +4823,10 @@ uint32_t FmuService_get_directional_derivative_args::write(::apache::thrift::pro
   xfer += oprot->writeFieldBegin("vUnknownRef", ::apache::thrift::protocol::T_LIST, 2);
   {
     xfer += oprot->writeListBegin(::apache::thrift::protocol::T_I64, static_cast<uint32_t>(this->vUnknownRef.size()));
-    std::vector<ValueReference> ::const_iterator _iter235;
-    for (_iter235 = this->vUnknownRef.begin(); _iter235 != this->vUnknownRef.end(); ++_iter235)
+    std::vector<ValueReference> ::const_iterator _iter231;
+    for (_iter231 = this->vUnknownRef.begin(); _iter231 != this->vUnknownRef.end(); ++_iter231)
     {
-      xfer += oprot->writeI64((*_iter235));
+      xfer += oprot->writeI64((*_iter231));
     }
     xfer += oprot->writeListEnd();
   }
@@ -5512,10 +4835,10 @@ uint32_t FmuService_get_directional_derivative_args::write(::apache::thrift::pro
   xfer += oprot->writeFieldBegin("vKnownRef", ::apache::thrift::protocol::T_LIST, 3);
   {
     xfer += oprot->writeListBegin(::apache::thrift::protocol::T_I64, static_cast<uint32_t>(this->vKnownRef.size()));
-    std::vector<ValueReference> ::const_iterator _iter236;
-    for (_iter236 = this->vKnownRef.begin(); _iter236 != this->vKnownRef.end(); ++_iter236)
+    std::vector<ValueReference> ::const_iterator _iter232;
+    for (_iter232 = this->vKnownRef.begin(); _iter232 != this->vKnownRef.end(); ++_iter232)
     {
-      xfer += oprot->writeI64((*_iter236));
+      xfer += oprot->writeI64((*_iter232));
     }
     xfer += oprot->writeListEnd();
   }
@@ -5524,10 +4847,10 @@ uint32_t FmuService_get_directional_derivative_args::write(::apache::thrift::pro
   xfer += oprot->writeFieldBegin("dvKnownRef", ::apache::thrift::protocol::T_LIST, 4);
   {
     xfer += oprot->writeListBegin(::apache::thrift::protocol::T_DOUBLE, static_cast<uint32_t>(this->dvKnownRef.size()));
-    std::vector<double> ::const_iterator _iter237;
-    for (_iter237 = this->dvKnownRef.begin(); _iter237 != this->dvKnownRef.end(); ++_iter237)
+    std::vector<double> ::const_iterator _iter233;
+    for (_iter233 = this->dvKnownRef.begin(); _iter233 != this->dvKnownRef.end(); ++_iter233)
     {
-      xfer += oprot->writeDouble((*_iter237));
+      xfer += oprot->writeDouble((*_iter233));
     }
     xfer += oprot->writeListEnd();
   }
@@ -5555,10 +4878,10 @@ uint32_t FmuService_get_directional_derivative_pargs::write(::apache::thrift::pr
   xfer += oprot->writeFieldBegin("vUnknownRef", ::apache::thrift::protocol::T_LIST, 2);
   {
     xfer += oprot->writeListBegin(::apache::thrift::protocol::T_I64, static_cast<uint32_t>((*(this->vUnknownRef)).size()));
-    std::vector<ValueReference> ::const_iterator _iter238;
-    for (_iter238 = (*(this->vUnknownRef)).begin(); _iter238 != (*(this->vUnknownRef)).end(); ++_iter238)
+    std::vector<ValueReference> ::const_iterator _iter234;
+    for (_iter234 = (*(this->vUnknownRef)).begin(); _iter234 != (*(this->vUnknownRef)).end(); ++_iter234)
     {
-      xfer += oprot->writeI64((*_iter238));
+      xfer += oprot->writeI64((*_iter234));
     }
     xfer += oprot->writeListEnd();
   }
@@ -5567,10 +4890,10 @@ uint32_t FmuService_get_directional_derivative_pargs::write(::apache::thrift::pr
   xfer += oprot->writeFieldBegin("vKnownRef", ::apache::thrift::protocol::T_LIST, 3);
   {
     xfer += oprot->writeListBegin(::apache::thrift::protocol::T_I64, static_cast<uint32_t>((*(this->vKnownRef)).size()));
-    std::vector<ValueReference> ::const_iterator _iter239;
-    for (_iter239 = (*(this->vKnownRef)).begin(); _iter239 != (*(this->vKnownRef)).end(); ++_iter239)
+    std::vector<ValueReference> ::const_iterator _iter235;
+    for (_iter235 = (*(this->vKnownRef)).begin(); _iter235 != (*(this->vKnownRef)).end(); ++_iter235)
     {
-      xfer += oprot->writeI64((*_iter239));
+      xfer += oprot->writeI64((*_iter235));
     }
     xfer += oprot->writeListEnd();
   }
@@ -5579,10 +4902,10 @@ uint32_t FmuService_get_directional_derivative_pargs::write(::apache::thrift::pr
   xfer += oprot->writeFieldBegin("dvKnownRef", ::apache::thrift::protocol::T_LIST, 4);
   {
     xfer += oprot->writeListBegin(::apache::thrift::protocol::T_DOUBLE, static_cast<uint32_t>((*(this->dvKnownRef)).size()));
-    std::vector<double> ::const_iterator _iter240;
-    for (_iter240 = (*(this->dvKnownRef)).begin(); _iter240 != (*(this->dvKnownRef)).end(); ++_iter240)
+    std::vector<double> ::const_iterator _iter236;
+    for (_iter236 = (*(this->dvKnownRef)).begin(); _iter236 != (*(this->dvKnownRef)).end(); ++_iter236)
     {
-      xfer += oprot->writeDouble((*_iter240));
+      xfer += oprot->writeDouble((*_iter236));
     }
     xfer += oprot->writeListEnd();
   }
@@ -5919,79 +5242,18 @@ void FmuServiceClient::recv_get_model_description(ModelDescription& _return)
   throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "get_model_description failed: unknown result");
 }
 
-void FmuServiceClient::get_co_simulation_attributes(CoSimulationAttributes& _return, const InstanceId& instanceId)
+void FmuServiceClient::create_instance(InstanceId& _return, const FmuId& fmuId)
 {
-  send_get_co_simulation_attributes(instanceId);
-  recv_get_co_simulation_attributes(_return);
+  send_create_instance(fmuId);
+  recv_create_instance(_return);
 }
 
-void FmuServiceClient::send_get_co_simulation_attributes(const InstanceId& instanceId)
+void FmuServiceClient::send_create_instance(const FmuId& fmuId)
 {
   int32_t cseqid = 0;
-  oprot_->writeMessageBegin("get_co_simulation_attributes", ::apache::thrift::protocol::T_CALL, cseqid);
+  oprot_->writeMessageBegin("create_instance", ::apache::thrift::protocol::T_CALL, cseqid);
 
-  FmuService_get_co_simulation_attributes_pargs args;
-  args.instanceId = &instanceId;
-  args.write(oprot_);
-
-  oprot_->writeMessageEnd();
-  oprot_->getTransport()->writeEnd();
-  oprot_->getTransport()->flush();
-}
-
-void FmuServiceClient::recv_get_co_simulation_attributes(CoSimulationAttributes& _return)
-{
-
-  int32_t rseqid = 0;
-  std::string fname;
-  ::apache::thrift::protocol::TMessageType mtype;
-
-  iprot_->readMessageBegin(fname, mtype, rseqid);
-  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
-    ::apache::thrift::TApplicationException x;
-    x.read(iprot_);
-    iprot_->readMessageEnd();
-    iprot_->getTransport()->readEnd();
-    throw x;
-  }
-  if (mtype != ::apache::thrift::protocol::T_REPLY) {
-    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
-    iprot_->readMessageEnd();
-    iprot_->getTransport()->readEnd();
-  }
-  if (fname.compare("get_co_simulation_attributes") != 0) {
-    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
-    iprot_->readMessageEnd();
-    iprot_->getTransport()->readEnd();
-  }
-  FmuService_get_co_simulation_attributes_presult result;
-  result.success = &_return;
-  result.read(iprot_);
-  iprot_->readMessageEnd();
-  iprot_->getTransport()->readEnd();
-
-  if (result.__isset.success) {
-    // _return pointer has now been filled
-    return;
-  }
-  if (result.__isset.ex) {
-    throw result.ex;
-  }
-  throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "get_co_simulation_attributes failed: unknown result");
-}
-
-bool FmuServiceClient::can_create_instance_from_cs(const FmuId& fmuId)
-{
-  send_can_create_instance_from_cs(fmuId);
-  return recv_can_create_instance_from_cs();
-}
-
-void FmuServiceClient::send_can_create_instance_from_cs(const FmuId& fmuId)
-{
-  int32_t cseqid = 0;
-  oprot_->writeMessageBegin("can_create_instance_from_cs", ::apache::thrift::protocol::T_CALL, cseqid);
-
-  FmuService_can_create_instance_from_cs_pargs args;
+  FmuService_create_instance_pargs args;
   args.fmuId = &fmuId;
   args.write(oprot_);
 
@@ -6000,7 +5262,7 @@ void FmuServiceClient::send_can_create_instance_from_cs(const FmuId& fmuId)
   oprot_->getTransport()->flush();
 }
 
-bool FmuServiceClient::recv_can_create_instance_from_cs()
+void FmuServiceClient::recv_create_instance(InstanceId& _return)
 {
 
   int32_t rseqid = 0;
@@ -6020,134 +5282,12 @@ bool FmuServiceClient::recv_can_create_instance_from_cs()
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
   }
-  if (fname.compare("can_create_instance_from_cs") != 0) {
+  if (fname.compare("create_instance") != 0) {
     iprot_->skip(::apache::thrift::protocol::T_STRUCT);
     iprot_->readMessageEnd();
     iprot_->getTransport()->readEnd();
   }
-  bool _return;
-  FmuService_can_create_instance_from_cs_presult result;
-  result.success = &_return;
-  result.read(iprot_);
-  iprot_->readMessageEnd();
-  iprot_->getTransport()->readEnd();
-
-  if (result.__isset.success) {
-    return _return;
-  }
-  if (result.__isset.ex) {
-    throw result.ex;
-  }
-  throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "can_create_instance_from_cs failed: unknown result");
-}
-
-bool FmuServiceClient::can_create_instance_from_me(const FmuId& fmuId)
-{
-  send_can_create_instance_from_me(fmuId);
-  return recv_can_create_instance_from_me();
-}
-
-void FmuServiceClient::send_can_create_instance_from_me(const FmuId& fmuId)
-{
-  int32_t cseqid = 0;
-  oprot_->writeMessageBegin("can_create_instance_from_me", ::apache::thrift::protocol::T_CALL, cseqid);
-
-  FmuService_can_create_instance_from_me_pargs args;
-  args.fmuId = &fmuId;
-  args.write(oprot_);
-
-  oprot_->writeMessageEnd();
-  oprot_->getTransport()->writeEnd();
-  oprot_->getTransport()->flush();
-}
-
-bool FmuServiceClient::recv_can_create_instance_from_me()
-{
-
-  int32_t rseqid = 0;
-  std::string fname;
-  ::apache::thrift::protocol::TMessageType mtype;
-
-  iprot_->readMessageBegin(fname, mtype, rseqid);
-  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
-    ::apache::thrift::TApplicationException x;
-    x.read(iprot_);
-    iprot_->readMessageEnd();
-    iprot_->getTransport()->readEnd();
-    throw x;
-  }
-  if (mtype != ::apache::thrift::protocol::T_REPLY) {
-    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
-    iprot_->readMessageEnd();
-    iprot_->getTransport()->readEnd();
-  }
-  if (fname.compare("can_create_instance_from_me") != 0) {
-    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
-    iprot_->readMessageEnd();
-    iprot_->getTransport()->readEnd();
-  }
-  bool _return;
-  FmuService_can_create_instance_from_me_presult result;
-  result.success = &_return;
-  result.read(iprot_);
-  iprot_->readMessageEnd();
-  iprot_->getTransport()->readEnd();
-
-  if (result.__isset.success) {
-    return _return;
-  }
-  if (result.__isset.ex) {
-    throw result.ex;
-  }
-  throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "can_create_instance_from_me failed: unknown result");
-}
-
-void FmuServiceClient::create_instance_from_cs(InstanceId& _return, const FmuId& fmuId)
-{
-  send_create_instance_from_cs(fmuId);
-  recv_create_instance_from_cs(_return);
-}
-
-void FmuServiceClient::send_create_instance_from_cs(const FmuId& fmuId)
-{
-  int32_t cseqid = 0;
-  oprot_->writeMessageBegin("create_instance_from_cs", ::apache::thrift::protocol::T_CALL, cseqid);
-
-  FmuService_create_instance_from_cs_pargs args;
-  args.fmuId = &fmuId;
-  args.write(oprot_);
-
-  oprot_->writeMessageEnd();
-  oprot_->getTransport()->writeEnd();
-  oprot_->getTransport()->flush();
-}
-
-void FmuServiceClient::recv_create_instance_from_cs(InstanceId& _return)
-{
-
-  int32_t rseqid = 0;
-  std::string fname;
-  ::apache::thrift::protocol::TMessageType mtype;
-
-  iprot_->readMessageBegin(fname, mtype, rseqid);
-  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
-    ::apache::thrift::TApplicationException x;
-    x.read(iprot_);
-    iprot_->readMessageEnd();
-    iprot_->getTransport()->readEnd();
-    throw x;
-  }
-  if (mtype != ::apache::thrift::protocol::T_REPLY) {
-    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
-    iprot_->readMessageEnd();
-    iprot_->getTransport()->readEnd();
-  }
-  if (fname.compare("create_instance_from_cs") != 0) {
-    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
-    iprot_->readMessageEnd();
-    iprot_->getTransport()->readEnd();
-  }
-  FmuService_create_instance_from_cs_presult result;
+  FmuService_create_instance_presult result;
   result.success = &_return;
   result.read(iprot_);
   iprot_->readMessageEnd();
@@ -6163,72 +5303,7 @@ void FmuServiceClient::recv_create_instance_from_cs(InstanceId& _return)
   if (result.__isset.ex2) {
     throw result.ex2;
   }
-  throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "create_instance_from_cs failed: unknown result");
-}
-
-void FmuServiceClient::create_instance_from_me(InstanceId& _return, const FmuId& fmuId, const Solver& solver)
-{
-  send_create_instance_from_me(fmuId, solver);
-  recv_create_instance_from_me(_return);
-}
-
-void FmuServiceClient::send_create_instance_from_me(const FmuId& fmuId, const Solver& solver)
-{
-  int32_t cseqid = 0;
-  oprot_->writeMessageBegin("create_instance_from_me", ::apache::thrift::protocol::T_CALL, cseqid);
-
-  FmuService_create_instance_from_me_pargs args;
-  args.fmuId = &fmuId;
-  args.solver = &solver;
-  args.write(oprot_);
-
-  oprot_->writeMessageEnd();
-  oprot_->getTransport()->writeEnd();
-  oprot_->getTransport()->flush();
-}
-
-void FmuServiceClient::recv_create_instance_from_me(InstanceId& _return)
-{
-
-  int32_t rseqid = 0;
-  std::string fname;
-  ::apache::thrift::protocol::TMessageType mtype;
-
-  iprot_->readMessageBegin(fname, mtype, rseqid);
-  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
-    ::apache::thrift::TApplicationException x;
-    x.read(iprot_);
-    iprot_->readMessageEnd();
-    iprot_->getTransport()->readEnd();
-    throw x;
-  }
-  if (mtype != ::apache::thrift::protocol::T_REPLY) {
-    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
-    iprot_->readMessageEnd();
-    iprot_->getTransport()->readEnd();
-  }
-  if (fname.compare("create_instance_from_me") != 0) {
-    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
-    iprot_->readMessageEnd();
-    iprot_->getTransport()->readEnd();
-  }
-  FmuService_create_instance_from_me_presult result;
-  result.success = &_return;
-  result.read(iprot_);
-  iprot_->readMessageEnd();
-  iprot_->getTransport()->readEnd();
-
-  if (result.__isset.success) {
-    // _return pointer has now been filled
-    return;
-  }
-  if (result.__isset.ex1) {
-    throw result.ex1;
-  }
-  if (result.__isset.ex2) {
-    throw result.ex2;
-  }
-  throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "create_instance_from_me failed: unknown result");
+  throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "create_instance failed: unknown result");
 }
 
 Status::type FmuServiceClient::setup_experiment(const InstanceId& instanceId, const double start, const double stop, const double tolerance)
@@ -6599,6 +5674,62 @@ Status::type FmuServiceClient::recv_terminate()
     throw result.ex;
   }
   throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "terminate failed: unknown result");
+}
+
+void FmuServiceClient::freeInstance(const InstanceId& instanceId)
+{
+  send_freeInstance(instanceId);
+  recv_freeInstance();
+}
+
+void FmuServiceClient::send_freeInstance(const InstanceId& instanceId)
+{
+  int32_t cseqid = 0;
+  oprot_->writeMessageBegin("freeInstance", ::apache::thrift::protocol::T_CALL, cseqid);
+
+  FmuService_freeInstance_pargs args;
+  args.instanceId = &instanceId;
+  args.write(oprot_);
+
+  oprot_->writeMessageEnd();
+  oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
+}
+
+void FmuServiceClient::recv_freeInstance()
+{
+
+  int32_t rseqid = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TMessageType mtype;
+
+  iprot_->readMessageBegin(fname, mtype, rseqid);
+  if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+    ::apache::thrift::TApplicationException x;
+    x.read(iprot_);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+    throw x;
+  }
+  if (mtype != ::apache::thrift::protocol::T_REPLY) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  if (fname.compare("freeInstance") != 0) {
+    iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+    iprot_->readMessageEnd();
+    iprot_->getTransport()->readEnd();
+  }
+  FmuService_freeInstance_presult result;
+  result.read(iprot_);
+  iprot_->readMessageEnd();
+  iprot_->getTransport()->readEnd();
+
+  if (result.__isset.ex) {
+    throw result.ex;
+  }
+  return;
 }
 
 void FmuServiceClient::read_integer(IntegerRead& _return, const InstanceId& instanceId, const ValueReferences& vr)
@@ -7376,201 +6507,30 @@ void FmuServiceProcessor::process_get_model_description(int32_t seqid, ::apache:
   }
 }
 
-void FmuServiceProcessor::process_get_co_simulation_attributes(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
+void FmuServiceProcessor::process_create_instance(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
 {
   void* ctx = NULL;
   if (this->eventHandler_.get() != NULL) {
-    ctx = this->eventHandler_->getContext("FmuService.get_co_simulation_attributes", callContext);
+    ctx = this->eventHandler_->getContext("FmuService.create_instance", callContext);
   }
-  ::apache::thrift::TProcessorContextFreer freer(this->eventHandler_.get(), ctx, "FmuService.get_co_simulation_attributes");
+  ::apache::thrift::TProcessorContextFreer freer(this->eventHandler_.get(), ctx, "FmuService.create_instance");
 
   if (this->eventHandler_.get() != NULL) {
-    this->eventHandler_->preRead(ctx, "FmuService.get_co_simulation_attributes");
+    this->eventHandler_->preRead(ctx, "FmuService.create_instance");
   }
 
-  FmuService_get_co_simulation_attributes_args args;
+  FmuService_create_instance_args args;
   args.read(iprot);
   iprot->readMessageEnd();
   uint32_t bytes = iprot->getTransport()->readEnd();
 
   if (this->eventHandler_.get() != NULL) {
-    this->eventHandler_->postRead(ctx, "FmuService.get_co_simulation_attributes", bytes);
+    this->eventHandler_->postRead(ctx, "FmuService.create_instance", bytes);
   }
 
-  FmuService_get_co_simulation_attributes_result result;
+  FmuService_create_instance_result result;
   try {
-    iface_->get_co_simulation_attributes(result.success, args.instanceId);
-    result.__isset.success = true;
-  } catch (NoSuchInstanceException &ex) {
-    result.ex = ex;
-    result.__isset.ex = true;
-  } catch (const std::exception& e) {
-    if (this->eventHandler_.get() != NULL) {
-      this->eventHandler_->handlerError(ctx, "FmuService.get_co_simulation_attributes");
-    }
-
-    ::apache::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("get_co_simulation_attributes", ::apache::thrift::protocol::T_EXCEPTION, seqid);
-    x.write(oprot);
-    oprot->writeMessageEnd();
-    oprot->getTransport()->writeEnd();
-    oprot->getTransport()->flush();
-    return;
-  }
-
-  if (this->eventHandler_.get() != NULL) {
-    this->eventHandler_->preWrite(ctx, "FmuService.get_co_simulation_attributes");
-  }
-
-  oprot->writeMessageBegin("get_co_simulation_attributes", ::apache::thrift::protocol::T_REPLY, seqid);
-  result.write(oprot);
-  oprot->writeMessageEnd();
-  bytes = oprot->getTransport()->writeEnd();
-  oprot->getTransport()->flush();
-
-  if (this->eventHandler_.get() != NULL) {
-    this->eventHandler_->postWrite(ctx, "FmuService.get_co_simulation_attributes", bytes);
-  }
-}
-
-void FmuServiceProcessor::process_can_create_instance_from_cs(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
-{
-  void* ctx = NULL;
-  if (this->eventHandler_.get() != NULL) {
-    ctx = this->eventHandler_->getContext("FmuService.can_create_instance_from_cs", callContext);
-  }
-  ::apache::thrift::TProcessorContextFreer freer(this->eventHandler_.get(), ctx, "FmuService.can_create_instance_from_cs");
-
-  if (this->eventHandler_.get() != NULL) {
-    this->eventHandler_->preRead(ctx, "FmuService.can_create_instance_from_cs");
-  }
-
-  FmuService_can_create_instance_from_cs_args args;
-  args.read(iprot);
-  iprot->readMessageEnd();
-  uint32_t bytes = iprot->getTransport()->readEnd();
-
-  if (this->eventHandler_.get() != NULL) {
-    this->eventHandler_->postRead(ctx, "FmuService.can_create_instance_from_cs", bytes);
-  }
-
-  FmuService_can_create_instance_from_cs_result result;
-  try {
-    result.success = iface_->can_create_instance_from_cs(args.fmuId);
-    result.__isset.success = true;
-  } catch (NoSuchFmuException &ex) {
-    result.ex = ex;
-    result.__isset.ex = true;
-  } catch (const std::exception& e) {
-    if (this->eventHandler_.get() != NULL) {
-      this->eventHandler_->handlerError(ctx, "FmuService.can_create_instance_from_cs");
-    }
-
-    ::apache::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("can_create_instance_from_cs", ::apache::thrift::protocol::T_EXCEPTION, seqid);
-    x.write(oprot);
-    oprot->writeMessageEnd();
-    oprot->getTransport()->writeEnd();
-    oprot->getTransport()->flush();
-    return;
-  }
-
-  if (this->eventHandler_.get() != NULL) {
-    this->eventHandler_->preWrite(ctx, "FmuService.can_create_instance_from_cs");
-  }
-
-  oprot->writeMessageBegin("can_create_instance_from_cs", ::apache::thrift::protocol::T_REPLY, seqid);
-  result.write(oprot);
-  oprot->writeMessageEnd();
-  bytes = oprot->getTransport()->writeEnd();
-  oprot->getTransport()->flush();
-
-  if (this->eventHandler_.get() != NULL) {
-    this->eventHandler_->postWrite(ctx, "FmuService.can_create_instance_from_cs", bytes);
-  }
-}
-
-void FmuServiceProcessor::process_can_create_instance_from_me(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
-{
-  void* ctx = NULL;
-  if (this->eventHandler_.get() != NULL) {
-    ctx = this->eventHandler_->getContext("FmuService.can_create_instance_from_me", callContext);
-  }
-  ::apache::thrift::TProcessorContextFreer freer(this->eventHandler_.get(), ctx, "FmuService.can_create_instance_from_me");
-
-  if (this->eventHandler_.get() != NULL) {
-    this->eventHandler_->preRead(ctx, "FmuService.can_create_instance_from_me");
-  }
-
-  FmuService_can_create_instance_from_me_args args;
-  args.read(iprot);
-  iprot->readMessageEnd();
-  uint32_t bytes = iprot->getTransport()->readEnd();
-
-  if (this->eventHandler_.get() != NULL) {
-    this->eventHandler_->postRead(ctx, "FmuService.can_create_instance_from_me", bytes);
-  }
-
-  FmuService_can_create_instance_from_me_result result;
-  try {
-    result.success = iface_->can_create_instance_from_me(args.fmuId);
-    result.__isset.success = true;
-  } catch (NoSuchFmuException &ex) {
-    result.ex = ex;
-    result.__isset.ex = true;
-  } catch (const std::exception& e) {
-    if (this->eventHandler_.get() != NULL) {
-      this->eventHandler_->handlerError(ctx, "FmuService.can_create_instance_from_me");
-    }
-
-    ::apache::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("can_create_instance_from_me", ::apache::thrift::protocol::T_EXCEPTION, seqid);
-    x.write(oprot);
-    oprot->writeMessageEnd();
-    oprot->getTransport()->writeEnd();
-    oprot->getTransport()->flush();
-    return;
-  }
-
-  if (this->eventHandler_.get() != NULL) {
-    this->eventHandler_->preWrite(ctx, "FmuService.can_create_instance_from_me");
-  }
-
-  oprot->writeMessageBegin("can_create_instance_from_me", ::apache::thrift::protocol::T_REPLY, seqid);
-  result.write(oprot);
-  oprot->writeMessageEnd();
-  bytes = oprot->getTransport()->writeEnd();
-  oprot->getTransport()->flush();
-
-  if (this->eventHandler_.get() != NULL) {
-    this->eventHandler_->postWrite(ctx, "FmuService.can_create_instance_from_me", bytes);
-  }
-}
-
-void FmuServiceProcessor::process_create_instance_from_cs(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
-{
-  void* ctx = NULL;
-  if (this->eventHandler_.get() != NULL) {
-    ctx = this->eventHandler_->getContext("FmuService.create_instance_from_cs", callContext);
-  }
-  ::apache::thrift::TProcessorContextFreer freer(this->eventHandler_.get(), ctx, "FmuService.create_instance_from_cs");
-
-  if (this->eventHandler_.get() != NULL) {
-    this->eventHandler_->preRead(ctx, "FmuService.create_instance_from_cs");
-  }
-
-  FmuService_create_instance_from_cs_args args;
-  args.read(iprot);
-  iprot->readMessageEnd();
-  uint32_t bytes = iprot->getTransport()->readEnd();
-
-  if (this->eventHandler_.get() != NULL) {
-    this->eventHandler_->postRead(ctx, "FmuService.create_instance_from_cs", bytes);
-  }
-
-  FmuService_create_instance_from_cs_result result;
-  try {
-    iface_->create_instance_from_cs(result.success, args.fmuId);
+    iface_->create_instance(result.success, args.fmuId);
     result.__isset.success = true;
   } catch (UnsupportedOperationException &ex1) {
     result.ex1 = ex1;
@@ -7580,11 +6540,11 @@ void FmuServiceProcessor::process_create_instance_from_cs(int32_t seqid, ::apach
     result.__isset.ex2 = true;
   } catch (const std::exception& e) {
     if (this->eventHandler_.get() != NULL) {
-      this->eventHandler_->handlerError(ctx, "FmuService.create_instance_from_cs");
+      this->eventHandler_->handlerError(ctx, "FmuService.create_instance");
     }
 
     ::apache::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("create_instance_from_cs", ::apache::thrift::protocol::T_EXCEPTION, seqid);
+    oprot->writeMessageBegin("create_instance", ::apache::thrift::protocol::T_EXCEPTION, seqid);
     x.write(oprot);
     oprot->writeMessageEnd();
     oprot->getTransport()->writeEnd();
@@ -7593,77 +6553,17 @@ void FmuServiceProcessor::process_create_instance_from_cs(int32_t seqid, ::apach
   }
 
   if (this->eventHandler_.get() != NULL) {
-    this->eventHandler_->preWrite(ctx, "FmuService.create_instance_from_cs");
+    this->eventHandler_->preWrite(ctx, "FmuService.create_instance");
   }
 
-  oprot->writeMessageBegin("create_instance_from_cs", ::apache::thrift::protocol::T_REPLY, seqid);
+  oprot->writeMessageBegin("create_instance", ::apache::thrift::protocol::T_REPLY, seqid);
   result.write(oprot);
   oprot->writeMessageEnd();
   bytes = oprot->getTransport()->writeEnd();
   oprot->getTransport()->flush();
 
   if (this->eventHandler_.get() != NULL) {
-    this->eventHandler_->postWrite(ctx, "FmuService.create_instance_from_cs", bytes);
-  }
-}
-
-void FmuServiceProcessor::process_create_instance_from_me(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
-{
-  void* ctx = NULL;
-  if (this->eventHandler_.get() != NULL) {
-    ctx = this->eventHandler_->getContext("FmuService.create_instance_from_me", callContext);
-  }
-  ::apache::thrift::TProcessorContextFreer freer(this->eventHandler_.get(), ctx, "FmuService.create_instance_from_me");
-
-  if (this->eventHandler_.get() != NULL) {
-    this->eventHandler_->preRead(ctx, "FmuService.create_instance_from_me");
-  }
-
-  FmuService_create_instance_from_me_args args;
-  args.read(iprot);
-  iprot->readMessageEnd();
-  uint32_t bytes = iprot->getTransport()->readEnd();
-
-  if (this->eventHandler_.get() != NULL) {
-    this->eventHandler_->postRead(ctx, "FmuService.create_instance_from_me", bytes);
-  }
-
-  FmuService_create_instance_from_me_result result;
-  try {
-    iface_->create_instance_from_me(result.success, args.fmuId, args.solver);
-    result.__isset.success = true;
-  } catch (UnsupportedOperationException &ex1) {
-    result.ex1 = ex1;
-    result.__isset.ex1 = true;
-  } catch (NoSuchFmuException &ex2) {
-    result.ex2 = ex2;
-    result.__isset.ex2 = true;
-  } catch (const std::exception& e) {
-    if (this->eventHandler_.get() != NULL) {
-      this->eventHandler_->handlerError(ctx, "FmuService.create_instance_from_me");
-    }
-
-    ::apache::thrift::TApplicationException x(e.what());
-    oprot->writeMessageBegin("create_instance_from_me", ::apache::thrift::protocol::T_EXCEPTION, seqid);
-    x.write(oprot);
-    oprot->writeMessageEnd();
-    oprot->getTransport()->writeEnd();
-    oprot->getTransport()->flush();
-    return;
-  }
-
-  if (this->eventHandler_.get() != NULL) {
-    this->eventHandler_->preWrite(ctx, "FmuService.create_instance_from_me");
-  }
-
-  oprot->writeMessageBegin("create_instance_from_me", ::apache::thrift::protocol::T_REPLY, seqid);
-  result.write(oprot);
-  oprot->writeMessageEnd();
-  bytes = oprot->getTransport()->writeEnd();
-  oprot->getTransport()->flush();
-
-  if (this->eventHandler_.get() != NULL) {
-    this->eventHandler_->postWrite(ctx, "FmuService.create_instance_from_me", bytes);
+    this->eventHandler_->postWrite(ctx, "FmuService.create_instance", bytes);
   }
 }
 
@@ -8006,6 +6906,62 @@ void FmuServiceProcessor::process_terminate(int32_t seqid, ::apache::thrift::pro
 
   if (this->eventHandler_.get() != NULL) {
     this->eventHandler_->postWrite(ctx, "FmuService.terminate", bytes);
+  }
+}
+
+void FmuServiceProcessor::process_freeInstance(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext)
+{
+  void* ctx = NULL;
+  if (this->eventHandler_.get() != NULL) {
+    ctx = this->eventHandler_->getContext("FmuService.freeInstance", callContext);
+  }
+  ::apache::thrift::TProcessorContextFreer freer(this->eventHandler_.get(), ctx, "FmuService.freeInstance");
+
+  if (this->eventHandler_.get() != NULL) {
+    this->eventHandler_->preRead(ctx, "FmuService.freeInstance");
+  }
+
+  FmuService_freeInstance_args args;
+  args.read(iprot);
+  iprot->readMessageEnd();
+  uint32_t bytes = iprot->getTransport()->readEnd();
+
+  if (this->eventHandler_.get() != NULL) {
+    this->eventHandler_->postRead(ctx, "FmuService.freeInstance", bytes);
+  }
+
+  FmuService_freeInstance_result result;
+  try {
+    iface_->freeInstance(args.instanceId);
+  } catch (NoSuchInstanceException &ex) {
+    result.ex = ex;
+    result.__isset.ex = true;
+  } catch (const std::exception& e) {
+    if (this->eventHandler_.get() != NULL) {
+      this->eventHandler_->handlerError(ctx, "FmuService.freeInstance");
+    }
+
+    ::apache::thrift::TApplicationException x(e.what());
+    oprot->writeMessageBegin("freeInstance", ::apache::thrift::protocol::T_EXCEPTION, seqid);
+    x.write(oprot);
+    oprot->writeMessageEnd();
+    oprot->getTransport()->writeEnd();
+    oprot->getTransport()->flush();
+    return;
+  }
+
+  if (this->eventHandler_.get() != NULL) {
+    this->eventHandler_->preWrite(ctx, "FmuService.freeInstance");
+  }
+
+  oprot->writeMessageBegin("freeInstance", ::apache::thrift::protocol::T_REPLY, seqid);
+  result.write(oprot);
+  oprot->writeMessageEnd();
+  bytes = oprot->getTransport()->writeEnd();
+  oprot->getTransport()->flush();
+
+  if (this->eventHandler_.get() != NULL) {
+    this->eventHandler_->postWrite(ctx, "FmuService.freeInstance", bytes);
   }
 }
 
@@ -8813,107 +7769,19 @@ void FmuServiceConcurrentClient::recv_get_model_description(ModelDescription& _r
   } // end while(true)
 }
 
-void FmuServiceConcurrentClient::get_co_simulation_attributes(CoSimulationAttributes& _return, const InstanceId& instanceId)
+void FmuServiceConcurrentClient::create_instance(InstanceId& _return, const FmuId& fmuId)
 {
-  int32_t seqid = send_get_co_simulation_attributes(instanceId);
-  recv_get_co_simulation_attributes(_return, seqid);
+  int32_t seqid = send_create_instance(fmuId);
+  recv_create_instance(_return, seqid);
 }
 
-int32_t FmuServiceConcurrentClient::send_get_co_simulation_attributes(const InstanceId& instanceId)
+int32_t FmuServiceConcurrentClient::send_create_instance(const FmuId& fmuId)
 {
   int32_t cseqid = this->sync_.generateSeqId();
   ::apache::thrift::async::TConcurrentSendSentry sentry(&this->sync_);
-  oprot_->writeMessageBegin("get_co_simulation_attributes", ::apache::thrift::protocol::T_CALL, cseqid);
+  oprot_->writeMessageBegin("create_instance", ::apache::thrift::protocol::T_CALL, cseqid);
 
-  FmuService_get_co_simulation_attributes_pargs args;
-  args.instanceId = &instanceId;
-  args.write(oprot_);
-
-  oprot_->writeMessageEnd();
-  oprot_->getTransport()->writeEnd();
-  oprot_->getTransport()->flush();
-
-  sentry.commit();
-  return cseqid;
-}
-
-void FmuServiceConcurrentClient::recv_get_co_simulation_attributes(CoSimulationAttributes& _return, const int32_t seqid)
-{
-
-  int32_t rseqid = 0;
-  std::string fname;
-  ::apache::thrift::protocol::TMessageType mtype;
-
-  // the read mutex gets dropped and reacquired as part of waitForWork()
-  // The destructor of this sentry wakes up other clients
-  ::apache::thrift::async::TConcurrentRecvSentry sentry(&this->sync_, seqid);
-
-  while(true) {
-    if(!this->sync_.getPending(fname, mtype, rseqid)) {
-      iprot_->readMessageBegin(fname, mtype, rseqid);
-    }
-    if(seqid == rseqid) {
-      if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
-        ::apache::thrift::TApplicationException x;
-        x.read(iprot_);
-        iprot_->readMessageEnd();
-        iprot_->getTransport()->readEnd();
-        sentry.commit();
-        throw x;
-      }
-      if (mtype != ::apache::thrift::protocol::T_REPLY) {
-        iprot_->skip(::apache::thrift::protocol::T_STRUCT);
-        iprot_->readMessageEnd();
-        iprot_->getTransport()->readEnd();
-      }
-      if (fname.compare("get_co_simulation_attributes") != 0) {
-        iprot_->skip(::apache::thrift::protocol::T_STRUCT);
-        iprot_->readMessageEnd();
-        iprot_->getTransport()->readEnd();
-
-        // in a bad state, don't commit
-        using ::apache::thrift::protocol::TProtocolException;
-        throw TProtocolException(TProtocolException::INVALID_DATA);
-      }
-      FmuService_get_co_simulation_attributes_presult result;
-      result.success = &_return;
-      result.read(iprot_);
-      iprot_->readMessageEnd();
-      iprot_->getTransport()->readEnd();
-
-      if (result.__isset.success) {
-        // _return pointer has now been filled
-        sentry.commit();
-        return;
-      }
-      if (result.__isset.ex) {
-        sentry.commit();
-        throw result.ex;
-      }
-      // in a bad state, don't commit
-      throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "get_co_simulation_attributes failed: unknown result");
-    }
-    // seqid != rseqid
-    this->sync_.updatePending(fname, mtype, rseqid);
-
-    // this will temporarily unlock the readMutex, and let other clients get work done
-    this->sync_.waitForWork(seqid);
-  } // end while(true)
-}
-
-bool FmuServiceConcurrentClient::can_create_instance_from_cs(const FmuId& fmuId)
-{
-  int32_t seqid = send_can_create_instance_from_cs(fmuId);
-  return recv_can_create_instance_from_cs(seqid);
-}
-
-int32_t FmuServiceConcurrentClient::send_can_create_instance_from_cs(const FmuId& fmuId)
-{
-  int32_t cseqid = this->sync_.generateSeqId();
-  ::apache::thrift::async::TConcurrentSendSentry sentry(&this->sync_);
-  oprot_->writeMessageBegin("can_create_instance_from_cs", ::apache::thrift::protocol::T_CALL, cseqid);
-
-  FmuService_can_create_instance_from_cs_pargs args;
+  FmuService_create_instance_pargs args;
   args.fmuId = &fmuId;
   args.write(oprot_);
 
@@ -8925,7 +7793,7 @@ int32_t FmuServiceConcurrentClient::send_can_create_instance_from_cs(const FmuId
   return cseqid;
 }
 
-bool FmuServiceConcurrentClient::recv_can_create_instance_from_cs(const int32_t seqid)
+void FmuServiceConcurrentClient::recv_create_instance(InstanceId& _return, const int32_t seqid)
 {
 
   int32_t rseqid = 0;
@@ -8954,7 +7822,7 @@ bool FmuServiceConcurrentClient::recv_can_create_instance_from_cs(const int32_t 
         iprot_->readMessageEnd();
         iprot_->getTransport()->readEnd();
       }
-      if (fname.compare("can_create_instance_from_cs") != 0) {
+      if (fname.compare("create_instance") != 0) {
         iprot_->skip(::apache::thrift::protocol::T_STRUCT);
         iprot_->readMessageEnd();
         iprot_->getTransport()->readEnd();
@@ -8963,183 +7831,7 @@ bool FmuServiceConcurrentClient::recv_can_create_instance_from_cs(const int32_t 
         using ::apache::thrift::protocol::TProtocolException;
         throw TProtocolException(TProtocolException::INVALID_DATA);
       }
-      bool _return;
-      FmuService_can_create_instance_from_cs_presult result;
-      result.success = &_return;
-      result.read(iprot_);
-      iprot_->readMessageEnd();
-      iprot_->getTransport()->readEnd();
-
-      if (result.__isset.success) {
-        sentry.commit();
-        return _return;
-      }
-      if (result.__isset.ex) {
-        sentry.commit();
-        throw result.ex;
-      }
-      // in a bad state, don't commit
-      throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "can_create_instance_from_cs failed: unknown result");
-    }
-    // seqid != rseqid
-    this->sync_.updatePending(fname, mtype, rseqid);
-
-    // this will temporarily unlock the readMutex, and let other clients get work done
-    this->sync_.waitForWork(seqid);
-  } // end while(true)
-}
-
-bool FmuServiceConcurrentClient::can_create_instance_from_me(const FmuId& fmuId)
-{
-  int32_t seqid = send_can_create_instance_from_me(fmuId);
-  return recv_can_create_instance_from_me(seqid);
-}
-
-int32_t FmuServiceConcurrentClient::send_can_create_instance_from_me(const FmuId& fmuId)
-{
-  int32_t cseqid = this->sync_.generateSeqId();
-  ::apache::thrift::async::TConcurrentSendSentry sentry(&this->sync_);
-  oprot_->writeMessageBegin("can_create_instance_from_me", ::apache::thrift::protocol::T_CALL, cseqid);
-
-  FmuService_can_create_instance_from_me_pargs args;
-  args.fmuId = &fmuId;
-  args.write(oprot_);
-
-  oprot_->writeMessageEnd();
-  oprot_->getTransport()->writeEnd();
-  oprot_->getTransport()->flush();
-
-  sentry.commit();
-  return cseqid;
-}
-
-bool FmuServiceConcurrentClient::recv_can_create_instance_from_me(const int32_t seqid)
-{
-
-  int32_t rseqid = 0;
-  std::string fname;
-  ::apache::thrift::protocol::TMessageType mtype;
-
-  // the read mutex gets dropped and reacquired as part of waitForWork()
-  // The destructor of this sentry wakes up other clients
-  ::apache::thrift::async::TConcurrentRecvSentry sentry(&this->sync_, seqid);
-
-  while(true) {
-    if(!this->sync_.getPending(fname, mtype, rseqid)) {
-      iprot_->readMessageBegin(fname, mtype, rseqid);
-    }
-    if(seqid == rseqid) {
-      if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
-        ::apache::thrift::TApplicationException x;
-        x.read(iprot_);
-        iprot_->readMessageEnd();
-        iprot_->getTransport()->readEnd();
-        sentry.commit();
-        throw x;
-      }
-      if (mtype != ::apache::thrift::protocol::T_REPLY) {
-        iprot_->skip(::apache::thrift::protocol::T_STRUCT);
-        iprot_->readMessageEnd();
-        iprot_->getTransport()->readEnd();
-      }
-      if (fname.compare("can_create_instance_from_me") != 0) {
-        iprot_->skip(::apache::thrift::protocol::T_STRUCT);
-        iprot_->readMessageEnd();
-        iprot_->getTransport()->readEnd();
-
-        // in a bad state, don't commit
-        using ::apache::thrift::protocol::TProtocolException;
-        throw TProtocolException(TProtocolException::INVALID_DATA);
-      }
-      bool _return;
-      FmuService_can_create_instance_from_me_presult result;
-      result.success = &_return;
-      result.read(iprot_);
-      iprot_->readMessageEnd();
-      iprot_->getTransport()->readEnd();
-
-      if (result.__isset.success) {
-        sentry.commit();
-        return _return;
-      }
-      if (result.__isset.ex) {
-        sentry.commit();
-        throw result.ex;
-      }
-      // in a bad state, don't commit
-      throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "can_create_instance_from_me failed: unknown result");
-    }
-    // seqid != rseqid
-    this->sync_.updatePending(fname, mtype, rseqid);
-
-    // this will temporarily unlock the readMutex, and let other clients get work done
-    this->sync_.waitForWork(seqid);
-  } // end while(true)
-}
-
-void FmuServiceConcurrentClient::create_instance_from_cs(InstanceId& _return, const FmuId& fmuId)
-{
-  int32_t seqid = send_create_instance_from_cs(fmuId);
-  recv_create_instance_from_cs(_return, seqid);
-}
-
-int32_t FmuServiceConcurrentClient::send_create_instance_from_cs(const FmuId& fmuId)
-{
-  int32_t cseqid = this->sync_.generateSeqId();
-  ::apache::thrift::async::TConcurrentSendSentry sentry(&this->sync_);
-  oprot_->writeMessageBegin("create_instance_from_cs", ::apache::thrift::protocol::T_CALL, cseqid);
-
-  FmuService_create_instance_from_cs_pargs args;
-  args.fmuId = &fmuId;
-  args.write(oprot_);
-
-  oprot_->writeMessageEnd();
-  oprot_->getTransport()->writeEnd();
-  oprot_->getTransport()->flush();
-
-  sentry.commit();
-  return cseqid;
-}
-
-void FmuServiceConcurrentClient::recv_create_instance_from_cs(InstanceId& _return, const int32_t seqid)
-{
-
-  int32_t rseqid = 0;
-  std::string fname;
-  ::apache::thrift::protocol::TMessageType mtype;
-
-  // the read mutex gets dropped and reacquired as part of waitForWork()
-  // The destructor of this sentry wakes up other clients
-  ::apache::thrift::async::TConcurrentRecvSentry sentry(&this->sync_, seqid);
-
-  while(true) {
-    if(!this->sync_.getPending(fname, mtype, rseqid)) {
-      iprot_->readMessageBegin(fname, mtype, rseqid);
-    }
-    if(seqid == rseqid) {
-      if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
-        ::apache::thrift::TApplicationException x;
-        x.read(iprot_);
-        iprot_->readMessageEnd();
-        iprot_->getTransport()->readEnd();
-        sentry.commit();
-        throw x;
-      }
-      if (mtype != ::apache::thrift::protocol::T_REPLY) {
-        iprot_->skip(::apache::thrift::protocol::T_STRUCT);
-        iprot_->readMessageEnd();
-        iprot_->getTransport()->readEnd();
-      }
-      if (fname.compare("create_instance_from_cs") != 0) {
-        iprot_->skip(::apache::thrift::protocol::T_STRUCT);
-        iprot_->readMessageEnd();
-        iprot_->getTransport()->readEnd();
-
-        // in a bad state, don't commit
-        using ::apache::thrift::protocol::TProtocolException;
-        throw TProtocolException(TProtocolException::INVALID_DATA);
-      }
-      FmuService_create_instance_from_cs_presult result;
+      FmuService_create_instance_presult result;
       result.success = &_return;
       result.read(iprot_);
       iprot_->readMessageEnd();
@@ -9159,100 +7851,7 @@ void FmuServiceConcurrentClient::recv_create_instance_from_cs(InstanceId& _retur
         throw result.ex2;
       }
       // in a bad state, don't commit
-      throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "create_instance_from_cs failed: unknown result");
-    }
-    // seqid != rseqid
-    this->sync_.updatePending(fname, mtype, rseqid);
-
-    // this will temporarily unlock the readMutex, and let other clients get work done
-    this->sync_.waitForWork(seqid);
-  } // end while(true)
-}
-
-void FmuServiceConcurrentClient::create_instance_from_me(InstanceId& _return, const FmuId& fmuId, const Solver& solver)
-{
-  int32_t seqid = send_create_instance_from_me(fmuId, solver);
-  recv_create_instance_from_me(_return, seqid);
-}
-
-int32_t FmuServiceConcurrentClient::send_create_instance_from_me(const FmuId& fmuId, const Solver& solver)
-{
-  int32_t cseqid = this->sync_.generateSeqId();
-  ::apache::thrift::async::TConcurrentSendSentry sentry(&this->sync_);
-  oprot_->writeMessageBegin("create_instance_from_me", ::apache::thrift::protocol::T_CALL, cseqid);
-
-  FmuService_create_instance_from_me_pargs args;
-  args.fmuId = &fmuId;
-  args.solver = &solver;
-  args.write(oprot_);
-
-  oprot_->writeMessageEnd();
-  oprot_->getTransport()->writeEnd();
-  oprot_->getTransport()->flush();
-
-  sentry.commit();
-  return cseqid;
-}
-
-void FmuServiceConcurrentClient::recv_create_instance_from_me(InstanceId& _return, const int32_t seqid)
-{
-
-  int32_t rseqid = 0;
-  std::string fname;
-  ::apache::thrift::protocol::TMessageType mtype;
-
-  // the read mutex gets dropped and reacquired as part of waitForWork()
-  // The destructor of this sentry wakes up other clients
-  ::apache::thrift::async::TConcurrentRecvSentry sentry(&this->sync_, seqid);
-
-  while(true) {
-    if(!this->sync_.getPending(fname, mtype, rseqid)) {
-      iprot_->readMessageBegin(fname, mtype, rseqid);
-    }
-    if(seqid == rseqid) {
-      if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
-        ::apache::thrift::TApplicationException x;
-        x.read(iprot_);
-        iprot_->readMessageEnd();
-        iprot_->getTransport()->readEnd();
-        sentry.commit();
-        throw x;
-      }
-      if (mtype != ::apache::thrift::protocol::T_REPLY) {
-        iprot_->skip(::apache::thrift::protocol::T_STRUCT);
-        iprot_->readMessageEnd();
-        iprot_->getTransport()->readEnd();
-      }
-      if (fname.compare("create_instance_from_me") != 0) {
-        iprot_->skip(::apache::thrift::protocol::T_STRUCT);
-        iprot_->readMessageEnd();
-        iprot_->getTransport()->readEnd();
-
-        // in a bad state, don't commit
-        using ::apache::thrift::protocol::TProtocolException;
-        throw TProtocolException(TProtocolException::INVALID_DATA);
-      }
-      FmuService_create_instance_from_me_presult result;
-      result.success = &_return;
-      result.read(iprot_);
-      iprot_->readMessageEnd();
-      iprot_->getTransport()->readEnd();
-
-      if (result.__isset.success) {
-        // _return pointer has now been filled
-        sentry.commit();
-        return;
-      }
-      if (result.__isset.ex1) {
-        sentry.commit();
-        throw result.ex1;
-      }
-      if (result.__isset.ex2) {
-        sentry.commit();
-        throw result.ex2;
-      }
-      // in a bad state, don't commit
-      throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "create_instance_from_me failed: unknown result");
+      throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "create_instance failed: unknown result");
     }
     // seqid != rseqid
     this->sync_.updatePending(fname, mtype, rseqid);
@@ -9785,6 +8384,88 @@ Status::type FmuServiceConcurrentClient::recv_terminate(const int32_t seqid)
       }
       // in a bad state, don't commit
       throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "terminate failed: unknown result");
+    }
+    // seqid != rseqid
+    this->sync_.updatePending(fname, mtype, rseqid);
+
+    // this will temporarily unlock the readMutex, and let other clients get work done
+    this->sync_.waitForWork(seqid);
+  } // end while(true)
+}
+
+void FmuServiceConcurrentClient::freeInstance(const InstanceId& instanceId)
+{
+  int32_t seqid = send_freeInstance(instanceId);
+  recv_freeInstance(seqid);
+}
+
+int32_t FmuServiceConcurrentClient::send_freeInstance(const InstanceId& instanceId)
+{
+  int32_t cseqid = this->sync_.generateSeqId();
+  ::apache::thrift::async::TConcurrentSendSentry sentry(&this->sync_);
+  oprot_->writeMessageBegin("freeInstance", ::apache::thrift::protocol::T_CALL, cseqid);
+
+  FmuService_freeInstance_pargs args;
+  args.instanceId = &instanceId;
+  args.write(oprot_);
+
+  oprot_->writeMessageEnd();
+  oprot_->getTransport()->writeEnd();
+  oprot_->getTransport()->flush();
+
+  sentry.commit();
+  return cseqid;
+}
+
+void FmuServiceConcurrentClient::recv_freeInstance(const int32_t seqid)
+{
+
+  int32_t rseqid = 0;
+  std::string fname;
+  ::apache::thrift::protocol::TMessageType mtype;
+
+  // the read mutex gets dropped and reacquired as part of waitForWork()
+  // The destructor of this sentry wakes up other clients
+  ::apache::thrift::async::TConcurrentRecvSentry sentry(&this->sync_, seqid);
+
+  while(true) {
+    if(!this->sync_.getPending(fname, mtype, rseqid)) {
+      iprot_->readMessageBegin(fname, mtype, rseqid);
+    }
+    if(seqid == rseqid) {
+      if (mtype == ::apache::thrift::protocol::T_EXCEPTION) {
+        ::apache::thrift::TApplicationException x;
+        x.read(iprot_);
+        iprot_->readMessageEnd();
+        iprot_->getTransport()->readEnd();
+        sentry.commit();
+        throw x;
+      }
+      if (mtype != ::apache::thrift::protocol::T_REPLY) {
+        iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+        iprot_->readMessageEnd();
+        iprot_->getTransport()->readEnd();
+      }
+      if (fname.compare("freeInstance") != 0) {
+        iprot_->skip(::apache::thrift::protocol::T_STRUCT);
+        iprot_->readMessageEnd();
+        iprot_->getTransport()->readEnd();
+
+        // in a bad state, don't commit
+        using ::apache::thrift::protocol::TProtocolException;
+        throw TProtocolException(TProtocolException::INVALID_DATA);
+      }
+      FmuService_freeInstance_presult result;
+      result.read(iprot_);
+      iprot_->readMessageEnd();
+      iprot_->getTransport()->readEnd();
+
+      if (result.__isset.ex) {
+        sentry.commit();
+        throw result.ex;
+      }
+      sentry.commit();
+      return;
     }
     // seqid != rseqid
     this->sync_.updatePending(fname, mtype, rseqid);

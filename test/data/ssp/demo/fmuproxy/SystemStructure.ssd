@@ -109,7 +109,7 @@
 
     <ssd:DefaultExperiment>
         <ssd:Annotations>
-            <ssc:Annotation type="org.open-simulation-platform">
+            <ssc:Annotation type="com.opensimulationplatform">
                 <osp:Algorithm>
                     <osp:FixedStepAlgorithm baseStepSize="1e-4"/>
                 </osp:Algorithm>
