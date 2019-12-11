@@ -371,7 +371,7 @@ cse_config_parser::cse_config_parser(
                     }
                 }
             }
-            functions_[functionName] = function;
+            functions_[functionName] = std::move(function);
         }
     }
 
@@ -568,18 +568,18 @@ struct extended_model_description
         const auto variableGroupsElement = static_cast<xercesc::DOMElement*>(rootElement->getElementsByTagName(tc("VariableGroups").get())->item(0));
 
         for (auto variableGroupElement = variableGroupsElement->getFirstElementChild(); variableGroupElement != nullptr; variableGroupElement = variableGroupElement->getNextElementSibling()) {
-            variable_group_description s;
-            s.name = tc(variableGroupElement->getAttribute(tc("name").get())).get();
-            s.type = tc(variableGroupElement->getAttribute(tc("type").get())).get();
+            variable_group_description vgd;
+            vgd.name = tc(variableGroupElement->getAttribute(tc("name").get())).get();
+            vgd.type = tc(variableGroupElement->getAttribute(tc("type").get())).get();
 
             auto variableElements = variableGroupElement->getElementsByTagName(tc("Variable").get());
             for (size_t i = 0; i < variableElements->getLength(); i++) {
                 auto variableElement = static_cast<xercesc::DOMElement*>(variableElements->item(i));
 
                 std::string variableName = tc(variableElement->getAttribute(tc("name").get())).get();
-                s.variables.push_back(variableName);
+                vgd.variables.push_back(std::move(variableName));
             }
-            variableGroups[s.name] = s;
+            variableGroups[vgd.name] = std::move(vgd);
         }
     }
 
@@ -802,7 +802,7 @@ void connect_signals(
                     throw std::runtime_error(oss.str());
                 }
                 auto factor = find_parameter(function.parameters, "factor");
-                double factorValue = factor ? std::get<double>((*factor).value) : 0.0;
+                double factorValue = factor ? std::get<double>((*factor).value) : 1.0;
                 auto offset = find_parameter(function.parameters, "offset");
                 double offsetValue = factor ? std::get<double>((*offset).value) : 0.0;
                 auto ltConnection = std::make_shared<linear_transformation_connection>(
