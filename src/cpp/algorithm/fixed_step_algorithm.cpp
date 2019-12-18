@@ -121,6 +121,9 @@ public:
                 transfer_destinations(entry.first);
             }
         }
+        for (const auto& entry : simulators_) {
+            entry.second.sim->start_simulation().get();
+        }
     }
 
     std::pair<duration, std::unordered_set<simulator_index>> do_step(time_point currentT)

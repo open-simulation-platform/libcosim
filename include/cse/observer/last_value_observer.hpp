@@ -35,6 +35,10 @@ public:
 
     void variable_disconnected(variable_id input, time_point) override;
 
+    void simulation_initialized(
+        step_number firstStep,
+        time_point startTime) override;
+
     void step_complete(
         step_number lastStep,
         duration lastStepSize,
