@@ -27,7 +27,6 @@ class LibcosimConan(ConanFile):
         "openssl/1.0.2u",
         "zlib/1.2.11",
     )
-
     options = {"fmuproxy": [True, False]}
     default_options = (
         "fmuproxy=False",
@@ -45,6 +44,7 @@ class LibcosimConan(ConanFile):
         binDir = os.path.join("output", str(self.settings.build_type).lower(), "bin")
         self.copy("*.dll", dst=binDir, keep_path=False)
         self.copy("*.pdb", dst=binDir, keep_path=False)
+        self.copy("*.dylib*", dst=binDir, keep_path=False)
 
     def requirements(self):
         if self.options.fmuproxy:
