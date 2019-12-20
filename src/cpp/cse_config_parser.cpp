@@ -91,13 +91,6 @@ public:
         std::string systemDescription;
     };
 
-    struct Connector
-    {
-        std::string name;
-        std::string kind;
-        std::string type;
-    };
-
     struct InitialValue
     {
         std::string name;
@@ -115,36 +108,114 @@ public:
 
     const std::vector<Simulator>& get_elements() const;
 
-    struct ScalarConnection
+    struct Parameter
     {
-        std::string sourceSimulator;
-        std::string sourceConnector;
-        std::string targetSimulator;
-        std::string targetConnector;
+        std::string name;
+        cse::variable_type type;
+        scalar_value value;
     };
 
-    struct SumConnection
+    struct Signal
     {
-        std::vector<std::pair<std::string, std::string>> sources;
-        std::pair<std::string, std::string> target;
+        std::string name;
+        cse::variable_type type;
+        cse::variable_causality causality;
     };
 
-    const std::vector<ScalarConnection>& get_scalar_connections() const;
-    const std::vector<SumConnection>& get_sum_connections() const;
-    const std::vector<ScalarConnection>& get_plug_socket_connections() const;
-    const std::vector<ScalarConnection>& get_bond_connections() const;
+    struct SignalGroup
+    {
+        std::string name;
+        std::vector<std::string> signals;
+    };
+
+    struct Function
+    {
+        std::string type;
+        std::string name;
+        std::vector<Parameter> parameters;
+        std::vector<Signal> signals;
+        std::vector<SignalGroup> signalGroups;
+    };
+
+    const std::unordered_map<std::string, Function>& get_functions() const;
+
+    struct VariableEndpoint
+    {
+        std::string simulator;
+        std::string name;
+    };
+
+    struct SignalEndpoint
+    {
+        std::string function;
+        std::string name;
+    };
+
+    struct VariableConnection
+    {
+        VariableEndpoint variableA;
+        VariableEndpoint variableB;
+    };
+
+    struct SignalConnection
+    {
+        SignalEndpoint signal;
+        VariableEndpoint variable;
+    };
+
+
+    const std::vector<VariableConnection>& get_variable_connections() const;
+    const std::vector<SignalConnection>& get_signal_connections() const;
+    const std::vector<VariableConnection>& get_variable_group_connections() const;
+    const std::vector<SignalConnection>& get_signal_group_connections() const;
 
 private:
     SystemDescription systemDescription_;
     SimulationInformation simulationInformation_;
     std::vector<Simulator> simulators_;
-    std::vector<SumConnection> sumConnections_;
-    std::vector<ScalarConnection> scalarConnections_;
-    std::vector<ScalarConnection> plugSocketConnections_;
-    std::vector<ScalarConnection> bondConnections_;
+    std::unordered_map<std::string, Function> functions_;
+    std::vector<VariableConnection> variableConnections_;
+    std::vector<VariableConnection> variableGroupConnections_;
+    std::vector<SignalConnection> signalConnections_;
+    std::vector<SignalConnection> signalGroupConnections_;
     static variable_type parse_variable_type(const std::string&);
     static bool parse_boolean_value(const std::string& s);
 };
+
+namespace
+{
+
+variable_type to_variable_type(const std::string& str)
+{
+    if ("real" == str) {
+        return cse::variable_type::real;
+    }
+    if ("integer" == str) {
+        return cse::variable_type::integer;
+    }
+    if ("boolean" == str) {
+        return cse::variable_type::boolean;
+    }
+    if ("string" == str) {
+        return cse::variable_type::string;
+    }
+    if ("enumeration" == str) {
+        return cse::variable_type::enumeration;
+    }
+    throw std::runtime_error("Failed to parse variable type: " + str);
+}
+
+variable_causality to_variable_causality(const std::string& str)
+{
+    if ("input" == str) {
+        return cse::variable_causality::input;
+    }
+    if ("output" == str) {
+        return cse::variable_causality::output;
+    }
+    throw std::runtime_error("Don't know how to handle variable causality: " + str);
+}
+} // namespace
 
 cse_config_parser::cse_config_parser(
     const boost::filesystem::path& configPath)
@@ -235,6 +306,75 @@ cse_config_parser::cse_config_parser(
         simulators_.push_back({name, source, stepSize, initialValues});
     }
 
+    const auto functionsElement = static_cast<xercesc::DOMElement*>(rootElement->getElementsByTagName(tc("Functions").get())->item(0));
+    if (functionsElement != nullptr) {
+        for (auto functionElement = functionsElement->getFirstElementChild(); functionElement != nullptr; functionElement = functionElement->getNextElementSibling()) {
+
+            Function function;
+
+            std::string functionName = tc(functionElement->getAttribute(tc("name").get())).get();
+            function.name = functionName;
+            std::string type = tc(functionElement->getAttribute(tc("type").get())).get();
+            function.type = type;
+
+            const auto parametersElement = static_cast<xercesc::DOMElement*>(functionElement->getElementsByTagName(tc("Parameters").get())->item(0));
+            if (parametersElement) {
+                for (auto parameterElement = parametersElement->getFirstElementChild(); parameterElement != nullptr; parameterElement = parameterElement->getNextElementSibling()) {
+
+                    Parameter p = function.parameters.emplace_back();
+                    p.name = tc(parameterElement->getAttribute(tc("name").get())).get();
+                    std::string typeStr = tc(parameterElement->getAttribute(tc("type").get())).get();
+                    p.type = to_variable_type(typeStr);
+                    std::string varValue = tc(parameterElement->getAttribute(tc("value").get())).get();
+
+                    switch (p.type) {
+                        case variable_type::real:
+                            p.value = boost::lexical_cast<double>(varValue);
+                            break;
+                        case variable_type::integer:
+                            p.value = boost::lexical_cast<int>(varValue);
+                            break;
+                        case variable_type::boolean:
+                            p.value = parse_boolean_value(varValue);
+                            break;
+                        case variable_type::string:
+                            p.value = varValue;
+                            break;
+                        default:
+                            std::ostringstream oss;
+                            oss << "Can't parse parameter value " << varValue
+                                << " into type " << p.type;
+                            throw std::runtime_error(oss.str());
+                    }
+                }
+            }
+            const auto signalsElement = static_cast<xercesc::DOMElement*>(functionElement->getElementsByTagName(tc("Signals").get())->item(0));
+            if (signalsElement) {
+                for (auto signalElement = signalsElement->getFirstElementChild(); signalElement != nullptr; signalElement = signalElement->getNextElementSibling()) {
+                    std::string name = tc(signalElement->getAttribute(tc("name").get())).get();
+                    std::string typeStr = tc(signalElement->getAttribute(tc("type").get())).get();
+                    auto sigType = to_variable_type(typeStr);
+                    std::string causalityStr = tc(signalElement->getAttribute(tc("causality").get())).get();
+                    auto sigCausality = to_variable_causality(causalityStr);
+
+                    function.signals.push_back({name, sigType, sigCausality});
+                }
+            }
+
+            const auto signalGroupsElement = static_cast<xercesc::DOMElement*>(functionElement->getElementsByTagName(tc("SignalGroups").get())->item(0));
+            if (signalGroupsElement) {
+                for (auto signalGroupElement = signalGroupsElement->getFirstElementChild(); signalGroupElement != nullptr; signalGroupElement = signalGroupElement->getNextElementSibling()) {
+                    SignalGroup signalGroup = function.signalGroups.emplace_back();
+                    signalGroup.name = tc(signalGroupElement->getAttribute(tc("name").get())).get();
+                    for (auto signalGroupSignalElement = signalGroupElement->getFirstElementChild(); signalGroupSignalElement != nullptr; signalGroupSignalElement = signalGroupSignalElement->getNextElementSibling()) {
+                        signalGroup.signals.emplace_back(tc(signalGroupSignalElement->getAttribute(tc("name").get())).get());
+                    }
+                }
+            }
+            functions_[functionName] = std::move(function);
+        }
+    }
+
     auto descNodes = rootElement->getElementsByTagName(tc("Description").get());
     if (descNodes->getLength() > 0) {
         simulationInformation_.description = tc(descNodes->item(0)->getTextContent()).get();
@@ -250,63 +390,75 @@ cse_config_parser::cse_config_parser(
         simulationInformation_.startTime = boost::lexical_cast<double>(tc(stNodes->item(0)->getTextContent()).get());
     }
 
-    auto varConns = static_cast<xercesc::DOMElement*>(rootElement->getElementsByTagName(tc("VariableConnections").get())->item(0));
+    auto connectionsElement = static_cast<xercesc::DOMElement*>(rootElement->getElementsByTagName(tc("Connections").get())->item(0));
+    if (connectionsElement) {
+        auto variableConnectionsElement = connectionsElement->getElementsByTagName(tc("VariableConnection").get());
+        for (size_t i = 0; i < variableConnectionsElement->getLength(); i++) {
+            auto connectionElement = static_cast<xercesc::DOMElement*>(variableConnectionsElement->item(i));
+            auto a = static_cast<xercesc::DOMElement*>(connectionElement->getElementsByTagName(tc("Variable").get())->item(0));
+            auto b = static_cast<xercesc::DOMElement*>(connectionElement->getElementsByTagName(tc("Variable").get())->item(1));
 
-    auto scalarConnections = varConns->getElementsByTagName(tc("ScalarConnection").get());
-    for (size_t i = 0; i < scalarConnections->getLength(); i++) {
-        auto scalarConnection = static_cast<xercesc::DOMElement*>(scalarConnections->item(i));
-        auto source = static_cast<xercesc::DOMElement*>(scalarConnection->getElementsByTagName(tc("Source").get())->item(0));
-        auto target = static_cast<xercesc::DOMElement*>(scalarConnection->getElementsByTagName(tc("Target").get())->item(0));
-        std::string sourceSimulator = tc(source->getAttribute(tc("simulator").get())).get();
-        std::string sourceVariable = tc(source->getAttribute(tc("endpoint").get())).get();
-        std::string targetSimulator = tc(target->getAttribute(tc("simulator").get())).get();
-        std::string targetVariable = tc(target->getAttribute(tc("endpoint").get())).get();
+            std::string simulatorA = tc(a->getAttribute(tc("simulator").get())).get();
+            std::string nameA = tc(a->getAttribute(tc("name").get())).get();
+            VariableEndpoint veA = {simulatorA, nameA};
 
-        scalarConnections_.push_back({sourceSimulator, sourceVariable,
-            targetSimulator, targetVariable});
-    }
-    auto sumConnections = varConns->getElementsByTagName(tc("SumConnection").get());
-    for (size_t i = 0; i < sumConnections->getLength(); i++) {
-        SumConnection s;
-        auto sumConnection = static_cast<xercesc::DOMElement*>(sumConnections->item(i));
-        auto sources = static_cast<xercesc::DOMElement*>(sumConnection->getElementsByTagName(tc("Sources").get())->item(0));
-        for (auto sourceElement = sources->getFirstElementChild(); sourceElement != nullptr; sourceElement = sourceElement->getNextElementSibling()) {
-            auto& source = s.sources.emplace_back();
-            source.first = tc(sourceElement->getAttribute(tc("simulator").get())).get();
-            source.second = tc(sourceElement->getAttribute(tc("endpoint").get())).get();
+            std::string simulatorB = tc(b->getAttribute(tc("simulator").get())).get();
+            std::string nameB = tc(b->getAttribute(tc("name").get())).get();
+            VariableEndpoint veB = {simulatorB, nameB};
+
+            variableConnections_.push_back({veA, veB});
         }
-        auto target = static_cast<xercesc::DOMElement*>(sumConnection->getElementsByTagName(tc("Target").get())->item(0));
-        std::string targetSimulator = tc(target->getAttribute(tc("simulator").get())).get();
-        std::string targetVariable = tc(target->getAttribute(tc("endpoint").get())).get();
-        s.target = {targetSimulator, targetVariable};
 
-        sumConnections_.push_back(std::move(s));
-    }
+        auto signalConnectionsElement = connectionsElement->getElementsByTagName(tc("SignalConnection").get());
+        for (size_t i = 0; i < signalConnectionsElement->getLength(); i++) {
+            auto connectionElement = static_cast<xercesc::DOMElement*>(signalConnectionsElement->item(i));
+            auto signalElement = static_cast<xercesc::DOMElement*>(connectionElement->getElementsByTagName(tc("Signal").get())->item(0));
+            auto variableElement = static_cast<xercesc::DOMElement*>(connectionElement->getElementsByTagName(tc("Variable").get())->item(0));
 
-    auto plugSocketConns = static_cast<xercesc::DOMElement*>(rootElement->getElementsByTagName(tc("PlugSocketConnections").get())->item(0));
-    for (auto element = plugSocketConns->getFirstElementChild(); element != nullptr; element = element->getNextElementSibling()) {
-        auto source = static_cast<xercesc::DOMElement*>(element->getElementsByTagName(tc("Source").get())->item(0));
-        auto target = static_cast<xercesc::DOMElement*>(element->getElementsByTagName(tc("Target").get())->item(0));
-        std::string sourceSimulator = tc(source->getAttribute(tc("simulator").get())).get();
-        std::string plug = tc(source->getAttribute(tc("endpoint").get())).get();
-        std::string targetSimulator = tc(target->getAttribute(tc("simulator").get())).get();
-        std::string socket = tc(target->getAttribute(tc("endpoint").get())).get();
+            std::string function = tc(signalElement->getAttribute(tc("function").get())).get();
+            std::string sigName = tc(signalElement->getAttribute(tc("name").get())).get();
+            SignalEndpoint signal = {function, sigName};
 
-        plugSocketConnections_.push_back({sourceSimulator, plug, targetSimulator, socket});
-    }
+            std::string simulator = tc(variableElement->getAttribute(tc("simulator").get())).get();
+            std::string varName = tc(variableElement->getAttribute(tc("name").get())).get();
+            VariableEndpoint variable = {simulator, varName};
 
-    auto bondConns = static_cast<xercesc::DOMElement*>(rootElement->getElementsByTagName(tc("BondConnections").get())->item(0));
-    for (auto element = bondConns->getFirstElementChild(); element != nullptr; element = element->getNextElementSibling()) {
-        auto bonds = element->getElementsByTagName(tc("Bond").get());
-        auto bondA = static_cast<xercesc::DOMElement*>(bonds->item(0));
-        auto bondB = static_cast<xercesc::DOMElement*>(bonds->item(1));
+            signalConnections_.push_back({signal, variable});
+        }
 
-        std::string simulatorA = tc(bondA->getAttribute(tc("simulator").get())).get();
-        std::string bondNameA = tc(bondA->getAttribute(tc("endpoint").get())).get();
-        std::string simulatorB = tc(bondB->getAttribute(tc("simulator").get())).get();
-        std::string bondNameB = tc(bondB->getAttribute(tc("endpoint").get())).get();
+        auto variableGroupConnectionsElement = connectionsElement->getElementsByTagName(tc("VariableGroupConnection").get());
+        for (size_t i = 0; i < variableGroupConnectionsElement->getLength(); i++) {
+            auto connectionElement = static_cast<xercesc::DOMElement*>(variableGroupConnectionsElement->item(i));
+            auto a = static_cast<xercesc::DOMElement*>(connectionElement->getElementsByTagName(tc("VariableGroup").get())->item(0));
+            auto b = static_cast<xercesc::DOMElement*>(connectionElement->getElementsByTagName(tc("VariableGroup").get())->item(1));
 
-        bondConnections_.push_back({simulatorA, bondNameA, simulatorB, bondNameB});
+            std::string simulatorA = tc(a->getAttribute(tc("simulator").get())).get();
+            std::string nameA = tc(a->getAttribute(tc("name").get())).get();
+            VariableEndpoint veA = {simulatorA, nameA};
+
+            std::string simulatorB = tc(b->getAttribute(tc("simulator").get())).get();
+            std::string nameB = tc(b->getAttribute(tc("name").get())).get();
+            VariableEndpoint veB = {simulatorB, nameB};
+
+            variableGroupConnections_.push_back({veA, veB});
+        }
+
+        auto signalGroupConnectionsElement = connectionsElement->getElementsByTagName(tc("SignalGroupConnection").get());
+        for (size_t i = 0; i < signalGroupConnectionsElement->getLength(); i++) {
+            auto connectionElement = static_cast<xercesc::DOMElement*>(signalGroupConnectionsElement->item(i));
+            auto signalElement = static_cast<xercesc::DOMElement*>(connectionElement->getElementsByTagName(tc("SignalGroup").get())->item(0));
+            auto variableElement = static_cast<xercesc::DOMElement*>(connectionElement->getElementsByTagName(tc("VariableGroup").get())->item(0));
+
+            std::string function = tc(signalElement->getAttribute(tc("function").get())).get();
+            std::string sigName = tc(signalElement->getAttribute(tc("name").get())).get();
+            SignalEndpoint signal = {function, sigName};
+
+            std::string simulator = tc(variableElement->getAttribute(tc("simulator").get())).get();
+            std::string varName = tc(variableElement->getAttribute(tc("name").get())).get();
+            VariableEndpoint variable = {simulator, varName};
+
+            signalGroupConnections_.push_back({signal, variable});
+        }
     }
 }
 
@@ -321,25 +473,29 @@ const std::vector<cse_config_parser::Simulator>& cse_config_parser::get_elements
 {
     return simulators_;
 }
-
-const std::vector<cse_config_parser::ScalarConnection>& cse_config_parser::get_scalar_connections() const
+const std::unordered_map<std::string, cse_config_parser::Function>& cse_config_parser::get_functions() const
 {
-    return scalarConnections_;
+    return functions_;
 }
 
-const std::vector<cse_config_parser::SumConnection>& cse_config_parser::get_sum_connections() const
+const std::vector<cse_config_parser::VariableConnection>& cse_config_parser::get_variable_connections() const
 {
-    return sumConnections_;
+    return variableConnections_;
 }
 
-const std::vector<cse_config_parser::ScalarConnection>& cse_config_parser::get_plug_socket_connections() const
+const std::vector<cse_config_parser::SignalConnection>& cse_config_parser::get_signal_connections() const
 {
-    return plugSocketConnections_;
+    return signalConnections_;
 }
 
-const std::vector<cse_config_parser::ScalarConnection>& cse_config_parser::get_bond_connections() const
+const std::vector<cse_config_parser::VariableConnection>& cse_config_parser::get_variable_group_connections() const
 {
-    return bondConnections_;
+    return variableGroupConnections_;
+}
+
+const std::vector<cse_config_parser::SignalConnection>& cse_config_parser::get_signal_group_connections() const
+{
+    return signalGroupConnections_;
 }
 
 variable_type cse_config_parser::parse_variable_type(const std::string& str)
@@ -386,18 +542,11 @@ struct slave_info
 };
 
 
-struct plug_socket_description
+struct variable_group_description
 {
     std::string name;
     std::string type;
     std::vector<std::string> variables;
-};
-
-struct bond_description
-{
-    std::string name;
-    std::vector<std::string> plugs;
-    std::vector<std::string> sockets;
 };
 
 struct extended_model_description
@@ -405,7 +554,6 @@ struct extended_model_description
 
     explicit extended_model_description(const boost::filesystem::path& ospModelDescription)
     {
-
         xercesc::XMLPlatformUtils::Initialize();
         const auto xerces_cleanup = gsl::final_act([]() {
             xercesc::XMLPlatformUtils::Terminate();
@@ -417,59 +565,28 @@ struct extended_model_description
 
         const auto rootElement = doc->getDocumentElement();
 
-        const auto socketsElement = static_cast<xercesc::DOMElement*>(rootElement->getElementsByTagName(tc("Sockets").get())->item(0));
+        const auto variableGroupsElement = static_cast<xercesc::DOMElement*>(rootElement->getElementsByTagName(tc("VariableGroups").get())->item(0));
 
-        for (auto socketElement = socketsElement->getFirstElementChild(); socketElement != nullptr; socketElement = socketElement->getNextElementSibling()) {
-            plug_socket_description s;
-            s.name = tc(socketElement->getAttribute(tc("name").get())).get();
-            s.type = tc(socketElement->getAttribute(tc("type").get())).get();
-            auto variables = static_cast<xercesc::DOMElement*>(socketElement->getElementsByTagName(tc("Variables").get())->item(0));
-            for (auto variableElement = variables->getFirstElementChild(); variableElement != nullptr; variableElement = variableElement->getNextElementSibling()) {
+        for (auto variableGroupElement = variableGroupsElement->getFirstElementChild(); variableGroupElement != nullptr; variableGroupElement = variableGroupElement->getNextElementSibling()) {
+            variable_group_description vgd;
+            vgd.name = tc(variableGroupElement->getAttribute(tc("name").get())).get();
+            vgd.type = tc(variableGroupElement->getAttribute(tc("type").get())).get();
+
+            auto variableElements = variableGroupElement->getElementsByTagName(tc("Variable").get());
+            for (size_t i = 0; i < variableElements->getLength(); i++) {
+                auto variableElement = static_cast<xercesc::DOMElement*>(variableElements->item(i));
+
                 std::string variableName = tc(variableElement->getAttribute(tc("name").get())).get();
-                s.variables.push_back(variableName);
+                vgd.variables.push_back(std::move(variableName));
             }
-            sockets[s.name] = std::move(s);
-        }
-
-        const auto plugsElement = static_cast<xercesc::DOMElement*>(rootElement->getElementsByTagName(tc("Plugs").get())->item(0));
-
-        for (auto plugElement = plugsElement->getFirstElementChild(); plugElement != nullptr; plugElement = plugElement->getNextElementSibling()) {
-            plug_socket_description p;
-            p.name = tc(plugElement->getAttribute(tc("name").get())).get();
-            p.type = tc(plugElement->getAttribute(tc("type").get())).get();
-            auto variables = static_cast<xercesc::DOMElement*>(plugElement->getElementsByTagName(tc("Variables").get())->item(0));
-            for (auto variableElement = variables->getFirstElementChild(); variableElement != nullptr; variableElement = variableElement->getNextElementSibling()) {
-                std::string variableName = tc(variableElement->getAttribute(tc("name").get())).get();
-                p.variables.push_back(variableName);
-            }
-            plugs[p.name] = std::move(p);
-        }
-
-        const auto bondsElement = static_cast<xercesc::DOMElement*>(rootElement->getElementsByTagName(tc("Bonds").get())->item(0));
-
-        for (auto bondElement = bondsElement->getFirstElementChild(); bondElement != nullptr; bondElement = bondElement->getNextElementSibling()) {
-            bond_description b;
-            b.name = tc(bondElement->getAttribute(tc("name").get())).get();
-            auto bondSockets = static_cast<xercesc::DOMElement*>(bondElement->getElementsByTagName(tc("BondSockets").get())->item(0));
-            for (auto bondSocketElement = bondSockets->getFirstElementChild(); bondSocketElement != nullptr; bondSocketElement = bondSocketElement->getNextElementSibling()) {
-                std::string bondSocketName = tc(bondSocketElement->getAttribute(tc("name").get())).get();
-                b.sockets.push_back(bondSocketName);
-            }
-            auto bondPlugs = static_cast<xercesc::DOMElement*>(bondElement->getElementsByTagName(tc("BondPlugs").get())->item(0));
-            for (auto bondPlugElement = bondPlugs->getFirstElementChild(); bondPlugElement != nullptr; bondPlugElement = bondPlugElement->getNextElementSibling()) {
-                std::string bondPlugName = tc(bondPlugElement->getAttribute(tc("name").get())).get();
-                b.plugs.push_back(bondPlugName);
-            }
-            bonds[b.name] = std::move(b);
+            variableGroups[vgd.name] = std::move(vgd);
         }
     }
 
-    std::unordered_map<std::string, plug_socket_description> plugs;
-    std::unordered_map<std::string, plug_socket_description> sockets;
-    std::unordered_map<std::string, bond_description> bonds;
+    std::unordered_map<std::string, variable_group_description> variableGroups;
 };
 
-variable_id get_variable(
+std::pair<variable_id, variable_causality> get_variable(
     const std::unordered_map<std::string, slave_info>& slaves,
     const std::string& element,
     const std::string& connector)
@@ -488,19 +605,39 @@ variable_id get_variable(
         throw std::out_of_range(oss.str());
     }
     auto variable = vdIt->second;
-    return {slave.index, variable.type, variable.reference};
+    return {{slave.index, variable.type, variable.reference}, variable.causality};
 }
 
 
 void connect_variables(
-    const std::vector<cse_config_parser::ScalarConnection>& variableConnections,
+    const std::vector<cse_config_parser::VariableConnection>& variableConnections,
     const std::unordered_map<std::string, slave_info>& slaves,
     cse::execution& execution)
 {
 
     for (const auto& connection : variableConnections) {
-        cse::variable_id output = get_variable(slaves, connection.sourceSimulator, connection.sourceConnector);
-        cse::variable_id input = get_variable(slaves, connection.targetSimulator, connection.targetConnector);
+        auto [variableIdA, causalityA] =
+            get_variable(slaves, connection.variableA.simulator, connection.variableA.name);
+        auto [variableIdB, causalityB] =
+            get_variable(slaves, connection.variableB.simulator, connection.variableB.name);
+
+        variable_id output;
+        variable_id input;
+        if (variable_causality::input == causalityA && variable_causality::output == causalityB) {
+            output = variableIdB;
+            input = variableIdA;
+        } else if (variable_causality::output == causalityA && variable_causality::input == causalityB) {
+            output = variableIdA;
+            input = variableIdB;
+        } else {
+            std::ostringstream oss;
+            oss << "Cannot create connection. There is a causality imbalance between variables "
+                << connection.variableA.simulator << ":" << connection.variableA.name
+                << " (" << causalityA << ") and "
+                << connection.variableB.simulator << ":" << connection.variableB.name
+                << " (" << causalityB << ").";
+            throw std::runtime_error(oss.str());
+        }
 
         auto c = std::make_shared<cse::scalar_connection>(output, input);
         execution.add_connection(c);
@@ -520,135 +657,163 @@ extended_model_description get_emd(
     return emdIt->second;
 }
 
-std::vector<std::string> get_plug_socket_variables(
-    const std::unordered_map<std::string, plug_socket_description>& descriptions,
+std::vector<std::string> get_variable_group_variables(
+    const std::unordered_map<std::string, variable_group_description>& descriptions,
     const std::string& element,
     const std::string& connector)
 {
-    auto psdIt = descriptions.find(connector);
-    if (psdIt == descriptions.end()) {
+    auto groupIt = descriptions.find(connector);
+    if (groupIt == descriptions.end()) {
         std::ostringstream oss;
-        oss << "Cannot find plug/socket description: " << element << ":" << connector;
+        oss << "Cannot find variable group description: " << element << ":" << connector;
         throw std::out_of_range(oss.str());
     }
-    return psdIt->second.variables;
+    return groupIt->second.variables;
 }
 
-void connect_plugs_and_sockets(
-    const std::vector<cse_config_parser::ScalarConnection>& plugSocketConnections,
+void connect_variable_groups(
+    const std::vector<cse_config_parser::VariableConnection>& variableGroupConnections,
     const std::unordered_map<std::string, slave_info>& slaves,
     cse::execution& execution,
     const std::unordered_map<std::string, extended_model_description>& emds)
 {
 
-    for (const auto& connection : plugSocketConnections) {
-        const auto& sourceEmd = get_emd(emds, connection.sourceSimulator);
-        const auto& plugVariables = get_plug_socket_variables(sourceEmd.plugs, connection.sourceSimulator, connection.sourceConnector);
-        const auto& targetEmd = get_emd(emds, connection.targetSimulator);
-        const auto& socketVariables = get_plug_socket_variables(targetEmd.sockets, connection.targetSimulator, connection.targetConnector);
+    for (const auto& connection : variableGroupConnections) {
+        const auto& emdA = get_emd(emds, connection.variableA.simulator);
+        const auto& variablesA =
+            get_variable_group_variables(emdA.variableGroups, connection.variableA.simulator, connection.variableA.name);
+        const auto& emdB = get_emd(emds, connection.variableB.simulator);
+        const auto& variablesB =
+            get_variable_group_variables(emdB.variableGroups, connection.variableB.simulator, connection.variableB.name);
 
-        if (plugVariables.size() != socketVariables.size()) {
+        if (variablesA.size() != variablesB.size()) {
             std::ostringstream oss;
-            oss << "Plug " << connection.sourceSimulator << ":" << connection.sourceConnector
-                << " has different size [" << plugVariables.size() << "] than the targeted socket "
-                << connection.targetSimulator << ":" << connection.targetConnector
-                << " size [" << socketVariables.size() << "]";
+            oss << "Cannot create connection between variable groups. Variable group "
+                << connection.variableA.simulator << ":" << connection.variableA.name
+                << " has different size [" << variablesA.size() << "] than variable group "
+                << connection.variableB.simulator << ":" << connection.variableB.name
+                << " size [" << variablesB.size() << "]";
             throw std::runtime_error(oss.str());
         }
 
-        std::vector<cse_config_parser::ScalarConnection> variableConnections;
+        std::vector<cse_config_parser::VariableConnection> variableConnections;
 
-        for (std::size_t i = 0; i < plugVariables.size(); ++i) {
-            variableConnections.push_back({connection.sourceSimulator,
-                plugVariables.at(i),
-                connection.targetSimulator,
-                socketVariables.at(i)});
+        // clang-format off
+        for (std::size_t i = 0; i < variablesA.size(); ++i) {
+            variableConnections.push_back({
+                {connection.variableA.simulator, variablesA.at(i)},
+                {connection.variableB.simulator, variablesB.at(i)}});
         }
+        // clang-format on
 
         connect_variables(variableConnections, slaves, execution);
     }
 }
 
-const bond_description& get_bond_description(
-    const std::unordered_map<std::string, bond_description>& descriptions,
-    const std::string& element,
-    const std::string& bondName)
+cse_config_parser::Signal get_signal(
+    const std::unordered_map<std::string, cse_config_parser::Function>& functions,
+    const std::string& functionName,
+    const std::string& signalName)
 {
-    auto bondIt = descriptions.find(bondName);
-    if (bondIt == descriptions.end()) {
+    auto functionIt = functions.find(functionName);
+    if (functionIt == functions.end()) {
         std::ostringstream oss;
-        oss << "Cannot find bond description: " << element << ":" << bondName;
+        oss << "Cannot find function with name " << functionName;
         throw std::out_of_range(oss.str());
     }
-    return bondIt->second;
-}
+    auto function = functionIt->second;
 
-void connect_bonds(
-    const std::vector<cse_config_parser::ScalarConnection>& bondConnections,
-    const std::unordered_map<std::string, slave_info>& slaves,
-    cse::execution& execution,
-    const std::unordered_map<std::string, extended_model_description>& emds)
-{
-
-    for (const auto& connection : bondConnections) {
-        const auto& bondAEmd = get_emd(emds, connection.sourceSimulator);
-        auto const& bondAPlugs = get_bond_description(bondAEmd.bonds, connection.sourceSimulator, connection.sourceConnector).plugs;
-        const auto& bondBEmd = get_emd(emds, connection.targetSimulator);
-        auto const& bondBSockets = get_bond_description(bondBEmd.bonds, connection.targetSimulator, connection.targetConnector).sockets;
-
-        if (bondAPlugs.size() != bondBSockets.size()) {
-            std::ostringstream oss;
-            oss << "Bond " << connection.sourceSimulator << ":" << connection.sourceConnector
-                << " has different number of plugs [" << bondAPlugs.size() << "] "
-                << " than the number of sockets [" << bondBSockets.size() << "] for targeted bond "
-                << connection.targetSimulator << ":" << connection.targetConnector;
-            throw std::runtime_error(oss.str());
-        }
-
-        std::vector<cse_config_parser::ScalarConnection> plugSocketConnectionsA;
-        for (std::size_t i = 0; i < bondAPlugs.size(); ++i) {
-            plugSocketConnectionsA.push_back({connection.sourceSimulator,
-                bondAPlugs.at(i),
-                connection.targetSimulator,
-                bondBSockets.at(i)});
-        }
-        connect_plugs_and_sockets(plugSocketConnectionsA, slaves, execution, emds);
-
-        const auto& bondASockets = get_bond_description(bondAEmd.bonds, connection.sourceSimulator, connection.sourceConnector).sockets;
-        const auto& bondBPlugs = get_bond_description(bondBEmd.bonds, connection.targetSimulator, connection.targetConnector).plugs;
-
-        if (bondASockets.size() != bondBPlugs.size()) {
-            std::ostringstream oss;
-            oss << "Bond " << connection.sourceSimulator << ":" << connection.sourceConnector
-                << " has different number of sockets [" << bondASockets.size() << "] "
-                << " than the number of plugs [" << bondBPlugs.size() << "] for targeted bond "
-                << connection.targetSimulator << ":" << connection.targetConnector;
-            throw std::runtime_error(oss.str());
-        }
-        std::vector<cse_config_parser::ScalarConnection> plugSocketConnectionsB;
-        for (std::size_t i = 0; i < bondASockets.size(); ++i) {
-            plugSocketConnectionsB.push_back({connection.targetSimulator,
-                bondBPlugs.at(i),
-                connection.sourceSimulator,
-                bondASockets.at(i)});
-        }
-        connect_plugs_and_sockets(plugSocketConnectionsB, slaves, execution, emds);
+    auto signalIt = std::find_if(
+        function.signals.begin(),
+        function.signals.end(),
+        [&signalName](const auto& signal) { return signalName == signal.name; });
+    if (signalIt == function.signals.end()) {
+        std::ostringstream oss;
+        oss << "Cannot find signal with name " << signalName << " for function " << functionName;
+        throw std::out_of_range(oss.str());
     }
+    return *signalIt;
 }
 
-void connect_sum(
-    const std::vector<cse_config_parser::SumConnection>& sumConnections,
+std::optional<cse_config_parser::Parameter> find_parameter(
+    std::vector<cse_config_parser::Parameter> params,
+    const std::string& parameterName)
+{
+    auto paramIt = std::find_if(
+        params.begin(),
+        params.end(),
+        [&parameterName](const auto& param) { return parameterName == param.name; });
+    if (paramIt == params.end()) {
+        return std::nullopt;
+    }
+    return *paramIt;
+}
+
+void connect_signals(
+    const std::unordered_map<std::string, cse_config_parser::Function>& functions,
+    const std::vector<cse_config_parser::SignalConnection>& signalConnections,
     const std::unordered_map<std::string, slave_info>& slaves,
     cse::execution& execution)
 {
-    for (const auto& sumConnection : sumConnections) {
-        std::vector<variable_id> sources;
-        for (const auto& [sim, var] : sumConnection.sources) {
-            sources.push_back(get_variable(slaves, sim, var));
+    std::unordered_map<std::string, std::vector<variable_id>> functionSources;
+    std::unordered_map<std::string, std::vector<variable_id>> functionTargets;
+
+    for (const auto& signalConnection : signalConnections) {
+        auto signal = get_signal(functions, signalConnection.signal.function, signalConnection.signal.name);
+        auto [variableId, variableCausality] =
+            get_variable(slaves, signalConnection.variable.simulator, signalConnection.variable.name);
+
+        // This is a reduction of available information to fit the current architecture.
+        // Signal names are ignored because they do not exist in the cse::connection classes.
+        if (variable_causality::input == signal.causality && variable_causality::output == variableCausality) {
+            functionSources[signalConnection.signal.function].push_back(variableId);
+        } else if (variable_causality::output == signal.causality && variable_causality::input == variableCausality) {
+            functionTargets[signalConnection.signal.function].push_back(variableId);
+        } else {
+            std::ostringstream oss;
+            oss << "Cannot create signal connection. There is a causality imbalance between variable "
+                << signalConnection.variable.simulator << ":" << signalConnection.variable.name
+                << " (" << variableCausality << ") and signal "
+                << signalConnection.signal.function << ":" << signalConnection.signal.name
+                << " (" << variableCausality << ").";
+            throw std::runtime_error(oss.str());
         }
-        auto target = get_variable(slaves, sumConnection.target.first, sumConnection.target.second);
-        auto c = std::make_shared<sum_connection>(sources, target);
-        execution.add_connection(c);
+    }
+
+    for (const auto& [functionName, function] : functions) {
+        const auto& sources = functionSources[functionName];
+        const auto& targets = functionTargets[functionName];
+
+        if (sources.empty() || targets.empty()) {
+            BOOST_LOG_SEV(log::logger(), log::severity_level::warning)
+                << "Ignoring function with name " << functionName << " due to lack of connected signals.";
+        } else {
+            if ("sum" == function.type) {
+                if (targets.size() > 1) {
+                    throw std::runtime_error("Cannot connect sum to multiple targets");
+                }
+                auto sumConnection = std::make_shared<sum_connection>(sources, targets.front());
+                execution.add_connection(sumConnection);
+            } else if ("lineartransformation" == function.type) {
+                if (targets.size() != 1 || sources.size() != 1) {
+                    std::ostringstream oss;
+                    oss << "Linear transforation functions only support single input and output, "
+                        << " but found " << sources.size() << " inputs and " << targets.size() << " outputs";
+                    throw std::runtime_error(oss.str());
+                }
+                auto factor = find_parameter(function.parameters, "factor");
+                double factorValue = factor ? std::get<double>((*factor).value) : 1.0;
+                auto offset = find_parameter(function.parameters, "offset");
+                double offsetValue = factor ? std::get<double>((*offset).value) : 0.0;
+                auto ltConnection = std::make_shared<linear_transformation_connection>(
+                    sources.front(), targets.front(), offsetValue, factorValue);
+                execution.add_connection(ltConnection);
+            } else {
+                std::ostringstream oss;
+                oss << "Unkown function type " << function.type << " for function with name " << functionName;
+                throw std::runtime_error(oss.str());
+            }
+        }
     }
 }
 
@@ -750,10 +915,18 @@ std::pair<execution, simulator_map> load_cse_config(
         }
     }
 
-    connect_variables(parser.get_scalar_connections(), slaves, exec);
-    connect_sum(parser.get_sum_connections(), slaves, exec);
-    connect_plugs_and_sockets(parser.get_plug_socket_connections(), slaves, exec, emds);
-    connect_bonds(parser.get_bond_connections(), slaves, exec, emds);
+    connect_variables(parser.get_variable_connections(), slaves, exec);
+    connect_variable_groups(parser.get_variable_group_connections(), slaves, exec, emds);
+    connect_signals(parser.get_functions(), parser.get_signal_connections(), slaves, exec);
+
+    // TODO: Connect signal groups - but need cse::connection classes that can handle this
+    const auto& signalGroupConnections = parser.get_signal_group_connections();
+    if (!signalGroupConnections.empty()) {
+        std::ostringstream oss;
+        oss << "Found " << signalGroupConnections.size() << " signal group connections, "
+            << "but don't know how to handle these yet";
+        throw std::invalid_argument(oss.str());
+    }
 
     return std::make_pair(std::move(exec), std::move(simulatorMap));
 }

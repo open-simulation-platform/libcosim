@@ -13,7 +13,7 @@
 #define REQUIRE(test) \
     if (!(test)) throw std::runtime_error("Requirement not satisfied: " #test)
 
-void test(const boost::filesystem::path& configPath)
+void test(const boost::filesystem::path& configPath, size_t expectedNumConnections)
 {
     auto resolver = cse::default_model_uri_resolver();
     auto simulation = cse::load_cse_config(*resolver, configPath, cse::to_time_point(0.0));
@@ -24,7 +24,9 @@ void test(const boost::filesystem::path& configPath)
     REQUIRE(simulator_map.at("CraneController").source == "../ssp/demo/CraneController.fmu");
     REQUIRE(simulator_map.at("KnuckleBoomCrane").source == "../ssp/demo/KnuckleBoomCrane.fmu");
 
-    for (const auto& connection : execution.get_connections()) {
+    const auto& connections = execution.get_connections();
+    REQUIRE(connections.size() == expectedNumConnections);
+    for (const auto& connection : connections) {
         if (const auto sum = std::dynamic_pointer_cast<cse::sum_connection>(connection)) {
             REQUIRE(sum->get_sources().length() == 3);
         }
@@ -53,8 +55,8 @@ int main()
 
         const auto testDataDir = std::getenv("TEST_DATA_DIR");
         REQUIRE(testDataDir);
-        test(boost::filesystem::path(testDataDir) / "msmi");
-        test(boost::filesystem::path(testDataDir) / "msmi" / "OspSystemStructure_Bond.xml");
+        test(boost::filesystem::path(testDataDir) / "msmi", 3);
+        test(boost::filesystem::path(testDataDir) / "msmi" / "OspSystemStructure_Bond.xml", 9);
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what();
         return 1;
