@@ -64,6 +64,9 @@ public:
                 simulators_[i].get(),
                 currentTime_);
         }
+        if (initialized_) {
+            obs->simulation_initialized(lastStep_, currentTime_);
+        }
     }
 
     void add_manipulator(std::shared_ptr<manipulator> man)
