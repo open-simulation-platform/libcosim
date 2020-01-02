@@ -9,7 +9,7 @@ class CSECoreConan(ConanFile):
     author = "osp"
     scm = {
         "type": "git",
-        "url": "git@github.com:open-simulation-platform/cse-core.git",
+        "url": "auto",
         "revision": "auto"
     }
     settings = "os", "compiler", "build_type", "arch"
