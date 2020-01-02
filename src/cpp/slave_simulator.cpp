@@ -426,6 +426,7 @@ public:
         }
         return boost::fibers::async([=]() {
             slave_->start_simulation().get();
+            get_variables();
         });
     }
 
