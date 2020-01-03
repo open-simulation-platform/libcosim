@@ -4,8 +4,8 @@
  * DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
  *  @generated
  */
-#ifndef CSE_FMUPROXY_SERVICE_TYPES_HPP
-#define CSE_FMUPROXY_SERVICE_TYPES_HPP
+#ifndef CSECORE_FMUPROXY_SERVICE_TYPES_HPP
+#define CSECORE_FMUPROXY_SERVICE_TYPES_HPP
 
 #include <iosfwd>
 
@@ -87,11 +87,7 @@ class StringRead;
 
 class BooleanRead;
 
-class Solver;
-
 class ModelDescription;
-
-class CoSimulationAttributes;
 
 class NoSuchFmuException;
 
@@ -937,56 +933,8 @@ void swap(BooleanRead &a, BooleanRead &b);
 
 std::ostream& operator<<(std::ostream& out, const BooleanRead& obj);
 
-typedef struct _Solver__isset {
-  _Solver__isset() : name(false), settings(false) {}
-  bool name :1;
-  bool settings :1;
-} _Solver__isset;
-
-class Solver : public virtual ::apache::thrift::TBase {
- public:
-
-  Solver(const Solver&);
-  Solver& operator=(const Solver&);
-  Solver() : name(), settings() {
-  }
-
-  virtual ~Solver() throw();
-  std::string name;
-  std::string settings;
-
-  _Solver__isset __isset;
-
-  void __set_name(const std::string& val);
-
-  void __set_settings(const std::string& val);
-
-  bool operator == (const Solver & rhs) const
-  {
-    if (!(name == rhs.name))
-      return false;
-    if (!(settings == rhs.settings))
-      return false;
-    return true;
-  }
-  bool operator != (const Solver &rhs) const {
-    return !(*this == rhs);
-  }
-
-  bool operator < (const Solver & ) const;
-
-  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
-  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
-
-  virtual void printTo(std::ostream& out) const;
-};
-
-void swap(Solver &a, Solver &b);
-
-std::ostream& operator<<(std::ostream& out, const Solver& obj);
-
 typedef struct _ModelDescription__isset {
-  _ModelDescription__isset() : guid(false), fmi_version(false), modelName(false), license(false), copyright(false), author(false), version(false), description(false), generation_tool(false), generation_date_and_time(false), default_experiment(false), variable_naming_convention(false), model_variables(false), model_structure(false) {}
+  _ModelDescription__isset() : guid(false), fmi_version(false), modelName(false), license(false), copyright(false), author(false), version(false), description(false), generation_tool(false), generation_date_and_time(false), default_experiment(false), variable_naming_convention(false), model_variables(false), model_structure(false), model_identifier(false), can_get_and_set_fmu_state(false), can_serialize_fmu_state(false), provides_directional_derivative(false), can_handle_variable_communication_step_size(false), can_interpolate_inputs(false), max_output_derivative_order(false) {}
   bool guid :1;
   bool fmi_version :1;
   bool modelName :1;
@@ -1001,6 +949,13 @@ typedef struct _ModelDescription__isset {
   bool variable_naming_convention :1;
   bool model_variables :1;
   bool model_structure :1;
+  bool model_identifier :1;
+  bool can_get_and_set_fmu_state :1;
+  bool can_serialize_fmu_state :1;
+  bool provides_directional_derivative :1;
+  bool can_handle_variable_communication_step_size :1;
+  bool can_interpolate_inputs :1;
+  bool max_output_derivative_order :1;
 } _ModelDescription__isset;
 
 class ModelDescription : public virtual ::apache::thrift::TBase {
@@ -1008,7 +963,7 @@ class ModelDescription : public virtual ::apache::thrift::TBase {
 
   ModelDescription(const ModelDescription&);
   ModelDescription& operator=(const ModelDescription&);
-  ModelDescription() : guid(), fmi_version(), modelName(), license(), copyright(), author(), version(), description(), generation_tool(), generation_date_and_time(), variable_naming_convention() {
+  ModelDescription() : guid(), fmi_version(), modelName(), license(), copyright(), author(), version(), description(), generation_tool(), generation_date_and_time(), variable_naming_convention(), model_identifier(), can_get_and_set_fmu_state(0), can_serialize_fmu_state(0), provides_directional_derivative(0), can_handle_variable_communication_step_size(0), can_interpolate_inputs(0), max_output_derivative_order(0) {
   }
 
   virtual ~ModelDescription() throw();
@@ -1026,6 +981,13 @@ class ModelDescription : public virtual ::apache::thrift::TBase {
   std::string variable_naming_convention;
   ModelVariables model_variables;
   ModelStructure model_structure;
+  std::string model_identifier;
+  bool can_get_and_set_fmu_state;
+  bool can_serialize_fmu_state;
+  bool provides_directional_derivative;
+  bool can_handle_variable_communication_step_size;
+  bool can_interpolate_inputs;
+  int32_t max_output_derivative_order;
 
   _ModelDescription__isset __isset;
 
@@ -1056,6 +1018,20 @@ class ModelDescription : public virtual ::apache::thrift::TBase {
   void __set_model_variables(const ModelVariables& val);
 
   void __set_model_structure(const ModelStructure& val);
+
+  void __set_model_identifier(const std::string& val);
+
+  void __set_can_get_and_set_fmu_state(const bool val);
+
+  void __set_can_serialize_fmu_state(const bool val);
+
+  void __set_provides_directional_derivative(const bool val);
+
+  void __set_can_handle_variable_communication_step_size(const bool val);
+
+  void __set_can_interpolate_inputs(const bool val);
+
+  void __set_max_output_derivative_order(const int32_t val);
 
   bool operator == (const ModelDescription & rhs) const
   {
@@ -1105,6 +1081,20 @@ class ModelDescription : public virtual ::apache::thrift::TBase {
       return false;
     if (!(model_structure == rhs.model_structure))
       return false;
+    if (!(model_identifier == rhs.model_identifier))
+      return false;
+    if (!(can_get_and_set_fmu_state == rhs.can_get_and_set_fmu_state))
+      return false;
+    if (!(can_serialize_fmu_state == rhs.can_serialize_fmu_state))
+      return false;
+    if (!(provides_directional_derivative == rhs.provides_directional_derivative))
+      return false;
+    if (!(can_handle_variable_communication_step_size == rhs.can_handle_variable_communication_step_size))
+      return false;
+    if (!(can_interpolate_inputs == rhs.can_interpolate_inputs))
+      return false;
+    if (!(max_output_derivative_order == rhs.max_output_derivative_order))
+      return false;
     return true;
   }
   bool operator != (const ModelDescription &rhs) const {
@@ -1122,84 +1112,6 @@ class ModelDescription : public virtual ::apache::thrift::TBase {
 void swap(ModelDescription &a, ModelDescription &b);
 
 std::ostream& operator<<(std::ostream& out, const ModelDescription& obj);
-
-typedef struct _CoSimulationAttributes__isset {
-  _CoSimulationAttributes__isset() : model_identifier(false), can_get_and_set_fmu_state(false), can_serialize_fmu_state(false), provides_directional_derivative(false), can_handle_variable_communication_step_size(false), can_interpolate_inputs(false), max_output_derivative_order(false) {}
-  bool model_identifier :1;
-  bool can_get_and_set_fmu_state :1;
-  bool can_serialize_fmu_state :1;
-  bool provides_directional_derivative :1;
-  bool can_handle_variable_communication_step_size :1;
-  bool can_interpolate_inputs :1;
-  bool max_output_derivative_order :1;
-} _CoSimulationAttributes__isset;
-
-class CoSimulationAttributes : public virtual ::apache::thrift::TBase {
- public:
-
-  CoSimulationAttributes(const CoSimulationAttributes&);
-  CoSimulationAttributes& operator=(const CoSimulationAttributes&);
-  CoSimulationAttributes() : model_identifier(), can_get_and_set_fmu_state(0), can_serialize_fmu_state(0), provides_directional_derivative(0), can_handle_variable_communication_step_size(0), can_interpolate_inputs(0), max_output_derivative_order(0) {
-  }
-
-  virtual ~CoSimulationAttributes() throw();
-  std::string model_identifier;
-  bool can_get_and_set_fmu_state;
-  bool can_serialize_fmu_state;
-  bool provides_directional_derivative;
-  bool can_handle_variable_communication_step_size;
-  bool can_interpolate_inputs;
-  int32_t max_output_derivative_order;
-
-  _CoSimulationAttributes__isset __isset;
-
-  void __set_model_identifier(const std::string& val);
-
-  void __set_can_get_and_set_fmu_state(const bool val);
-
-  void __set_can_serialize_fmu_state(const bool val);
-
-  void __set_provides_directional_derivative(const bool val);
-
-  void __set_can_handle_variable_communication_step_size(const bool val);
-
-  void __set_can_interpolate_inputs(const bool val);
-
-  void __set_max_output_derivative_order(const int32_t val);
-
-  bool operator == (const CoSimulationAttributes & rhs) const
-  {
-    if (!(model_identifier == rhs.model_identifier))
-      return false;
-    if (!(can_get_and_set_fmu_state == rhs.can_get_and_set_fmu_state))
-      return false;
-    if (!(can_serialize_fmu_state == rhs.can_serialize_fmu_state))
-      return false;
-    if (!(provides_directional_derivative == rhs.provides_directional_derivative))
-      return false;
-    if (!(can_handle_variable_communication_step_size == rhs.can_handle_variable_communication_step_size))
-      return false;
-    if (!(can_interpolate_inputs == rhs.can_interpolate_inputs))
-      return false;
-    if (!(max_output_derivative_order == rhs.max_output_derivative_order))
-      return false;
-    return true;
-  }
-  bool operator != (const CoSimulationAttributes &rhs) const {
-    return !(*this == rhs);
-  }
-
-  bool operator < (const CoSimulationAttributes & ) const;
-
-  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
-  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
-
-  virtual void printTo(std::ostream& out) const;
-};
-
-void swap(CoSimulationAttributes &a, CoSimulationAttributes &b);
-
-std::ostream& operator<<(std::ostream& out, const CoSimulationAttributes& obj);
 
 typedef struct _NoSuchFmuException__isset {
   _NoSuchFmuException__isset() : message(false) {}

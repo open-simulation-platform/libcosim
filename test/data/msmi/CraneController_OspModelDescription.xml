@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<OspModelDescription xmlns="http://opensimulationplatform.com/MSMI/OSPModelDescription">
+    <VariableGroups>
+        <VariableGroup type="flow" name="velocity">
+            <Variable name="p_Crane.f[1]"/>
+            <Variable name="p_Crane.f[2]"/>
+            <Variable name="p_Crane.f[3]"/>
+        </VariableGroup>
+        <VariableGroup type="abstract" name="actuatorLimits">
+            <Variable name="Act_Limits[1]"/>
+            <Variable name="Act_Limits[2]"/>
+            <Variable name="Act_Limits[3]"/>
+        </VariableGroup>
+        <VariableGroup type="effort" name="force">
+            <Variable name="p_Crane.e[1]"/>
+            <Variable name="p_Crane.e[2]"/>
+            <Variable name="p_Crane.e[3]"/>
+        </VariableGroup>
+
+        <!--<Bond name="mechanical">
+            <BondSockets>
+                <BondSocket name="velocity"/>
+            </BondSockets>
+            <BondPlugs>
+                <BondPlug name="force"/>
+            </BondPlugs>
+        </Bond>-->
+
+    </VariableGroups>
+</OspModelDescription>

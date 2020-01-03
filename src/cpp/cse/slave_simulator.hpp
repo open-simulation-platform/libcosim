@@ -83,6 +83,8 @@ public:
 
     boost::fibers::future<void> do_iteration() override;
 
+    boost::fibers::future<void> start_simulation() override;
+
     boost::fibers::future<step_result> do_step(
         time_point currentT,
         duration deltaT) override;

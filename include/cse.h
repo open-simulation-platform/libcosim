@@ -77,6 +77,9 @@ typedef enum
     /// The model reported an error.
     CSE_ERRC_MODEL_ERROR,
 
+    /// An error occured during simulation.
+    CSE_ERRC_SIMULATION_ERROR,
+
     /// ZIP file error.
     CSE_ERRC_ZIP_ERROR,
 } cse_errc;
@@ -140,10 +143,29 @@ cse_execution* cse_execution_create(
     cse_duration stepSize);
 
 /**
+ *  Creates a new execution based on an OspSystemStructure.xml file.
+ *
+ *  \param [in] configPath
+ *      Path to an OspSystemStructure.xml file, or a directory holding OspSystemStructure.xml
+ *  \param [in] startTimeDefined
+ *      Defines whether or not the following startTime variable should be ignored or not.
+ *  \param [in] startTime
+ *      The (logical) time point at which the simulation should start.
+ *      If startTimeDefined=false, this variable will be ignored and a default value will be used.
+ *  \returns
+ *      A pointer to an object which holds the execution state,
+ *      or NULL on error.
+ */
+cse_execution* cse_config_execution_create(
+    const char* configPath,
+    bool startTimeDefined,
+    cse_time_point startTime);
+
+/**
  *  Creates a new execution based on a SystemStructure.ssd file.
  *
  *  \param [in] sspDir
- *      Path to the directory holding SystemStructure.ssd
+ *      Path to an .ssd file, or a directory holding SystemStructure.ssd
  *  \param [in] startTimeDefined
  *      Defines whether or not the following startTime variable should be ignored or not.
  *  \param [in] startTime
@@ -199,12 +221,14 @@ typedef struct cse_slave_s cse_slave;
  *
  *  \param [in] fmuPath
  *      Path to FMU.
+ *  \param [in] instanceName
+ *      Unique name of the instance.
  *
  *  \returns
  *      A pointer to an object which holds the local slave object,
  *      or NULL on error.
  */
-cse_slave* cse_local_slave_create(const char* fmuPath);
+cse_slave* cse_local_slave_create(const char* fmuPath, const char* instanceName);
 
 /**
  *  Destroys a local slave.
@@ -248,7 +272,7 @@ cse_slave_index cse_execution_add_slave(
 int cse_execution_step(cse_execution* execution, size_t numSteps);
 
 /**
- *  Advances an execution to a specific point in time.
+ *  Advances an execution to a specific point in time (blocking).
  *
  *  \param [in] execution
  *      The execution to be stepped.
@@ -263,9 +287,10 @@ int cse_execution_simulate_until(cse_execution* execution, cse_time_point target
 
 
 /**
- *  Starts an execution.
+ *  Starts an execution (non blocking).
  *
- *  The execution will run until `cse_execution_stop()` is called.
+ *  The execution will run until `cse_execution_stop()` is called. The status of the
+ *  simulation can be polled with `cse_execution_get_status()`.
  *
  *  \param [in] execution
  *      The execution to be started.
@@ -274,7 +299,6 @@ int cse_execution_simulate_until(cse_execution* execution, cse_time_point target
  *      0 on success and -1 on error.
  */
 int cse_execution_start(cse_execution* execution);
-
 
 /**
  *  Stops an execution.
@@ -296,7 +320,7 @@ int cse_execution_enable_real_time_simulation(cse_execution* execution);
 int cse_execution_disable_real_time_simulation(cse_execution* execution);
 
 /// Sets a custom real time factor.
-int cse_execution_set_real_time_factor_target(cse_execution *execution, double realTimeFactor);
+int cse_execution_set_real_time_factor_target(cse_execution* execution, double realTimeFactor);
 
 
 /// Execution states.
@@ -325,7 +349,12 @@ typedef struct
 } cse_execution_status;
 
 /**
- *  Returns execution status.
+ * Returns execution status.
+ *
+ * This method will also poll the status of any asynchronous execution started
+ * by calling `cse_execution_start()`. Will return failure if a simulation
+ * error occured during the execution, in which case the `status` parameter
+ * will still be valid.
  *
  *  \param [in] execution
  *      The execution to get status from.

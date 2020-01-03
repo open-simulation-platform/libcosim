@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<OspSystemStructure xmlns="http://opensimulationplatform.com/MSMI/OSPSystemStructure">
+    <StartTime>0.0</StartTime>
+    <BaseStepSize>1e-4</BaseStepSize>
+    <Algorithm>fixedStep</Algorithm>
+    <Simulators>
+        <Simulator name="CraneController" source="../ssp/demo/CraneController.fmu" stepSize="2e-4">
+            <InitialValues>
+                <InitialValue variable="cl1_min">
+                    <Real value="2.2"/>
+                </InitialValue>
+                <InitialValue variable="cl1_max">
+                    <Real value="3.8"/>
+                </InitialValue>
+            </InitialValues>
+        </Simulator>
+        <Simulator name="KnuckleBoomCrane" source="../ssp/demo/KnuckleBoomCrane.fmu" stepSize="2e-4"/>
+        <Simulator name="TrueIdentity" source="../fmi1/identity.fmu" stepSize="2.03e-4">
+            <InitialValues>
+                <InitialValue variable="booleanIn">
+                    <Boolean value="true"/>
+                </InitialValue>
+            </InitialValues>
+        </Simulator>
+        <Simulator name="1Identity" source="../fmi1/identity.fmu" stepSize="2.03e-4">
+            <InitialValues>
+                <InitialValue variable="booleanIn">
+                    <Boolean value="1"/>
+                </InitialValue>
+            </InitialValues>
+        </Simulator>
+    </Simulators>
+    <Connections>
+        <VariableGroupConnection>
+            <VariableGroup simulator="KnuckleBoomCrane" name="actuatorLimits"/>
+            <VariableGroup simulator="CraneController" name="actuatorLimits"/>
+        </VariableGroupConnection>
+        <!-- Splitting the bond into two -->
+        <VariableGroupConnection>
+            <VariableGroup simulator="KnuckleBoomCrane" name="velocity"/>
+            <VariableGroup simulator="CraneController" name="velocity"/>
+        </VariableGroupConnection>
+        <VariableGroupConnection>
+            <VariableGroup simulator="KnuckleBoomCrane" name="force"/>
+            <VariableGroup simulator="CraneController" name="force"/>
+        </VariableGroupConnection>
+    </Connections>
+</OspSystemStructure>

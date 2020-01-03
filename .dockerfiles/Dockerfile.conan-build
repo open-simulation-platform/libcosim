@@ -11,6 +11,7 @@ RUN apt-get update && \
     python3-setuptools \
     python3-wheel \
     python3-pip \
+    libxerces-c3.2 \
     && rm -rf /var/lib/apt/lists/*
 
 # Install  Conan package manager and CMake

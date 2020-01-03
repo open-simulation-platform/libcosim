@@ -51,10 +51,10 @@ int main()
     execution = cse_execution_create(0, nanoStepSize);
     if (!execution) { goto Lerror; }
 
-    slave1 = cse_local_slave_create(fmuPath);
+    slave1 = cse_local_slave_create(fmuPath, "slave1");
     if (!slave1) { goto Lerror; }
 
-    slave2 = cse_local_slave_create(fmuPath);
+    slave2 = cse_local_slave_create(fmuPath, "slave2");
     if (!slave2) { goto Lerror; }
 
     observer1 = cse_last_value_observer_create();

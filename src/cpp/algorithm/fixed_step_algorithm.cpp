@@ -1,21 +1,24 @@
-#if defined(_WIN32) && !defined(NOMINMAX)
-#    define NOMINMAX
-#endif
-#include "cse/algorithm.hpp"
+#include "cse/algorithm/fixed_step_algorithm.hpp"
 
 #include "cse/error.hpp"
 #include "cse/exception.hpp"
+#include "cse/log/logger.hpp"
 
 #include <gsl/span>
 
 #include <algorithm>
+#include <cstdlib>
 #include <numeric>
 #include <sstream>
 #include <unordered_map>
 #include <vector>
 
+
+namespace cse
+{
 namespace
 {
+
 std::string exception_ptr_msg(std::exception_ptr ep)
 {
     assert(ep);
@@ -27,11 +30,29 @@ std::string exception_ptr_msg(std::exception_ptr ep)
         return "Unknown error";
     }
 }
+
+int calculate_decimation_factor(
+    std::string_view name,
+    duration baseStepSize,
+    duration simulatorStepSize)
+{
+    if (simulatorStepSize == duration::zero()) return 1;
+    const auto result = std::div(simulatorStepSize.count(), baseStepSize.count());
+    const int factor = std::max<int>(1, static_cast<int>(result.quot));
+    if (result.rem > 0 || result.quot < 1) {
+        duration actualStepSize = baseStepSize * factor;
+        const auto startTime = time_point();
+        BOOST_LOG_SEV(log::logger(), log::warning)
+            << "Effective step size for " << name
+            << " will be " << to_double_duration(actualStepSize, startTime) << " s"
+            << " instead of configured value "
+            << to_double_duration(simulatorStepSize, startTime) << " s";
+    }
+    return factor;
+}
+
 } // namespace
 
-
-namespace cse
-{
 
 class fixed_step_algorithm::impl
 {
@@ -50,10 +71,12 @@ public:
     impl(impl&&) = delete;
     impl& operator=(impl&&) = delete;
 
-    void add_simulator(simulator_index i, simulator* s)
+    void add_simulator(simulator_index i, simulator* s, duration stepSizeHint)
     {
         assert(simulators_.count(i) == 0);
         simulators_[i].sim = s;
+        simulators_[i].decimationFactor =
+            calculate_decimation_factor(s->name(), baseStepSize_, stepSizeHint);
     }
 
     void remove_simulator(simulator_index i)
@@ -98,6 +121,9 @@ public:
                 transfer_destinations(entry.first);
             }
         }
+        for_all_simulators([](auto s) {
+            return s->start_simulation();
+        });
     }
 
     std::pair<duration, std::unordered_set<simulator_index>> do_step(time_point currentT)
@@ -333,9 +359,10 @@ fixed_step_algorithm& fixed_step_algorithm::operator=(
 
 void fixed_step_algorithm::add_simulator(
     simulator_index i,
-    simulator* s)
+    simulator* s,
+    duration stepSizeHint)
 {
-    pimpl_->add_simulator(i, s);
+    pimpl_->add_simulator(i, s, stepSizeHint);
 }
 
 

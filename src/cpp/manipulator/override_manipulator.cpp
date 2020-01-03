@@ -1,5 +1,6 @@
+#include "cse/error.hpp"
 #include "cse/manipulator.hpp"
-#include <cse/error.hpp>
+#include "cse/utility/utility.hpp"
 
 #include <sstream>
 
@@ -8,17 +9,6 @@ namespace cse
 
 namespace
 {
-
-template<typename... Functors>
-struct visitor : Functors...
-{
-    visitor(const Functors&... functors)
-        : Functors(functors)...
-    {
-    }
-
-    using Functors::operator()...;
-};
 
 cse::variable_causality find_variable_causality(
     const std::vector<variable_description>& variables,
@@ -58,7 +48,7 @@ bool is_input(cse::variable_causality causality)
 
 void override_manipulator::simulator_added(
     simulator_index index,
-    simulator* sim,
+    manipulable* sim,
     time_point /*currentTime*/)
 {
     simulators_[index] = sim;

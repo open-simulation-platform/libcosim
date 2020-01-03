@@ -1,27 +1,14 @@
+#include "cse/manipulator/scenario_manager.hpp"
+
 #include "cse/algorithm.hpp"
 #include "cse/log/logger.hpp"
-#include "cse/manipulator.hpp"
 #include "cse/scenario.hpp"
 #include "cse/scenario_parser.hpp"
+#include "cse/utility/utility.hpp"
+
 
 namespace cse
 {
-
-namespace
-{
-
-template<typename... Functors>
-struct visitor : Functors...
-{
-    visitor(const Functors&... functors)
-        : Functors(functors)...
-    {
-    }
-
-    using Functors::operator()...;
-};
-
-} // namespace
 
 class scenario_manager::impl
 {
@@ -90,7 +77,7 @@ public:
         }
     }
 
-    void simulator_added(simulator_index index, simulator* sim)
+    void simulator_added(simulator_index index, manipulable* sim)
     {
         simulators_[index] = sim;
     }
@@ -125,7 +112,7 @@ private:
         bool running = false;
     };
 
-    void execute_action(simulator* sim, const scenario::variable_action& a)
+    void execute_action(manipulable* sim, const scenario::variable_action& a)
     {
         std::visit(
             visitor(
@@ -181,7 +168,7 @@ private:
         return false;
     }
 
-    void cleanup_action(simulator* sim, const scenario::variable_action& a)
+    void cleanup_action(manipulable* sim, const scenario::variable_action& a)
     {
         BOOST_LOG_SEV(log::logger(), log::info)
             << "Resetting variable for simulator " << a.simulator
@@ -228,7 +215,7 @@ private:
     }
 
     scenario_state state;
-    std::unordered_map<simulator_index, simulator*> simulators_;
+    std::unordered_map<simulator_index, manipulable*> simulators_;
 };
 
 scenario_manager::~scenario_manager() noexcept = default;
@@ -262,7 +249,7 @@ void scenario_manager::step_commencing(
 
 void scenario_manager::simulator_added(
     simulator_index index,
-    simulator* sim,
+    manipulable* sim,
     time_point /*currentTime*/)
 {
     pimpl_->simulator_added(index, sim);

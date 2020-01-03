@@ -4,6 +4,7 @@
 #include <cse/async_slave.hpp>
 #include <cse/execution.hpp>
 #include <cse/log/simple.hpp>
+#include <cse/manipulator/scenario_manager.hpp>
 #include <cse/observer/time_series_observer.hpp>
 
 #include <exception>

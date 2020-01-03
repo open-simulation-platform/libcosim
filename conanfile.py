@@ -5,7 +5,7 @@ from conans import ConanFile, CMake
 
 class CSECoreConan(ConanFile):
     name = "cse-core"
-    version = "0.5.0"
+    version = "0.6.0"
     author = "osp"
     scm = {
         "type": "git",
@@ -17,10 +17,12 @@ class CSECoreConan(ConanFile):
     requires = (
         "boost/1.66.0@conan/stable",
         "FMILibrary/2.0.3@kyllingstad/testing",
-        "gsl_microsoft/1.0.0@bincrafters/stable",
+        "gsl_microsoft/20171020@bincrafters/stable",
         "libzip/1.5.2@bincrafters/stable",
-        "jsonformoderncpp/3.5.0@vthiery/stable",
-        "bzip2/1.0.8@conan/stable"
+        "zlib/1.2.11",
+        "yaml-cpp/0.6.3",
+        "bzip2/1.0.8",
+        "xerces-c/3.2.2"
         )
 
     options = {"fmuproxy": [True, False]}
@@ -36,8 +38,7 @@ class CSECoreConan(ConanFile):
 
     def requirements(self):
         if self.options.fmuproxy:
-            self.requires("OpenSSL/1.0.2o@conan/stable")
-            self.requires("thrift/0.12.0@helmesjo/stable")
+            self.requires("thrift/0.12.0@bincrafters/stable")
 
     def configure_cmake(self):
         cmake = CMake(self)

@@ -32,6 +32,9 @@ size_t get_samples(
         auto sampleIt = samples.begin();
         if (fromStep >= sampleIt->first) {
             sampleIt = samples.find(fromStep);
+            if (sampleIt == samples.end()) { // fromStep was not found, use next.
+                sampleIt = samples.upper_bound(fromStep);
+            }
         }
         for (samplesRead = 0; samplesRead < static_cast<std::size_t>(values.size()); samplesRead++) {
             if ((sampleIt != samples.end()) && (sampleIt->first < fromStep + values.size())) {
@@ -224,6 +227,15 @@ void time_series_observer::variables_connected(variable_id /*output*/, variable_
 
 void time_series_observer::variable_disconnected(variable_id /*input*/, time_point /*currentTime*/)
 {
+}
+
+void time_series_observer::simulation_initialized(
+    step_number firstStep,
+    time_point startTime)
+{
+    for (const auto& entry : slaveObservers_) {
+        entry.second->observe(firstStep, startTime);
+    }
 }
 
 void time_series_observer::step_complete(

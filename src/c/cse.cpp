@@ -4,6 +4,7 @@
 
 #include <cse.h>
 #include <cse/algorithm.hpp>
+#include <cse/cse_config_parser.hpp>
 #include <cse/exception.hpp>
 #include <cse/execution.hpp>
 #include <cse/fmi/fmu.hpp>
@@ -14,6 +15,8 @@
 #include <cse/observer.hpp>
 #include <cse/orchestration.hpp>
 #include <cse/ssp_parser.hpp>
+
+#include <boost/fiber/future.hpp>
 
 #include <algorithm>
 #include <atomic>
@@ -44,6 +47,8 @@ cse_errc cpp_to_c_error_code(std::error_code ec)
         return CSE_ERRC_DL_LOAD_ERROR;
     else if (ec == cse::errc::model_error)
         return CSE_ERRC_MODEL_ERROR;
+    else if (ec == cse::errc::simulation_error)
+        return CSE_ERRC_SIMULATION_ERROR;
     else if (ec == cse::errc::zip_error)
         return CSE_ERRC_ZIP_ERROR;
     else if (ec.category() == std::generic_category()) {
@@ -115,6 +120,14 @@ constexpr cse::time_point to_time_point(cse_time_point nanos)
     return cse::time_point(to_duration(nanos));
 }
 
+// A wrapper for `std::strncpy()` which ensures that `dest` is always
+// null terminated.
+void safe_strncpy(char* dest, const char* src, std::size_t count)
+{
+    std::strncpy(dest, src, count - 1);
+    dest[count - 1] = '\0';
+}
+
 } // namespace
 
 
@@ -133,6 +146,8 @@ struct cse_execution_s
     cse::simulator_map simulators;
     std::unique_ptr<cse::execution> cpp_execution;
     std::thread t;
+    boost::fibers::future<bool> simulate_result;
+    std::exception_ptr simulate_exception_ptr;
     std::atomic<cse_execution_state> state;
     int error_code;
 };
@@ -149,6 +164,30 @@ cse_execution* cse_execution_create(cse_time_point startTime, cse_duration stepS
             std::make_unique<cse::fixed_step_algorithm>(to_duration(stepSize)));
         execution->error_code = CSE_ERRC_SUCCESS;
         execution->state = CSE_EXECUTION_STOPPED;
+
+        return execution.release();
+    } catch (...) {
+        handle_current_exception();
+        return nullptr;
+    }
+}
+
+cse_execution* cse_config_execution_create(
+    const char* configPath,
+    bool startTimeDefined,
+    cse_time_point startTime)
+{
+    try {
+        auto execution = std::make_unique<cse_execution>();
+
+        auto resolver = cse::default_model_uri_resolver();
+        auto sim = cse::load_cse_config(
+            *resolver,
+            configPath,
+            startTimeDefined ? std::optional<cse::time_point>(to_time_point(startTime)) : std::nullopt);
+
+        execution->cpp_execution = std::make_unique<cse::execution>(std::move(sim.first));
+        execution->simulators = std::move(sim.second);
 
         return execution.release();
     } catch (...) {
@@ -233,8 +272,8 @@ int cse_execution_get_slave_infos(cse_execution* execution, cse_slave_info infos
         auto ids = execution->simulators;
         size_t slave = 0;
         for (const auto& [name, entry] : ids) {
-            std::strncpy(infos[slave].name, name.c_str(), SLAVE_NAME_MAX_SIZE);
-            std::strncpy(infos[slave].source, entry.source.c_str(), SLAVE_NAME_MAX_SIZE);
+            safe_strncpy(infos[slave].name, name.c_str(), SLAVE_NAME_MAX_SIZE);
+            safe_strncpy(infos[slave].source, entry.source.c_str(), SLAVE_NAME_MAX_SIZE);
             infos[slave].index = entry.index;
             if (++slave >= numSlaves) {
                 break;
@@ -319,7 +358,7 @@ cse_variable_type to_c_variable_type(const cse::variable_type& vt)
 
 void translate_variable_description(const cse::variable_description& vd, cse_variable_description& cvd)
 {
-    std::strncpy(cvd.name, vd.name.c_str(), SLAVE_NAME_MAX_SIZE);
+    safe_strncpy(cvd.name, vd.name.c_str(), SLAVE_NAME_MAX_SIZE);
     cvd.reference = vd.reference;
     cvd.type = to_c_variable_type(vd.type);
     cvd.causality = to_variable_causality(vd.causality);
@@ -353,19 +392,21 @@ int cse_slave_get_variables(cse_execution* execution, cse_slave_index slave, cse
 struct cse_slave_s
 {
     std::string address;
-    std::string name;
+    std::string modelName;
+    std::string instanceName;
     std::string source;
     std::shared_ptr<cse::slave> instance;
 };
 
-cse_slave* cse_local_slave_create(const char* fmuPath)
+cse_slave* cse_local_slave_create(const char* fmuPath, const char* instanceName)
 {
     try {
         const auto importer = cse::fmi::importer::create();
         const auto fmu = importer->import(fmuPath);
         auto slave = std::make_unique<cse_slave>();
-        slave->name = fmu->model_description()->name;
-        slave->instance = fmu->instantiate_slave(slave->name);
+        slave->modelName = fmu->model_description()->name;
+        slave->instanceName = std::string(instanceName);
+        slave->instance = fmu->instantiate_slave(slave->instanceName);
         // slave address not in use yet. Should be something else than a string.
         slave->address = "local";
         slave->source = fmuPath;
@@ -393,8 +434,8 @@ cse_slave_index cse_execution_add_slave(
     cse_slave* slave)
 {
     try {
-        auto index = execution->cpp_execution->add_slave(cse::make_background_thread_slave(slave->instance), slave->name);
-        execution->simulators[slave->name] = cse::simulator_map_entry{index, slave->source, slave->instance->model_description()};
+        auto index = execution->cpp_execution->add_slave(cse::make_background_thread_slave(slave->instance), slave->instanceName);
+        execution->simulators[slave->instanceName] = cse::simulator_map_entry{index, slave->source, slave->instance->model_description()};
         return index;
     } catch (...) {
         handle_current_exception();
@@ -453,10 +494,11 @@ int cse_execution_start(cse_execution* execution)
     } else {
         try {
             execution->state = CSE_EXECUTION_RUNNING;
-            execution->t = std::thread([execution]() {
-                auto future = execution->cpp_execution->simulate_until(std::nullopt);
-                future.get();
+            auto task = boost::fibers::packaged_task<bool()>([execution]() {
+                return execution->cpp_execution->simulate_until(std::nullopt).get();
             });
+            execution->simulate_result = task.get_future();
+            execution->t = std::thread(std::move(task));
             return success;
         } catch (...) {
             handle_current_exception();
@@ -466,16 +508,33 @@ int cse_execution_start(cse_execution* execution)
     }
 }
 
+void execution_async_health_check(cse_execution* execution)
+{
+    if (execution->simulate_result.valid()) {
+        const auto status = execution->simulate_result.wait_for(std::chrono::duration<int64_t>());
+        if (boost::fibers::future_status::ready == status) {
+            if (auto ep = execution->simulate_result.get_exception_ptr()) {
+                execution->simulate_exception_ptr = ep;
+            }
+        }
+    }
+    if (auto ep = execution->simulate_exception_ptr) {
+        std::rethrow_exception(ep);
+    }
+}
+
 int cse_execution_stop(cse_execution* execution)
 {
     try {
         execution->cpp_execution->stop_simulation();
         if (execution->t.joinable()) {
+            execution->simulate_result.get();
             execution->t.join();
         }
         execution->state = CSE_EXECUTION_STOPPED;
         return success;
     } catch (...) {
+        execution->t.join();
         handle_current_exception();
         execution->state = CSE_EXECUTION_ERROR;
         return failure;
@@ -491,9 +550,14 @@ int cse_execution_get_status(cse_execution* execution, cse_execution_status* sta
         status->real_time_factor = execution->cpp_execution->get_measured_real_time_factor();
         status->real_time_factor_target = execution->cpp_execution->get_real_time_factor_target();
         status->is_real_time_simulation = execution->cpp_execution->is_real_time_simulation() ? 1 : 0;
+        execution_async_health_check(execution);
         return success;
     } catch (...) {
         handle_current_exception();
+        execution->error_code = cse_last_error_code();
+        execution->state = CSE_EXECUTION_ERROR;
+        status->error_code = execution->error_code;
+        status->state = execution->state;
         return failure;
     }
 }

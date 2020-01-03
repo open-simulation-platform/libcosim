@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified"
+           targetNamespace="http://opensimulationplatform.com/MSMI/OSPSystemStructure"
+           xmlns:osp="http://opensimulationplatform.com/MSMI/OSPSystemStructure">
+    <xs:element name="OspSystemStructure">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="StartTime" minOccurs="0" default="0.0" type="xs:double"/>
+                <xs:element name="BaseStepSize" minOccurs="0" type="xs:double"/>
+                <xs:element name="Algorithm" minOccurs="0" default="fixedStep" type="xs:string"/>
+                <xs:element name="Simulators" type="osp:simulators"/>
+                <xs:element name="Functions" type="osp:functions" minOccurs="0"/>
+                <xs:element name="Connections" type="osp:connections" minOccurs="0"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:complexType name="connections">
+        <xs:sequence>
+            <xs:element name="VariableConnection" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Variable" type="osp:variableEndpoint" minOccurs="2" maxOccurs="2"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SignalConnection" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:all>
+                        <xs:element name="Variable" type="osp:variableEndpoint"/>
+                        <xs:element name="Signal" type="osp:signalEndpoint"/>
+                    </xs:all>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="VariableGroupConnection" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="VariableGroup" type="osp:variableEndpoint" minOccurs="2" maxOccurs="2"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SignalGroupConnection" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:all>
+                        <xs:element name="SignalGroup" type="osp:signalEndpoint"/>
+                        <xs:element name="VariableGroup" type="osp:variableEndpoint"/>
+                    </xs:all>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SumConnection" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Sources">
+                            <xs:complexType>
+                                <xs:sequence>
+                                    <xs:element name="Source" maxOccurs="unbounded" type="osp:variableEndpoint"/>
+                                </xs:sequence>
+                            </xs:complexType>
+                        </xs:element>
+                        <xs:element name="Target" type="osp:variableEndpoint"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="variableEndpoint">
+        <xs:attribute name="simulator" use="required" type="xs:string"/>
+        <xs:attribute name="name" use="required" type="xs:string"/>
+    </xs:complexType>
+    <xs:complexType name="signalEndpoint">
+        <xs:attribute name="function" use="required" type="xs:string"/>
+        <xs:attribute name="name" use="required" type="xs:string"/>
+    </xs:complexType>
+    <xs:complexType name="simulators">
+        <xs:sequence>
+            <xs:element name="Simulator" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="InitialValues" minOccurs="0">
+                            <xs:complexType>
+                                <xs:sequence>
+                                    <xs:element name="InitialValue" maxOccurs="unbounded">
+                                        <xs:complexType>
+                                            <xs:choice>
+                                                <xs:element name="Real">
+                                                    <xs:complexType>
+                                                        <xs:attribute name="value" type="xs:double" use="required"/>
+                                                    </xs:complexType>
+                                                </xs:element>
+                                                <xs:element name="Integer">
+                                                    <xs:complexType>
+                                                        <xs:attribute name="value" type="xs:int" use="required"/>
+                                                    </xs:complexType>
+                                                </xs:element>
+                                                <xs:element name="Boolean">
+                                                    <xs:complexType>
+                                                        <xs:attribute name="value" type="xs:boolean" use="required"/>
+                                                    </xs:complexType>
+                                                </xs:element>
+                                                <xs:element name="String">
+                                                    <xs:complexType>
+                                                        <xs:attribute name="value" type="xs:string" use="required"/>
+                                                    </xs:complexType>
+                                                </xs:element>
+                                            </xs:choice>
+                                            <xs:attribute name="variable" use="required"/>
+                                        </xs:complexType>
+                                    </xs:element>
+                                </xs:sequence>
+                            </xs:complexType>
+                        </xs:element>
+                    </xs:sequence>
+                    <xs:attribute name="name" type="xs:string" use="required"/>
+                    <xs:attribute name="source" type="xs:anyURI" use="required"/>
+                    <xs:attribute name="stepSize" type="xs:double"/>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="functions">
+        <xs:sequence>
+            <xs:element name="Function" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Parameters" minOccurs="0">
+                            <xs:complexType>
+                                <xs:sequence>
+                                    <xs:element name="Parameter" maxOccurs="unbounded">
+                                        <xs:complexType>
+                                            <xs:attribute name="name" type="xs:string" use="required"/>
+                                            <xs:attribute name="value" type="xs:string" use="required"/>
+                                            <xs:attribute name="type" type="xs:string" use="required"/>
+                                        </xs:complexType>
+                                    </xs:element>
+                                </xs:sequence>
+                            </xs:complexType>
+                        </xs:element>
+                        <xs:element name="Signals">
+                            <xs:complexType>
+                                <xs:sequence>
+                                    <xs:element name="Signal" maxOccurs="unbounded">
+                                        <xs:complexType>
+                                            <xs:attribute name="name" type="xs:string" use="required"/>
+                                            <xs:attribute name="type" type="xs:string" use="required"/>
+                                            <xs:attribute name="causality" type="xs:string" use="required"/>
+                                        </xs:complexType>
+                                    </xs:element>
+                                </xs:sequence>
+                            </xs:complexType>
+                        </xs:element>
+                        <xs:element name="SignalGroups" minOccurs="0">
+                            <xs:complexType>
+                                <xs:sequence>
+                                    <xs:element name="SignalGroup" maxOccurs="unbounded">
+                                        <xs:complexType>
+                                            <xs:sequence>
+                                                <xs:element name="Signal" maxOccurs="unbounded">
+                                                    <xs:complexType>
+                                                        <xs:attribute name="name" type="xs:string" use="required"/>
+                                                    </xs:complexType>
+                                                </xs:element>
+                                            </xs:sequence>
+                                            <xs:attribute name="name" use="required"/>
+                                        </xs:complexType>
+                                    </xs:element>
+                                </xs:sequence>
+                            </xs:complexType>
+                        </xs:element>
+                    </xs:sequence>
+                    <xs:attribute name="name" type="xs:string" use="required"/>
+                    <xs:attribute name="type" type="xs:string" use="required"/>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+
+</xs:schema>
