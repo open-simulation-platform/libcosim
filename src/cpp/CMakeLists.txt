@@ -88,6 +88,7 @@ set(sources
     "ssp_parser.cpp"
     "timer.cpp"
     "uri.cpp"
+    "utility/concurrency.cpp"
     "utility/filesystem.cpp"
     "utility/uuid.cpp"
     "utility/zip.cpp"

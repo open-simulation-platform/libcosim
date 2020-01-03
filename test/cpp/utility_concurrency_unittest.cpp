@@ -1,8 +1,10 @@
-#define BOOST_TEST_MODULE cse::utility shared_queue unittests
+#define BOOST_TEST_MODULE cse::utility unittests
 #include <cse/utility/concurrency.hpp>
+#include <cse/utility/filesystem.hpp>
 
 #include <boost/test/unit_test.hpp>
 
+#include <chrono>
 #include <thread>
 #include <vector>
 
@@ -64,4 +66,33 @@ BOOST_AUTO_TEST_CASE(shared_box_noncopyable)
     }
 
     reader.join();
+}
+
+
+BOOST_AUTO_TEST_CASE(file_lock)
+{
+    using namespace std::chrono_literals;
+    const auto workDir = cse::utility::temp_dir();
+    const auto lockFilePath = workDir.path() / "lock";
+
+    auto fib = boost::fibers::fiber([=] {
+        auto lock2 = cse::utility::file_lock(lockFilePath);
+        boost::this_fiber::yield();
+        BOOST_TEST_REQUIRE(!lock2.try_lock());
+        boost::this_fiber::yield();
+        BOOST_TEST_REQUIRE(lock2.try_lock());
+        boost::this_fiber::yield();
+    });
+
+    auto lock1 = cse::utility::file_lock(lockFilePath);
+    boost::this_fiber::yield();
+    lock1.lock();
+    boost::this_fiber::yield();
+    lock1.unlock();
+    boost::this_fiber::yield();
+    BOOST_TEST_REQUIRE(!lock1.try_lock());
+    boost::this_fiber::yield();
+    BOOST_TEST_REQUIRE(lock1.try_lock());
+
+    fib.join();
 }

@@ -67,59 +67,6 @@ private:
 };
 
 
-/**
- *  Manages a lock file for interprocess synchronisation.
- *
- *  This class meets the
- *  [Lockable](https://en.cppreference.com/w/cpp/named_req/Lockable)
- *  requirements.
- */
-class lock_file
-{
-public:
-    /**
-     *  Constructs an object that uses the file at `path` as a lock file.
-     *
-     *  The file must be writable by the current process, but it will not be
-     *  modified if it already exists.  If it does not exist, it will be
-     *  created.
-     *
-     *  The constructor will not attempt to lock the file. Use `lock()` to
-     *  do this.
-     */
-    explicit lock_file(const boost::filesystem::path& path);
-
-    /// Calls `unlock()` and closes the file.
-    ~lock_file() noexcept;
-
-    // Copying and moving are not allowed
-    lock_file(const lock_file&) = delete;
-    lock_file& operator=(const lock_file&) = delete;
-    lock_file(lock_file&&) = delete;
-    lock_file& operator=(lock_file&&) = delete;
-
-    /// Acquires a lock on the file, blocking if necessary.
-    void lock();
-
-    /**
-     *  Attempts to acquire a lock on the file without blocking and returns
-     *  whether the attempt was successful.
-     */
-    bool try_lock();
-
-    /// Releases the lock, if one is held.
-    void unlock() noexcept;
-
-private:
-    boost::filesystem::path path_;
-#ifdef _WIN32
-    void* file_;
-#else
-    int file_;
-#endif
-};
-
-
 } // namespace utility
 } // namespace cse
 #endif // header guard

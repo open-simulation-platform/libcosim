@@ -5,6 +5,7 @@
 #include "cse/fmi/v1/fmu.hpp"
 #include "cse/fmi/v2/fmu.hpp"
 #include "cse/log/logger.hpp"
+#include "cse/utility/concurrency.hpp"
 #include "cse/utility/filesystem.hpp"
 #include "cse/utility/uuid.hpp"
 #include "cse/utility/zip.hpp"
@@ -225,7 +226,7 @@ std::shared_ptr<fmu> importer::import(const boost::filesystem::path& fmuPath)
 
     const auto fmuUnpackDir = fmuDir_ / sanitise_path(minModelDesc.guid);
     boost::filesystem::create_directories(fmuUnpackDir);
-    auto fmuUnpackDirLock = utility::lock_file(fmuUnpackDir.string() + ".lock");
+    auto fmuUnpackDirLock = utility::file_lock(fmuUnpackDir.string() + ".lock");
     fmuUnpackDirLock.lock();
     if (!boost::filesystem::exists(fmuUnpackDir / "modelDescription.xml") ||
         boost::filesystem::last_write_time(fmuPath) > boost::filesystem::last_write_time(fmuUnpackDir / "modelDescription.xml")) {
