@@ -22,14 +22,14 @@ namespace cse
 class file_observer::slave_value_writer
 {
 public:
-    slave_value_writer(observable* observable, boost::filesystem::path& logPath, time_point currentTime)
+    slave_value_writer(observable* observable, boost::filesystem::path& logPath)
         : observable_(observable)
         , logPath_(logPath)
     {
-        initialize_default(currentTime);
+        initialize_default();
     }
 
-    slave_value_writer(observable* observable, boost::filesystem::path& logPath, size_t decimationFactor, time_point currentTime,
+    slave_value_writer(observable* observable, boost::filesystem::path& logPath, size_t decimationFactor,
         std::vector<variable_description>& realVars, std::vector<variable_description>& intVars,
         std::vector<variable_description>& boolVars, std::vector<variable_description>& strVars)
         : observable_(observable)
@@ -40,7 +40,7 @@ public:
         , loggableBoolVariables_(boolVars)
         , loggableStringVariables_(strVars)
     {
-        initialize_config(currentTime);
+        initialize_config();
     }
 
     void observe(step_number timeStep, time_point currentTime)
@@ -91,7 +91,7 @@ private:
     }
 
     /** Default constructor initialization, all variables are logged. */
-    void initialize_default(time_point currentTime)
+    void initialize_default()
     {
         for (const auto& vd : observable_->model_description().variables) {
             if (vd.causality != variable_causality::local) {
@@ -131,11 +131,10 @@ private:
         }
 
         write_header();
-        observe(0, currentTime);
     }
 
     /** External config initialization, only configured variables are logged. */
-    void initialize_config(time_point currentTime)
+    void initialize_config()
     {
         for (const auto& variable : loggableRealVariables_) {
             realReferences_.push_back(variable.reference);
@@ -162,7 +161,6 @@ private:
         }
 
         write_header();
-        observe(0, currentTime);
     }
 
     void write_header()
@@ -290,7 +288,10 @@ T get_attribute(const boost::property_tree::ptree& tree, const std::string& key,
 }
 } // namespace
 
-void file_observer::simulator_added(simulator_index index, observable* simulator, time_point currentTime)
+void file_observer::simulator_added(
+    simulator_index index,
+    observable* simulator,
+    time_point /*currentTime*/)
 {
     auto time_str = format_time(boost::posix_time::second_clock::local_time());
     auto name = simulator->name().append("_").append(std::to_string(index)).append("_");
@@ -311,7 +312,7 @@ void file_observer::simulator_added(simulator_index index, observable* simulator
         if (std::find(modelNames.begin(), modelNames.end(), simulator->name()) != modelNames.end()) {
             parse_config(simulator->name());
 
-            valueWriters_[index] = std::make_unique<slave_value_writer>(simulator, logPath_, decimationFactor_, currentTime,
+            valueWriters_[index] = std::make_unique<slave_value_writer>(simulator, logPath_, decimationFactor_,
                 loggableRealVariables_, loggableIntVariables_, loggableBoolVariables_, loggableStringVariables_);
 
             loggableRealVariables_.clear();
@@ -322,7 +323,7 @@ void file_observer::simulator_added(simulator_index index, observable* simulator
             return;
 
     } else {
-        valueWriters_[index] = std::make_unique<slave_value_writer>(simulator, logPath_, currentTime);
+        valueWriters_[index] = std::make_unique<slave_value_writer>(simulator, logPath_);
     }
 }
 
@@ -337,6 +338,13 @@ void file_observer::variables_connected(variable_id /*output*/, variable_id /*in
 
 void file_observer::variable_disconnected(variable_id /*input*/, time_point /*currentTime*/)
 {
+}
+
+void file_observer::simulation_initialized(step_number firstStep, time_point startTime)
+{
+    for (const auto& entry : valueWriters_) {
+        entry.second->observe(firstStep, startTime);
+    }
 }
 
 void file_observer::step_complete(step_number /*lastStep*/, duration /*lastStepSize*/, time_point /*currentTime*/)

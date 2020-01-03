@@ -31,6 +31,15 @@ void last_value_observer::variable_disconnected(variable_id /*input*/, time_poin
 {
 }
 
+void last_value_observer::simulation_initialized(
+    step_number /*firstStep*/,
+    time_point /*startTime*/)
+{
+    for (const auto& entry : valueProviders_) {
+        entry.second->observe();
+    }
+}
+
 void last_value_observer::step_complete(
     step_number /*lastStep*/,
     duration /*lastStepSize*/,
