@@ -12,8 +12,8 @@
 #ifdef _WIN32
 #    include <windows.h>
 #else
+#    include <cerrno>
 #    include <fcntl.h>
-#    include <sys/file.h>
 #endif
 
 
@@ -28,8 +28,8 @@ boost::interprocess::file_lock make_boost_file_lock(
     const boost::filesystem::path& path)
 {
 #ifdef _WIN32
-    auto fileHandle = CreateFileW(
-        path_.c_str(),
+    const auto fileHandle = CreateFileW(
+        path.c_str(),
         GENERIC_WRITE,
         FILE_SHARE_WRITE,
         NULL,
@@ -45,7 +45,7 @@ boost::interprocess::file_lock make_boost_file_lock(
     CloseHandle(fileHandle);
     return boost::interprocess::file_lock(path.string().c_str());
 #else
-    auto fileDescriptor = open(path.c_str(), O_CREAT | O_WRONLY, 0777);
+    const auto fileDescriptor = open(path.c_str(), O_CREAT | O_WRONLY, 0777);
     if (fileDescriptor == -1) {
         throw std::system_error(
             errno,
