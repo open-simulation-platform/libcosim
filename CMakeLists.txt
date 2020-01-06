@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.9)
 file(STRINGS "${CMAKE_SOURCE_DIR}/version.txt" projectVersion)
 project("csecore" VERSION ${projectVersion})
+message("Current cse-core version: ${CMAKE_PROJECT_VERSION}\n")
 
 # ==============================================================================
 # Build settings
