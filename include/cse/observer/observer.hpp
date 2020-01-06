@@ -91,6 +91,11 @@ public:
     /// A variable connection was broken.
     virtual void variable_disconnected(variable_id input, time_point) = 0;
 
+    /// The simulation was initialized, and stepping will start.
+    virtual void simulation_initialized(
+        step_number firstStep,
+        time_point startTime) = 0;
+
     /// A time step is complete, and a communication point was reached.
     virtual void step_complete(
         step_number lastStep,

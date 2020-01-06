@@ -103,12 +103,21 @@ public:
      *  new output values, without advancing logical time.
      *
      *  This function can be used in the initialisation phase, after `setup()`
-     *  has been called and before the first `do_step()` call.  It enables
-     *  iterative initialisation of the system.  The purpose could be to
+     *  has been called and before the call to `start_simulation()`. It enables
+     *  iterative initialisation of the system. The purpose could be to
      *  propagate initial values between simulators and/or bring the system
      *  to a steady state.
      */
     virtual boost::fibers::future<void> do_iteration() = 0;
+
+    /**
+     *  Signals to the simulator that the initialization phase is complete
+     *  and that stepping will begin.
+     *
+     *  This function must be called at the end of the initialisation phase,
+     *  after any call to `do_iteration()` and before the first `do_step()` call.
+     */
+    virtual boost::fibers::future<void> start_simulation() = 0;
 
     /**
      *  Performs a single time step.

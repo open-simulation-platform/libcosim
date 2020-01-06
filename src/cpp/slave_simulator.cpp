@@ -419,15 +419,23 @@ public:
         // clang-format on
     }
 
+    boost::fibers::future<void> start_simulation()
+    {
+        if (slave_->state() != slave_state::initialisation) {
+            CSE_PANIC();
+        }
+        return boost::fibers::async([=]() {
+            slave_->start_simulation().get();
+            get_variables();
+        });
+    }
+
     boost::fibers::future<step_result> do_step(
         time_point currentT,
         duration deltaT)
     {
         // clang-format off
             return boost::fibers::async([=]() {
-                if (slave_->state() == slave_state::initialisation) {
-                    slave_->start_simulation().get();
-                }
                 set_variables();
                 const auto result = slave_->do_step(currentT, deltaT).get();
                 get_variables();
@@ -700,6 +708,10 @@ boost::fibers::future<void> slave_simulator::do_iteration()
     return pimpl_->do_iteration();
 }
 
+boost::fibers::future<void> slave_simulator::start_simulation()
+{
+    return pimpl_->start_simulation();
+}
 
 boost::fibers::future<step_result> slave_simulator::do_step(
     time_point currentT,

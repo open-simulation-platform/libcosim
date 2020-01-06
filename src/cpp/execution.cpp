@@ -64,6 +64,9 @@ public:
                 simulators_[i].get(),
                 currentTime_);
         }
+        if (initialized_) {
+            obs->simulation_initialized(lastStep_, currentTime_);
+        }
     }
 
     void add_manipulator(std::shared_ptr<manipulator> man)
@@ -133,6 +136,9 @@ public:
         if (!initialized_) {
             algorithm_->initialize();
             initialized_ = true;
+            for (const auto& obs : observers_) {
+                obs->simulation_initialized(lastStep_, currentTime_);
+            }
         }
         for (const auto& man : manipulators_) {
             man->step_commencing(currentTime_);
