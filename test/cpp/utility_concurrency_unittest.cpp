@@ -4,7 +4,6 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include <chrono>
 #include <thread>
 #include <vector>
 
@@ -71,28 +70,22 @@ BOOST_AUTO_TEST_CASE(shared_box_noncopyable)
 
 BOOST_AUTO_TEST_CASE(file_lock)
 {
-    using namespace std::chrono_literals;
     const auto workDir = cse::utility::temp_dir();
     const auto lockFilePath = workDir.path() / "lock";
 
+    // This fiber won't start immediately
     auto fib = boost::fibers::fiber([=] {
         auto lock2 = cse::utility::file_lock(lockFilePath);
-        boost::this_fiber::yield();
         BOOST_TEST_REQUIRE(!lock2.try_lock());
-        boost::this_fiber::yield();
-        BOOST_TEST_REQUIRE(lock2.try_lock());
+        lock2.lock(); // Switch to main fiber while waiting for the lock.
         boost::this_fiber::yield();
     });
 
     auto lock1 = cse::utility::file_lock(lockFilePath);
-    boost::this_fiber::yield();
-    lock1.lock();
-    boost::this_fiber::yield();
-    lock1.unlock();
-    boost::this_fiber::yield();
-    BOOST_TEST_REQUIRE(!lock1.try_lock());
-    boost::this_fiber::yield();
     BOOST_TEST_REQUIRE(lock1.try_lock());
-
+    boost::this_fiber::yield(); // Start and switch to 'fib'.
+    lock1.unlock();
+    boost::this_fiber::yield(); // Switch to 'fib' to let it acquire the lock.
+    BOOST_TEST_REQUIRE(!lock1.try_lock());
     fib.join();
 }

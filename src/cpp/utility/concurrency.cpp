@@ -28,10 +28,11 @@ boost::interprocess::file_lock make_boost_file_lock(
     const boost::filesystem::path& path)
 {
 #ifdef _WIN32
+    // NOTE: The share mode flags must match those used by boost::interprocess.
     const auto fileHandle = CreateFileW(
         path.c_str(),
         GENERIC_WRITE,
-        FILE_SHARE_WRITE,
+        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
         NULL,
         OPEN_ALWAYS,
         FILE_ATTRIBUTE_NORMAL,
@@ -107,13 +108,36 @@ file_lock::file_lock(const boost::filesystem::path& path)
 
 void file_lock::lock()
 {
-    std::lock(fileLock_, mutexLock_);
+    // NOTE: The reason we can't use std::lock() here is that we must make
+    // sure that the mutex gets locked before the file.  Otherwise, the
+    // code might block on the file lock, when the lock is in fact held by
+    // a different fiber in the same process.  Trying to lock the mutex first
+    // gives us a chance to yield to the other fiber if the operation would
+    // otherwise block.
+    mutexLock_.lock();
+    try {
+        fileLock_.lock();
+    } catch (...) {
+        mutexLock_.unlock();
+        throw;
+    }
 }
 
 
 bool file_lock::try_lock()
 {
-    return std::try_lock(fileLock_, mutexLock_) == -1;
+    // We try the locks in the same order as for lock().
+    if (!mutexLock_.try_lock()) return false;
+    try {
+        if (!fileLock_.try_lock()) {
+            mutexLock_.unlock();
+            return false;
+        }
+        return true;
+    } catch (...) {
+        mutexLock_.unlock();
+        throw;
+    }
 }
 
 
