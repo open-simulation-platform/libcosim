@@ -1,12 +1,14 @@
 import os
 
-from conans import ConanFile, CMake
+from conans import ConanFile, CMake, tools
+from os import path
+
 
 
 class CSECoreConan(ConanFile):
     name = "cse-core"
-    version = "0.6.0"
     author = "osp"
+    exports = "version.txt"
     scm = {
         "type": "git",
         "url": "git@github.com:open-simulation-platform/cse-core.git",
@@ -30,6 +32,9 @@ class CSECoreConan(ConanFile):
         "fmuproxy=False",
         "boost:shared=True"
         )
+
+    def set_version(self):
+        self.version = tools.load(path.join(self.recipe_folder, "version.txt")).strip()
 
     def imports(self):
         binDir = os.path.join("output", str(self.settings.build_type).lower(), "bin")
