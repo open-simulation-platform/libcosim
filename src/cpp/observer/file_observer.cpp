@@ -368,9 +368,9 @@ cse::observable* find_simulator(
     const std::unordered_map<simulator_index, observable*>& simulators,
     const std::string& simulatorName)
 {
-    for (const auto& [idx, observable] : simulators) {
-        if (observable->name() == simulatorName) {
-            return observable;
+    for (const auto& entry : simulators) {
+        if (entry.second->name() == simulatorName) {
+            return entry.second;
         }
     }
     throw std::invalid_argument("Can't find simulator with name: " + simulatorName);
