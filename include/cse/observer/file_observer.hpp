@@ -19,14 +19,34 @@ namespace cse
 
 
 /**
- * An observer implementation, for saving observed variable values to file in the preferred format (csv or binary).
+ * An observer implementation, for saving observed variable values to file in the csv format.
  */
 class file_observer : public observer
 {
 public:
+    /**
+     * Creates an observer which logs all variable values to file in csv format.
+     *
+     * \param logDir the directory where log files will be created.
+     */
     file_observer(const boost::filesystem::path& logDir);
 
+    /**
+     * Creates an observer which logs selected variable values to file in csv format.
+     *
+     * \param logDir the directory where log files will be created.
+     * \param configPath the path to a an xml file containing the logging configuration.
+     */
     file_observer(const boost::filesystem::path& logDir, const boost::filesystem::path& configPath);
+
+    /// Returns whether the observer is currently recording values.
+    bool is_recording();
+
+    /// Starts recording values. Throws an exception if the observer is already recording.
+    void start_recording();
+
+    /// Stops recording values. Throws an exception if the observer is not recording.
+    void stop_recording();
 
     void simulator_added(simulator_index, observable*, time_point) override;
 
@@ -56,22 +76,23 @@ public:
     ~file_observer() override;
 
 private:
-    void parse_config(const std::string& simulatorName);
+    struct simulator_logging_config
+    {
+        std::vector<variable_description> variables;
+        size_t decimationFactor;
+    };
+
+    simulator_logging_config parse_config(const std::string& simulatorName);
 
     class slave_value_writer;
     std::unordered_map<simulator_index, std::unique_ptr<slave_value_writer>> valueWriters_;
     std::unordered_map<simulator_index, observable*> simulators_;
-    std::vector<variable_description> loggableRealVariables_;
-    std::vector<variable_description> loggableIntVariables_;
-    std::vector<variable_description> loggableBoolVariables_;
-    std::vector<variable_description> loggableStringVariables_;
     boost::property_tree::ptree ptree_;
     boost::filesystem::path configPath_;
     boost::filesystem::path logDir_;
-    boost::filesystem::path logPath_;
     bool logFromConfig_ = false;
-    size_t decimationFactor_;
     size_t defaultDecimationFactor_ = 1;
+    bool recording_ = true;
 };
 
 
