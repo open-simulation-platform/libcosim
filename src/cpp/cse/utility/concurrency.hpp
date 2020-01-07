@@ -136,6 +136,21 @@ private:
 };
 
 
+/// Whether and how a `file_lock` should acquire a lock on construction.
+enum class file_lock_initial_state
+{
+    /// Do not attempt to acquire a lock, never block.
+    not_locked,
+
+    /// Acquire a lock, blocking if necessary.
+    locked,
+
+    /// Acquire a shared lock, blocking if necessary.
+    locked_shared,
+};
+
+
+
 /**
  *  A file-based mutual exclusion mechanism.
  *
@@ -179,12 +194,18 @@ public:
      *  Two different paths `p1` and `p2` are considered to refer to the
      *  same file if `boost::filesystem::equivalent(p1,p2)` is `true`.
      *
-     *  The constructor will not attempt to lock the file.
+     *  \param [in] path
+     *      The path to the lock file.
+     *  \param [in] initialState
+     *      Whether and how the lock should be acquired on construction.
+     *      May cause the constructor to block until a lock can be acquired.
      *
      *  \throws std::system_error
      *      if the file could not be opened or created.
      */
-    explicit file_lock(const boost::filesystem::path& path);
+    explicit file_lock(
+        const boost::filesystem::path& path,
+        file_lock_initial_state initialState = file_lock_initial_state::not_locked);
 
     /**
      *  Acquires a lock on the file, blocking if necessary.

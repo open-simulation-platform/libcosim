@@ -157,10 +157,17 @@ std::shared_ptr<shared_mutex> get_file_mutex(
 } // namespace
 
 
-file_lock::file_lock(const boost::filesystem::path& path)
+file_lock::file_lock(
+    const boost::filesystem::path& path,
+    file_lock_initial_state initialState)
     : fileLock_(make_boost_file_lock(path))
     , mutex_(get_file_mutex(path))
 {
+    if (initialState == file_lock_initial_state::locked) {
+        lock();
+    } else if (initialState == file_lock_initial_state::locked_shared) {
+        lock_shared();
+    }
 }
 
 

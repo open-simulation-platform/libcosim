@@ -7,6 +7,7 @@
 #include "cse/fmi/importer.hpp"
 #include "cse/fmi/windows.hpp"
 #include "cse/log/logger.hpp"
+#include "cse/utility/concurrency.hpp"
 
 #include <gsl/gsl_util>
 
@@ -35,8 +36,12 @@ namespace v1
 
 fmu::fmu(
     std::shared_ptr<fmi::importer> importer,
-    const boost::filesystem::path& fmuDir)
+    const boost::filesystem::path& fmuDir,
+    const boost::filesystem::path* fmuDirLockFile)
     : importer_{importer}
+    , dirLock_(fmuDirLockFile != nullptr
+              ? std::make_unique<utility::file_lock>(*fmuDirLockFile, utility::file_lock_initial_state::locked_shared)
+              : nullptr)
     , dir_(fmuDir)
     , handle_{fmi1_import_parse_xml(importer->fmilib_handle(), fmuDir.string().c_str())}
 {
