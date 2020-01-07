@@ -35,7 +35,7 @@ public:
      * Creates an observer which logs selected variable values to file in csv format.
      *
      * \param logDir the directory where log files will be created.
-     * \param configPath the path to a an xml file containing the logging configuration.
+     * \param configPath the path to an xml file containing the logging configuration.
      */
     file_observer(const boost::filesystem::path& logDir, const boost::filesystem::path& configPath);
 
