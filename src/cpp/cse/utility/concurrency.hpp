@@ -13,6 +13,8 @@
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <shared_mutex>
+#include <variant>
 
 
 namespace cse
@@ -90,13 +92,58 @@ private:
 
 
 /**
+ *  A shared mutex à la `std::shared_mutex`, but with support for fibers.
+ *
+ *  This class works in the same way as `std::shared_mutex`, but as it is
+ *  implemented in terms of Boost.Fiber primitives, "blocking" operations
+ *  are really "yielding" operations.
+ *
+ *  The class meets the
+ *  [SharedMutex](https://en.cppreference.com/w/cpp/named_req/SharedMutex)
+ *  requirements.
+ */
+class shared_mutex
+{
+public:
+    /// Locks the mutex, blocks if the mutex is not available.
+    void lock();
+
+    /// Tries to lock the mutex and returns immediately whether it succeeded.
+    bool try_lock();
+
+    /// Unlocks the mutex.
+    void unlock();
+
+    /**
+     *  Locks the mutex for shared ownership, blocks if the mutex is not
+     *  available.
+     */
+    void lock_shared();
+
+    /**
+     *  Tries to lock the mutex for shared ownership, returns immediately
+     *  whether it succeeded.
+     */
+    bool try_lock_shared();
+
+    /// Unlocks the mutex from shared ownership.
+    void unlock_shared();
+
+private:
+    boost::fibers::mutex mutex_;
+    boost::fibers::condition_variable condition_;
+    int sharedCount_ = 0;
+};
+
+
+/**
  *  A file-based mutual exclusion mechanism.
  *
  *  This class provides interprocess synchronisation based on
  *  `boost::interprocess::file_lock`, augmenting it with support for
  *  inter-fiber and inter-thread synchronisation.  This is achieved by
- *  combining the file lock with a lock on a global `boost::fibers::mutex`
- *  object that is associated with the file.
+ *  combining the file lock with a lock on a global `shared_mutex` object
+ *  associated with the file.
  *
  *  Note that a single `file_lock` object may only be used by one fiber at a
  *  time.  That is, if it is locked by one fiber, it must be unlocked by the
@@ -109,12 +156,15 @@ private:
  *
  *  Therefore, to synchronise between fibers (including those running in
  *  separate threads), it is recommended to create one and only one `file_lock`
- *  object associated with the same file in each fiber.
+ *  object associated with the same file in each fiber.  If, for some reason,
+ *  a `file_lock` *must* be transferred between fibers, do so only when it is
+ *  in the unlocked state.
  *
- *  If a lock is held upon destruction, it is automatically released.
+ *  The lock automatically gets unlocked on destruction.
  *
- *  The class meets the requirements of the
- *  [Lockable](https://en.cppreference.com/w/cpp/named_req/Lockable) concept.
+ *  The class meets the
+ *  [Lockable](https://en.cppreference.com/w/cpp/named_req/Lockable)
+ *  requirements.
  */
 class file_lock
 {
@@ -125,6 +175,9 @@ public:
      *  If the file already exists, the current process must have write
      *  permissions to it (though it will not be modified).
      *  If it does not exist, it will be created.
+     *
+     *  Two different paths `p1` and `p2` are considered to refer to the
+     *  same file if `boost::filesystem::equivalent(p1,p2)` is `true`.
      *
      *  The constructor will not attempt to lock the file.
      *
@@ -160,12 +213,42 @@ public:
      *  \pre
      *      This `file_lock` object has been locked in the current fiber.
      */
-    void unlock() noexcept;
+    void unlock();
+
+    /**
+     *  Acquires a shared lock on the file, blocking if necessary.
+     *
+     *  \pre
+     *      This `file_lock` object is not already locked.
+     *      The file is not locked by a different `file_lock` object in the
+     *      same fiber.
+     */
+    void lock_shared();
+
+    /**
+     *  Attempts to acquire a shared lock on the file without blocking and
+     *  returns whether the attempt was successful.
+     *
+     *  \pre
+     *      This `file_lock` object is not already locked.
+     *      The file is not locked by a different `file_lock` object in the
+     *      same fiber.
+     */
+    bool try_lock_shared();
+
+    /**
+     *  Unlocks the file from shared ownership.
+     *
+     *  \pre
+     *      This `file_lock` object has been locked for shared ownership in
+     *      the current fiber.
+     */
+    void unlock_shared();
 
 private:
     boost::interprocess::file_lock fileLock_;
-    std::shared_ptr<boost::fibers::mutex> mutex_;
-    std::unique_lock<boost::fibers::mutex> mutexLock_;
+    std::shared_ptr<shared_mutex> mutex_;
+    std::variant<std::unique_lock<shared_mutex>, std::shared_lock<shared_mutex>> mutexLock_;
 };
 
 

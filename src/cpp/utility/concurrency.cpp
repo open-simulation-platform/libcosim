@@ -21,6 +21,66 @@ namespace cse
 {
 namespace utility
 {
+
+
+void shared_mutex::lock()
+{
+    std::unique_lock<boost::fibers::mutex> lock(mutex_);
+    condition_.wait(lock, [&] { return sharedCount_ == 0; });
+
+    // Release the mutex from the unique_lock, so it doesn't get automatically
+    // unlocked when the function exits.
+    lock.release();
+}
+
+
+bool shared_mutex::try_lock()
+{
+    std::unique_lock<boost::fibers::mutex> lock(mutex_, std::try_to_lock);
+    if (!lock.owns_lock()) return false;
+    if (sharedCount_ > 0) return false;
+
+    // Release the mutex from the unique_lock, so it doesn't get automatically
+    // unlocked when the function exits.
+    lock.release();
+    return true;
+}
+
+
+void shared_mutex::unlock()
+{
+    mutex_.unlock();
+    condition_.notify_one();
+}
+
+
+void shared_mutex::lock_shared()
+{
+    std::lock_guard<boost::fibers::mutex> lock(mutex_);
+    ++sharedCount_;
+}
+
+
+bool shared_mutex::try_lock_shared()
+{
+    std::unique_lock<boost::fibers::mutex> lock(mutex_, std::try_to_lock);
+    if (!lock.owns_lock()) return false;
+    ++sharedCount_;
+    return true;
+}
+
+
+void shared_mutex::unlock_shared()
+{
+    std::unique_lock<boost::fibers::mutex> lock(mutex_);
+    --sharedCount_;
+    if (sharedCount_ == 0) {
+        lock.unlock();
+        condition_.notify_one();
+    }
+}
+
+
 namespace
 {
 
@@ -59,17 +119,17 @@ boost::interprocess::file_lock make_boost_file_lock(
 }
 
 
-std::shared_ptr<boost::fibers::mutex> get_file_mutex(
+std::shared_ptr<shared_mutex> get_file_mutex(
     const boost::filesystem::path& path)
 {
     struct file_mutex
     {
         boost::filesystem::path path;
-        std::weak_ptr<boost::fibers::mutex> mutexPtr;
+        std::weak_ptr<shared_mutex> mutexPtr;
     };
     static std::vector<file_mutex> fileMutexes;
     static boost::fibers::mutex fileMutexesMutex;
-    std::shared_ptr<boost::fibers::mutex> fileMutex;
+    std::shared_ptr<shared_mutex> fileMutex;
 
     // Do a linear search for an element corresponding to the given path
     // in `fileMutexes`, cleaning up expired elements along the way.
@@ -88,20 +148,18 @@ std::shared_ptr<boost::fibers::mutex> get_file_mutex(
 
     // If no element corresponding to the given path was found, create one.
     if (!fileMutex) {
-        fileMutex = std::make_shared<boost::fibers::mutex>();
+        fileMutex = std::make_shared<shared_mutex>();
         fileMutexes.push_back({boost::filesystem::canonical(path), fileMutex});
     }
 
     return fileMutex;
 }
-
 } // namespace
 
 
 file_lock::file_lock(const boost::filesystem::path& path)
     : fileLock_(make_boost_file_lock(path))
     , mutex_(get_file_mutex(path))
-    , mutexLock_(*mutex_, std::defer_lock)
 {
 }
 
@@ -114,37 +172,54 @@ void file_lock::lock()
     // a different fiber in the same process.  Trying to lock the mutex first
     // gives us a chance to yield to the other fiber if the operation would
     // otherwise block.
-    mutexLock_.lock();
-    try {
-        fileLock_.lock();
-    } catch (...) {
-        mutexLock_.unlock();
-        throw;
-    }
+    std::unique_lock<shared_mutex> mutexLock(*mutex_);
+    fileLock_.lock();
+    mutexLock_ = std::move(mutexLock);
 }
 
 
 bool file_lock::try_lock()
 {
-    // We try the locks in the same order as for lock().
-    if (!mutexLock_.try_lock()) return false;
-    try {
-        if (!fileLock_.try_lock()) {
-            mutexLock_.unlock();
-            return false;
-        }
-        return true;
-    } catch (...) {
-        mutexLock_.unlock();
-        throw;
-    }
+    // See note on locking order in lock() above.
+    std::unique_lock<shared_mutex> mutexLock(*mutex_, std::try_to_lock);
+    if (!mutexLock.owns_lock()) return false;
+    if (!fileLock_.try_lock()) return false;
+    mutexLock_ = std::move(mutexLock);
+    return true;
 }
 
 
-void file_lock::unlock() noexcept
+void file_lock::unlock()
 {
     fileLock_.unlock();
-    mutexLock_.unlock();
+    std::get<std::unique_lock<shared_mutex>>(mutexLock_).unlock();
+}
+
+
+void file_lock::lock_shared()
+{
+    // See note on locking order in lock() above.
+    std::shared_lock<shared_mutex> mutexLock(*mutex_);
+    fileLock_.lock_sharable();
+    mutexLock_ = std::move(mutexLock);
+}
+
+
+bool file_lock::try_lock_shared()
+{
+    // See note on locking order in lock() above.
+    std::shared_lock<shared_mutex> mutexLock(*mutex_, std::try_to_lock);
+    if (!mutexLock.owns_lock()) return false;
+    if (!fileLock_.try_lock_sharable()) return false;
+    mutexLock_ = std::move(mutexLock);
+    return true;
+}
+
+
+void file_lock::unlock_shared()
+{
+    fileLock_.unlock_sharable();
+    std::get<std::shared_lock<shared_mutex>>(mutexLock_).unlock();
 }
 
 
