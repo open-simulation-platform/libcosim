@@ -61,22 +61,22 @@ public:
         }
         if (++counter_ % decimationFactor_ == 0) {
 
-            if (!realReferences_.empty()) realSamples_[timeStep].reserve(realReferences_.size());
-            if (!intReferences_.empty()) intSamples_[timeStep].reserve(intReferences_.size());
-            if (!boolReferences_.empty()) boolSamples_[timeStep].reserve(boolReferences_.size());
-            if (!stringReferences_.empty()) stringSamples_[timeStep].reserve(stringReferences_.size());
+            if (!realVars_.empty()) realSamples_[timeStep].reserve(realVars_.size());
+            if (!intVars_.empty()) intSamples_[timeStep].reserve(intVars_.size());
+            if (!boolVars_.empty()) boolSamples_[timeStep].reserve(boolVars_.size());
+            if (!stringVars_.empty()) stringSamples_[timeStep].reserve(stringVars_.size());
 
-            for (const auto idx : realReferences_) {
-                realSamples_[timeStep].push_back(observable_->get_real(idx));
+            for (const auto& vd : realVars_) {
+                realSamples_[timeStep].push_back(observable_->get_real(vd.reference));
             }
-            for (const auto idx : intReferences_) {
-                intSamples_[timeStep].push_back(observable_->get_integer(idx));
+            for (const auto& vd : intVars_) {
+                intSamples_[timeStep].push_back(observable_->get_integer(vd.reference));
             }
-            for (const auto idx : boolReferences_) {
-                boolSamples_[timeStep].push_back(observable_->get_boolean(idx));
+            for (const auto& vd : boolVars_) {
+                boolSamples_[timeStep].push_back(observable_->get_boolean(vd.reference));
             }
-            for (const auto idx : stringReferences_) {
-                stringSamples_[timeStep].push_back(observable_->get_string(idx));
+            for (const auto& vd : stringVars_) {
+                stringSamples_[timeStep].push_back(observable_->get_string(vd.reference));
             }
             timeSamples_[timeStep] = to_double_time_point(currentTime);
 
@@ -114,25 +114,21 @@ private:
         }
     }
 
-    void initialize_variable(variable_description vd)
+    void initialize_variable(const variable_description& vd)
     {
         observable_->expose_for_getting(vd.type, vd.reference);
 
         switch (vd.type) {
             case variable_type::real:
-                realReferences_.push_back(vd.reference);
                 realVars_.push_back(vd);
                 break;
             case variable_type::integer:
-                intReferences_.push_back(vd.reference);
                 intVars_.push_back(vd);
                 break;
             case variable_type::string:
-                stringReferences_.push_back(vd.reference);
                 stringVars_.push_back(vd);
                 break;
             case variable_type::boolean:
-                boolReferences_.push_back(vd.reference);
                 boolVars_.push_back(vd);
                 break;
             case variable_type::enumeration:
@@ -225,10 +221,6 @@ private:
     std::map<step_number, std::vector<int>> intSamples_;
     std::map<step_number, std::vector<bool>> boolSamples_;
     std::map<step_number, std::vector<std::string_view>> stringSamples_;
-    std::vector<value_reference> realReferences_;
-    std::vector<value_reference> intReferences_;
-    std::vector<value_reference> boolReferences_;
-    std::vector<value_reference> stringReferences_;
     std::map<step_number, double> timeSamples_;
     std::vector<variable_description> realVars_;
     std::vector<variable_description> intVars_;
