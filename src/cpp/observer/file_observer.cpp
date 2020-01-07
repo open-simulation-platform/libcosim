@@ -320,8 +320,8 @@ void file_observer::step_complete(step_number /*lastStep*/, duration /*lastStepS
 
 void file_observer::simulator_step_complete(simulator_index index, step_number lastStep, duration /*lastStepSize*/, time_point currentTime)
 {
-    if (recording_) {
-        valueWriters_.at(index)->observe(lastStep, currentTime);
+    if (auto writer = valueWriters_.find(index); writer != valueWriters_.end() && recording_) {
+        writer->second->observe(lastStep, currentTime);
     }
 }
 
@@ -347,7 +347,7 @@ void file_observer::start_recording()
 void file_observer::stop_recording()
 {
     if (!recording_) {
-        throw std::runtime_error("File observer has already stopeed recording");
+        throw std::runtime_error("File observer has already stopped recording");
     } else {
         for (const auto& entry : valueWriters_) {
             entry.second->stop_recording();
