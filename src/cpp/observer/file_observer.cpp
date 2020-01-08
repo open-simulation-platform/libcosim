@@ -411,7 +411,7 @@ file_observer::simulator_logging_config file_observer::parse_config(const std::s
                                 BOOST_LOG_SEV(log::logger(), log::info) << "Logging variable: " << modelName << ":" << name;
                                 break;
                             default:
-                                CSE_PANIC();
+                                CSE_PANIC_M("Variable type not supported.");
                         }
                     }
                 }
