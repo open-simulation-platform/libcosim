@@ -12,6 +12,7 @@
 #include <codecvt>
 #include <locale>
 #include <map>
+#include <mutex>
 #include <sstream>
 #include <vector>
 
@@ -22,7 +23,7 @@ namespace
 {
 std::string format_time(boost::posix_time::ptime now)
 {
-    std::locale loc(std::wcout.getloc(), new boost::posix_time::wtime_facet(L"%Y%m%d_%H%M%S"));
+    std::locale loc(std::wcout.getloc(), new boost::posix_time::wtime_facet(L"%Y%m%d_%H%M%S_%f"));
 
     std::basic_stringstream<wchar_t> wss;
     wss.imbue(loc);
@@ -55,51 +56,58 @@ public:
 
     void observe(step_number timeStep, time_point currentTime)
     {
-        if (!recording_) {
-            write_header();
-            recording_ = true;
-        }
-        if (++counter_ % decimationFactor_ == 0) {
+        std::lock_guard<std::mutex> lock(lock_);
+        if (recording_) {
+            if (!fsw_.is_open()) {
+                create_log_file();
+            }
+            if (timeStep % decimationFactor_ == 0) {
 
-            if (!realVars_.empty()) realSamples_[timeStep].reserve(realVars_.size());
-            if (!intVars_.empty()) intSamples_[timeStep].reserve(intVars_.size());
-            if (!boolVars_.empty()) boolSamples_[timeStep].reserve(boolVars_.size());
-            if (!stringVars_.empty()) stringSamples_[timeStep].reserve(stringVars_.size());
+                if (!realVars_.empty()) realSamples_[timeStep].reserve(realVars_.size());
+                if (!intVars_.empty()) intSamples_[timeStep].reserve(intVars_.size());
+                if (!boolVars_.empty()) boolSamples_[timeStep].reserve(boolVars_.size());
+                if (!stringVars_.empty()) stringSamples_[timeStep].reserve(stringVars_.size());
 
-            for (const auto& vd : realVars_) {
-                realSamples_[timeStep].push_back(observable_->get_real(vd.reference));
-            }
-            for (const auto& vd : intVars_) {
-                intSamples_[timeStep].push_back(observable_->get_integer(vd.reference));
-            }
-            for (const auto& vd : boolVars_) {
-                boolSamples_[timeStep].push_back(observable_->get_boolean(vd.reference));
-            }
-            for (const auto& vd : stringVars_) {
-                stringSamples_[timeStep].push_back(observable_->get_string(vd.reference));
-            }
-            timeSamples_[timeStep] = to_double_time_point(currentTime);
+                for (const auto& vd : realVars_) {
+                    realSamples_[timeStep].push_back(observable_->get_real(vd.reference));
+                }
+                for (const auto& vd : intVars_) {
+                    intSamples_[timeStep].push_back(observable_->get_integer(vd.reference));
+                }
+                for (const auto& vd : boolVars_) {
+                    boolSamples_[timeStep].push_back(observable_->get_boolean(vd.reference));
+                }
+                for (const auto& vd : stringVars_) {
+                    stringSamples_[timeStep].push_back(observable_->get_string(vd.reference));
+                }
+                timeSamples_[timeStep] = to_double_time_point(currentTime);
 
-            if (counter_ >= decimationFactor_) {
                 persist();
-                counter_ = 0;
             }
         }
+    }
+
+    void start_recording()
+    {
+        recording_ = true;
     }
 
     void stop_recording()
     {
-        persist();
-        counter_ = 0;
+        std::lock_guard<std::mutex> lock(lock_);
         if (fsw_.is_open()) {
             fsw_.close();
         }
         recording_ = false;
+        realSamples_.clear();
+        intSamples_.clear();
+        boolSamples_.clear();
+        stringSamples_.clear();
+        timeSamples_.clear();
     }
 
     ~slave_value_writer()
     {
-        persist();
         if (fsw_.is_open()) {
             fsw_.close();
         }
@@ -154,9 +162,9 @@ private:
         }
     }
 
-    void write_header()
+    void create_log_file()
     {
-        auto time_str = format_time(boost::posix_time::second_clock::local_time());
+        auto time_str = format_time(boost::posix_time::microsec_clock::local_time());
         auto filename = observable_->name().append("_").append(time_str).append(".csv");
 
         auto filepath = logDir_ / filename;
@@ -192,7 +200,6 @@ private:
     void persist()
     {
         ss_.clear();
-        ss_.str(std::string());
 
         if (fsw_.is_open()) {
 
@@ -231,8 +238,8 @@ private:
     size_t decimationFactor_ = 1;
     boost::filesystem::ofstream fsw_;
     std::stringstream ss_;
-    size_t counter_ = 0;
-    bool recording_ = false;
+    std::atomic<bool> recording_ = true;
+    std::mutex lock_;
 };
 
 file_observer::file_observer(const boost::filesystem::path& logDir)
@@ -309,8 +316,10 @@ void file_observer::variable_disconnected(variable_id /*input*/, time_point /*cu
 
 void file_observer::simulation_initialized(step_number firstStep, time_point startTime)
 {
-    for (const auto& entry : valueWriters_) {
-        entry.second->observe(firstStep, startTime);
+    if (recording_) {
+        for (const auto& entry : valueWriters_) {
+            entry.second->observe(firstStep, startTime);
+        }
     }
 }
 
@@ -340,6 +349,9 @@ void file_observer::start_recording()
     if (recording_) {
         throw std::runtime_error("File observer is already recording");
     } else {
+        for (const auto& entry : valueWriters_) {
+            entry.second->start_recording();
+        }
         recording_ = true;
     }
 }

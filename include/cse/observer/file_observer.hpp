@@ -10,6 +10,7 @@
 #include <boost/filesystem/path.hpp>
 #include <boost/property_tree/ptree.hpp>
 
+#include <atomic>
 #include <memory>
 #include <unordered_map>
 
@@ -92,7 +93,7 @@ private:
     boost::filesystem::path logDir_;
     bool logFromConfig_ = false;
     size_t defaultDecimationFactor_ = 1;
-    bool recording_ = true;
+    std::atomic<bool> recording_ = true;
 };
 
 

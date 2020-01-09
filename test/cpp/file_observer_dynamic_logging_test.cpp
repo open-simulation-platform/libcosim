@@ -39,10 +39,6 @@ int main()
         cse::log::set_global_output_level(cse::log::debug);
 
         constexpr cse::time_point startTime = cse::to_time_point(0.0);
-        constexpr cse::time_point time1 = cse::to_time_point(2.0);
-        constexpr cse::time_point time2 = cse::to_time_point(4.0);
-        constexpr cse::time_point time3 = cse::to_time_point(6.0);
-        constexpr cse::time_point time4 = cse::to_time_point(8.0);
         constexpr cse::duration stepSize = cse::to_duration(0.1);
 
         const auto logPath = boost::filesystem::current_path() / "logs" / "clean";
@@ -56,18 +52,24 @@ int main()
         auto observer = std::make_shared<cse::file_observer>(logPath);
         execution.add_observer(observer);
 
-        // Add a slave to the execution and connect variables
+        // Add slaves to the execution
         execution.add_slave(
-            cse::make_pseudo_async(std::make_unique<mock_slave>([](double x) { return x - 1.1; })), "slave_one");
+            cse::make_pseudo_async(std::make_unique<mock_slave>(
+                [](double x) { return x - 1.1; })),
+            "slave_one");
         execution.add_slave(
-            cse::make_pseudo_async(std::make_unique<mock_slave>([](double x) { return x + 1.1; },
+            cse::make_pseudo_async(std::make_unique<mock_slave>(
+                [](double x) { return x + 1.1; },
                 [](int y) { return y - 4; },
                 [](bool z) { return !z; })),
             "slave_two");
 
         // Run the simulation
-        auto simResult = execution.simulate_until(time1);
-        REQUIRE(simResult.get());
+        auto t = std::thread([&]() { execution.simulate_until(std::nullopt).get(); });
+
+        constexpr std::chrono::duration sleepTime = std::chrono::milliseconds(500);
+
+        std::this_thread::sleep_for(sleepTime);
 
         REQUIRE(observer->is_recording());
         observer->stop_recording();
@@ -79,27 +81,22 @@ int main()
         REQUIRE(filecount(logPath) == 0);
 
         observer->start_recording();
-        simResult = execution.simulate_until(time2);
-        simResult.get();
+        std::this_thread::sleep_for(sleepTime);
         observer->stop_recording();
 
-        REQUIRE(filecount(logPath) == 2);
-        simResult = execution.simulate_until(time3);
-        simResult.get();
-        REQUIRE(filecount(logPath) == 2);
-
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::this_thread::sleep_for(sleepTime);
 
         observer->start_recording();
-        simResult = execution.simulate_until(time4);
-        simResult.get();
+        std::this_thread::sleep_for(sleepTime);
         observer->stop_recording();
+
+        execution.stop_simulation();
+        t.join();
         REQUIRE(filecount(logPath) == 4);
 
         // Test that files are released.
         remove_directory_contents(logPath);
         REQUIRE(filecount(logPath) == 0);
-
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
