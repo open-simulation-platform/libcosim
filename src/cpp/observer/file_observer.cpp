@@ -56,7 +56,7 @@ public:
 
     void observe(step_number timeStep, time_point currentTime)
     {
-        std::lock_guard<std::mutex> lock(lock_);
+        std::lock_guard<std::mutex> lock(mutex_);
         if (recording_) {
             if (!fsw_.is_open()) {
                 create_log_file();
@@ -94,7 +94,7 @@ public:
 
     void stop_recording()
     {
-        std::lock_guard<std::mutex> lock(lock_);
+        std::lock_guard<std::mutex> lock(mutex_);
         if (fsw_.is_open()) {
             fsw_.close();
         }
@@ -239,7 +239,7 @@ private:
     boost::filesystem::ofstream fsw_;
     std::stringstream ss_;
     std::atomic<bool> recording_ = true;
-    std::mutex lock_;
+    std::mutex mutex_;
 };
 
 file_observer::file_observer(const boost::filesystem::path& logDir)

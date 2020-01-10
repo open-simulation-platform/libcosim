@@ -20,7 +20,9 @@ namespace cse
 
 
 /**
- * An observer implementation, for saving observed variable values to file in the csv format.
+ * An observer implementation, for saving observed variable values to file in csv format.
+ *
+ * Recording may be toggled on or off mid simulation. This functionality is thread safe.
  */
 class file_observer : public observer
 {
@@ -40,13 +42,25 @@ public:
      */
     file_observer(const boost::filesystem::path& logDir, const boost::filesystem::path& configPath);
 
-    /// Returns whether the observer is currently recording values.
+    /**
+     * Returns whether the observer is currently recording values.
+     *
+     * This method can safely be called from different threads.
+     */
     bool is_recording();
 
-    /// Starts recording values. Throws an exception if the observer is already recording.
+    /**
+     * Starts recording values. Throws an exception if the observer is already recording.
+     *
+     * This method can safely be called from different threads.
+     */
     void start_recording();
 
-    /// Stops recording values. Throws an exception if the observer is not recording.
+    /**
+     * Stops recording values. Throws an exception if the observer is not recording.
+     *
+     * This method can safely be called from different threads.
+     */
     void stop_recording();
 
     void simulator_added(simulator_index, observable*, time_point) override;
