@@ -1,7 +1,7 @@
 import os
 
 from conans import ConanFile, CMake, tools
-from os import path
+from os import environ, path
 
 
 
@@ -47,6 +47,8 @@ class CSECoreConan(ConanFile):
 
     def configure_cmake(self):
         cmake = CMake(self)
+        if "JENKINS_URL" in environ and tools.os_info.is_windows:
+            cmake.parallel = False
         cmake.definitions["CSECORE_USING_CONAN"] = "ON"
         if self.settings.build_type == "Debug":
             cmake.definitions["CSECORE_BUILD_PRIVATE_APIDOC"] = "ON"
