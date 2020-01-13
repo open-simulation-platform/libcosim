@@ -106,7 +106,7 @@ boost::interprocess::file_lock make_boost_file_lock(
     CloseHandle(fileHandle);
     return boost::interprocess::file_lock(path.string().c_str());
 #else
-    const auto fileDescriptor = open(path.c_str(), O_CREAT | O_WRONLY, 0777);
+    const auto fileDescriptor = open(path.c_str(), O_CREAT | O_WRONLY, 0666);
     if (fileDescriptor == -1) {
         throw std::system_error(
             errno,
