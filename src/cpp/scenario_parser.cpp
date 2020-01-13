@@ -58,19 +58,6 @@ bool is_input(cse::variable_causality causality)
     }
 }
 
-cse::variable_description find_variable(
-    const std::vector<variable_description>& variables,
-    const std::string& name)
-{
-    for (const auto& vd : variables) {
-        if (vd.name == name) {
-            return vd;
-        }
-    }
-
-    throw std::invalid_argument("Cannot find variable with name " + name);
-}
-
 template<typename T>
 std::function<T(T)> generate_modifier(
     const std::string& kind,
@@ -225,7 +212,7 @@ scenario::scenario parse_scenario(
         auto varName =
             specified_or_default(event, "variable", defaultOpts.variable);
         const auto var =
-            find_variable(simulator->model_description().variables, varName);
+            find_variable(simulator->model_description(), varName);
 
         auto mode = specified_or_default(event, "action", defaultOpts.action);
         bool isInput = is_input(var.causality);
