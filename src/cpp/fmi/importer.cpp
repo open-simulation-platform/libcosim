@@ -367,9 +367,16 @@ void importer::clean_cache()
                 const auto fmuUnpackDirLockFile = lock_file_name(it->path());
                 auto fmuUnpackDirLock = create_lock_file(
                     fmuUnpackDirLockFile,
-                    utility::file_lock_initial_state::locked);
-                fs::remove_all(*it, errorCode);
-                fs::remove(fmuUnpackDirLockFile);
+                    utility::file_lock_initial_state::not_locked);
+                if (fmuUnpackDirLock.try_lock()) {
+                    BOOST_LOG_SEV(log::logger(), log::debug)
+                        << "Removing directory" << it->path();
+                    fs::remove_all(*it, errorCode);
+                    fs::remove(fmuUnpackDirLockFile);
+                } else {
+                    BOOST_LOG_SEV(log::logger(), log::debug)
+                        << "Cannot remove directory " << it->path() << " (in use)";
+                }
             }
         }
     }
@@ -378,6 +385,7 @@ void importer::clean_cache()
     auto workDirLock = create_lock_file(
         lock_file_name(workDir_),
         utility::file_lock_initial_state::locked);
+    BOOST_LOG_SEV(log::logger(), log::debug) << "Removing directory " << workDir_;
     boost::system::error_code errorCode;
     boost::filesystem::remove_all(workDir_, errorCode);
 }

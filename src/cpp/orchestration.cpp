@@ -137,7 +137,7 @@ std::shared_ptr<model_uri_resolver> default_model_uri_resolver(
     auto resolver = std::make_shared<model_uri_resolver>();
     if (cacheDir) {
         resolver->add_sub_resolver(
-            std::make_shared<fmu_file_uri_sub_resolver>(*cacheDir / "fmus"));
+            std::make_shared<fmu_file_uri_sub_resolver>(*cacheDir));
     } else {
         resolver->add_sub_resolver(
             std::make_shared<fmu_file_uri_sub_resolver>());

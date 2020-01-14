@@ -9,6 +9,7 @@
 #include <boost/fiber/mutex.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/interprocess/sync/file_lock.hpp>
+#include <boost/interprocess/sync/sharable_lock.hpp>
 
 #include <memory>
 #include <mutex>
@@ -150,7 +151,6 @@ enum class file_lock_initial_state
 };
 
 
-
 /**
  *  A file-based mutual exclusion mechanism.
  *
@@ -267,9 +267,47 @@ public:
     void unlock_shared();
 
 private:
-    boost::interprocess::file_lock fileLock_;
-    std::shared_ptr<shared_mutex> mutex_;
+    //  Wraps a boost::interprocess::file_lock and adds two features:
+    //    - Creation of file if it doesn't exist
+    //    - Shared lock counting (see .cpp file for details)
+    //  A bonus is that the interface of this class follows the std conventions
+    //  for shared mutexes rather than Boost.Interprocess' slightly different
+    //  interface.
+    class boost_wrapper
+    {
+    public:
+        boost_wrapper(const boost::filesystem::path& path);
+        void lock();
+        bool try_lock();
+        void unlock();
+        void lock_shared();
+        bool try_lock_shared();
+        void unlock_shared();
+
+    private:
+        boost::interprocess::file_lock fileLock_;
+        boost::fibers::mutex shareCountMutex_;
+        int shareCount_ = 0; // -1 means exclusive lock
+    };
+
+    // Holds the mutex and file lock associated with a particular file.
+    struct file_mutex
+    {
+        file_mutex(const boost::filesystem::path& path);
+        shared_mutex mutex;
+        boost_wrapper file;
+    };
+
+    // Returns the mutex and file lock associated with the file at `path`.
+    static std::shared_ptr<file_mutex> get_file_mutex(
+        const boost::filesystem::path& path);
+
+    // The mutex and file lock associated with this object.
+    std::shared_ptr<file_mutex> fileMutex_;
+
+    // The locks we hold on the mutex and the file lock.
     std::variant<std::unique_lock<shared_mutex>, std::shared_lock<shared_mutex>> mutexLock_;
+    std::variant<std::unique_lock<boost_wrapper>, std::shared_lock<boost_wrapper>> fileLock_;
 };
 
 
