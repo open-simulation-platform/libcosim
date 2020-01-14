@@ -9,7 +9,6 @@
 #include <boost/fiber/mutex.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/interprocess/sync/file_lock.hpp>
-#include <boost/interprocess/sync/sharable_lock.hpp>
 
 #include <memory>
 #include <mutex>
