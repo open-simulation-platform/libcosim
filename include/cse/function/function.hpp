@@ -18,6 +18,9 @@ namespace cse
 /// Function parameter types
 enum class function_parameter_type
 {
+    /// A real number
+    real,
+
     /// An integer
     integer,
 
@@ -27,7 +30,7 @@ enum class function_parameter_type
 
 
 /// Type that holds the value of a function parameter.
-using function_parameter_value = std::variant<int, variable_type>;
+using function_parameter_value = std::variant<double, int, variable_type>;
 
 
 /// A description of a function parameter.
@@ -57,6 +60,7 @@ struct function_io_description
 {
     std::string name;
     std::variant<variable_type, function_parameter_placeholder> type;
+    variable_causality causality;
     std::variant<int, function_parameter_placeholder> count;
 };
 
@@ -89,9 +93,18 @@ public:
 
     virtual void initialize() = 0;
 
-    virtual void set_io(int groupIndex, int ioIndex, scalar_value_view value) = 0;
+    virtual void set_io(
+        int groupIndex,
+        int groupInstance,
+        int ioIndex,
+        int ioInstance,
+        scalar_value_view value) = 0;
 
-    virtual scalar_value_view get_io(int groupIndex, int ioIndex) const = 0;
+    virtual scalar_value_view get_io(
+        int groupIndex,
+        int groupInstance,
+        int ioIndex,
+        int ioInstance) const = 0;
 
     virtual void calculate() = 0;
 };

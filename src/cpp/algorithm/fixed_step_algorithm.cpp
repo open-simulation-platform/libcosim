@@ -85,6 +85,10 @@ public:
         simulators_.erase(i);
     }
 
+    void add_function(function_index i, function* f)
+    {
+    }
+
     void add_connection(std::shared_ptr<connection> c)
     {
         for (const auto& source : c->get_sources()) {
@@ -184,6 +188,14 @@ private:
         std::unordered_map<variable_id, std::vector<std::shared_ptr<connection>>> outgoingConnections;
         std::unordered_map<variable_id, std::shared_ptr<connection>> incomingConnections;
     };
+
+    struct function_info
+    {
+        function* fun;
+    };
+
+    struct connection
+    {
 
     template<typename F>
     void for_all_simulators(F f)

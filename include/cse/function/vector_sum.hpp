@@ -23,9 +23,18 @@ public:
 
     void initialize() override;
 
-    void set_io(int groupIndex, int ioIndex, scalar_value_view value) override;
+    void set_io(
+        int groupIndex,
+        int groupInstance,
+        int ioIndex,
+        int ioInstance,
+        scalar_value_view value) override;
 
-    scalar_value_view get_io(int groupIndex, int ioIndex) const override;
+    scalar_value_view get_io(
+        int groupIndex,
+        int groupInstance,
+        int ioIndex,
+        int ioInstance) const override;
 
     void calculate() override;
 

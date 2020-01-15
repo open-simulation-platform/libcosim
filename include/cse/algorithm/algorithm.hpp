@@ -4,6 +4,7 @@
 #include <cse/algorithm/simulator.hpp>
 #include <cse/connection.hpp>
 #include <cse/execution.hpp>
+#include <cse/function/function.hpp>
 #include <cse/model.hpp>
 #include <cse/observer/observer.hpp>
 
@@ -33,6 +34,9 @@ namespace cse
 class algorithm
 {
 public:
+    /// A value that uniquely identifies a function in a simulation.
+    using function_index = int;
+
     /**
      *  Adds a simulator to the co-simulation.
      *
@@ -62,6 +66,19 @@ public:
      *      co-simulation with `add_simulator()`.
      */
     virtual void remove_simulator(simulator_index index) = 0;
+
+    /**
+     *  Adds a function to the co-simulation.
+     *
+     *  \param index
+     *      A numerical index that will be used to identify the function
+     *      in other function calls.
+     *  \param fun
+     *      A pointer to an object that is used to access the function.
+     *      Note that the algorithm does not have resource ownership of
+     *      the object it points to (i.e., should not try to delete it).
+     */
+    virtual void add_function(function_index index, function* fun) = 0;
 
     /**
      * Adds a connection to the co-simulation.

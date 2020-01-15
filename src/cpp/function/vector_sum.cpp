@@ -3,6 +3,7 @@
 #include <gsl/span>
 
 #include <cassert>
+#include <stdexcept>
 
 
 using namespace std::literals;
@@ -57,6 +58,7 @@ function_type_description vector_sum_function::type_description() const
                     function_io_description{
                         ""s, // name (inherited from group)
                         function_parameter_placeholder{vector_sum_numberType}, // type
+                        variable_causality::input, // causality
                         function_parameter_placeholder{vector_sum_dimension}, // count
                     },
                 }},
@@ -68,6 +70,7 @@ function_type_description vector_sum_function::type_description() const
                     function_io_description{
                         ""s, // name = (inherited from group)
                         function_parameter_placeholder{vector_sum_numberType}, // type
+                        variable_causality::output, // causality
                         function_parameter_placeholder{vector_sum_dimension}, // count
                     },
                 }},
@@ -106,22 +109,39 @@ void vector_sum_function::initialize()
 }
 
 
-void vector_sum_function::set_io(int groupIndex, int ioIndex, scalar_value_view value)
+void vector_sum_function::set_io(
+        int groupIndex,
+        int groupInstance,
+        int ioIndex,
+        int ioInstance,
+        scalar_value_view value)
 {
+    if (groupIndex != 0 || groupInstance >= inputCount_ ||
+        ioIndex != 0 || ioInstance >= dimension_) {
+        throw std::out_of_range("Invalid variable/group index");
+    }
     if (integerType_) {
-        integerIOs_.at(groupIndex).at(ioIndex) = std::get<int>(value);
+        integerIOs_.at(groupInstance).at(ioInstance) = std::get<int>(value);
     } else {
-        realIOs_.at(groupIndex).at(ioIndex) = std::get<double>(value);
+        realIOs_.at(groupInstance).at(ioInstance) = std::get<double>(value);
     }
 }
 
 
-scalar_value_view vector_sum_function::get_io(int groupIndex, int ioIndex) const
+scalar_value_view vector_sum_function::get_io(
+        int groupIndex,
+        int groupInstance,
+        int ioIndex,
+        int ioInstance) const
 {
+    if (groupIndex != 0 || groupInstance >= inputCount_ ||
+        ioIndex != 0 || ioInstance >= dimension_) {
+        throw std::out_of_range("Invalid variable/group index");
+    }
     if (integerType_) {
-        return integerIOs_.at(groupIndex).at(ioIndex);
+        return integerIOs_.at(groupInstance).at(ioInstance);
     } else {
-        return realIOs_.at(groupIndex).at(ioIndex);
+        return realIOs_.at(groupInstance).at(ioInstance);
     }
 }
 

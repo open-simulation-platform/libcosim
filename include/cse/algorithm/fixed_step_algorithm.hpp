@@ -35,6 +35,7 @@ public:
     // `algorithm` methods
     void add_simulator(simulator_index i, simulator* s, duration stepSizeHint) override;
     void remove_simulator(simulator_index i) override;
+    void add_function(function_index i, function* f) override;
     void add_connection(std::shared_ptr<connection> c) override;
     void remove_connection(std::shared_ptr<connection> c) override;
     void setup(time_point startTime, std::optional<time_point> stopTime) override;
