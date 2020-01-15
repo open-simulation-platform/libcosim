@@ -13,7 +13,13 @@
     </xs:element>
 
     <xs:complexType name="FixedStepAlgorithm">
-            <xs:attribute name="baseStepSize" type="xs:double" use="required"/>
+        <xs:attribute name="baseStepSize" type="xs:double" use="required"/>
     </xs:complexType>
+
+    <xs:element name="StepSizeHint">
+        <xs:complexType>
+            <xs:attribute name="value" type="xs:double" use="required"/>
+        </xs:complexType>
+    </xs:element>
 
 </xs:schema>
