@@ -123,7 +123,7 @@ std::shared_ptr<v1::slave_instance> fmu::instantiate_v1_slave(
 #ifdef _WIN32
     if (!additionalDllSearchPath_) {
         additionalDllSearchPath_ =
-            std::make_unique<detail::additional_path>(fmu_binaries_dir(dir_));
+            std::make_unique<detail::additional_path>(fmu_binaries_dir(dir_->path()));
     }
 #endif
     prune(instances_);
