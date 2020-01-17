@@ -5,9 +5,7 @@
 #include "cse/fmi/v1/fmu.hpp"
 #include "cse/fmi/v2/fmu.hpp"
 #include "cse/log/logger.hpp"
-#include "cse/utility/concurrency.hpp"
 #include "cse/utility/filesystem.hpp"
-#include "cse/utility/uuid.hpp"
 #include "cse/utility/zip.hpp"
 
 #include <boost/algorithm/string/trim.hpp>
@@ -15,64 +13,20 @@
 #include <boost/property_tree/xml_parser.hpp>
 #include <gsl/gsl_util>
 
-#include <cassert>
 #include <cstdlib>
 #include <cstring>
 #include <new>
-#include <sstream>
-#include <string>
+
 
 namespace cse
 {
 namespace fmi
 {
 
-/*  A note on the `importer` cache directory structure:
- *
- *  Each `importer` is associated with one top-level cache directory, which
- *  may be shared between several instances in separate fibers, threads and
- *  processes.  The path to this directory is passed to the `importer`
- *  constructor.  This directory has the following substructure:
- *
- *  <cacheDir>/
- *      fmus.lock
- *      fmus/
- *          <FMU 1 GUID>.lock
- *          <FMU 1 GUID>/
- *              modelDescription.xml
- *              binaries/
- *              ...
- *          <FMU 2 GUID>.lock
- *          <FMU 2 GUID>/
- *              modelDescription.xml
- *              binaries/
- *              ...
- *          ...
- *      tmp.lock
- *      tmp/
- *          <randomly named subdirectory 1>/
- *          <randomly named subdirectory 2>/
- *          ...
- *
- *  `fmus/` contains the complete contents of previously-unpacked FMUs.
- *  `tmp/` contains temporary "scratch space" directories.
- *
- *  The files with a `.lock` suffix are lock files associated with the
- *  eponymous directory.  They can be locked in exclusive or shared mode, as
- *  necessary, to prevent the modification or removal of their associated
- *  directory while it is in use.
- */
 
-std::shared_ptr<importer> importer::create(
-    const boost::filesystem::path& cachePath)
+std::shared_ptr<importer> importer::create(std::shared_ptr<file_cache> cache)
 {
-    return std::shared_ptr<importer>(new importer(cachePath));
-}
-
-
-std::shared_ptr<importer> importer::create()
-{
-    return std::shared_ptr<importer>(new importer(utility::temp_dir()));
+    return std::shared_ptr<importer>(new importer(cache));
 }
 
 
@@ -129,25 +83,18 @@ std::unique_ptr<jm_callbacks> make_callbacks()
 } // namespace
 
 
-importer::importer(const boost::filesystem::path& cachePath)
-    : callbacks_{make_callbacks()}
-    , handle_{fmi_import_allocate_context(callbacks_.get()), &fmi_import_free_context}
-    , fmuDir_{cachePath / "fmu"}
-    , workDir_{cachePath / "tmp"}
+importer::importer(std::shared_ptr<file_cache> cache)
+    : fileCache_(cache)
+    , callbacks_(make_callbacks())
+    , handle_(fmi_import_allocate_context(callbacks_.get()), &fmi_import_free_context)
 {
     if (handle_ == nullptr) throw std::bad_alloc();
 }
 
 
-importer::importer(utility::temp_dir&& tempDir)
-    : importer{tempDir.path()}
-{
-    tempCacheDir_ = std::make_unique<utility::temp_dir>(std::move(tempDir));
-}
-
-
 namespace
 {
+
 struct minimal_model_description
 {
     fmi_version fmiVersion;
@@ -195,53 +142,12 @@ minimal_model_description peek_model_description(
     return md;
 }
 
-// Replaces all characters which are not printable ASCII characters or
-// not valid for use in a path with their percent-encoded equivalents.
-// References:
-//     https://en.wikipedia.org/wiki/Percent-encoding
-//     https://msdn.microsoft.com/en-us/library/aa365247.aspx
-std::string sanitise_path(const std::string& str)
+bool is_outdated(
+    const boost::filesystem::path& file,
+    const boost::filesystem::path& comparator)
 {
-    CSE_INPUT_CHECK(!str.empty());
-    std::ostringstream sanitised;
-    sanitised.fill('0');
-    sanitised << std::hex;
-    for (const char c : str) {
-        if (c < 0x20 || c > 0x7E
-#ifdef _WIN32
-            || c == '<' || c == '>' || c == ':' || c == '"' || c == '/' || c == '\\' || c == '|' || c == '?' || c == '*'
-#endif
-        ) {
-            sanitised
-                << '%'
-                << std::setw(2)
-                << static_cast<int>(static_cast<unsigned char>(c));
-        } else {
-            sanitised << c;
-        }
-    }
-    auto sanitised_string = sanitised.str();
-    sanitised_string.erase(std::remove(sanitised_string.begin(), sanitised_string.end(), '{'), sanitised_string.end());
-    sanitised_string.erase(std::remove(sanitised_string.begin(), sanitised_string.end(), '}'), sanitised_string.end());
-    return sanitised_string;
-}
-
-
-// Returns the name of a lock file associated with `path`.
-boost::filesystem::path lock_file_name(const boost::filesystem::path& path)
-{
-    return path.string() + ".lock";
-}
-
-
-// Creates a lock file along with its parent directories, and returns a
-// `file_lock` for it.
-utility::file_lock create_lock_file(
-    const boost::filesystem::path& path,
-    utility::file_lock_initial_state initialState)
-{
-    boost::filesystem::create_directories(path.parent_path());
-    return utility::file_lock(path, initialState);
+    return !boost::filesystem::exists(file) ||
+        boost::filesystem::last_write_time(comparator) > boost::filesystem::last_write_time(file);
 }
 
 } // namespace
@@ -253,31 +159,19 @@ std::shared_ptr<fmu> importer::import(const boost::filesystem::path& fmuPath)
     auto pit = pathCache_.find(fmuPath);
     if (pit != end(pathCache_)) return pit->second.lock();
 
-    // Lock the temporary working directory. We only need a shared lock to
-    // to prevent its deletion by `clean_cache()`.  Since we use UUIDs for
-    // the individual subfolders, there's no chance of other conflicts.
-    auto workDirLock = create_lock_file(
-        lock_file_name(workDir_),
-        utility::file_lock_initial_state::locked_shared);
-
     // Unzip the model description into a temporary folder
+    const auto tempMdDir = utility::temp_dir();
     const auto zip = cse::utility::zip::archive(fmuPath);
-    const auto tempMdDir = workDir_ / cse::utility::random_uuid();
-    boost::filesystem::create_directories(tempMdDir);
-    const auto removeTempMdDir = gsl::finally([tempMdDir]() {
-        boost::system::error_code errorCode;
-        boost::filesystem::remove_all(tempMdDir, errorCode);
-    });
     const auto modelDescriptionIndex = zip.find_entry("modelDescription.xml");
     if (modelDescriptionIndex == cse::utility::zip::invalid_entry_index) {
         throw error(
             make_error_code(errc::bad_file),
             fmuPath.string() + " does not contain modelDescription.xml");
     }
-    zip.extract_file_to(modelDescriptionIndex, tempMdDir);
+    zip.extract_file_to(modelDescriptionIndex, tempMdDir.path());
 
     // Look at the model description to figure out the FMU's GUID.
-    const auto minModelDesc = peek_model_description(tempMdDir);
+    const auto minModelDesc = peek_model_description(tempMdDir.path());
     if (minModelDesc.fmiVersion == fmi_version::unknown) {
         throw error(
             make_error_code(errc::unsupported_feature),
@@ -288,45 +182,52 @@ std::shared_ptr<fmu> importer::import(const boost::filesystem::path& fmuPath)
     auto git = guidCache_.find(minModelDesc.guid);
     if (git != end(guidCache_)) return git->second.lock();
 
-    // Lock the directory that holds all FMUs.  We only need a shared lock to
-    // to prevent its deletion by `clean_cache()`, since the individual FMU
-    // directories are protected by non-shared locks.
-    auto fmuDirLock = create_lock_file(
-        lock_file_name(fmuDir_),
-        utility::file_lock_initial_state::locked_shared);
-
-    // Lock the directory that holds (or will hold) the entire FMU contents.
-    const auto fmuUnpackDir = fmuDir_ / sanitise_path(minModelDesc.guid);
-    const auto fmuUnpackDirLockFile = lock_file_name(fmuUnpackDir);
-    auto fmuUnpackDirLock = create_lock_file(
-        fmuUnpackDirLockFile,
-        utility::file_lock_initial_state::locked);
+    // Get a cache directory to hold the entire FMU contents.
+    auto fmuUnpackDir = fileCache_->get_directory_rw(minModelDesc.guid);
 
     // Unzip the entire FMU if necessary.
-    const auto modelDescriptionPath = fmuUnpackDir / "modelDescription.xml";
-    if (!boost::filesystem::exists(modelDescriptionPath) ||
-        boost::filesystem::last_write_time(fmuPath) > boost::filesystem::last_write_time(modelDescriptionPath)) {
+    const auto modelDescriptionPath = fmuUnpackDir->path() / "modelDescription.xml";
+    if (is_outdated(modelDescriptionPath, fmuPath)) {
         try {
-            boost::filesystem::create_directories(fmuUnpackDir);
-            zip.extract_all(fmuUnpackDir);
+            zip.extract_all(fmuUnpackDir->path());
         } catch (...) {
-            boost::system::error_code errorCode;
-            boost::filesystem::remove_all(fmuUnpackDir, errorCode);
+            // Remove model description again, so we don't erroneously think
+            // that the unpacking was successful the next time we try it.
+            boost::system::error_code ignoredError;
+            boost::filesystem::remove(modelDescriptionPath, ignoredError);
             throw;
         }
     }
 
-    // Unlock the FMU directory again, so the `fmu` object can lock it.
-    fmuUnpackDirLock.unlock();
+    // Drop R/W privileges and acquire read-only access to FMU cache directory
+    fmuUnpackDir.reset();
+    auto fmuUnpackDirRO = fileCache_->get_directory_ro(minModelDesc.guid);
 
     // Create and return an `fmu` object.
     auto fmuObj = minModelDesc.fmiVersion == fmi_version::v1_0
-        ? std::shared_ptr<fmu>(new v1::fmu(shared_from_this(), fmuUnpackDir, &fmuUnpackDirLockFile))
-        : std::shared_ptr<fmu>(new v2::fmu(shared_from_this(), fmuUnpackDir, &fmuUnpackDirLockFile));
+        ? std::shared_ptr<fmu>(new v1::fmu(shared_from_this(), std::move(fmuUnpackDirRO)))
+        : std::shared_ptr<fmu>(new v2::fmu(shared_from_this(), std::move(fmuUnpackDirRO)));
     pathCache_[fmuPath] = fmuObj;
     guidCache_[minModelDesc.guid] = fmuObj;
     return fmuObj;
 }
+
+
+namespace
+{
+class existing_directory_ro : public file_cache::directory_ro
+{
+public:
+    explicit existing_directory_ro(const boost::filesystem::path& path)
+        : path_(path)
+    {}
+
+    boost::filesystem::path path() const override { return path_; }
+
+private:
+    boost::filesystem::path path_;
+};
+} // namespace
 
 
 std::shared_ptr<fmu> importer::import_unpacked(
@@ -342,52 +243,12 @@ std::shared_ptr<fmu> importer::import_unpacked(
     auto git = guidCache_.find(minModelDesc.guid);
     if (git != end(guidCache_)) return git->second.lock();
 
+    auto unpackedFMUDir = std::make_unique<existing_directory_ro>(unpackedFMUPath);
     auto fmuObj = minModelDesc.fmiVersion == fmi_version::v1_0
-        ? std::shared_ptr<fmu>(new v1::fmu(shared_from_this(), unpackedFMUPath, nullptr))
-        : std::shared_ptr<fmu>(new v2::fmu(shared_from_this(), unpackedFMUPath, nullptr));
+        ? std::shared_ptr<fmu>(new v1::fmu(shared_from_this(), std::move(unpackedFMUDir)))
+        : std::shared_ptr<fmu>(new v2::fmu(shared_from_this(), std::move(unpackedFMUDir)));
     guidCache_[minModelDesc.guid] = fmuObj;
     return fmuObj;
-}
-
-
-void importer::clean_cache()
-{
-    namespace fs = boost::filesystem;
-
-    // Remove unused FMUs
-    auto fmuDirLock = create_lock_file(
-        lock_file_name(fmuDir_),
-        utility::file_lock_initial_state::locked);
-
-    if (fs::exists(fmuDir_)) {
-        boost::system::error_code errorCode;
-        for (auto it = fs::directory_iterator(fmuDir_); it != fs::directory_iterator(); ++it) {
-            if (it->status().type() == fs::directory_file &&
-                guidCache_.count(it->path().filename().string()) == 0) {
-                const auto fmuUnpackDirLockFile = lock_file_name(it->path());
-                auto fmuUnpackDirLock = create_lock_file(
-                    fmuUnpackDirLockFile,
-                    utility::file_lock_initial_state::not_locked);
-                if (fmuUnpackDirLock.try_lock()) {
-                    BOOST_LOG_SEV(log::logger(), log::debug)
-                        << "Removing directory" << it->path();
-                    fs::remove_all(*it, errorCode);
-                    fs::remove(fmuUnpackDirLockFile);
-                } else {
-                    BOOST_LOG_SEV(log::logger(), log::debug)
-                        << "Cannot remove directory " << it->path() << " (in use)";
-                }
-            }
-        }
-    }
-
-    // Delete the temp-files directory
-    auto workDirLock = create_lock_file(
-        lock_file_name(workDir_),
-        utility::file_lock_initial_state::locked);
-    BOOST_LOG_SEV(log::logger(), log::debug) << "Removing directory " << workDir_;
-    boost::system::error_code errorCode;
-    boost::filesystem::remove_all(workDir_, errorCode);
 }
 
 

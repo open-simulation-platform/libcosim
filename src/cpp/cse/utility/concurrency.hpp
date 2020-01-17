@@ -275,7 +275,7 @@ private:
     class boost_wrapper
     {
     public:
-        boost_wrapper(const boost::filesystem::path& path);
+        explicit boost_wrapper(const boost::filesystem::path& path);
         void lock();
         bool try_lock();
         void unlock();

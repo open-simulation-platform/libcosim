@@ -6,6 +6,7 @@
 #define CSE_ORCHESTRATION_HPP
 
 #include <cse/async_slave.hpp>
+#include <cse/file_cache.hpp>
 #include <cse/fmi/importer.hpp>
 #include <cse/model.hpp>
 #include <cse/uri.hpp>
@@ -168,7 +169,7 @@ class fmu_file_uri_sub_resolver : public model_uri_sub_resolver
 public:
     fmu_file_uri_sub_resolver();
 
-    explicit fmu_file_uri_sub_resolver(const boost::filesystem::path& cacheDir);
+    explicit fmu_file_uri_sub_resolver(std::shared_ptr<file_cache> cache);
 
     std::shared_ptr<model> lookup_model(const uri& modelUri) override;
 
@@ -180,12 +181,12 @@ private:
 /**
  *  Returns a resolver for all URI schemes supported natively by CSE.
  *
- *  If `cacheDir` is not null, it will be used for caching by the URI
+ *  If `cache` is not null, it will be used for caching by the URI
  *  resolvers that support it (e.g. for unpacking of FMUs by the `file`
  *  URI resolver).
  */
 std::shared_ptr<model_uri_resolver> default_model_uri_resolver(
-    const boost::filesystem::path* cacheDir = nullptr);
+    std::shared_ptr<file_cache> cache = nullptr);
 
 
 } // namespace cse

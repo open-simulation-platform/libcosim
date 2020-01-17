@@ -27,7 +27,8 @@ BOOST_AUTO_TEST_CASE(v2_fmu)
     BOOST_TEST(d->author.empty());
     BOOST_TEST(d->version.empty());
     BOOST_TEST(std::static_pointer_cast<fmi::v2::fmu>(fmu)->fmilib_handle() != nullptr);
-    BOOST_TEST(std::static_pointer_cast<fmi::v2::fmu>(fmu)->directory().filename() == "ad6d7bad-97d1-4fb9-ab3e-00a0d051e42c");
+    BOOST_TEST(boost::filesystem::exists(
+        std::static_pointer_cast<fmi::v2::fmu>(fmu)->directory() / "modelDescription.xml"));
 
     auto instance = fmu->instantiate_slave("testSlave");
     instance->setup(
