@@ -21,9 +21,17 @@ namespace cse
 namespace
 {
 
-// We'll use std::shared_ptr and std::weak_ptr solely for their reference
-// counting and ownership semantics below, and don't care about the actual
-// contents of any pointed-to object, so let's define a dummy object type.
+// In the following, we'll use std::shared_ptr and std::weak_ptr as an easy
+// way of tracking the lifetime of a `temporary_file_cache_directory`
+// object.  In short, once such an object expires, the reference count for
+// its `ownership_` shared pointer gets decremented, and when the reference
+// count reaches zero, the corresponding `weak_ptr` in
+// `temporary_file_cache::impl::ownerships_` expires.  Then we know that access
+// to the directory has been relinquished by all.
+//
+// Since we don't care about the actual contents of the pointed-to object, we
+// define a dummy object type.
+
 struct dummy
 {
 };
@@ -76,7 +84,6 @@ public:
 
         auto ownership = std::make_shared<dummy>();
         owns.rw = ownership;
-
         return std::make_unique<temporary_file_cache_directory>(root_, path, ownership);
     }
 
@@ -91,7 +98,6 @@ public:
 
         auto ownership = std::make_shared<dummy>();
         owns.ro = ownership;
-
         return std::make_unique<temporary_file_cache_directory>(root_, path, ownership);
     }
 
@@ -144,7 +150,7 @@ std::unique_ptr<file_cache::directory_ro> temporary_file_cache::get_directory_ro
 
 
 // =============================================================================
-// temporary_file_cache
+// persistent_file_cache
 // =============================================================================
 
 class persistent_file_cache_directory
