@@ -394,7 +394,8 @@ cse_config_parser::cse_config_parser(
                 }
                 for (int i = 0; i < inputCount; i++) {
                     const std::string sgName = "in[" + std::to_string(i) + "]";
-                    SignalGroup sg{sgName};
+                    SignalGroup sg;
+                    sg.name = sgName;
                     for (int j = 0; j < dimension; j++) {
                         const std::string sigName = sgName + "[" + std::to_string(j) + "]";
                         function.signals.push_back({sigName, variable_type::real, variable_causality::input});
@@ -402,7 +403,8 @@ cse_config_parser::cse_config_parser(
                     }
                     function.signalGroups.push_back(sg);
                 }
-                SignalGroup sg{"out"};
+                SignalGroup sg;
+                sg.name = "out";
                 for (int j = 0; j < dimension; j++) {
                     const std::string sigName = "out[" + std::to_string(j) + "]";
                     function.signals.push_back({sigName, variable_type::real, variable_causality::output});
