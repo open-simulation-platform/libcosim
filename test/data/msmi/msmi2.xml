@@ -144,28 +144,10 @@
 
             <!-- Function Sum vector -->
             <Function type="Sum" name="myVecSummation">
-                <Signals>
-                    <Signal type="real" causality="input" name="in1[0]"/>
-                    <Signal type="real" causality="input" name="in1[1]"/>
-                    <Signal type="real" causality="input" name="in2[0]"/>
-                    <Signal type="real" causality="input" name="in2[1]"/>
-                    <Signal type="real" causality="output" name="out[0]"/>
-                    <Signal type="real" causality="output" name="out[1]"/>
-                </Signals>
-                <SignalGroups>
-                    <SignalGroup name="in1">
-                        <Signal name="in1[0]"/>
-                        <Signal name="in1[1]"/>
-                    </SignalGroup>
-                    <SignalGroup name="in2">
-                        <Signal name="in2[0]"/>
-                        <Signal name="in2[1]"/>
-                    </SignalGroup>
-                    <SignalGroup name="out">
-                        <Signal name="out[0]"/>
-                        <Signal name="out[1]"/>
-                    </SignalGroup>
-                </SignalGroups>
+                <Parameters>
+                    <Parameter name="inputCount" value="3" type="integer"/>
+                    <Parameter name="dimension" value="2" type="integer"/>
+                </Parameters>
             </Function>
 
             <!-- Function linear transformation scalar -->

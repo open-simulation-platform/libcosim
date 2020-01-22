@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<OspSystemStructure
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://opensimulationplatform.com/MSMI/OSPSystemStructure ../../../src/cpp/xsd/OspSystemStructure.xsd"
+        xmlns="http://opensimulationplatform.com/MSMI/OSPSystemStructure">
+    <StartTime>0.0</StartTime>
+    <BaseStepSize>1e-1</BaseStepSize>
+    <Algorithm>fixedStep</Algorithm>
+    <Simulators>
+        <Simulator name="vector1" source="../fmi2/vector.fmu"/>
+        <Simulator name="vector2" source="../fmi2/vector.fmu"/>
+        <Simulator name="vector3" source="../fmi2/vector.fmu"/>
+        <Simulator name="vector4" source="../fmi2/vector.fmu"/>
+    </Simulators>
+    <Functions>
+        <Function name="myVectorSum" type="vectorSum">
+            <Parameters>
+                <Parameter name="inputCount" value="3" type="integer"/>
+                <Parameter name="dimension" value="3" type="integer"/>
+            </Parameters>
+        </Function>
+    </Functions>
+    <Connections>
+        <SignalGroupConnection>
+            <VariableGroup simulator="vector1" name="output"/>
+            <SignalGroup function="myVectorSum" name="in[0]"/>
+        </SignalGroupConnection>
+        <SignalGroupConnection>
+            <VariableGroup simulator="vector2" name="output"/>
+            <SignalGroup function="myVectorSum" name="in[1]"/>
+        </SignalGroupConnection>
+        <SignalGroupConnection>
+            <VariableGroup simulator="vector3" name="output"/>
+            <SignalGroup function="myVectorSum" name="in[2]"/>
+        </SignalGroupConnection>
+        <SignalGroupConnection>
+            <SignalGroup function="myVectorSum" name="out"/>
+            <VariableGroup simulator="vector4" name="input"/>
+        </SignalGroupConnection>
+    </Connections>
+</OspSystemStructure>

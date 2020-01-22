@@ -134,7 +134,7 @@
                                 </xs:sequence>
                             </xs:complexType>
                         </xs:element>
-                        <xs:element name="Signals">
+                        <xs:element name="Signals" minOccurs="0">
                             <xs:complexType>
                                 <xs:sequence>
                                     <xs:element name="Signal" maxOccurs="unbounded">

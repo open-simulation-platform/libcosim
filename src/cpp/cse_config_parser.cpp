@@ -317,11 +317,17 @@ cse_config_parser::cse_config_parser(
             std::string type = tc(functionElement->getAttribute(tc("type").get())).get();
             function.type = type;
 
+            if (type != "sum" && type != "lineartransformation" && type != "vectorSum") {
+                std::ostringstream oss;
+                oss << "Unknown function type " << function.type << " for function with name " << functionName;
+                throw std::runtime_error(oss.str());
+            }
+
             const auto parametersElement = static_cast<xercesc::DOMElement*>(functionElement->getElementsByTagName(tc("Parameters").get())->item(0));
             if (parametersElement) {
                 for (auto parameterElement = parametersElement->getFirstElementChild(); parameterElement != nullptr; parameterElement = parameterElement->getNextElementSibling()) {
 
-                    Parameter p = function.parameters.emplace_back();
+                    Parameter p{};
                     p.name = tc(parameterElement->getAttribute(tc("name").get())).get();
                     std::string typeStr = tc(parameterElement->getAttribute(tc("type").get())).get();
                     p.type = to_variable_type(typeStr);
@@ -346,6 +352,7 @@ cse_config_parser::cse_config_parser(
                                 << " into type " << p.type;
                             throw std::runtime_error(oss.str());
                     }
+                    function.parameters.push_back(std::move(p));
                 }
             }
             const auto signalsElement = static_cast<xercesc::DOMElement*>(functionElement->getElementsByTagName(tc("Signals").get())->item(0));
@@ -364,12 +371,44 @@ cse_config_parser::cse_config_parser(
             const auto signalGroupsElement = static_cast<xercesc::DOMElement*>(functionElement->getElementsByTagName(tc("SignalGroups").get())->item(0));
             if (signalGroupsElement) {
                 for (auto signalGroupElement = signalGroupsElement->getFirstElementChild(); signalGroupElement != nullptr; signalGroupElement = signalGroupElement->getNextElementSibling()) {
-                    SignalGroup signalGroup = function.signalGroups.emplace_back();
+                    SignalGroup signalGroup{};
                     signalGroup.name = tc(signalGroupElement->getAttribute(tc("name").get())).get();
                     for (auto signalGroupSignalElement = signalGroupElement->getFirstElementChild(); signalGroupSignalElement != nullptr; signalGroupSignalElement = signalGroupSignalElement->getNextElementSibling()) {
                         signalGroup.signals.emplace_back(tc(signalGroupSignalElement->getAttribute(tc("name").get())).get());
                     }
+                    function.signalGroups.push_back(std::move(signalGroup));
                 }
+            }
+            if ("vectorSum" == type) {
+                int inputCount = -1;
+                int dimension = -1;
+                for (const auto& p : function.parameters) {
+                    if ("inputCount" == p.name) {
+                        inputCount = std::get<int>(p.value);
+                    } else if ("dimension" == p.name) {
+                        dimension = std::get<int>(p.value);
+                    }
+                }
+                if (inputCount <= 0 || dimension <= 0) {
+                    throw std::runtime_error("Not enough information for creating vector sum");
+                }
+                for (int i = 0; i < inputCount; i++) {
+                    const std::string sgName = "in[" + std::to_string(i) + "]";
+                    SignalGroup sg{sgName};
+                    for (int j = 0; j < dimension; j++) {
+                        const std::string sigName = sgName + "[" + std::to_string(j) + "]";
+                        function.signals.push_back({sigName, variable_type::real, variable_causality::input});
+                        sg.signals.emplace_back(sigName);
+                    }
+                    function.signalGroups.push_back(sg);
+                }
+                SignalGroup sg{"out"};
+                for (int j = 0; j < dimension; j++) {
+                    const std::string sigName = "out[" + std::to_string(j) + "]";
+                    function.signals.push_back({sigName, variable_type::real, variable_causality::output});
+                    sg.signals.emplace_back(sigName);
+                }
+                function.signalGroups.push_back(sg);
             }
             functions_[functionName] = std::move(function);
         }
@@ -784,34 +823,84 @@ void connect_signals(
         const auto& sources = functionSources[functionName];
         const auto& targets = functionTargets[functionName];
 
-        if (sources.empty() || targets.empty()) {
-            BOOST_LOG_SEV(log::logger(), log::severity_level::warning)
-                << "Ignoring function with name " << functionName << " due to lack of connected signals.";
-        } else {
-            if ("sum" == function.type) {
-                if (targets.size() > 1) {
-                    throw std::runtime_error("Cannot connect sum to multiple targets");
-                }
-                auto sumConnection = std::make_shared<sum_connection>(sources, targets.front());
-                execution.add_connection(sumConnection);
-            } else if ("lineartransformation" == function.type) {
-                if (targets.size() != 1 || sources.size() != 1) {
-                    std::ostringstream oss;
-                    oss << "Linear transforation functions only support single input and output, "
-                        << " but found " << sources.size() << " inputs and " << targets.size() << " outputs";
-                    throw std::runtime_error(oss.str());
-                }
-                auto factor = find_parameter(function.parameters, "factor");
-                double factorValue = factor ? std::get<double>((*factor).value) : 1.0;
-                auto offset = find_parameter(function.parameters, "offset");
-                double offsetValue = factor ? std::get<double>((*offset).value) : 0.0;
-                auto ltConnection = std::make_shared<linear_transformation_connection>(
-                    sources.front(), targets.front(), offsetValue, factorValue);
-                execution.add_connection(ltConnection);
-            } else {
+        if ("sum" == function.type) {
+            if (targets.size() > 1) {
+                throw std::runtime_error("Cannot connect sum to multiple targets");
+            }
+            auto sumConnection = std::make_shared<sum_connection>(sources, targets.front());
+            execution.add_connection(sumConnection);
+        } else if ("lineartransformation" == function.type) {
+            if (targets.size() != 1 || sources.size() != 1) {
                 std::ostringstream oss;
-                oss << "Unkown function type " << function.type << " for function with name " << functionName;
+                oss << "Linear transforation functions only support single input and output, "
+                    << " but found " << sources.size() << " inputs and " << targets.size() << " outputs";
                 throw std::runtime_error(oss.str());
+            }
+            auto factor = find_parameter(function.parameters, "factor");
+            double factorValue = factor ? std::get<double>((*factor).value) : 1.0;
+            auto offset = find_parameter(function.parameters, "offset");
+            double offsetValue = factor ? std::get<double>((*offset).value) : 0.0;
+            auto ltConnection = std::make_shared<linear_transformation_connection>(
+                sources.front(), targets.front(), offsetValue, factorValue);
+            execution.add_connection(ltConnection);
+        }
+    }
+}
+void connect_signal_groups(
+    const std::unordered_map<std::string, cse_config_parser::Function>& functions,
+    const std::vector<cse_config_parser::SignalConnection>& signalGroupConnections,
+    const std::unordered_map<std::string, slave_info>& slaves,
+    cse::execution& execution,
+    const std::unordered_map<std::string, extended_model_description>& emds)
+{
+    for (const auto& [functionName, function] : functions) {
+
+        if ("vectorSum" == function.type) {
+            const int dimension = std::get<int>(find_parameter(function.parameters, "dimension")->value);
+            for (int i = 0; i < dimension; i++) {
+                std::vector<std::string> sourceSignalGroups;
+                std::string targetSignalGroup;
+                for (cse_config_parser::SignalGroup sg : function.signalGroups) {
+                    std::string signalName = sg.signals.at(i);
+                    cse_config_parser::Signal s;
+                    for (const auto& sig : function.signals) {
+                        if (sig.name == signalName) {
+                            s = sig;
+                        }
+                    }
+                    if (variable_causality::input == s.causality) {
+                        sourceSignalGroups.push_back(sg.name);
+                    } else if (variable_causality::output == s.causality) {
+                        if (!targetSignalGroup.empty()) throw std::runtime_error("Target is already defined");
+                        targetSignalGroup = sg.name;
+                    } else {
+                        throw std::runtime_error("Unknown signal causality");
+                    }
+                }
+                std::vector<variable_id> sourceVariables;
+                variable_id targetVariable;
+                for (const auto& signalGroupConnection : signalGroupConnections) {
+                    if (functionName == signalGroupConnection.signal.function) {
+
+                        if (targetSignalGroup == signalGroupConnection.signal.name) {
+                            std::string variableName =
+                                emds.at(signalGroupConnection.variable.simulator)
+                                    .variableGroups.at(signalGroupConnection.variable.name)
+                                    .variables.at(i);
+                            targetVariable = get_variable(slaves, signalGroupConnection.variable.simulator, variableName).first;
+                        }
+                        for (const auto& sourceSignal : sourceSignalGroups) {
+                            if (sourceSignal == signalGroupConnection.signal.name) {
+                                const auto& emd = emds.at(signalGroupConnection.variable.simulator);
+                                const auto& variableGroup = emd.variableGroups.at(signalGroupConnection.variable.name);
+                                const auto& variableName = variableGroup.variables.at(i);
+                                sourceVariables.push_back(get_variable(slaves, signalGroupConnection.variable.simulator, variableName).first);
+                            }
+                        }
+                    }
+                }
+                auto sumConnection = std::make_shared<sum_connection>(sourceVariables, targetVariable);
+                execution.add_connection(sumConnection);
             }
         }
     }
@@ -918,15 +1007,16 @@ std::pair<execution, simulator_map> load_cse_config(
     connect_variables(parser.get_variable_connections(), slaves, exec);
     connect_variable_groups(parser.get_variable_group_connections(), slaves, exec, emds);
     connect_signals(parser.get_functions(), parser.get_signal_connections(), slaves, exec);
+    connect_signal_groups(parser.get_functions(), parser.get_signal_group_connections(), slaves, exec, emds);
 
-    // TODO: Connect signal groups - but need cse::connection classes that can handle this
-    const auto& signalGroupConnections = parser.get_signal_group_connections();
-    if (!signalGroupConnections.empty()) {
-        std::ostringstream oss;
-        oss << "Found " << signalGroupConnections.size() << " signal group connections, "
-            << "but don't know how to handle these yet";
-        throw std::invalid_argument(oss.str());
-    }
+    //    // TODO: Connect signal groups - but need cse::connection classes that can handle this
+    //    const auto& signalGroupConnections = parser.get_signal_group_connections();
+    //    if (!signalGroupConnections.empty()) {
+    //        std::ostringstream oss;
+    //        oss << "Found " << signalGroupConnections.size() << " signal group connections, "
+    //            << "but don't know how to handle these yet";
+    //        throw std::invalid_argument(oss.str());
+    //    }
 
     return std::make_pair(std::move(exec), std::move(simulatorMap));
 }
