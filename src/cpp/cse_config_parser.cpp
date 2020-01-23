@@ -132,7 +132,7 @@ public:
     {
         std::string type;
         std::string name;
-        std::vector<Parameter> parameters;
+        std::unordered_map<std::string, Parameter> parameters;
         std::vector<Signal> signals;
         std::vector<SignalGroup> signalGroups;
     };
@@ -215,6 +215,31 @@ variable_causality to_variable_causality(const std::string& str)
     }
     throw std::runtime_error("Don't know how to handle variable causality: " + str);
 }
+
+std::optional<cse_config_parser::Parameter> find_parameter(
+    std::unordered_map<std::string, cse_config_parser::Parameter> params,
+    const std::string& parameterName)
+{
+    auto paramIt = params.find(parameterName);
+    if (paramIt == params.end()) {
+        return std::nullopt;
+    }
+    return paramIt->second;
+}
+
+cse_config_parser::Parameter get_parameter(
+    std::unordered_map<std::string, cse_config_parser::Parameter> params,
+    const std::string& parameterName)
+{
+    if (const auto& param = find_parameter(params, parameterName)) {
+        return *param;
+    } else {
+        std::ostringstream oss;
+        oss << "Can't find parameter with name " << parameterName;
+        throw std::out_of_range(oss.str());
+    }
+}
+
 } // namespace
 
 cse_config_parser::cse_config_parser(
@@ -328,7 +353,8 @@ cse_config_parser::cse_config_parser(
                 for (auto parameterElement = parametersElement->getFirstElementChild(); parameterElement != nullptr; parameterElement = parameterElement->getNextElementSibling()) {
 
                     Parameter p{};
-                    p.name = tc(parameterElement->getAttribute(tc("name").get())).get();
+                    std::string parameterName = tc(parameterElement->getAttribute(tc("name").get())).get();
+                    p.name = parameterName;
                     std::string typeStr = tc(parameterElement->getAttribute(tc("type").get())).get();
                     p.type = to_variable_type(typeStr);
                     std::string varValue = tc(parameterElement->getAttribute(tc("value").get())).get();
@@ -352,7 +378,7 @@ cse_config_parser::cse_config_parser(
                                 << " into type " << p.type;
                             throw std::runtime_error(oss.str());
                     }
-                    function.parameters.push_back(std::move(p));
+                    function.parameters[parameterName] = std::move(p);
                 }
             }
             const auto signalsElement = static_cast<xercesc::DOMElement*>(functionElement->getElementsByTagName(tc("Signals").get())->item(0));
@@ -379,16 +405,23 @@ cse_config_parser::cse_config_parser(
                     function.signalGroups.push_back(std::move(signalGroup));
                 }
             }
-            if ("vectorSum" == type) {
-                int inputCount = -1;
-                int dimension = -1;
-                for (const auto& p : function.parameters) {
-                    if ("inputCount" == p.name) {
-                        inputCount = std::get<int>(p.value);
-                    } else if ("dimension" == p.name) {
-                        dimension = std::get<int>(p.value);
-                    }
+
+            if ("lineartransformation" == type) {
+                function.signals.push_back({"in", variable_type::real, variable_causality::input});
+                function.signals.push_back({"out", variable_type::real, variable_causality::output});
+            } else if ("sum" == type) {
+                int inputCount = std::get<int>(get_parameter(function.parameters, "inputCount").value);
+                if (inputCount <= 0) {
+                    throw std::runtime_error("Not enough information for creating sum connection");
                 }
+                for (int i = 0; i < inputCount; i++) {
+                    const std::string sigName = "in[" + std::to_string(i) + "]";
+                    function.signals.push_back({sigName, variable_type::real, variable_causality::input});
+                }
+                function.signals.push_back({"out", variable_type::real, variable_causality::output});
+            } else if ("vectorSum" == type) {
+                int inputCount = std::get<int>(get_parameter(function.parameters, "inputCount").value);
+                int dimension = std::get<int>(get_parameter(function.parameters, "dimension").value);
                 if (inputCount <= 0 || dimension <= 0) {
                     throw std::runtime_error("Not enough information for creating vector sum");
                 }
@@ -774,20 +807,6 @@ cse_config_parser::Signal get_signal(
         throw std::out_of_range(oss.str());
     }
     return *signalIt;
-}
-
-std::optional<cse_config_parser::Parameter> find_parameter(
-    std::vector<cse_config_parser::Parameter> params,
-    const std::string& parameterName)
-{
-    auto paramIt = std::find_if(
-        params.begin(),
-        params.end(),
-        [&parameterName](const auto& param) { return parameterName == param.name; });
-    if (paramIt == params.end()) {
-        return std::nullopt;
-    }
-    return *paramIt;
 }
 
 void connect_signals(

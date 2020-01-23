@@ -46,20 +46,6 @@
                     </xs:all>
                 </xs:complexType>
             </xs:element>
-            <xs:element name="SumConnection" minOccurs="0" maxOccurs="unbounded">
-                <xs:complexType>
-                    <xs:sequence>
-                        <xs:element name="Sources">
-                            <xs:complexType>
-                                <xs:sequence>
-                                    <xs:element name="Source" maxOccurs="unbounded" type="osp:variableEndpoint"/>
-                                </xs:sequence>
-                            </xs:complexType>
-                        </xs:element>
-                        <xs:element name="Target" type="osp:variableEndpoint"/>
-                    </xs:sequence>
-                </xs:complexType>
-            </xs:element>
         </xs:sequence>
     </xs:complexType>
     <xs:complexType name="variableEndpoint">
@@ -129,37 +115,6 @@
                                             <xs:attribute name="name" type="xs:string" use="required"/>
                                             <xs:attribute name="value" type="xs:string" use="required"/>
                                             <xs:attribute name="type" type="xs:string" use="required"/>
-                                        </xs:complexType>
-                                    </xs:element>
-                                </xs:sequence>
-                            </xs:complexType>
-                        </xs:element>
-                        <xs:element name="Signals" minOccurs="0">
-                            <xs:complexType>
-                                <xs:sequence>
-                                    <xs:element name="Signal" maxOccurs="unbounded">
-                                        <xs:complexType>
-                                            <xs:attribute name="name" type="xs:string" use="required"/>
-                                            <xs:attribute name="type" type="xs:string" use="required"/>
-                                            <xs:attribute name="causality" type="xs:string" use="required"/>
-                                        </xs:complexType>
-                                    </xs:element>
-                                </xs:sequence>
-                            </xs:complexType>
-                        </xs:element>
-                        <xs:element name="SignalGroups" minOccurs="0">
-                            <xs:complexType>
-                                <xs:sequence>
-                                    <xs:element name="SignalGroup" maxOccurs="unbounded">
-                                        <xs:complexType>
-                                            <xs:sequence>
-                                                <xs:element name="Signal" maxOccurs="unbounded">
-                                                    <xs:complexType>
-                                                        <xs:attribute name="name" type="xs:string" use="required"/>
-                                                    </xs:complexType>
-                                                </xs:element>
-                                            </xs:sequence>
-                                            <xs:attribute name="name" use="required"/>
                                         </xs:complexType>
                                     </xs:element>
                                 </xs:sequence>

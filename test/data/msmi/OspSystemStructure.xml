@@ -35,22 +35,15 @@
     </Simulators>
     <Functions>
         <Function name="mySum" type="sum">
-            <Signals>
-                <Signal name="0" type="real" causality="input"/>
-                <Signal name="1" type="real" causality="input"/>
-                <Signal name="2" type="real" causality="input"/>
-                <Signal name="sum" type="real" causality="output"/>
-            </Signals>
+            <Parameters>
+                <Parameter name="inputCount" value="3" type="integer"/>
+            </Parameters>
         </Function>
         <Function type="lineartransformation" name="myScaling">
             <Parameters>
                 <Parameter name="factor" value="0.1" type="real"/>
                 <Parameter name="offset" value="123.4" type="real"/>
             </Parameters>
-            <Signals>
-                <Signal type="real" causality="input" name="in"/>
-                <Signal type="real" causality="output" name="out"/>
-            </Signals>
         </Function>
     </Functions>
     <Connections>
@@ -61,18 +54,18 @@
 
         <SignalConnection>
             <Variable simulator="KnuckleBoomCrane" name="p_Crane.f[1]"/>
-            <Signal function="mySum" name="0"/>
+            <Signal function="mySum" name="in[0]"/>
         </SignalConnection>
         <SignalConnection>
             <Variable simulator="KnuckleBoomCrane" name="p_Crane.f[2]"/>
-            <Signal function="mySum" name="1"/>
+            <Signal function="mySum" name="in[1]"/>
         </SignalConnection>
         <SignalConnection>
             <Variable simulator="KnuckleBoomCrane" name="p_Crane.f[3]"/>
-            <Signal function="mySum" name="2"/>
+            <Signal function="mySum" name="in[2]"/>
         </SignalConnection>
         <SignalConnection>
-            <Signal function="mySum" name="sum"/>
+            <Signal function="mySum" name="out"/>
             <Variable simulator="CraneController" name="p_Crane.f[1]"/>
         </SignalConnection>
 
