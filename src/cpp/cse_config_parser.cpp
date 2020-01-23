@@ -381,30 +381,6 @@ cse_config_parser::cse_config_parser(
                     function.parameters[parameterName] = std::move(p);
                 }
             }
-            const auto signalsElement = static_cast<xercesc::DOMElement*>(functionElement->getElementsByTagName(tc("Signals").get())->item(0));
-            if (signalsElement) {
-                for (auto signalElement = signalsElement->getFirstElementChild(); signalElement != nullptr; signalElement = signalElement->getNextElementSibling()) {
-                    std::string name = tc(signalElement->getAttribute(tc("name").get())).get();
-                    std::string typeStr = tc(signalElement->getAttribute(tc("type").get())).get();
-                    auto sigType = to_variable_type(typeStr);
-                    std::string causalityStr = tc(signalElement->getAttribute(tc("causality").get())).get();
-                    auto sigCausality = to_variable_causality(causalityStr);
-
-                    function.signals.push_back({name, sigType, sigCausality});
-                }
-            }
-
-            const auto signalGroupsElement = static_cast<xercesc::DOMElement*>(functionElement->getElementsByTagName(tc("SignalGroups").get())->item(0));
-            if (signalGroupsElement) {
-                for (auto signalGroupElement = signalGroupsElement->getFirstElementChild(); signalGroupElement != nullptr; signalGroupElement = signalGroupElement->getNextElementSibling()) {
-                    SignalGroup signalGroup{};
-                    signalGroup.name = tc(signalGroupElement->getAttribute(tc("name").get())).get();
-                    for (auto signalGroupSignalElement = signalGroupElement->getFirstElementChild(); signalGroupSignalElement != nullptr; signalGroupSignalElement = signalGroupSignalElement->getNextElementSibling()) {
-                        signalGroup.signals.emplace_back(tc(signalGroupSignalElement->getAttribute(tc("name").get())).get());
-                    }
-                    function.signalGroups.push_back(std::move(signalGroup));
-                }
-            }
 
             if ("lineartransformation" == type) {
                 function.signals.push_back({"in", variable_type::real, variable_causality::input});
@@ -434,7 +410,7 @@ cse_config_parser::cse_config_parser(
                         function.signals.push_back({sigName, variable_type::real, variable_causality::input});
                         sg.signals.emplace_back(sigName);
                     }
-                    function.signalGroups.push_back(sg);
+                    function.signalGroups.push_back(std::move(sg));
                 }
                 SignalGroup sg;
                 sg.name = "out";
