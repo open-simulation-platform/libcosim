@@ -81,25 +81,76 @@ public:
     virtual void add_function(function_index index, function* fun) = 0;
 
     /**
-     * Adds a connection to the co-simulation.
+     *  Connects a simulator output variable to a simulator input variable.
      *
-     * After this, the algorithm is responsible for acquiring the values of
-     * the connection's source variables, and distributing the connection's
-     * destination variable values at communication points.
+     *  After this, the algorithm is responsible for acquiring the value of
+     *  the output variable and assigning it to the input variable at
+     *  communication points.
      *
-     * It is assumed that the variables contained by the connection are valid
-     * and that there are no existing connections to any of the connection's
-     * destination variables.
+     *  \param output
+     *      A reference to the output variable.
+     *  \param input
+     *      A reference to the input variable.
+     *  \param inputAlreadyConnected
+     *      Whether the input has already been connected in a previous
+     *      `connect_variables()` call. If so, the previous connection must
+     *      be broken. This is meant as an aid to subclass implementors,
+     *      saving them from having to perform this check on every connection.
      */
-    virtual void add_connection(std::shared_ptr<connection> conn) = 0;
+    virtual void connect_variables(
+        variable_id output,
+        variable_id input,
+        bool inputAlreadyConnected) = 0;
 
     /**
-     * Removes a connection from the co-simulation.
+     *  Connects a simulator output variable to a function input variable.
      *
-     * It is assumed that the connection has previously been added to the
-     * co-simulation with `add_connection()`.
+     *  After this, the algorithm is responsible for acquiring the value of
+     *  the output variable and assigning it to the input variable before
+     *  the function is calculated.
+     *
+     *  \param output
+     *      A reference to the output variable.
+     *  \param input
+     *      A reference to the input variable.
+     *  \param inputAlreadyConnected
+     *      Whether the input has already been connected in a previous
+     *      `connect_variables()` call. If so, the previous connection must
+     *      be broken. This is meant as an aid to subclass implementors,
+     *      saving them from having to perform this check on every connection.
      */
-    virtual void remove_connection(std::shared_ptr<connection> conn) = 0;
+    virtual void connect_variables(
+        variable_id output,
+        function_io_id input,
+        bool inputAlreadyConnected) = 0;
+
+    /**
+     *  Connects a function output variable to a simulator input variable.
+     *
+     *  After this, the algorithm is responsible for acquiring the value of
+     *  the output variable and assigning it to the input variable after
+     *  the function is calculated.
+     *
+     *  \param output
+     *      A reference to the output variable.
+     *  \param input
+     *      A reference to the input variable.
+     *  \param inputAlreadyConnected
+     *      Whether the input has already been connected in a previous
+     *      `connect_variables()` call. If so, the previous connection must
+     *      be broken. This is meant as an aid to subclass implementors,
+     *      saving them from having to perform this check on every connection.
+     */
+    virtual void connect_variables(
+        function_io_id output,
+        variable_id input,
+        bool inputAlreadyConnected) = 0;
+
+    /// Breaks any previously established connection to input variable `input`.
+    virtual void disconnect_variable(variable_id input) = 0;
+
+    /// Breaks any previously established connection to input variable `input`.
+    virtual void disconnect_variable(function_io_id input) = 0;
 
     /**
      *  Performs initial setup.

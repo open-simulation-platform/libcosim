@@ -4,6 +4,7 @@
 #include "cse/error.hpp"
 #include "cse/exception.hpp"
 #include "cse/fmi/fmu.hpp"
+#include "cse/function/linear_transformation.hpp"
 #include "cse/log/logger.hpp"
 #include <cse/utility/filesystem.hpp>
 #include <cse/utility/zip.hpp>
@@ -11,9 +12,9 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 
+#include <optional>
 #include <string>
 #include <variant>
-#include <optional>
 
 namespace cse
 {
@@ -69,7 +70,8 @@ public:
 
     const DefaultExperiment& get_default_experiment() const;
 
-    struct System {
+    struct System
+    {
         std::string name;
         std::optional<std::string> description;
     };
@@ -403,14 +405,19 @@ std::pair<execution, simulator_map> load_ssp(
         cse::variable_id output = get_variable(slaves, connection.startElement, connection.startConnector);
         cse::variable_id input = get_variable(slaves, connection.endElement, connection.endConnector);
 
-        std::shared_ptr<cse::scalar_connection> c;
-        if (const auto& l = connection.linearTransformation) {
-            c = std::make_shared<linear_transformation_connection>(output, input, l->offset, l->factor);
-        } else {
-            c = std::make_shared<scalar_connection>(output, input);
-        }
         try {
-            execution.add_connection(c);
+            if (const auto& l = connection.linearTransformation) {
+                auto funID = execution.add_function(
+                    std::make_shared<linear_transformation_function>(l->offset, l->factor));
+                execution.connect_variables(
+                    output,
+                    function_io_id{funID, variable_type::real, function_io_reference{0, 0, 0, 0}});
+                execution.connect_variables(
+                    function_io_id{funID, variable_type::real, function_io_reference{1, 0, 0, 0}},
+                    input);
+            } else {
+                execution.connect_variables(output, input);
+            }
         } catch (const std::exception& e) {
             std::ostringstream oss;
             oss << "Encountered error while adding connection from "

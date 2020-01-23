@@ -4,6 +4,8 @@
 
 #include "cse/algorithm.hpp"
 #include "cse/fmi/fmu.hpp"
+#include "cse/function/linear_transformation.hpp"
+#include "cse/function/vector_sum.hpp"
 #include <cse/exception.hpp>
 #include <cse/log/logger.hpp>
 
@@ -639,8 +641,7 @@ void connect_variables(
             throw std::runtime_error(oss.str());
         }
 
-        auto c = std::make_shared<cse::scalar_connection>(output, input);
-        execution.add_connection(c);
+        execution.connect_variables(output, input);
     }
 }
 
@@ -792,8 +793,17 @@ void connect_signals(
                 if (targets.size() > 1) {
                     throw std::runtime_error("Cannot connect sum to multiple targets");
                 }
-                auto sumConnection = std::make_shared<sum_connection>(sources, targets.front());
-                execution.add_connection(sumConnection);
+                const auto funID = execution.add_function(
+                    std::make_shared<vector_sum_function<double>>(sources.size(), 1));
+                for (int i = 0; i < static_cast<int>(sources.size()); ++i) {
+                    execution.connect_variables(
+                        sources[i],
+                        function_io_id{funID, variable_type::real, function_io_reference{0, i, 0, 0}});
+                }
+                execution.connect_variables(
+                    function_io_id{funID, variable_type::real, function_io_reference{1, 0, 0, 0}},
+                    targets[0]);
+
             } else if ("lineartransformation" == function.type) {
                 if (targets.size() != 1 || sources.size() != 1) {
                     std::ostringstream oss;
@@ -805,9 +815,14 @@ void connect_signals(
                 double factorValue = factor ? std::get<double>((*factor).value) : 1.0;
                 auto offset = find_parameter(function.parameters, "offset");
                 double offsetValue = factor ? std::get<double>((*offset).value) : 0.0;
-                auto ltConnection = std::make_shared<linear_transformation_connection>(
-                    sources.front(), targets.front(), offsetValue, factorValue);
-                execution.add_connection(ltConnection);
+                const auto funID = execution.add_function(
+                    std::make_shared<linear_transformation_function>(offsetValue, factorValue));
+                execution.connect_variables(
+                    sources[0],
+                    function_io_id{funID, variable_type::real, function_io_reference{0, 0, 0, 0}});
+                execution.connect_variables(
+                    function_io_id{funID, variable_type::real, function_io_reference{1, 0, 0, 0}},
+                    targets[0]);
             } else {
                 std::ostringstream oss;
                 oss << "Unkown function type " << function.type << " for function with name " << functionName;

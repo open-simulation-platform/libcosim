@@ -1,121 +1,80 @@
+/**
+ *  \file
+ *  The `function` API.
+ */
 #ifndef CSE_FUNCTION_FUNCTION_HPP
 #define CSE_FUNCTION_FUNCTION_HPP
 
-#include <cse/model.hpp>
+#include <cse/function/description.hpp>
 
 #include <memory>
-#include <optional>
-#include <string>
-#include <string_view>
-#include <variant>
-#include <vector>
+#include <unordered_map>
 
 
 namespace cse
 {
 
 
-/// Function parameter types
-enum class function_parameter_type
-{
-    /// A real number
-    real,
-
-    /// An integer
-    integer,
-
-    /// A variable type
-    type
-};
-
-
-/// Type that holds the value of a function parameter.
-using function_parameter_value = std::variant<double, int, variable_type>;
-
-
-/// A description of a function parameter.
-struct function_parameter_description
-{
-    std::string name;
-    function_parameter_type type;
-    function_parameter_value default_value;
-    std::optional<function_parameter_value> min_value;
-    std::optional<function_parameter_value> max_value;
-};
-
-
-/**
- *  An placeholder that may be used in certain fields in `function_io_description`
- *  and `function_io_group_description` to represent an as-of-yet unspecified
- *  parameter value.
- */
-struct function_parameter_placeholder
-{
-    int parameter_index;
-};
-
-
-/// A description of one of a function's input or output variables.
-struct function_io_description
-{
-    std::string name;
-    std::variant<variable_type, function_parameter_placeholder> type;
-    variable_causality causality;
-    std::variant<int, function_parameter_placeholder> count;
-};
-
-
-/// A description of one of a function's groups of input and output variables.
-struct function_io_group_description
-{
-    std::string name;
-    std::variant<int, function_parameter_placeholder> count;
-    std::vector<function_io_description> ios;
-};
-
-
-/// A description of a function type.
-struct function_type_description
-{
-    std::string name;
-    std::vector<function_parameter_description> parameters;
-    std::vector<function_io_group_description> io_groups;
-};
-
-
-/// A function instance.
+/// An interface for function instances.
 class function
 {
 public:
-    virtual function_type_description type_description() const = 0;
+    /**
+     *  Returns a description of the function.
+     *
+     *  The returned object may not contain any `function_parameter_placeholder`
+     *  values, since all parameters must have a specific value once the
+     *  function has been instantiated.
+     */
+    virtual function_type_description description() const = 0;
 
-    virtual void set_parameter(int index, function_parameter_value value) = 0;
+    /// Sets the value of a real-valued variable.
+    virtual void set_real_io(const function_io_reference& reference, double value) = 0;
 
-    virtual void initialize() = 0;
+    /// Sets the value of an integer-valued variable.
+    virtual void set_integer_io( const function_io_reference& reference, int value) = 0;
 
-    virtual void set_io(
-        int groupIndex,
-        int groupInstance,
-        int ioIndex,
-        int ioInstance,
-        scalar_value_view value) = 0;
+    /// Retrieves the value of a real-valued variable.
+    virtual double get_real_io(const function_io_reference& reference) const = 0;
 
-    virtual scalar_value_view get_io(
-        int groupIndex,
-        int groupInstance,
-        int ioIndex,
-        int ioInstance) const = 0;
+    /// Retrieves the value of an integer-valued variable.
+    virtual int get_integer_io(const function_io_reference& reference) const = 0;
 
+    /// Performs the function calculations.
     virtual void calculate() = 0;
 };
 
 
-/// A function type.
+/**
+ *  An interface for function type descriptors.
+ *
+ *  Classes that implement this interface act as factory classes for `function`
+ *  instances.
+ */
 class function_type
 {
 public:
+    /**
+     *  Returns a description of the function type.
+     *
+     *  Some aspects of a function description may depend on the values of
+     *  certain parameters, which are only known after instantiation.  Such
+     *  fields are given a `function_parameter_placeholder` value in the
+     *  returned object.
+     */
     virtual function_type_description description() const = 0;
-    virtual std::unique_ptr<function> instantiate(std::string_view name) = 0;
+
+    /**
+     *  Instantiates a function of this type.
+     *
+     *  \param parameters
+     *      The set of parameter values with which the function will be
+     *      instantiated.  The keys in this map are the parameters' positions
+     *      (indexes) in the `function_type_description::parameters` vector
+     *      returned by `description()`.
+     */
+    virtual std::unique_ptr<function> instantiate(
+        const std::unordered_map<int, function_parameter_value> parameters) = 0;
 };
 
 

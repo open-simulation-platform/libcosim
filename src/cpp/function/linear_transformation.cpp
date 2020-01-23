@@ -1,10 +1,7 @@
 #include "cse/function/linear_transformation.hpp"
 
-#include "cse/error.hpp"
+#include "cse/function/utility.hpp"
 
-#include <gsl/span>
-
-#include <cassert>
 #include <stdexcept>
 
 
@@ -13,20 +10,21 @@ using namespace std::literals;
 
 namespace cse
 {
+namespace
+{
 
 enum linear_transformation_parameters
 {
-    linear_transformation_offset = 0,
-    linear_transformation_factor = 1,
+    linear_transformation_offset,
+    linear_transformation_factor,
 };
 
-
-function_type_description linear_transformation_function::type_description() const
+function_type_description linear_transformation_description()
 {
     return {
-        "VectorSum",
+        "LinearTransformation",
         {
-            // parameters (in the same order as linear_transformation_parameter enum!)
+            // parameters (in the same order as linear_transformation_parameters enum!)
             function_parameter_description{
                 "offset", // name
                 function_parameter_type::real, // type
@@ -62,7 +60,7 @@ function_type_description linear_transformation_function::type_description() con
                 {
                     // ios
                     function_io_description{
-                        ""s, // name (inherited from group)
+                        ""s, // name = (inherited from group)
                         variable_type::real, // type
                         variable_causality::output, // causality
                         1, // count
@@ -71,51 +69,84 @@ function_type_description linear_transformation_function::type_description() con
         }};
 }
 
+} // namespace
 
-void linear_transformation_function::set_parameter(int index, function_parameter_value value)
+
+// =============================================================================
+// linear_transformation_function
+// =============================================================================
+
+linear_transformation_function::linear_transformation_function(double offset, double factor)
+    : offset_(offset)
+    , factor_(factor)
 {
-    switch (index) {
-        case linear_transformation_offset:
-            offset_ = std::get<double>(value);
-            break;
-        case linear_transformation_factor:
-            factor_ = std::get<double>(value);
-            break;
-    };
 }
 
-
-void linear_transformation_function::initialize()
+function_type_description linear_transformation_function::description() const
 {
-    // no action needed
+    return linear_transformation_description();
 }
 
-
-void linear_transformation_function::set_io(int groupIndex, int ioIndex, scalar_value_view value)
+void linear_transformation_function::set_real_io(
+    const function_io_reference& reference,
+    double value)
 {
-    if (groupIndex == 0 && ioIndex == 0) {
-        input_ = std::get<double>(value);
+    if (reference == function_io_reference{0, 0, 0, 0}) {
+        input_ = value;
     } else {
-        throw std::out_of_range("Invalid variable/group index");
+        throw std::out_of_range("Invalid function variable reference");
     }
 }
 
-
-scalar_value_view linear_transformation_function::get_io(int groupIndex, int ioIndex) const
+void linear_transformation_function::set_integer_io(
+    const function_io_reference&, int)
 {
-    if (groupIndex == 0 && ioIndex == 0) {
+    throw std::out_of_range("Invalid function variable reference");
+}
+
+double linear_transformation_function::get_real_io(
+    const function_io_reference& reference) const
+{
+    if (reference == function_io_reference{0, 0, 0, 0}) {
         return input_;
-    } else if (groupIndex == 1 && ioIndex == 0) {
+    } else if (reference == function_io_reference{1, 0, 0, 0}) {
         return output_;
     } else {
-        throw std::out_of_range("Invalid variable/group index");
+        throw std::out_of_range("Invalid function variable reference");
     }
 }
 
+int linear_transformation_function::get_integer_io(
+    const function_io_reference&) const
+{
+    throw std::out_of_range("Invalid function variable reference");
+}
 
 void linear_transformation_function::calculate()
 {
     output_ = offset_ + factor_ * input_;
+}
+
+
+// =============================================================================
+// linear_transformation_function_type
+// =============================================================================
+
+function_type_description linear_transformation_function_type::description() const
+{
+    return linear_transformation_description();
+}
+
+std::unique_ptr<function> linear_transformation_function_type::instantiate(
+    const std::unordered_map<int, function_parameter_value> parameters)
+{
+    const auto descr = description();
+    const auto offset =
+        get_function_parameter<double>(descr, parameters, linear_transformation_offset);
+    const auto factor =
+        get_function_parameter<double>(descr, parameters, linear_transformation_factor);
+
+    return std::make_unique<linear_transformation_function>(offset, factor);
 }
 
 } // namespace cse

@@ -1,31 +1,31 @@
 #include "cse/function/vector_sum.hpp"
 
-#include <gsl/span>
-
-#include <cassert>
-#include <stdexcept>
+#include "cse/function/utility.hpp"
 
 
 using namespace std::literals;
 
-
 namespace cse
 {
-
 enum vector_sum_parameters
 {
     vector_sum_inputCount = 0,
-    vector_sum_numberType = 1,
+    vector_sum_numericType = 1,
     vector_sum_dimension = 2,
 };
 
 
-function_type_description vector_sum_function::type_description() const
+namespace detail
+{
+function_type_description vector_sum_description(
+    std::variant<int, function_parameter_placeholder> inputCount,
+    std::variant<variable_type, function_parameter_placeholder> numericType,
+    std::variant<int, function_parameter_placeholder> dimension)
 {
     return {
         "VectorSum",
         {
-            // parameters (in the same order as vector_sum_parameter enum!)
+            // parameters (in the same order as vector_sum_parameters enum!)
             function_parameter_description{
                 "inputCount", // name
                 function_parameter_type::integer, // type
@@ -34,7 +34,7 @@ function_type_description vector_sum_function::type_description() const
                 {} // max_value
             },
             function_parameter_description{
-                "numberType", // name
+                "numericType", // name
                 function_parameter_type::type, // type
                 variable_type::real, // default_value
                 {}, // min_value
@@ -52,14 +52,14 @@ function_type_description vector_sum_function::type_description() const
             // io_groups
             function_io_group_description{
                 "in", // name
-                function_parameter_placeholder{vector_sum_inputCount}, // count
+                inputCount, // count
                 {
                     // ios
                     function_io_description{
                         ""s, // name (inherited from group)
-                        function_parameter_placeholder{vector_sum_numberType}, // type
+                        numericType, // type
                         variable_causality::input, // causality
-                        function_parameter_placeholder{vector_sum_dimension}, // count
+                        dimension, // count
                     },
                 }},
             function_io_group_description{
@@ -69,107 +69,44 @@ function_type_description vector_sum_function::type_description() const
                     // ios
                     function_io_description{
                         ""s, // name = (inherited from group)
-                        function_parameter_placeholder{vector_sum_numberType}, // type
+                        numericType, // type
                         variable_causality::output, // causality
-                        function_parameter_placeholder{vector_sum_dimension}, // count
+                        dimension, // count
                     },
                 }},
         }};
 }
+} // namespace detail
 
 
-void vector_sum_function::set_parameter(int index, function_parameter_value value)
+function_type_description vector_sum_function_type::description() const
 {
-    // TODO: Check that parameter values are within bounds
-    switch (index) {
-        case vector_sum_inputCount:
-            inputCount_ = std::get<int>(value);
-            break;
-        case vector_sum_numberType:
-            integerType_ = std::get<variable_type>(value) == variable_type::integer;
-            break;
-        case vector_sum_dimension:
-            dimension_ = std::get<int>(value);
-            break;
-    };
+    return detail::vector_sum_description(
+        function_parameter_placeholder{vector_sum_inputCount},
+        function_parameter_placeholder{vector_sum_numericType},
+        function_parameter_placeholder{vector_sum_dimension});
 }
 
 
-void vector_sum_function::initialize()
+std::unique_ptr<function> vector_sum_function_type::instantiate(
+    const std::unordered_map<int, function_parameter_value> parameters)
 {
-    if (integerType_) {
-        integerIOs_ = std::vector<std::vector<int>>(
-            inputCount_ + 1,
-            std::vector<int>(dimension_, 0));
+    const auto descr = description();
+    const auto inputCount =
+        get_function_parameter<int>(descr, parameters, vector_sum_inputCount);
+    const auto numericType =
+        get_function_parameter<variable_type>(descr, parameters, vector_sum_numericType);
+    const auto dimension =
+        get_function_parameter<int>(descr, parameters, vector_sum_dimension);
+
+    if (numericType == variable_type::real) {
+        return std::make_unique<vector_sum_function<double>>(inputCount, dimension);
+    } else if (numericType == variable_type::integer) {
+        return std::make_unique<vector_sum_function<int>>(inputCount, dimension);
     } else {
-        realIOs_ = std::vector<std::vector<double>>(
-            inputCount_ + 1,
-            std::vector<double>(dimension_, 0.0));
+        throw std::domain_error("Parameter 'numericType' must be 'real' or 'integer'");
     }
 }
 
-
-void vector_sum_function::set_io(
-        int groupIndex,
-        int groupInstance,
-        int ioIndex,
-        int ioInstance,
-        scalar_value_view value)
-{
-    if (groupIndex != 0 || groupInstance >= inputCount_ ||
-        ioIndex != 0 || ioInstance >= dimension_) {
-        throw std::out_of_range("Invalid variable/group index");
-    }
-    if (integerType_) {
-        integerIOs_.at(groupInstance).at(ioInstance) = std::get<int>(value);
-    } else {
-        realIOs_.at(groupInstance).at(ioInstance) = std::get<double>(value);
-    }
-}
-
-
-scalar_value_view vector_sum_function::get_io(
-        int groupIndex,
-        int groupInstance,
-        int ioIndex,
-        int ioInstance) const
-{
-    if (groupIndex != 0 || groupInstance >= inputCount_ ||
-        ioIndex != 0 || ioInstance >= dimension_) {
-        throw std::out_of_range("Invalid variable/group index");
-    }
-    if (integerType_) {
-        return integerIOs_.at(groupInstance).at(ioInstance);
-    } else {
-        return realIOs_.at(groupInstance).at(ioInstance);
-    }
-}
-
-
-namespace
-{
-template<typename T>
-void add_vectors(gsl::span<std::vector<T>> inputs, std::vector<T>& output)
-{
-    assert(inputs[0].size() == output.size());
-    output.assign(inputs[0].begin(), inputs[0].end());
-    for (const auto& term : inputs.subspan(1)) {
-        assert(term.size() == output.size());
-        for (std::size_t i = 0; i < output.size(); ++i) {
-            output[i] += term[i];
-        }
-    }
-}
-} // namespace
-
-
-void vector_sum_function::calculate()
-{
-    if (integerType_) {
-        add_vectors(gsl::make_span(integerIOs_).first(inputCount_), integerIOs_.back());
-    } else {
-        add_vectors(gsl::make_span(realIOs_).first(inputCount_), realIOs_.back());
-    }
-}
 
 } // namespace cse
