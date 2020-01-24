@@ -57,4 +57,3 @@ T get_function_parameter(
 
 } // namespace cse
 #endif // header guard
-

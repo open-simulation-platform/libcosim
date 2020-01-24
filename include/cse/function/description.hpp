@@ -47,7 +47,7 @@ struct function_parameter_description
 
 
 /**
- *  An placeholder that may be used in certain fields in `function_io_description`
+ *  A placeholder that may be used in certain fields in `function_io_description`
  *  and `function_io_group_description` to represent an as-of-yet unspecified
  *  parameter value.
  */

@@ -33,9 +33,6 @@ namespace cse
 class algorithm
 {
 public:
-    /// A value that uniquely identifies a function in a simulation.
-    using function_index = int;
-
     /**
      *  Adds a simulator to the co-simulation.
      *

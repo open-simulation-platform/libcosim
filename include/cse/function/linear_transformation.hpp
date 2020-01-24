@@ -7,8 +7,6 @@
 
 #include <cse/function/function.hpp>
 
-#include <vector>
-
 
 namespace cse
 {
@@ -48,6 +46,7 @@ private:
 class linear_transformation_function_type : public function_type
 {
 public:
+    // Overridden `function_type` methods
     function_type_description description() const override;
 
     std::unique_ptr<function> instantiate(

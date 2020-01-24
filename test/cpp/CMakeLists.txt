@@ -5,7 +5,6 @@ set(tests
     "file_observer_logging_test"
     "file_observer_logging_from_config_test"
     "last_value_observer_test"
-    "multi_connections_test"
     "multi_fixed_step_algorithm_test"
     "time_series_observer_test"
     "trend_buffer_test"

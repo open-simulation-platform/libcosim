@@ -623,8 +623,7 @@ int connect_variables(
     try {
         const auto outputId = cse::variable_id{outputSimulator, type, outputVariable};
         const auto inputId = cse::variable_id{inputSimulator, type, inputVariable};
-        const auto connection = std::make_shared<cse::scalar_connection>(outputId, inputId);
-        execution->cpp_execution->add_connection(connection);
+        execution->cpp_execution->connect_variables(outputId, inputId);
         return success;
     } catch (...) {
         handle_current_exception();

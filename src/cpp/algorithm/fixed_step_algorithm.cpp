@@ -264,7 +264,6 @@ private:
         variable_id target;
     };
 
-
     struct connection_sf
     {
         variable_id source;

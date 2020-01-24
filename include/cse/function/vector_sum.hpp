@@ -46,17 +46,24 @@ public:
      *      The dimension of the input and output vectors.
      */
     vector_sum_function(int inputCount, int dimension)
-        : ios_(inputCount, std::vector<T>(dimension))
+        : inputs_(inputCount, std::vector<T>(dimension))
+        , output_(dimension)
     {
+        if (inputCount < 1) {
+            throw std::invalid_argument("Invalid inputCount value");
+        }
+        if (dimension < 1) {
+            throw std::invalid_argument("Invalid dimension value");
+        }
     }
 
     // Overridden `function` methods.
     function_type_description description() const override
     {
         return detail::vector_sum_description(
-            ios_.size() - 1,
+            inputs_.size(),
             std::is_integral_v<T> ? variable_type::integer : variable_type::real,
-            ios_.front().size());
+            inputs_.front().size());
     }
 
 #ifdef __GNUC__
@@ -69,7 +76,8 @@ public:
     {
         if constexpr (std::is_same_v<T, double>) {
             if (reference.group == 0 && reference.io == 0) {
-                ios_.at(reference.group_instance).at(reference.io_instance) = value;
+                inputs_.at(reference.group_instance).at(reference.io_instance) = value;
+                return;
             }
         }
         throw std::out_of_range("Invalid function variable reference");
@@ -81,7 +89,8 @@ public:
     {
         if constexpr (std::is_same_v<T, int>) {
             if (reference.group == 0 && reference.io == 0) {
-                ios_.at(reference.group_instance).at(reference.io_instance) = value;
+                inputs_.at(reference.group_instance).at(reference.io_instance) = value;
+                return;
             }
         }
         throw std::out_of_range("Invalid function variable reference");
@@ -91,10 +100,10 @@ public:
     {
         if constexpr (std::is_same_v<T, double>) {
             if (reference.group == 0 && reference.io == 0) {
-                return ios_.at(reference.group_instance).at(reference.io_instance);
+                return inputs_.at(reference.group_instance).at(reference.io_instance);
             }
             if (reference.group == 1 && reference.group_instance == 0 && reference.io == 0) {
-                return ios_.back().at(reference.io_instance);
+                return output_.at(reference.io_instance);
             }
         }
         throw std::out_of_range("Invalid function variable reference");
@@ -104,10 +113,10 @@ public:
     {
         if constexpr (std::is_same_v<T, int>) {
             if (reference.group == 0 && reference.io == 0) {
-                return ios_.at(reference.group_instance).at(reference.io_instance);
+                return inputs_.at(reference.group_instance).at(reference.io_instance);
             }
             if (reference.group == 1 && reference.group_instance == 0 && reference.io == 0) {
-                return ios_.back().at(reference.io_instance);
+                return output_.at(reference.io_instance);
             }
         }
         throw std::out_of_range("Invalid function variable reference");
@@ -118,18 +127,17 @@ public:
 
     void calculate() override
     {
-        auto& output = ios_.back();
-        output.assign(ios_[0].begin(), ios_[0].end());
-        for (std::size_t i = 1; i < ios_.size() - 1; ++i) {
-            for (std::size_t j = 0; j < output.size(); ++j) {
-                output[j] += ios_[i][j];
+        output_.assign(inputs_[0].begin(), inputs_[0].end());
+        for (std::size_t i = 1; i < inputs_.size(); ++i) {
+            for (std::size_t j = 0; j < output_.size(); ++j) {
+                output_[j] += inputs_[i][j];
             }
         }
     }
 
 private:
-    // The last vector in ios_ is the output
-    std::vector<std::vector<T>> ios_;
+    std::vector<std::vector<T>> inputs_;
+    std::vector<T> output_;
 };
 
 
