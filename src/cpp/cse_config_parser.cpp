@@ -205,17 +205,6 @@ variable_type to_variable_type(const std::string& str)
     throw std::runtime_error("Failed to parse variable type: " + str);
 }
 
-variable_causality to_variable_causality(const std::string& str)
-{
-    if ("input" == str) {
-        return cse::variable_causality::input;
-    }
-    if ("output" == str) {
-        return cse::variable_causality::output;
-    }
-    throw std::runtime_error("Don't know how to handle variable causality: " + str);
-}
-
 std::optional<cse_config_parser::Parameter> find_parameter(
     std::unordered_map<std::string, cse_config_parser::Parameter> params,
     const std::string& parameterName)
