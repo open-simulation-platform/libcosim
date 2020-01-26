@@ -1,14 +1,13 @@
 #include "cse/ssp/ssp_loader.hpp"
 
 #include "cse/algorithm.hpp"
+#include "cse/cse_config.hpp"
 #include "cse/exception.hpp"
 #include "cse/fmi/fmu.hpp"
 #include "cse/log/logger.hpp"
 #include "cse/ssp/ssp_parser.hpp"
-#include "cse/cse_config.hpp"
-
-#include <string>
-#include <variant>
+#include "cse/utility/filesystem.hpp"
+#include "cse/utility/zip.hpp"
 
 namespace cse
 {
@@ -29,16 +28,23 @@ void ssp_loader::override_algorithm(std::shared_ptr<cse::algorithm> algorithm)
 
 void ssp_loader::set_custom_model_uri_resolver(std::shared_ptr<cse::model_uri_resolver> modelResolver)
 {
-    if (modelResolver != nullptr) {
         modelResolver_ = std::move(modelResolver);
-    }
 }
 
 std::pair<execution, simulator_map> ssp_loader::load(
     const boost::filesystem::path& configPath)
 {
+    auto sspFile = configPath;
+    std::optional<cse::utility::temp_dir> temp_ssp_dir;
+    if (sspFile.extension() == ".ssp") {
+        temp_ssp_dir = cse::utility::temp_dir();
+        auto archive = cse::utility::zip::archive(sspFile);
+        archive.extract_all(temp_ssp_dir->path());
+        sspFile = temp_ssp_dir->path();
+    }
+
     simulator_map simulatorMap;
-    const auto absolutePath = boost::filesystem::absolute(configPath);
+    const auto absolutePath = boost::filesystem::absolute(sspFile);
     const auto configFile = boost::filesystem::is_regular_file(absolutePath)
         ? absolutePath
         : absolutePath / "SystemStructure.ssd";
