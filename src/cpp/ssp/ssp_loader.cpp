@@ -86,7 +86,7 @@ std::pair<execution, simulator_map> ssp_loader::load(const boost::filesystem::pa
             slaves[component.name].variables[v.name] = v;
         }
 
-        if (const auto& set = component.get_parameter_set(parameterSetName_) ) {
+        if (const auto& set = component.get_parameter_set(parameterSetName_)) {
             BOOST_LOG_SEV(log::logger(), log::info)
                 << "Applying values from parameterSet '" << set->name << "'";
             for (const auto& p : set->parameters) {
@@ -111,7 +111,6 @@ std::pair<execution, simulator_map> ssp_loader::load(const boost::filesystem::pa
                 }
             }
         }
-
     }
 
     for (const auto& connection : parser.get_connections()) {

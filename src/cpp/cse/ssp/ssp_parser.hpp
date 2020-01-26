@@ -113,7 +113,7 @@ public:
             if (parameterSetName) {
                 for (const auto& set : parameterSets) {
                     if (set.name == *parameterSetName) {
-                       return set;
+                        return set;
                     }
                 }
             } else {
