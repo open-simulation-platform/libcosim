@@ -107,7 +107,7 @@ BOOST_AUTO_TEST_CASE(ssp_archive_multiple_ssd)
 
     cse::ssp_loader loader;
     loader.set_ssd_file_name("SystemStructure2");
-    auto [execution, simulatorMap] = loader.load(sspFile);
+    auto simulatorMap = loader.load(sspFile).second;
     BOOST_REQUIRE(simulatorMap.size() == 1);
 }
 
