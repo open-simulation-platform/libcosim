@@ -14,6 +14,7 @@
                 </ssd:Connectors>
                 <ssd:ParameterBindings>
                     <ssd:ParameterBinding source="initial_values.ssv"/>
+                    <ssd:ParameterBinding source="initial_values2.ssv"/>
                 </ssd:ParameterBindings>
             </ssd:Component>
             <ssd:Component name="identity2" source="../../fmi1/identity.fmu">

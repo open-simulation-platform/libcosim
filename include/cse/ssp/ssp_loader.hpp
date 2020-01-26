@@ -48,7 +48,11 @@ public:
      *      The `model_uri_resolver` to use by the loader
      *
      */
-    void set_custom_model_uri_resolver(std::shared_ptr<cse::model_uri_resolver> modelResolver);
+    void set_model_uri_resolver(std::shared_ptr<cse::model_uri_resolver> resolver);
+
+    void set_ssd_file_name(const std::string& name);
+
+    void set_parameter_set_name(const std::string& name);
 
     /**
      *  Creates an execution based on a configuration file.
@@ -56,11 +60,11 @@ public:
      *  \param [in] configPath
      *      Path to the configuration file, or the directory holding it.
      */
-    std::pair<execution, simulator_map> load(
-        const boost::filesystem::path& configPath,
-        std::optional<std::string> customSsdFileName = std::nullopt);
+    std::pair<execution, simulator_map> load(const boost::filesystem::path& configPath);
 
 private:
+    std::optional<std::string> ssdFileName_;
+    std::optional<std::string> parameterSetName_;
     std::optional<cse::time_point> overrideStartTime_;
     std::shared_ptr<cse::algorithm> overrideAlgorithm_;
     std::shared_ptr<cse::model_uri_resolver> modelResolver_;

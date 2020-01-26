@@ -106,7 +106,8 @@ BOOST_AUTO_TEST_CASE(ssp_archive_multiple_ssd)
     const auto sspFile = boost::filesystem::path(testDataDir) / "ssp" / "demo" / "demo.ssp";
 
     cse::ssp_loader loader;
-    auto [execution, simulatorMap] = loader.load(sspFile, "SystemStructure2");
+    loader.set_ssd_file_name("SystemStructure2");
+    auto [execution, simulatorMap] = loader.load(sspFile);
     BOOST_REQUIRE(simulatorMap.size() == 1);
 }
 
@@ -140,4 +141,28 @@ BOOST_AUTO_TEST_CASE(ssp_linear_transformation_test)
     double factor = 1.3;
     double target = factor * initialValue + offset;
     BOOST_REQUIRE_CLOSE(transformedValue, target, tolerance);
+}
+
+BOOST_AUTO_TEST_CASE(ssp_multiple_parameter_sets_test)
+{
+    const auto testDataDir = std::getenv("TEST_DATA_DIR");
+    BOOST_TEST_REQUIRE(testDataDir != nullptr);
+    const auto sspDir = boost::filesystem::path(testDataDir) / "ssp" / "linear_transformation";
+
+    cse::ssp_loader loader;
+    loader.set_parameter_set_name("initialValues2");
+    loader.override_algorithm(std::make_unique<cse::fixed_step_algorithm>(cse::to_duration(1e-3)));
+    auto [exec, simulatorMap] = loader.load(sspDir);
+
+    auto observer = std::make_shared<cse::last_value_observer>();
+    exec.add_observer(observer);
+
+    exec.step();
+
+    double initialValue;
+    auto slave1 = simulatorMap.at("identity1");
+    cse::value_reference v1Ref = cse::find_variable(slave1.description, "realOut").reference;
+    observer->get_real(slave1.index, gsl::make_span(&v1Ref, 1), gsl::make_span(&initialValue, 1));
+    BOOST_REQUIRE_CLOSE(initialValue, 4.0, tolerance);
+
 }

@@ -26,14 +26,21 @@ void ssp_loader::override_algorithm(std::shared_ptr<cse::algorithm> algorithm)
     overrideAlgorithm_ = std::move(algorithm);
 }
 
-void ssp_loader::set_custom_model_uri_resolver(std::shared_ptr<cse::model_uri_resolver> modelResolver)
+void ssp_loader::set_model_uri_resolver(std::shared_ptr<cse::model_uri_resolver> resolver)
 {
-    modelResolver_ = std::move(modelResolver);
+    modelResolver_ = std::move(resolver);
 }
 
-std::pair<execution, simulator_map> ssp_loader::load(
-    const boost::filesystem::path& configPath,
-    std::optional<std::string> customSsdFileName)
+void ssp_loader::set_ssd_file_name(const std::string& name)
+{
+    ssdFileName_ = name;
+}
+void ssp_loader::set_parameter_set_name(const std::string& name)
+{
+    parameterSetName_ = name;
+}
+
+std::pair<execution, simulator_map> ssp_loader::load(const boost::filesystem::path& configPath)
 {
     auto sspFile = configPath;
     std::optional<cse::utility::temp_dir> temp_ssp_dir;
@@ -44,7 +51,7 @@ std::pair<execution, simulator_map> ssp_loader::load(
         sspFile = temp_ssp_dir->path();
     }
 
-    const auto ssdFileName = customSsdFileName ? *customSsdFileName : "SystemStructure";
+    const auto ssdFileName = ssdFileName_ ? *ssdFileName_ : "SystemStructure";
     const auto absolutePath = boost::filesystem::absolute(sspFile);
     const auto configFile = boost::filesystem::is_regular_file(absolutePath)
         ? absolutePath
@@ -70,7 +77,8 @@ std::pair<execution, simulator_map> ssp_loader::load(
     for (const auto& component : elements) {
         auto model = modelResolver_->lookup_model(baseURI, component.source);
         auto slave = model->instantiate(component.name);
-        simulator_index index = slaves[component.name].index = execution.add_slave(slave, component.name);
+        auto stepSizeHint = cse::to_duration(component.stepSizeHint.value_or(0));
+        simulator_index index = slaves[component.name].index = execution.add_slave(slave, component.name, stepSizeHint);
 
         simulatorMap[component.name] = simulator_map_entry{index, component.source, *model->description()};
 
@@ -78,27 +86,32 @@ std::pair<execution, simulator_map> ssp_loader::load(
             slaves[component.name].variables[v.name] = v;
         }
 
-        for (const auto& p : component.parameters) {
-            auto reference = find_variable(*model->description(), p.name).reference;
+        if (const auto& set = component.get_parameter_set(parameterSetName_) ) {
             BOOST_LOG_SEV(log::logger(), log::info)
-                << "Initializing variable " << component.name << ":" << p.name << " with value " << streamer{p.value};
-            switch (p.type) {
-                case variable_type::real:
-                    execution.set_real_initial_value(index, reference, std::get<double>(p.value));
-                    break;
-                case variable_type::integer:
-                    execution.set_integer_initial_value(index, reference, std::get<int>(p.value));
-                    break;
-                case variable_type::boolean:
-                    execution.set_boolean_initial_value(index, reference, std::get<bool>(p.value));
-                    break;
-                case variable_type::string:
-                    execution.set_string_initial_value(index, reference, std::get<std::string>(p.value));
-                    break;
-                default:
-                    throw error(make_error_code(errc::unsupported_feature), "Variable type not supported yet");
+                << "Applying values from parameterSet '" << set->name << "'";
+            for (const auto& p : set->parameters) {
+                auto reference = find_variable(*model->description(), p.name).reference;
+                BOOST_LOG_SEV(log::logger(), log::info)
+                    << "Initializing variable " << component.name << ":" << p.name << " with value " << streamer{p.value};
+                switch (p.type) {
+                    case variable_type::real:
+                        execution.set_real_initial_value(index, reference, std::get<double>(p.value));
+                        break;
+                    case variable_type::integer:
+                        execution.set_integer_initial_value(index, reference, std::get<int>(p.value));
+                        break;
+                    case variable_type::boolean:
+                        execution.set_boolean_initial_value(index, reference, std::get<bool>(p.value));
+                        break;
+                    case variable_type::string:
+                        execution.set_string_initial_value(index, reference, std::get<std::string>(p.value));
+                        break;
+                    default:
+                        throw error(make_error_code(errc::unsupported_feature), "Variable type not supported yet");
+                }
             }
         }
+
     }
 
     for (const auto& connection : parser.get_connections()) {

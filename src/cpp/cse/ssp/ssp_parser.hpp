@@ -8,8 +8,8 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 
-#include <string>
 #include <optional>
+#include <string>
 
 namespace cse
 {
@@ -49,7 +49,7 @@ variable_type parse_connector_type(const boost::property_tree::ptree& tree)
     }
 }
 
-}
+} // namespace
 
 class ssp_parser
 {
@@ -67,7 +67,8 @@ public:
 
     const DefaultExperiment& get_default_experiment() const;
 
-    struct System {
+    struct System
+    {
         std::string name;
         std::optional<std::string> description;
     };
@@ -93,13 +94,35 @@ public:
         scalar_value value;
     };
 
+    struct ParameterSet
+    {
+        std::string name;
+        std::vector<Parameter> parameters;
+    };
+
     struct Component
     {
         std::string name;
         std::string source;
         std::optional<double> stepSizeHint;
         std::vector<Connector> connectors;
-        std::vector<Parameter> parameters;
+        std::vector<ParameterSet> parameterSets;
+
+        std::optional<ParameterSet> get_parameter_set(std::optional<std::string> parameterSetName) const
+        {
+            if (parameterSetName) {
+                for (const auto& set : parameterSets) {
+                    if (set.name == *parameterSetName) {
+                       return set;
+                    }
+                }
+            } else {
+                if (!parameterSets.empty()) {
+                    return parameterSets[0];
+                }
+            }
+            return std::nullopt;
+        }
     };
 
     const std::vector<Component>& get_elements() const;
@@ -128,26 +151,29 @@ private:
     std::vector<Component> elements_;
     std::vector<Connection> connections_;
 
-    static void parse_parameter_set(Component& e, const boost::property_tree::ptree& parameterSet)
+    static ParameterSet parse_parameter_set(const boost::property_tree::ptree& parameterSetNode)
     {
-        for (const auto& parameter : parameterSet.get_child("ssv:Parameters")) {
+        ParameterSet parameterSet;
+        parameterSet.name = get_attribute<std::string>(parameterSetNode, "name");
+        for (const auto& parameter : parameterSetNode.get_child("ssv:Parameters")) {
             const auto name = get_attribute<std::string>(parameter.second, "name");
             if (const auto realParameter = parameter.second.get_child_optional("ssv:Real")) {
                 const auto value = get_attribute<double>(*realParameter, "value");
-                e.parameters.push_back({name, variable_type::real, value});
+                parameterSet.parameters.push_back({name, variable_type::real, value});
             } else if (const auto intParameter = parameter.second.get_child_optional("ssv:Integer")) {
                 const auto value = get_attribute<int>(*intParameter, "value");
-                e.parameters.push_back({name, variable_type::integer, value});
+                parameterSet.parameters.push_back({name, variable_type::integer, value});
             } else if (const auto boolParameter = parameter.second.get_child_optional("ssv:Boolean")) {
                 const auto value = get_attribute<bool>(*boolParameter, "value");
-                e.parameters.push_back({name, variable_type::boolean, value});
+                parameterSet.parameters.push_back({name, variable_type::boolean, value});
             } else if (const auto stringParameter = parameter.second.get_child_optional("ssv:String")) {
                 const auto value = get_attribute<std::string>(*stringParameter, "value");
-                e.parameters.push_back({name, variable_type::string, value});
+                parameterSet.parameters.push_back({name, variable_type::string, value});
             } else {
                 CSE_PANIC();
             }
         }
+        return parameterSet;
     }
 };
 
@@ -155,7 +181,7 @@ ssp_parser::ssp_parser(const boost::filesystem::path& ssdPath)
 {
     boost::property_tree::ptree root;
     boost::property_tree::read_xml(ssdPath.string(), root,
-                                   boost::property_tree::xml_parser::no_comments | boost::property_tree::xml_parser::trim_whitespace);
+        boost::property_tree::xml_parser::no_comments | boost::property_tree::xml_parser::trim_whitespace);
 
     boost::property_tree::ptree ssd = root.get_child("ssd:SystemStructureDescription");
     systemDescription_.name = get_attribute<std::string>(ssd, "name");
@@ -214,11 +240,13 @@ ssp_parser::ssp_parser(const boost::filesystem::path& ssdPath)
                         throw std::runtime_error(oss.str());
                     }
                     boost::property_tree::read_xml(ssvPath.string(), binding,
-                                                   boost::property_tree::xml_parser::no_comments | boost::property_tree::xml_parser::trim_whitespace);
-                    parse_parameter_set(e, binding.get_child("ssv:ParameterSet"));
+                        boost::property_tree::xml_parser::no_comments | boost::property_tree::xml_parser::trim_whitespace);
+                    const auto parameterSet = parse_parameter_set(binding.get_child("ssv:ParameterSet"));
+                    e.parameterSets.push_back(parameterSet);
                 } else {
                     if (const auto parameterValues = parameterBinding.second.get_child_optional("ssd:ParameterValues")) {
-                        parse_parameter_set(e, parameterValues->get_child("ssv:ParameterSet"));
+                        const auto parameterSet = parse_parameter_set(parameterValues->get_child("ssv:ParameterSet"));
+                        e.parameterSets.push_back(parameterSet);
                     }
                 }
             }
@@ -326,6 +354,6 @@ cse::variable_id get_variable(
     return {slave.index, variable.type, variable.reference};
 }
 
-}
+} // namespace cse
 
 #endif
