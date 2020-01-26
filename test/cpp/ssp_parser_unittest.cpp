@@ -96,6 +96,20 @@ BOOST_AUTO_TEST_CASE(ssp_archive)
     common_demo_case_tests(execution, simulatorMap);
 }
 
+BOOST_AUTO_TEST_CASE(ssp_archive_multiple_ssd)
+{
+    cse::log::setup_simple_console_logging();
+    cse::log::set_global_output_level(cse::log::info);
+
+    const auto testDataDir = std::getenv("TEST_DATA_DIR");
+    BOOST_TEST_REQUIRE(testDataDir != nullptr);
+    const auto sspFile = boost::filesystem::path(testDataDir) / "ssp" / "demo" / "demo.ssp";
+
+    cse::ssp_loader loader;
+    auto [execution, simulatorMap] = loader.load(sspFile, "SystemStructure2");
+    BOOST_REQUIRE(simulatorMap.size() == 1);
+}
+
 BOOST_AUTO_TEST_CASE(ssp_linear_transformation_test)
 {
     const auto testDataDir = std::getenv("TEST_DATA_DIR");

@@ -56,7 +56,9 @@ public:
      *  \param [in] configPath
      *      Path to the configuration file, or the directory holding it.
      */
-    std::pair<execution, simulator_map> load(const boost::filesystem::path& configPath);
+    std::pair<execution, simulator_map> load(
+        const boost::filesystem::path& configPath,
+        std::optional<std::string> customSsdFileName = std::nullopt);
 
 private:
     std::optional<cse::time_point> overrideStartTime_;

@@ -28,11 +28,12 @@ void ssp_loader::override_algorithm(std::shared_ptr<cse::algorithm> algorithm)
 
 void ssp_loader::set_custom_model_uri_resolver(std::shared_ptr<cse::model_uri_resolver> modelResolver)
 {
-        modelResolver_ = std::move(modelResolver);
+    modelResolver_ = std::move(modelResolver);
 }
 
 std::pair<execution, simulator_map> ssp_loader::load(
-    const boost::filesystem::path& configPath)
+    const boost::filesystem::path& configPath,
+    std::optional<std::string> customSsdFileName)
 {
     auto sspFile = configPath;
     std::optional<cse::utility::temp_dir> temp_ssp_dir;
@@ -43,11 +44,11 @@ std::pair<execution, simulator_map> ssp_loader::load(
         sspFile = temp_ssp_dir->path();
     }
 
-    simulator_map simulatorMap;
+    const auto ssdFileName = customSsdFileName ? *customSsdFileName : "SystemStructure";
     const auto absolutePath = boost::filesystem::absolute(sspFile);
     const auto configFile = boost::filesystem::is_regular_file(absolutePath)
         ? absolutePath
-        : absolutePath / "SystemStructure.ssd";
+        : absolutePath / std::string(ssdFileName + ".ssd");
     const auto baseURI = path_to_file_uri(configFile);
     const auto parser = ssp_parser(configFile);
 
@@ -63,9 +64,9 @@ std::pair<execution, simulator_map> ssp_loader::load(
     const auto startTime = overrideStartTime_ ? *overrideStartTime_ : get_default_start_time(parser);
     auto execution = cse::execution(startTime, algorithm);
 
-    auto elements = parser.get_elements();
-
+    simulator_map simulatorMap;
     std::map<std::string, slave_info> slaves;
+    auto elements = parser.get_elements();
     for (const auto& component : elements) {
         auto model = modelResolver_->lookup_model(baseURI, component.source);
         auto slave = model->instantiate(component.name);
