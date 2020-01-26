@@ -87,6 +87,7 @@ set(sources
     "scenario_parser.cpp"
     "slave_simulator.cpp"
     "ssp/ssp_loader.cpp"
+    "ssp/ssp_parser.cpp"
     "timer.cpp"
     "uri.cpp"
     "utility/filesystem.cpp"

@@ -8,6 +8,7 @@
 #include "cse/ssp/ssp_parser.hpp"
 #include "cse/utility/filesystem.hpp"
 #include "cse/utility/zip.hpp"
+#include <cse/utility/utility.hpp>
 
 namespace cse
 {
@@ -86,7 +87,7 @@ std::pair<execution, simulator_map> ssp_loader::load(const boost::filesystem::pa
             slaves[component.name].variables[v.name] = v;
         }
 
-        if (const auto& set = component.get_parameter_set(parameterSetName_)) {
+        if (const auto& set = get_parameter_set(component, parameterSetName_)) {
             BOOST_LOG_SEV(log::logger(), log::info)
                 << "Applying values from parameterSet '" << set->name << "'";
             for (const auto& p : set->parameters) {
