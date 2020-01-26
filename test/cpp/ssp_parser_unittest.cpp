@@ -3,7 +3,7 @@
 #include <cse/connection/linear_transformation_connection.hpp>
 #include <cse/log/simple.hpp>
 #include <cse/observer/last_value_observer.hpp>
-#include <cse/ssp_parser.hpp>
+#include <cse/ssp/ssp_loader.hpp>
 
 #include <boost/filesystem.hpp>
 #include <boost/test/unit_test.hpp>
@@ -49,10 +49,10 @@ BOOST_AUTO_TEST_CASE(basic_test)
 
     const auto testDataDir = std::getenv("TEST_DATA_DIR");
     BOOST_REQUIRE(testDataDir != nullptr);
-    boost::filesystem::path xmlPath = boost::filesystem::path(testDataDir) / "ssp" / "demo";
+    boost::filesystem::path sspFile = boost::filesystem::path(testDataDir) / "ssp" / "demo";
 
-    auto resolver = cse::default_model_uri_resolver();
-    auto [execution, simulatorMap] = cse::load_ssp(*resolver, xmlPath);
+    cse::ssp_loader loader;
+    auto [execution, simulatorMap] = loader.load(sspFile);
 
     auto craneController = simulatorMap.at("CraneController");
     auto knuckleBoomCrane = simulatorMap.at("KnuckleBoomCrane");
@@ -70,11 +70,11 @@ BOOST_AUTO_TEST_CASE(no_algorithm_test)
 
     const auto testDataDir = std::getenv("TEST_DATA_DIR");
     BOOST_REQUIRE(testDataDir != nullptr);
-    boost::filesystem::path xmlPath = boost::filesystem::path(testDataDir) / "ssp" / "demo" / "no_algorithm_element";
+    boost::filesystem::path sspFile = boost::filesystem::path(testDataDir) / "ssp" / "demo" / "no_algorithm_element";
 
-    auto resolver = cse::default_model_uri_resolver();
-    auto algorithm = std::make_unique<cse::fixed_step_algorithm>(cse::to_duration(1e-4));
-    auto [execution, simulatorMap] = cse::load_ssp(*resolver, xmlPath, std::move(algorithm));
+    cse::ssp_loader loader;
+    loader.override_algorithm(std::make_unique<cse::fixed_step_algorithm>(cse::to_duration(1e-4)));
+    auto [execution, simulatorMap] = loader.load(sspFile);
 
     double startTimeDefinedInSsp = 5.0;
     BOOST_CHECK_CLOSE(cse::to_double_time_point(execution.current_time()), startTimeDefinedInSsp, tolerance);
@@ -91,8 +91,8 @@ BOOST_AUTO_TEST_CASE(ssp_archive)
     BOOST_TEST_REQUIRE(testDataDir != nullptr);
     const auto sspFile = boost::filesystem::path(testDataDir) / "ssp" / "demo" / "demo.ssp";
 
-    auto resolver = cse::default_model_uri_resolver();
-    auto [execution, simulatorMap] = cse::load_ssp(*resolver, sspFile);
+    cse::ssp_loader loader;
+    auto [execution, simulatorMap] = loader.load(sspFile);
     common_demo_case_tests(execution, simulatorMap);
 }
 
@@ -102,9 +102,9 @@ BOOST_AUTO_TEST_CASE(ssp_linear_transformation_test)
     BOOST_TEST_REQUIRE(testDataDir != nullptr);
     const auto sspDir = boost::filesystem::path(testDataDir) / "ssp" / "linear_transformation";
 
-    auto resolver = cse::default_model_uri_resolver();
-    auto algorithm = std::make_shared<cse::fixed_step_algorithm>(cse::to_duration(1e-3));
-    auto [exec, simulatorMap] = cse::load_ssp(*resolver, sspDir, algorithm);
+    cse::ssp_loader loader;
+    loader.override_algorithm(std::make_unique<cse::fixed_step_algorithm>(cse::to_duration(1e-3)));
+    auto [exec, simulatorMap] = loader.load(sspDir);
 
     auto observer = std::make_shared<cse::last_value_observer>();
     exec.add_observer(observer);
