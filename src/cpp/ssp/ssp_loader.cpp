@@ -105,7 +105,12 @@ std::pair<execution, simulator_map> ssp_loader::load(
         cse::variable_id output = get_variable(slaves, connection.startElement, connection.startConnector);
         cse::variable_id input = get_variable(slaves, connection.endElement, connection.endConnector);
 
-        const auto c = std::make_shared<scalar_connection>(output, input);
+        std::shared_ptr<cse::scalar_connection> c;
+        if (const auto& l = connection.linearTransformation) {
+            c = std::make_shared<linear_transformation_connection>(output, input, l->offset, l->factor);
+        } else {
+            c = std::make_shared<scalar_connection>(output, input);
+        }
         try {
             execution.add_connection(c);
         } catch (const std::exception& e) {
