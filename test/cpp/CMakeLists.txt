@@ -21,6 +21,7 @@ endif()
 
 set(unittests
     "async_slave_unittest"
+    "function_unittest"
     "fmi_v1_fmu_unittest"
     "fmi_v2_fmu_unittest"
     "model_unittest"
