@@ -1,3 +1,6 @@
+#if defined(WIN32) && !defined(NOMINMAX)
+#    define NOMINMAX
+#endif
 #include "cse/algorithm/fixed_step_algorithm.hpp"
 
 #include "cse/error.hpp"
