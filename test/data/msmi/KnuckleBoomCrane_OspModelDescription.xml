@@ -11,20 +11,10 @@
             <Variable name="p_Crane.f[2]"/>
             <Variable name="p_Crane.f[3]"/>
         </VariableGroup>
-        <VariableGroup type="abstract" name="actuatorLimits">
+        <VariableGroup type="generic" name="actuatorLimits">
             <Variable name="Act_Limits[1]"/>
             <Variable name="Act_Limits[2]"/>
             <Variable name="Act_Limits[3]"/>
         </VariableGroup>
-        <!--    <Bonds>-->
-        <!--        <Bond name="mechanical">-->
-        <!--            <BondPlugs>-->
-        <!--                <BondPlug name="velocity"/>-->
-        <!--            </BondPlugs>-->
-        <!--            <BondSockets>-->
-        <!--                <BondSocket name="force"/>-->
-        <!--            </BondSockets>-->
-        <!--        </Bond>-->
-        <!--    </Bonds>-->
     </VariableGroups>
 </OspModelDescription>

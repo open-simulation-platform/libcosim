@@ -13,12 +13,7 @@
         <Simulator name="vector4" source="../fmi2/vector.fmu"/>
     </Simulators>
     <Functions>
-        <Function name="myVectorSum" type="vectorSum">
-            <Parameters>
-                <Parameter name="inputCount" value="3" type="integer"/>
-                <Parameter name="dimension" value="3" type="integer"/>
-            </Parameters>
-        </Function>
+        <VectorSum name="myVectorSum" inputCount="3" dimension="3"/>
     </Functions>
     <Connections>
         <SignalGroupConnection>

@@ -34,17 +34,8 @@
         </Simulator>
     </Simulators>
     <Functions>
-        <Function name="mySum" type="sum">
-            <Parameters>
-                <Parameter name="inputCount" value="3" type="integer"/>
-            </Parameters>
-        </Function>
-        <Function type="lineartransformation" name="myScaling">
-            <Parameters>
-                <Parameter name="factor" value="0.1" type="real"/>
-                <Parameter name="offset" value="123.4" type="real"/>
-            </Parameters>
-        </Function>
+        <LinearTransformation name="myScaling" factor="0.1" offset="123.4"/>
+        <Sum name="mySum" inputCount="3"/>
     </Functions>
     <Connections>
         <VariableConnection>
