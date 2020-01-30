@@ -640,6 +640,17 @@ std::pair<variable_id, variable_causality> variable_from_signal(
     throw std::out_of_range(oss.str());
 }
 
+void verify_causality(variable_causality expected, variable_causality actual, const variable_id& variable, const std::string& functionName)
+{
+    if (expected != actual) {
+        std::ostringstream oss;
+        oss << "Can't connect variable " << variable
+            << " to function " << functionName
+            << " because of a causality imbalance" << std::endl;
+        throw std::runtime_error(oss.str());
+    }
+}
+
 } // namespace
 
 void connect_variables(
@@ -743,12 +754,6 @@ void connect_variable_groups(
     }
 }
 
-namespace
-{
-
-
-} // namespace
-
 void connect_linear_transformation_functions(
     const std::unordered_map<std::string, cse_config_parser::LinearTransformationFunction>& functions,
     const std::vector<cse_config_parser::SignalConnection>& signalConnections,
@@ -757,11 +762,11 @@ void connect_linear_transformation_functions(
 {
     for (const auto& [functionName, function] : functions) {
         const auto [sourceVar, sourceVarCausality] = variable_from_signal(signalConnections, slaves, functionName, function.in.name);
-        assert(sourceVarCausality == variable_causality::output);
+        verify_causality(sourceVarCausality, variable_causality::output, sourceVar, functionName);
         assert(sourceVar.type == variable_type::real);
 
         const auto [targetVar, targetVarCausality] = variable_from_signal(signalConnections, slaves, functionName, function.out.name);
-        assert(targetVarCausality == variable_causality::input);
+        verify_causality(targetVarCausality, variable_causality::input, targetVar, functionName);
         assert(targetVar.type == variable_type::real);
 
         auto ltConnection = std::make_shared<linear_transformation_connection>(
@@ -780,12 +785,12 @@ void connect_sum_functions(
         std::vector<variable_id> sourceVars;
         for (int i = 0; i < function.inputCount; i++) {
             const auto [sourceVar, sourceVarCausality] = variable_from_signal(signalConnections, slaves, functionName, function.ins.at(i).name);
-            assert(sourceVarCausality == variable_causality::output);
+            verify_causality(sourceVarCausality, variable_causality::output, sourceVar, functionName);
             assert(sourceVar.type == variable_type::real);
             sourceVars.push_back(sourceVar);
         }
         const auto [targetVar, targetVarCausality] = variable_from_signal(signalConnections, slaves, functionName, function.out.name);
-        assert(targetVarCausality == variable_causality::input);
+        verify_causality(targetVarCausality, variable_causality::input, targetVar, functionName);
         assert(targetVar.type == variable_type::real);
 
         auto sumConnection = std::make_shared<sum_connection>(
@@ -815,7 +820,7 @@ void connect_vector_sum_functions(
                         const auto& variableGroup = emd.variableGroups.at(signalGroupConnection.variable.name);
                         const auto& variableName = variableGroup.variables.at(i);
                         const auto [targetVar, targetVarCausality] = get_variable(slaves, signalGroupConnection.variable.simulator, variableName);
-                        assert(targetVarCausality == variable_causality::input);
+                        verify_causality(targetVarCausality, variable_causality::input, targetVar, functionName);
                         assert(targetVar.type == variable_type::real);
                         targetVariable = targetVar;
                     }
@@ -825,7 +830,7 @@ void connect_vector_sum_functions(
                             const auto& variableGroup = emd.variableGroups.at(signalGroupConnection.variable.name);
                             const auto& variableName = variableGroup.variables.at(i);
                             const auto [sourceVar, sourceVarCausality] = get_variable(slaves, signalGroupConnection.variable.simulator, variableName);
-                            assert(sourceVarCausality == variable_causality::output);
+                            verify_causality(sourceVarCausality, variable_causality::output, sourceVar, functionName);
                             assert(sourceVar.type == variable_type::real);
                             sourceVariables.push_back(sourceVar);
                         }
