@@ -610,7 +610,7 @@ std::pair<variable_id, variable_causality> get_variable(
     auto slaveIt = slaves.find(element);
     if (slaveIt == slaves.end()) {
         std::ostringstream oss;
-        oss << "Cannot find slave: " << element;
+        oss << "Cannot find simulator: " << element;
         throw std::out_of_range(oss.str());
     }
     auto slave = slaveIt->second;
@@ -624,29 +624,43 @@ std::pair<variable_id, variable_causality> get_variable(
     return {{slave.index, variable.type, variable.reference}, variable.causality};
 }
 
-std::pair<variable_id, variable_causality> variable_from_signal(
+cse_config_parser::SignalConnection find_signal_connection(
     const std::vector<cse_config_parser::SignalConnection>& signalConnections,
-    const std::unordered_map<std::string, slave_info>& slaves,
     const std::string& functionName,
     const std::string& signalName)
 {
-    for (const auto& signalConnection : signalConnections) {
-        if ((functionName == signalConnection.signal.function) && (signalName == signalConnection.signal.name)) {
-            return get_variable(slaves, signalConnection.variable.simulator, signalConnection.variable.name);
-        }
+    auto it = std::find_if(
+        signalConnections.begin(),
+        signalConnections.end(),
+        [&](const auto& conn) { return functionName == conn.signal.function && signalName == conn.signal.name; });
+    if (it == signalConnections.end()) {
+        std::ostringstream oss;
+        oss << "Missing expected connection to " << functionName << ":" << signalName;
+        throw std::out_of_range(oss.str());
     }
-    std::ostringstream oss;
-    oss << "Cannot find variable connected to signal " << functionName << ":" << signalName;
-    throw std::out_of_range(oss.str());
+    return *it;
 }
 
-void verify_causality(variable_causality expected, variable_causality actual, const variable_id& variable, const std::string& functionName)
+void verify_causality(variable_causality actual, variable_causality expected, const cse_config_parser::SignalConnection& conn)
 {
-    if (expected != actual) {
+    if (actual != expected) {
         std::ostringstream oss;
-        oss << "Can't connect variable " << variable
-            << " to function " << functionName
-            << " because of a causality imbalance" << std::endl;
+        oss << "Cannot create connection. There is a causality imbalance between "
+            << conn.variable.simulator << ":" << conn.variable.name
+            << " and "
+            << conn.signal.function << ":" << conn.signal.name;
+        throw std::runtime_error(oss.str());
+    }
+}
+
+void verify_type(variable_type actual, variable_type expected, const cse_config_parser::SignalConnection& conn)
+{
+    if (actual != expected) {
+        std::ostringstream oss;
+        oss << "Cannot create connection. There is a type mismatch between "
+            << conn.variable.simulator << ":" << conn.variable.name
+            << " and "
+            << conn.signal.function << ":" << conn.signal.name;
         throw std::runtime_error(oss.str());
     }
 }
@@ -658,7 +672,6 @@ void connect_variables(
     const std::unordered_map<std::string, slave_info>& slaves,
     cse::execution& execution)
 {
-
     for (const auto& connection : variableConnections) {
         auto [variableIdA, causalityA] =
             get_variable(slaves, connection.variableA.simulator, connection.variableA.name);
@@ -761,13 +774,15 @@ void connect_linear_transformation_functions(
     cse::execution& execution)
 {
     for (const auto& [functionName, function] : functions) {
-        const auto [sourceVar, sourceVarCausality] = variable_from_signal(signalConnections, slaves, functionName, function.in.name);
-        verify_causality(sourceVarCausality, variable_causality::output, sourceVar, functionName);
-        assert(sourceVar.type == variable_type::real);
+        const auto inConn = find_signal_connection(signalConnections, functionName, function.in.name);
+        const auto [sourceVar, sourceVarCausality] = get_variable(slaves, inConn.variable.simulator, inConn.variable.name);
+        verify_causality(sourceVarCausality, variable_causality::output, inConn);
+        verify_type(sourceVar.type, variable_type::real, inConn);
 
-        const auto [targetVar, targetVarCausality] = variable_from_signal(signalConnections, slaves, functionName, function.out.name);
-        verify_causality(targetVarCausality, variable_causality::input, targetVar, functionName);
-        assert(targetVar.type == variable_type::real);
+        const auto outConn = find_signal_connection(signalConnections, functionName, function.out.name);
+        const auto [targetVar, targetVarCausality] = get_variable(slaves, outConn.variable.simulator, outConn.variable.name);
+        verify_causality(targetVarCausality, variable_causality::input, outConn);
+        verify_type(targetVar.type, variable_type::real, inConn);
 
         auto ltConnection = std::make_shared<linear_transformation_connection>(
             sourceVar, targetVar, function.offset, function.factor);
@@ -784,14 +799,16 @@ void connect_sum_functions(
     for (const auto& [functionName, function] : functions) {
         std::vector<variable_id> sourceVars;
         for (int i = 0; i < function.inputCount; i++) {
-            const auto [sourceVar, sourceVarCausality] = variable_from_signal(signalConnections, slaves, functionName, function.ins.at(i).name);
-            verify_causality(sourceVarCausality, variable_causality::output, sourceVar, functionName);
-            assert(sourceVar.type == variable_type::real);
+            const auto inConn = find_signal_connection(signalConnections, functionName, function.ins.at(i).name);
+            const auto [sourceVar, sourceVarCausality] = get_variable(slaves, inConn.variable.simulator, inConn.variable.name);
+            verify_causality(sourceVarCausality, variable_causality::output, inConn);
+            verify_type(sourceVar.type, variable_type::real, inConn);
             sourceVars.push_back(sourceVar);
         }
-        const auto [targetVar, targetVarCausality] = variable_from_signal(signalConnections, slaves, functionName, function.out.name);
-        verify_causality(targetVarCausality, variable_causality::input, targetVar, functionName);
-        assert(targetVar.type == variable_type::real);
+        const auto outConn = find_signal_connection(signalConnections, functionName, function.out.name);
+        const auto [targetVar, targetVarCausality] = get_variable(slaves, outConn.variable.simulator, outConn.variable.name);
+        verify_causality(targetVarCausality, variable_causality::input, outConn);
+        verify_type(targetVar.type, variable_type::real, outConn);
 
         auto sumConnection = std::make_shared<sum_connection>(
             sourceVars, targetVar);
@@ -810,32 +827,25 @@ void connect_vector_sum_functions(
 
         for (int i = 0; i < function.dimension; i++) {
 
-            std::vector<variable_id> sourceVariables;
-            variable_id targetVariable;
-            for (const auto& signalGroupConnection : signalGroupConnections) {
-                if (functionName == signalGroupConnection.signal.function) {
+            const auto outGroupConn = find_signal_connection(signalGroupConnections, functionName, function.outGroup.name);
+            const auto& emd = emds.at(outGroupConn.variable.simulator);
+            const auto& variableGroup = emd.variableGroups.at(outGroupConn.variable.name);
+            const auto& variableName = variableGroup.variables.at(i);
+            const auto [targetVar, targetVarCausality] = get_variable(slaves, outGroupConn.variable.simulator, variableName);
+            verify_causality(targetVarCausality, variable_causality::input, outGroupConn);
+            verify_type(targetVar.type, variable_type::real, outGroupConn);
+            variable_id targetVariable = targetVar;
 
-                    if (function.outGroup.name == signalGroupConnection.signal.name) {
-                        const auto& emd = emds.at(signalGroupConnection.variable.simulator);
-                        const auto& variableGroup = emd.variableGroups.at(signalGroupConnection.variable.name);
-                        const auto& variableName = variableGroup.variables.at(i);
-                        const auto [targetVar, targetVarCausality] = get_variable(slaves, signalGroupConnection.variable.simulator, variableName);
-                        verify_causality(targetVarCausality, variable_causality::input, targetVar, functionName);
-                        assert(targetVar.type == variable_type::real);
-                        targetVariable = targetVar;
-                    }
-                    for (int j = 0; j < function.inputCount; j++) {
-                        if (function.inGroups.at(j).name == signalGroupConnection.signal.name) {
-                            const auto& emd = emds.at(signalGroupConnection.variable.simulator);
-                            const auto& variableGroup = emd.variableGroups.at(signalGroupConnection.variable.name);
-                            const auto& variableName = variableGroup.variables.at(i);
-                            const auto [sourceVar, sourceVarCausality] = get_variable(slaves, signalGroupConnection.variable.simulator, variableName);
-                            verify_causality(sourceVarCausality, variable_causality::output, sourceVar, functionName);
-                            assert(sourceVar.type == variable_type::real);
-                            sourceVariables.push_back(sourceVar);
-                        }
-                    }
-                }
+            std::vector<variable_id> sourceVariables;
+            for (int j = 0; j < function.inputCount; j++) {
+                const auto inGroupConn = find_signal_connection(signalGroupConnections, functionName, function.inGroups.at(j).name);
+                const auto& inEmd = emds.at(inGroupConn.variable.simulator);
+                const auto& inVariableGroup = inEmd.variableGroups.at(inGroupConn.variable.name);
+                const auto& inVariableName = inVariableGroup.variables.at(i);
+                const auto [sourceVar, sourceVarCausality] = get_variable(slaves, inGroupConn.variable.simulator, inVariableName);
+                verify_causality(sourceVarCausality, variable_causality::output, inGroupConn);
+                verify_type(sourceVar.type, variable_type::real, inGroupConn);
+                sourceVariables.push_back(sourceVar);
             }
             auto sumConnection = std::make_shared<sum_connection>(sourceVariables, targetVariable);
             execution.add_connection(sumConnection);
