@@ -20,15 +20,16 @@
 class test_manipulator : public cse::manipulator
 {
 public:
-    test_manipulator(cse::variable_id variable)
+    explicit test_manipulator(cse::variable_id variable)
         : variable_(variable)
+        , acc_(0.0)
     {
         double slope = 1.0;
-        double acc = 0.0;
-        double stepSize = 0.2;
-        f_ = std::function<double(double)>([&](double original) {
-            acc += slope * stepSize;
-            return original + acc;
+        double* accumulator = &acc_;
+        double stepSize = 0.1;
+        f_ = std::function<double(double)>([=](double original) {
+            *accumulator += slope * stepSize;
+            return original + *accumulator;
         });
     }
 
@@ -41,21 +42,23 @@ public:
     {
     }
 
-    void step_commencing(cse::time_point currentTime) override
+    void step_commencing(cse::time_point) override
     {
-        if (currentTime <= startTime_) {
+        if (!initialized_) {
             man_->expose_for_setting(variable_.type, variable_.reference);
             man_->set_real_input_modifier(variable_.reference, f_);
+            initialized_ = true;
         }
     }
 
     ~test_manipulator() noexcept override = default;
 
 private:
-    cse::time_point startTime_ = cse::to_time_point(2.0);
     cse::manipulable* man_;
     cse::variable_id variable_;
     std::function<double(double)> f_;
+    bool initialized_ = false;
+    double acc_;
 };
 
 int main()
@@ -65,7 +68,7 @@ int main()
         cse::log::set_global_output_level(cse::log::debug);
 
         constexpr cse::time_point startTime = cse::to_time_point(0.0);
-        constexpr cse::duration stepSize = cse::to_duration(1.0);
+        constexpr cse::duration stepSize = cse::to_duration(0.1);
 
         auto execution = cse::execution(startTime, std::make_unique<cse::fixed_step_algorithm>(stepSize));
 
@@ -76,24 +79,22 @@ int main()
         auto simIndex = execution.add_slave(
             cse::make_pseudo_async(
                 std::make_unique<mock_slave>()),
-            "slave one",
-            cse::to_duration(2.0));
+            "mock");
 
-        auto input = cse::variable_id{simIndex, cse::variable_type::real, 1};
-        auto output = cse::variable_id{simIndex, cse::variable_type::real, 0};
+        const auto input = cse::variable_id{simIndex, cse::variable_type::real, 1};
+        const auto output = cse::variable_id{simIndex, cse::variable_type::real, 0};
 
         auto manipulator = std::make_shared<test_manipulator>(input);
 
         execution.add_manipulator(manipulator);
 
-
-        double expectedValues[] = {1.0, 1.0, 3.0, 3.0, 5.0, 5.0};
+        double expectedValues[] = {1.1, 1.2, 1.3, 1.4, 1.5, 1.6};
         for (double expected : expectedValues) {
             execution.step();
             double value = -1.0;
             observer->get_real(output.simulator, gsl::make_span(&output.reference, 1), gsl::make_span(&value, 1));
-            //            REQUIRE(expected == value);
             std::cout << "Expected value: " << expected << ", actual value: " << value << std::endl;
+            REQUIRE(std::fabs(expected - value) < 1.0e-9);
         }
 
     } catch (const std::exception& e) {

@@ -139,6 +139,15 @@ public:
     std::pair<gsl::span<value_reference>, gsl::span<const T>> modify_and_get()
     {
         if (!hasRunModifiers_) {
+            for (const auto& entry : modifiers_) {
+                const auto ref = entry.first;
+                if (exposedVariables_.at(ref).arrayIndex < 0) {
+                    exposedVariables_.at(ref).arrayIndex = references_.size();
+                    assert(references_.size() == values_.size());
+                    references_.emplace_back(ref);
+                    values_.emplace_back(exposedVariables_.at(ref).lastValue);
+                }
+            }
             assert(references_.size() == values_.size());
             for (std::size_t i = 0; i < references_.size(); ++i) {
                 const auto iterator = modifiers_.find(references_[i]);
