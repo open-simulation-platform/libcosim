@@ -6,11 +6,12 @@ set(tests
     "file_observer_logging_test"
     "file_observer_logging_from_config_test"
     "last_value_observer_test"
+    "monitor_modified_variables_test"
     "multi_connections_test"
     "multi_fixed_step_algorithm_test"
+    "ramp_modifier_test"
     "time_series_observer_test"
     "trend_buffer_test"
-    "monitor_modified_variables_test"
     "scenario_manager_test"
     "synchronized_xy_series_test"
 )
