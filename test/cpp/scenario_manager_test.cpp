@@ -46,11 +46,11 @@ int main()
         constexpr bool input = true;
         constexpr bool output = false;
 
-        auto realModifier1 = cse::scenario::real_modifier{[](double original) { return original + 1.001; }};
+        auto realModifier1 = cse::scenario::real_modifier{[](double original, cse::duration) { return original + 1.001; }};
         auto realAction1 = cse::scenario::variable_action{simIndex, 1, realModifier1, input};
         auto realEvent1 = cse::scenario::event{cse::to_time_point(0.5), realAction1};
 
-        auto realModifier2 = cse::scenario::real_modifier{[](double /*original*/) { return -1.0; }};
+        auto realModifier2 = cse::scenario::real_modifier{[](double /*original*/, cse::duration) { return -1.0; }};
         auto realAction2 = cse::scenario::variable_action{simIndex, 0, realModifier2, output};
         auto realEvent2 = cse::scenario::event{cse::to_time_point(0.2), realAction2};
 
@@ -58,11 +58,11 @@ int main()
         auto realAction3 = cse::scenario::variable_action{simIndex, 0, realModifier3, output};
         auto realEvent3 = cse::scenario::event{cse::to_time_point(0.3), realAction3};
 
-        auto intModifier1 = cse::scenario::integer_modifier{[](int /*original*/) { return 2; }};
+        auto intModifier1 = cse::scenario::integer_modifier{[](int /*original*/, cse::duration) { return 2; }};
         auto intAction1 = cse::scenario::variable_action{simIndex, 1, intModifier1, input};
         auto intEvent1 = cse::scenario::event{cse::to_time_point(0.65), intAction1};
 
-        auto intModifier2 = cse::scenario::integer_modifier{[](int /*original*/) { return 5; }};
+        auto intModifier2 = cse::scenario::integer_modifier{[](int /*original*/, cse::duration) { return 5; }};
         auto intAction2 = cse::scenario::variable_action{simIndex, 0, intModifier2, output};
         auto intEvent2 = cse::scenario::event{cse::to_time_point(0.8), intAction2};
 

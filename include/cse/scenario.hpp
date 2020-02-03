@@ -20,28 +20,28 @@ namespace scenario
 struct real_modifier
 {
     /// A function which may be called any number of times. Can be `nullptr`.
-    std::function<double(double)> f;
+    std::function<double(double, duration)> f;
 };
 
 /// The modification of the value of a variable with type `integer`.
 struct integer_modifier
 {
     /// A function which may be called any number of times. Can be `nullptr`.
-    std::function<int(int)> f;
+    std::function<int(int, duration)> f;
 };
 
 /// The modification of the value of a variable with type `boolean`.
 struct boolean_modifier
 {
     /// A function which may be called any number of times. Can be `nullptr`.
-    std::function<bool(bool)> f;
+    std::function<bool(bool, duration)> f;
 };
 
 /// The modification of the value of a variable with type `string`.
 struct string_modifier
 {
     /// A function which may be called any number of times. Can be `nullptr`.
-    std::function<std::string(std::string_view)> f;
+    std::function<std::string(std::string_view, duration)> f;
 };
 
 /// A struct specifying a variable and the modification of its value.

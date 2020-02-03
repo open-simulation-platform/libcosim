@@ -20,15 +20,14 @@
 class test_manipulator : public cse::manipulator
 {
 public:
-    explicit test_manipulator(cse::variable_id variable)
+    explicit test_manipulator(cse::variable_id variable, cse::time_point startTime)
         : variable_(variable)
         , acc_(0.0)
     {
         double slope = 1.0;
         double* accumulator = &acc_;
-        double stepSize = 0.1;
-        f_ = std::function<double(double)>([=](double original) {
-            *accumulator += slope * stepSize;
+        f_ = std::function<double(double, cse::duration)>([=](double original, cse::duration deltaT) {
+            *accumulator += slope * cse::to_double_duration(deltaT, startTime);
             return original + *accumulator;
         });
     }
@@ -56,7 +55,7 @@ public:
 private:
     cse::manipulable* man_;
     cse::variable_id variable_;
-    std::function<double(double)> f_;
+    std::function<double(double, cse::duration)> f_;
     bool initialized_ = false;
     double acc_;
 };
@@ -84,7 +83,7 @@ int main()
         const auto input = cse::variable_id{simIndex, cse::variable_type::real, 1};
         const auto output = cse::variable_id{simIndex, cse::variable_type::real, 0};
 
-        auto manipulator = std::make_shared<test_manipulator>(input);
+        auto manipulator = std::make_shared<test_manipulator>(input, startTime);
 
         execution.add_manipulator(manipulator);
 
