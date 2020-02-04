@@ -92,12 +92,8 @@ public:
         functions_[i].fun = f;
     }
 
-    void connect_variables(
-        variable_id output,
-        variable_id input,
-        bool inputAlreadyConnected)
+    void connect_variables(variable_id output, variable_id input)
     {
-        if (inputAlreadyConnected) disconnect_variable(input);
         auto& sourceSimInfo = simulators_.at(output.simulator);
         auto& targetSimInfo = simulators_.at(input.simulator);
         sourceSimInfo.sim->expose_for_getting(output.type, output.reference);
@@ -105,23 +101,15 @@ public:
         sourceSimInfo.outgoingSimConnections.push_back({output, input});
     }
 
-    void connect_variables(
-        variable_id output,
-        function_io_id input,
-        bool inputAlreadyConnected)
+    void connect_variables(variable_id output, function_io_id input)
     {
-        if (inputAlreadyConnected) disconnect_variable(input);
         auto& simInfo = simulators_.at(output.simulator);
         simInfo.sim->expose_for_getting(output.type, output.reference);
         simInfo.outgoingFunConnections.push_back({output, input});
     }
 
-    void connect_variables(
-        function_io_id output,
-        variable_id input,
-        bool inputAlreadyConnected)
+    void connect_variables(function_io_id output, variable_id input)
     {
-        if (inputAlreadyConnected) disconnect_variable(input);
         auto& funInfo = functions_.at(output.function);
         auto& simInfo = simulators_.at(input.simulator);
         simInfo.sim->expose_for_setting(input.type, input.reference);
@@ -509,22 +497,19 @@ void fixed_step_algorithm::add_function(function_index i, function* f)
     pimpl_->add_function(i, f);
 }
 
-void fixed_step_algorithm::connect_variables(
-    variable_id output, variable_id input, bool inputAlreadyConnected)
+void fixed_step_algorithm::connect_variables(variable_id output, variable_id input)
 {
-    pimpl_->connect_variables(output, input, inputAlreadyConnected);
+    pimpl_->connect_variables(output, input);
 }
 
-void fixed_step_algorithm::connect_variables(
-    variable_id output, function_io_id input, bool inputAlreadyConnected)
+void fixed_step_algorithm::connect_variables(variable_id output, function_io_id input)
 {
-    pimpl_->connect_variables(output, input, inputAlreadyConnected);
+    pimpl_->connect_variables(output, input);
 }
 
-void fixed_step_algorithm::connect_variables(
-    function_io_id output, variable_id input, bool inputAlreadyConnected)
+void fixed_step_algorithm::connect_variables(function_io_id output, variable_id input)
 {
-    pimpl_->connect_variables(output, input, inputAlreadyConnected);
+    pimpl_->connect_variables(output, input);
 }
 
 void fixed_step_algorithm::disconnect_variable(variable_id input)

@@ -61,9 +61,9 @@ public:
     function_type_description description() const override
     {
         return detail::vector_sum_description(
-            inputs_.size(),
+            static_cast<int>(inputs_.size()),
             std::is_integral_v<T> ? variable_type::integer : variable_type::real,
-            inputs_.front().size());
+            static_cast<int>(inputs_.front().size()));
     }
 
     void set_real_io(

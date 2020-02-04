@@ -270,14 +270,11 @@ private:
         validate_variable(output, variable_causality::output);
         validate_variable(input, variable_causality::input);
 
-        const auto existing = connections.find(input);
-        const auto hasExisting = existing != connections.end();
-        algorithm_->connect_variables(output, input, hasExisting);
-        if (hasExisting) {
-            existing->second = output;
-        } else {
-            connections.emplace(input, output);
+        if (connections.count(input)) {
+            throw std::logic_error("Input variable already connected");
         }
+        algorithm_->connect_variables(output, input);
+        connections.emplace(input, output);
     }
 
     void validate_variable(variable_id variable, variable_causality causality)

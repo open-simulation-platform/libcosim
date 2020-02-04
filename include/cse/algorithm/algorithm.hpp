@@ -87,16 +87,8 @@ public:
      *      A reference to the output variable.
      *  \param input
      *      A reference to the input variable.
-     *  \param inputAlreadyConnected
-     *      Whether the input has already been connected in a previous
-     *      `connect_variables()` call. If so, the previous connection must
-     *      be broken. This is meant as an aid to subclass implementors,
-     *      saving them from having to perform this check on every connection.
      */
-    virtual void connect_variables(
-        variable_id output,
-        variable_id input,
-        bool inputAlreadyConnected) = 0;
+    virtual void connect_variables(variable_id output, variable_id input) = 0;
 
     /**
      *  Connects a simulator output variable to a function input variable.
@@ -109,16 +101,8 @@ public:
      *      A reference to the output variable.
      *  \param input
      *      A reference to the input variable.
-     *  \param inputAlreadyConnected
-     *      Whether the input has already been connected in a previous
-     *      `connect_variables()` call. If so, the previous connection must
-     *      be broken. This is meant as an aid to subclass implementors,
-     *      saving them from having to perform this check on every connection.
      */
-    virtual void connect_variables(
-        variable_id output,
-        function_io_id input,
-        bool inputAlreadyConnected) = 0;
+    virtual void connect_variables(variable_id output, function_io_id input) = 0;
 
     /**
      *  Connects a function output variable to a simulator input variable.
@@ -131,16 +115,8 @@ public:
      *      A reference to the output variable.
      *  \param input
      *      A reference to the input variable.
-     *  \param inputAlreadyConnected
-     *      Whether the input has already been connected in a previous
-     *      `connect_variables()` call. If so, the previous connection must
-     *      be broken. This is meant as an aid to subclass implementors,
-     *      saving them from having to perform this check on every connection.
      */
-    virtual void connect_variables(
-        function_io_id output,
-        variable_id input,
-        bool inputAlreadyConnected) = 0;
+    virtual void connect_variables(function_io_id output, variable_id input) = 0;
 
     /// Breaks any previously established connection to input variable `input`.
     virtual void disconnect_variable(variable_id input) = 0;

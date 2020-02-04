@@ -36,9 +36,9 @@ public:
     void add_simulator(simulator_index i, simulator* s, duration stepSizeHint) override;
     void remove_simulator(simulator_index i) override;
     void add_function(function_index i, function* f) override;
-    void connect_variables(variable_id output, variable_id input, bool inputAlreadyConnected) override;
-    void connect_variables(variable_id output, function_io_id input, bool inputAlreadyConnected) override;
-    void connect_variables(function_io_id output, variable_id input, bool inputAlreadyConnected) override;
+    void connect_variables(variable_id output, variable_id input) override;
+    void connect_variables(variable_id output, function_io_id input) override;
+    void connect_variables(function_io_id output, variable_id input) override;
     void disconnect_variable(variable_id input) override;
     void disconnect_variable(function_io_id input) override;
     void setup(time_point startTime, std::optional<time_point> stopTime) override;
