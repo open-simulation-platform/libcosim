@@ -66,13 +66,9 @@ public:
             inputs_.front().size());
     }
 
-#ifdef __GNUC__
-#    pragma GCC diagnostic push
-#    pragma GCC diagnostic ignored "-Wunused-but-set-parameter"
-#endif
     void set_real_io(
-        const function_io_reference& reference,
-        double value) override
+        [[maybe_unused]] const function_io_reference& reference,
+        [[maybe_unused]] double value) override
     {
         if constexpr (std::is_same_v<T, double>) {
             if (reference.group == 0 && reference.io == 0) {
@@ -84,8 +80,8 @@ public:
     }
 
     void set_integer_io(
-        const function_io_reference& reference,
-        int value) override
+        [[maybe_unused]] const function_io_reference& reference,
+        [[maybe_unused]] int value) override
     {
         if constexpr (std::is_same_v<T, int>) {
             if (reference.group == 0 && reference.io == 0) {
@@ -96,7 +92,7 @@ public:
         throw std::out_of_range("Invalid function variable reference");
     }
 
-    double get_real_io(const function_io_reference& reference) const override
+    double get_real_io([[maybe_unused]] const function_io_reference& reference) const override
     {
         if constexpr (std::is_same_v<T, double>) {
             if (reference.group == 0 && reference.io == 0) {
@@ -109,7 +105,7 @@ public:
         throw std::out_of_range("Invalid function variable reference");
     }
 
-    int get_integer_io(const function_io_reference& reference) const override
+    int get_integer_io([[maybe_unused]] const function_io_reference& reference) const override
     {
         if constexpr (std::is_same_v<T, int>) {
             if (reference.group == 0 && reference.io == 0) {
@@ -121,9 +117,6 @@ public:
         }
         throw std::out_of_range("Invalid function variable reference");
     }
-#ifdef __GNUC__
-#    pragma GCC diagnostic pop
-#endif
 
     void calculate() override
     {

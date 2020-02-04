@@ -22,18 +22,18 @@ enum linear_transformation_parameters
 function_type_description linear_transformation_description()
 {
     return {
-        "LinearTransformation",
+        "LinearTransformation"s,
         {
             // parameters (in the same order as linear_transformation_parameters enum!)
             function_parameter_description{
-                "offset", // name
+                "offset"s, // name
                 function_parameter_type::real, // type
                 0.0, // default_value
                 {}, // min_value
                 {} // max_value
             },
             function_parameter_description{
-                "factor", // name
+                "factor"s, // name
                 function_parameter_type::real, // type
                 1.0, // default_value
                 {}, // min_value
@@ -43,7 +43,7 @@ function_type_description linear_transformation_description()
         {
             // io_groups
             function_io_group_description{
-                "in", // name
+                "in"s, // name
                 1, // count
                 {
                     // ios
@@ -55,7 +55,7 @@ function_type_description linear_transformation_description()
                     },
                 }},
             function_io_group_description{
-                "out", // name
+                "out"s, // name
                 1, // count
                 {
                     // ios

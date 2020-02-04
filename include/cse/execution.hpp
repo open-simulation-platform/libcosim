@@ -23,7 +23,7 @@ namespace cse
 /// An index which identifies a sub-simulator in an execution.
 using simulator_index = int;
 
-/// An index which identifies a sub-simulator in an execution.
+/// An index which identifies a function in an execution.
 using function_index = int;
 
 /// An number which identifies a specific time step in an execution.
@@ -128,7 +128,6 @@ class algorithm;
 class observer;
 class manipulator;
 class simulator;
-class connection;
 
 
 /**

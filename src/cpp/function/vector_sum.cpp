@@ -27,21 +27,21 @@ function_type_description vector_sum_description(
         {
             // parameters (in the same order as vector_sum_parameters enum!)
             function_parameter_description{
-                "inputCount", // name
+                "inputCount"s, // name
                 function_parameter_type::integer, // type
                 1, // default_value
                 1, // min_value
                 {} // max_value
             },
             function_parameter_description{
-                "numericType", // name
+                "numericType"s, // name
                 function_parameter_type::type, // type
                 variable_type::real, // default_value
                 {}, // min_value
                 {} // max_value
             },
             function_parameter_description{
-                "dimension", // name
+                "dimension"s, // name
                 function_parameter_type::integer, // type
                 1, // default_value
                 1, // min_value
@@ -51,7 +51,7 @@ function_type_description vector_sum_description(
         {
             // io_groups
             function_io_group_description{
-                "in", // name
+                "in"s, // name
                 inputCount, // count
                 {
                     // ios
@@ -63,7 +63,7 @@ function_type_description vector_sum_description(
                     },
                 }},
             function_io_group_description{
-                "out", // name
+                "out"s, // name
                 1, // count
                 {
                     // ios
