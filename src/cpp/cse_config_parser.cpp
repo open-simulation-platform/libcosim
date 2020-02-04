@@ -793,9 +793,10 @@ void connect_signals(
                 if (targets.size() > 1) {
                     throw std::runtime_error("Cannot connect sum to multiple targets");
                 }
+                const auto sourceCount = static_cast<int>(sources.size());
                 const auto funID = execution.add_function(
-                    std::make_shared<vector_sum_function<double>>(sources.size(), 1));
-                for (int i = 0; i < static_cast<int>(sources.size()); ++i) {
+                    std::make_shared<vector_sum_function<double>>(sourceCount, 1));
+                for (int i = 0; i < sourceCount; ++i) {
                     execution.connect_variables(
                         sources[i],
                         function_io_id{funID, variable_type::real, function_io_reference{0, i, 0, 0}});
