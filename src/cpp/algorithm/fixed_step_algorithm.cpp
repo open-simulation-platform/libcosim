@@ -305,15 +305,15 @@ private:
 
     void update_function_decimation_factor(function_info& f)
     {
-        // The decimation factor of a function is equal to the greatest one
-        // among the simulators that receive its results.
-        int decimationFactor = 1;
-        for (const auto& c : f.outgoingSimConnections) {
-            decimationFactor = std::max(
-                decimationFactor,
-                simulators_.at(c.target.simulator).decimationFactor);
-        }
-        f.decimationFactor = decimationFactor;
+        f.decimationFactor = std::accumulate(
+            f.outgoingSimConnections.begin(),
+            f.outgoingSimConnections.end(),
+            1,
+            [&](int current, const auto& connection) {
+                return std::lcm(
+                    current,
+                    simulators_.at(connection.target.simulator).decimationFactor);
+            });
     }
 
     template<typename F>
