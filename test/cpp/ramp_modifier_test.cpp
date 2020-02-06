@@ -20,17 +20,18 @@
 class test_manipulator : public cse::manipulator
 {
 public:
+    test_manipulator(const test_manipulator&) = delete;
+    test_manipulator& operator=(const test_manipulator&) = delete;
+
     explicit test_manipulator(cse::variable_id variable, cse::time_point startTime, bool input)
         : variable_(variable)
-        , acc_(0.0)
         , input_(input)
     {
         double slope = 1.0;
-        double* accumulator = &acc_;
         f_ = std::function<double(double, cse::duration)>(
-            [=](double original, cse::duration deltaT) {
-                *accumulator += slope * cse::to_double_duration(deltaT, startTime);
-                return original + *accumulator;
+            [=, acc = 0.0](double original, cse::duration deltaT) mutable {
+                acc += slope * cse::to_double_duration(deltaT, startTime);
+                return original + acc;
             });
     }
 
@@ -64,7 +65,6 @@ private:
     cse::variable_id variable_;
     std::function<double(double, cse::duration)> f_;
     bool initialized_ = false;
-    double acc_;
     bool input_;
 };
 
