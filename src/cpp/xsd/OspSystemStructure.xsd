@@ -46,20 +46,6 @@
                     </xs:all>
                 </xs:complexType>
             </xs:element>
-            <xs:element name="SumConnection" minOccurs="0" maxOccurs="unbounded">
-                <xs:complexType>
-                    <xs:sequence>
-                        <xs:element name="Sources">
-                            <xs:complexType>
-                                <xs:sequence>
-                                    <xs:element name="Source" maxOccurs="unbounded" type="osp:variableEndpoint"/>
-                                </xs:sequence>
-                            </xs:complexType>
-                        </xs:element>
-                        <xs:element name="Target" type="osp:variableEndpoint"/>
-                    </xs:sequence>
-                </xs:complexType>
-            </xs:element>
         </xs:sequence>
     </xs:complexType>
     <xs:complexType name="variableEndpoint">
@@ -118,59 +104,26 @@
     </xs:complexType>
     <xs:complexType name="functions">
         <xs:sequence>
-            <xs:element name="Function" minOccurs="0" maxOccurs="unbounded">
-                <xs:complexType>
-                    <xs:sequence>
-                        <xs:element name="Parameters" minOccurs="0">
-                            <xs:complexType>
-                                <xs:sequence>
-                                    <xs:element name="Parameter" maxOccurs="unbounded">
-                                        <xs:complexType>
-                                            <xs:attribute name="name" type="xs:string" use="required"/>
-                                            <xs:attribute name="value" type="xs:string" use="required"/>
-                                            <xs:attribute name="type" type="xs:string" use="required"/>
-                                        </xs:complexType>
-                                    </xs:element>
-                                </xs:sequence>
-                            </xs:complexType>
-                        </xs:element>
-                        <xs:element name="Signals">
-                            <xs:complexType>
-                                <xs:sequence>
-                                    <xs:element name="Signal" maxOccurs="unbounded">
-                                        <xs:complexType>
-                                            <xs:attribute name="name" type="xs:string" use="required"/>
-                                            <xs:attribute name="type" type="xs:string" use="required"/>
-                                            <xs:attribute name="causality" type="xs:string" use="required"/>
-                                        </xs:complexType>
-                                    </xs:element>
-                                </xs:sequence>
-                            </xs:complexType>
-                        </xs:element>
-                        <xs:element name="SignalGroups" minOccurs="0">
-                            <xs:complexType>
-                                <xs:sequence>
-                                    <xs:element name="SignalGroup" maxOccurs="unbounded">
-                                        <xs:complexType>
-                                            <xs:sequence>
-                                                <xs:element name="Signal" maxOccurs="unbounded">
-                                                    <xs:complexType>
-                                                        <xs:attribute name="name" type="xs:string" use="required"/>
-                                                    </xs:complexType>
-                                                </xs:element>
-                                            </xs:sequence>
-                                            <xs:attribute name="name" use="required"/>
-                                        </xs:complexType>
-                                    </xs:element>
-                                </xs:sequence>
-                            </xs:complexType>
-                        </xs:element>
-                    </xs:sequence>
-                    <xs:attribute name="name" type="xs:string" use="required"/>
-                    <xs:attribute name="type" type="xs:string" use="required"/>
-                </xs:complexType>
-            </xs:element>
+            <xs:element name="LinearTransformation" type="osp:linearTransformationFunction" minOccurs="0"
+                        maxOccurs="unbounded"/>
+            <xs:element name="Sum" type="osp:sumFunction" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="VectorSum" type="osp:vectorSumFunction" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
     </xs:complexType>
+    <xs:complexType name="linearTransformationFunction">
+        <xs:attribute name="name" use="required" type="xs:string"/>
+        <xs:attribute name="factor" type="xs:double"/>
+        <xs:attribute name="offset" type="xs:double"/>
+    </xs:complexType>
+    <xs:complexType name="sumFunction">
+        <xs:attribute name="name" use="required" type="xs:string"/>
+        <xs:attribute name="inputCount" use="required" type="xs:positiveInteger"/>
+    </xs:complexType>
+    <xs:complexType name="vectorSumFunction">
+        <xs:attribute name="name" use="required" type="xs:string"/>
+        <xs:attribute name="inputCount" use="required" type="xs:positiveInteger"/>
+        <xs:attribute name="dimension" use="required" type="xs:positiveInteger"/>
+    </xs:complexType>
+
 
 </xs:schema>

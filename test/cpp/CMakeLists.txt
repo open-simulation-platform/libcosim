@@ -13,6 +13,7 @@ set(tests
     "monitor_modified_variables_test"
     "scenario_manager_test"
     "synchronized_xy_series_test"
+    "vector_sum_test"
 )
 
 if(CSECORE_WITH_FMUPROXY AND CSECORE_TEST_FMUPROXY)

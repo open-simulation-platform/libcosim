@@ -8,7 +8,6 @@
 #include <cse/log/logger.hpp>
 
 #include <boost/lexical_cast.hpp>
-#include <gsl/gsl_util>
 #include <xercesc/dom/DOM.hpp>
 #include <xercesc/framework/MemBufInputSource.hpp>
 #include <xercesc/framework/Wrapper4InputSource.hpp>
@@ -108,13 +107,6 @@ public:
 
     const std::vector<Simulator>& get_elements() const;
 
-    struct Parameter
-    {
-        std::string name;
-        cse::variable_type type;
-        scalar_value value;
-    };
-
     struct Signal
     {
         std::string name;
@@ -128,16 +120,37 @@ public:
         std::vector<std::string> signals;
     };
 
-    struct Function
+    struct LinearTransformationFunction
     {
-        std::string type;
         std::string name;
-        std::vector<Parameter> parameters;
-        std::vector<Signal> signals;
-        std::vector<SignalGroup> signalGroups;
+        double factor;
+        double offset;
+        Signal in;
+        Signal out;
     };
 
-    const std::unordered_map<std::string, Function>& get_functions() const;
+    struct SumFunction
+    {
+        std::string name;
+        int inputCount;
+        std::vector<Signal> ins;
+        Signal out;
+    };
+
+    struct VectorSumFunction
+    {
+        std::string name;
+        int inputCount;
+        int dimension;
+        std::vector<Signal> ins;
+        std::vector<Signal> outs;
+        std::vector<SignalGroup> inGroups;
+        SignalGroup outGroup;
+    };
+
+    const std::unordered_map<std::string, LinearTransformationFunction>& get_linear_transformation_functions() const;
+    const std::unordered_map<std::string, SumFunction>& get_sum_functions() const;
+    const std::unordered_map<std::string, VectorSumFunction>& get_vector_sum_functions() const;
 
     struct VariableEndpoint
     {
@@ -173,7 +186,9 @@ private:
     SystemDescription systemDescription_;
     SimulationInformation simulationInformation_;
     std::vector<Simulator> simulators_;
-    std::unordered_map<std::string, Function> functions_;
+    std::unordered_map<std::string, LinearTransformationFunction> linearTransformationFunctions_;
+    std::unordered_map<std::string, SumFunction> sumFunctions_;
+    std::unordered_map<std::string, VectorSumFunction> vectorSumFunctions_;
     std::vector<VariableConnection> variableConnections_;
     std::vector<VariableConnection> variableGroupConnections_;
     std::vector<SignalConnection> signalConnections_;
@@ -185,36 +200,17 @@ private:
 namespace
 {
 
-variable_type to_variable_type(const std::string& str)
+template<typename T>
+T attribute_or(xercesc::DOMElement* el, const char* attributeName, T defaultValue)
 {
-    if ("real" == str) {
-        return cse::variable_type::real;
+    auto node = tc(el->getAttribute(tc(attributeName).get()));
+    if (*node) {
+        return boost::lexical_cast<T>(node);
+    } else {
+        return defaultValue;
     }
-    if ("integer" == str) {
-        return cse::variable_type::integer;
-    }
-    if ("boolean" == str) {
-        return cse::variable_type::boolean;
-    }
-    if ("string" == str) {
-        return cse::variable_type::string;
-    }
-    if ("enumeration" == str) {
-        return cse::variable_type::enumeration;
-    }
-    throw std::runtime_error("Failed to parse variable type: " + str);
 }
 
-variable_causality to_variable_causality(const std::string& str)
-{
-    if ("input" == str) {
-        return cse::variable_causality::input;
-    }
-    if ("output" == str) {
-        return cse::variable_causality::output;
-    }
-    throw std::runtime_error("Don't know how to handle variable causality: " + str);
-}
 } // namespace
 
 cse_config_parser::cse_config_parser(
@@ -310,68 +306,72 @@ cse_config_parser::cse_config_parser(
     if (functionsElement != nullptr) {
         for (auto functionElement = functionsElement->getFirstElementChild(); functionElement != nullptr; functionElement = functionElement->getNextElementSibling()) {
 
-            Function function;
 
-            std::string functionName = tc(functionElement->getAttribute(tc("name").get())).get();
-            function.name = functionName;
-            std::string type = tc(functionElement->getAttribute(tc("type").get())).get();
-            function.type = type;
+            const auto functionNodeName = std::string(tc(functionElement->getNodeName()).get());
+            const auto functionName = std::string(tc(functionElement->getAttribute(tc("name").get())).get());
+            if ("LinearTransformation" == functionNodeName) {
+                LinearTransformationFunction function;
+                function.name = functionName;
 
-            const auto parametersElement = static_cast<xercesc::DOMElement*>(functionElement->getElementsByTagName(tc("Parameters").get())->item(0));
-            if (parametersElement) {
-                for (auto parameterElement = parametersElement->getFirstElementChild(); parameterElement != nullptr; parameterElement = parameterElement->getNextElementSibling()) {
+                function.factor = attribute_or<double>(functionElement, "factor", 1.0);
+                function.offset = attribute_or<double>(functionElement, "offset", 0.0);
 
-                    Parameter p = function.parameters.emplace_back();
-                    p.name = tc(parameterElement->getAttribute(tc("name").get())).get();
-                    std::string typeStr = tc(parameterElement->getAttribute(tc("type").get())).get();
-                    p.type = to_variable_type(typeStr);
-                    std::string varValue = tc(parameterElement->getAttribute(tc("value").get())).get();
+                function.in = {"in", variable_type::real, variable_causality::input};
+                function.out = {"out", variable_type::real, variable_causality::output};
 
-                    switch (p.type) {
-                        case variable_type::real:
-                            p.value = boost::lexical_cast<double>(varValue);
-                            break;
-                        case variable_type::integer:
-                            p.value = boost::lexical_cast<int>(varValue);
-                            break;
-                        case variable_type::boolean:
-                            p.value = parse_boolean_value(varValue);
-                            break;
-                        case variable_type::string:
-                            p.value = varValue;
-                            break;
-                        default:
-                            std::ostringstream oss;
-                            oss << "Can't parse parameter value " << varValue
-                                << " into type " << p.type;
-                            throw std::runtime_error(oss.str());
+                linearTransformationFunctions_[functionName] = function;
+
+            } else if ("Sum" == functionNodeName) {
+                SumFunction function;
+                function.name = functionName;
+
+                int inputCount = boost::lexical_cast<int>(tc(functionElement->getAttribute(tc("inputCount").get())));
+                function.inputCount = inputCount;
+
+                for (int i = 0; i < inputCount; i++) {
+                    const std::string sigName = "in[" + std::to_string(i) + "]";
+                    function.ins.push_back({sigName, variable_type::real, variable_causality::input});
+                }
+                function.out = {"out", variable_type::real, variable_causality::output};
+
+                sumFunctions_[functionName] = function;
+
+            } else if ("VectorSum" == functionNodeName) {
+                VectorSumFunction function;
+                function.name = functionName;
+
+                int inputCount = boost::lexical_cast<int>(tc(functionElement->getAttribute(tc("inputCount").get())));
+                function.inputCount = inputCount;
+                int dimension = boost::lexical_cast<int>(tc(functionElement->getAttribute(tc("dimension").get())));
+                function.dimension = inputCount;
+
+                for (int i = 0; i < inputCount; i++) {
+                    const std::string sgName = "in[" + std::to_string(i) + "]";
+                    SignalGroup sg;
+                    sg.name = sgName;
+                    for (int j = 0; j < dimension; j++) {
+                        const std::string sigName = sgName + "[" + std::to_string(j) + "]";
+                        function.ins.push_back({sigName, variable_type::real, variable_causality::input});
+                        sg.signals.emplace_back(sigName);
                     }
+                    function.inGroups.push_back(std::move(sg));
                 }
-            }
-            const auto signalsElement = static_cast<xercesc::DOMElement*>(functionElement->getElementsByTagName(tc("Signals").get())->item(0));
-            if (signalsElement) {
-                for (auto signalElement = signalsElement->getFirstElementChild(); signalElement != nullptr; signalElement = signalElement->getNextElementSibling()) {
-                    std::string name = tc(signalElement->getAttribute(tc("name").get())).get();
-                    std::string typeStr = tc(signalElement->getAttribute(tc("type").get())).get();
-                    auto sigType = to_variable_type(typeStr);
-                    std::string causalityStr = tc(signalElement->getAttribute(tc("causality").get())).get();
-                    auto sigCausality = to_variable_causality(causalityStr);
+                SignalGroup sg;
+                sg.name = "out";
+                for (int j = 0; j < dimension; j++) {
+                    const std::string sigName = "out[" + std::to_string(j) + "]";
+                    function.outs.push_back({sigName, variable_type::real, variable_causality::output});
+                    sg.signals.emplace_back(sigName);
+                }
+                function.outGroup = sg;
 
-                    function.signals.push_back({name, sigType, sigCausality});
-                }
-            }
+                vectorSumFunctions_[functionName] = function;
 
-            const auto signalGroupsElement = static_cast<xercesc::DOMElement*>(functionElement->getElementsByTagName(tc("SignalGroups").get())->item(0));
-            if (signalGroupsElement) {
-                for (auto signalGroupElement = signalGroupsElement->getFirstElementChild(); signalGroupElement != nullptr; signalGroupElement = signalGroupElement->getNextElementSibling()) {
-                    SignalGroup signalGroup = function.signalGroups.emplace_back();
-                    signalGroup.name = tc(signalGroupElement->getAttribute(tc("name").get())).get();
-                    for (auto signalGroupSignalElement = signalGroupElement->getFirstElementChild(); signalGroupSignalElement != nullptr; signalGroupSignalElement = signalGroupSignalElement->getNextElementSibling()) {
-                        signalGroup.signals.emplace_back(tc(signalGroupSignalElement->getAttribute(tc("name").get())).get());
-                    }
-                }
+            } else {
+                std::ostringstream oss;
+                oss << "Found unknown function type " << functionNodeName << " with name " << functionName;
+                throw std::runtime_error(oss.str());
             }
-            functions_[functionName] = std::move(function);
         }
     }
 
@@ -473,9 +473,23 @@ const std::vector<cse_config_parser::Simulator>& cse_config_parser::get_elements
 {
     return simulators_;
 }
-const std::unordered_map<std::string, cse_config_parser::Function>& cse_config_parser::get_functions() const
+
+const std::unordered_map<std::string, cse_config_parser::LinearTransformationFunction>&
+cse_config_parser::get_linear_transformation_functions() const
 {
-    return functions_;
+    return linearTransformationFunctions_;
+}
+
+const std::unordered_map<std::string, cse_config_parser::SumFunction>&
+cse_config_parser::get_sum_functions() const
+{
+    return sumFunctions_;
+}
+
+const std::unordered_map<std::string, cse_config_parser::VectorSumFunction>&
+cse_config_parser::get_vector_sum_functions() const
+{
+    return vectorSumFunctions_;
 }
 
 const std::vector<cse_config_parser::VariableConnection>& cse_config_parser::get_variable_connections() const
@@ -551,7 +565,6 @@ struct variable_group_description
 
 struct extended_model_description
 {
-
     explicit extended_model_description(const boost::filesystem::path& ospModelDescription)
     {
         xercesc::XMLPlatformUtils::Initialize();
@@ -586,6 +599,9 @@ struct extended_model_description
     std::unordered_map<std::string, variable_group_description> variableGroups;
 };
 
+namespace
+{
+
 std::pair<variable_id, variable_causality> get_variable(
     const std::unordered_map<std::string, slave_info>& slaves,
     const std::string& element,
@@ -594,7 +610,7 @@ std::pair<variable_id, variable_causality> get_variable(
     auto slaveIt = slaves.find(element);
     if (slaveIt == slaves.end()) {
         std::ostringstream oss;
-        oss << "Cannot find slave: " << element;
+        oss << "Cannot find simulator: " << element;
         throw std::out_of_range(oss.str());
     }
     auto slave = slaveIt->second;
@@ -608,13 +624,54 @@ std::pair<variable_id, variable_causality> get_variable(
     return {{slave.index, variable.type, variable.reference}, variable.causality};
 }
 
+cse_config_parser::SignalConnection find_signal_connection(
+    const std::vector<cse_config_parser::SignalConnection>& signalConnections,
+    const std::string& functionName,
+    const std::string& signalName)
+{
+    auto it = std::find_if(
+        signalConnections.begin(),
+        signalConnections.end(),
+        [&](const auto& conn) { return functionName == conn.signal.function && signalName == conn.signal.name; });
+    if (it == signalConnections.end()) {
+        std::ostringstream oss;
+        oss << "Missing expected connection to " << functionName << ":" << signalName;
+        throw std::out_of_range(oss.str());
+    }
+    return *it;
+}
+
+void verify_causality(variable_causality actual, variable_causality expected, const cse_config_parser::SignalConnection& conn)
+{
+    if (actual != expected) {
+        std::ostringstream oss;
+        oss << "Cannot create connection. There is a causality imbalance between "
+            << conn.variable.simulator << ":" << conn.variable.name
+            << " and "
+            << conn.signal.function << ":" << conn.signal.name;
+        throw std::runtime_error(oss.str());
+    }
+}
+
+void verify_type(variable_type actual, variable_type expected, const cse_config_parser::SignalConnection& conn)
+{
+    if (actual != expected) {
+        std::ostringstream oss;
+        oss << "Cannot create connection. There is a type mismatch between "
+            << conn.variable.simulator << ":" << conn.variable.name
+            << " and "
+            << conn.signal.function << ":" << conn.signal.name;
+        throw std::runtime_error(oss.str());
+    }
+}
+
+} // namespace
 
 void connect_variables(
     const std::vector<cse_config_parser::VariableConnection>& variableConnections,
     const std::unordered_map<std::string, slave_info>& slaves,
     cse::execution& execution)
 {
-
     for (const auto& connection : variableConnections) {
         auto [variableIdA, causalityA] =
             get_variable(slaves, connection.variableA.simulator, connection.variableA.name);
@@ -710,109 +767,88 @@ void connect_variable_groups(
     }
 }
 
-cse_config_parser::Signal get_signal(
-    const std::unordered_map<std::string, cse_config_parser::Function>& functions,
-    const std::string& functionName,
-    const std::string& signalName)
-{
-    auto functionIt = functions.find(functionName);
-    if (functionIt == functions.end()) {
-        std::ostringstream oss;
-        oss << "Cannot find function with name " << functionName;
-        throw std::out_of_range(oss.str());
-    }
-    auto function = functionIt->second;
-
-    auto signalIt = std::find_if(
-        function.signals.begin(),
-        function.signals.end(),
-        [&signalName](const auto& signal) { return signalName == signal.name; });
-    if (signalIt == function.signals.end()) {
-        std::ostringstream oss;
-        oss << "Cannot find signal with name " << signalName << " for function " << functionName;
-        throw std::out_of_range(oss.str());
-    }
-    return *signalIt;
-}
-
-std::optional<cse_config_parser::Parameter> find_parameter(
-    std::vector<cse_config_parser::Parameter> params,
-    const std::string& parameterName)
-{
-    auto paramIt = std::find_if(
-        params.begin(),
-        params.end(),
-        [&parameterName](const auto& param) { return parameterName == param.name; });
-    if (paramIt == params.end()) {
-        return std::nullopt;
-    }
-    return *paramIt;
-}
-
-void connect_signals(
-    const std::unordered_map<std::string, cse_config_parser::Function>& functions,
+void connect_linear_transformation_functions(
+    const std::unordered_map<std::string, cse_config_parser::LinearTransformationFunction>& functions,
     const std::vector<cse_config_parser::SignalConnection>& signalConnections,
     const std::unordered_map<std::string, slave_info>& slaves,
     cse::execution& execution)
 {
-    std::unordered_map<std::string, std::vector<variable_id>> functionSources;
-    std::unordered_map<std::string, std::vector<variable_id>> functionTargets;
-
-    for (const auto& signalConnection : signalConnections) {
-        auto signal = get_signal(functions, signalConnection.signal.function, signalConnection.signal.name);
-        auto [variableId, variableCausality] =
-            get_variable(slaves, signalConnection.variable.simulator, signalConnection.variable.name);
-
-        // This is a reduction of available information to fit the current architecture.
-        // Signal names are ignored because they do not exist in the cse::connection classes.
-        if (variable_causality::input == signal.causality && variable_causality::output == variableCausality) {
-            functionSources[signalConnection.signal.function].push_back(variableId);
-        } else if (variable_causality::output == signal.causality && variable_causality::input == variableCausality) {
-            functionTargets[signalConnection.signal.function].push_back(variableId);
-        } else {
-            std::ostringstream oss;
-            oss << "Cannot create signal connection. There is a causality imbalance between variable "
-                << signalConnection.variable.simulator << ":" << signalConnection.variable.name
-                << " (" << variableCausality << ") and signal "
-                << signalConnection.signal.function << ":" << signalConnection.signal.name
-                << " (" << variableCausality << ").";
-            throw std::runtime_error(oss.str());
-        }
-    }
-
     for (const auto& [functionName, function] : functions) {
-        const auto& sources = functionSources[functionName];
-        const auto& targets = functionTargets[functionName];
+        const auto inConn = find_signal_connection(signalConnections, functionName, function.in.name);
+        const auto [sourceVar, sourceVarCausality] = get_variable(slaves, inConn.variable.simulator, inConn.variable.name);
+        verify_causality(sourceVarCausality, variable_causality::output, inConn);
+        verify_type(sourceVar.type, variable_type::real, inConn);
 
-        if (sources.empty() || targets.empty()) {
-            BOOST_LOG_SEV(log::logger(), log::severity_level::warning)
-                << "Ignoring function with name " << functionName << " due to lack of connected signals.";
-        } else {
-            if ("sum" == function.type) {
-                if (targets.size() > 1) {
-                    throw std::runtime_error("Cannot connect sum to multiple targets");
-                }
-                auto sumConnection = std::make_shared<sum_connection>(sources, targets.front());
-                execution.add_connection(sumConnection);
-            } else if ("lineartransformation" == function.type) {
-                if (targets.size() != 1 || sources.size() != 1) {
-                    std::ostringstream oss;
-                    oss << "Linear transforation functions only support single input and output, "
-                        << " but found " << sources.size() << " inputs and " << targets.size() << " outputs";
-                    throw std::runtime_error(oss.str());
-                }
-                auto factor = find_parameter(function.parameters, "factor");
-                double factorValue = factor ? std::get<double>((*factor).value) : 1.0;
-                auto offset = find_parameter(function.parameters, "offset");
-                double offsetValue = factor ? std::get<double>((*offset).value) : 0.0;
-                auto ltConnection = std::make_shared<linear_transformation_connection>(
-                    sources.front(), targets.front(), offsetValue, factorValue);
-                execution.add_connection(ltConnection);
-            } else {
-                std::ostringstream oss;
-                oss << "Unkown function type " << function.type << " for function with name " << functionName;
-                throw std::runtime_error(oss.str());
+        const auto outConn = find_signal_connection(signalConnections, functionName, function.out.name);
+        const auto [targetVar, targetVarCausality] = get_variable(slaves, outConn.variable.simulator, outConn.variable.name);
+        verify_causality(targetVarCausality, variable_causality::input, outConn);
+        verify_type(targetVar.type, variable_type::real, inConn);
+
+        auto ltConnection = std::make_shared<linear_transformation_connection>(
+            sourceVar, targetVar, function.offset, function.factor);
+        execution.add_connection(ltConnection);
+    }
+}
+
+void connect_sum_functions(
+    const std::unordered_map<std::string, cse_config_parser::SumFunction>& functions,
+    const std::vector<cse_config_parser::SignalConnection>& signalConnections,
+    const std::unordered_map<std::string, slave_info>& slaves,
+    cse::execution& execution)
+{
+    for (const auto& [functionName, function] : functions) {
+        std::vector<variable_id> sourceVars;
+        for (int i = 0; i < function.inputCount; i++) {
+            const auto inConn = find_signal_connection(signalConnections, functionName, function.ins.at(i).name);
+            const auto [sourceVar, sourceVarCausality] = get_variable(slaves, inConn.variable.simulator, inConn.variable.name);
+            verify_causality(sourceVarCausality, variable_causality::output, inConn);
+            verify_type(sourceVar.type, variable_type::real, inConn);
+            sourceVars.push_back(sourceVar);
+        }
+        const auto outConn = find_signal_connection(signalConnections, functionName, function.out.name);
+        const auto [targetVar, targetVarCausality] = get_variable(slaves, outConn.variable.simulator, outConn.variable.name);
+        verify_causality(targetVarCausality, variable_causality::input, outConn);
+        verify_type(targetVar.type, variable_type::real, outConn);
+
+        auto sumConnection = std::make_shared<sum_connection>(
+            sourceVars, targetVar);
+        execution.add_connection(sumConnection);
+    }
+}
+
+void connect_vector_sum_functions(
+    const std::unordered_map<std::string, cse_config_parser::VectorSumFunction>& functions,
+    const std::vector<cse_config_parser::SignalConnection>& signalGroupConnections,
+    const std::unordered_map<std::string, slave_info>& slaves,
+    cse::execution& execution,
+    const std::unordered_map<std::string, extended_model_description>& emds)
+{
+    for (const auto& [functionName, function] : functions) {
+
+        for (int i = 0; i < function.dimension; i++) {
+
+            const auto outGroupConn = find_signal_connection(signalGroupConnections, functionName, function.outGroup.name);
+            const auto& emd = emds.at(outGroupConn.variable.simulator);
+            const auto& variableGroup = emd.variableGroups.at(outGroupConn.variable.name);
+            const auto& variableName = variableGroup.variables.at(i);
+            const auto [targetVar, targetVarCausality] = get_variable(slaves, outGroupConn.variable.simulator, variableName);
+            verify_causality(targetVarCausality, variable_causality::input, outGroupConn);
+            verify_type(targetVar.type, variable_type::real, outGroupConn);
+            variable_id targetVariable = targetVar;
+
+            std::vector<variable_id> sourceVariables;
+            for (int j = 0; j < function.inputCount; j++) {
+                const auto inGroupConn = find_signal_connection(signalGroupConnections, functionName, function.inGroups.at(j).name);
+                const auto& inEmd = emds.at(inGroupConn.variable.simulator);
+                const auto& inVariableGroup = inEmd.variableGroups.at(inGroupConn.variable.name);
+                const auto& inVariableName = inVariableGroup.variables.at(i);
+                const auto [sourceVar, sourceVarCausality] = get_variable(slaves, inGroupConn.variable.simulator, inVariableName);
+                verify_causality(sourceVarCausality, variable_causality::output, inGroupConn);
+                verify_type(sourceVar.type, variable_type::real, inGroupConn);
+                sourceVariables.push_back(sourceVar);
             }
+            auto sumConnection = std::make_shared<sum_connection>(sourceVariables, targetVariable);
+            execution.add_connection(sumConnection);
         }
     }
 }
@@ -917,16 +953,9 @@ std::pair<execution, simulator_map> load_cse_config(
 
     connect_variables(parser.get_variable_connections(), slaves, exec);
     connect_variable_groups(parser.get_variable_group_connections(), slaves, exec, emds);
-    connect_signals(parser.get_functions(), parser.get_signal_connections(), slaves, exec);
-
-    // TODO: Connect signal groups - but need cse::connection classes that can handle this
-    const auto& signalGroupConnections = parser.get_signal_group_connections();
-    if (!signalGroupConnections.empty()) {
-        std::ostringstream oss;
-        oss << "Found " << signalGroupConnections.size() << " signal group connections, "
-            << "but don't know how to handle these yet";
-        throw std::invalid_argument(oss.str());
-    }
+    connect_linear_transformation_functions(parser.get_linear_transformation_functions(), parser.get_signal_connections(), slaves, exec);
+    connect_sum_functions(parser.get_sum_functions(), parser.get_signal_connections(), slaves, exec);
+    connect_vector_sum_functions(parser.get_vector_sum_functions(), parser.get_signal_group_connections(), slaves, exec, emds);
 
     return std::make_pair(std::move(exec), std::move(simulatorMap));
 }
