@@ -46,19 +46,29 @@ public:
      *
      * \param [in] modelResolver
      *      The `model_uri_resolver` to use by the loader
-     *
      */
     void set_model_uri_resolver(std::shared_ptr<cse::model_uri_resolver> resolver);
 
+    /**
+     * Specify a non-default SystemStructureDefinition file to be loaded
+     *
+     * \param [in] name
+     *      The name of the (custom) SystemStructureDefinition file to load
+     */
     void set_ssd_file_name(const std::string& name);
 
+    /**
+     * Explicitly specify the name of the parameter set(s) to be loaded
+     * /param [in] name
+     *      The name of the parameter set(s) to be loaded
+     */
     void set_parameter_set_name(const std::string& name);
 
     /**
-     *  Creates an execution based on a configuration file.
+     *  Creates an execution based on a SSP configuration.
      *
      *  \param [in] configPath
-     *      Path to the configuration file, or the directory holding it.
+     *      Path to the .ssp archive, or a directory holding one or more .ssd files.
      */
     std::pair<execution, simulator_map> load(const boost::filesystem::path& configPath);
 
