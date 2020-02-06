@@ -132,7 +132,7 @@ void override_manipulator::override_real_variable(
     value_reference variable,
     double value)
 {
-    auto f = [value](double /*original*/) { return value; };
+    auto f = [value](double /*original*/, duration) { return value; };
     add_action(index, variable, variable_type::real, scenario::real_modifier{f});
 }
 
@@ -141,7 +141,7 @@ void override_manipulator::override_integer_variable(
     value_reference variable,
     int value)
 {
-    auto f = [value](int /*original*/) { return value; };
+    auto f = [value](int /*original*/, duration) { return value; };
     add_action(index, variable, variable_type::integer, scenario::integer_modifier{f});
 }
 
@@ -150,7 +150,7 @@ void override_manipulator::override_boolean_variable(
     value_reference variable,
     bool value)
 {
-    auto f = [value](bool /*original*/) { return value; };
+    auto f = [value](bool /*original*/, duration) { return value; };
     add_action(index, variable, variable_type::boolean, scenario::boolean_modifier{f});
 }
 
@@ -159,7 +159,7 @@ void override_manipulator::override_string_variable(
     value_reference variable,
     const std::string& value)
 {
-    auto f = [value](std::string_view /*original*/) { return value; };
+    auto f = [value](std::string_view /*original*/, duration) { return value; };
     add_action(index, variable, variable_type::string, scenario::string_modifier{f});
 }
 
