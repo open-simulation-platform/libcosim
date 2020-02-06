@@ -100,6 +100,13 @@ fmu_file_uri_sub_resolver::fmu_file_uri_sub_resolver()
 }
 
 
+fmu_file_uri_sub_resolver::fmu_file_uri_sub_resolver(
+    std::shared_ptr<file_cache> cache)
+    : importer_(fmi::importer::create(cache))
+{
+}
+
+
 std::shared_ptr<model> fmu_file_uri_sub_resolver::lookup_model(const uri& modelUri)
 {
     assert(modelUri.scheme().has_value());
@@ -124,12 +131,20 @@ std::shared_ptr<model> fmu_file_uri_sub_resolver::lookup_model(const uri& modelU
 // misc
 // =============================================================================
 
-std::shared_ptr<model_uri_resolver> default_model_uri_resolver()
+std::shared_ptr<model_uri_resolver> default_model_uri_resolver(
+    std::shared_ptr<file_cache> cache)
 {
     auto resolver = std::make_shared<model_uri_resolver>();
-    resolver->add_sub_resolver(std::make_shared<fmu_file_uri_sub_resolver>());
+    if (cache) {
+        resolver->add_sub_resolver(
+            std::make_shared<fmu_file_uri_sub_resolver>(cache));
+    } else {
+        resolver->add_sub_resolver(
+            std::make_shared<fmu_file_uri_sub_resolver>());
+    }
 #ifdef HAS_FMUPROXY
-    resolver->add_sub_resolver(std::make_shared<fmuproxy::fmuproxy_uri_sub_resolver>());
+    resolver->add_sub_resolver(
+        std::make_shared<fmuproxy::fmuproxy_uri_sub_resolver>());
 #endif
     return resolver;
 }

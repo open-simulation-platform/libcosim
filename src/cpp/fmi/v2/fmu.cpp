@@ -35,10 +35,10 @@ namespace v2
 
 fmu::fmu(
     std::shared_ptr<fmi::importer> importer,
-    const boost::filesystem::path& fmuDir)
+    std::unique_ptr<file_cache::directory_ro> fmuDir)
     : importer_{importer}
-    , dir_(fmuDir)
-    , handle_{fmi2_import_parse_xml(importer->fmilib_handle(), fmuDir.string().c_str(), nullptr)}
+    , dir_(std::move(fmuDir))
+    , handle_{fmi2_import_parse_xml(importer->fmilib_handle(), dir_->path().string().c_str(), nullptr)}
 {
     if (handle_ == nullptr) {
         throw error(
@@ -122,7 +122,7 @@ std::shared_ptr<v2::slave_instance> fmu::instantiate_v2_slave(
 #ifdef _WIN32
     if (!additionalDllSearchPath_) {
         additionalDllSearchPath_ =
-            std::make_unique<detail::additional_path>(fmu_binaries_dir(dir_));
+            std::make_unique<detail::additional_path>(fmu_binaries_dir(dir_->path()));
     }
 #endif
     prune(instances_);
@@ -143,7 +143,7 @@ std::shared_ptr<v2::slave_instance> fmu::instantiate_v2_slave(
 
 boost::filesystem::path fmu::directory() const
 {
-    return dir_;
+    return dir_->path();
 }
 
 
