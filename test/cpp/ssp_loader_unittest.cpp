@@ -1,4 +1,4 @@
-#define BOOST_TEST_MODULE ssp_parser.hpp unittests
+#define BOOST_TEST_MODULE ssp_loader.hpp unittests
 #include <cse/algorithm/fixed_step_algorithm.hpp>
 #include <cse/connection/linear_transformation_connection.hpp>
 #include <cse/log/simple.hpp>
