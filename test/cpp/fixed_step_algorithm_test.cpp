@@ -63,7 +63,6 @@ int main()
 
         // Run simulation
         auto simResult = execution.simulate_until(midTime);
-        auto start = std::chrono::steady_clock::now();
         REQUIRE(simResult.get());
         REQUIRE(std::chrono::abs(execution.current_time() - midTime) < std::chrono::microseconds(1));
         // Actual performance should not be tested here - just check that we get a positive value
