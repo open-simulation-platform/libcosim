@@ -17,6 +17,8 @@ namespace cse
 
 using simulator_map = std::map<std::string, simulator_map_entry>;
 
+
+// Class for loading an execution from a SSP configuration.
 class ssp_loader
 {
 
@@ -24,8 +26,8 @@ public:
     ssp_loader();
 
     /**
-     *  Explicitly specify the simulation start time
-     *  Will override any value found in the configuration file.
+     *  Explicitly specifies the simulation start time.
+     *  Overrides the start time specified in the configuration file.
      *
      *  \param [in] timePoint
      *      The (logical) time point at which the simulation should start
@@ -34,7 +36,9 @@ public:
 
     /**
      *  Explicitly specify the co-simulation algorithm to use.
-     *  Will override any value found in the configuration file.
+     *  Required if no algorithm is present in the configuration to load.
+     *
+     *  Overrides the algorithm specified in the configuration file.
      *
      *  \param [in] algorithm
      *      The co-simulation algorithm to be used in the execution.
@@ -42,30 +46,31 @@ public:
     virtual void override_algorithm(std::shared_ptr<cse::algorithm> algorithm);
 
     /**
-     * Assign a custom `model_uri_resolver`
+     * Assign a custom `model_uri_resolver`.
      *
      * \param [in] modelResolver
-     *      The `model_uri_resolver` to use by the loader
+     *      The `model_uri_resolver` to use by the loader.
      */
     void set_model_uri_resolver(std::shared_ptr<cse::model_uri_resolver> resolver);
 
     /**
-     * Specify a non-default SystemStructureDefinition file to be loaded
+     * Specify a non-default SystemStructureDefinition (.ssd) file to load.
      *
      * \param [in] name
-     *      The name of the (custom) SystemStructureDefinition file to load
+     *      The name of the (custom) SystemStructureDefinition file to load.
      */
     void set_ssd_file_name(const std::string& name);
 
     /**
-     * Explicitly specify the name of the parameter set(s) to be loaded
+     * Explicitly specify the name of the parameter set(s) to load.
+     *
      * /param [in] name
-     *      The name of the parameter set(s) to be loaded
+     *      The name of the parameter set(s) to load
      */
     void set_parameter_set_name(const std::string& name);
 
     /**
-     *  Creates an execution based on a SSP configuration.
+     *  Create an execution based on a SSP configuration.
      *
      *  \param [in] configPath
      *      Path to the .ssp archive, or a directory holding one or more .ssd files.
