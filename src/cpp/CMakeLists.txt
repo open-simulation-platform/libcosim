@@ -18,7 +18,6 @@ set(publicHeaders
     "exception.hpp"
     "execution.hpp"
     "file_cache.hpp"
-    "ssp/ssp_loader.hpp"
     "fmi/fmu.hpp"
     "fmi/importer.hpp"
     "fmi/v1/fmu.hpp"
@@ -41,6 +40,7 @@ set(publicHeaders
     "scenario.hpp"
     "scenario_parser.hpp"
     "slave.hpp"
+    "ssp/ssp_loader.hpp"
     "timer.hpp"
     "uri.hpp"
 )
