@@ -24,7 +24,8 @@ struct visitor : Functors...
 };
 
 /**
- * Utility for printing value of variant types like scalar_value
+ * Utility for printing value of variant types like `scalar_value`
+ *
  * See https://stackoverflow.com/questions/47168477/how-to-stream-stdvariant
  */
 template<class T>
