@@ -9,7 +9,7 @@
                 <xs:element name="UnitDefinitions" minOccurs="0">
                     <xs:complexType>
                         <xs:sequence maxOccurs="unbounded">
-                            <xs:element name="Unit" type="fmi2Unit"/>
+                            <xs:element name="Unit" type="osp:fmi2Unit"/>
                         </xs:sequence>
                     </xs:complexType>
                 </xs:element>
