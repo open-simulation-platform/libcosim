@@ -2,10 +2,10 @@
 <OspModelDescription xmlns="http://opensimulationplatform.com/MSMI/OSPModelDescription">
     <UnitDefinitions>
         <Unit name="force~N">
-            <BaseUnit kg="1" m="1" s="-2" A="0" K="0" mol="0" cd="0" rad="0" factor="1.0000000000000000" offset="0.0000000000000000"/>
+            <BaseUnit kg="1" m="1" s="-2" A="0" K="0" mol="0" cd="0" rad="0" factor="1.0" offset="0.0"/>
         </Unit>
         <Unit name="velocity~m_s">
-            <BaseUnit kg="0" m="1" s="-1" A="0" K="0" mol="0" cd="0" rad="0" factor="1.0000000000000000" offset="0.0000000000000000"/>
+            <BaseUnit kg="0" m="1" s="-1" A="0" K="0" mol="0" cd="0" rad="0" factor="1.0" offset="0.0"/>
         </Unit>
     </UnitDefinitions>
     <VariableGroups>
