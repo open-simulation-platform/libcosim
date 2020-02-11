@@ -1,5 +1,5 @@
 #include <cse/log/simple.hpp>
-#include <cse/ssp_parser.hpp>
+#include <cse/ssp/ssp_loader.hpp>
 
 #include <boost/filesystem.hpp>
 
@@ -17,16 +17,13 @@ int main()
 
         const auto testDataDir = std::getenv("TEST_DATA_DIR");
         REQUIRE(testDataDir);
-        boost::filesystem::path xmlPath = boost::filesystem::path(testDataDir) / "ssp" / "demo" / "fmuproxy";
+        boost::filesystem::path sspFile = boost::filesystem::path(testDataDir) / "ssp" / "demo" / "fmuproxy";
 
-        auto resolver = cse::default_model_uri_resolver();
-        auto simulation = cse::load_ssp(*resolver, xmlPath);
-        auto& execution = simulation.first;
+        cse::ssp_loader loader;
+        auto [exec, simulatorMap] = loader.load(sspFile);
+        REQUIRE(simulatorMap.size() == 2);
 
-        auto& simulator_map = simulation.second;
-        REQUIRE(simulator_map.size() == 2);
-
-        auto result = execution.simulate_until(cse::to_time_point(1e-3));
+        auto result = exec.simulate_until(cse::to_time_point(1e-3));
         REQUIRE(result.get());
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what();
