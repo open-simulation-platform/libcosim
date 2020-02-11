@@ -1,10 +1,18 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <OspModelDescription xmlns="http://opensimulationplatform.com/MSMI/OSPModelDescription">
+    <UnitDefinitions>
+        <Unit name="force~N">
+            <BaseUnit kg="1" m="1" s="-2" A="0" K="0" mol="0" cd="0" rad="0" factor="1.0" offset="0.0"/>
+        </Unit>
+        <Unit name="velocity~m_s">
+            <BaseUnit kg="0" m="1" s="-1" A="0" K="0" mol="0" cd="0" rad="0" factor="1.0" offset="0.0"/>
+        </Unit>
+    </UnitDefinitions>
     <VariableGroups>
         <VariableGroup type="flow" name="velocity">
-            <Variable name="p_Crane.f[1]"/>
-            <Variable name="p_Crane.f[2]"/>
-            <Variable name="p_Crane.f[3]"/>
+            <Variable name="p_Crane.f[1]" unit="velocity~m_s"/>
+            <Variable name="p_Crane.f[2]" unit="velocity~m_s"/>
+            <Variable name="p_Crane.f[3]" unit="velocity~m_s"/>
         </VariableGroup>
         <VariableGroup type="generic" name="actuatorLimits">
             <Variable name="Act_Limits[1]"/>
@@ -12,9 +20,9 @@
             <Variable name="Act_Limits[3]"/>
         </VariableGroup>
         <VariableGroup type="effort" name="force">
-            <Variable name="p_Crane.e[1]"/>
-            <Variable name="p_Crane.e[2]"/>
-            <Variable name="p_Crane.e[3]"/>
+            <Variable name="p_Crane.e[1]" unit="force~N"/>
+            <Variable name="p_Crane.e[2]" unit="force~N"/>
+            <Variable name="p_Crane.e[3]" unit="force~N"/>
         </VariableGroup>
     </VariableGroups>
 </OspModelDescription>

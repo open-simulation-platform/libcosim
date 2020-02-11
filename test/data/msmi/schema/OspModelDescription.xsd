@@ -2,9 +2,17 @@
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified"
            targetNamespace="http://opensimulationplatform.com/MSMI/OSPModelDescription"
            xmlns:osp="http://opensimulationplatform.com/MSMI/OSPModelDescription">
+    <xs:include schemaLocation="fmi2Unit.xsd"/>
     <xs:element name="OspModelDescription">
         <xs:complexType>
             <xs:sequence>
+                <xs:element name="UnitDefinitions" minOccurs="0">
+                    <xs:complexType>
+                        <xs:sequence maxOccurs="unbounded">
+                            <xs:element name="Unit" type="osp:fmi2Unit"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
                 <xs:element name="VariableGroups" type="osp:variablegroups"/>
             </xs:sequence>
         </xs:complexType>
@@ -24,5 +32,6 @@
     </xs:complexType>
     <xs:complexType name="variable">
         <xs:attribute name="name" use="required"/>
+        <xs:attribute name="unit"/>
     </xs:complexType>
 </xs:schema>
