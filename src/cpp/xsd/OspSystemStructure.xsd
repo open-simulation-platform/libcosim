@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified"
            targetNamespace="http://opensimulationplatform.com/MSMI/OSPSystemStructure"
-           xmlns:osp="http://opensimulationplatform.com/MSMI/OSPSystemStructure">
+           xmlns:osp="http://opensimulationplatform.com/MSMI/OSPSystemStructure"
+           version="0.1">
     <xs:element name="OspSystemStructure">
         <xs:complexType>
             <xs:sequence>
@@ -12,6 +13,11 @@
                 <xs:element name="Functions" type="osp:functions" minOccurs="0"/>
                 <xs:element name="Connections" type="osp:connections" minOccurs="0"/>
             </xs:sequence>
+            <xs:attribute name="version" type="xs:normalizedString" use="required" fixed="0.1">
+                <xs:annotation>
+                    <xs:documentation>Version of CSE configuration format</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
         </xs:complexType>
     </xs:element>
     <xs:complexType name="connections">
