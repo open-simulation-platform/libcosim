@@ -163,22 +163,20 @@ public:
             return s->setup(startTime_, stopTime_, std::nullopt);
         });
 
-        // Run N iterations of the functions' and simulators' calculation/step
+        // Run N iterations of the simulators' and functions' step/calculation
         // procedures, where N is the number of simulators in the system,
         // to propagate initial values.
         for (std::size_t i = 0; i < simulators_.size(); ++i) {
-            for (const auto& f : functions_) {
-                f.second.fun->calculate();
-            }
-            for (const auto& f : functions_) {
-                transfer_variables(f.second.outgoingSimConnections);
-            }
             for_all_simulators([=](auto s) {
                 return s->do_iteration();
             });
             for (const auto& s : simulators_) {
                 transfer_variables(s.second.outgoingSimConnections);
                 transfer_variables(s.second.outgoingFunConnections);
+            }
+            for (const auto& f : functions_) {
+                f.second.fun->calculate();
+                transfer_variables(f.second.outgoingSimConnections);
             }
         }
 
@@ -189,15 +187,6 @@ public:
 
     std::pair<duration, std::unordered_set<simulator_index>> do_step(time_point currentT)
     {
-        // Calculate functions and transfer their outputs to simulators.
-        for (const auto& f : functions_) {
-            const auto& info = f.second;
-            if (stepCounter_ % info.decimationFactor == 0) {
-                info.fun->calculate();
-                transfer_variables(info.outgoingSimConnections);
-            }
-        }
-
         // Initiate simulator time steps.
         for (auto& s : simulators_) {
             auto& info = s.second;
@@ -239,6 +228,15 @@ public:
             auto& simInfo = simulators_.at(simIndex);
             transfer_variables(simInfo.outgoingSimConnections);
             transfer_variables(simInfo.outgoingFunConnections);
+        }
+
+        // Calculate functions and transfer their outputs to simulators.
+        for (const auto& f : functions_) {
+            const auto& info = f.second;
+            if (stepCounter_ % info.decimationFactor == 0) {
+                info.fun->calculate();
+                transfer_variables(info.outgoingSimConnections);
+            }
         }
 
         return std::pair(baseStepSize_, std::move(finished));
