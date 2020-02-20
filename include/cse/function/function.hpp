@@ -15,7 +15,86 @@ namespace cse
 {
 
 
-/// An interface for function instances.
+/**
+ *  An interface for function instances.
+ *
+ *  ### Functions
+ *
+ *  In the context of this library, a "function" is some operation that is
+ *  performed on variables between co-simulation time steps, i.e., at
+ *  synchronisation points.
+ *
+ *  A function has a set of input and output variables which can be
+ *  connected to compatible simulator input and output variables.
+ *  It thus becomes part of the overall connection graph of the system
+ *  in much the same way as simulators.  As an example, consider the
+ *  following system:
+ *
+ *      .----.
+ *      | S1 |---.   .---.
+ *      '----'   '-->|   |       .----.
+ *                   | F |------>| S3 |
+ *      .----.   .-->|   |       '----'
+ *      | S2 |---'   '---'
+ *      '----'
+ *
+ *  Here, `F` is a function that has two input variables, connected to the
+ *  output variables of simulators `S1` and `S2`, and one output variable,
+ *  connected to an input variable of simulator `S3`.  `F` could for example
+ *  represent a summation operation.
+ *
+ *  The principal difference between a function and a simulator is that
+ *  no (simulated) time passes during the evaluation of a function.
+ *  A simulation of the above system through synchronisation points
+ *  `t0, t1, ...` would thus proceed as follows:
+ *
+ *   1. Advance `S1`, `S2` and `S3` from time `t0` to time `t1`
+ *   2. Calculate `F`
+ *   3. Advance `S1`, `S2` and `S3` from time `t1` to time `t2`
+ *   4. Calculate `F`
+ *   5. ...and so on
+ *
+ *  Another important difference is that, while a simulator has a flat,
+ *  static set of variables, a function's variables are organised in groups,
+ *  and the number and properties of the variables can vary dynamically.
+ *  In particular, the following properties may be defined as run-time
+ *  parameters:
+ *
+ *    * The number of instances of a variable group
+ *    * The number of instances of a variable
+ *    * The type of a variable
+ *
+ *  This enables one to define versatile, generic function types that can be
+ *  used in a wide range of situations.
+ *
+ *  As an example, we could define a "vector sum" function that
+ *  accepts an arbitrary number of input vectors (group instances) of
+ *  arbitrary dimension (variable instances), supporting both real and
+ *  integer vectors (variable type).  See `vector_sum_function_type` for a
+ *  concrete implementation of this.
+ *
+ *  ### Function types and function instances
+ *
+ *  To be more precise, we need to distinguish between *function types* and
+ *  *function instances*.  The distinction is analogue to that between a
+ *  class and an object in object-oriented programming, or – perhaps more
+ *  relevantly – between a *model* and a *simulator* in this library.
+ *  Above, we've sloppily referred to both as "functions", but the difference
+ *  is crucial.
+ *
+ *  A function *type* defines the function in an abstract way.  This
+ *  includes which parameters it has, which input/output variables it has
+ *  and how they depend on the parameters, and so on.  Function types
+ *  are represented in code by the `function_type` interface.
+ *
+ *  Given a function type and a set of concrete parameter values, you can
+ *  create a function *instance*.  This the entity that you add to an
+ *  execution and which performs the actual calculations during a simulation.
+ *  You cannot change the parameter values of a function instance, only
+ *  its input variable values.  Function instances are represented in code
+ *  by the `function` interface, and are typically created with
+ *  `function_type::instantiate()`.
+ */
 class function
 {
 public:
@@ -28,16 +107,30 @@ public:
      */
     virtual function_type_description description() const = 0;
 
-    /// Sets the value of a real-valued variable.
+    /// Sets the value of a real input variable.
     virtual void set_real_io(const function_io_reference& reference, double value) = 0;
 
-    /// Sets the value of an integer-valued variable.
+    /// Sets the value of an integer input variable.
     virtual void set_integer_io( const function_io_reference& reference, int value) = 0;
 
-    /// Retrieves the value of a real-valued variable.
+    /**
+     *  Retrieves the value of a real variable.
+     *
+     *  If `reference` refers to an output variable, the function is only
+     *  required to return a valid value *after* `calculate()` has been
+     *  called, and *before* the next call to any of the `set_xxx_io()`
+     *  functions.
+     */
     virtual double get_real_io(const function_io_reference& reference) const = 0;
 
-    /// Retrieves the value of an integer-valued variable.
+    /**
+     *  Retrieves the value of an integer variable.
+     *
+     *  If `reference` refers to an output variable, the function is only
+     *  required to return a valid value *after* `calculate()` has been
+     *  called, and *before* the next call to any of the `set_xxx_io()`
+     *  functions.
+     */
     virtual int get_integer_io(const function_io_reference& reference) const = 0;
 
     /// Performs the function calculations.
@@ -46,10 +139,11 @@ public:
 
 
 /**
- *  An interface for function type descriptors.
+ *  Interface for classes that represent function types and act as
+ *  factory classes for `function` instances.
  *
- *  Classes that implement this interface act as factory classes for `function`
- *  instances.
+ *  For more information about function types and instances, see the
+ *  documentation for `cse::function`.
  */
 class function_type
 {

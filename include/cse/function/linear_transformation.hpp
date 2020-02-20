@@ -12,7 +12,12 @@ namespace cse
 {
 
 
-/// A scalar linear transformation function.
+/**
+ *  A scalar linear transformation function instance.
+ *
+ *  See `linear_transformation_function_type` for a description of this
+ *  function.
+ */
 class linear_transformation_function : public function
 {
 public:
@@ -42,7 +47,31 @@ private:
 };
 
 
-/// Factory class for `linear_transformation_function`.
+/**
+ *  A scalar linear transformation function type.
+ *
+ *  ### Operation
+ *
+ *      out = offset + factor * in
+ *
+ *  ### Parameters
+ *
+ *  | Parameter | Type | Default | Description           |
+ *  |-----------|------|---------|-----------------------|
+ *  | offset    | real | 0.0     | Constant term         |
+ *  | factor    | real | 1.0     | Linear scaling factor |
+ *
+ *  ### Variables
+ *
+ *  | Group | Count | Variable  | Count | Causality | Type | Description  |
+ *  |-------|-------|-----------|-------|-----------|------|--------------|
+ *  | in    | 1     | (unnamed) | 1     | input     | real | Input value  |
+ *  | out   | 1     | (unnamed) | 1     | output    | real | Output value |
+ *
+ *  ### Instance type
+ *
+ *  `linear_transformation_function`
+ */
 class linear_transformation_function_type : public function_type
 {
 public:

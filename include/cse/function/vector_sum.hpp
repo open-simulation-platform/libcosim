@@ -25,8 +25,9 @@ function_type_description vector_sum_description(
 
 
 /**
- *  A vector sum function that supports real and integer numbers, and an
- *  arbitrary number of inputs with arbitrary dimension.
+ *  A vector sum function instance.
+ *
+ *  See `vector_sum_function_type` for a description of this function.
  *
  *  \tparam T
  *      The vector value type, either `double` or `int`.
@@ -134,10 +135,36 @@ private:
 };
 
 
-/// Factory class for `vector_sum_function`.
+/**
+ *  A vector sum function type.
+ *
+ *  ### Operation
+ *
+ *      out = in[0] + in[1] + ... + in[inputCount-1]
+ *
+ *  ### Parameters
+ *
+ *  | Parameter   | Type          | Default | Description                           |
+ *  |-------------|---------------|---------|---------------------------------------|
+ *  | numericType | variable type | real    | Vector element type (real or integer) |
+ *  | inputCount  | integer       | 1       | Number of input vectors               |
+ *  | dimension   | integer       | 1       | Dimension of input and output vectors |
+ *
+ *  ### Variables
+ *
+ *  | Group | Count        | Variable  | Count       | Causality | Type          | Description    |
+ *  |-------|--------------|-----------|-------------|-----------|---------------|----------------|
+ *  | in    | `inputCount` | (unnamed) | `dimension` | input     | `numericType` | Input vectors  |
+ *  | out   | 1            | (unnamed) | `dimension` | output    | `numericType` | Output vectors |
+ *
+ *  ### Instance type
+ *
+ *  `vector_sum_function`
+ */
 class vector_sum_function_type : public function_type
 {
 public:
+    // Overridden `function_type` methods
     function_type_description description() const override;
 
     std::unique_ptr<function> instantiate(
