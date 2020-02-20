@@ -159,7 +159,7 @@ if(DOXYGEN_FOUND)
     set(DOXYGEN_JAVADOC_AUTOBRIEF "YES")
     set(DOXYGEN_QT_AUTOBRIEF "YES")
     set(DOXYGEN_MULTILINE_CPP_IS_BRIEF "YES")
-    set(DOXYGEN_EXCLUDE_PATTERNS "*.cpp" "*.c")
+    set(DOXYGEN_EXCLUDE_PATTERNS "*.cpp" "*.c" "*/fmuproxy/*service*")
     set(doxygenInputs "${CMAKE_SOURCE_DIR}/include")
     if(CSECORE_BUILD_PRIVATE_APIDOC)
         list(APPEND doxygenInputs
