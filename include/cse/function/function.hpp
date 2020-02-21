@@ -108,30 +108,30 @@ public:
     virtual function_description description() const = 0;
 
     /// Sets the value of a real input variable.
-    virtual void set_real_io(const function_io_reference& reference, double value) = 0;
+    virtual void set_real(const function_io_reference& reference, double value) = 0;
 
     /// Sets the value of an integer input variable.
-    virtual void set_integer_io( const function_io_reference& reference, int value) = 0;
+    virtual void set_integer( const function_io_reference& reference, int value) = 0;
 
     /**
      *  Retrieves the value of a real variable.
      *
      *  If `reference` refers to an output variable, the function is only
      *  required to return a valid value *after* `calculate()` has been
-     *  called, and *before* the next call to any of the `set_xxx_io()`
+     *  called, and *before* the next call to any of the `set_xxx()`
      *  functions.
      */
-    virtual double get_real_io(const function_io_reference& reference) const = 0;
+    virtual double get_real(const function_io_reference& reference) const = 0;
 
     /**
      *  Retrieves the value of an integer variable.
      *
      *  If `reference` refers to an output variable, the function is only
      *  required to return a valid value *after* `calculate()` has been
-     *  called, and *before* the next call to any of the `set_xxx_io()`
+     *  called, and *before* the next call to any of the `set_xxx()`
      *  functions.
      */
-    virtual int get_integer_io(const function_io_reference& reference) const = 0;
+    virtual int get_integer(const function_io_reference& reference) const = 0;
 
     /// Performs the function calculations.
     virtual void calculate() = 0;

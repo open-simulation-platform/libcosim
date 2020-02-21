@@ -401,18 +401,18 @@ private:
         assert(c.source.type == c.target.type);
         switch (c.target.type) {
             case variable_type::real:
-                functions_.at(c.target.function).fun->set_real_io(c.target.reference, simulators_.at(c.source.simulator).sim->get_real(c.source.reference));
+                functions_.at(c.target.function).fun->set_real(c.target.reference, simulators_.at(c.source.simulator).sim->get_real(c.source.reference));
                 break;
             case variable_type::integer:
-                functions_.at(c.target.function).fun->set_integer_io(c.target.reference, simulators_.at(c.source.simulator).sim->get_integer(c.source.reference));
+                functions_.at(c.target.function).fun->set_integer(c.target.reference, simulators_.at(c.source.simulator).sim->get_integer(c.source.reference));
                 break;
             case variable_type::boolean:
-                //                functions_.at(c.target.function).fun->set_boolean_io(
+                //                functions_.at(c.target.function).fun->set_boolean(
                 //                    c.target.reference,
                 //                    simulators_.at(c.source.simulator).sim->get_boolean(c.source.reference));
                 //                break;
             case variable_type::string:
-                //                functions_.at(c.target.function).fun->set_string_io(
+                //                functions_.at(c.target.function).fun->set_string(
                 //                    c.target.reference,
                 //                    simulators_.at(c.source.simulator).sim->get_string(c.source.reference));
                 //                break;
@@ -426,20 +426,20 @@ private:
         assert(c.source.type == c.target.type);
         switch (c.target.type) {
             case variable_type::real:
-                simulators_.at(c.target.simulator).sim->set_real(c.target.reference, functions_.at(c.source.function).fun->get_real_io(c.source.reference));
+                simulators_.at(c.target.simulator).sim->set_real(c.target.reference, functions_.at(c.source.function).fun->get_real(c.source.reference));
                 break;
             case variable_type::integer:
-                simulators_.at(c.target.simulator).sim->set_integer(c.target.reference, functions_.at(c.source.function).fun->get_integer_io(c.source.reference));
+                simulators_.at(c.target.simulator).sim->set_integer(c.target.reference, functions_.at(c.source.function).fun->get_integer(c.source.reference));
                 break;
             case variable_type::boolean:
                 //                simulators_.at(c.target.simulator).sim->set_boolean(
                 //                    c.target.reference,
-                //                    functions_.at(c.source.function).fun->get_boolean_io(c.source.reference));
+                //                    functions_.at(c.source.function).fun->get_boolean(c.source.reference));
                 //                break;
             case variable_type::string:
                 //                simulators_.at(c.target.simulator).sim->set_string(
                 //                    c.target.reference,
-                //                    functions_.at(c.source.function).fun->get_string_io(c.source.reference));
+                //                    functions_.at(c.source.function).fun->get_string(c.source.reference));
                 //                break;
             case variable_type::enumeration:
                 CSE_PANIC_M("Can't handle variable of type 'enumeration' yet");

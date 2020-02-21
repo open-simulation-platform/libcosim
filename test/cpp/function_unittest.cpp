@@ -54,13 +54,13 @@ BOOST_AUTO_TEST_CASE(linear_transformation_standalone)
     const auto [inGID, inVID] = find_io(funDesc, "in");
     const auto [outGID, outVID] = find_io(funDesc, "out");
 
-    fun->set_real_io({inGID, 0, inVID, 0}, 10.0);
+    fun->set_real({inGID, 0, inVID, 0}, 10.0);
     fun->calculate();
-    BOOST_TEST(fun->get_real_io({outGID, 0, outVID, 0}) == 53.0);
+    BOOST_TEST(fun->get_real({outGID, 0, outVID, 0}) == 53.0);
 
-    fun->set_real_io({inGID, 0, inVID, 0}, -1.0);
+    fun->set_real({inGID, 0, inVID, 0}, -1.0);
     fun->calculate();
-    BOOST_TEST(fun->get_real_io({outGID, 0, outVID, 0}) == -2.0);
+    BOOST_TEST(fun->get_real({outGID, 0, outVID, 0}) == -2.0);
 }
 
 
@@ -92,13 +92,13 @@ BOOST_AUTO_TEST_CASE(vector_sum_standalone)
 
     const auto [inGID, inVID] = find_io(funDesc, "in");
     const auto [outGID, outVID] = find_io(funDesc, "out");
-    fun->set_integer_io({inGID, 0, inVID, 0}, 1);
-    fun->set_integer_io({inGID, 0, inVID, 1}, 2);
-    fun->set_integer_io({inGID, 1, inVID, 0}, 3);
-    fun->set_integer_io({inGID, 1, inVID, 1}, 5);
-    fun->set_integer_io({inGID, 2, inVID, 0}, 7);
-    fun->set_integer_io({inGID, 2, inVID, 1}, 11);
+    fun->set_integer({inGID, 0, inVID, 0}, 1);
+    fun->set_integer({inGID, 0, inVID, 1}, 2);
+    fun->set_integer({inGID, 1, inVID, 0}, 3);
+    fun->set_integer({inGID, 1, inVID, 1}, 5);
+    fun->set_integer({inGID, 2, inVID, 0}, 7);
+    fun->set_integer({inGID, 2, inVID, 1}, 11);
     fun->calculate();
-    BOOST_TEST(fun->get_integer_io({outGID, 0, outVID, 0}) == 11);
-    BOOST_TEST(fun->get_integer_io({outGID, 0, outVID, 1}) == 18);
+    BOOST_TEST(fun->get_integer({outGID, 0, outVID, 0}) == 11);
+    BOOST_TEST(fun->get_integer({outGID, 0, outVID, 1}) == 18);
 }

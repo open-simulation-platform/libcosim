@@ -227,7 +227,7 @@ struct function_type_description : public function_description
  *  instance.
  *
  *  This is typically used with functions that read or write variable values,
- *  such as `function::set_real_io()` and its siblings.
+ *  such as `function::set_real()` and its siblings.
  *
  *  The meaning of the various fields is best illustrated with an example:
  *

@@ -67,7 +67,7 @@ public:
             static_cast<int>(inputs_.front().size()));
     }
 
-    void set_real_io(
+    void set_real(
         [[maybe_unused]] const function_io_reference& reference,
         [[maybe_unused]] double value) override
     {
@@ -80,7 +80,7 @@ public:
         throw std::out_of_range("Invalid function variable reference");
     }
 
-    void set_integer_io(
+    void set_integer(
         [[maybe_unused]] const function_io_reference& reference,
         [[maybe_unused]] int value) override
     {
@@ -93,7 +93,7 @@ public:
         throw std::out_of_range("Invalid function variable reference");
     }
 
-    double get_real_io([[maybe_unused]] const function_io_reference& reference) const override
+    double get_real([[maybe_unused]] const function_io_reference& reference) const override
     {
         if constexpr (std::is_same_v<T, double>) {
             if (reference.group == 0 && reference.io == 0) {
@@ -106,7 +106,7 @@ public:
         throw std::out_of_range("Invalid function variable reference");
     }
 
-    int get_integer_io([[maybe_unused]] const function_io_reference& reference) const override
+    int get_integer([[maybe_unused]] const function_io_reference& reference) const override
     {
         if constexpr (std::is_same_v<T, int>) {
             if (reference.group == 0 && reference.io == 0) {

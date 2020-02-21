@@ -87,7 +87,7 @@ function_description linear_transformation_function::description() const
     return linear_transformation_description();
 }
 
-void linear_transformation_function::set_real_io(
+void linear_transformation_function::set_real(
     const function_io_reference& reference,
     double value)
 {
@@ -98,13 +98,13 @@ void linear_transformation_function::set_real_io(
     }
 }
 
-void linear_transformation_function::set_integer_io(
+void linear_transformation_function::set_integer(
     const function_io_reference&, int)
 {
     throw std::out_of_range("Invalid function variable reference");
 }
 
-double linear_transformation_function::get_real_io(
+double linear_transformation_function::get_real(
     const function_io_reference& reference) const
 {
     if (reference == function_io_reference{0, 0, 0, 0}) {
@@ -116,7 +116,7 @@ double linear_transformation_function::get_real_io(
     }
 }
 
-int linear_transformation_function::get_integer_io(
+int linear_transformation_function::get_integer(
     const function_io_reference&) const
 {
     throw std::out_of_range("Invalid function variable reference");
