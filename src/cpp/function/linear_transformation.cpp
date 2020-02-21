@@ -76,6 +76,12 @@ function_type_description linear_transformation_description()
 // linear_transformation_function
 // =============================================================================
 
+[[noreturn]] void throw_bad_io_ref()
+{
+    throw std::out_of_range("Invalid function variable reference");
+}
+
+
 linear_transformation_function::linear_transformation_function(double offset, double factor)
     : offset_(offset)
     , factor_(factor)
@@ -94,14 +100,26 @@ void linear_transformation_function::set_real(
     if (reference == function_io_reference{0, 0, 0, 0}) {
         input_ = value;
     } else {
-        throw std::out_of_range("Invalid function variable reference");
+        throw_bad_io_ref();
     }
 }
 
 void linear_transformation_function::set_integer(
     const function_io_reference&, int)
 {
-    throw std::out_of_range("Invalid function variable reference");
+    throw_bad_io_ref();
+}
+
+void linear_transformation_function::set_boolean(
+    const function_io_reference&, bool)
+{
+    throw_bad_io_ref();
+}
+
+void linear_transformation_function::set_string(
+    const function_io_reference&, std::string_view)
+{
+    throw_bad_io_ref();
 }
 
 double linear_transformation_function::get_real(
@@ -112,14 +130,26 @@ double linear_transformation_function::get_real(
     } else if (reference == function_io_reference{1, 0, 0, 0}) {
         return output_;
     } else {
-        throw std::out_of_range("Invalid function variable reference");
+        throw_bad_io_ref();
     }
 }
 
 int linear_transformation_function::get_integer(
     const function_io_reference&) const
 {
-    throw std::out_of_range("Invalid function variable reference");
+    throw_bad_io_ref();
+}
+
+bool linear_transformation_function::get_boolean(
+    const function_io_reference&) const
+{
+    throw_bad_io_ref();
+}
+
+std::string_view linear_transformation_function::get_string(
+    const function_io_reference&) const
+{
+    throw_bad_io_ref();
 }
 
 void linear_transformation_function::calculate()

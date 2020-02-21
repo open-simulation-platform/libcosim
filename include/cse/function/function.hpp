@@ -113,6 +113,12 @@ public:
     /// Sets the value of an integer input variable.
     virtual void set_integer( const function_io_reference& reference, int value) = 0;
 
+    /// Sets the value of a boolean input variable.
+    virtual void set_boolean( const function_io_reference& reference, bool value) = 0;
+
+    /// Sets the value of a boolean input variable.
+    virtual void set_string( const function_io_reference& reference, std::string_view value) = 0;
+
     /**
      *  Retrieves the value of a real variable.
      *
@@ -132,6 +138,29 @@ public:
      *  functions.
      */
     virtual int get_integer(const function_io_reference& reference) const = 0;
+
+    /**
+     *  Retrieves the value of a boolean variable.
+     *
+     *  If `reference` refers to an output variable, the function is only
+     *  required to return a valid value *after* `calculate()` has been
+     *  called, and *before* the next call to any of the `set_xxx()`
+     *  functions.
+     */
+    virtual bool get_boolean(const function_io_reference& reference) const = 0;
+
+    /**
+     *  Retrieves the value of a real variable.
+     *
+     *  If `reference` refers to an output variable, the function is only
+     *  required to return a valid value *after* `calculate()` has been
+     *  called, and *before* the next call to any of the `set_xxx()`
+     *  functions.
+     *
+     *  The returned string view must remain valid at least until the next
+     *  time any of the functions in this interface are called.
+     */
+    virtual std::string_view get_string(const function_io_reference& reference) const = 0;
 
     /// Performs the function calculations.
     virtual void calculate() = 0;

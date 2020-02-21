@@ -77,7 +77,7 @@ public:
                 return;
             }
         }
-        throw std::out_of_range("Invalid function variable reference");
+        throw_bad_io_ref();
     }
 
     void set_integer(
@@ -90,7 +90,21 @@ public:
                 return;
             }
         }
-        throw std::out_of_range("Invalid function variable reference");
+        throw_bad_io_ref();
+    }
+
+    void set_boolean(
+        const function_io_reference& /*reference*/,
+        bool /*value*/) override
+    {
+        throw_bad_io_ref();
+    }
+
+    void set_string(
+        const function_io_reference& /*reference*/,
+        std::string_view /*value*/) override
+    {
+        throw_bad_io_ref();
     }
 
     double get_real([[maybe_unused]] const function_io_reference& reference) const override
@@ -103,7 +117,7 @@ public:
                 return output_.at(reference.io_instance);
             }
         }
-        throw std::out_of_range("Invalid function variable reference");
+        throw_bad_io_ref();
     }
 
     int get_integer([[maybe_unused]] const function_io_reference& reference) const override
@@ -116,7 +130,17 @@ public:
                 return output_.at(reference.io_instance);
             }
         }
-        throw std::out_of_range("Invalid function variable reference");
+        throw_bad_io_ref();
+    }
+
+    bool get_boolean(const function_io_reference& /*reference*/) const override
+    {
+        throw_bad_io_ref();
+    }
+
+    std::string_view get_string(const function_io_reference& /*reference*/) const override
+    {
+        throw_bad_io_ref();
     }
 
     void calculate() override
@@ -130,6 +154,11 @@ public:
     }
 
 private:
+    [[noreturn]] static void throw_bad_io_ref()
+    {
+        throw std::out_of_range("Invalid function variable reference");
+    }
+
     std::vector<std::vector<T>> inputs_;
     std::vector<T> output_;
 };

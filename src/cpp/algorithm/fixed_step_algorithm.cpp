@@ -407,15 +407,11 @@ private:
                 functions_.at(c.target.function).fun->set_integer(c.target.reference, simulators_.at(c.source.simulator).sim->get_integer(c.source.reference));
                 break;
             case variable_type::boolean:
-                //                functions_.at(c.target.function).fun->set_boolean(
-                //                    c.target.reference,
-                //                    simulators_.at(c.source.simulator).sim->get_boolean(c.source.reference));
-                //                break;
+                functions_.at(c.target.function).fun->set_boolean(c.target.reference, simulators_.at(c.source.simulator).sim->get_boolean(c.source.reference));
+                break;
             case variable_type::string:
-                //                functions_.at(c.target.function).fun->set_string(
-                //                    c.target.reference,
-                //                    simulators_.at(c.source.simulator).sim->get_string(c.source.reference));
-                //                break;
+                functions_.at(c.target.function).fun->set_string(c.target.reference, simulators_.at(c.source.simulator).sim->get_string(c.source.reference));
+                break;
             case variable_type::enumeration:
                 CSE_PANIC_M("Can't handle variable of type 'enumeration' yet");
         }
@@ -432,15 +428,11 @@ private:
                 simulators_.at(c.target.simulator).sim->set_integer(c.target.reference, functions_.at(c.source.function).fun->get_integer(c.source.reference));
                 break;
             case variable_type::boolean:
-                //                simulators_.at(c.target.simulator).sim->set_boolean(
-                //                    c.target.reference,
-                //                    functions_.at(c.source.function).fun->get_boolean(c.source.reference));
-                //                break;
+                simulators_.at(c.target.simulator).sim->set_boolean(c.target.reference, functions_.at(c.source.function).fun->get_boolean(c.source.reference));
+                break;
             case variable_type::string:
-                //                simulators_.at(c.target.simulator).sim->set_string(
-                //                    c.target.reference,
-                //                    functions_.at(c.source.function).fun->get_string(c.source.reference));
-                //                break;
+                simulators_.at(c.target.simulator).sim->set_string(c.target.reference, functions_.at(c.source.function).fun->get_string(c.source.reference));
+                break;
             case variable_type::enumeration:
                 CSE_PANIC_M("Can't handle variable of type 'enumeration' yet");
         }

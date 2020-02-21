@@ -35,8 +35,12 @@ public:
     function_description description() const override;
     void set_real(const function_io_reference& reference, double value) override;
     void set_integer(const function_io_reference& reference, int value) override;
+    void set_boolean(const function_io_reference& reference, bool value) override;
+    void set_string(const function_io_reference& reference, std::string_view value) override;
     double get_real(const function_io_reference& reference) const override;
     int get_integer(const function_io_reference& reference) const override;
+    bool get_boolean(const function_io_reference& reference) const override;
+    std::string_view get_string(const function_io_reference& reference) const override;
     void calculate() override;
 
 private:
