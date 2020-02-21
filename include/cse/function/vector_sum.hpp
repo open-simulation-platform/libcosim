@@ -59,7 +59,7 @@ public:
     }
 
     // Overridden `function` methods.
-    function_type_description description() const override
+    function_description description() const override
     {
         return detail::vector_sum_description(
             static_cast<int>(inputs_.size()),

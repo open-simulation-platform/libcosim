@@ -21,52 +21,52 @@ enum linear_transformation_parameters
 
 function_type_description linear_transformation_description()
 {
-    return {
-        "LinearTransformation"s,
-        {
-            // parameters (in the same order as linear_transformation_parameters enum!)
-            function_parameter_description{
-                "offset"s, // name
-                function_parameter_type::real, // type
-                0.0, // default_value
-                {}, // min_value
-                {} // max_value
-            },
-            function_parameter_description{
-                "factor"s, // name
-                function_parameter_type::real, // type
-                1.0, // default_value
-                {}, // min_value
-                {} // max_value
-            },
+    function_type_description f;
+    f.parameters = {
+        // parameters (in the same order as linear_transformation_parameters enum!)
+        function_parameter_description{
+            "offset"s, // name
+            function_parameter_type::real, // type
+            0.0, // default_value
+            {}, // min_value
+            {} // max_value
         },
-        {
-            // io_groups
-            function_io_group_description{
-                "in"s, // name
-                1, // count
-                {
-                    // ios
-                    function_io_description{
-                        ""s, // name (inherited from group)
-                        variable_type::real, // type
-                        variable_causality::input, // causality
-                        1, // count
-                    },
-                }},
-            function_io_group_description{
-                "out"s, // name
-                1, // count
-                {
-                    // ios
-                    function_io_description{
-                        ""s, // name = (inherited from group)
-                        variable_type::real, // type
-                        variable_causality::output, // causality
-                        1, // count
-                    },
-                }},
-        }};
+        function_parameter_description{
+            "factor"s, // name
+            function_parameter_type::real, // type
+            1.0, // default_value
+            {}, // min_value
+            {} // max_value
+        },
+    };
+    f.io_groups = {
+        // io_groups
+        function_io_group_description{
+            "in"s, // name
+            1, // count
+            {
+                // ios
+                function_io_description{
+                    ""s, // name (inherited from group)
+                    variable_type::real, // type
+                    variable_causality::input, // causality
+                    1, // count
+                },
+            }},
+        function_io_group_description{
+            "out"s, // name
+            1, // count
+            {
+                // ios
+                function_io_description{
+                    ""s, // name = (inherited from group)
+                    variable_type::real, // type
+                    variable_causality::output, // causality
+                    1, // count
+                },
+            }},
+    };
+    return f;
 }
 
 } // namespace
@@ -82,7 +82,7 @@ linear_transformation_function::linear_transformation_function(double offset, do
 {
 }
 
-function_type_description linear_transformation_function::description() const
+function_description linear_transformation_function::description() const
 {
     return linear_transformation_description();
 }

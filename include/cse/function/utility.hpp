@@ -23,8 +23,8 @@ namespace cse
  *  `function_type::instantiate()` by providing a simple and safe way
  *  to extract parameter values from the map passed to this function.
  *
- *  \param functionDescription
- *      The function description (to get the list of parameter
+ *  \param functionTypeDescription
+ *      The function type description (to get the list of parameter
  *      definitions).
  *  \param parameterValues
  *      A mapping from parameter indexes to parameter values.
@@ -33,11 +33,11 @@ namespace cse
  */
 template<typename T>
 T get_function_parameter(
-    const function_type_description& functionDescription,
+    const function_type_description& functionTypeDescription,
     const std::unordered_map<int, function_parameter_value> parameterValues,
     int parameterIndex)
 {
-    const auto& description = functionDescription.parameters.at(parameterIndex);
+    const auto& description = functionTypeDescription.parameters.at(parameterIndex);
     const auto it = parameterValues.find(parameterIndex);
     if (it == parameterValues.end()) {
         return std::get<T>(description.default_value);
@@ -47,8 +47,7 @@ T get_function_parameter(
         if ((description.min_value && value < std::get<T>(*description.min_value)) ||
             (description.max_value && value > std::get<T>(*description.max_value))) {
             throw std::domain_error(
-                "Parameter " + functionDescription.name + ':' +
-                description.name + " is out of bounds");
+                "Parameter '" + description.name + "' is out of bounds");
         }
     }
     return value;

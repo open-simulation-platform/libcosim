@@ -99,13 +99,13 @@ class function
 {
 public:
     /**
-     *  Returns a description of the function.
+     *  Returns a description of the function instance.
      *
      *  The returned object may not contain any `function_parameter_placeholder`
      *  values, since all parameters must have a specific value once the
      *  function has been instantiated.
      */
-    virtual function_type_description description() const = 0;
+    virtual function_description description() const = 0;
 
     /// Sets the value of a real input variable.
     virtual void set_real_io(const function_io_reference& reference, double value) = 0;

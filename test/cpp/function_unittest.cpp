@@ -18,12 +18,12 @@ int find_param(const cse::function_type_description& ftd, const std::string& nam
 
 
 std::pair<int, int> find_io(
-    const cse::function_type_description& ftd,
+    const cse::function_description& fd,
     const std::string& groupName,
     const std::string& varName = "")
 {
-    for (int g = 0; g < static_cast<int>(ftd.io_groups.size()); ++g) {
-        const auto& group = ftd.io_groups[g];
+    for (int g = 0; g < static_cast<int>(fd.io_groups.size()); ++g) {
+        const auto& group = fd.io_groups[g];
         if (group.name != groupName) continue;
         for (int v = 0; v < static_cast<int>(group.ios.size()); ++v) {
             if (group.ios[v].name == varName) return {g, v};

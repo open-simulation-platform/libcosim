@@ -32,7 +32,7 @@ public:
     linear_transformation_function(double offset, double factor);
 
     // Overridden `function` methods
-    function_type_description description() const override;
+    function_description description() const override;
     void set_real_io(const function_io_reference& reference, double value) override;
     void set_integer_io(const function_io_reference& reference, int value) override;
     double get_real_io(const function_io_reference& reference) const override;

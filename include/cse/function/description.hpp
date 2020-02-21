@@ -183,11 +183,33 @@ struct function_io_group_description
 };
 
 
-/// A description of a function type.
-struct function_type_description
+/**
+ *  A description of a function.
+ *
+ *  This structure can be used to describe either a function type or a function
+ *  instance.
+ *
+ *  In the former case, it will be embedded in a `function_type_description`
+ *  (which derives from `function_description`).  The variable descriptions
+ *  may then depend on parameters, so some of its subfields may contain
+ *  values of type `function_parameter_placeholder`.  See
+ *  `function_io_group_description` and `function_io_description` for
+ *  information about which fields these are.
+ *
+ *  On the other hand, if the structure is used to describe a function
+ *  *instance*, it may not contain any parameter placeholders; all subfields
+ *  must have concrete values.
+ */
+struct function_description
 {
-    std::string name;
+    /// Information about the function's variable groups.
+    std::vector<function_io_group_description> io_groups;
+};
 
+
+/// A description of a function type.
+struct function_type_description : public function_description
+{
     /**
      *  The function's parameters.
      *
@@ -197,9 +219,6 @@ struct function_type_description
      *  simulation, such as the number and types of input/output variables.
      */
     std::vector<function_parameter_description> parameters;
-
-    /// The function's variable groups.
-    std::vector<function_io_group_description> io_groups;
 };
 
 
@@ -215,10 +234,10 @@ struct function_type_description
  *  Let's say we have a "3D vector sum" function with two 3D input vectors
  *  and one 3D output vector.  Let's furthermore say that we implement
  *  these as two variable groups called `input` and `output`, listed in that
- *  order in `function_type_description::io_groups`.
+ *  order in `function_description::io_groups`.
  *
  *  We would then have two instances of the `input` group and one instance
- *  of the `output` group.  That is, their `function_io_group_description::count` 
+ *  of the `output` group.  That is, their `function_io_group_description::count`
  *  values would be 2 and 1, respectively.  Each group would contain one
  *  variable with 3 instances (i.e., `function_io_description::count = 3`).
  *
@@ -239,7 +258,7 @@ struct function_io_reference
      *  The group index.
      *
      *  This number corresponds to the group's position in the
-     *  `function_type_description::io_groups` list for the function in
+     *  `function_description::io_groups` list for the function in
      *  question.
      */
     int group;
