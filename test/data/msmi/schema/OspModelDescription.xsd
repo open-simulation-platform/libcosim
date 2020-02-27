@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified"
            targetNamespace="http://opensimulationplatform.com/MSMI/OSPModelDescription"
-           xmlns:osp="http://opensimulationplatform.com/MSMI/OSPModelDescription">
+           xmlns:osp="http://opensimulationplatform.com/MSMI/OSPModelDescription"
+           version="0.1">
     <xs:include schemaLocation="fmi2Unit.xsd"/>
     <xs:element name="OspModelDescription">
         <xs:complexType>
@@ -15,6 +16,11 @@
                 </xs:element>
                 <xs:element name="VariableGroups" type="osp:variablegroups"/>
             </xs:sequence>
+            <xs:attribute name="msmiVersion" type="xs:normalizedString" use="required" fixed="0.1">
+                <xs:annotation>
+                    <xs:documentation>MSMI version</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
         </xs:complexType>
     </xs:element>
     <xs:complexType name="variablegroups">
