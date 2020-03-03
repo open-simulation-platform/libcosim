@@ -183,7 +183,12 @@ std::shared_ptr<fmu> importer::import(const boost::filesystem::path& fmuPath)
     if (git != end(guidCache_)) return git->second.lock();
 
     // Get a cache directory to hold the entire FMU contents.
-    auto fmuUnpackDir = fileCache_->get_directory_rw(minModelDesc.guid);
+
+    std::string guidStr = std::string(minModelDesc.guid);
+    guidStr.erase(std::remove(guidStr.begin(), guidStr.end(), '{'), guidStr.end());
+    guidStr.erase(std::remove(guidStr.begin(), guidStr.end(), '}'), guidStr.end());
+
+    auto fmuUnpackDir = fileCache_->get_directory_rw(guidStr);
 
     // Unzip the entire FMU if necessary.
     const auto modelDescriptionPath = fmuUnpackDir->path() / "modelDescription.xml";
@@ -201,7 +206,7 @@ std::shared_ptr<fmu> importer::import(const boost::filesystem::path& fmuPath)
 
     // Drop R/W privileges and acquire read-only access to FMU cache directory
     fmuUnpackDir.reset();
-    auto fmuUnpackDirRO = fileCache_->get_directory_ro(minModelDesc.guid);
+    auto fmuUnpackDirRO = fileCache_->get_directory_ro(guidStr);
 
     // Create and return an `fmu` object.
     auto fmuObj = minModelDesc.fmiVersion == fmi_version::v1_0
