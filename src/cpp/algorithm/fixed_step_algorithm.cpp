@@ -166,7 +166,7 @@ public:
         // Run N iterations of the simulators' and functions' step/calculation
         // procedures, where N is the number of simulators in the system,
         // to propagate initial values.
-        for (std::size_t i = 0; i < simulators_.size(); ++i) {
+        for (std::size_t i = 0; i < simulators_.size() + functions_.size(); ++i) {
             for_all_simulators([=](auto s) {
                 return s->do_iteration();
             });

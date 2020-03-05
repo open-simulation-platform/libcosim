@@ -21,6 +21,12 @@ namespace cse
 class linear_transformation_function : public function
 {
 public:
+    /// Reference to the "in" variable, for convencience.
+    constexpr static auto in_io_reference = function_io_reference{0, 0, 0, 0};
+
+    /// Reference to the "out" variable, for convencience.
+    constexpr static auto out_io_reference = function_io_reference{1, 0, 0, 0};
+
     /**
      *  Constructor.
      *
