@@ -562,6 +562,7 @@ struct variable_group_description
     std::string name;
     std::string type;
     std::vector<std::string> variables;
+    std::vector<variable_group_description> variable_group_descriptions;
 };
 
 struct extended_model_description
@@ -582,19 +583,28 @@ struct extended_model_description
         const auto variableGroupsElement = static_cast<xercesc::DOMElement*>(rootElement->getElementsByTagName(tc("VariableGroups").get())->item(0));
 
         for (auto variableGroupElement = variableGroupsElement->getFirstElementChild(); variableGroupElement != nullptr; variableGroupElement = variableGroupElement->getNextElementSibling()) {
-            variable_group_description vgd;
-            vgd.name = tc(variableGroupElement->getAttribute(tc("name").get())).get();
-            vgd.type = tc(variableGroupElement->getAttribute(tc("type").get())).get();
-
-            auto variableElements = variableGroupElement->getElementsByTagName(tc("Variable").get());
-            for (size_t i = 0; i < variableElements->getLength(); i++) {
-                auto variableElement = static_cast<xercesc::DOMElement*>(variableElements->item(i));
-
-                std::string variableName = tc(variableElement->getAttribute(tc("name").get())).get();
-                vgd.variables.push_back(std::move(variableName));
-            }
+            variable_group_description vgd = create_variable_group_description(variableGroupElement);
             variableGroups[vgd.name] = std::move(vgd);
         }
+    }
+
+    static variable_group_description create_variable_group_description(xercesc::DOMElement *variableGroupElement) {
+        variable_group_description variableGroupDescription;
+
+        variableGroupDescription.name = tc(variableGroupElement->getAttribute(tc("name").get())).get();
+        variableGroupDescription.type = tc(variableGroupElement->getTagName()).get();
+
+        for (auto variableGroupChildElement = variableGroupElement->getFirstElementChild(); variableGroupChildElement != nullptr; variableGroupChildElement = variableGroupChildElement->getNextElementSibling()) {
+            std::string tagName(tc(variableGroupChildElement->getTagName()).get());
+            if (tagName == "Variable") {
+                std::string variableName = tc(variableGroupChildElement->getAttribute(tc("ref").get())).get();
+                variableGroupDescription.variables.push_back(std::move(variableName));
+            } else {
+                variableGroupDescription.variable_group_descriptions.push_back(create_variable_group_description(variableGroupChildElement));
+            }
+        }
+
+        return variableGroupDescription;
     }
 
     std::unordered_map<std::string, variable_group_description> variableGroups;

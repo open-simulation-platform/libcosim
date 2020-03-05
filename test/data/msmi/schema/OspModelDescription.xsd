@@ -1,68 +1,66 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified"
            targetNamespace="http://opensimulationplatform.com/MSMI/OSPModelDescription"
-           xmlns:osp="http://opensimulationplatform.com/MSMI/OSPModelDescription"
+           xmlns="http://opensimulationplatform.com/MSMI/OSPModelDescription"
            version="0.1">
     <xs:include schemaLocation="fmi2Unit.xsd"/>
-    <xs:element name="OspModelDescription" type="osp:OspModelDescriptionType"/>
+    <xs:element name="OspModelDescription" type="OspModelDescriptionType"/>
     <xs:complexType name="UnitDefinitionsType">
         <xs:sequence minOccurs="0" maxOccurs="unbounded">
-            <xs:element type="osp:fmi2Unit" name="Unit"/>
+            <xs:element type="fmi2Unit" name="Unit"/>
         </xs:sequence>
     </xs:complexType>
     <xs:complexType name="VariableType">
-        <xs:attribute type="xs:string" name="name" use="required"/>
-        <xs:attribute type="xs:string" name="unit" use="optional"/>
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute type="xs:string" name="ref" use="required"/>
+                <xs:attribute type="xs:string" name="unit"/>
+            </xs:extension>
+        </xs:simpleContent>
     </xs:complexType>
-    <xs:complexType name="VariableGroupType">
-        <xs:choice maxOccurs="unbounded" minOccurs="0">
-            <xs:element type="osp:VariableType" name="Variable"/>
-            <xs:element type="osp:VariableGroupType" name="VariableGroup"/>
-        </xs:choice>
-        <xs:attribute type="xs:string" name="name" use="required"/>
-        <xs:attribute name="type" use="required">
-            <xs:simpleType>
-                <xs:restriction base="xs:string">
-                    <xs:enumeration value="generic"/>
-
-                    <xs:enumeration value="force"/>
-                    <xs:enumeration value="linear_velocity"/>
-                    <xs:enumeration value="linear_displacement"/>
-
-                    <xs:enumeration value="torque"/>
-                    <xs:enumeration value="angular_velocity"/>
-                    <xs:enumeration value="angular_displacement"/>
-
-                    <xs:enumeration value="voltage"/>
-                    <xs:enumeration value="current"/>
-                    <xs:enumeration value="charge"/>
-
-                    <xs:enumeration value="pressure"/>
-                    <xs:enumeration value="volume_rate_flow"/>
-                    <xs:enumeration value="volume"/>
-
-                    <xs:enumeration value="linear_mechanical_port"/>
-                    <xs:enumeration value="angular_mechanical_port"/>
-                    <xs:enumeration value="electromagnetic_port"/>
-                    <xs:enumeration value="hydraulic_port"/>
-                </xs:restriction>
-            </xs:simpleType>
-        </xs:attribute>
-    </xs:complexType>
-    <xs:complexType name="VariableGroupsType">
-        <xs:sequence minOccurs="0" maxOccurs="unbounded">
-            <xs:element type="osp:VariableGroupType" name="VariableGroup"/>
+    <xs:complexType name="ForceType">
+        <xs:sequence>
+            <xs:element type="VariableType" name="Variable" maxOccurs="3" minOccurs="1"/>
         </xs:sequence>
+        <xs:attribute type="xs:string" name="name" use="required"/>
+    </xs:complexType>
+    <xs:complexType name="LinearVelocityType">
+        <xs:sequence>
+            <xs:element type="VariableType" name="Variable" maxOccurs="3" minOccurs="1"/>
+        </xs:sequence>
+        <xs:attribute type="xs:string" name="name" use="required"/>
+    </xs:complexType>
+    <xs:complexType name="LinearMechanicalPortType">
+        <xs:sequence>
+            <xs:element type="ForceType" name="Force"/>
+            <xs:element type="LinearVelocityType" name="LinearVelocity"/>
+        </xs:sequence>
+        <xs:attribute type="xs:string" name="name" use="required"/>
+    </xs:complexType>
+    <xs:complexType name="GenericType">
+        <xs:complexContent>
+            <xs:extension base="VariableGroupSequenceType">
+                <xs:choice>
+                    <xs:element type="VariableType" name="Variable" maxOccurs="unbounded" minOccurs="0"/>
+                </xs:choice>
+                <xs:attribute type="xs:string" name="name" use="required"/>
+            </xs:extension>
+        </xs:complexContent>
+
+    </xs:complexType>
+    <xs:complexType name="VariableGroupSequenceType">
+        <xs:choice maxOccurs="unbounded" minOccurs="0">
+            <xs:element type="ForceType" name="Force"/>
+            <xs:element type="LinearMechanicalPortType" name="LinearMechanicalPort"/>
+            <xs:element type="LinearVelocityType" name="LinearVelocity"/>
+            <xs:element type="GenericType" name="Generic"/>
+        </xs:choice>
     </xs:complexType>
     <xs:complexType name="OspModelDescriptionType">
         <xs:sequence>
-            <xs:element type="osp:UnitDefinitionsType" name="UnitDefinitions" minOccurs="0"/>
-            <xs:element type="osp:VariableGroupsType" name="VariableGroups"/>
+            <xs:element type="UnitDefinitionsType" name="UnitDefinitions" minOccurs="0"/>
+            <xs:element type="VariableGroupSequenceType" name="VariableGroups"/>
         </xs:sequence>
-        <xs:attribute name="version" type="xs:string" use="required" fixed="0.1">
-            <xs:annotation>
-                <xs:documentation>OspModelDescription version</xs:documentation>
-            </xs:annotation>
-        </xs:attribute>
+        <xs:attribute type="xs:string" name="version"/>
     </xs:complexType>
 </xs:schema>

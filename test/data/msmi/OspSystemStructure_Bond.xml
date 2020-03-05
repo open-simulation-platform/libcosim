@@ -37,14 +37,9 @@
             <VariableGroup simulator="KnuckleBoomCrane" name="actuatorLimits"/>
             <VariableGroup simulator="CraneController" name="actuatorLimits"/>
         </VariableGroupConnection>
-        <!-- Splitting the bond into two -->
         <VariableGroupConnection>
-            <VariableGroup simulator="KnuckleBoomCrane" name="velocity"/>
-            <VariableGroup simulator="CraneController" name="velocity"/>
-        </VariableGroupConnection>
-        <VariableGroupConnection>
-            <VariableGroup simulator="KnuckleBoomCrane" name="force"/>
-            <VariableGroup simulator="CraneController" name="force"/>
+            <VariableGroup simulator="KnuckleBoomCrane" name="linear mechanical port"/>
+            <VariableGroup simulator="CraneController" name="linear mechanical port"/>
         </VariableGroupConnection>
     </Connections>
 </OspSystemStructure>

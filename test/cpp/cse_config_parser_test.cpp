@@ -25,6 +25,8 @@ void test(const boost::filesystem::path& configPath, size_t expectedNumConnectio
     REQUIRE(simulator_map.at("KnuckleBoomCrane").source == "../ssp/demo/KnuckleBoomCrane.fmu");
 
     const auto& connections = execution.get_connections();
+    std::cout << connections.size() << std::endl;
+    std::cout << expectedNumConnections << std::endl;
     REQUIRE(connections.size() == expectedNumConnections);
     for (const auto& connection : connections) {
         if (const auto sum = std::dynamic_pointer_cast<cse::sum_connection>(connection)) {
