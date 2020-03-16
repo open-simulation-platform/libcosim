@@ -42,10 +42,14 @@ void test(const boost::filesystem::path& scenarioFile)
             [](int y) { return y + 2; })),
         "slave uno");
 
-    observer->start_observing(cse::variable_id{simIndex, cse::variable_type::real, 0});
-    observer->start_observing(cse::variable_id{simIndex, cse::variable_type::real, 1});
-    observer->start_observing(cse::variable_id{simIndex, cse::variable_type::integer, 0});
-    observer->start_observing(cse::variable_id{simIndex, cse::variable_type::integer, 1});
+    observer->start_observing(
+        cse::variable_id{simIndex, cse::variable_type::real, mock_slave::real_in_reference});
+    observer->start_observing(
+        cse::variable_id{simIndex, cse::variable_type::real, mock_slave::real_out_reference});
+    observer->start_observing(
+            cse::variable_id{simIndex, cse::variable_type::integer, mock_slave::integer_in_reference});
+    observer->start_observing(
+        cse::variable_id{simIndex, cse::variable_type::integer, mock_slave::integer_out_reference});
 
     scenarioManager->load_scenario(scenarioFile, startTime);
 
@@ -60,19 +64,43 @@ void test(const boost::filesystem::path& scenarioFile)
     cse::step_number steps[numSamples];
     cse::time_point times[numSamples];
 
-    size_t samplesRead = observer->get_real_samples(simIndex, 1, 1, gsl::make_span(realInputValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
+    size_t samplesRead = observer->get_real_samples(
+        simIndex,
+        mock_slave::real_in_reference,
+        1,
+        gsl::make_span(realInputValues, numSamples),
+        gsl::make_span(steps, numSamples),
+        gsl::make_span(times, numSamples));
     BOOST_CHECK(samplesRead == 11);
-    samplesRead = observer->get_real_samples(simIndex, 0, 1, gsl::make_span(realOutputValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
+    samplesRead = observer->get_real_samples(
+        simIndex,
+        mock_slave::real_out_reference,
+        1,
+        gsl::make_span(realOutputValues, numSamples),
+        gsl::make_span(steps, numSamples),
+        gsl::make_span(times, numSamples));
     BOOST_CHECK(samplesRead == 11);
-    samplesRead = observer->get_integer_samples(simIndex, 1, 1, gsl::make_span(intInputValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
+    samplesRead = observer->get_integer_samples(
+        simIndex,
+        mock_slave::integer_in_reference,
+        1,
+        gsl::make_span(intInputValues, numSamples),
+        gsl::make_span(steps, numSamples),
+        gsl::make_span(times, numSamples));
     BOOST_CHECK(samplesRead == 11);
-    samplesRead = observer->get_integer_samples(simIndex, 0, 1, gsl::make_span(intOutputValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
+    samplesRead = observer->get_integer_samples(
+        simIndex,
+        mock_slave::integer_out_reference,
+        1,
+        gsl::make_span(intOutputValues, numSamples),
+        gsl::make_span(steps, numSamples),
+        gsl::make_span(times, numSamples));
     BOOST_CHECK(samplesRead == 11);
 
-    double expectedRealInputs[] = {0.0, 0.0, 0.0, 0.0, 0.0, 2.001, 2.001, 2.001, 2.001, 2.001, 1.0};
-    double expectedRealOutputs[] = {1.234, 1.234, -1.0, 1.234, 1.234, 3.235, 3.235, 3.235, 3.235, 3.235, 2.234};
-    int expectedIntInputs[] = {0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 1};
-    int expectedIntOutputs[] = {2, 2, 2, 2, 2, 2, 2, 4, 5, 5, 3};
+    double expectedRealInputs[] = {0.0, 0.0, 0.0, 0.0, 0.0, 1.001, 1.001, 1.001, 1.001, 1.001, 0.0};
+    double expectedRealOutputs[] = {1.234, 1.234, -1.0, 1.234, 1.234, 2.235, 2.235, 2.235, 2.235, 2.235, 1.234};
+    int expectedIntInputs[] = {0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 0};
+    int expectedIntOutputs[] = {2, 2, 2, 2, 2, 2, 2, 4, 5, 5, 2};
 
     for (size_t i = 0; i < samplesRead; i++) {
         BOOST_CHECK_CLOSE(realInputValues[i], expectedRealInputs[i], tolerance);
