@@ -818,8 +818,8 @@ void connect_sum_functions(
         verify_type(targetVar.type, variable_type::real, outConn);
 
         const auto fn = execution.add_function(
-            std::make_shared<vector_sum_function<double>>(sourceVars.size(), 1));
-        for (std::size_t i = 0; i < sourceVars.size(); ++i) {
+            std::make_shared<vector_sum_function<double>>(function.inputCount, 1));
+        for (int i = 0; i < function.inputCount; ++i) {
             execution.connect_variables(
                 sourceVars.at(i),
                 function_io_id{fn, variable_type::real, vector_sum_function<double>::in_io_reference(i, 0)});
@@ -864,10 +864,10 @@ void connect_vector_sum_functions(
                 sourceVariables.push_back(sourceVar);
             }
 
-            for (std::size_t k = 0; k < sourceVariables.size(); ++k) {
+            for (int j = 0; j < function.inputCount; ++j) {
                 execution.connect_variables(
-                    sourceVariables.at(k),
-                    function_io_id{fn, variable_type::real, vector_sum_function<double>::in_io_reference(k, i)});
+                    sourceVariables.at(j),
+                    function_io_id{fn, variable_type::real, vector_sum_function<double>::in_io_reference(j, i)});
             }
             execution.connect_variables(
                 function_io_id{fn, variable_type::real, vector_sum_function<double>::out_io_reference(i)},
