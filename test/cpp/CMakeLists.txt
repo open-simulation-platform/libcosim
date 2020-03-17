@@ -2,20 +2,22 @@ set(tests
     "async_slave_mockup_test"
     "cse_config_parser_test"
     "fixed_step_algorithm_test"
+    "file_observer_dynamic_logging_test"
     "file_observer_logging_test"
     "file_observer_logging_from_config_test"
     "last_value_observer_test"
+    "monitor_modified_variables_test"
     "multi_fixed_step_algorithm_test"
+    "ramp_modifier_test"
     "time_series_observer_test"
     "trend_buffer_test"
-    "monitor_modified_variables_test"
     "scenario_manager_test"
     "synchronized_xy_series_test"
 )
 
 if(CSECORE_WITH_FMUPROXY AND CSECORE_TEST_FMUPROXY)
     list(APPEND tests
-        "ssp_parser_fmuproxy_test"
+        "ssp_loader_fmuproxy_test"
     )
 endif()
 
@@ -27,7 +29,7 @@ set(unittests
     "model_unittest"
     "orchestration_unittest"
     "scenario_parser_unittest"
-    "ssp_parser_unittest"
+    "ssp_loader_unittest"
     "uri_unittest"
     "utility_concurrency_unittest"
     "utility_filesystem_unittest"

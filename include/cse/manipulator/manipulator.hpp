@@ -36,73 +36,113 @@ public:
      *  Sets a modifier for the value of a real input variable.
      *
      *  The variable must previously have been exposed with `expose_for_setting()`.
+     *  \param reference The variable's value reference.
+     *  \param modifier A function which takes the original value and the step size,
+     *  and returns a modified value. The function is guaranteed to be called each
+     *  time the `manipulable` is stepped. The function can be removed by setting
+     *  the argument to `nullptr`.
      */
     virtual void set_real_input_modifier(
         value_reference reference,
-        std::function<double(double)> modifier) = 0;
+        std::function<double(double, duration)> modifier) = 0;
 
     /**
      *  Sets a modifier for the value of an integer input variable.
      *
      *  The variable must previously have been exposed with `expose_for_setting()`.
+     *  \param reference The variable's value reference.
+     *  \param modifier A function which takes the original value and the step size,
+     *  and returns a modified value. The function is guaranteed to be called each
+     *  time the `manipulable` is stepped. The function can be removed by setting
+     *  the argument to `nullptr`.
      */
     virtual void set_integer_input_modifier(
         value_reference reference,
-        std::function<int(int)> modifier) = 0;
+        std::function<int(int, duration)> modifier) = 0;
 
     /**
      *  Sets a modifier for the value of a boolean input variable.
      *
      *  The variable must previously have been exposed with `expose_for_setting()`.
+     *  \param reference The variable's value reference.
+     *  \param modifier A function which takes the original value and the step size,
+     *  and returns a modified value. The function is guaranteed to be called each
+     *  time the `manipulable` is stepped. The function can be removed by setting
+     *  the argument to `nullptr`.
      */
     virtual void set_boolean_input_modifier(
         value_reference reference,
-        std::function<bool(bool)> modifier) = 0;
+        std::function<bool(bool, duration)> modifier) = 0;
 
     /**
      *  Sets a modifier for the value of a string input variable.
      *
      *  The variable must previously have been exposed with `expose_for_setting()`.
+     *  \param reference The variable's value reference.
+     *  \param modifier A function which takes the original value and the step size,
+     *  and returns a modified value. The function is guaranteed to be called each
+     *  time the `manipulable` is stepped. The function can be removed by setting
+     *  the argument to `nullptr`.
      */
     virtual void set_string_input_modifier(
         value_reference reference,
-        std::function<std::string(std::string_view)> modifier) = 0;
+        std::function<std::string(std::string_view, duration)> modifier) = 0;
 
     /**
      *  Sets a modifier for the value of a real output variable.
      *
      *  The variable must previously have been exposed with `expose_for_setting()`.
+     *  \param reference The variable's value reference.
+     *  \param modifier A function which takes the original value and the step size,
+     *  and returns a modified value. The function is guaranteed to be called each
+     *  time the `manipulable` is stepped. The function can be removed by setting
+     *  the argument to `nullptr`.
      */
     virtual void set_real_output_modifier(
         value_reference reference,
-        std::function<double(double)> modifier) = 0;
+        std::function<double(double, duration)> modifier) = 0;
 
     /**
      *  Sets a modifier for the value of an integer output variable.
      *
      *  The variable must previously have been exposed with `expose_for_setting()`.
+     *  \param reference The variable's value reference.
+     *  \param modifier A function which takes the original value and the step size,
+     *  and returns a modified value. The function is guaranteed to be called each
+     *  time the `manipulable` is stepped. The function can be removed by setting
+     *  the argument to `nullptr`.
      */
     virtual void set_integer_output_modifier(
         value_reference reference,
-        std::function<int(int)> modifier) = 0;
+        std::function<int(int, duration)> modifier) = 0;
 
     /**
      *  Sets a modifier for the value of a boolean output variable.
      *
      *  The variable must previously have been exposed with `expose_for_setting()`.
+     *  \param reference The variable's value reference.
+     *  \param modifier A function which takes the original value and the step size,
+     *  and returns a modified value. The function is guaranteed to be called each
+     *  time the `manipulable` is stepped. The function can be removed by setting
+     *  the argument to `nullptr`.
      */
     virtual void set_boolean_output_modifier(
         value_reference reference,
-        std::function<bool(bool)> modifier) = 0;
+        std::function<bool(bool, duration)> modifier) = 0;
 
     /**
      *  Sets a modifier for the value of a string output variable.
      *
      *  The variable must previously have been exposed with `expose_for_setting()`.
+     *  \param reference The variable's value reference.
+     *  \param modifier A function which takes the original value and the step size,
+     *  and returns a modified value. The function is guaranteed to be called each
+     *  time the `manipulable` is stepped. The function can be removed by setting
+     *  the argument to `nullptr`.
      */
     virtual void set_string_output_modifier(
         value_reference reference,
-        std::function<std::string(std::string_view)> modifier) = 0;
+        std::function<std::string(std::string_view, duration)> modifier) = 0;
 };
 
 /**

@@ -14,7 +14,7 @@
 #include <cse/model.hpp>
 #include <cse/observer.hpp>
 #include <cse/orchestration.hpp>
-#include <cse/ssp_parser.hpp>
+#include <cse/ssp/ssp_loader.hpp>
 
 #include <boost/fiber/future.hpp>
 
@@ -204,14 +204,12 @@ cse_execution* cse_ssp_execution_create(
     try {
         auto execution = std::make_unique<cse_execution>();
 
-        auto resolver = cse::default_model_uri_resolver();
-        auto sim = cse::load_ssp(
-            *resolver,
-            sspDir,
-            startTimeDefined ? std::optional<cse::time_point>(to_time_point(startTime)) : std::nullopt);
+        cse::ssp_loader loader;
+        if (startTimeDefined) loader.override_start_time(to_time_point(startTime));
+        auto [exec, simulatorMap] = loader.load(sspDir);
 
-        execution->cpp_execution = std::make_unique<cse::execution>(std::move(sim.first));
-        execution->simulators = std::move(sim.second);
+        execution->cpp_execution = std::make_unique<cse::execution>(std::move(exec));
+        execution->simulators = std::move(simulatorMap);
 
         return execution.release();
     } catch (...) {
@@ -229,15 +227,13 @@ cse_execution* cse_ssp_fixed_step_execution_create(
     try {
         auto execution = std::make_unique<cse_execution>();
 
-        auto resolver = cse::default_model_uri_resolver();
-        auto sim = cse::load_ssp(
-            *resolver,
-            sspDir,
-            std::make_unique<cse::fixed_step_algorithm>(to_duration(stepSize)),
-            startTimeDefined ? std::optional<cse::time_point>(to_time_point(startTime)) : std::nullopt);
+        cse::ssp_loader loader;
+        if (startTimeDefined) loader.override_start_time(to_time_point(startTime));
+        loader.override_algorithm(std::make_unique<cse::fixed_step_algorithm>(to_duration(stepSize)));
+        auto [exec, simulatorMap] = loader.load(sspDir);
 
-        execution->cpp_execution = std::make_unique<cse::execution>(std::move(sim.first));
-        execution->simulators = std::move(sim.second);
+        execution->cpp_execution = std::make_unique<cse::execution>(std::move(exec));
+        execution->simulators = std::move(simulatorMap);
 
         return execution.release();
     } catch (...) {

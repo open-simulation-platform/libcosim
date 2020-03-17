@@ -96,144 +96,31 @@
     <OspSystemStructure>
         <Functions>
             <!-- Function Switch -->
-            <Function type="Switch" name="mySwitch">
-                <Signals>
-                    <Signal type="boolean" causality="input" name="predicate"/>
-                    <Signal type="real" causality="input" name="true"/>
-                    <Signal type="real" causality="input" name="false"/>
-                    <Signal type="real" causality="output" name="result"/>
-                </Signals>
-            </Function>
+            <Switch name="mySwitch"/>
 
             <!-- Function Switch vector -->
-            <Function type="VectorSwitch" name="myVecSwitch">
-                <Signals>
-                    <!-- Should these use same elements as in FMI: ScalarVariable -->
-                    <Signal type="boolean" causality="input" name="predicate"/>
-                    <Signal type="real" causality="input" name="true[0]"/>
-                    <Signal type="real" causality="input" name="true[1]"/>
-                    <Signal type="real" causality="input" name="false[0]"/>
-                    <Signal type="real" causality="input" name="false[1]"/>
-                    <Signal type="real" causality="output" name="result[0]"/>
-                    <Signal type="real" causality="output" name="result[1]"/>
-                </Signals>
-                <SignalGroups>
-                    <SignalGroup name="true">
-                        <Signal name="true[0]"/>
-                        <Signal name="true[1]"/>
-                    </SignalGroup>
-                    <SignalGroup name="false">
-                        <Signal name="false[0]"/>
-                        <Signal name="false[1]"/>
-                    </SignalGroup>
-                    <SignalGroup name="result">
-                        <Signal name="result[0]"/>
-                        <Signal name="result[1]"/>
-                    </SignalGroup>
-                </SignalGroups>
-            </Function>
+            <VectorSwitch name="myVecSwitch" dimension="2"/>
 
             <!-- Function Sum scalar -->
-            <Function type="Sum" name="mySummation">
-                <Signals>
-                    <Signal type="real" causality="input" name="in1"/>
-                    <Signal type="real" causality="input" name="in2"/>
-                    <Signal type="real" causality="output" name="out"/>
-                </Signals>
-            </Function>
+            <Sum name="mySummation" inputCount="2"/>
 
             <!-- Function Sum vector -->
-            <Function type="Sum" name="myVecSummation">
-                <Signals>
-                    <Signal type="real" causality="input" name="in1[0]"/>
-                    <Signal type="real" causality="input" name="in1[1]"/>
-                    <Signal type="real" causality="input" name="in2[0]"/>
-                    <Signal type="real" causality="input" name="in2[1]"/>
-                    <Signal type="real" causality="output" name="out[0]"/>
-                    <Signal type="real" causality="output" name="out[1]"/>
-                </Signals>
-                <SignalGroups>
-                    <SignalGroup name="in1">
-                        <Signal name="in1[0]"/>
-                        <Signal name="in1[1]"/>
-                    </SignalGroup>
-                    <SignalGroup name="in2">
-                        <Signal name="in2[0]"/>
-                        <Signal name="in2[1]"/>
-                    </SignalGroup>
-                    <SignalGroup name="out">
-                        <Signal name="out[0]"/>
-                        <Signal name="out[1]"/>
-                    </SignalGroup>
-                </SignalGroups>
-            </Function>
+            <VectorSum name="myVecSummation" inputCount="2" dimension="2"/>
 
             <!-- Function linear transformation scalar -->
-            <Function type="LinearTransformation" name="myScaling">
-                <!-- A linear transformation is parameterized -->
-                <Parameters>
-                    <Parameter name="factor" type="real" value="0.1"/>  <!-- Key, Value -->
-                    <Parameter name="offset" type="real" value="123.4"/>
-                </Parameters>
-                <Signals>
-                    <Signal type="real" causality="input" name="in"/>
-                    <Signal type="real" causality="output" name="out"/>
-                </Signals>
-            </Function>
+            <LinearTransformation name="myScaling" factor="0.1" offset="123.4"/>
 
             <!-- Function linear transformation vector -->
-            <Function type="LinearTransformation" name="myVectorScaling">
-                <Parameters>
-                    <Parameter name="factor" value="0.1"/>
-                    <Parameter name="offset" value="123.4"/>
-                </Parameters>
-                <Signals>
-                    <Signal type="real" causality="input" name="in[0]"/>
-                    <Signal type="real" causality="input" name="in[1]"/>
-                    <Signal type="real" causality="output" name="out[0]"/>
-                    <Signal type="real" causality="output" name="out[1]"/>
-                </Signals>
-                <SignalGroups>
-                    <SignalGroup name="in">
-                        <Signal name="in[0]"/>
-                        <Signal name="in[1]"/>
-                    </SignalGroup>
-                    <SignalGroup name="out">
-                        <Signal name="out[0]"/>
-                        <Signal name="out[1]"/>
-                    </SignalGroup>
-                </SignalGroups>
-            </Function>
+            <VectorLinearTransformation name="myVectorScaling" factor="0.1" offset="123.4" dimension="2"/>
 
             <!-- Function matrix multiplication vector -->
-            <Function type="StaticMatrixTransformation" name="myStaticMatrixMultiplication">
-                <Parameters>
-                    <Parameter name="x0" value="0.0"/>
-                    <Parameter name="x1" value="-1.0"/>
-                    <Parameter name="y0" value="1.0"/>
-                    <Parameter name="y1" value="0.0"/>
-                </Parameters>
-                <Signals>
-                    <Signal type="real" causality="input" name="in[0]"/>
-                    <Signal type="real" causality="input" name="in[1]"/>
-                    <Signal type="real" causality="output" name="out[0]"/>
-                    <Signal type="real" causality="output" name="out[1]"/>
-                </Signals>
-                <SignalGroups>
-                    <SignalGroup name="in">
-                        <Signal name="in[0]"/>
-                        <Signal name="in[1]"/>
-                    </SignalGroup>
-                    <SignalGroup name="out">
-                        <Signal name="out[0]"/>
-                        <Signal name="out[1]"/>
-                    </SignalGroup>
-                </SignalGroups>
-            </Function>
+            <StaticMatrixTransformation name="myStaticMatrixMultiplication" dimension="2"
+                                        x0="0.0" x1="-1.0"
+                                        y0="1.0" y1="0.0"/>
         </Functions>
 
         <!--
-            - LinearTransformation as Function?
+            - LinearTransformation as Function
             - Consider naming of xml elements
               Do connections to/from functions have special names?
               Signal name or id or reference?
@@ -252,26 +139,26 @@
             -->
 
             <!-- Linear transformation as function -->
-            <VariableConnection>
+            <SignalConnection>
                 <Variable simulator="SimA" name="out"/>
                 <Signal function="myScaling" name="in"/>
-            </VariableConnection>
+            </SignalConnection>
 
-            <VariableConnection>
+            <SignalConnection>
                 <Signal function="myScaling" name="out"/>
                 <Variable simulator="SimB" name="in"/>
-            </VariableConnection>
+            </SignalConnection>
 
 
-            <VariableGroupConnection>
+            <SignalGroupConnection>
                 <VariableGroup simulator="simA" name="A"/>
                 <SignalGroup function="myStaticMatrixMultiplication" name="in"/>
-            </VariableGroupConnection>
+            </SignalGroupConnection>
 
-            <VariableGroupConnection>
+            <SignalGroupConnection>
                 <SignalGroup function="myStaticMatrixMultiplication" name="out"/>
                 <VariableGroup simulator="simB" name="B"/>
-            </VariableGroupConnection>
+            </SignalGroupConnection>
 
             <VariableGroupConnection>
                 <VariableGroup simulator="simA" name="A"/>
@@ -279,52 +166,49 @@
             </VariableGroupConnection>
 
             <!-- Function Switch -->
-            <VariableConnection>
+            <SignalConnection>
                 <Variable simulator="simA" name="out"/>
                 <Signal function="mySwitch" name="predicate"/>
-            </VariableConnection>
-            <VariableConnection>
+            </SignalConnection>
+            <SignalConnection>
                 <Variable simulator="simB" name="out"/>
                 <Signal function="mySwitch" name="true"/>
-            </VariableConnection>
-            <VariableConnection>
+            </SignalConnection>
+            <SignalConnection>
                 <Variable simulator="simC" name="out"/>
                 <Signal function="mySwitch" name="false"/>
-            </VariableConnection>
-            <VariableConnection>
+            </SignalConnection>
+            <SignalConnection>
                 <Signal function="mySwitch" name="result"/>
                 <Variable simulator="simD" name="in"/>
-            </VariableConnection>
+            </SignalConnection>
 
-            <VariableConnection>
+            <SignalConnection>
                 <Variable simulator="simA" name="out"/>
-                <Signal function="mySummation" name="0"/>
-            </VariableConnection>
-            <VariableConnection>
+                <Signal function="mySummation" name="in[0]"/>
+            </SignalConnection>
+            <SignalConnection>
                 <Variable simulator="simB" name="out"/>
-                <Signal function="mySummation" name="in2"/>
-            </VariableConnection>
-            <VariableConnection>
+                <Signal function="mySummation" name="in[1]"/>
+            </SignalConnection>
+            <SignalConnection>
                 <Signal function="mySummation" name="out"/>
                 <Variable simulator="simC" name="in"/>
-            </VariableConnection>
-            <VariableConnection>
-                <Variable simulator="simA" name="out"/>
-                <Signal function="mySummation" name="in1"/>
-            </VariableConnection>
+            </SignalConnection>
 
-            <VariableGroupConnection>
-                <SignalGroup function="myVecSummation" name="in1"/>
+
+            <SignalGroupConnection>
+                <SignalGroup function="myVecSummation" name="in[0]"/>
                 <VariableGroup simulator="simA" name="outVec"/>
-            </VariableGroupConnection>
-            <VariableGroupConnection>
-                <SignalGroup function="myVecSummation" name="in2"/>
+            </SignalGroupConnection>
+            <SignalGroupConnection>
+                <SignalGroup function="myVecSummation" name="in[1]"/>
                 <VariableGroup simulator="simB" name="outVec"/>
-            </VariableGroupConnection>
-            <VariableGroupConnection>
+            </SignalGroupConnection>
+            <SignalGroupConnection>
                 <SignalGroup function="myVecSummation" name="out"/>
                 <VariableGroup simulator="simC" name="inVec"/>
-            </VariableGroupConnection>
+            </SignalGroupConnection>
         </Connections>
     </OspSystemStructure>
 </MSMI>

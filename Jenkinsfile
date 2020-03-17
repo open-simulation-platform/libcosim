@@ -13,7 +13,7 @@ pipeline {
 
         stage('Build') {
             parallel {
-                stage('Build on Windows') {
+                stage('Windows') {
                     agent { label 'windows' }
 
                     environment {
@@ -112,7 +112,7 @@ pipeline {
                         }
                     }
                 }
-                stage('Build on Windows with FMU-proxy support') {
+                stage('Windows with FMU-proxy support') {
                     agent { label 'windows' }
 
                     environment {
@@ -170,7 +170,7 @@ pipeline {
                         }
                     }
                 }
-                stage ( 'Build on Linux with Conan' ) {
+                stage ( 'Linux with Conan' ) {
                     agent {
                         dockerfile {
                             filename 'Dockerfile.conan-build'
@@ -276,7 +276,7 @@ pipeline {
                         }
                     }
                 }
-                stage ( 'Build on Linux with Conan & FMU-proxy support' ) {
+                stage ( 'Linux with Conan & FMU-proxy support' ) {
                     agent {
                         dockerfile {
                             filename 'Dockerfile.conan-build'
@@ -341,7 +341,7 @@ pipeline {
                         }
                     }
                 }
-                stage ( 'Build on Linux with Docker' ) {
+                stage ( 'Linux with Docker' ) {
                     agent {
                         dockerfile {
                             filename 'Dockerfile.build'

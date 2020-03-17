@@ -58,21 +58,8 @@ bool is_input(cse::variable_causality causality)
     }
 }
 
-cse::variable_description find_variable(
-    const std::vector<variable_description>& variables,
-    const std::string& name)
-{
-    for (const auto& vd : variables) {
-        if (vd.name == name) {
-            return vd;
-        }
-    }
-
-    throw std::invalid_argument("Cannot find variable with name " + name);
-}
-
 template<typename T>
-std::function<T(T)> generate_modifier(
+std::function<T(T, duration)> generate_modifier(
     const std::string& kind,
     const YAML::Node& event)
 {
@@ -81,16 +68,16 @@ std::function<T(T)> generate_modifier(
     }
     T value = event["value"].as<T>();
     if ("bias" == kind) {
-        return [value](T original) { return original + value; };
+        return [value](T original, duration) { return original + value; };
     } else if ("override" == kind) {
-        return [value](T /*original*/) { return value; };
+        return [value](T /*original*/, duration) { return value; };
     }
     std::ostringstream oss;
     oss << "Can't process unrecognized modifier kind: " << kind;
     throw std::invalid_argument(oss.str());
 }
 
-std::function<std::string(std::string_view)> generate_string_modifier(
+std::function<std::string(std::string_view, duration)> generate_string_modifier(
     const std::string& kind,
     const YAML::Node& event)
 {
@@ -99,7 +86,7 @@ std::function<std::string(std::string_view)> generate_string_modifier(
     }
     auto value = event["value"].as<std::string>();
     if ("override" == kind) {
-        return [value](std::string_view /*original*/) { return value; };
+        return [value](std::string_view /*original*/, duration) { return value; };
     }
     std::ostringstream oss;
     oss << "Can't process unsupported modifier kind: " << kind << " for type " << to_text(cse::variable_type::string);
@@ -225,7 +212,7 @@ scenario::scenario parse_scenario(
         auto varName =
             specified_or_default(event, "variable", defaultOpts.variable);
         const auto var =
-            find_variable(simulator->model_description().variables, varName);
+            find_variable(simulator->model_description(), varName);
 
         auto mode = specified_or_default(event, "action", defaultOpts.action);
         bool isInput = is_input(var.causality);

@@ -97,7 +97,7 @@ void linear_transformation_function::set_real(
     const function_io_reference& reference,
     double value)
 {
-    if (reference == function_io_reference{0, 0, 0, 0}) {
+    if (reference == in_io_reference) {
         input_ = value;
     } else {
         throw_bad_io_ref();
@@ -125,9 +125,9 @@ void linear_transformation_function::set_string(
 double linear_transformation_function::get_real(
     const function_io_reference& reference) const
 {
-    if (reference == function_io_reference{0, 0, 0, 0}) {
+    if (reference == in_io_reference) {
         return input_;
-    } else if (reference == function_io_reference{1, 0, 0, 0}) {
+    } else if (reference == out_io_reference) {
         return output_;
     } else {
         throw_bad_io_ref();

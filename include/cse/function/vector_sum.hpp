@@ -153,6 +153,18 @@ public:
         }
     }
 
+    /// Reference to a component of an input vector, for convencience.
+    constexpr static function_io_reference in_io_reference(int inputVector, int component)
+    {
+        return {0, inputVector, 0, component};
+    }
+
+    /// Reference to a component of the output vector, for convencience.
+    constexpr static function_io_reference out_io_reference(int component)
+    {
+        return {1, 0, 0, component};
+    }
+
 private:
     [[noreturn]] static void throw_bad_io_ref()
     {

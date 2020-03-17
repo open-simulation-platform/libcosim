@@ -174,7 +174,7 @@ BOOST_AUTO_TEST_CASE(function_in_execution)
             cse::scenario::variable_action{
                 idS1,
                 mockRealIn,
-                cse::scenario::real_modifier{[](double) { return event1Value; }},
+                cse::scenario::real_modifier{[](double, cse::duration) { return event1Value; }},
                 true}});
     scenario.events.push_back(
         cse::scenario::event{
@@ -182,9 +182,10 @@ BOOST_AUTO_TEST_CASE(function_in_execution)
             cse::scenario::variable_action{
                 idS1,
                 mockRealIn,
-                cse::scenario::real_modifier{[](double) { return event2Value; }},
+                cse::scenario::real_modifier{[](double, cse::duration) { return event2Value; }},
                 true}});
-//    scenarioManager->load_scenario(scenario, exe.current_time());
+    scenario.end = stopTime;
+    scenarioManager->load_scenario(scenario, exe.current_time());
 
     // Collect S2's output values
     observer->start_observing(

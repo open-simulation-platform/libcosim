@@ -2,7 +2,8 @@
 <OspSystemStructure
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://opensimulationplatform.com/MSMI/OSPSystemStructure ../../../src/cpp/xsd/OspSystemStructure.xsd"
-        xmlns="http://opensimulationplatform.com/MSMI/OSPSystemStructure">
+        xmlns="http://opensimulationplatform.com/MSMI/OSPSystemStructure"
+        version="0.1">
     <StartTime>0.0</StartTime>
     <BaseStepSize>1e-4</BaseStepSize>
     <Algorithm>fixedStep</Algorithm>
@@ -34,24 +35,8 @@
         </Simulator>
     </Simulators>
     <Functions>
-        <Function name="mySum" type="sum">
-            <Signals>
-                <Signal name="0" type="real" causality="input"/>
-                <Signal name="1" type="real" causality="input"/>
-                <Signal name="2" type="real" causality="input"/>
-                <Signal name="sum" type="real" causality="output"/>
-            </Signals>
-        </Function>
-        <Function type="lineartransformation" name="myScaling">
-            <Parameters>
-                <Parameter name="factor" value="0.1" type="real"/>
-                <Parameter name="offset" value="123.4" type="real"/>
-            </Parameters>
-            <Signals>
-                <Signal type="real" causality="input" name="in"/>
-                <Signal type="real" causality="output" name="out"/>
-            </Signals>
-        </Function>
+        <LinearTransformation name="myScaling" factor="0.1" offset="123.4"/>
+        <Sum name="mySum" inputCount="3"/>
     </Functions>
     <Connections>
         <VariableConnection>
@@ -61,18 +46,18 @@
 
         <SignalConnection>
             <Variable simulator="KnuckleBoomCrane" name="p_Crane.f[1]"/>
-            <Signal function="mySum" name="0"/>
+            <Signal function="mySum" name="in[0]"/>
         </SignalConnection>
         <SignalConnection>
             <Variable simulator="KnuckleBoomCrane" name="p_Crane.f[2]"/>
-            <Signal function="mySum" name="1"/>
+            <Signal function="mySum" name="in[1]"/>
         </SignalConnection>
         <SignalConnection>
             <Variable simulator="KnuckleBoomCrane" name="p_Crane.f[3]"/>
-            <Signal function="mySum" name="2"/>
+            <Signal function="mySum" name="in[2]"/>
         </SignalConnection>
         <SignalConnection>
-            <Signal function="mySum" name="sum"/>
+            <Signal function="mySum" name="out"/>
             <Variable simulator="CraneController" name="p_Crane.f[1]"/>
         </SignalConnection>
 

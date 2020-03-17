@@ -51,7 +51,7 @@ int main()
         REQUIRE(simResult.get());
 
         // Print the log paths
-        std::cout << "CSV file: " << csv_observer->get_log_path() << std::endl;
+        std::cout << "Log directory: " << csv_observer->get_log_path() << std::endl;
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;

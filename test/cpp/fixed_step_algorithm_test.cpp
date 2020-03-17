@@ -27,7 +27,7 @@ int main()
         constexpr cse::time_point startTime;
         constexpr cse::time_point midTime = cse::to_time_point(0.6);
         constexpr cse::time_point endTime = cse::to_time_point(1.0);
-        constexpr cse::duration stepSize = cse::to_duration(0.1);
+        constexpr cse::duration stepSize = cse::to_duration(0.05);
 
         // Set up execution
         auto execution = cse::execution(
@@ -40,93 +40,74 @@ int main()
         auto observer = std::make_shared<cse::last_value_observer>();
         execution.add_observer(observer);
 
-        const cse::value_reference realOutRef = 0;
-        const cse::value_reference realInRef = 1;
+        const cse::value_reference realOutRef = mock_slave::real_out_reference;
+        const cse::value_reference realInRef = mock_slave::real_in_reference;
 
 
         // Add slaves to it
-        for (int i = 0; i < numSlaves; ++i) {
+        std::vector<cse::simulator_index> slaves;
+        slaves.push_back(
             execution.add_slave(
-                cse::make_pseudo_async(std::make_unique<mock_slave>([](double x) { return x + 1.234; })),
-                "slave" + std::to_string(i));
-            if (i > 0) {
-                execution.connect_variables(
-                    cse::variable_id{i - 1, cse::variable_type::real, realOutRef},
-                    cse::variable_id{i, cse::variable_type::real, realInRef});
-            }
+                cse::make_pseudo_async(
+                    std::make_unique<mock_slave>([](cse::time_point t, double) {
+                        return cse::to_double_time_point(t);
+                    })),
+                "clock_slave"));
+        for (int i = 1; i < numSlaves; ++i) {
+            slaves.push_back(
+                execution.add_slave(
+                    cse::make_pseudo_async(
+                        std::make_unique<mock_slave>([](double x) {
+                            return x + 1.234;
+                    })),
+                    "adder_slave" + std::to_string(i)));
+            execution.connect_variables(
+                cse::variable_id{slaves[i - 1], cse::variable_type::real, realOutRef},
+                cse::variable_id{slaves[i], cse::variable_type::real, realInRef});
         }
 
+        // Add an observer that watches the last slave
         auto observer2 = std::make_shared<cse::time_series_observer>();
         execution.add_observer(observer2);
-        observer2->start_observing(cse::variable_id{9, cse::variable_type::real, realOutRef});
+        observer2->start_observing(
+            cse::variable_id{slaves.back(), cse::variable_type::real, realOutRef});
 
         // Run simulation
         auto simResult = execution.simulate_until(midTime);
-        auto start = std::chrono::steady_clock::now();
         REQUIRE(simResult.get());
         REQUIRE(std::chrono::abs(execution.current_time() - midTime) < std::chrono::microseconds(1));
-        REQUIRE(execution.get_measured_real_time_factor() > 1.0);
+        // Actual performance should not be tested here - just check that we get a positive value
+        REQUIRE(execution.get_measured_real_time_factor() > 0.0);
         simResult = execution.simulate_until(endTime);
         REQUIRE(simResult.get());
-        auto end = std::chrono::steady_clock::now();
 
-        auto simulatedDuration = endTime - startTime;
-        auto measuredDuration = end - start;
-        bool fasterThanRealTime = measuredDuration < simulatedDuration;
-        REQUIRE(fasterThanRealTime);
-
-        double realOutValue = -1.0;
-        double realInValue = -1.0;
-
-        for (int j = 0; j < numSlaves; j++) {
-            double lastRealOutValue = realOutValue;
-            observer->get_real(j, gsl::make_span(&realOutRef, 1), gsl::make_span(&realOutValue, 1));
-            observer->get_real(j, gsl::make_span(&realInRef, 1), gsl::make_span(&realInValue, 1));
-            if (j > 0) {
-                // Check that real input of slave j has same value as real output of slave j - 1
-                REQUIRE(std::fabs(realInValue - lastRealOutValue) < 1.0e-9);
-            }
-        }
-
+        // Check that time, step number and output values increase monotonically
         const int numSamples = 10;
         double realValues[numSamples];
         cse::step_number steps[numSamples];
         cse::time_point timeValues[numSamples];
-        observer2->get_real_samples(9, realOutRef, 1, gsl::make_span(realValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(timeValues, numSamples));
-        cse::step_number lastStep = -1;
-        double lastValue = -1.0;
-        for (int k = 0; k < numSamples; k++) {
-            REQUIRE(steps[k] > lastStep);
-            lastStep = steps[k];
+        observer2->get_real_samples(
+            slaves.back(),
+            realOutRef,
+            numSlaves, // changes won't propagate to the last slave until the numSlaves'th step
+            gsl::make_span(realValues, numSamples),
+            gsl::make_span(steps, numSamples),
+            gsl::make_span(timeValues, numSamples));
 
-            REQUIRE(realValues[k] > lastValue);
-            lastValue = realValues[k];
-
-            if (k > 0) {
-                cse::duration diff = timeValues[k] - timeValues[k - 1];
-                REQUIRE(diff == stepSize);
-            }
+        for (int k = 1; k < numSamples; k++) {
+            REQUIRE(steps[k] > steps[k-1]);
+            REQUIRE(realValues[k] > realValues[k-1]);
+            REQUIRE(timeValues[k] - timeValues[k-1] == stepSize);
         }
 
-        constexpr auto finalTime = cse::to_time_point(5.0);
-
+        // Run for another period with an RTF target > 1
+        constexpr auto finalTime = cse::to_time_point(2.0);
+        constexpr double rtfTarget = 2.25;
         execution.enable_real_time_simulation();
+        execution.set_real_time_factor_target(rtfTarget);
         simResult = execution.simulate_until(finalTime);
-        start = std::chrono::steady_clock::now();
         REQUIRE(simResult.get());
-        end = std::chrono::steady_clock::now();
-
-        simulatedDuration = finalTime - endTime;
-        measuredDuration = end - start;
-        const auto tolerance = std::chrono::milliseconds(50);
-
-        fasterThanRealTime = (simulatedDuration - measuredDuration) > tolerance;
-        bool slowerThanRealTime = (measuredDuration - simulatedDuration) > tolerance;
-        REQUIRE(!slowerThanRealTime);
-        REQUIRE(!fasterThanRealTime);
-
-        printf("Real time factor: %lf\n", execution.get_measured_real_time_factor());
-        REQUIRE(fabs(execution.get_measured_real_time_factor() - 1.0) < 0.05);
+        REQUIRE(std::fabs(execution.get_real_time_factor_target() - rtfTarget) < 1.0e-9);
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;

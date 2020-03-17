@@ -141,7 +141,4 @@ BOOST_AUTO_TEST_CASE(v1_fmu_unpacked)
     auto importer = fmi::importer::create();
     auto fmu = importer->import_unpacked(unpackDir.path());
     run_tests(fmu);
-
-    importer->clean_cache();
-    BOOST_TEST(boost::filesystem::exists(unpackDir.path()));
 }
