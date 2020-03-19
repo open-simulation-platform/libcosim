@@ -19,63 +19,95 @@
 namespace cse
 {
 
+namespace
+{
+std::string format_time(boost::posix_time::ptime now)
+{
+    std::locale loc(std::wcout.getloc(), new boost::posix_time::wtime_facet(L"%Y%m%d_%H%M%S_%f"));
+
+    std::basic_stringstream<wchar_t> wss;
+    wss.imbue(loc);
+    wss << now;
+
+    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
+    return converter.to_bytes(wss.str());
+}
+} // namespace
+
+
 class file_observer::slave_value_writer
 {
 public:
-    slave_value_writer(observable* observable, boost::filesystem::path& logPath, time_point currentTime)
+    slave_value_writer(observable* observable, boost::filesystem::path& logDir)
         : observable_(observable)
-        , logPath_(logPath)
+        , logDir_(logDir)
     {
-        initialize_default(currentTime);
+        initialize_default();
     }
 
-    slave_value_writer(observable* observable, boost::filesystem::path& logPath, size_t decimationFactor, time_point currentTime,
-        std::vector<variable_description>& realVars, std::vector<variable_description>& intVars,
-        std::vector<variable_description>& boolVars, std::vector<variable_description>& strVars)
+    slave_value_writer(observable* observable, boost::filesystem::path& logDir, size_t decimationFactor,
+        const std::vector<variable_description>& variables)
         : observable_(observable)
-        , logPath_(logPath)
+        , logDir_(logDir)
         , decimationFactor_(decimationFactor)
-        , loggableRealVariables_(realVars)
-        , loggableIntVariables_(intVars)
-        , loggableBoolVariables_(boolVars)
-        , loggableStringVariables_(strVars)
     {
-        initialize_config(currentTime);
+        initialize_config(variables);
     }
 
     void observe(step_number timeStep, time_point currentTime)
     {
-        if (++counter_ % decimationFactor_ == 0) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (recording_) {
+            if (!fsw_.is_open()) {
+                create_log_file();
+            }
+            if (timeStep % decimationFactor_ == 0) {
 
-            if (!realReferences_.empty()) realSamples_[timeStep].reserve(realReferences_.size());
-            if (!intReferences_.empty()) intSamples_[timeStep].reserve(intReferences_.size());
-            if (!boolReferences_.empty()) boolSamples_[timeStep].reserve(boolReferences_.size());
-            if (!stringReferences_.empty()) stringSamples_[timeStep].reserve(stringReferences_.size());
+                if (!realVars_.empty()) realSamples_[timeStep].reserve(realVars_.size());
+                if (!intVars_.empty()) intSamples_[timeStep].reserve(intVars_.size());
+                if (!boolVars_.empty()) boolSamples_[timeStep].reserve(boolVars_.size());
+                if (!stringVars_.empty()) stringSamples_[timeStep].reserve(stringVars_.size());
 
-            for (const auto idx : realReferences_) {
-                realSamples_[timeStep].push_back(observable_->get_real(idx));
-            }
-            for (const auto idx : intReferences_) {
-                intSamples_[timeStep].push_back(observable_->get_integer(idx));
-            }
-            for (const auto idx : boolReferences_) {
-                boolSamples_[timeStep].push_back(observable_->get_boolean(idx));
-            }
-            for (const auto idx : stringReferences_) {
-                stringSamples_[timeStep].push_back(observable_->get_string(idx));
-            }
-            timeSamples_[timeStep] = to_double_time_point(currentTime);
+                for (const auto& vd : realVars_) {
+                    realSamples_[timeStep].push_back(observable_->get_real(vd.reference));
+                }
+                for (const auto& vd : intVars_) {
+                    intSamples_[timeStep].push_back(observable_->get_integer(vd.reference));
+                }
+                for (const auto& vd : boolVars_) {
+                    boolSamples_[timeStep].push_back(observable_->get_boolean(vd.reference));
+                }
+                for (const auto& vd : stringVars_) {
+                    stringSamples_[timeStep].push_back(observable_->get_string(vd.reference));
+                }
+                timeSamples_[timeStep] = to_double_time_point(currentTime);
 
-            if (counter_ >= decimationFactor_) {
                 persist();
-                counter_ = 0;
             }
         }
     }
 
+    void start_recording()
+    {
+        recording_ = true;
+    }
+
+    void stop_recording()
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (fsw_.is_open()) {
+            fsw_.close();
+        }
+        recording_ = false;
+        realSamples_.clear();
+        intSamples_.clear();
+        boolSamples_.clear();
+        stringSamples_.clear();
+        timeSamples_.clear();
+    }
+
     ~slave_value_writer()
     {
-        persist();
         if (fsw_.is_open()) {
             fsw_.close();
         }
@@ -90,85 +122,54 @@ private:
         }
     }
 
+    void initialize_variable(const variable_description& vd)
+    {
+        observable_->expose_for_getting(vd.type, vd.reference);
+
+        switch (vd.type) {
+            case variable_type::real:
+                realVars_.push_back(vd);
+                break;
+            case variable_type::integer:
+                intVars_.push_back(vd);
+                break;
+            case variable_type::string:
+                stringVars_.push_back(vd);
+                break;
+            case variable_type::boolean:
+                boolVars_.push_back(vd);
+                break;
+            case variable_type::enumeration:
+                CSE_PANIC();
+        }
+    }
+
     /** Default constructor initialization, all variables are logged. */
-    void initialize_default(time_point currentTime)
+    void initialize_default()
     {
         for (const auto& vd : observable_->model_description().variables) {
             if (vd.causality != variable_causality::local) {
-
-                observable_->expose_for_getting(vd.type, vd.reference);
-
-                if (vd.type == variable_type::real) {
-                    realReferences_.push_back(vd.reference);
-                }
-                if (vd.type == variable_type::integer) {
-                    intReferences_.push_back(vd.reference);
-                }
-                if (vd.type == variable_type::boolean) {
-                    boolReferences_.push_back(vd.reference);
-                }
-                if (vd.type == variable_type::string) {
-                    stringReferences_.push_back(vd.reference);
-                }
-
-                switch (vd.type) {
-                    case variable_type::real:
-                        realVars_.push_back(vd);
-                        break;
-                    case variable_type::integer:
-                        intVars_.push_back(vd);
-                        break;
-                    case variable_type::string:
-                        stringVars_.push_back(vd);
-                        break;
-                    case variable_type::boolean:
-                        boolVars_.push_back(vd);
-                        break;
-                    case variable_type::enumeration:
-                        CSE_PANIC();
-                }
+                initialize_variable(vd);
             }
         }
-
-        write_header();
-        observe(0, currentTime);
     }
 
     /** External config initialization, only configured variables are logged. */
-    void initialize_config(time_point currentTime)
+    void initialize_config(const std::vector<variable_description>& variables)
     {
-        for (const auto& variable : loggableRealVariables_) {
-            realReferences_.push_back(variable.reference);
-            observable_->expose_for_getting(variable_type::real, variable.reference);
-            realVars_.push_back(variable);
+        for (const auto& vd : variables) {
+            initialize_variable(vd);
         }
-
-        for (const auto& variable : loggableIntVariables_) {
-            intReferences_.push_back(variable.reference);
-            observable_->expose_for_getting(variable_type::integer, variable.reference);
-            intVars_.push_back(variable);
-        }
-
-        for (const auto& variable : loggableBoolVariables_) {
-            boolReferences_.push_back(variable.reference);
-            observable_->expose_for_getting(variable_type::boolean, variable.reference);
-            boolVars_.push_back(variable);
-        }
-
-        for (const auto& variable : loggableStringVariables_) {
-            stringReferences_.push_back(variable.reference);
-            observable_->expose_for_getting(variable_type::string, variable.reference);
-            stringVars_.push_back(variable);
-        }
-
-        write_header();
-        observe(0, currentTime);
     }
 
-    void write_header()
+    void create_log_file()
     {
-        boost::filesystem::create_directories(logPath_.parent_path());
-        fsw_.open(logPath_, std::ios_base::out | std::ios_base::app);
+        auto time_str = format_time(boost::posix_time::microsec_clock::local_time());
+        auto filename = observable_->name().append("_").append(time_str).append(".csv");
+
+        auto filepath = logDir_ / filename;
+        boost::filesystem::create_directories(logDir_);
+        fsw_.open(filepath, std::ios_base::out | std::ios_base::app);
 
         if (fsw_.fail()) {
             throw std::runtime_error("Failed to open file stream for logging");
@@ -199,7 +200,6 @@ private:
     void persist()
     {
         ss_.clear();
-        ss_.str(std::string());
 
         if (fsw_.is_open()) {
 
@@ -228,25 +228,18 @@ private:
     std::map<step_number, std::vector<int>> intSamples_;
     std::map<step_number, std::vector<bool>> boolSamples_;
     std::map<step_number, std::vector<std::string_view>> stringSamples_;
-    std::vector<value_reference> realReferences_;
-    std::vector<value_reference> intReferences_;
-    std::vector<value_reference> boolReferences_;
-    std::vector<value_reference> stringReferences_;
     std::map<step_number, double> timeSamples_;
     std::vector<variable_description> realVars_;
     std::vector<variable_description> intVars_;
     std::vector<variable_description> boolVars_;
     std::vector<variable_description> stringVars_;
     observable* observable_;
-    boost::filesystem::path logPath_;
+    boost::filesystem::path logDir_;
     size_t decimationFactor_ = 1;
-    std::vector<variable_description> loggableRealVariables_;
-    std::vector<variable_description> loggableIntVariables_;
-    std::vector<variable_description> loggableBoolVariables_;
-    std::vector<variable_description> loggableStringVariables_;
     boost::filesystem::ofstream fsw_;
     std::stringstream ss_;
-    size_t counter_ = 0;
+    std::atomic<bool> recording_ = true;
+    std::mutex mutex_;
 };
 
 file_observer::file_observer(const boost::filesystem::path& logDir)
@@ -265,17 +258,6 @@ file_observer::file_observer(const boost::filesystem::path& logDir, const boost:
 
 namespace
 {
-std::string format_time(boost::posix_time::ptime now)
-{
-    std::locale loc(std::wcout.getloc(), new boost::posix_time::wtime_facet(L"%Y%m%d_%H%M%S"));
-
-    std::basic_stringstream<wchar_t> wss;
-    wss.imbue(loc);
-    wss << now;
-
-    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
-    return converter.to_bytes(wss.str());
-}
 
 template<typename T>
 T get_attribute(const boost::property_tree::ptree& tree, const std::string& key)
@@ -290,39 +272,32 @@ T get_attribute(const boost::property_tree::ptree& tree, const std::string& key,
 }
 } // namespace
 
-void file_observer::simulator_added(simulator_index index, observable* simulator, time_point currentTime)
+void file_observer::simulator_added(
+    simulator_index index,
+    observable* simulator,
+    time_point /*currentTime*/)
 {
-    auto time_str = format_time(boost::posix_time::second_clock::local_time());
-    auto name = simulator->name().append("_").append(std::to_string(index)).append("_");
-    auto extension = time_str.append(".csv");
-    auto filename = name.append(extension);
-
-    logPath_ = logDir_ / filename;
     simulators_[index] = simulator;
 
     if (logFromConfig_) {
-        // Read all configured model names from the XML. If simulator name is not in the list, terminate.
+        // Read all configured model names from the XML. If simulator name is not in the list, do nothing.
         std::vector<std::string> modelNames;
-        for (const auto& [model_key, model] : ptree_.get_child("simulators")) {
-            (void)model_key; // Ugly GCC 7.3 adaptation
-
-            modelNames.push_back(get_attribute<std::string>(model, "name"));
+        for (const auto& simulatorChild : ptree_.get_child("simulators")) {
+            modelNames.push_back(get_attribute<std::string>(simulatorChild.second, "name"));
         }
         if (std::find(modelNames.begin(), modelNames.end(), simulator->name()) != modelNames.end()) {
-            parse_config(simulator->name());
+            auto config = parse_config(simulator->name());
 
-            valueWriters_[index] = std::make_unique<slave_value_writer>(simulator, logPath_, decimationFactor_, currentTime,
-                loggableRealVariables_, loggableIntVariables_, loggableBoolVariables_, loggableStringVariables_);
-
-            loggableRealVariables_.clear();
-            loggableIntVariables_.clear();
-            loggableBoolVariables_.clear();
-            loggableStringVariables_.clear();
-        } else
+            valueWriters_[index] = std::make_unique<slave_value_writer>(
+                simulator,
+                logDir_,
+                config.decimationFactor,
+                config.variables);
+        } else {
             return;
-
+        }
     } else {
-        valueWriters_[index] = std::make_unique<slave_value_writer>(simulator, logPath_, currentTime);
+        valueWriters_[index] = std::make_unique<slave_value_writer>(simulator, logDir_);
     }
 }
 
@@ -339,83 +314,124 @@ void file_observer::variable_disconnected(variable_id /*input*/, time_point /*cu
 {
 }
 
+void file_observer::simulation_initialized(step_number firstStep, time_point startTime)
+{
+    if (recording_) {
+        for (const auto& entry : valueWriters_) {
+            entry.second->observe(firstStep, startTime);
+        }
+    }
+}
+
 void file_observer::step_complete(step_number /*lastStep*/, duration /*lastStepSize*/, time_point /*currentTime*/)
 {
 }
 
 void file_observer::simulator_step_complete(simulator_index index, step_number lastStep, duration /*lastStepSize*/, time_point currentTime)
 {
-    if (valueWriters_.find(index) != valueWriters_.end()) {
-        valueWriters_.at(index)->observe(lastStep, currentTime);
+    if (auto writer = valueWriters_.find(index); writer != valueWriters_.end() && recording_) {
+        writer->second->observe(lastStep, currentTime);
     }
 }
 
 boost::filesystem::path file_observer::get_log_path()
 {
-    return logPath_;
+    return logDir_;
 }
 
-std::pair<cse::simulator_index, cse::observable*> find_simulator(
+bool file_observer::is_recording()
+{
+    return recording_;
+}
+
+void file_observer::start_recording()
+{
+    if (recording_) {
+        throw std::runtime_error("File observer is already recording");
+    } else {
+        for (const auto& entry : valueWriters_) {
+            entry.second->start_recording();
+        }
+        recording_ = true;
+    }
+}
+
+void file_observer::stop_recording()
+{
+    if (!recording_) {
+        throw std::runtime_error("File observer has already stopped recording");
+    } else {
+        for (const auto& entry : valueWriters_) {
+            entry.second->stop_recording();
+        }
+        recording_ = false;
+    }
+}
+
+cse::observable* find_simulator(
     const std::unordered_map<simulator_index, observable*>& simulators,
     const std::string& simulatorName)
 {
-    for (const auto& [idx, simulator] : simulators) {
-        if (simulator->name() == simulatorName) {
-            return std::make_pair(idx, simulator);
+    for (const auto& entry : simulators) {
+        if (entry.second->name() == simulatorName) {
+            return entry.second;
         }
     }
     throw std::invalid_argument("Can't find simulator with name: " + simulatorName);
 }
 
-void file_observer::parse_config(const std::string& simulatorName)
+file_observer::simulator_logging_config file_observer::parse_config(const std::string& simulatorName)
 {
-    for (const auto& [simulatorElementName, simulatorElement] : ptree_.get_child("simulators")) {
-        (void)simulatorElementName; // Ugly GCC 7.3 adaptation
+    for (const auto& childElement : ptree_.get_child("simulators")) {
+        auto simulatorElement = childElement.second;
 
         auto modelName = get_attribute<std::string>(simulatorElement, "name");
-        if (modelName != simulatorName) continue;
+        if (modelName == simulatorName) {
+            simulator_logging_config config;
 
-        decimationFactor_ = get_attribute(simulatorElement, "decimationFactor", defaultDecimationFactor_);
+            config.decimationFactor = get_attribute<size_t>(simulatorElement, "decimationFactor", defaultDecimationFactor_);
 
-        const auto& [simulatorIndex, simulator] = find_simulator(simulators_, modelName);
-        (void)simulatorIndex; // Ugly GCC 7.3 adaptation
+            const auto& simulator = find_simulator(simulators_, modelName);
 
-        if (simulatorElement.count("variable") == 0) {
-            loggableRealVariables_ = find_variables_of_type(simulator->model_description(), variable_type::real);
-            loggableIntVariables_ = find_variables_of_type(simulator->model_description(), variable_type::integer);
-            loggableBoolVariables_ = find_variables_of_type(simulator->model_description(), variable_type::boolean);
-            loggableStringVariables_ = find_variables_of_type(simulator->model_description(), variable_type::string);
+            if (simulatorElement.count("variable") == 0) {
 
-            continue;
-        }
+                for (const auto& vd : simulator->model_description().variables) {
+                    switch (vd.type) {
+                        case variable_type::real:
+                        case variable_type::integer:
+                        case variable_type::boolean:
+                        case variable_type::string:
+                            config.variables.push_back(vd);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            } else {
+                for (const auto& [variableElementName, variableElement] : simulatorElement) {
+                    if (variableElementName == "variable") {
+                        const auto name = get_attribute<std::string>(variableElement, "name");
+                        const auto variableDescription =
+                            find_variable(simulator->model_description(), name);
 
-        for (const auto& [variableElementName, variableElement] : simulatorElement) {
-            if (variableElementName == "variable") {
-                const auto name = get_attribute<std::string>(variableElement, "name");
-                const auto variableDescription =
-                    find_variable(simulator->model_description(), name);
-
-                BOOST_LOG_SEV(log::logger(), log::info) << "Logging variable: " << modelName << ":" << name;
-
-                switch (variableDescription.type) {
-                    case variable_type::real:
-                        loggableRealVariables_.push_back(variableDescription);
-                        break;
-                    case variable_type::integer:
-                        loggableIntVariables_.push_back(variableDescription);
-                        break;
-                    case variable_type::boolean:
-                        loggableBoolVariables_.push_back(variableDescription);
-                        break;
-                    case variable_type::string:
-                        loggableStringVariables_.push_back(variableDescription);
-                        break;
-                    case variable_type::enumeration:
-                        CSE_PANIC();
+                        switch (variableDescription.type) {
+                            case variable_type::real:
+                            case variable_type::integer:
+                            case variable_type::boolean:
+                            case variable_type::string:
+                                config.variables.push_back(variableDescription);
+                                BOOST_LOG_SEV(log::logger(), log::info) << "Logging variable: " << modelName << ":" << name;
+                                break;
+                            default:
+                                CSE_PANIC_M("Variable type not supported.");
+                        }
+                    }
                 }
             }
+            return config;
         }
     }
+    return simulator_logging_config();
 }
 
 file_observer::~file_observer() = default;

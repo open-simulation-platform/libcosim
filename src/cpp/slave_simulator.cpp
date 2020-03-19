@@ -37,7 +37,7 @@ struct get_variable_cache
     std::vector<value_reference> references;
     boost::container::vector<T> originalValues;
     boost::container::vector<T> modifiedValues;
-    std::vector<std::function<T(T)>> modifiers;
+    std::vector<std::function<T(T, duration)>> modifiers;
     std::unordered_map<value_reference, std::size_t> indexMapping;
 
     void expose(value_reference r)
@@ -63,16 +63,16 @@ struct get_variable_cache
         }
     }
 
-    void set_modifier(value_reference r, std::function<T(T)> m)
+    void set_modifier(value_reference r, std::function<T(T, duration)> m)
     {
         modifiers[indexMapping[r]] = m;
     }
 
-    void run_modifiers()
+    void run_modifiers(duration deltaT)
     {
         for (std::size_t i = 0; i < originalValues.size(); ++i) {
             if (modifiers[i]) {
-                modifiedValues[i] = modifiers[i](originalValues[i]);
+                modifiedValues[i] = modifiers[i](originalValues[i], deltaT);
             } else {
                 modifiedValues[i] = originalValues[i];
             }
@@ -112,7 +112,7 @@ public:
         }
     }
 
-    void set_modifier(value_reference r, std::function<T(T)> m)
+    void set_modifier(value_reference r, std::function<T(T, duration)> m)
     {
         assert(!hasRunModifiers_);
         const auto it = exposedVariables_.find(r);
@@ -136,14 +136,23 @@ public:
         }
     }
 
-    std::pair<gsl::span<value_reference>, gsl::span<const T>> modify_and_get()
+    std::pair<gsl::span<value_reference>, gsl::span<const T>> modify_and_get(duration deltaT)
     {
         if (!hasRunModifiers_) {
+            for (const auto& entry : modifiers_) {
+                const auto ref = entry.first;
+                if (exposedVariables_.at(ref).arrayIndex < 0) {
+                    exposedVariables_.at(ref).arrayIndex = references_.size();
+                    assert(references_.size() == values_.size());
+                    references_.emplace_back(ref);
+                    values_.emplace_back(exposedVariables_.at(ref).lastValue);
+                }
+            }
             assert(references_.size() == values_.size());
             for (std::size_t i = 0; i < references_.size(); ++i) {
                 const auto iterator = modifiers_.find(references_[i]);
                 if (iterator != modifiers_.end()) {
-                    values_[i] = iterator->second(values_[i]);
+                    values_[i] = iterator->second(values_[i], deltaT);
                 }
             }
             hasRunModifiers_ = true;
@@ -177,7 +186,7 @@ private:
     // The modifiers associated with certain variables, and a flag that
     // specifies whether they have been run on the values currently in
     // `values_`.
-    std::unordered_map<value_reference, std::function<T(T)>> modifiers_;
+    std::unordered_map<value_reference, std::function<T(T, duration)>> modifiers_;
     bool hasRunModifiers_ = false;
 
     // The references and values of the variables that will be set next.
@@ -319,7 +328,7 @@ public:
 
     void set_real_input_modifier(
         value_reference ref,
-        std::function<double(double)> modifier)
+        std::function<double(double, duration)> modifier)
     {
         realSetCache_.set_modifier(ref, modifier);
         set_modified_reference(modifiedRealVariables_, ref, modifier ? true : false);
@@ -327,7 +336,7 @@ public:
 
     void set_integer_input_modifier(
         value_reference ref,
-        std::function<int(int)> modifier)
+        std::function<int(int, duration)> modifier)
     {
         integerSetCache_.set_modifier(ref, modifier);
         set_modified_reference(modifiedIntegerVariables_, ref, modifier ? true : false);
@@ -335,7 +344,7 @@ public:
 
     void set_boolean_input_modifier(
         value_reference ref,
-        std::function<bool(bool)> modifier)
+        std::function<bool(bool, duration)> modifier)
     {
         booleanSetCache_.set_modifier(ref, modifier);
         set_modified_reference(modifiedBooleanVariables_, ref, modifier ? true : false);
@@ -343,7 +352,7 @@ public:
 
     void set_string_input_modifier(
         value_reference ref,
-        std::function<std::string(std::string_view)> modifier)
+        std::function<std::string(std::string_view, duration)> modifier)
     {
         stringSetCache_.set_modifier(ref, modifier);
         set_modified_reference(modifiedStringVariables_, ref, modifier ? true : false);
@@ -351,7 +360,7 @@ public:
 
     void set_real_output_modifier(
         value_reference ref,
-        std::function<double(double)> modifier)
+        std::function<double(double, duration)> modifier)
     {
         realGetCache_.set_modifier(ref, modifier);
         set_modified_reference(modifiedRealVariables_, ref, modifier ? true : false);
@@ -359,7 +368,7 @@ public:
 
     void set_integer_output_modifier(
         value_reference ref,
-        std::function<int(int)> modifier)
+        std::function<int(int, duration)> modifier)
     {
         integerGetCache_.set_modifier(ref, modifier);
         set_modified_reference(modifiedIntegerVariables_, ref, modifier ? true : false);
@@ -367,7 +376,7 @@ public:
 
     void set_boolean_output_modifier(
         value_reference ref,
-        std::function<bool(bool)> modifier)
+        std::function<bool(bool, duration)> modifier)
     {
         booleanGetCache_.set_modifier(ref, modifier);
         set_modified_reference(modifiedBooleanVariables_, ref, modifier ? true : false);
@@ -375,7 +384,7 @@ public:
 
     void set_string_output_modifier(
         value_reference ref,
-        std::function<std::string(std::string_view)> modifier)
+        std::function<std::string(std::string_view, duration)> modifier)
     {
         stringGetCache_.set_modifier(ref, modifier);
         set_modified_reference(modifiedStringVariables_, ref, modifier ? true : false);
@@ -413,10 +422,21 @@ public:
     {
         // clang-format off
             return boost::fibers::async([=]() {
-                set_variables();
-                get_variables();
+                set_variables(duration::zero());
+                get_variables(duration::zero());
             });
         // clang-format on
+    }
+
+    boost::fibers::future<void> start_simulation()
+    {
+        if (slave_->state() != slave_state::initialisation) {
+            CSE_PANIC();
+        }
+        return boost::fibers::async([=]() {
+            slave_->start_simulation().get();
+            get_variables(duration::zero());
+        });
     }
 
     boost::fibers::future<step_result> do_step(
@@ -425,24 +445,21 @@ public:
     {
         // clang-format off
             return boost::fibers::async([=]() {
-                if (slave_->state() == slave_state::initialisation) {
-                    slave_->start_simulation().get();
-                }
-                set_variables();
+                set_variables(deltaT);
                 const auto result = slave_->do_step(currentT, deltaT).get();
-                get_variables();
+                get_variables(deltaT);
                 return result;
             });
         // clang-format on
     }
 
 private:
-    void set_variables()
+    void set_variables(duration deltaT)
     {
-        const auto [realRefs, realValues] = realSetCache_.modify_and_get();
-        const auto [integerRefs, integerValues] = integerSetCache_.modify_and_get();
-        const auto [booleanRefs, booleanValues] = booleanSetCache_.modify_and_get();
-        const auto [stringRefs, stringValues] = stringSetCache_.modify_and_get();
+        const auto [realRefs, realValues] = realSetCache_.modify_and_get(deltaT);
+        const auto [integerRefs, integerValues] = integerSetCache_.modify_and_get(deltaT);
+        const auto [booleanRefs, booleanValues] = booleanSetCache_.modify_and_get(deltaT);
+        const auto [stringRefs, stringValues] = stringSetCache_.modify_and_get(deltaT);
         slave_->set_variables(
                   gsl::make_span(realRefs),
                   gsl::make_span(realValues),
@@ -459,7 +476,7 @@ private:
         stringSetCache_.reset();
     }
 
-    void get_variables()
+    void get_variables(duration deltaT)
     {
         const auto values = slave_->get_variables(
                                       gsl::make_span(realGetCache_.references),
@@ -471,10 +488,10 @@ private:
         copy_contents(values.integer, integerGetCache_.originalValues);
         copy_contents(values.boolean, booleanGetCache_.originalValues);
         copy_contents(values.string, stringGetCache_.originalValues);
-        realGetCache_.run_modifiers();
-        integerGetCache_.run_modifiers();
-        booleanGetCache_.run_modifiers();
-        stringGetCache_.run_modifiers();
+        realGetCache_.run_modifiers(deltaT);
+        integerGetCache_.run_modifiers(deltaT);
+        booleanGetCache_.run_modifiers(deltaT);
+        stringGetCache_.run_modifiers(deltaT);
     }
 
     variable_description find_variable_description(value_reference ref, variable_type type)
@@ -612,56 +629,56 @@ void slave_simulator::set_string(value_reference ref, std::string_view value)
 
 void slave_simulator::set_real_input_modifier(
     value_reference ref,
-    std::function<double(double)> modifier)
+    std::function<double(double, duration)> modifier)
 {
     pimpl_->set_real_input_modifier(ref, modifier);
 }
 
 void slave_simulator::set_integer_input_modifier(
     value_reference ref,
-    std::function<int(int)> modifier)
+    std::function<int(int, duration)> modifier)
 {
     pimpl_->set_integer_input_modifier(ref, modifier);
 }
 
 void slave_simulator::set_boolean_input_modifier(
     value_reference ref,
-    std::function<bool(bool)> modifier)
+    std::function<bool(bool, duration)> modifier)
 {
     pimpl_->set_boolean_input_modifier(ref, modifier);
 }
 
 void slave_simulator::set_string_input_modifier(
     value_reference ref,
-    std::function<std::string(std::string_view)> modifier)
+    std::function<std::string(std::string_view, duration)> modifier)
 {
     pimpl_->set_string_input_modifier(ref, modifier);
 }
 
 void slave_simulator::set_real_output_modifier(
     value_reference ref,
-    std::function<double(double)> modifier)
+    std::function<double(double, duration)> modifier)
 {
     pimpl_->set_real_output_modifier(ref, modifier);
 }
 
 void slave_simulator::set_integer_output_modifier(
     value_reference ref,
-    std::function<int(int)> modifier)
+    std::function<int(int, duration)> modifier)
 {
     pimpl_->set_integer_output_modifier(ref, modifier);
 }
 
 void slave_simulator::set_boolean_output_modifier(
     value_reference ref,
-    std::function<bool(bool)> modifier)
+    std::function<bool(bool, duration)> modifier)
 {
     pimpl_->set_boolean_output_modifier(ref, modifier);
 }
 
 void slave_simulator::set_string_output_modifier(
     value_reference ref,
-    std::function<std::string(std::string_view)> modifier)
+    std::function<std::string(std::string_view, duration)> modifier)
 {
     pimpl_->set_string_output_modifier(ref, modifier);
 }
@@ -700,6 +717,10 @@ boost::fibers::future<void> slave_simulator::do_iteration()
     return pimpl_->do_iteration();
 }
 
+boost::fibers::future<void> slave_simulator::start_simulation()
+{
+    return pimpl_->start_simulation();
+}
 
 boost::fibers::future<step_result> slave_simulator::do_step(
     time_point currentT,

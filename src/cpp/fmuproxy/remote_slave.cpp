@@ -183,4 +183,5 @@ void cse::fmuproxy::remote_slave::set_string_variables(gsl::span<const cse::valu
 cse::fmuproxy::remote_slave::~remote_slave()
 {
     end_simulation();
+    state_->client().freeInstance(instanceId_);
 }

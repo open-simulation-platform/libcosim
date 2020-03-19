@@ -11,12 +11,13 @@ set(publicHeaders
     "config.hpp"
     "connection.hpp"
     "connection/connection.hpp"
+    "connection/linear_transformation_connection.hpp"
     "connection/scalar_connection.hpp"
     "connection/sum_connection.hpp"
     "cse_config_parser.hpp"
     "exception.hpp"
     "execution.hpp"
-    "ssp_parser.hpp"
+    "file_cache.hpp"
     "fmi/fmu.hpp"
     "fmi/importer.hpp"
     "fmi/v1/fmu.hpp"
@@ -36,11 +37,12 @@ set(publicHeaders
     "observer/time_series_observer.hpp"
     "observer/time_series_provider.hpp"
     "orchestration.hpp"
-    "slave.hpp"
-    "system_structure.hpp"
-    "timer.hpp"
     "scenario.hpp"
     "scenario_parser.hpp"
+    "slave.hpp"
+    "ssp/ssp_loader.hpp"
+    "system_structure.hpp"
+    "timer.hpp"
     "uri.hpp"
 )
 set(privateHeaders
@@ -48,10 +50,12 @@ set(privateHeaders
     "fmi/fmilib.h"
     "fmi/glue.hpp"
     "fmi/windows.hpp"
-    "slave_simulator.hpp"
     "observer/slave_value_provider.hpp"
+    "slave_simulator.hpp"
+    "ssp/ssp_parser.hpp"
     "utility/concurrency.hpp"
     "utility/filesystem.hpp"
+    "utility/utility.hpp"
     "utility/uuid.hpp"
     "utility/zip.hpp"
 )
@@ -61,33 +65,36 @@ set(generatedHeaders
 set(sources
     "algorithm/fixed_step_algorithm.cpp"
     "async_slave.cpp"
+    "connection/linear_transformation_connection.cpp"
     "connection/scalar_connection.cpp"
     "connection/sum_connection.cpp"
     "cse_config_parser.cpp"
+    "error.cpp"
     "exception.cpp"
     "execution.cpp"
-    "ssp_parser.cpp"
+    "file_cache.cpp"
+    "fmi/glue.cpp"
     "fmi/importer.cpp"
     "fmi/v1/fmu.cpp"
     "fmi/v2/fmu.cpp"
+    "fmi/windows.cpp"
     "log/logger.cpp"
     "manipulator/scenario_manager.cpp"
     "manipulator/override_manipulator.cpp"
     "model.cpp"
     "observer/file_observer.cpp"
     "observer/last_value_observer.cpp"
+    "observer/slave_value_provider.cpp"
     "observer/time_series_observer.cpp"
     "orchestration.cpp"
     "scenario_parser.cpp"
-    "system_structure.cpp"
-    "uri.cpp"
-
-    "error.cpp"
-    "fmi/glue.cpp"
-    "fmi/windows.cpp"
-    "observer/slave_value_provider.cpp"
     "slave_simulator.cpp"
+    "ssp/ssp_loader.cpp"
+    "ssp/ssp_parser.cpp"
+    "system_structure.cpp"
     "timer.cpp"
+    "uri.cpp"
+    "utility/concurrency.cpp"
     "utility/filesystem.cpp"
     "utility/uuid.cpp"
     "utility/zip.cpp"
@@ -95,25 +102,25 @@ set(sources
 
 if(CSECORE_WITH_FMUPROXY)
     list(APPEND publicHeaders
-            "fmuproxy/remote_fmu.hpp"
-            "fmuproxy/service_types.hpp"
-            "fmuproxy/thrift_state.hpp"
             "fmuproxy/fmu_service.hpp"
             "fmuproxy/fmuproxy_client.hpp"
             "fmuproxy/fmuproxy_uri_sub_resolver.hpp"
+            "fmuproxy/remote_fmu.hpp"
+            "fmuproxy/service_types.hpp"
+            "fmuproxy/thrift_state.hpp"
     )
     list(APPEND privateHeaders
             "fmuproxy/fmuproxy_helper.hpp"
             "fmuproxy/remote_slave.hpp"
     )
     list(APPEND sources
+            "fmuproxy/fmu_service.cpp"
+            "fmuproxy/fmuproxy_client.cpp"
+            "fmuproxy/fmuproxy_uri_sub_resolver.cpp"
             "fmuproxy/remote_slave.cpp"
             "fmuproxy/remote_fmu.cpp"
             "fmuproxy/service_types.cpp"
             "fmuproxy/thrift_state.cpp"
-            "fmuproxy/fmu_service.cpp"
-            "fmuproxy/fmuproxy_client.cpp"
-            "fmuproxy/fmuproxy_uri_sub_resolver.cpp"
     )
 endif()
 
@@ -161,7 +168,7 @@ target_link_libraries(csecorecpp
         gsl
         XercesC::XercesC
     PRIVATE
-        nlohmann_json
+        yaml-cpp
     )
 
 if(CSECORE_WITH_FMUPROXY)

@@ -49,7 +49,6 @@ slave_value_provider::slave_value_provider(observable* observable)
                 CSE_PANIC();
         }
     }
-    observe();
 }
 
 slave_value_provider::~slave_value_provider() noexcept = default;

@@ -37,6 +37,9 @@ public:
     /**
      * Load a scenario for execution.
      *
+     * This function may only be called after the object has been added to an
+     * execution with `execution::add_manipulator()`.
+     *
      * \param s
      *  The in-memory constructed scenario.
      * \param currentTime
@@ -47,6 +50,9 @@ public:
 
     /**
      * Load a scenario for execution.
+     *
+     * This function may only be called after the object has been added to an
+     * execution with `execution::add_manipulator()`.
      *
      * \param scenarioFile
      *  The path to a proprietary `json` file defining the scenario.

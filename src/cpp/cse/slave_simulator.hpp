@@ -48,28 +48,28 @@ public:
 
     void set_real_input_modifier(
         value_reference reference,
-        std::function<double(double)> modifier) override;
+        std::function<double(double, duration)> modifier) override;
     void set_integer_input_modifier(
         value_reference reference,
-        std::function<int(int)> modifier) override;
+        std::function<int(int, duration)> modifier) override;
     void set_boolean_input_modifier(
         value_reference reference,
-        std::function<bool(bool)> modifier) override;
+        std::function<bool(bool, duration)> modifier) override;
     void set_string_input_modifier(
         value_reference reference,
-        std::function<std::string(std::string_view)> modifier) override;
+        std::function<std::string(std::string_view, duration)> modifier) override;
     void set_real_output_modifier(
         value_reference reference,
-        std::function<double(double)> modifier) override;
+        std::function<double(double, duration)> modifier) override;
     void set_integer_output_modifier(
         value_reference reference,
-        std::function<int(int)> modifier) override;
+        std::function<int(int, duration)> modifier) override;
     void set_boolean_output_modifier(
         value_reference reference,
-        std::function<bool(bool)> modifier) override;
+        std::function<bool(bool, duration)> modifier) override;
     void set_string_output_modifier(
         value_reference reference,
-        std::function<std::string(std::string_view)> modifier) override;
+        std::function<std::string(std::string_view, duration)> modifier) override;
 
     std::unordered_set<value_reference>& get_modified_real_variables() const override;
     std::unordered_set<value_reference>& get_modified_integer_variables() const override;
@@ -82,6 +82,8 @@ public:
         std::optional<double> relativeTolerance) override;
 
     boost::fibers::future<void> do_iteration() override;
+
+    boost::fibers::future<void> start_simulation() override;
 
     boost::fibers::future<step_result> do_step(
         time_point currentT,

@@ -5,6 +5,7 @@
 #ifndef CSE_FMI_V2_FMU_HPP
 #define CSE_FMI_V2_FMU_HPP
 
+#include <cse/file_cache.hpp>
 #include <cse/fmi/fmu.hpp>
 #include <cse/fmi/importer.hpp>
 #include <cse/model.hpp>
@@ -51,7 +52,7 @@ private:
     friend class fmi::importer;
     fmu(
         std::shared_ptr<fmi::importer> importer,
-        const boost::filesystem::path& fmuDir);
+        std::unique_ptr<file_cache::directory_ro> fmuDir);
 
 public:
     // Disable copy and move
@@ -94,7 +95,7 @@ public:
 
 private:
     std::shared_ptr<fmi::importer> importer_;
-    boost::filesystem::path dir_;
+    std::unique_ptr<file_cache::directory_ro> dir_;
 
     fmi2_import_t* handle_;
     cse::model_description modelDescription_;

@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<OspSystemStructure xmlns="http://opensimulationplatform.com/MSMI/OSPSystemStructure">
+<OspSystemStructure
+        xmlns="http://opensimulationplatform.com/MSMI/OSPSystemStructure"
+        version="0.1">
     <StartTime>0.0</StartTime>
     <BaseStepSize>1e-4</BaseStepSize>
     <Algorithm>fixedStep</Algorithm>
@@ -30,17 +32,19 @@
             </InitialValues>
         </Simulator>
     </Simulators>
-    <PlugSocketConnections>
-        <PlugSocketConnection>
-            <Source simulator="KnuckleBoomCrane" endpoint="actuatorLimits"/>
-            <Target simulator="CraneController" endpoint="actuatorLimits"/>
-        </PlugSocketConnection>
-    </PlugSocketConnections>
-    <BondConnections>
-        <BondConnection>
-            <Bond simulator="CraneController" endpoint="mechanical"/>
-            <Bond simulator="KnuckleBoomCrane" endpoint="mechanical"/>
-        </BondConnection>
-    </BondConnections>
-    <VariableConnections/>
+    <Connections>
+        <VariableGroupConnection>
+            <VariableGroup simulator="KnuckleBoomCrane" name="actuatorLimits"/>
+            <VariableGroup simulator="CraneController" name="actuatorLimits"/>
+        </VariableGroupConnection>
+        <!-- Splitting the bond into two -->
+        <VariableGroupConnection>
+            <VariableGroup simulator="KnuckleBoomCrane" name="velocity"/>
+            <VariableGroup simulator="CraneController" name="velocity"/>
+        </VariableGroupConnection>
+        <VariableGroupConnection>
+            <VariableGroup simulator="KnuckleBoomCrane" name="force"/>
+            <VariableGroup simulator="CraneController" name="force"/>
+        </VariableGroupConnection>
+    </Connections>
 </OspSystemStructure>

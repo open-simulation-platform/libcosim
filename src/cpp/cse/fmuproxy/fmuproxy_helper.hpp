@@ -14,15 +14,15 @@ namespace
 
 inline cse::variable_causality parse_causality(const std::string& c)
 {
-    if (c.compare("input") == 0) {
+    if (c == "input") {
         return cse::variable_causality::input;
-    } else if (c.compare("output") == 0) {
+    } else if (c == "output") {
         return cse::variable_causality::output;
-    } else if (c.compare("parameter") == 0) {
+    } else if (c == "parameter") {
         return cse::variable_causality::parameter;
-    } else if (c.compare("calculated_parameter") == 0) {
+    } else if (c == "calculated_parameter") {
         return cse::variable_causality::calculated_parameter;
-    } else if (c.compare("local") == 0 || c.compare("independent") == 0 || c.compare("unknown") == 0 || c.compare("") == 0) {
+    } else if (c == "local" || c == "independent" || c == "unknown" || c == "") {
         return cse::variable_causality::local;
     } else {
         const auto err = "Failed to parse causality: '" + c + "'";
@@ -32,15 +32,15 @@ inline cse::variable_causality parse_causality(const std::string& c)
 
 inline cse::variable_variability parse_variability(const std::string& v)
 {
-    if (v.compare("constant") == 0) {
+    if (v == "constant") {
         return cse::variable_variability::constant;
-    } else if (v.compare("discrete") == 0) {
+    } else if (v == "discrete") {
         return cse::variable_variability::discrete;
-    } else if (v.compare("fixed") == 0) {
+    } else if (v == "fixed") {
         return cse::variable_variability::fixed;
-    } else if (v.compare("tunable") == 0) {
+    } else if (v == "tunable") {
         return cse::variable_variability::tunable;
-    } else if (v.compare("continuous") == 0 || v.compare("unknown") == 0 || v.compare("") == 0) {
+    } else if (v == "continuous" || v == "unknown" || v == "") {
         return cse::variable_variability::continuous;
     } else {
         const auto err = "Failed to parse variability: '" + v + "'";

@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.9)
-project("csecore" VERSION "0.6.0")
+file(STRINGS "${CMAKE_SOURCE_DIR}/version.txt" projectVersion)
+project("csecore" VERSION ${projectVersion})
+message("Current cse-core version: ${CMAKE_PROJECT_VERSION}\n")
 
 # ==============================================================================
 # Build settings
@@ -119,7 +121,7 @@ find_package(MS_GSL REQUIRED)
 find_package(Boost REQUIRED COMPONENTS ${Boost_components})
 find_package(FMILibrary REQUIRED)
 find_package(LIBZIP REQUIRED)
-find_package(nlohmann_json REQUIRED)
+find_package(YAML_CPP REQUIRED)
 find_package(XercesC REQUIRED)
 if(CSECORE_WITH_FMUPROXY)
     find_package(THRIFT REQUIRED)
@@ -157,7 +159,7 @@ if(DOXYGEN_FOUND)
     set(DOXYGEN_JAVADOC_AUTOBRIEF "YES")
     set(DOXYGEN_QT_AUTOBRIEF "YES")
     set(DOXYGEN_MULTILINE_CPP_IS_BRIEF "YES")
-    set(DOXYGEN_EXCLUDE_PATTERNS "*.cpp" "*.c")
+    set(DOXYGEN_EXCLUDE_PATTERNS "*.cpp" "*.c" "*/fmuproxy/*service*")
     set(doxygenInputs "${CMAKE_SOURCE_DIR}/include")
     if(CSECORE_BUILD_PRIVATE_APIDOC)
         list(APPEND doxygenInputs
@@ -222,8 +224,8 @@ install(FILES
         "${CMAKE_SOURCE_DIR}/cmake/FindFMILibrary.cmake"
         "${CMAKE_SOURCE_DIR}/cmake/FindLIBZIP.cmake"
         "${CMAKE_SOURCE_DIR}/cmake/FindMS_GSL.cmake"
-        "${CMAKE_SOURCE_DIR}/cmake/Findnlohmann_json.cmake"
         "${CMAKE_SOURCE_DIR}/cmake/FindTHRIFT.cmake"
+        "${CMAKE_SOURCE_DIR}/cmake/FindYAML_CPP.cmake"
         DESTINATION
         "${CSECORE_CMAKE_INSTALL_DIR}"
 )

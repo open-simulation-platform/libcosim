@@ -1,12 +1,14 @@
 import os
 
-from conans import ConanFile, CMake
+from conans import ConanFile, CMake, tools
+from os import path
+
 
 
 class CSECoreConan(ConanFile):
     name = "cse-core"
-    version = "0.6.0"
     author = "osp"
+    exports = "version.txt"
     scm = {
         "type": "git",
         "url": "git@github.com:open-simulation-platform/cse-core.git",
@@ -20,7 +22,7 @@ class CSECoreConan(ConanFile):
         "gsl_microsoft/20171020@bincrafters/stable",
         "libzip/1.5.2@bincrafters/stable",
         "zlib/1.2.11",
-        "jsonformoderncpp/3.5.0@vthiery/stable",
+        "yaml-cpp/0.6.3",
         "bzip2/1.0.8",
         "xerces-c/3.2.2"
         )
@@ -31,6 +33,9 @@ class CSECoreConan(ConanFile):
         "boost:shared=True"
         )
 
+    def set_version(self):
+        self.version = tools.load(path.join(self.recipe_folder, "version.txt")).strip()
+
     def imports(self):
         binDir = os.path.join("output", str(self.settings.build_type).lower(), "bin")
         self.copy("*.dll", dst=binDir, keep_path=False)
@@ -38,11 +43,10 @@ class CSECoreConan(ConanFile):
 
     def requirements(self):
         if self.options.fmuproxy:
-            self.requires("thrift/0.12.0@osp/testing")
+            self.requires("thrift/0.12.0@bincrafters/stable")
 
     def configure_cmake(self):
         cmake = CMake(self)
-        cmake.parallel = False # Needed to keep stable build on Jenkins Windows Node
         cmake.definitions["CSECORE_USING_CONAN"] = "ON"
         if self.settings.build_type == "Debug":
             cmake.definitions["CSECORE_BUILD_PRIVATE_APIDOC"] = "ON"
@@ -55,12 +59,12 @@ class CSECoreConan(ConanFile):
     def build(self):
         cmake = self.configure_cmake()
         cmake.build()
-        self.run('cmake --build . --target doc')
+        cmake.build(target="doc")
 
     def package(self):
         cmake = self.configure_cmake()
-        self.run('cmake --build %s --target install-doc' % (self.build_folder))
         cmake.install()
+        cmake.build(target="install-doc")
 
     def package_info(self):
         self.cpp_info.libs = [ "csecorecpp", "csecorec" ]

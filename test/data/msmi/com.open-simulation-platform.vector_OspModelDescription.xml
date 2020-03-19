@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<OspModelDescription xmlns="http://opensimulationplatform.com/MSMI/OSPModelDescription">
+    <VariableGroups>
+        <VariableGroup type="generic" name="input">
+            <Variable name="input[0]"/>
+            <Variable name="input[1]"/>
+            <Variable name="input[2]"/>
+        </VariableGroup>
+        <VariableGroup type="generic" name="output">
+            <Variable name="output[0]"/>
+            <Variable name="output[1]"/>
+            <Variable name="output[2]"/>
+        </VariableGroup>
+    </VariableGroups>
+</OspModelDescription>
