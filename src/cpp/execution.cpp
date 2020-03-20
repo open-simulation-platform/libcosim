@@ -471,7 +471,7 @@ std::unordered_map<std::string, simulator_index> inject_system_structure(
             exe.add_slave(sim.model->instantiate(sim.name), sim.name);
         indexMap.emplace(std::string(sim.name), index);
     }
-    for (const auto& conn : sys.scalar_connections()) {
+    for (const auto& conn : sys.connections()) {
         const auto& sourceVarDesc = sys.get_variable_description(conn.source);
         const auto& targetVarDesc = sys.get_variable_description(conn.target);
         exe.connect_variables(

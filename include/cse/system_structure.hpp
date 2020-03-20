@@ -1,6 +1,7 @@
 #ifndef CSE_SYSTEM_STRUCTURE_HPP
 #define CSE_SYSTEM_STRUCTURE_HPP
 
+#include <cse/function/function.hpp>
 #include <cse/model.hpp>
 #include <cse/orchestration.hpp>
 
@@ -90,8 +91,15 @@ public:
         std::shared_ptr<cse::model> model;
     };
 
-    /// Information about a scalar connection.
-    struct scalar_connection
+    /// Information about a function.
+    struct function
+    {
+        /// The function type
+        std::shared_ptr<function_type> type;
+    };
+
+    /// Information about a connection.
+    struct connection
     {
         /// The source variable.
         full_variable_name source;
@@ -102,16 +110,16 @@ public:
 
 private:
     using simulator_map = std::unordered_map<std::string, simulator>;
-    using scalar_connection_map =
+    using connection_map =
         std::unordered_map<full_variable_name, full_variable_name>;
-    using scalar_connection_transform =
-        scalar_connection (*)(const scalar_connection_map::value_type&);
+    using connection_transform =
+        connection (*)(const connection_map::value_type&);
 
 public:
     using simulator_range = boost::select_second_const_range<simulator_map>;
-    using scalar_connection_range =
+    using connection_range =
         boost::transformed_range<
-            scalar_connection_transform, const scalar_connection_map>;
+            connection_transform, const connection_map>;
 
     /**
      *  Adds a simulator to the system.
@@ -135,26 +143,26 @@ public:
     simulator_range simulators() const noexcept;
 
     /**
-     *  Establishes a connection between two scalar variables.
+     *  Establishes a connection between two variables.
      *
      *  The same target variable may not be connected several times.
      */
-    void add_scalar_connection(const scalar_connection& c);
+    void connect_variables(const connection& c);
 
     /// \overload
-    void add_scalar_connection(
+    void connect_variables(
         const full_variable_name& source, const full_variable_name& target)
     {
-        add_scalar_connection({source, target});
+        connect_variables({source, target});
     }
 
     /**
      *  Returns a list of the scalar connections in the system.
      *
      *  \returns
-     *      A range of `scalar_connection` objects.
+     *      A range of `connection` objects.
      */
-    scalar_connection_range scalar_connections() const noexcept;
+    connection_range connections() const noexcept;
 
     /**
      *  Retrieves the description of a variable, given its qualified name.
@@ -169,8 +177,8 @@ private:
     // Simulators, indexed by name.
     simulator_map simulators_;
 
-    // Scalar connections. Target is key, source is value.
-    scalar_connection_map scalarConnections_;
+    // Connections. Target is key, source is value.
+    connection_map connections_;
 
     // Cache for fast lookup of model info, indexed by model UUID.
     struct model_info

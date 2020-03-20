@@ -56,13 +56,13 @@ BOOST_AUTO_TEST_CASE(system_structure_basic_use)
     BOOST_CHECK_THROW(ss.add_simulator("simB", model), cse::error); // simB exists
     BOOST_CHECK_THROW(ss.add_simulator("sim\nB", model), cse::error); // invalid name
 
-    ss.add_scalar_connection({"simA", "realOut"}, {"simB", "realIn"});
-    ss.add_scalar_connection({"simA", "realOut"}, {"simA", "realIn"}); // self connection
+    ss.connect_variables({"simA", "realOut"}, {"simB", "realIn"});
+    ss.connect_variables({"simA", "realOut"}, {"simA", "realIn"}); // self connection
     BOOST_CHECK_THROW(
-        ss.add_scalar_connection({"simB", "realOut"}, {"simB", "realIn"}),
+        ss.connect_variables({"simB", "realOut"}, {"simB", "realIn"}),
         cse::error); // simB.realIn already connected
     BOOST_CHECK_THROW(
-        ss.add_scalar_connection({"simA", "realOut"}, {"simB", "intIn"}),
+        ss.connect_variables({"simA", "realOut"}, {"simB", "intIn"}),
         cse::error); // incompatible variables
 
     const auto sims = ss.simulators();
@@ -73,7 +73,7 @@ BOOST_AUTO_TEST_CASE(system_structure_basic_use)
         (firstSim.name == "simA" && secondSim.name == "simB") ||
         (firstSim.name == "simB" && secondSim.name == "simA"));
 
-    const auto conns = ss.scalar_connections();
+    const auto conns = ss.connections();
     BOOST_TEST_REQUIRE(std::distance(conns.begin(), conns.end()) == 2);
     const auto& firstConn = *conns.begin();
     const auto& secondConn = *(++conns.begin());

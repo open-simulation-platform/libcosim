@@ -46,7 +46,7 @@ std::string to_text(const full_variable_name& v)
 }
 
 error make_connection_error(
-    const system_structure::scalar_connection& c, const std::string& e)
+    const system_structure::connection& c, const std::string& e)
 {
     std::ostringstream msg;
     msg << "Cannot establish connection between variables "
@@ -82,7 +82,7 @@ system_structure::simulator_range system_structure::simulators() const noexcept
 }
 
 
-void system_structure::add_scalar_connection(const scalar_connection& c)
+void system_structure::connect_variables(const connection& c)
 {
     std::string validationError;
     const auto valid = is_valid_connection(
@@ -92,20 +92,20 @@ void system_structure::add_scalar_connection(const scalar_connection& c)
     if (!valid) {
         throw make_connection_error(c, validationError);
     }
-    const auto cit = scalarConnections_.find(c.target);
-    if (cit != scalarConnections_.end()) {
+    const auto cit = connections_.find(c.target);
+    if (cit != connections_.end()) {
         throw make_connection_error(
             c,
             "Target variable is already connected to " +
                 to_text(cit->second));
     }
-    scalarConnections_.emplace(c.target, c.source);
+    connections_.emplace(c.target, c.source);
 }
 
 
 namespace
 {
-system_structure::scalar_connection to_scalar_connection(
+system_structure::connection to_connection(
     const std::pair<const full_variable_name, full_variable_name>& varPair)
 {
     return {varPair.second, varPair.first};
@@ -113,10 +113,10 @@ system_structure::scalar_connection to_scalar_connection(
 } // namespace
 
 
-system_structure::scalar_connection_range system_structure::scalar_connections()
+system_structure::connection_range system_structure::connections()
     const noexcept
 {
-    return boost::adaptors::transform(scalarConnections_, to_scalar_connection);
+    return boost::adaptors::transform(connections_, to_connection);
 }
 
 
