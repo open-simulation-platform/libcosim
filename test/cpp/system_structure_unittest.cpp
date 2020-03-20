@@ -51,10 +51,10 @@ BOOST_AUTO_TEST_CASE(system_structure_basic_use)
 
     cse::system_structure ss;
 
-    ss.add_simulator("simA", model);
-    ss.add_simulator("simB", model);
-    BOOST_CHECK_THROW(ss.add_simulator("simB", model), cse::error); // simB exists
-    BOOST_CHECK_THROW(ss.add_simulator("sim\nB", model), cse::error); // invalid name
+    ss.add_entity("simA", model);
+    ss.add_entity("simB", model);
+    BOOST_CHECK_THROW(ss.add_entity("simB", model), cse::error); // simB exists
+    BOOST_CHECK_THROW(ss.add_entity("sim\nB", model), cse::error); // invalid name
 
     ss.connect_variables({"simA", "realOut"}, {"simB", "realIn"});
     ss.connect_variables({"simA", "realOut"}, {"simA", "realIn"}); // self connection
@@ -65,7 +65,7 @@ BOOST_AUTO_TEST_CASE(system_structure_basic_use)
         ss.connect_variables({"simA", "realOut"}, {"simB", "intIn"}),
         cse::error); // incompatible variables
 
-    const auto sims = ss.simulators();
+    const auto sims = ss.entities();
     BOOST_TEST_REQUIRE(std::distance(sims.begin(), sims.end()) == 2);
     const auto& firstSim = *sims.begin();
     const auto& secondSim = *(++sims.begin());

@@ -13,13 +13,14 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <variant>
 
 
 namespace cse
 {
 
 /**
- *  The qualified name of a variable, consisting of the simulator name and
+ *  The qualified name of a variable, consisting of the entity name and
  *  the variable name.
  *
  *  The validity of the qualified name can only be determined in the context
@@ -27,8 +28,8 @@ namespace cse
  */
 struct full_variable_name
 {
-    /// The name of a simulator.
-    std::string simulator_name;
+    /// The name of a entity.
+    std::string entity_name;
 
     /// The name of a variable.
     std::string variable_name;
@@ -38,7 +39,7 @@ struct full_variable_name
 inline bool operator==(
     const full_variable_name& a, const full_variable_name& b) noexcept
 {
-    return a.simulator_name == b.simulator_name &&
+    return a.entity_name == b.entity_name &&
         a.variable_name == b.variable_name;
 }
 
@@ -58,7 +59,7 @@ struct hash<cse::full_variable_name>
     std::size_t operator()(const cse::full_variable_name& v) const noexcept
     {
         std::size_t seed = 0;
-        boost::hash_combine(seed, v.simulator_name);
+        boost::hash_combine(seed, v.entity_name);
         boost::hash_combine(seed, v.variable_name);
         return seed;
     }
@@ -72,7 +73,7 @@ namespace cse
 /**
  *  A description of the structure of a modelled system.
  *
- *  The system structure description contains the list of simulators in the
+ *  The system structure description contains the list of entities in the
  *  system and the connections between them.  Validation is performed on
  *  the fly by the class' mutators, and any attempt to make an invalid change
  *  will result in an exception of type `cse::error` with error code
@@ -81,21 +82,28 @@ namespace cse
 class system_structure
 {
 public:
-    /// Information about a simulator.
-    struct simulator
+    /**
+     *  The type of an entity.
+     *
+     *  This is a shared pointer to a `cse::model` if the entity is a simulator,
+     *  and to a `cse::function_type` if the entity is a function instance.
+     */
+    using entity_type = std::variant<
+            std::shared_ptr<model>,
+            std::shared_ptr<function_type>>;
+    /**
+     *  Information about a simulation entity
+     *
+     *  An entity may be either a entity or a function instance;
+     *  this is determined by the `type` field.
+     */
+    struct entity
     {
-        /// The simulator name.
+        /// The entity name.
         std::string name;
 
-        /// The model on which the simulator is based.
-        std::shared_ptr<cse::model> model;
-    };
-
-    /// Information about a function.
-    struct function
-    {
-        /// The function type
-        std::shared_ptr<function_type> type;
+        /// The entity type.
+        entity_type type;
     };
 
     /// Information about a connection.
@@ -109,38 +117,44 @@ public:
     };
 
 private:
-    using simulator_map = std::unordered_map<std::string, simulator>;
+    using entity_map = std::unordered_map<std::string, entity>;
     using connection_map =
         std::unordered_map<full_variable_name, full_variable_name>;
     using connection_transform =
         connection (*)(const connection_map::value_type&);
 
 public:
-    using simulator_range = boost::select_second_const_range<simulator_map>;
+    using entity_range = boost::select_second_const_range<entity_map>;
     using connection_range =
         boost::transformed_range<
             connection_transform, const connection_map>;
 
     /**
-     *  Adds a simulator to the system.
+     *  Adds an entity to the system.
      *
-     *  `s.name` must be unique in the context of the present system.
+     *  `e.name` must be unique in the context of the present system.
      */
-    void add_simulator(const simulator& s);
+    void add_entity(const entity& e);
 
     /// \overload
-    void add_simulator(std::string_view name, std::shared_ptr<cse::model> model)
+    void add_entity(std::string_view name, std::shared_ptr<cse::model> type)
     {
-        add_simulator({std::string(name), model});
+        add_entity({std::string(name), type});
+    }
+
+    /// \overload
+    void add_entity(std::string_view name, std::shared_ptr<cse::function_type> type)
+    {
+        add_entity({std::string(name), type});
     }
 
     /**
-     *  Returns a list of the simulators in the system.
+     *  Returns a list of the entities in the system.
      *
      *  \returns
-     *      A range of `simulator` objects.
+     *      A range of `entity` objects.
      */
-    simulator_range simulators() const noexcept;
+    entity_range entities() const noexcept;
 
     /**
      *  Establishes a connection between two variables.
@@ -174,23 +188,32 @@ public:
         const full_variable_name& v) const;
 
 private:
-    // Simulators, indexed by name.
-    simulator_map simulators_;
+    // Entities, indexed by name.
+    entity_map entities_;
 
     // Connections. Target is key, source is value.
     connection_map connections_;
 
-    // Cache for fast lookup of model info, indexed by model UUID.
+    // Cache for fast lookup of model info.
     struct model_info
     {
         std::unordered_map<std::string, variable_description> variables;
     };
-    std::unordered_map<std::string, model_info> modelCache_;
+    std::unordered_map<std::shared_ptr<model>, model_info> modelCache_;
 };
 
 
 /**
- *  Checks whether `name` is a valid simulator name.
+ *  Converts a `cse::system_structure::entity_type` to a `cse::model`.
+ *
+ *  This is a convenience function that simply checks whether `et` contains
+ *  a pointer to a `model`, and if so, returns it.  Otherwise, it returns null.
+ */
+std::shared_ptr<model> entity_type_to_model(system_structure::entity_type et) noexcept;
+
+
+/**
+ *  Checks whether `name` is a valid entity name.
  *
  *  The rules are the same as for C(++) identifiers:  The name may only
  *  consist of ASCII letters, numbers and underscores, and the first
@@ -200,7 +223,7 @@ private:
  *  human-readable reason will be stored in the string pointed to by
  *  `reason`.
  */
-bool is_valid_simulator_name(std::string_view name, std::string* reason) noexcept;
+bool is_valid_entity_name(std::string_view name, std::string* reason) noexcept;
 
 
 /**

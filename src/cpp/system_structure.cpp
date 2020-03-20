@@ -1,7 +1,6 @@
 #include "cse/system_structure.hpp"
 
 #include "cse/exception.hpp"
-#include "cse/model.hpp"
 #include "cse/utility/utility.hpp"
 
 #include <cctype>
@@ -35,7 +34,7 @@ make_variable_lookup_table(const model_description& md)
 
 std::ostream& operator<<(std::ostream& s, const full_variable_name& v)
 {
-    return s << v.simulator_name << ':' << v.variable_name;
+    return s << v.entity_name << ':' << v.variable_name;
 }
 
 std::string to_text(const full_variable_name& v)
@@ -56,29 +55,33 @@ error make_connection_error(
 } // namespace
 
 
-void system_structure::add_simulator(const simulator& s)
+void system_structure::add_entity(const entity& e)
 {
-    if (std::string e; !is_valid_simulator_name(s.name, &e)) {
+    if (std::string err; !is_valid_entity_name(e.name, &err)) {
         throw error(
             make_error_code(errc::invalid_system_structure),
-            "Illegal simulator name '" + s.name + "': " + e);
+            "Illegal entity name '" + e.name + "': " + err);
     }
-    if (simulators_.count(s.name)) {
+    if (entities_.count(e.name)) {
         throw error(
             make_error_code(errc::invalid_system_structure),
-            "Duplicate simulator name: " + s.name);
+            "Duplicate entity name: " + e.name);
     }
-    simulators_.emplace(s.name, s);
-    if (modelCache_.count(s.model->description()->uuid) == 0) {
-        modelCache_[s.model->description()->uuid] =
-            {make_variable_lookup_table(*s.model->description())};
+    if (const auto model = entity_type_to_model(e.type)) {
+        entities_.emplace(e.name, e);
+        if (modelCache_.count(model) == 0) {
+            modelCache_[model] = {make_variable_lookup_table(*model->description())};
+        }
+    } else {
+        // TODO
+        throw std::logic_error("Functions not fully supported yet");
     }
 }
 
 
-system_structure::simulator_range system_structure::simulators() const noexcept
+system_structure::entity_range system_structure::entities() const noexcept
 {
-    return boost::adaptors::values(simulators_);
+    return boost::adaptors::values(entities_);
 }
 
 
@@ -123,30 +126,40 @@ system_structure::connection_range system_structure::connections()
 const variable_description& system_structure::get_variable_description(
     const full_variable_name& v) const
 {
-    const auto sit = simulators_.find(v.simulator_name);
-    if (sit == simulators_.end()) {
+    const auto sit = entities_.find(v.entity_name);
+    if (sit == entities_.end()) {
         throw error(
             make_error_code(errc::invalid_system_structure),
-            "Unknown simulator name: " + v.simulator_name);
+            "Unknown entity name: " + v.entity_name);
     }
-    const auto& modelInfo =
-        modelCache_.at(sit->second.model->description()->uuid);
-
-    const auto vit = modelInfo.variables.find(v.variable_name);
-    if (vit == modelInfo.variables.end()) {
-        throw error(
-            make_error_code(errc::invalid_system_structure),
-            "Simulator '" + v.simulator_name +
-                "' of type '" + sit->second.model->description()->name +
-                "' does not have a variable named '" + v.variable_name + "'");
+    if (const auto model = entity_type_to_model(sit->second.type)) {
+        const auto& modelInfo = modelCache_.at(model);
+        const auto vit = modelInfo.variables.find(v.variable_name);
+        if (vit == modelInfo.variables.end()) {
+            throw error(
+                make_error_code(errc::invalid_system_structure),
+                "Entity '" + v.entity_name +
+                    "' of type '" + model->description()->name +
+                    "' does not have a variable named '" + v.variable_name + "'");
+        }
+        return vit->second;
+    } else {
+        // TODO
+        throw std::logic_error("Functions not fully supported yet");
     }
-    return vit->second;
 }
 
 
 // =============================================================================
 // Free functions
 // =============================================================================
+
+std::shared_ptr<model> entity_type_to_model(system_structure::entity_type et) noexcept
+{
+    const auto mt = std::get_if<std::shared_ptr<model>>(&et);
+    return mt ? *mt : nullptr;
+}
+
 
 namespace
 {
@@ -170,7 +183,7 @@ std::string illegal_char_err_msg(char c)
 }
 } // namespace
 
-bool is_valid_simulator_name(std::string_view name, std::string* reason) noexcept
+bool is_valid_entity_name(std::string_view name, std::string* reason) noexcept
 {
     if (name.empty()) return false;
     if (!std::isalpha(static_cast<unsigned char>(name[0])) && name[0] != '_') {

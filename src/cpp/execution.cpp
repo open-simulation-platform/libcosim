@@ -466,27 +466,32 @@ std::unordered_map<std::string, simulator_index> inject_system_structure(
     const parameter_set& initialValues)
 {
     std::unordered_map<std::string, simulator_index> indexMap;
-    for (const auto& sim : sys.simulators()) {
-        const auto index =
-            exe.add_slave(sim.model->instantiate(sim.name), sim.name);
-        indexMap.emplace(std::string(sim.name), index);
+    for (const auto& entity : sys.entities()) {
+        if (const auto model = entity_type_to_model(entity.type)) {
+            const auto index =
+                exe.add_slave(model->instantiate(entity.name), entity.name);
+            indexMap.emplace(std::string(entity.name), index);
+        } else {
+            // TODO
+            throw std::logic_error("Functions not fully supported yet");
+        }
     }
     for (const auto& conn : sys.connections()) {
         const auto& sourceVarDesc = sys.get_variable_description(conn.source);
         const auto& targetVarDesc = sys.get_variable_description(conn.target);
         exe.connect_variables(
             variable_id{
-                indexMap.at(conn.source.simulator_name),
+                indexMap.at(conn.source.entity_name),
                 sourceVarDesc.type,
                 sourceVarDesc.reference},
             variable_id{
-                indexMap.at(conn.target.simulator_name),
+                indexMap.at(conn.target.entity_name),
                 targetVarDesc.type,
                 targetVarDesc.reference});
     }
     for (const auto& [var, val] : initialValues) {
         const auto& varDesc = sys.get_variable_description(var);
-        const auto simIdx = indexMap.at(var.simulator_name);
+        const auto simIdx = indexMap.at(var.entity_name);
         const auto valRef = varDesc.reference;
         std::visit(
             visitor(
