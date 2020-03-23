@@ -15,6 +15,13 @@
 namespace cse
 {
 
+std::string to_text(const full_variable_name& v)
+{
+    std::ostringstream s;
+    s << v;
+    return s.str();
+}
+
 
 // =============================================================================
 // system_structure

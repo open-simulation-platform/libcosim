@@ -112,12 +112,7 @@ inline std::ostream& operator<<(std::ostream& s, const full_variable_name& v)
 }
 
 /// Returns a string representation of a `full_variable_name`.
-inline std::string to_text(const full_variable_name& v)
-{
-    std::ostringstream s;
-    s << v;
-    return s.str();
-}
+std::string to_text(const full_variable_name& v);
 
 } // namespace cse
 
