@@ -7,12 +7,6 @@ using namespace std::literals;
 
 namespace cse
 {
-enum vector_sum_parameters
-{
-    vector_sum_inputCount = 0,
-    vector_sum_numericType = 1,
-    vector_sum_dimension = 2,
-};
 
 
 namespace detail
@@ -24,7 +18,7 @@ function_type_description vector_sum_description(
 {
     function_type_description f;
     f.parameters = {
-        // parameters (in the same order as vector_sum_parameters enum!)
+        // parameters (in the same order as the enum in vector_sum_function_type!)
         function_parameter_description{
             "inputCount"s, // name
             function_parameter_type::integer, // type
@@ -82,9 +76,9 @@ function_type_description vector_sum_description(
 function_type_description vector_sum_function_type::description() const
 {
     return detail::vector_sum_description(
-        function_parameter_placeholder{vector_sum_inputCount},
-        function_parameter_placeholder{vector_sum_numericType},
-        function_parameter_placeholder{vector_sum_dimension});
+        function_parameter_placeholder{vector_sum_function_type::inputCount_parameter_index},
+        function_parameter_placeholder{vector_sum_function_type::numericType_parameter_index},
+        function_parameter_placeholder{vector_sum_function_type::dimension_parameter_index});
 }
 
 
@@ -92,12 +86,12 @@ std::unique_ptr<function> vector_sum_function_type::instantiate(
     const function_parameter_value_map& parameters)
 {
     const auto descr = description();
-    const auto inputCount =
-        get_function_parameter<int>(descr, parameters, vector_sum_inputCount);
-    const auto numericType =
-        get_function_parameter<variable_type>(descr, parameters, vector_sum_numericType);
-    const auto dimension =
-        get_function_parameter<int>(descr, parameters, vector_sum_dimension);
+    const auto inputCount = get_function_parameter<int>(
+        descr, parameters, vector_sum_function_type::inputCount_parameter_index);
+    const auto numericType = get_function_parameter<variable_type>(
+        descr, parameters, vector_sum_function_type::numericType_parameter_index);
+    const auto dimension = get_function_parameter<int>(
+        descr, parameters, vector_sum_function_type::dimension_parameter_index);
 
     if (numericType == variable_type::real) {
         return std::make_unique<vector_sum_function<double>>(inputCount, dimension);

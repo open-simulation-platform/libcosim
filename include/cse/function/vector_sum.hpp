@@ -187,8 +187,8 @@ private:
  *
  *  | Parameter   | Type          | Default | Description                           |
  *  |-------------|---------------|---------|---------------------------------------|
- *  | numericType | variable type | real    | Vector element type (real or integer) |
  *  | inputCount  | integer       | 1       | Number of input vectors               |
+ *  | numericType | variable type | real    | Vector element type (real or integer) |
  *  | dimension   | integer       | 1       | Dimension of input and output vectors |
  *
  *  ### Variables
@@ -205,6 +205,13 @@ private:
 class vector_sum_function_type : public function_type
 {
 public:
+    /// Parameter indexes, for convenience.
+    enum {
+        inputCount_parameter_index,
+        numericType_parameter_index,
+        dimension_parameter_index,
+    };
+
     // Overridden `function_type` methods
     function_type_description description() const override;
 
