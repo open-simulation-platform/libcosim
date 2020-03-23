@@ -1,12 +1,13 @@
 #include "cse/system_structure.hpp"
 
 #include "cse/exception.hpp"
+#include "cse/function/utility.hpp"
 #include "cse/utility/utility.hpp"
 
+#include <cassert>
 #include <cctype>
 #include <cstddef>
 #include <iomanip>
-#include <ostream>
 #include <sstream>
 #include <unordered_map>
 
@@ -32,16 +33,32 @@ make_variable_lookup_table(const model_description& md)
     return table;
 }
 
-std::ostream& operator<<(std::ostream& s, const full_variable_name& v)
+std::unordered_map<
+    std::string,
+    std::unordered_map<
+        std::string,
+        system_structure::function_io_description>>
+make_variable_lookup_table(const function_description& fd)
 {
-    return s << v.entity_name << ':' << v.variable_name;
-}
-
-std::string to_text(const full_variable_name& v)
-{
-    std::ostringstream s;
-    s << v;
-    return s.str();
+    std::unordered_map<
+        std::string,
+        std::unordered_map<
+            std::string,
+            system_structure::function_io_description>>
+        table;
+    for (std::size_t g = 0; g < fd.io_groups.size(); ++g) {
+        const auto& group = fd.io_groups[g];
+        for (std::size_t i = 0; i < group.ios.size(); ++i) {
+            const auto& io = group.ios[i];
+            table[group.name].emplace(
+                io.name,
+                system_structure::function_io_description{
+                    static_cast<int>(g),
+                    static_cast<int>(i),
+                    io});
+        }
+    }
+    return table;
 }
 
 error make_connection_error(
@@ -67,15 +84,32 @@ void system_structure::add_entity(const entity& e)
             make_error_code(errc::invalid_system_structure),
             "Duplicate entity name: " + e.name);
     }
-    if (const auto model = entity_type_to_model(e.type)) {
-        entities_.emplace(e.name, e);
-        if (modelCache_.count(model) == 0) {
-            modelCache_[model] = {make_variable_lookup_table(*model->description())};
+    assert(!functionCache_.count(e.name));
+
+    if (const auto model = entity_type_to<cse::model>(e.type)) {
+        // Make a model cache entry
+        if (modelCache_.count(model->description()->uuid) == 0) {
+            modelCache_[model->description()->uuid] =
+                {make_variable_lookup_table(*model->description())};
         }
     } else {
-        // TODO
-        throw std::logic_error("Functions not fully supported yet");
+        // Make a function cache entry
+        const auto functionType = entity_type_to<function_type>(e.type);
+        assert(functionType);
+        function_info info;
+        try {
+            info.description = substitute_function_parameters(
+                functionType->description(),
+                e.parameter_values);
+        } catch (const std::exception&) {
+            throw error(
+                make_error_code(errc::invalid_system_structure),
+                "Invalid or incomplete function parameter set: " + e.name);
+        }
+        info.ios = make_variable_lookup_table(info.description);
+        functionCache_.emplace(e.name, std::move(info));
     }
+    entities_.emplace(e.name, e);
 }
 
 
@@ -88,10 +122,25 @@ system_structure::entity_range system_structure::entities() const noexcept
 void system_structure::connect_variables(const connection& c)
 {
     std::string validationError;
-    const auto valid = is_valid_connection(
-        get_variable_description(c.source),
-        get_variable_description(c.target),
-        &validationError);
+    bool valid = false;
+    if (c.source.is_simulator_variable()) {
+        if (c.target.is_simulator_variable()) {
+            valid = is_valid_connection(
+                get_variable_description(c.source),
+                get_variable_description(c.target),
+                &validationError);
+        } else {
+            valid = is_valid_connection(
+                get_variable_description(c.source),
+                get_function_io_description(c.target).description,
+                &validationError);
+        }
+    } else {
+        valid = is_valid_connection(
+            get_function_io_description(c.source).description,
+            get_variable_description(c.target),
+            &validationError);
+    }
     if (!valid) {
         throw make_connection_error(c, validationError);
     }
@@ -130,36 +179,57 @@ const variable_description& system_structure::get_variable_description(
     if (sit == entities_.end()) {
         throw error(
             make_error_code(errc::invalid_system_structure),
-            "Unknown entity name: " + v.entity_name);
+            "Unknown simulator name: " + v.entity_name);
     }
-    if (const auto model = entity_type_to_model(sit->second.type)) {
-        const auto& modelInfo = modelCache_.at(model);
-        const auto vit = modelInfo.variables.find(v.variable_name);
-        if (vit == modelInfo.variables.end()) {
-            throw error(
-                make_error_code(errc::invalid_system_structure),
-                "Entity '" + v.entity_name +
-                    "' of type '" + model->description()->name +
-                    "' does not have a variable named '" + v.variable_name + "'");
-        }
-        return vit->second;
-    } else {
-        // TODO
-        throw std::logic_error("Functions not fully supported yet");
+    const auto model = entity_type_to<cse::model>(sit->second.type);
+    if (!model) {
+        throw std::logic_error("Not a simulator: " + to_text(v));
     }
+    const auto& modelInfo = modelCache_.at(model->description()->uuid);
+    const auto vit = modelInfo.variables.find(v.variable_name);
+    if (vit == modelInfo.variables.end()) {
+        throw error(
+            make_error_code(errc::invalid_system_structure),
+            "No such variable: " + to_text(v));
+    }
+    return vit->second;
+}
+
+
+const system_structure::function_io_description&
+system_structure::get_function_io_description(
+    const full_variable_name& v) const
+{
+    const auto fit = entities_.find(v.entity_name);
+    if (fit == entities_.end()) {
+        throw error(
+            make_error_code(errc::invalid_system_structure),
+            "Unknown function name: " + v.entity_name);
+    }
+    const auto functionType = entity_type_to<function_type>(fit->second.type);
+    if (!functionType) {
+        throw std::logic_error("Not a function: " + to_text(v));
+    }
+    const auto& functionInfo = functionCache_.at(v.entity_name);
+    const auto git = functionInfo.ios.find(v.variable_group_name);
+    if (git == functionInfo.ios.end()) {
+        throw error(
+            make_error_code(errc::invalid_system_structure),
+            "No such variable: " + to_text(v));
+    }
+    const auto vit = git->second.find(v.variable_name);
+    if (vit == git->second.end()) {
+        throw error(
+            make_error_code(errc::invalid_system_structure),
+            "No such variable: " + to_text(v));
+    }
+    return vit->second;
 }
 
 
 // =============================================================================
 // Free functions
 // =============================================================================
-
-std::shared_ptr<model> entity_type_to_model(system_structure::entity_type et) noexcept
-{
-    const auto mt = std::get_if<std::shared_ptr<model>>(&et);
-    return mt ? *mt : nullptr;
-}
-
 
 namespace
 {
@@ -262,8 +332,71 @@ bool is_valid_connection(
 }
 
 
-void add_parameter_value(
-    parameter_set& parameterSet,
+bool is_valid_connection(
+    const variable_description& source,
+    const function_io_description& target,
+    std::string* reason)
+{
+    if (source.type != std::get<variable_type>(target.type)) {
+        if (reason != nullptr) *reason = "Variable types differ.";
+        return false;
+    }
+    if (source.causality != variable_causality::calculated_parameter &&
+        source.causality != variable_causality::output) {
+        if (reason != nullptr) {
+            *reason = "Only variables with causality 'output' or 'calculated "
+                      "parameter' may be used as source variables in a connection.";
+        }
+        return false;
+    }
+    if (target.causality != variable_causality::input) {
+        if (reason != nullptr) {
+            *reason = "Only variables with causality 'input' may be used as "
+                      "target variables in a connection.";
+        }
+        return false;
+    }
+    return true;
+}
+
+
+bool is_valid_connection(
+    const function_io_description& source,
+    const variable_description& target,
+    std::string* reason)
+{
+    if (std::get<variable_type>(source.type) != target.type) {
+        if (reason != nullptr) *reason = "Variable types differ.";
+        return false;
+    }
+    if (source.causality != variable_causality::calculated_parameter &&
+        source.causality != variable_causality::output) {
+        if (reason != nullptr) {
+            *reason = "Only variables with causality 'output' or 'calculated "
+                      "parameter' may be used as source variables in a connection.";
+        }
+        return false;
+    }
+    if (target.causality != variable_causality::input) {
+        if (reason != nullptr) {
+            *reason = "Only variables with causality 'input' may be used as "
+                      "target variables in a connection.";
+        }
+        return false;
+    }
+    if (target.variability == variable_variability::constant ||
+        target.variability == variable_variability::fixed) {
+        if (reason != nullptr) {
+            *reason = "The target variable is not modifiable.";
+        }
+        return false;
+    }
+    return true;
+}
+
+
+void add_variable_value(
+    variable_value_map& variableValues,
     const system_structure& systemStructure,
     const full_variable_name& variable,
     scalar_value value)
@@ -274,7 +407,7 @@ void add_parameter_value(
         msg << "Invalid value for variable '" << variable << "': " << e;
         throw error(make_error_code(errc::invalid_system_structure), msg.str());
     }
-    parameterSet.insert_or_assign(variable, value);
+    variableValues.insert_or_assign(variable, value);
 }
 
 

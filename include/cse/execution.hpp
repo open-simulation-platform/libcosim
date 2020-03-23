@@ -313,6 +313,17 @@ private:
 };
 
 
+/// Maps entity names to simulator/function indices in an `execution`.
+struct entity_index_maps
+{
+    /// Mapping of simulator names to simulator indices.
+    std::unordered_map<std::string, simulator_index> simulators;
+
+    /// Mapping of function names to function indices.
+    std::unordered_map<std::string, function_index> functions;
+};
+
+
 /**
  *  Adds simulators and connections to an execution, and sets initial values,
  *  according to a predefined system structure description.
@@ -320,11 +331,14 @@ private:
  *  This function may be called multiple times for the same `execution`, as
  *  long as there is no conflict between the different `system_structure`
  *  objects.
+ *
+ *  \returns
+ *      Mappings between entity names and their indexes in the execution.
  */
-std::unordered_map<std::string, simulator_index> inject_system_structure(
+entity_index_maps inject_system_structure(
     execution& exe,
     const system_structure& sys,
-    const parameter_set& initialValues);
+    const variable_value_map& initialValues);
 
 } // namespace cse
 #endif // header guard

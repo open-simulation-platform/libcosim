@@ -54,5 +54,18 @@ T get_function_parameter(
 }
 
 
+/**
+ *  Returns a `function_description` with the same contents as the
+ *  `function_description` part of `functionTypeDescription`, but with
+ *  all placeholders replaced by actual parameter values.
+ *
+ *  The `parameterValues` map *must* contain values for all placeholders
+ *  in `functionTypeDescription`.  Otherwise, an exception is thrown.
+ */
+function_description substitute_function_parameters(
+    const function_type_description& functionTypeDescription,
+    const function_parameter_value_map& parameterValues);
+
+
 } // namespace cse
 #endif // header guard

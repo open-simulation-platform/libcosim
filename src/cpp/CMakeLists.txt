@@ -76,6 +76,7 @@ set(sources
     "fmi/v2/fmu.cpp"
     "fmi/windows.cpp"
     "function/linear_transformation.cpp"
+    "function/utility.cpp"
     "function/vector_sum.cpp"
     "log/logger.cpp"
     "manipulator/scenario_manager.cpp"
