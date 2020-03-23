@@ -75,7 +75,8 @@ std::pair<execution, simulator_map> ssp_loader::load(const boost::filesystem::pa
     simulator_map simulatorMap;
     std::map<std::string, slave_info> slaves;
     auto elements = parser.get_elements();
-    for (const auto& [_, component] : elements) {
+    for (const auto& e : elements) {
+        auto& component = e.second;
         auto model = modelResolver_->lookup_model(baseURI, component.source);
         auto slave = model->instantiate(component.name);
         auto stepSizeHint = cse::to_duration(component.stepSizeHint.value_or(0));
