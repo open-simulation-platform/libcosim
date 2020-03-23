@@ -34,7 +34,7 @@ namespace cse
 template<typename T>
 T get_function_parameter(
     const function_type_description& functionTypeDescription,
-    const std::unordered_map<int, function_parameter_value> parameterValues,
+    const function_parameter_value_map& parameterValues,
     int parameterIndex)
 {
     const auto& description = functionTypeDescription.parameters.at(parameterIndex);

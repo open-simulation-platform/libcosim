@@ -9,6 +9,7 @@
 
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <variant>
 #include <vector>
 
@@ -38,6 +39,17 @@ enum class function_parameter_type
  *  `function_parameter_type`.
  */
 using function_parameter_value = std::variant<double, int, variable_type>;
+
+
+/**
+ *  An associative container for function parameter values.
+ *
+ *  The container maps parameter indexes, defined as the positions of the
+ *  parameter descriptions in some `function_type_description::parameters`
+ *  list, to values.
+ */
+using function_parameter_value_map =
+    std::unordered_map<int, function_parameter_value>;
 
 
 /// A description of a function parameter.

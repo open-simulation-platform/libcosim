@@ -197,7 +197,7 @@ public:
      *      returned by `description()`.
      */
     virtual std::unique_ptr<function> instantiate(
-        const std::unordered_map<int, function_parameter_value> parameters) = 0;
+        const function_parameter_value_map& parameters) = 0;
 };
 
 
