@@ -85,11 +85,17 @@ private:
 class linear_transformation_function_type : public function_type
 {
 public:
+    /// Reference to the `offset` parameter, for convenience
+    constexpr static int offset_parameter_index = 0;
+
+    /// Reference to the `factor` parameter, for convenience
+    constexpr static int factor_parameter_index = 1;
+
     // Overridden `function_type` methods
     function_type_description description() const override;
 
     std::unique_ptr<function> instantiate(
-        const std::unordered_map<int, function_parameter_value> parameters) override;
+        const function_parameter_value_map& parameters) override;
 };
 
 

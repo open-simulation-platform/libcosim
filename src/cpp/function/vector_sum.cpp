@@ -89,7 +89,7 @@ function_type_description vector_sum_function_type::description() const
 
 
 std::unique_ptr<function> vector_sum_function_type::instantiate(
-    const std::unordered_map<int, function_parameter_value> parameters)
+    const function_parameter_value_map& parameters)
 {
     const auto descr = description();
     const auto inputCount =

@@ -209,7 +209,7 @@ public:
     function_type_description description() const override;
 
     std::unique_ptr<function> instantiate(
-        const std::unordered_map<int, function_parameter_value> parameters) override;
+        const function_parameter_value_map& parameters) override;
 };
 
 

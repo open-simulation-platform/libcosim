@@ -13,12 +13,6 @@ namespace cse
 namespace
 {
 
-enum linear_transformation_parameters
-{
-    linear_transformation_offset,
-    linear_transformation_factor,
-};
-
 function_type_description linear_transformation_description()
 {
     function_type_description f;
@@ -168,13 +162,13 @@ function_type_description linear_transformation_function_type::description() con
 }
 
 std::unique_ptr<function> linear_transformation_function_type::instantiate(
-    const std::unordered_map<int, function_parameter_value> parameters)
+    const function_parameter_value_map& parameters)
 {
     const auto descr = description();
     const auto offset =
-        get_function_parameter<double>(descr, parameters, linear_transformation_offset);
+        get_function_parameter<double>(descr, parameters, offset_parameter_index);
     const auto factor =
-        get_function_parameter<double>(descr, parameters, linear_transformation_factor);
+        get_function_parameter<double>(descr, parameters, factor_parameter_index);
 
     return std::make_unique<linear_transformation_function>(offset, factor);
 }
