@@ -8,7 +8,6 @@
 #    include <windows.h>
 #else
 #    include <unistd.h>
-#    define Sleep(x) usleep((x)*1000)
 #endif
 
 void print_last_error()
