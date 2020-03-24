@@ -68,7 +68,7 @@ ssp_parser::ParameterSet parse_parameter_set(const boost::property_tree::ptree& 
     return parameterSet;
 }
 
-inline ssp_parser::Component checkComponent(const std::string name, std::unordered_map<std::string, ssp_parser::Component> elements)
+inline ssp_parser::Component check_component(const std::string& name, std::unordered_map<std::string, ssp_parser::Component> elements)
 {
     if (elements.count(name)) {
         return elements[name];
@@ -79,7 +79,7 @@ inline ssp_parser::Component checkComponent(const std::string name, std::unorder
     }
 }
 
-inline ssp_parser::Connector checkConnector(const std::string name, ssp_parser::Component component)
+inline ssp_parser::Connector check_connector(const std::string& name, ssp_parser::Component component)
 {
     if (component.connectors.count(name)) {
         return component.connectors[name];
@@ -184,11 +184,11 @@ ssp_parser::ssp_parser(const boost::filesystem::path& ssdPath)
     if (const auto connections = system.get_child_optional("ssd:Connections")) {
         for (const auto& connection : *connections) {
             auto& c = connections_.emplace_back();
-            c.startElement = checkComponent(get_attribute<std::string>(connection.second, "startElement"), elements_);
-            c.startConnector = checkConnector(get_attribute<std::string>(connection.second, "startConnector"), c.startElement);
+            c.startElement = check_component(get_attribute<std::string>(connection.second, "startElement"), elements_);
+            c.startConnector = check_connector(get_attribute<std::string>(connection.second, "startConnector"), c.startElement);
 
-            c.endElement = checkComponent(get_attribute<std::string>(connection.second, "endElement"), elements_);
-            c.endConnector = checkConnector(get_attribute<std::string>(connection.second, "endConnector"), c.endElement);
+            c.endElement = check_component(get_attribute<std::string>(connection.second, "endElement"), elements_);
+            c.endConnector = check_connector(get_attribute<std::string>(connection.second, "endConnector"), c.endElement);
 
             if (const auto l = connection.second.get_child_optional("ssc:LinearTransformation")) {
                 auto offset = get_attribute<double>(*l, "offset", 0);
