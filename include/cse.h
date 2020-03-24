@@ -244,7 +244,7 @@ cse_slave* cse_local_slave_create(const char* fmuPath, const char* instanceName)
  *  \returns
  *      0 on success and -1 on error.
  */
-int set_real_initial_value(cse_execution* execution, cse_slave_index slaveIndex, cse_value_reference vr, double value);
+int cse_execution_set_real_initial_value(cse_execution* execution, cse_slave_index slaveIndex, cse_value_reference vr, double value);
 
 /**
  *  Sets a integer initial value for the given slave in the given execution.
@@ -260,7 +260,7 @@ int set_real_initial_value(cse_execution* execution, cse_slave_index slaveIndex,
  *  \returns
  *      0 on success and -1 on error.
  */
-int set_integer_initial_value(cse_execution* execution, cse_slave_index slaveIndex, cse_value_reference vr, int value);
+int cse_execution_set_integer_initial_value(cse_execution* execution, cse_slave_index slaveIndex, cse_value_reference vr, int value);
 
 /**
  *  Sets a boolean initial value for the given slave in the given execution.
@@ -276,7 +276,7 @@ int set_integer_initial_value(cse_execution* execution, cse_slave_index slaveInd
  *  \returns
  *      0 on success and -1 on error.
  */
-int set_boolean_initial_value(cse_execution* execution, cse_slave_index slaveIndex, cse_value_reference vr, bool value);
+int cse_execution_set_boolean_initial_value(cse_execution* execution, cse_slave_index slaveIndex, cse_value_reference vr, bool value);
 
 /**
  *  Sets a string initial value for the given slave in the given execution.
@@ -292,7 +292,7 @@ int set_boolean_initial_value(cse_execution* execution, cse_slave_index slaveInd
  *  \returns
  *      0 on success and -1 on error.
  */
-int set_string_initial_value(cse_execution* execution, cse_slave_index slaveIndex, cse_value_reference vr, char* value);
+int cse_execution_set_string_initial_value(cse_execution* execution, cse_slave_index slaveIndex, cse_value_reference vr, char* value);
 
 
 /**
