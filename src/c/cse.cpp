@@ -418,6 +418,7 @@ int cse_execution_set_real_initial_value(cse_execution* execution, cse_slave_ind
     try {
         execution->cpp_execution->set_real_initial_value(slaveIndex, vr, value);
     } catch (...) {
+        handle_current_exception();
         return failure;
     }
     return success;
@@ -428,6 +429,7 @@ int cse_execution_set_integer_initial_value(cse_execution* execution, cse_slave_
     try {
         execution->cpp_execution->set_integer_initial_value(slaveIndex, vr, value);
     } catch (...) {
+        handle_current_exception();
         return failure;
     }
     return success;
@@ -438,6 +440,7 @@ int cse_execution_set_boolean_initial_value(cse_execution* execution, cse_slave_
     try {
         execution->cpp_execution->set_boolean_initial_value(slaveIndex, vr, value);
     } catch (...) {
+        handle_current_exception();
         return failure;
     }
     return success;
@@ -448,6 +451,7 @@ int cse_execution_set_string_initial_value(cse_execution* execution, cse_slave_i
     try {
         execution->cpp_execution->set_string_initial_value(slaveIndex, vr, value);
     } catch (...) {
+        handle_current_exception();
         return failure;
     }
     return success;
