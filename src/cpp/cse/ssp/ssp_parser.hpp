@@ -8,6 +8,7 @@
 
 #include <optional>
 #include <string>
+#include <unordered_map>
 
 namespace cse
 {
@@ -66,11 +67,11 @@ public:
         std::string name;
         std::string source;
         std::optional<double> stepSizeHint;
-        std::vector<Connector> connectors;
         std::vector<ParameterSet> parameterSets;
+        std::unordered_map<std::string, Connector> connectors;
     };
 
-    const std::vector<Component>& get_elements() const;
+    [[nodiscard]] const std::unordered_map<std::string, Component>& get_elements() const;
 
     struct LinearTransformation
     {
@@ -80,21 +81,21 @@ public:
 
     struct Connection
     {
-        std::string startElement;
-        std::string startConnector;
-        std::string endElement;
-        std::string endConnector;
+        Component startElement;
+        Connector startConnector;
+        Component endElement;
+        Connector endConnector;
         std::optional<LinearTransformation> linearTransformation;
     };
 
-    const std::vector<Connection>& get_connections() const;
+    [[nodiscard]] const std::vector<Connection>& get_connections() const;
 
 private:
     SystemDescription systemDescription_;
     DefaultExperiment defaultExperiment_;
 
-    std::vector<Component> elements_;
     std::vector<Connection> connections_;
+    std::unordered_map<std::string, Component> elements_;
 };
 
 struct slave_info
