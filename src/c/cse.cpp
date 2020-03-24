@@ -413,6 +413,46 @@ cse_slave* cse_local_slave_create(const char* fmuPath, const char* instanceName)
     }
 }
 
+int set_real_initial_value(cse_execution* execution, cse_slave_index slaveIndex, cse_value_reference vr, double value)
+{
+    try {
+        execution->cpp_execution->set_real_initial_value(slaveIndex, vr, value);
+    } catch (...) {
+        return failure;
+    }
+    return success;
+}
+
+int set_integer_initial_value(cse_execution* execution, cse_slave_index slaveIndex, cse_value_reference vr, int value)
+{
+    try {
+        execution->cpp_execution->set_integer_initial_value(slaveIndex, vr, value);
+    } catch (...) {
+        return failure;
+    }
+    return success;
+}
+
+int set_boolean_initial_value(cse_execution* execution, cse_slave_index slaveIndex, cse_value_reference vr, bool value)
+{
+    try {
+        execution->cpp_execution->set_boolean_initial_value(slaveIndex, vr, value);
+    } catch (...) {
+        return failure;
+    }
+    return success;
+}
+
+int set_string_initial_value(cse_execution* execution, cse_slave_index slaveIndex, cse_value_reference vr, char* value)
+{
+    try {
+        execution->cpp_execution->set_string_initial_value(slaveIndex, vr, value);
+    } catch (...) {
+        return failure;
+    }
+    return success;
+}
+
 int cse_local_slave_destroy(cse_slave* slave)
 {
     try {
