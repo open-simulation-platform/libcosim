@@ -57,19 +57,19 @@ int main()
 
     cse_value_reference realVr = 0;
     double initialRealVal = 1.2;
-    set_real_initial_value(execution, slave_index, realVr, initialRealVal);
+    cse_execution_set_real_initial_value(execution, slave_index, realVr, initialRealVal);
 
     cse_value_reference intVr = 0;
     int initialIntVal = -5;
-    set_integer_initial_value(execution, slave_index, intVr, initialIntVal);
+    cse_execution_set_integer_initial_value(execution, slave_index, intVr, initialIntVal);
 
     cse_value_reference boolVr = 0;
     int initialBoolVal = true;
-    set_boolean_initial_value(execution, slave_index, boolVr, initialBoolVal);
+    cse_execution_set_boolean_initial_value(execution, slave_index, boolVr, initialBoolVal);
 
     cse_value_reference strVr = 0;
     char* initialStrVal = "Hello World!";
-    set_boolean_initial_value(execution, slave_index, strVr, initialStrVal);
+    cse_execution_set_boolean_initial_value(execution, slave_index, strVr, initialStrVal);
 
     rc = cse_execution_step(execution, 1);
     if (rc < 0) { goto Lerror; }
