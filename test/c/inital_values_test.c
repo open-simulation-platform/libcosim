@@ -3,12 +3,8 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
-#ifdef _WINDOWS
-#    include <windows.h>
-#else
-#    include <unistd.h>
-#endif
 
 void print_last_error()
 {
