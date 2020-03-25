@@ -76,7 +76,8 @@ std::pair<execution, simulator_map> ssp_loader::load(const boost::filesystem::pa
     simulator_map simulatorMap;
     std::map<std::string, slave_info> slaves;
     auto elements = parser.get_elements();
-    for (const auto& component : elements) {
+    for (const auto& e : elements) {
+        auto& component = e.second;
         auto model = modelResolver_->lookup_model(baseURI, component.source);
         auto slave = model->instantiate(component.name);
         auto stepSizeHint = cse::to_duration(component.stepSizeHint.value_or(0));
@@ -117,8 +118,8 @@ std::pair<execution, simulator_map> ssp_loader::load(const boost::filesystem::pa
 
     for (const auto& connection : parser.get_connections()) {
 
-        cse::variable_id output = get_variable(slaves, connection.startElement, connection.startConnector);
-        cse::variable_id input = get_variable(slaves, connection.endElement, connection.endConnector);
+        cse::variable_id output = get_variable(slaves, connection.startElement.name, connection.startConnector.name);
+        cse::variable_id input = get_variable(slaves, connection.endElement.name, connection.endConnector.name);
 
         try {
             if (const auto& l = connection.linearTransformation) {
@@ -136,8 +137,8 @@ std::pair<execution, simulator_map> ssp_loader::load(const boost::filesystem::pa
         } catch (const std::exception& e) {
             std::ostringstream oss;
             oss << "Encountered error while adding connection from "
-                << connection.startElement << ":" << connection.startConnector << " to "
-                << connection.endElement << ":" << connection.endConnector
+                << connection.startElement.name << ":" << connection.startConnector.name << " to "
+                << connection.endElement.name << ":" << connection.endConnector.name
                 << ": " << e.what();
 
             BOOST_LOG_SEV(log::logger(), log::error) << oss.str();
