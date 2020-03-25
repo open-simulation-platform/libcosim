@@ -727,10 +727,9 @@ extended_model_description get_emd(
 
 std::vector<std::string> get_variable_group_variables(
     const std::unordered_map<std::string, variable_group_description>& descriptions,
-    const std::string& element,
-    const std::string& connector)
+    const cse_config_parser::VariableEndpoint endpoint)
 {
-    auto groupIt = descriptions.find(connector);
+    auto groupIt = descriptions.find(endpoint.name);
     if (groupIt == descriptions.end()) {
         for (const auto& description : descriptions) {
             if (description.second.variable_group_descriptions.size() != 0) {
@@ -738,11 +737,11 @@ std::vector<std::string> get_variable_group_variables(
                 for (const auto& variableGroupDescr : description.second.variable_group_descriptions) {
                     nestedDescriptions.insert({variableGroupDescr.name, variableGroupDescr});
                 }
-                return get_variable_group_variables(nestedDescriptions, element, connector);
+                return get_variable_group_variables(nestedDescriptions, endpoint);
             }
         }
         std::ostringstream oss;
-        oss << "Cannot find variable group description: " << element << ":" << connector;
+        oss << "Cannot find variable group description: " << endpoint.simulator << ":" << endpoint.name;
         throw std::out_of_range(oss.str());
     }
     return groupIt->second.variables;
@@ -754,9 +753,7 @@ std::vector<cse::variable_group_description> get_variable_groups(
 {
     auto groupIt = descriptions.find(connector);
     if (groupIt == descriptions.end()) {
-        std::ostringstream oss;
-        oss << "Cannot find variable group for " << connector;
-        throw std::out_of_range(oss.str());
+        return {};
     }
     return groupIt->second.variable_group_descriptions;
 }
@@ -770,28 +767,31 @@ void connect_variable_groups(
 
     for (const auto& connection : variableGroupConnections) {
         const auto& emdA = get_emd(emds, connection.variableA.simulator);
-        const auto& variablesA =
-            get_variable_group_variables(emdA.variableGroups, connection.variableA.simulator, connection.variableA.name);
         const auto& emdB = get_emd(emds, connection.variableB.simulator);
-        const auto& variablesB =
-            get_variable_group_variables(emdB.variableGroups, connection.variableB.simulator, connection.variableB.name);
+        const auto& variablesA = get_variable_group_variables(emdA.variableGroups, connection.variableA);
+        const auto& variablesB = get_variable_group_variables(emdB.variableGroups, connection.variableB);
+        const auto& variableGroupsA = get_variable_groups(emdA.variableGroups, connection.variableA.name);
+        const auto& variableGroupsB = get_variable_groups(emdB.variableGroups, connection.variableB.name);
 
-        if (variablesA.size() == 0 || variablesB.size() == 0) {
-            // Variables for the connection cannot be found directly under any of the variable groups.
-            // The connection refers to a variableGroup with variableGroups.
-            const auto& variableGroupsA = get_variable_groups(emdA.variableGroups, connection.variableA.name);
-            const auto& variableGroupsB = get_variable_groups(emdB.variableGroups, connection.variableB.name);
-
-            std::vector<cse_config_parser::VariableConnection> nestedVariableGroupConnections;
-            // clang-format off
-            for (std::size_t i = 0; i < variableGroupsA.size(); ++i) {
-                nestedVariableGroupConnections.push_back({
-                    {connection.variableA.simulator, variableGroupsA.at(i).name},
-                    {connection.variableB.simulator, variableGroupsB.at(i).name}});
-            }
-            // clang-format on
-            connect_variable_groups(nestedVariableGroupConnections, slaves, execution, emds);
+        if (variableGroupsA.size() != variableGroupsB.size()) {
+            std::ostringstream oss;
+            oss << "Cannot create connection between variable groups. Variable group "
+                << connection.variableA.simulator << ":" << connection.variableA.name
+                << " has different size [" << variableGroupsA.size() << "] than variable group "
+                << connection.variableB.simulator << ":" << connection.variableB.name
+                << " size [" << variableGroupsB.size() << "]";
+            throw std::runtime_error(oss.str());
         }
+
+        std::vector<cse_config_parser::VariableConnection> nestedVariableGroupConnections;
+        // clang-format off
+        for (std::size_t i = 0; i < variableGroupsA.size(); ++i) {
+            nestedVariableGroupConnections.push_back({
+                {connection.variableA.simulator, variableGroupsA.at(i).name},
+                {connection.variableB.simulator, variableGroupsB.at(i).name}});
+        }
+        // clang-format on
+        connect_variable_groups(nestedVariableGroupConnections, slaves, execution, emds);
 
         if (variablesA.size() != variablesB.size()) {
             std::ostringstream oss;
