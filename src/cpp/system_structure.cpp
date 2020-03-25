@@ -94,6 +94,11 @@ void system_structure::add_entity(const entity& e)
     assert(!functionCache_.count(e.name));
 
     if (const auto model = entity_type_to<cse::model>(e.type)) {
+        if (e.step_size_hint < duration::zero()) {
+            throw error(
+                make_error_code(errc::invalid_system_structure),
+                "Negative step size hint: " + e.name);
+        }
         // Make a model cache entry
         if (modelCache_.count(model->description()->uuid) == 0) {
             modelCache_[model->description()->uuid] =

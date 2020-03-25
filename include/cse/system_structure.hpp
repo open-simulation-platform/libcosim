@@ -174,7 +174,10 @@ public:
         /// The entity type.
         entity_type type;
 
-        /// Parameter values (for functions; ignored for simulators)
+        /// Recommended step size (for simulators; ignored for functions).
+        duration step_size_hint;
+
+        /// Parameter values (for functions; ignored for simulators).
         function_parameter_value_map parameter_values;
     };
 
@@ -209,9 +212,12 @@ public:
     void add_entity(const entity& e);
 
     /// \overload
-    void add_entity(std::string_view name, std::shared_ptr<cse::model> type)
+    void add_entity(
+        std::string_view name,
+        std::shared_ptr<cse::model> type,
+        duration stepSizeHint = duration::zero())
     {
-        add_entity({std::string(name), type, {}});
+        add_entity({std::string(name), type, stepSizeHint, {}});
     }
 
     /// \overload
@@ -220,7 +226,7 @@ public:
         std::shared_ptr<function_type> type,
         function_parameter_value_map parameters)
     {
-        add_entity({std::string(name), type, std::move(parameters)});
+        add_entity({std::string(name), type, {}, std::move(parameters)});
     }
 
     /**

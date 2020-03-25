@@ -38,11 +38,16 @@ private:
 
 BOOST_AUTO_TEST_CASE(system_structure_basic_use)
 {
-    const auto model = std::make_shared<mock_model>();
-    const auto func = std::make_shared<cse::linear_transformation_function_type>();
-
+    // Some test parameters
+    constexpr auto startTime = cse::time_point();
+    constexpr auto stopTime = cse::time_point(std::chrono::seconds(1));
+    constexpr auto timeStep = std::chrono::milliseconds(100);
     constexpr auto offset = 2.0;
     constexpr auto factor = 3.0;
+
+    // Get a model and function type
+    const auto model = std::make_shared<mock_model>();
+    const auto func = std::make_shared<cse::linear_transformation_function_type>();
     const auto funcParams = cse::function_parameter_value_map{
         std::make_pair(cse::linear_transformation_function_type::offset_parameter_index, offset),
         std::make_pair(cse::linear_transformation_function_type::factor_parameter_index, factor)};
@@ -51,12 +56,13 @@ BOOST_AUTO_TEST_CASE(system_structure_basic_use)
     cse::system_structure ss;
 
     ss.add_entity("simA", model);
-    ss.add_entity("simB", model);
+    ss.add_entity("simB", model, timeStep * 2);
     ss.add_entity("func", func, funcParams);
     ss.add_entity("simC", model);
     BOOST_CHECK_THROW(ss.add_entity("simB", model), cse::error); // simB exists
     BOOST_CHECK_THROW(ss.add_entity("func", func, funcParams), cse::error); // func exists
     BOOST_CHECK_THROW(ss.add_entity("sim\nB", model), cse::error); // invalid name
+    BOOST_CHECK_THROW(ss.add_entity("simB", model, -timeStep), cse::error); // negative step size
 
     ss.connect_variables({"simA", "realOut"}, {"simB", "realIn"}); // sim-sim connection
     ss.connect_variables({"simA", "realOut"}, {"simA", "realIn"}); // sim self connection
@@ -94,10 +100,6 @@ BOOST_AUTO_TEST_CASE(system_structure_basic_use)
 
     // Set up and run an execution to verify that the system structure
     // turns out as intended.
-    constexpr auto startTime = cse::time_point();
-    constexpr auto stopTime = cse::time_point(std::chrono::seconds(1));
-    constexpr auto timeStep = std::chrono::milliseconds(100);
-
     auto execution = cse::execution(
         startTime, std::make_shared<cse::fixed_step_algorithm>(timeStep));
     const auto obs = std::make_shared<cse::last_value_observer>();

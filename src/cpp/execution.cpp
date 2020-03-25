@@ -504,8 +504,10 @@ entity_index_maps inject_system_structure(
     for (const auto& entity : sys.entities()) {
         if (const auto model = entity_type_to<cse::model>(entity.type)) {
             // Entity is a simulator
-            const auto index =
-                exe.add_slave(model->instantiate(entity.name), entity.name);
+            const auto index = exe.add_slave(
+                model->instantiate(entity.name),
+                entity.name,
+                entity.step_size_hint);
             indexMaps.simulators.emplace(std::string(entity.name), index);
         } else {
             // Entity is a function
