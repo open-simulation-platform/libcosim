@@ -37,9 +37,9 @@ int main()
                 [](int y) { return y + 2; })),
             "Slave");
 
-        observer->start_observing(cse::variable_id{simIndex, cse::variable_type::integer, 0});
+        observer->start_observing(cse::variable_id{simIndex, cse::variable_type::integer, mock_slave::integer_out_reference});
 
-        manipulator->override_integer_variable(simIndex, 0, 1);
+        manipulator->override_integer_variable(simIndex, mock_slave::integer_out_reference, 1);
 
         auto simResult = execution.simulate_until(endTime);
         REQUIRE(simResult.get());
@@ -49,7 +49,7 @@ int main()
         cse::step_number steps[numSamples];
         cse::time_point times[numSamples];
 
-        size_t samplesRead = observer->get_integer_samples(simIndex, 0, 1, gsl::make_span(intOutputValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
+        size_t samplesRead = observer->get_integer_samples(simIndex, mock_slave::integer_out_reference, 1, gsl::make_span(intOutputValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
         REQUIRE(samplesRead == 10);
 
         for (size_t i = 0; i < samplesRead; i++) {
