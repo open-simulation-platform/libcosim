@@ -8,9 +8,7 @@
         <ssd:Elements>
             <ssd:Component name="identity1" source="../../fmi1/identity.fmu">
                 <ssd:Connectors>
-                    <ssd:Connector name="realOut" kind="output">
-                        <ssc:Real/>
-                    </ssd:Connector>
+                    <ssd:Connector name="realOut" kind="output"><ssc:Real/></ssd:Connector>
                 </ssd:Connectors>
                 <ssd:ParameterBindings>
                     <ssd:ParameterBinding source="initial_values.ssv"/>
@@ -19,9 +17,7 @@
             </ssd:Component>
             <ssd:Component name="identity2" source="../../fmi1/identity.fmu">
                 <ssd:Connectors>
-                    <ssd:Connector name="realIn" kind="input">
-                        <ssc:Real/>
-                    </ssd:Connector>
+                    <ssd:Connector name="realIn" kind="input"><ssc:Real/></ssd:Connector>
                 </ssd:Connectors>
             </ssd:Component>
         </ssd:Elements>
@@ -31,7 +27,6 @@
                 <ssc:LinearTransformation offset="50" factor="1.3"/>
             </ssd:Connection>
         </ssd:Connections>
-
 
     </ssd:System>
 
