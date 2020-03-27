@@ -196,6 +196,32 @@ cse_execution* cse_config_execution_create(
     }
 }
 
+
+namespace
+{
+// Converts an entity_index_maps object to an "old-style" simulator_map.
+//
+// This function is only temporary, and will be removed once cse_config_parser
+// has also been converted to use system_structure and entity_index_maps.
+cse::simulator_map to_old_simulator_map(
+    const cse::entity_index_maps& entityMap,
+    const cse::system_structure& systemStructure)
+{
+    cse::simulator_map oldSimulatorMap;
+    for (const auto& [name, index] : entityMap.simulators) {
+        const auto entity = systemStructure.find_entity(name);
+        assert(entity);
+        const auto model = cse::entity_type_to<cse::model>(entity->type);
+        assert(model);
+        oldSimulatorMap.emplace(
+            name,
+            cse::simulator_map_entry{index, *model->description()});
+    }
+    return oldSimulatorMap;
+}
+} // namespace
+
+
 cse_execution* cse_ssp_execution_create(
     const char* sspDir,
     bool startTimeDefined,
@@ -205,11 +231,15 @@ cse_execution* cse_ssp_execution_create(
         auto execution = std::make_unique<cse_execution>();
 
         cse::ssp_loader loader;
-        if (startTimeDefined) loader.override_start_time(to_time_point(startTime));
-        auto [exec, simulatorMap] = loader.load(sspDir);
+        const auto config = loader.load(sspDir);
+        auto exec = cse::execution(
+            startTimeDefined ? to_time_point(startTime) : config.start_time,
+            config.algorithm);
+        auto indexMaps = cse::inject_system_structure(
+            exec, config.system_structure, config.parameter_sets.at(""));
 
         execution->cpp_execution = std::make_unique<cse::execution>(std::move(exec));
-        execution->simulators = std::move(simulatorMap);
+        execution->simulators = to_old_simulator_map(indexMaps, config.system_structure);
 
         return execution.release();
     } catch (...) {
@@ -228,12 +258,15 @@ cse_execution* cse_ssp_fixed_step_execution_create(
         auto execution = std::make_unique<cse_execution>();
 
         cse::ssp_loader loader;
-        if (startTimeDefined) loader.override_start_time(to_time_point(startTime));
-        loader.override_algorithm(std::make_unique<cse::fixed_step_algorithm>(to_duration(stepSize)));
-        auto [exec, simulatorMap] = loader.load(sspDir);
+        const auto config = loader.load(sspDir);
+        auto exec = cse::execution(
+            startTimeDefined ? to_time_point(startTime) : config.start_time,
+            std::make_unique<cse::fixed_step_algorithm>(to_duration(stepSize)));
+        auto indexMaps = cse::inject_system_structure(
+            exec, config.system_structure, config.parameter_sets.at(""));
 
         execution->cpp_execution = std::make_unique<cse::execution>(std::move(exec));
-        execution->simulators = std::move(simulatorMap);
+        execution->simulators = to_old_simulator_map(indexMaps, config.system_structure);
 
         return execution.release();
     } catch (...) {
@@ -269,7 +302,6 @@ int cse_execution_get_slave_infos(cse_execution* execution, cse_slave_info infos
         size_t slave = 0;
         for (const auto& [name, entry] : ids) {
             safe_strncpy(infos[slave].name, name.c_str(), SLAVE_NAME_MAX_SIZE);
-            safe_strncpy(infos[slave].source, entry.source.c_str(), SLAVE_NAME_MAX_SIZE);
             infos[slave].index = entry.index;
             if (++slave >= numSlaves) {
                 break;
@@ -390,7 +422,6 @@ struct cse_slave_s
     std::string address;
     std::string modelName;
     std::string instanceName;
-    std::string source;
     std::shared_ptr<cse::slave> instance;
 };
 
@@ -405,7 +436,6 @@ cse_slave* cse_local_slave_create(const char* fmuPath, const char* instanceName)
         slave->instance = fmu->instantiate_slave(slave->instanceName);
         // slave address not in use yet. Should be something else than a string.
         slave->address = "local";
-        slave->source = fmuPath;
         return slave.release();
     } catch (...) {
         handle_current_exception();
@@ -431,7 +461,7 @@ cse_slave_index cse_execution_add_slave(
 {
     try {
         auto index = execution->cpp_execution->add_slave(cse::make_background_thread_slave(slave->instance), slave->instanceName);
-        execution->simulators[slave->instanceName] = cse::simulator_map_entry{index, slave->source, slave->instance->model_description()};
+        execution->simulators[slave->instanceName] = cse::simulator_map_entry{index, slave->instance->model_description()};
         return index;
     } catch (...) {
         handle_current_exception();

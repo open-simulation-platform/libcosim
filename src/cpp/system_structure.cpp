@@ -131,6 +131,15 @@ system_structure::entity_range system_structure::entities() const noexcept
 }
 
 
+const system_structure::entity* system_structure::find_entity(
+    std::string_view name) const
+{
+    const auto it = entities_.find(std::string(name));
+    if (it == entities_.end()) return nullptr;
+    return &it->second;
+}
+
+
 void system_structure::connect_variables(const connection& c)
 {
     std::string validationError;

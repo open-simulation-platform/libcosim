@@ -7,6 +7,9 @@
 #include <boost/filesystem.hpp>
 #include <boost/test/unit_test.hpp>
 
+#include <algorithm>
+
+
 namespace
 {
 
@@ -14,11 +17,17 @@ namespace
 // See https://www.boost.org/doc/libs/1_65_0/libs/test/doc/html/boost_test/utf_reference/testing_tool_ref/assertion_boost_level_close.html
 constexpr double tolerance = 0.0001;
 
-void common_demo_case_tests(cse::execution& execution, cse::simulator_map simulatorMap)
+void common_demo_case_tests(const cse::ssp_configuration& config)
 {
-    BOOST_REQUIRE(simulatorMap.size() == 2);
-    auto craneController = simulatorMap.at("CraneController");
-    auto knuckleBoomCrane = simulatorMap.at("KnuckleBoomCrane");
+    auto execution = cse::execution(config.start_time, config.algorithm);
+    const auto entityMaps = cse::inject_system_structure(
+        execution,
+        config.system_structure,
+        config.parameter_sets.at(""));
+
+    BOOST_REQUIRE(entityMaps.simulators.size() == 2);
+    BOOST_REQUIRE(entityMaps.simulators.count("CraneController") == 1);
+    const auto knuckleBoomCrane = entityMaps.simulators.at("KnuckleBoomCrane");
 
     auto obs = std::make_shared<cse::last_value_observer>();
     execution.add_observer(obs);
@@ -26,14 +35,16 @@ void common_demo_case_tests(cse::execution& execution, cse::simulator_map simula
     BOOST_REQUIRE(result.get());
 
     double realValue = -1.0;
-    cse::value_reference reference = cse::find_variable(knuckleBoomCrane.description, "Spring_Joint.k").reference;
-    obs->get_real(knuckleBoomCrane.index, gsl::make_span(&reference, 1), gsl::make_span(&realValue, 1));
+    const auto reference =
+        config.system_structure.get_variable_description({"KnuckleBoomCrane", "Spring_Joint.k"}).reference;
+    obs->get_real(knuckleBoomCrane, gsl::make_span(&reference, 1), gsl::make_span(&realValue, 1));
 
     double magicNumberFromSsdFile = 0.005;
     BOOST_CHECK_CLOSE(realValue, magicNumberFromSsdFile, tolerance);
 
-    cse::value_reference reference2 = cse::find_variable(knuckleBoomCrane.description, "mt0_init").reference;
-    obs->get_real(knuckleBoomCrane.index, gsl::make_span(&reference2, 1), gsl::make_span(&realValue, 1));
+    const auto reference2 =
+        config.system_structure.get_variable_description({"KnuckleBoomCrane", "mt0_init"}).reference;
+    obs->get_real(knuckleBoomCrane, gsl::make_span(&reference2, 1), gsl::make_span(&realValue, 1));
 
     magicNumberFromSsdFile = 69.0;
     BOOST_CHECK_CLOSE(realValue, magicNumberFromSsdFile, tolerance);
@@ -51,15 +62,9 @@ BOOST_AUTO_TEST_CASE(basic_test)
     boost::filesystem::path sspFile = boost::filesystem::path(testDataDir) / "ssp" / "demo";
 
     cse::ssp_loader loader;
-    auto [execution, simulatorMap] = loader.load(sspFile);
+    const auto config = loader.load(sspFile);
 
-    auto craneController = simulatorMap.at("CraneController");
-    auto knuckleBoomCrane = simulatorMap.at("KnuckleBoomCrane");
-
-    BOOST_REQUIRE(craneController.source == "CraneController.fmu");
-    BOOST_REQUIRE(knuckleBoomCrane.source == "KnuckleBoomCrane.fmu");
-
-    common_demo_case_tests(execution, simulatorMap);
+    common_demo_case_tests(config);
 }
 
 BOOST_AUTO_TEST_CASE(no_algorithm_test)
@@ -72,13 +77,13 @@ BOOST_AUTO_TEST_CASE(no_algorithm_test)
     boost::filesystem::path sspFile = boost::filesystem::path(testDataDir) / "ssp" / "demo" / "no_algorithm_element";
 
     cse::ssp_loader loader;
-    loader.override_algorithm(std::make_unique<cse::fixed_step_algorithm>(cse::to_duration(1e-4)));
-    auto [execution, simulatorMap] = loader.load(sspFile);
+    auto config = loader.load(sspFile);
+    config.algorithm = std::make_unique<cse::fixed_step_algorithm>(cse::to_duration(1e-4));
 
     double startTimeDefinedInSsp = 5.0;
-    BOOST_CHECK_CLOSE(cse::to_double_time_point(execution.current_time()), startTimeDefinedInSsp, tolerance);
+    BOOST_CHECK_CLOSE(cse::to_double_time_point(config.start_time), startTimeDefinedInSsp, tolerance);
 
-    common_demo_case_tests(execution, simulatorMap);
+    common_demo_case_tests(config);
 }
 
 BOOST_AUTO_TEST_CASE(ssp_archive)
@@ -91,8 +96,8 @@ BOOST_AUTO_TEST_CASE(ssp_archive)
     const auto sspFile = boost::filesystem::path(testDataDir) / "ssp" / "demo" / "demo.ssp";
 
     cse::ssp_loader loader;
-    auto [execution, simulatorMap] = loader.load(sspFile);
-    common_demo_case_tests(execution, simulatorMap);
+    const auto config = loader.load(sspFile);
+    common_demo_case_tests(config);
 }
 
 BOOST_AUTO_TEST_CASE(ssp_archive_multiple_ssd)
@@ -106,8 +111,9 @@ BOOST_AUTO_TEST_CASE(ssp_archive_multiple_ssd)
 
     cse::ssp_loader loader;
     loader.set_ssd_file_name("SystemStructure2");
-    auto simulatorMap = loader.load(sspFile).second;
-    BOOST_REQUIRE(simulatorMap.size() == 1);
+    const auto config = loader.load(sspFile);
+    const auto entities = config.system_structure.entities();
+    BOOST_REQUIRE(std::distance(entities.begin(), entities.end()) == 1);
 }
 
 BOOST_AUTO_TEST_CASE(ssp_linear_transformation_test)
@@ -117,24 +123,33 @@ BOOST_AUTO_TEST_CASE(ssp_linear_transformation_test)
     const auto sspDir = boost::filesystem::path(testDataDir) / "ssp" / "linear_transformation";
 
     cse::ssp_loader loader;
-    loader.override_algorithm(std::make_unique<cse::fixed_step_algorithm>(cse::to_duration(1e-3)));
-    auto [exec, simulatorMap] = loader.load(sspDir);
+    const auto config = loader.load(sspDir);
 
-    auto observer = std::make_shared<cse::last_value_observer>();
+    auto exec = cse::execution(
+        config.start_time,
+        std::make_unique<cse::fixed_step_algorithm>(cse::to_duration(1e-3)));
+    const auto entityMaps = cse::inject_system_structure(
+        exec,
+        config.system_structure,
+        config.parameter_sets.at(""));
+
+    const auto observer = std::make_shared<cse::last_value_observer>();
     exec.add_observer(observer);
 
     exec.step();
 
     double initialValue;
-    auto slave1 = simulatorMap.at("identity1");
-    cse::value_reference v1Ref = cse::find_variable(slave1.description, "realOut").reference;
-    observer->get_real(slave1.index, gsl::make_span(&v1Ref, 1), gsl::make_span(&initialValue, 1));
+    const auto slave1 = entityMaps.simulators.at("identity1");
+    const auto v1Ref =
+        config.system_structure.get_variable_description({"identity1", "realOut"}).reference;
+    observer->get_real(slave1, gsl::make_span(&v1Ref, 1), gsl::make_span(&initialValue, 1));
     BOOST_REQUIRE_CLOSE(initialValue, 2.0, tolerance);
 
     double transformedValue;
-    auto slave2 = simulatorMap.at("identity2");
-    cse::value_reference v2Ref = cse::find_variable(slave2.description, "realIn").reference;
-    observer->get_real(slave2.index, gsl::make_span(&v2Ref, 1), gsl::make_span(&transformedValue, 1));
+    const auto slave2 = entityMaps.simulators.at("identity2");
+    const auto v2Ref =
+        config.system_structure.get_variable_description({"identity2", "realIn"}).reference;
+    observer->get_real(slave2, gsl::make_span(&v2Ref, 1), gsl::make_span(&transformedValue, 1));
 
     double offset = 50;
     double factor = 1.3;
@@ -149,9 +164,15 @@ BOOST_AUTO_TEST_CASE(ssp_multiple_parameter_sets_test)
     const auto sspDir = boost::filesystem::path(testDataDir) / "ssp" / "linear_transformation";
 
     cse::ssp_loader loader;
-    loader.set_parameter_set_name("initialValues2");
-    loader.override_algorithm(std::make_unique<cse::fixed_step_algorithm>(cse::to_duration(1e-3)));
-    auto [exec, simulatorMap] = loader.load(sspDir);
+    const auto config = loader.load(sspDir);
+
+    auto exec = cse::execution(
+        config.start_time,
+        std::make_unique<cse::fixed_step_algorithm>(cse::to_duration(1e-3)));
+    const auto entityMaps = cse::inject_system_structure(
+        exec,
+        config.system_structure,
+        config.parameter_sets.at("initialValues2"));
 
     auto observer = std::make_shared<cse::last_value_observer>();
     exec.add_observer(observer);
@@ -159,9 +180,10 @@ BOOST_AUTO_TEST_CASE(ssp_multiple_parameter_sets_test)
     exec.step();
 
     double initialValue;
-    auto slave1 = simulatorMap.at("identity1");
-    cse::value_reference v1Ref = cse::find_variable(slave1.description, "realOut").reference;
-    observer->get_real(slave1.index, gsl::make_span(&v1Ref, 1), gsl::make_span(&initialValue, 1));
+    const auto slave1 = entityMaps.simulators.at("identity1");
+    const auto v1Ref =
+        config.system_structure.get_variable_description({"identity1", "realOut"}).reference;
+    observer->get_real(slave1, gsl::make_span(&v1Ref, 1), gsl::make_span(&initialValue, 1));
     BOOST_REQUIRE_CLOSE(initialValue, 4.0, tolerance);
 
 }

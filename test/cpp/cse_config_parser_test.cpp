@@ -20,8 +20,6 @@ void test(const boost::filesystem::path& configPath)
     auto& simulator_map = simulation.second;
 
     REQUIRE(simulator_map.size() == 4);
-    REQUIRE(simulator_map.at("CraneController").source == "../ssp/demo/CraneController.fmu");
-    REQUIRE(simulator_map.at("KnuckleBoomCrane").source == "../ssp/demo/KnuckleBoomCrane.fmu");
 
     auto obs = std::make_shared<cse::last_value_observer>();
     execution.add_observer(obs);

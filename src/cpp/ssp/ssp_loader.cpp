@@ -1,32 +1,21 @@
 #include "cse/ssp/ssp_loader.hpp"
 
-#include "cse/algorithm.hpp"
-#include "cse/cse_config.hpp"
-#include "cse/exception.hpp"
-#include "cse/fmi/fmu.hpp"
 #include "cse/function/linear_transformation.hpp"
 #include "cse/log/logger.hpp"
 #include "cse/ssp/ssp_parser.hpp"
 #include "cse/utility/filesystem.hpp"
 #include "cse/utility/zip.hpp"
-#include <cse/utility/utility.hpp>
+
+#include <random>
+
 
 namespace cse
 {
 
+
 ssp_loader::ssp_loader()
     : modelResolver_(cse::default_model_uri_resolver())
 {}
-
-void ssp_loader::override_start_time(cse::time_point timePoint)
-{
-    overrideStartTime_ = timePoint;
-}
-
-void ssp_loader::override_algorithm(std::shared_ptr<cse::algorithm> algorithm)
-{
-    overrideAlgorithm_ = std::move(algorithm);
-}
 
 void ssp_loader::set_model_uri_resolver(std::shared_ptr<cse::model_uri_resolver> resolver)
 {
@@ -37,12 +26,44 @@ void ssp_loader::set_ssd_file_name(const std::string& name)
 {
     ssdFileName_ = name;
 }
-void ssp_loader::set_parameter_set_name(const std::string& name)
-{
-    parameterSetName_ = name;
-}
 
-std::pair<execution, simulator_map> ssp_loader::load(const boost::filesystem::path& configPath)
+namespace
+{
+// Adds an SSP component parameter set to a `variable_value_map`.
+void add_parameter_set(
+    variable_value_map& valueMap,
+    const std::string& componentName,
+    const ssp_parser::ParameterSet& parameterSet,
+    const system_structure& systemStructure)
+{
+    for (const auto& param : parameterSet.parameters) {
+        try {
+            const auto variableName = full_variable_name(componentName, param.name);
+            const auto& variableDescription =
+                systemStructure.get_variable_description(variableName);
+            if (variableDescription.causality != variable_causality::parameter &&
+                variableDescription.causality != variable_causality::input) {
+                throw std::runtime_error(
+                    "Non-input causality for variable " + to_text(variableName));
+            }
+            add_variable_value(
+                valueMap,
+                systemStructure,
+                full_variable_name(componentName, param.name),
+                param.value);
+        } catch (const std::exception& e) {
+            // SSP allows ignoring failures when applying parameter sets to
+            // components.  We may want to restrict to only specific failures
+            // in the future, though.
+            BOOST_LOG_SEV(log::logger(), log::warning)
+                << "SSP parameter set " << parameterSet.name << ": "
+                << e.what();
+        }
+    }
+}
+} // namespace
+
+ssp_configuration ssp_loader::load(const boost::filesystem::path& configPath)
 {
     auto sspFile = configPath;
     std::optional<cse::utility::temp_dir> temp_ssp_dir;
@@ -61,92 +82,65 @@ std::pair<execution, simulator_map> ssp_loader::load(const boost::filesystem::pa
     const auto baseURI = path_to_file_uri(configFile);
     const auto parser = ssp_parser(configFile);
 
-    std::shared_ptr<cse::algorithm> algorithm;
-    if (overrideAlgorithm_ != nullptr) {
-        algorithm = overrideAlgorithm_;
-    } else if (parser.get_default_experiment().algorithm != nullptr) {
-        algorithm = parser.get_default_experiment().algorithm;
-    } else {
-        throw std::invalid_argument("SSP contains no default co-simulation algorithm, nor has one been explicitly specified!");
-    }
+    ssp_configuration configuration;
+    configuration.start_time = get_default_start_time(parser);
+    configuration.algorithm = parser.get_default_experiment().algorithm;
+    configuration.parameter_sets[""]; // Ensure that the default set exists.
 
-    const auto startTime = overrideStartTime_ ? *overrideStartTime_ : get_default_start_time(parser);
-    auto execution = cse::execution(startTime, algorithm);
-
-    simulator_map simulatorMap;
-    std::map<std::string, slave_info> slaves;
     auto elements = parser.get_elements();
-    for (const auto& e : elements) {
-        auto& component = e.second;
-        auto model = modelResolver_->lookup_model(baseURI, component.source);
-        auto slave = model->instantiate(component.name);
-        auto stepSizeHint = cse::to_duration(component.stepSizeHint.value_or(0));
-        simulator_index index = slaves[component.name].index = execution.add_slave(slave, component.name, stepSizeHint);
+    for (const auto& [componentName, component] : elements) {
+        configuration.system_structure.add_entity(
+            componentName,
+            modelResolver_->lookup_model(baseURI, component.source),
+            cse::to_duration(component.stepSizeHint.value_or(0)));
 
-        simulatorMap[component.name] = simulator_map_entry{index, component.source, *model->description()};
-
-        for (const auto& v : model->description()->variables) {
-            slaves[component.name].variables[v.name] = v;
+        for (const auto& paramSet : component.parameterSets) {
+            add_parameter_set(
+                configuration.parameter_sets[paramSet.name],
+                componentName,
+                paramSet,
+                configuration.system_structure);
         }
-
-        if (const auto& set = get_parameter_set(component, parameterSetName_)) {
-            BOOST_LOG_SEV(log::logger(), log::info)
-                << "Applying values from parameterSet '" << set->name << "'";
-            for (const auto& p : set->parameters) {
-                auto reference = find_variable(*model->description(), p.name).reference;
-                BOOST_LOG_SEV(log::logger(), log::info)
-                    << "Initializing variable " << component.name << ":" << p.name << " with value " << streamer{p.value};
-                switch (p.type) {
-                    case variable_type::real:
-                        execution.set_real_initial_value(index, reference, std::get<double>(p.value));
-                        break;
-                    case variable_type::integer:
-                        execution.set_integer_initial_value(index, reference, std::get<int>(p.value));
-                        break;
-                    case variable_type::boolean:
-                        execution.set_boolean_initial_value(index, reference, std::get<bool>(p.value));
-                        break;
-                    case variable_type::string:
-                        execution.set_string_initial_value(index, reference, std::get<std::string>(p.value));
-                        break;
-                    default:
-                        throw error(make_error_code(errc::unsupported_feature), "Variable type not supported yet");
-                }
-            }
+        if (!component.parameterSets.empty()) {
+            add_parameter_set(
+                configuration.parameter_sets[""],
+                componentName,
+                component.parameterSets[0],
+                configuration.system_structure);
         }
     }
 
     for (const auto& connection : parser.get_connections()) {
+        const auto output = full_variable_name(
+            connection.startElement.name,
+            connection.startConnector.name);
+        const auto input = full_variable_name(
+            connection.endElement.name,
+            connection.endConnector.name);
 
-        cse::variable_id output = get_variable(slaves, connection.startElement.name, connection.startConnector.name);
-        cse::variable_id input = get_variable(slaves, connection.endElement.name, connection.endConnector.name);
+        if (const auto& l = connection.linearTransformation) {
+            const auto functionName =
+                "__linearTransformation__" + std::to_string(std::random_device{}());
 
-        try {
-            if (const auto& l = connection.linearTransformation) {
-                const auto fn = execution.add_function(
-                    std::make_shared<linear_transformation_function>(l->offset, l->factor));
-                execution.connect_variables(
-                    output,
-                    function_io_id{fn, variable_type::real, linear_transformation_function::in_io_reference});
-                execution.connect_variables(
-                    function_io_id{fn, variable_type::real, linear_transformation_function::out_io_reference},
-                    input);
-            } else {
-                execution.connect_variables(output, input);
-            }
-        } catch (const std::exception& e) {
-            std::ostringstream oss;
-            oss << "Encountered error while adding connection from "
-                << connection.startElement.name << ":" << connection.startConnector.name << " to "
-                << connection.endElement.name << ":" << connection.endConnector.name
-                << ": " << e.what();
+            function_parameter_value_map functionParams;
+            functionParams[linear_transformation_function_type::offset_parameter_index] = l->offset;
+            functionParams[linear_transformation_function_type::factor_parameter_index] = l->factor;
 
-            BOOST_LOG_SEV(log::logger(), log::error) << oss.str();
-            throw std::runtime_error(oss.str());
+            configuration.system_structure.add_entity(
+                functionName,
+                std::make_shared<linear_transformation_function_type>(),
+                functionParams);
+            configuration.system_structure.connect_variables(
+                output,
+                full_variable_name(functionName, "in", ""));
+            configuration.system_structure.connect_variables(
+                full_variable_name(functionName, "out", ""),
+                input);
+        } else {
+            configuration.system_structure.connect_variables(output, input);
         }
     }
-
-    return std::make_pair(std::move(execution), std::move(simulatorMap));
+    return configuration;
 }
 
 } // namespace cse

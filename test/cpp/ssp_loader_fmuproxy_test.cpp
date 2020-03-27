@@ -20,8 +20,13 @@ int main()
         boost::filesystem::path sspFile = boost::filesystem::path(testDataDir) / "ssp" / "demo" / "fmuproxy";
 
         cse::ssp_loader loader;
-        auto [exec, simulatorMap] = loader.load(sspFile);
-        REQUIRE(simulatorMap.size() == 2);
+        const auto config = loader.load(sspFile);
+        auto exec = cse::execution(config.start_time, config.algorithm);
+        const auto entityMaps = cse::inject_system_structure(
+            exec,
+            config.system_structure,
+            config.parameter_sets.at(""));
+        REQUIRE(entityMaps.simulators.size() == 2);
 
         auto result = exec.simulate_until(cse::to_time_point(1e-3));
         REQUIRE(result.get());
