@@ -55,6 +55,14 @@ public:
         return index;
     }
 
+    function_index add_function(std::shared_ptr<function> fun)
+    {
+        const auto index = static_cast<function_index>(functions_.size());
+        functions_.push_back(fun);
+        algorithm_->add_function(index, fun.get());
+        return index;
+    }
+
     void add_observer(std::shared_ptr<observer> obs)
     {
         observers_.push_back(obs);
@@ -80,46 +88,20 @@ public:
         }
     }
 
-    void add_connection(std::shared_ptr<connection> conn)
+    void connect_variables(variable_id output, variable_id input)
     {
-        for (const auto& destination : conn->get_destinations()) {
-            if (find_connection(destination)) {
-                std::ostringstream oss;
-                oss << "A connection to this destination variable already exists: "
-                    << destination;
-                throw error(make_error_code(errc::unsupported_feature), oss.str());
-            }
-            validate_variable(destination, variable_causality::input);
-        }
-        for (const auto& source : conn->get_sources()) {
-            validate_variable(source, variable_causality::output);
-        }
-        algorithm_->add_connection(conn);
-        connections_.push_back(conn);
+        connect_variables_impl(ssConnections_, output, input);
     }
 
-    void remove_connection(variable_id destination)
+    void connect_variables(variable_id output, function_io_id input)
     {
-        const auto& toRemove = find_connection(destination);
-        if (!toRemove) {
-            std::ostringstream oss;
-            oss << "Can't find connection connected to destination: " << destination;
-            throw std::out_of_range(oss.str());
-        }
-        algorithm_->remove_connection(toRemove);
-        connections_.erase(
-            std::remove(
-                connections_.begin(),
-                connections_.end(),
-                toRemove),
-            connections_.end());
+        connect_variables_impl(sfConnections_, output, input);
     }
 
-    const std::vector<std::shared_ptr<connection>>& get_connections()
+    void connect_variables(function_io_id output, variable_id input)
     {
-        return connections_;
+        connect_variables_impl(fsConnections_, output, input);
     }
-
 
     time_point current_time() const noexcept
     {
@@ -279,6 +261,22 @@ public:
     }
 
 private:
+    template<typename OutputID, typename InputID>
+    void connect_variables_impl(
+        std::unordered_map<InputID, OutputID>& connections,
+        OutputID output,
+        InputID input)
+    {
+        validate_variable(output, variable_causality::output);
+        validate_variable(input, variable_causality::input);
+
+        if (connections.count(input)) {
+            throw std::logic_error("Input variable already connected");
+        }
+        algorithm_->connect_variables(output, input);
+        connections.emplace(input, output);
+    }
+
     void validate_variable(variable_id variable, variable_causality causality)
     {
         const auto variables = simulators_.at(variable.simulator)->model_description().variables;
@@ -297,16 +295,14 @@ private:
         }
     }
 
-    std::shared_ptr<connection> find_connection(variable_id destination)
+    void validate_variable(function_io_id variable, variable_causality causality)
     {
-        for (const auto& c : connections_) {
-            for (const auto& id : c->get_destinations()) {
-                if (id == destination) {
-                    return c;
-                }
-            }
+        const auto description = functions_.at(variable.function)->description();
+        const auto& group = description.io_groups.at(variable.reference.group);
+        const auto& io = group.ios.at(variable.reference.io);
+        if (io.causality != causality) {
+            throw std::logic_error("Error connecting function variable: Wrong causality");
         }
-        return nullptr;
     }
 
     static bool timed_out(std::optional<time_point> endTime, time_point currentTime, duration stepSize)
@@ -325,9 +321,12 @@ private:
 
     std::shared_ptr<algorithm> algorithm_;
     std::vector<std::shared_ptr<simulator>> simulators_;
+    std::vector<std::shared_ptr<function>> functions_;
     std::vector<std::shared_ptr<observer>> observers_;
     std::vector<std::shared_ptr<manipulator>> manipulators_;
-    std::vector<std::shared_ptr<connection>> connections_;
+    std::unordered_map<variable_id, variable_id> ssConnections_;
+    std::unordered_map<function_io_id, variable_id> sfConnections_;
+    std::unordered_map<variable_id, function_io_id> fsConnections_;
     real_time_timer timer_;
 };
 
@@ -349,6 +348,11 @@ simulator_index execution::add_slave(
     return pimpl_->add_slave(std::move(slave), name, stepSizeHint);
 }
 
+function_index execution::add_function(std::shared_ptr<function> fun)
+{
+    return pimpl_->add_function(fun);
+}
+
 void execution::add_observer(std::shared_ptr<observer> obs)
 {
     return pimpl_->add_observer(obs);
@@ -359,19 +363,19 @@ void execution::add_manipulator(std::shared_ptr<manipulator> man)
     return pimpl_->add_manipulator(man);
 }
 
-void execution::add_connection(std::shared_ptr<connection> conn)
+void execution::connect_variables(variable_id output, variable_id input)
 {
-    pimpl_->add_connection(conn);
+   pimpl_->connect_variables(output, input);
 }
 
-void execution::remove_connection(variable_id destination)
+void execution::connect_variables(variable_id output, function_io_id input)
 {
-    pimpl_->remove_connection(destination);
+   pimpl_->connect_variables(output, input);
 }
 
-const std::vector<std::shared_ptr<connection>>& execution::get_connections()
+void execution::connect_variables(function_io_id output, variable_id input)
 {
-    return pimpl_->get_connections();
+   pimpl_->connect_variables(output, input);
 }
 
 time_point execution::current_time() const noexcept

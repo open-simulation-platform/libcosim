@@ -61,10 +61,9 @@ int main()
                             return x + 1.234;
                     })),
                     "adder_slave" + std::to_string(i)));
-            execution.add_connection(
-                std::make_shared<cse::scalar_connection>(
-                    cse::variable_id{slaves[i - 1], cse::variable_type::real, realOutRef},
-                    cse::variable_id{slaves[i], cse::variable_type::real, realInRef}));
+            execution.connect_variables(
+                cse::variable_id{slaves[i - 1], cse::variable_type::real, realOutRef},
+                cse::variable_id{slaves[i], cse::variable_type::real, realInRef});
         }
 
         // Add an observer that watches the last slave
