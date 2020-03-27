@@ -1,10 +1,11 @@
+#if defined(WIN32) && !defined(NOMINMAX)
+#    define NOMINMAX
+#endif
 #include "cse/algorithm/fixed_step_algorithm.hpp"
 
 #include "cse/error.hpp"
 #include "cse/exception.hpp"
 #include "cse/log/logger.hpp"
-
-#include <gsl/span>
 
 #include <algorithm>
 #include <cstdlib>
@@ -81,28 +82,73 @@ public:
 
     void remove_simulator(simulator_index i)
     {
-        remove_connections(i);
         simulators_.erase(i);
+        disconnect_simulator_variables(i);
     }
 
-    void add_connection(std::shared_ptr<connection> c)
+    void add_function(function_index i, function* f)
     {
-        for (const auto& source : c->get_sources()) {
-            auto& simInfo = find_simulator(source.simulator);
-            simInfo.sim->expose_for_getting(source.type, source.reference);
-            simInfo.outgoingConnections[source].push_back(c);
-        }
-        for (const auto& destination : c->get_destinations()) {
-            auto& simInfo = find_simulator(destination.simulator);
-            simInfo.sim->expose_for_setting(destination.type, destination.reference);
-            simInfo.incomingConnections[destination] = c;
+        assert(functions_.count(i) == 0);
+        functions_[i].fun = f;
+    }
+
+    void connect_variables(variable_id output, variable_id input)
+    {
+        auto& sourceSimInfo = simulators_.at(output.simulator);
+        auto& targetSimInfo = simulators_.at(input.simulator);
+        sourceSimInfo.sim->expose_for_getting(output.type, output.reference);
+        targetSimInfo.sim->expose_for_setting(input.type, input.reference);
+        sourceSimInfo.outgoingSimConnections.push_back({output, input});
+    }
+
+    void connect_variables(variable_id output, function_io_id input)
+    {
+        auto& simInfo = simulators_.at(output.simulator);
+        simInfo.sim->expose_for_getting(output.type, output.reference);
+        simInfo.outgoingFunConnections.push_back({output, input});
+    }
+
+    void connect_variables(function_io_id output, variable_id input)
+    {
+        auto& funInfo = functions_.at(output.function);
+        auto& simInfo = simulators_.at(input.simulator);
+        simInfo.sim->expose_for_setting(input.type, input.reference);
+        funInfo.outgoingSimConnections.push_back({output, input});
+        update_function_decimation_factor(funInfo);
+    }
+
+    void disconnect_variable(variable_id input)
+    {
+        for (auto& s : simulators_) {
+            auto& conns = s.second.outgoingSimConnections;
+            const auto it = std::find_if(
+                conns.begin(),
+                conns.end(),
+                [input](const auto& c) { return c.target == input; });
+            if (it != conns.end()) {
+                conns.erase(it);
+                // There can be only one connection to an input variable,
+                // so we return as early as possible.
+                return;
+            }
         }
     }
 
-    void remove_connection(std::shared_ptr<connection> c)
+    void disconnect_variable(function_io_id input)
     {
-        remove_sources(c);
-        remove_destinations(c);
+        for (auto& s : simulators_) {
+            auto& conns = s.second.outgoingFunConnections;
+            const auto it = std::find_if(
+                conns.begin(),
+                conns.end(),
+                [input](const auto& c) { return c.target == input; });
+            if (it != conns.end()) {
+                conns.erase(it);
+                // There can be only one connection to an input variable,
+                // so we return as early as possible.
+                return;
+            }
+        }
     }
 
     void setup(time_point startTime, std::optional<time_point> stopTime)
@@ -113,14 +159,27 @@ public:
 
     void initialize()
     {
-        setup_simulators();
-        for (std::size_t i = 0; i < simulators_.size(); ++i) {
-            iterate_simulators();
-            for (const auto& entry : simulators_) {
-                transfer_sources(entry.first);
-                transfer_destinations(entry.first);
+        for_all_simulators([=](auto s) {
+            return s->setup(startTime_, stopTime_, std::nullopt);
+        });
+
+        // Run N iterations of the simulators' and functions' step/calculation
+        // procedures, where N is the number of simulators in the system,
+        // to propagate initial values.
+        for (std::size_t i = 0; i < simulators_.size() + functions_.size(); ++i) {
+            for_all_simulators([=](auto s) {
+                return s->do_iteration();
+            });
+            for (const auto& s : simulators_) {
+                transfer_variables(s.second.outgoingSimConnections);
+                transfer_variables(s.second.outgoingFunConnections);
+            }
+            for (const auto& f : functions_) {
+                f.second.fun->calculate();
+                transfer_variables(f.second.outgoingSimConnections);
             }
         }
+
         for_all_simulators([](auto s) {
             return s->start_simulation();
         });
@@ -128,16 +187,18 @@ public:
 
     std::pair<duration, std::unordered_set<simulator_index>> do_step(time_point currentT)
     {
+        // Initiate simulator time steps.
         for (auto& s : simulators_) {
             auto& info = s.second;
             if (stepCounter_ % info.decimationFactor == 0) {
-                transfer_destinations(s.first);
                 info.stepResult = info.sim->do_step(currentT, baseStepSize_ * info.decimationFactor);
             }
         }
 
         ++stepCounter_;
 
+        // Wait for all simulators that are supposed to finish their individual
+        // time steps within this co-simulation time step.
         std::unordered_set<simulator_index> finished;
         bool failed = false;
         std::stringstream errMessages;
@@ -161,8 +222,21 @@ public:
             throw error(make_error_code(errc::simulation_error), errMessages.str());
         }
 
-        for (auto idx : finished) {
-            transfer_sources(idx);
+        // Transfer the outputs from simulators that have finished their
+        // individual time steps within this co-simulation time step.
+        for (auto simIndex : finished) {
+            auto& simInfo = simulators_.at(simIndex);
+            transfer_variables(simInfo.outgoingSimConnections);
+            transfer_variables(simInfo.outgoingFunConnections);
+        }
+
+        // Calculate functions and transfer their outputs to simulators.
+        for (const auto& f : functions_) {
+            const auto& info = f.second;
+            if (stepCounter_ % info.decimationFactor == 0) {
+                info.fun->calculate();
+                transfer_variables(info.outgoingSimConnections);
+            }
         }
 
         return std::pair(baseStepSize_, std::move(finished));
@@ -176,14 +250,72 @@ public:
 
 
 private:
+    struct connection_ss
+    {
+        variable_id source;
+        variable_id target;
+    };
+
+    struct connection_sf
+    {
+        variable_id source;
+        function_io_id target;
+    };
+
+    struct connection_fs
+    {
+        function_io_id source;
+        variable_id target;
+    };
+
     struct simulator_info
     {
         simulator* sim;
         int decimationFactor = 1;
         boost::fibers::future<step_result> stepResult;
-        std::unordered_map<variable_id, std::vector<std::shared_ptr<connection>>> outgoingConnections;
-        std::unordered_map<variable_id, std::shared_ptr<connection>> incomingConnections;
+        std::vector<connection_ss> outgoingSimConnections;
+        std::vector<connection_sf> outgoingFunConnections;
     };
+
+    struct function_info
+    {
+        function* fun;
+        int decimationFactor = 1;
+        std::vector<connection_fs> outgoingSimConnections;
+    };
+
+    void disconnect_simulator_variables(simulator_index i)
+    {
+        for (auto& s : simulators_) {
+            auto& connections = s.second.outgoingSimConnections;
+            const auto newEnd = std::remove_if(
+                connections.begin(),
+                connections.end(),
+                [i](const auto& c) { return c.target.simulator == i; });
+            connections.erase(newEnd, connections.end());
+        }
+        for (auto& f : functions_) {
+            auto& connections = f.second.outgoingSimConnections;
+            const auto newEnd = std::remove_if(
+                connections.begin(),
+                connections.end(),
+                [i](const auto& c) { return c.target.simulator == i; });
+            connections.erase(newEnd, connections.end());
+        }
+    }
+
+    void update_function_decimation_factor(function_info& f)
+    {
+        f.decimationFactor = std::accumulate(
+            f.outgoingSimConnections.begin(),
+            f.outgoingSimConnections.end(),
+            1,
+            [&](int current, const auto& connection) {
+                return std::lcm(
+                    current,
+                    simulators_.at(connection.target.simulator).decimationFactor);
+            });
+    }
 
     template<typename F>
     void for_all_simulators(F f)
@@ -210,119 +342,99 @@ private:
         }
     }
 
-    void setup_simulators()
+    void transfer_variables(const std::vector<connection_ss>& connections)
     {
-        for_all_simulators([=](auto s) {
-            return s->setup(startTime_, stopTime_, std::nullopt);
-        });
-    }
-
-    void iterate_simulators()
-    {
-        for_all_simulators([=](auto s) {
-            return s->do_iteration();
-        });
-    }
-
-    void remove_destinations(std::shared_ptr<connection> c)
-    {
-        for (const auto& destinationId : c->get_destinations()) {
-            auto& connectedSim = find_simulator(destinationId.simulator);
-            connectedSim.incomingConnections.erase(destinationId);
-        }
-    }
-
-    void remove_sources(std::shared_ptr<connection> c)
-    {
-        for (const auto& sourceId : c->get_sources()) {
-            auto& sourceSim = find_simulator(sourceId.simulator);
-            auto& outgoingConns = sourceSim.outgoingConnections.at(sourceId);
-            outgoingConns.erase(std::remove(outgoingConns.begin(), outgoingConns.end(), c), outgoingConns.end());
-            if (outgoingConns.empty()) {
-                sourceSim.outgoingConnections.erase(sourceId);
+        for (const auto& c : connections) {
+            const auto sdf = simulators_.at(c.source.simulator).decimationFactor;
+            const auto tdf = simulators_.at(c.target.simulator).decimationFactor;
+            if (stepCounter_ % std::lcm(sdf, tdf) == 0) {
+                transfer_variable(c);
             }
         }
     }
 
-    void remove_connections(simulator_index i)
+    void transfer_variables(const std::vector<connection_sf>& connections)
     {
-        for (auto& entry : simulators_.at(i).outgoingConnections) {
-            for (auto& sourceConn : entry.second) {
-                remove_destinations(sourceConn);
-            }
-        }
-        for (auto& entry : simulators_.at(i).incomingConnections) {
-            remove_sources(entry.second);
-        }
-    }
-
-    simulator_info& find_simulator(simulator_index i)
-    {
-        auto sim = simulators_.find(i);
-        if (sim == simulators_.end()) {
-            std::ostringstream oss;
-            oss << "Cannot find simulator with index " << i;
-            throw std::out_of_range(oss.str());
-        }
-        return sim->second;
-    }
-
-    void transfer_sources(simulator_index i)
-    {
-        for (auto& [sourceVar, connections] : simulators_[i].outgoingConnections) {
-            for (const auto& c : connections) {
-                switch (sourceVar.type) {
-                    case variable_type::real:
-                        c->set_source_value(sourceVar, simulators_.at(i).sim->get_real(sourceVar.reference));
-                        break;
-                    case variable_type::integer:
-                        c->set_source_value(sourceVar, simulators_.at(i).sim->get_integer(sourceVar.reference));
-                        break;
-                    case variable_type::boolean:
-                        c->set_source_value(sourceVar, simulators_.at(i).sim->get_boolean(sourceVar.reference));
-                        break;
-                    case variable_type::string:
-                        c->set_source_value(sourceVar, simulators_.at(i).sim->get_string(sourceVar.reference));
-                        break;
-                    default:
-                        CSE_PANIC();
-                }
+        for (const auto& c : connections) {
+            const auto sdf = simulators_.at(c.source.simulator).decimationFactor;
+            const auto tdf = functions_.at(c.target.function).decimationFactor;
+            if (stepCounter_ % std::lcm(sdf, tdf) == 0) {
+                transfer_variable(c);
             }
         }
     }
 
-    bool decimation_factor_match(variable_id destination, gsl::span<variable_id> sources)
+    void transfer_variables(const std::vector<connection_fs>& connections)
     {
-        const auto idf = simulators_[destination.simulator].decimationFactor;
-        bool match = true;
-        for (const auto& source : sources) {
-            const auto odf = simulators_[source.simulator].decimationFactor;
-            match &= (stepCounter_ % std::lcm(odf, idf) == 0);
+        for (const auto& c : connections) {
+            const auto sdf = functions_.at(c.source.function).decimationFactor;
+            const auto tdf = simulators_.at(c.target.simulator).decimationFactor;
+            if (stepCounter_ % std::lcm(sdf, tdf) == 0) {
+                transfer_variable(c);
+            }
         }
-        return match;
     }
 
-    void transfer_destinations(simulator_index i)
+    void transfer_variable(const connection_ss& c)
     {
-        for (auto& [destVar, conn] : simulators_[i].incomingConnections) {
-            if (decimation_factor_match(destVar, conn->get_sources())) {
-                switch (destVar.type) {
-                    case variable_type::real:
-                        simulators_.at(i).sim->set_real(destVar.reference, std::get<double>(conn->get_destination_value(destVar)));
-                        break;
-                    case variable_type::integer:
-                        simulators_.at(i).sim->set_integer(destVar.reference, std::get<int>(conn->get_destination_value(destVar)));
-                        break;
-                    case variable_type::boolean:
-                        simulators_.at(i).sim->set_boolean(destVar.reference, std::get<bool>(conn->get_destination_value(destVar)));
-                        break;
-                    case variable_type::string:
-                        simulators_.at(i).sim->set_string(destVar.reference, std::get<std::string_view>(conn->get_destination_value(destVar)));
-                        break;
-                    default:
-                        CSE_PANIC();
-                }
-            }
+        assert(c.source.type == c.target.type);
+        switch (c.target.type) {
+            case variable_type::real:
+                simulators_.at(c.target.simulator).sim->set_real(c.target.reference, simulators_.at(c.source.simulator).sim->get_real(c.source.reference));
+                break;
+            case variable_type::integer:
+                simulators_.at(c.target.simulator).sim->set_integer(c.target.reference, simulators_.at(c.source.simulator).sim->get_integer(c.source.reference));
+                break;
+            case variable_type::boolean:
+                simulators_.at(c.target.simulator).sim->set_boolean(c.target.reference, simulators_.at(c.source.simulator).sim->get_boolean(c.source.reference));
+                break;
+            case variable_type::string:
+                simulators_.at(c.target.simulator).sim->set_string(c.target.reference, simulators_.at(c.source.simulator).sim->get_string(c.source.reference));
+                break;
+            case variable_type::enumeration:
+                CSE_PANIC_M("Can't handle variable of type 'enumeration' yet");
+        }
+    }
+
+    void transfer_variable(const connection_sf& c)
+    {
+        assert(c.source.type == c.target.type);
+        switch (c.target.type) {
+            case variable_type::real:
+                functions_.at(c.target.function).fun->set_real(c.target.reference, simulators_.at(c.source.simulator).sim->get_real(c.source.reference));
+                break;
+            case variable_type::integer:
+                functions_.at(c.target.function).fun->set_integer(c.target.reference, simulators_.at(c.source.simulator).sim->get_integer(c.source.reference));
+                break;
+            case variable_type::boolean:
+                functions_.at(c.target.function).fun->set_boolean(c.target.reference, simulators_.at(c.source.simulator).sim->get_boolean(c.source.reference));
+                break;
+            case variable_type::string:
+                functions_.at(c.target.function).fun->set_string(c.target.reference, simulators_.at(c.source.simulator).sim->get_string(c.source.reference));
+                break;
+            case variable_type::enumeration:
+                CSE_PANIC_M("Can't handle variable of type 'enumeration' yet");
+        }
+    }
+
+    void transfer_variable(const connection_fs& c)
+    {
+        assert(c.source.type == c.target.type);
+        switch (c.target.type) {
+            case variable_type::real:
+                simulators_.at(c.target.simulator).sim->set_real(c.target.reference, functions_.at(c.source.function).fun->get_real(c.source.reference));
+                break;
+            case variable_type::integer:
+                simulators_.at(c.target.simulator).sim->set_integer(c.target.reference, functions_.at(c.source.function).fun->get_integer(c.source.reference));
+                break;
+            case variable_type::boolean:
+                simulators_.at(c.target.simulator).sim->set_boolean(c.target.reference, functions_.at(c.source.function).fun->get_boolean(c.source.reference));
+                break;
+            case variable_type::string:
+                simulators_.at(c.target.simulator).sim->set_string(c.target.reference, functions_.at(c.source.function).fun->get_string(c.source.reference));
+                break;
+            case variable_type::enumeration:
+                CSE_PANIC_M("Can't handle variable of type 'enumeration' yet");
         }
     }
 
@@ -330,6 +442,7 @@ private:
     time_point startTime_;
     std::optional<time_point> stopTime_;
     std::unordered_map<simulator_index, simulator_info> simulators_;
+    std::unordered_map<function_index, function_info> functions_;
     int64_t stepCounter_ = 0;
 };
 
@@ -372,15 +485,36 @@ void fixed_step_algorithm::remove_simulator(simulator_index i)
 }
 
 
-void fixed_step_algorithm::add_connection(std::shared_ptr<connection> c)
+void fixed_step_algorithm::add_function(function_index i, function* f)
 {
-    pimpl_->add_connection(c);
+    pimpl_->add_function(i, f);
 }
 
-void fixed_step_algorithm::remove_connection(std::shared_ptr<connection> c)
+void fixed_step_algorithm::connect_variables(variable_id output, variable_id input)
 {
-    pimpl_->remove_connection(c);
+    pimpl_->connect_variables(output, input);
 }
+
+void fixed_step_algorithm::connect_variables(variable_id output, function_io_id input)
+{
+    pimpl_->connect_variables(output, input);
+}
+
+void fixed_step_algorithm::connect_variables(function_io_id output, variable_id input)
+{
+    pimpl_->connect_variables(output, input);
+}
+
+void fixed_step_algorithm::disconnect_variable(variable_id input)
+{
+    pimpl_->disconnect_variable(input);
+}
+
+void fixed_step_algorithm::disconnect_variable(function_io_id input)
+{
+    pimpl_->disconnect_variable(input);
+}
+
 
 void fixed_step_algorithm::setup(
     time_point startTime,

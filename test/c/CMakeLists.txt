@@ -3,6 +3,7 @@ set(tests
     "execution_from_cse_config_test"
     "execution_from_ssp_custom_algo_test"
     "execution_from_ssp_test"
+    "inital_values_test"
     "load_config_and_teardown_test"
     "multiple_fmus_execution_test"
     "observer_can_buffer_samples"

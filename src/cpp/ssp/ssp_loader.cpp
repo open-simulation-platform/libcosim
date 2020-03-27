@@ -4,6 +4,7 @@
 #include "cse/cse_config.hpp"
 #include "cse/exception.hpp"
 #include "cse/fmi/fmu.hpp"
+#include "cse/function/linear_transformation.hpp"
 #include "cse/log/logger.hpp"
 #include "cse/ssp/ssp_parser.hpp"
 #include "cse/utility/filesystem.hpp"
@@ -75,7 +76,8 @@ std::pair<execution, simulator_map> ssp_loader::load(const boost::filesystem::pa
     simulator_map simulatorMap;
     std::map<std::string, slave_info> slaves;
     auto elements = parser.get_elements();
-    for (const auto& component : elements) {
+    for (const auto& e : elements) {
+        auto& component = e.second;
         auto model = modelResolver_->lookup_model(baseURI, component.source);
         auto slave = model->instantiate(component.name);
         auto stepSizeHint = cse::to_duration(component.stepSizeHint.value_or(0));
@@ -116,22 +118,27 @@ std::pair<execution, simulator_map> ssp_loader::load(const boost::filesystem::pa
 
     for (const auto& connection : parser.get_connections()) {
 
-        cse::variable_id output = get_variable(slaves, connection.startElement, connection.startConnector);
-        cse::variable_id input = get_variable(slaves, connection.endElement, connection.endConnector);
+        cse::variable_id output = get_variable(slaves, connection.startElement.name, connection.startConnector.name);
+        cse::variable_id input = get_variable(slaves, connection.endElement.name, connection.endConnector.name);
 
-        std::shared_ptr<cse::scalar_connection> c;
-        if (const auto& l = connection.linearTransformation) {
-            c = std::make_shared<linear_transformation_connection>(output, input, l->offset, l->factor);
-        } else {
-            c = std::make_shared<scalar_connection>(output, input);
-        }
         try {
-            execution.add_connection(c);
+            if (const auto& l = connection.linearTransformation) {
+                const auto fn = execution.add_function(
+                    std::make_shared<linear_transformation_function>(l->offset, l->factor));
+                execution.connect_variables(
+                    output,
+                    function_io_id{fn, variable_type::real, linear_transformation_function::in_io_reference});
+                execution.connect_variables(
+                    function_io_id{fn, variable_type::real, linear_transformation_function::out_io_reference},
+                    input);
+            } else {
+                execution.connect_variables(output, input);
+            }
         } catch (const std::exception& e) {
             std::ostringstream oss;
             oss << "Encountered error while adding connection from "
-                << connection.startElement << ":" << connection.startConnector << " to "
-                << connection.endElement << ":" << connection.endConnector
+                << connection.startElement.name << ":" << connection.startConnector.name << " to "
+                << connection.endElement.name << ":" << connection.endConnector.name
                 << ": " << e.what();
 
             BOOST_LOG_SEV(log::logger(), log::error) << oss.str();

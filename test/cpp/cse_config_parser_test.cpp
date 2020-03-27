@@ -1,4 +1,3 @@
-#include <cse/connection/sum_connection.hpp>
 #include <cse/cse_config_parser.hpp>
 #include <cse/log/simple.hpp>
 #include <cse/observer/last_value_observer.hpp>
@@ -13,7 +12,7 @@
 #define REQUIRE(test) \
     if (!(test)) throw std::runtime_error("Requirement not satisfied: " #test)
 
-void test(const boost::filesystem::path& configPath, size_t expectedNumConnections)
+void test(const boost::filesystem::path& configPath)
 {
     auto resolver = cse::default_model_uri_resolver();
     auto simulation = cse::load_cse_config(*resolver, configPath, cse::to_time_point(0.0));
@@ -23,16 +22,6 @@ void test(const boost::filesystem::path& configPath, size_t expectedNumConnectio
     REQUIRE(simulator_map.size() == 4);
     REQUIRE(simulator_map.at("CraneController").source == "../ssp/demo/CraneController.fmu");
     REQUIRE(simulator_map.at("KnuckleBoomCrane").source == "../ssp/demo/KnuckleBoomCrane.fmu");
-
-    const auto& connections = execution.get_connections();
-    std::cout << connections.size() << std::endl;
-    std::cout << expectedNumConnections << std::endl;
-    REQUIRE(connections.size() == expectedNumConnections);
-    for (const auto& connection : connections) {
-        if (const auto sum = std::dynamic_pointer_cast<cse::sum_connection>(connection)) {
-            REQUIRE(sum->get_sources().length() == 3);
-        }
-    }
 
     auto obs = std::make_shared<cse::last_value_observer>();
     execution.add_observer(obs);
@@ -57,8 +46,8 @@ int main()
 
         const auto testDataDir = std::getenv("TEST_DATA_DIR");
         REQUIRE(testDataDir);
-        test(boost::filesystem::path(testDataDir) / "msmi", 3);
-        test(boost::filesystem::path(testDataDir) / "msmi" / "OspSystemStructure_Bond.xml", 9);
+        test(boost::filesystem::path(testDataDir) / "msmi");
+        test(boost::filesystem::path(testDataDir) / "msmi" / "OspSystemStructure_Bond.xml");
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what();
         return 1;
