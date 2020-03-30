@@ -730,9 +730,9 @@ std::vector<std::string> get_variable_group_variables(
     const std::unordered_map<std::string, variable_group_description>& descriptions,
     const cse_config_parser::VariableEndpoint& endpoint)
 {
+    std::vector<std::string> groupVariables;
     auto groupIt = descriptions.find(endpoint.name);
     if (groupIt == descriptions.end()) {
-        std::vector<std::string> groupVariables;
         for (const auto& description : descriptions) {
             if (description.second.variable_group_descriptions.size() != 0) {
                 std::unordered_map<std::string, variable_group_description> nestedDescriptions;
@@ -741,13 +741,14 @@ std::vector<std::string> get_variable_group_variables(
                 }
                 groupVariables = get_variable_group_variables(nestedDescriptions, endpoint);
                 if (groupVariables.size() > 0) {
-                    return groupVariables;
+                    break;
                 }
             }
         }
-        return {};
+    } else {
+        groupVariables = groupIt->second.variables;
     }
-    return groupIt->second.variables;
+    return groupVariables;
 }
 
 std::vector<cse::variable_group_description> get_variable_groups(
