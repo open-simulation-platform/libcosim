@@ -4,6 +4,7 @@
 #include "cse/exception.hpp"
 #include "cse/slave_simulator.hpp"
 #include "cse/timer.hpp"
+#include "cse/utility/utility.hpp"
 
 #include <algorithm>
 #include <sstream>
@@ -365,17 +366,17 @@ void execution::add_manipulator(std::shared_ptr<manipulator> man)
 
 void execution::connect_variables(variable_id output, variable_id input)
 {
-   pimpl_->connect_variables(output, input);
+    pimpl_->connect_variables(output, input);
 }
 
 void execution::connect_variables(variable_id output, function_io_id input)
 {
-   pimpl_->connect_variables(output, input);
+    pimpl_->connect_variables(output, input);
 }
 
 void execution::connect_variables(function_io_id output, variable_id input)
 {
-   pimpl_->connect_variables(output, input);
+    pimpl_->connect_variables(output, input);
 }
 
 time_point execution::current_time() const noexcept
@@ -457,5 +458,120 @@ void execution::set_string_initial_value(simulator_index sim, value_reference va
 {
     pimpl_->set_string_initial_value(sim, var, value);
 }
+
+
+namespace
+{
+variable_id make_variable_id(
+    const system_structure& systemStructure,
+    const entity_index_maps& indexMaps,
+    const full_variable_name& variableName)
+{
+    const auto& variableDescription =
+        systemStructure.get_variable_description(variableName);
+    return {
+        indexMaps.simulators.at(variableName.entity_name),
+        variableDescription.type,
+        variableDescription.reference};
+}
+
+function_io_id make_function_io_id(
+    const system_structure& systemStructure,
+    const entity_index_maps& indexMaps,
+    const full_variable_name& variableName)
+{
+    const auto& variableDescription =
+        systemStructure.get_function_io_description(variableName);
+    return {
+        indexMaps.functions.at(variableName.entity_name),
+        std::get<variable_type>(variableDescription.description.type),
+        function_io_reference{
+            variableDescription.group_index,
+            variableName.variable_group_instance,
+            variableDescription.io_index,
+            variableName.variable_instance}};
+}
+} // namespace
+
+
+entity_index_maps inject_system_structure(
+    execution& exe,
+    const system_structure& sys,
+    const variable_value_map& initialValues)
+{
+    // Add simulators and functions
+    entity_index_maps indexMaps;
+    for (const auto& entity : sys.entities()) {
+        if (const auto model = entity_type_to<cse::model>(entity.type)) {
+            // Entity is a simulator
+            const auto index = exe.add_slave(
+                model->instantiate(entity.name),
+                entity.name,
+                entity.step_size_hint);
+            indexMaps.simulators.emplace(std::string(entity.name), index);
+        } else {
+            // Entity is a function
+            const auto functionType = entity_type_to<function_type>(entity.type);
+            assert(functionType);
+            const auto index = exe.add_function(
+                functionType->instantiate(entity.parameter_values));
+            indexMaps.functions.emplace(std::string(entity.name), index);
+        }
+    }
+
+    // Connect variables
+    for (const auto& conn : sys.connections()) {
+        if (conn.source.is_simulator_variable()) {
+            if (conn.target.is_simulator_variable()) {
+                // Source is simulator, target is simulator
+                exe.connect_variables(
+                    make_variable_id(sys, indexMaps, conn.source),
+                    make_variable_id(sys, indexMaps, conn.target));
+            } else {
+                // Source is simulator, target is function
+                exe.connect_variables(
+                    make_variable_id(sys, indexMaps, conn.source),
+                    make_function_io_id(sys, indexMaps, conn.target));
+            }
+        } else {
+            // Source is function, target must be simulator
+            exe.connect_variables(
+                make_function_io_id(sys, indexMaps, conn.source),
+                make_variable_id(sys, indexMaps, conn.target));
+        }
+    }
+
+    // Set initial values
+    for (const auto& [var, val] : initialValues) {
+        if (!var.is_simulator_variable()) {
+            throw error(
+                make_error_code(errc::invalid_system_structure),
+                "Cannot set initial value of variable " +
+                    to_text(var) +
+                    " (only supported for simulator variables)");
+        }
+        const auto& varDesc = sys.get_variable_description(var);
+        if (varDesc.causality != variable_causality::parameter &&
+            varDesc.causality != variable_causality::input) {
+            throw error(
+                make_error_code(errc::invalid_system_structure),
+                "Cannot set initial value of variable " +
+                    to_text(var) +
+                    " (only supported for parameters and inputs)");
+        }
+        const auto simIdx = indexMaps.simulators.at(var.entity_name);
+        const auto valRef = varDesc.reference;
+        std::visit(
+            visitor(
+                [&](double v) { exe.set_real_initial_value(simIdx, valRef, v); },
+                [&](int v) { exe.set_integer_initial_value(simIdx, valRef, v); },
+                [&](bool v) { exe.set_boolean_initial_value(simIdx, valRef, v); },
+                [&](const std::string& v) { exe.set_string_initial_value(simIdx, valRef, v); }),
+            val);
+    }
+
+    return indexMaps;
+}
+
 
 } // namespace cse

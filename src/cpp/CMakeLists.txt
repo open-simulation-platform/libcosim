@@ -41,6 +41,7 @@ set(publicHeaders
     "scenario_parser.hpp"
     "slave.hpp"
     "ssp/ssp_loader.hpp"
+    "system_structure.hpp"
     "timer.hpp"
     "uri.hpp"
 )
@@ -75,6 +76,7 @@ set(sources
     "fmi/v2/fmu.cpp"
     "fmi/windows.cpp"
     "function/linear_transformation.cpp"
+    "function/utility.cpp"
     "function/vector_sum.cpp"
     "log/logger.cpp"
     "manipulator/scenario_manager.cpp"
@@ -89,6 +91,7 @@ set(sources
     "slave_simulator.cpp"
     "ssp/ssp_loader.cpp"
     "ssp/ssp_parser.cpp"
+    "system_structure.cpp"
     "timer.cpp"
     "uri.cpp"
     "utility/concurrency.cpp"

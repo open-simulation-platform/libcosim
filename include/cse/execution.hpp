@@ -8,6 +8,7 @@
 #include <cse/async_slave.hpp>
 #include <cse/function/function.hpp>
 #include <cse/model.hpp>
+#include <cse/system_structure.hpp>
 
 #include <boost/fiber/future.hpp>
 #include <boost/functional/hash.hpp>
@@ -15,6 +16,7 @@
 #include <memory>
 #include <optional>
 #include <sstream>
+#include <unordered_map>
 
 
 namespace cse
@@ -310,6 +312,33 @@ private:
     std::unique_ptr<impl> pimpl_;
 };
 
+
+/// Maps entity names to simulator/function indices in an `execution`.
+struct entity_index_maps
+{
+    /// Mapping of simulator names to simulator indices.
+    std::unordered_map<std::string, simulator_index> simulators;
+
+    /// Mapping of function names to function indices.
+    std::unordered_map<std::string, function_index> functions;
+};
+
+
+/**
+ *  Adds simulators and connections to an execution, and sets initial values,
+ *  according to a predefined system structure description.
+ *
+ *  This function may be called multiple times for the same `execution`, as
+ *  long as there is no conflict between the different `system_structure`
+ *  objects.
+ *
+ *  \returns
+ *      Mappings between entity names and their indexes in the execution.
+ */
+entity_index_maps inject_system_structure(
+    execution& exe,
+    const system_structure& sys,
+    const variable_value_map& initialValues);
 
 } // namespace cse
 #endif // header guard
