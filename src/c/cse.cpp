@@ -143,8 +143,8 @@ const char* cse_last_error_message()
 
 struct cse_execution_s
 {
-    cse::simulator_map simulators;
     std::unique_ptr<cse::execution> cpp_execution;
+    cse::entity_index_maps entity_maps;
     std::thread t;
     boost::fibers::future<bool> simulate_result;
     std::exception_ptr simulate_exception_ptr;
@@ -181,13 +181,15 @@ cse_execution* cse_config_execution_create(
         auto execution = std::make_unique<cse_execution>();
 
         auto resolver = cse::default_model_uri_resolver();
-        auto sim = cse::load_cse_config(
-            *resolver,
-            configPath,
-            startTimeDefined ? std::optional<cse::time_point>(to_time_point(startTime)) : std::nullopt);
+        const auto config = cse::load_cse_config(configPath, *resolver);
 
-        execution->cpp_execution = std::make_unique<cse::execution>(std::move(sim.first));
-        execution->simulators = std::move(sim.second);
+        execution->cpp_execution = std::make_unique<cse::execution>(
+            startTimeDefined ? to_time_point(startTime) : config.start_time,
+            std::make_shared<cse::fixed_step_algorithm>(config.step_size));
+        execution->entity_maps = cse::inject_system_structure(
+            *execution->cpp_execution,
+            config.system_structure,
+            config.initial_values);
 
         return execution.release();
     } catch (...) {
@@ -195,31 +197,6 @@ cse_execution* cse_config_execution_create(
         return nullptr;
     }
 }
-
-
-namespace
-{
-// Converts an entity_index_maps object to an "old-style" simulator_map.
-//
-// This function is only temporary, and will be removed once cse_config_parser
-// has also been converted to use system_structure and entity_index_maps.
-cse::simulator_map to_old_simulator_map(
-    const cse::entity_index_maps& entityMap,
-    const cse::system_structure& systemStructure)
-{
-    cse::simulator_map oldSimulatorMap;
-    for (const auto& [name, index] : entityMap.simulators) {
-        const auto entity = systemStructure.find_entity(name);
-        assert(entity);
-        const auto model = cse::entity_type_to<cse::model>(entity->type);
-        assert(model);
-        oldSimulatorMap.emplace(
-            name,
-            cse::simulator_map_entry{index, *model->description()});
-    }
-    return oldSimulatorMap;
-}
-} // namespace
 
 
 cse_execution* cse_ssp_execution_create(
@@ -232,14 +209,14 @@ cse_execution* cse_ssp_execution_create(
 
         cse::ssp_loader loader;
         const auto config = loader.load(sspDir);
-        auto exec = cse::execution(
+
+        execution->cpp_execution = std::make_unique<cse::execution>(
             startTimeDefined ? to_time_point(startTime) : config.start_time,
             config.algorithm);
-        auto indexMaps = cse::inject_system_structure(
-            exec, config.system_structure, config.parameter_sets.at(""));
-
-        execution->cpp_execution = std::make_unique<cse::execution>(std::move(exec));
-        execution->simulators = to_old_simulator_map(indexMaps, config.system_structure);
+        execution->entity_maps = cse::inject_system_structure(
+            *execution->cpp_execution,
+            config.system_structure,
+            config.parameter_sets.at(""));
 
         return execution.release();
     } catch (...) {
@@ -259,14 +236,14 @@ cse_execution* cse_ssp_fixed_step_execution_create(
 
         cse::ssp_loader loader;
         const auto config = loader.load(sspDir);
-        auto exec = cse::execution(
+
+        execution->cpp_execution = std::make_unique<cse::execution>(
             startTimeDefined ? to_time_point(startTime) : config.start_time,
             std::make_unique<cse::fixed_step_algorithm>(to_duration(stepSize)));
-        auto indexMaps = cse::inject_system_structure(
-            exec, config.system_structure, config.parameter_sets.at(""));
-
-        execution->cpp_execution = std::make_unique<cse::execution>(std::move(exec));
-        execution->simulators = to_old_simulator_map(indexMaps, config.system_structure);
+        execution->entity_maps = cse::inject_system_structure(
+            *execution->cpp_execution,
+            config.system_structure,
+            config.parameter_sets.at(""));
 
         return execution.release();
     } catch (...) {
@@ -292,17 +269,17 @@ int cse_execution_destroy(cse_execution* execution)
 
 size_t cse_execution_get_num_slaves(cse_execution* execution)
 {
-    return execution->simulators.size();
+    return execution->entity_maps.simulators.size();
 }
 
 int cse_execution_get_slave_infos(cse_execution* execution, cse_slave_info infos[], size_t numSlaves)
 {
     try {
-        auto ids = execution->simulators;
+        auto ids = execution->entity_maps.simulators;
         size_t slave = 0;
-        for (const auto& [name, entry] : ids) {
+        for (const auto& [name, index] : ids) {
             safe_strncpy(infos[slave].name, name.c_str(), SLAVE_NAME_MAX_SIZE);
-            infos[slave].index = entry.index;
+            infos[slave].index = index;
             if (++slave >= numSlaves) {
                 break;
             }
@@ -318,13 +295,17 @@ int cse_execution_get_slave_infos(cse_execution* execution, cse_slave_info infos
 
 int cse_slave_get_num_variables(cse_execution* execution, cse_slave_index slave)
 {
-    for (const auto& entry : execution->simulators) {
-        if (entry.second.index == slave) {
-            return static_cast<int>(entry.second.description.variables.size());
-        }
+    try {
+        return execution
+            ->cpp_execution
+            ->get_simulator(slave)
+            ->model_description()
+            .variables
+            .size();
+    } catch (...) {
+        handle_current_exception();
+        return failure;
     }
-    set_last_error(CSE_ERRC_OUT_OF_RANGE, "Invalid slave index");
-    return -1;
 }
 
 int cse_get_num_modified_variables(cse_execution* execution)
@@ -396,21 +377,16 @@ void translate_variable_description(const cse::variable_description& vd, cse_var
 int cse_slave_get_variables(cse_execution* execution, cse_slave_index slave, cse_variable_description variables[], size_t numVariables)
 {
     try {
-        for (const auto& entry : execution->simulators) {
-            if (entry.second.index == slave) {
-                auto vars = entry.second.description.variables;
-                size_t var = 0;
-                for (; var < std::min(numVariables, vars.size()); var++) {
-                    translate_variable_description(vars.at(var), variables[var]);
-                }
-                return static_cast<int>(var);
-            }
+        const auto vars = execution
+                              ->cpp_execution
+                              ->get_simulator(slave)
+                              ->model_description()
+                              .variables;
+        size_t var = 0;
+        for (; var < std::min(numVariables, vars.size()); var++) {
+            translate_variable_description(vars.at(var), variables[var]);
         }
-
-        std::ostringstream oss;
-        oss << "Slave with reference " << slave
-            << " was not found among loaded slaves.";
-        throw std::invalid_argument(oss.str());
+        return static_cast<int>(var);
     } catch (...) {
         handle_current_exception();
         return failure;
@@ -505,7 +481,7 @@ cse_slave_index cse_execution_add_slave(
 {
     try {
         auto index = execution->cpp_execution->add_slave(cse::make_background_thread_slave(slave->instance), slave->instanceName);
-        execution->simulators[slave->instanceName] = cse::simulator_map_entry{index, slave->instance->model_description()};
+        execution->entity_maps.simulators[slave->instanceName] = index;
         return index;
     } catch (...) {
         handle_current_exception();

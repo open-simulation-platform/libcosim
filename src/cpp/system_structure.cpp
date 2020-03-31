@@ -113,10 +113,11 @@ void system_structure::add_entity(const entity& e)
             info.description = substitute_function_parameters(
                 functionType->description(),
                 e.parameter_values);
-        } catch (const std::exception&) {
+        } catch (const std::exception& ex) {
             throw error(
                 make_error_code(errc::invalid_system_structure),
-                "Invalid or incomplete function parameter set: " + e.name);
+                "Invalid or incomplete function parameter set: " + e.name +
+                " (" + ex.what() + ")");
         }
         info.ios = make_variable_lookup_table(info.description);
         functionCache_.emplace(e.name, std::move(info));
