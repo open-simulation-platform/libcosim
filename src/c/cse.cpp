@@ -296,12 +296,12 @@ int cse_execution_get_slave_infos(cse_execution* execution, cse_slave_info infos
 int cse_slave_get_num_variables(cse_execution* execution, cse_slave_index slave)
 {
     try {
-        return execution
-            ->cpp_execution
-            ->get_simulator(slave)
-            ->model_description()
-            .variables
-            .size();
+        return static_cast<int>(execution
+                                    ->cpp_execution
+                                    ->get_simulator(slave)
+                                    ->model_description()
+                                    .variables
+                                    .size());
     } catch (...) {
         handle_current_exception();
         return failure;
