@@ -15,6 +15,11 @@
             <Variable ref="Act_Limits[2]"/>
             <Variable ref="Act_Limits[3]"/>
         </Generic>
+        <Generic name="Test - do not connect">
+            <Generic name="Test2 - do not connect">
+                <Variable ref="Act_Limits[1]"/>
+            </Generic>
+        </Generic>
         <LinearMechanicalPort name="linear mechanical port">
             <Force name="force">
                 <Variable ref="p_Crane.e[1]" unit="force~N"/>

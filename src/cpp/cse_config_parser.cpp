@@ -667,8 +667,9 @@ extended_model_description get_emd(
 
 std::vector<std::string> get_variable_group_variables(
     const std::unordered_map<std::string, variable_group_description>& descriptions,
-    const cse_config_parser::VariableEndpoint endpoint)
+    const cse_config_parser::VariableEndpoint& endpoint)
 {
+    std::vector<std::string> groupVariables;
     auto groupIt = descriptions.find(endpoint.name);
     if (groupIt == descriptions.end()) {
         for (const auto& description : descriptions) {
@@ -677,14 +678,16 @@ std::vector<std::string> get_variable_group_variables(
                 for (const auto& variableGroupDescr : description.second.variable_group_descriptions) {
                     nestedDescriptions.insert({variableGroupDescr.name, variableGroupDescr});
                 }
-                return get_variable_group_variables(nestedDescriptions, endpoint);
+                groupVariables = get_variable_group_variables(nestedDescriptions, endpoint);
+                if (groupVariables.size() > 0) {
+                    break;
+                }
             }
         }
-        std::ostringstream oss;
-        oss << "Cannot find variable group description: " << endpoint.simulator << ":" << endpoint.name;
-        throw std::out_of_range(oss.str());
+    } else {
+        groupVariables = groupIt->second.variables;
     }
-    return groupIt->second.variables;
+    return groupVariables;
 }
 
 std::vector<cse::variable_group_description> get_variable_groups(
