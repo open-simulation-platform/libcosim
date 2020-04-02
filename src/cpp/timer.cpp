@@ -138,12 +138,12 @@ void real_time_timer::disable_real_time_simulation()
     pimpl_->disable_real_time_simulation();
 }
 
-bool real_time_timer::is_real_time_simulation()
+bool real_time_timer::is_real_time_simulation() const
 {
     return pimpl_->is_real_time_simulation();
 }
 
-double real_time_timer::get_measured_real_time_factor()
+double real_time_timer::get_measured_real_time_factor() const
 {
     return pimpl_->get_measured_real_time_factor();
 }
@@ -153,7 +153,7 @@ void real_time_timer::set_real_time_factor_target(double realTimeFactor)
     pimpl_->set_real_time_factor_target(realTimeFactor);
 }
 
-double real_time_timer::get_real_time_factor_target()
+double real_time_timer::get_real_time_factor_target() const
 {
     return pimpl_->get_real_time_factor_target();
 }

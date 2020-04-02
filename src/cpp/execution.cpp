@@ -167,12 +167,12 @@ public:
         timer_.disable_real_time_simulation();
     }
 
-    bool is_real_time_simulation()
+    bool is_real_time_simulation() const
     {
         return timer_.is_real_time_simulation();
     }
 
-    double get_measured_real_time_factor()
+    double get_measured_real_time_factor() const
     {
         return timer_.get_measured_real_time_factor();
     }
@@ -182,12 +182,12 @@ public:
         timer_.set_real_time_factor_target(realTimeFactor);
     }
 
-    double get_real_time_factor_target()
+    double get_real_time_factor_target() const
     {
         return timer_.get_real_time_factor_target();
     }
 
-    std::vector<variable_id> get_modified_variables()
+    std::vector<variable_id> get_modified_variables() const
     {
         std::vector<variable_id> modifiedVariables;
 
@@ -414,12 +414,12 @@ void execution::disable_real_time_simulation()
     pimpl_->disable_real_time_simulation();
 }
 
-bool execution::is_real_time_simulation()
+bool execution::is_real_time_simulation() const
 {
     return pimpl_->is_real_time_simulation();
 }
 
-double execution::get_measured_real_time_factor()
+double execution::get_measured_real_time_factor() const
 {
     return pimpl_->get_measured_real_time_factor();
 }
@@ -429,12 +429,12 @@ void execution::set_real_time_factor_target(double realTimeFactor)
     pimpl_->set_real_time_factor_target(realTimeFactor);
 }
 
-double execution::get_real_time_factor_target()
+double execution::get_real_time_factor_target() const
 {
     return pimpl_->get_real_time_factor_target();
 }
 
-std::vector<variable_id> execution::get_modified_variables()
+std::vector<variable_id> execution::get_modified_variables() const
 {
     return pimpl_->get_modified_variables();
 }
