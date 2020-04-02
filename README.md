@@ -29,7 +29,7 @@ of course you can always build and install dependencies manually.
 First, add the OSP Conan repository as a remote and configure the username and
 password to access it:
 
-    conan remote add osp https://osp-conan.azurewebsites.net/artifactory/api/conan/conan-local
+    conan remote add osp https://osp-conan.azurewebsites.net/artifactory/api/conan/public
     conan user -p "Open Simulation Platform" -r osp osp
 
 As we will build the library using the *debug* configuration in this guide (as
