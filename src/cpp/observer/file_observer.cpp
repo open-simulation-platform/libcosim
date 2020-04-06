@@ -176,7 +176,7 @@ private:
 
         auto filepath = logDir_ / filename;
         boost::filesystem::create_directories(logDir_);
-        fsw_.open(filepath, std::ios_base::out | std::ios_base::app);
+        fsw_.open(filepath, std::ios_base::out | std::ios_base::trunc);
 
         if (fsw_.fail()) {
             throw std::runtime_error("Failed to open file stream for logging");
