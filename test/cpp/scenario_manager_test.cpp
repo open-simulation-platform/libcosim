@@ -38,32 +38,36 @@ int main()
                 [](int y) { return y + 2; })),
             "slave uno");
 
-        observer->start_observing(cse::variable_id{simIndex, cse::variable_type::real, 0});
-        observer->start_observing(cse::variable_id{simIndex, cse::variable_type::real, 1});
-        observer->start_observing(cse::variable_id{simIndex, cse::variable_type::integer, 0});
-        observer->start_observing(cse::variable_id{simIndex, cse::variable_type::integer, 1});
+        observer->start_observing(
+            cse::variable_id{simIndex, cse::variable_type::real, mock_slave::real_in_reference});
+        observer->start_observing(
+            cse::variable_id{simIndex, cse::variable_type::real, mock_slave::real_out_reference});
+        observer->start_observing(
+            cse::variable_id{simIndex, cse::variable_type::integer, mock_slave::integer_in_reference});
+        observer->start_observing(
+            cse::variable_id{simIndex, cse::variable_type::integer, mock_slave::integer_out_reference});
 
         constexpr bool input = true;
         constexpr bool output = false;
 
         auto realModifier1 = cse::scenario::real_modifier{[](double original, cse::duration) { return original + 1.001; }};
-        auto realAction1 = cse::scenario::variable_action{simIndex, 1, realModifier1, input};
+        auto realAction1 = cse::scenario::variable_action{simIndex, mock_slave::real_in_reference, realModifier1, input};
         auto realEvent1 = cse::scenario::event{cse::to_time_point(0.5), realAction1};
 
         auto realModifier2 = cse::scenario::real_modifier{[](double /*original*/, cse::duration) { return -1.0; }};
-        auto realAction2 = cse::scenario::variable_action{simIndex, 0, realModifier2, output};
+        auto realAction2 = cse::scenario::variable_action{simIndex, mock_slave::real_out_reference, realModifier2, output};
         auto realEvent2 = cse::scenario::event{cse::to_time_point(0.2), realAction2};
 
         auto realModifier3 = cse::scenario::real_modifier{nullptr};
-        auto realAction3 = cse::scenario::variable_action{simIndex, 0, realModifier3, output};
+        auto realAction3 = cse::scenario::variable_action{simIndex, mock_slave::real_out_reference, realModifier3, output};
         auto realEvent3 = cse::scenario::event{cse::to_time_point(0.3), realAction3};
 
         auto intModifier1 = cse::scenario::integer_modifier{[](int /*original*/, cse::duration) { return 2; }};
-        auto intAction1 = cse::scenario::variable_action{simIndex, 1, intModifier1, input};
+        auto intAction1 = cse::scenario::variable_action{simIndex, mock_slave::integer_in_reference, intModifier1, input};
         auto intEvent1 = cse::scenario::event{cse::to_time_point(0.65), intAction1};
 
         auto intModifier2 = cse::scenario::integer_modifier{[](int /*original*/, cse::duration) { return 5; }};
-        auto intAction2 = cse::scenario::variable_action{simIndex, 0, intModifier2, output};
+        auto intAction2 = cse::scenario::variable_action{simIndex, mock_slave::integer_out_reference, intModifier2, output};
         auto intEvent2 = cse::scenario::event{cse::to_time_point(0.8), intAction2};
 
         auto events = std::vector<cse::scenario::event>();
@@ -90,19 +94,43 @@ int main()
         cse::step_number steps[numSamples];
         cse::time_point times[numSamples];
 
-        size_t samplesRead = observer->get_real_samples(simIndex, 1, 1, gsl::make_span(realInputValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
+        size_t samplesRead = observer->get_real_samples(
+            simIndex,
+            mock_slave::real_in_reference,
+            1,
+            gsl::make_span(realInputValues, numSamples),
+            gsl::make_span(steps, numSamples),
+            gsl::make_span(times, numSamples));
         REQUIRE(samplesRead == 11);
-        samplesRead = observer->get_real_samples(simIndex, 0, 1, gsl::make_span(realOutputValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
+        samplesRead = observer->get_real_samples(
+            simIndex,
+            mock_slave::real_out_reference,
+            1,
+            gsl::make_span(realOutputValues, numSamples),
+            gsl::make_span(steps, numSamples),
+            gsl::make_span(times, numSamples));
         REQUIRE(samplesRead == 11);
-        samplesRead = observer->get_integer_samples(simIndex, 1, 1, gsl::make_span(intInputValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
+        samplesRead = observer->get_integer_samples(
+            simIndex,
+            mock_slave::integer_in_reference,
+            1,
+            gsl::make_span(intInputValues, numSamples),
+            gsl::make_span(steps, numSamples),
+            gsl::make_span(times, numSamples));
         REQUIRE(samplesRead == 11);
-        samplesRead = observer->get_integer_samples(simIndex, 0, 1, gsl::make_span(intOutputValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
+        samplesRead = observer->get_integer_samples(
+            simIndex,
+            mock_slave::integer_out_reference,
+            1,
+            gsl::make_span(intOutputValues, numSamples),
+            gsl::make_span(steps, numSamples),
+            gsl::make_span(times, numSamples));
         REQUIRE(samplesRead == 11);
 
-        double expectedRealInputs[] = {0.0, 0.0, 0.0, 0.0, 0.0, 2.001, 2.001, 2.001, 2.001, 2.001, 1.0};
-        double expectedRealOutputs[] = {1.234, 1.234, -1.0, 1.234, 1.234, 3.235, 3.235, 3.235, 3.235, 3.235, 2.234};
-        int expectedIntInputs[] = {0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 1};
-        int expectedIntOutputs[] = {2, 2, 2, 2, 2, 2, 2, 4, 5, 5, 3};
+        double expectedRealInputs[] = {0.0, 0.0, 0.0, 0.0, 0.0, 1.001, 1.001, 1.001, 1.001, 1.001, 0.0};
+        double expectedRealOutputs[] = {1.234, 1.234, -1.0, 1.234, 1.234, 2.235, 2.235, 2.235, 2.235, 2.235, 1.234};
+        int expectedIntInputs[] = {0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 0};
+        int expectedIntOutputs[] = {2, 2, 2, 2, 2, 2, 2, 4, 5, 5, 2};
 
         for (size_t i = 0; i < samplesRead; i++) {
             REQUIRE(std::fabs(realInputValues[i] - expectedRealInputs[i]) < 1.0e-9);

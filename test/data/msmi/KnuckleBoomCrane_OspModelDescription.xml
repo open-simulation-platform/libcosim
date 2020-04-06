@@ -1,20 +1,23 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<OspModelDescription xmlns="http://opensimulationplatform.com/MSMI/OSPModelDescription">
+<OspModelDescription xmlns="http://opensimulationplatform.com/MSMI/OSPModelDescription"
+                     version="0.1">
     <VariableGroups>
-        <VariableGroup type="effort" name="force">
-            <Variable name="p_Crane.e[1]"/>
-            <Variable name="p_Crane.e[2]"/>
-            <Variable name="p_Crane.e[3]"/>
-        </VariableGroup>
-        <VariableGroup type="flow" name="velocity">
-            <Variable name="p_Crane.f[1]"/>
-            <Variable name="p_Crane.f[2]"/>
-            <Variable name="p_Crane.f[3]"/>
-        </VariableGroup>
-        <VariableGroup type="generic" name="actuatorLimits">
-            <Variable name="Act_Limits[1]"/>
-            <Variable name="Act_Limits[2]"/>
-            <Variable name="Act_Limits[3]"/>
-        </VariableGroup>
-    </VariableGroups>
+        <Generic name="actuatorLimits">
+            <Variable ref="Act_Limits[1]"/>
+            <Variable ref="Act_Limits[2]"/>
+            <Variable ref="Act_Limits[3]"/>
+        </Generic>
+        <LinearMechanicalPort name="linear mechanical port">
+            <Force name="force">
+                <Variable ref="p_Crane.e[1]"/>
+                <Variable ref="p_Crane.e[2]"/>
+                <Variable ref="p_Crane.e[3]"/>
+            </Force>
+            <LinearVelocity name="velocity">
+                <Variable ref="p_Crane.f[1]"/>
+                <Variable ref="p_Crane.f[2]"/>
+                <Variable ref="p_Crane.f[3]"/>
+            </LinearVelocity>
+        </LinearMechanicalPort>
+   </VariableGroups>
 </OspModelDescription>

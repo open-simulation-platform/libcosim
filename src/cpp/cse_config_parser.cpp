@@ -4,6 +4,8 @@
 
 #include "cse/algorithm.hpp"
 #include "cse/fmi/fmu.hpp"
+#include "cse/function/linear_transformation.hpp"
+#include "cse/function/vector_sum.hpp"
 #include <cse/exception.hpp>
 #include <cse/log/logger.hpp>
 #include <cse/utility/utility.hpp>
@@ -562,6 +564,7 @@ struct variable_group_description
     std::string name;
     std::string type;
     std::vector<std::string> variables;
+    std::vector<variable_group_description> variable_group_descriptions;
 };
 
 struct extended_model_description
@@ -582,19 +585,28 @@ struct extended_model_description
         const auto variableGroupsElement = static_cast<xercesc::DOMElement*>(rootElement->getElementsByTagName(tc("VariableGroups").get())->item(0));
 
         for (auto variableGroupElement = variableGroupsElement->getFirstElementChild(); variableGroupElement != nullptr; variableGroupElement = variableGroupElement->getNextElementSibling()) {
-            variable_group_description vgd;
-            vgd.name = tc(variableGroupElement->getAttribute(tc("name").get())).get();
-            vgd.type = tc(variableGroupElement->getAttribute(tc("type").get())).get();
-
-            auto variableElements = variableGroupElement->getElementsByTagName(tc("Variable").get());
-            for (size_t i = 0; i < variableElements->getLength(); i++) {
-                auto variableElement = static_cast<xercesc::DOMElement*>(variableElements->item(i));
-
-                std::string variableName = tc(variableElement->getAttribute(tc("name").get())).get();
-                vgd.variables.push_back(std::move(variableName));
-            }
+            variable_group_description vgd = create_variable_group_description(variableGroupElement);
             variableGroups[vgd.name] = std::move(vgd);
         }
+    }
+
+    static variable_group_description create_variable_group_description(xercesc::DOMElement *variableGroupElement) {
+        variable_group_description variableGroupDescription;
+
+        variableGroupDescription.name = tc(variableGroupElement->getAttribute(tc("name").get())).get();
+        variableGroupDescription.type = tc(variableGroupElement->getTagName()).get();
+
+        for (auto variableGroupChildElement = variableGroupElement->getFirstElementChild(); variableGroupChildElement != nullptr; variableGroupChildElement = variableGroupChildElement->getNextElementSibling()) {
+            std::string tagName(tc(variableGroupChildElement->getTagName()).get());
+            if (tagName == "Variable") {
+                std::string variableName = tc(variableGroupChildElement->getAttribute(tc("ref").get())).get();
+                variableGroupDescription.variables.push_back(std::move(variableName));
+            } else {
+                variableGroupDescription.variable_group_descriptions.push_back(create_variable_group_description(variableGroupChildElement));
+            }
+        }
+
+        return variableGroupDescription;
     }
 
     std::unordered_map<std::string, variable_group_description> variableGroups;
@@ -697,8 +709,7 @@ void connect_variables(
             throw std::runtime_error(oss.str());
         }
 
-        auto c = std::make_shared<cse::scalar_connection>(output, input);
-        execution.add_connection(c);
+        execution.connect_variables(output, input);
     }
 }
 
@@ -717,16 +728,38 @@ extended_model_description get_emd(
 
 std::vector<std::string> get_variable_group_variables(
     const std::unordered_map<std::string, variable_group_description>& descriptions,
-    const std::string& element,
+    const cse_config_parser::VariableEndpoint& endpoint)
+{
+    std::vector<std::string> groupVariables;
+    auto groupIt = descriptions.find(endpoint.name);
+    if (groupIt == descriptions.end()) {
+        for (const auto& description : descriptions) {
+            if (description.second.variable_group_descriptions.size() != 0) {
+                std::unordered_map<std::string, variable_group_description> nestedDescriptions;
+                for (const auto& variableGroupDescr : description.second.variable_group_descriptions) {
+                    nestedDescriptions.insert({variableGroupDescr.name, variableGroupDescr});
+                }
+                groupVariables = get_variable_group_variables(nestedDescriptions, endpoint);
+                if (groupVariables.size() > 0) {
+                    break;
+                }
+            }
+        }
+    } else {
+        groupVariables = groupIt->second.variables;
+    }
+    return groupVariables;
+}
+
+std::vector<cse::variable_group_description> get_variable_groups(
+    const std::unordered_map<std::string, variable_group_description>& descriptions,
     const std::string& connector)
 {
     auto groupIt = descriptions.find(connector);
     if (groupIt == descriptions.end()) {
-        std::ostringstream oss;
-        oss << "Cannot find variable group description: " << element << ":" << connector;
-        throw std::out_of_range(oss.str());
+        return {};
     }
-    return groupIt->second.variables;
+    return groupIt->second.variable_group_descriptions;
 }
 
 void connect_variable_groups(
@@ -738,11 +771,31 @@ void connect_variable_groups(
 
     for (const auto& connection : variableGroupConnections) {
         const auto& emdA = get_emd(emds, connection.variableA.simulator);
-        const auto& variablesA =
-            get_variable_group_variables(emdA.variableGroups, connection.variableA.simulator, connection.variableA.name);
         const auto& emdB = get_emd(emds, connection.variableB.simulator);
-        const auto& variablesB =
-            get_variable_group_variables(emdB.variableGroups, connection.variableB.simulator, connection.variableB.name);
+        const auto& variablesA = get_variable_group_variables(emdA.variableGroups, connection.variableA);
+        const auto& variablesB = get_variable_group_variables(emdB.variableGroups, connection.variableB);
+        const auto& variableGroupsA = get_variable_groups(emdA.variableGroups, connection.variableA.name);
+        const auto& variableGroupsB = get_variable_groups(emdB.variableGroups, connection.variableB.name);
+
+        if (variableGroupsA.size() != variableGroupsB.size()) {
+            std::ostringstream oss;
+            oss << "Cannot create connection between variable groups. Variable group "
+                << connection.variableA.simulator << ":" << connection.variableA.name
+                << " has different size [" << variableGroupsA.size() << "] than variable group "
+                << connection.variableB.simulator << ":" << connection.variableB.name
+                << " size [" << variableGroupsB.size() << "]";
+            throw std::runtime_error(oss.str());
+        }
+
+        std::vector<cse_config_parser::VariableConnection> nestedVariableGroupConnections;
+        // clang-format off
+        for (std::size_t i = 0; i < variableGroupsA.size(); ++i) {
+            nestedVariableGroupConnections.push_back({
+                {connection.variableA.simulator, variableGroupsA.at(i).name},
+                {connection.variableB.simulator, variableGroupsB.at(i).name}});
+        }
+        // clang-format on
+        connect_variable_groups(nestedVariableGroupConnections, slaves, execution, emds);
 
         if (variablesA.size() != variablesB.size()) {
             std::ostringstream oss;
@@ -785,9 +838,14 @@ void connect_linear_transformation_functions(
         verify_causality(targetVarCausality, variable_causality::input, outConn);
         verify_type(targetVar.type, variable_type::real, inConn);
 
-        auto ltConnection = std::make_shared<linear_transformation_connection>(
-            sourceVar, targetVar, function.offset, function.factor);
-        execution.add_connection(ltConnection);
+        const auto fn = execution.add_function(
+            std::make_shared<linear_transformation_function>(function.offset, function.factor));
+        execution.connect_variables(
+            sourceVar,
+            function_io_id{fn, variable_type::real, linear_transformation_function::in_io_reference});
+        execution.connect_variables(
+            function_io_id{fn, variable_type::real, linear_transformation_function::out_io_reference},
+            targetVar);
     }
 }
 
@@ -811,9 +869,16 @@ void connect_sum_functions(
         verify_causality(targetVarCausality, variable_causality::input, outConn);
         verify_type(targetVar.type, variable_type::real, outConn);
 
-        auto sumConnection = std::make_shared<sum_connection>(
-            sourceVars, targetVar);
-        execution.add_connection(sumConnection);
+        const auto fn = execution.add_function(
+            std::make_shared<vector_sum_function<double>>(function.inputCount, 1));
+        for (int i = 0; i < function.inputCount; ++i) {
+            execution.connect_variables(
+                sourceVars.at(i),
+                function_io_id{fn, variable_type::real, vector_sum_function<double>::in_io_reference(i, 0)});
+        }
+        execution.connect_variables(
+            function_io_id{fn, variable_type::real, vector_sum_function<double>::out_io_reference(0)},
+            targetVar);
     }
 }
 
@@ -825,6 +890,8 @@ void connect_vector_sum_functions(
     const std::unordered_map<std::string, extended_model_description>& emds)
 {
     for (const auto& [functionName, function] : functions) {
+        const auto fn = execution.add_function(
+            std::make_shared<vector_sum_function<double>>(function.inputCount, function.dimension));
 
         for (int i = 0; i < function.dimension; i++) {
 
@@ -848,9 +915,16 @@ void connect_vector_sum_functions(
                 verify_type(sourceVar.type, variable_type::real, inGroupConn);
                 sourceVariables.push_back(sourceVar);
             }
-            auto sumConnection = std::make_shared<sum_connection>(sourceVariables, targetVariable);
-            execution.add_connection(sumConnection);
-        }
+
+            for (int j = 0; j < function.inputCount; ++j) {
+                execution.connect_variables(
+                    sourceVariables.at(j),
+                    function_io_id{fn, variable_type::real, vector_sum_function<double>::in_io_reference(j, i)});
+            }
+            execution.connect_variables(
+                function_io_id{fn, variable_type::real, vector_sum_function<double>::out_io_reference(i)},
+                targetVariable);
+            }
     }
 }
 

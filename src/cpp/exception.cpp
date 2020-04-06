@@ -35,6 +35,8 @@ public:
                 return "Variable value is invalid or out of range";
             case errc::simulation_error:
                 return "Simulation error";
+            case errc::invalid_system_structure:
+                return "Invalid system structure";
             case errc::zip_error:
                 return "ZIP file error";
             default:

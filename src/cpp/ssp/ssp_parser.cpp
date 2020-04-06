@@ -68,6 +68,28 @@ ssp_parser::ParameterSet parse_parameter_set(const boost::property_tree::ptree& 
     return parameterSet;
 }
 
+inline ssp_parser::Component check_component(const std::string& name, std::unordered_map<std::string, ssp_parser::Component> elements)
+{
+    if (elements.count(name)) {
+        return elements[name];
+    } else {
+        std::ostringstream oss;
+        oss << "No component named: '" << name << "'!";
+        throw std::runtime_error(oss.str());
+    }
+}
+
+inline ssp_parser::Connector check_connector(const std::string& name, ssp_parser::Component component)
+{
+    if (component.connectors.count(name)) {
+        return component.connectors[name];
+    } else {
+        std::ostringstream oss;
+        oss << "No connector named: '" << name << "' in Component '" << component.name << "'!";
+        throw std::runtime_error(oss.str());
+    }
+}
+
 } // namespace
 
 ssp_parser::ssp_parser(const boost::filesystem::path& ssdPath)
@@ -107,17 +129,18 @@ ssp_parser::ssp_parser(const boost::filesystem::path& ssdPath)
 
     for (const auto& component : system.get_child("ssd:Elements")) {
 
-        auto& e = elements_.emplace_back();
-        e.name = get_attribute<std::string>(component.second, "name");
-        e.source = get_attribute<std::string>(component.second, "source");
+        Component comp;
+        comp.name = get_attribute<std::string>(component.second, "name");
+        comp.source = get_attribute<std::string>(component.second, "source");
 
         if (component.second.get_child_optional("ssd:Connectors")) {
             for (const auto& connector : component.second.get_child("ssd:Connectors")) {
                 if (connector.first == "ssd:Connector") {
-                    auto& c = e.connectors.emplace_back();
+                    Connector c;
                     c.name = get_attribute<std::string>(connector.second, "name");
                     c.kind = get_attribute<std::string>(connector.second, "kind");
                     c.type = parse_connector_type(connector.second);
+                    comp.connectors[c.name] = c;
                 }
             }
         }
@@ -135,11 +158,11 @@ ssp_parser::ssp_parser(const boost::filesystem::path& ssdPath)
                     boost::property_tree::read_xml(ssvPath.string(), binding,
                         boost::property_tree::xml_parser::no_comments | boost::property_tree::xml_parser::trim_whitespace);
                     const auto parameterSet = parse_parameter_set(binding.get_child("ssv:ParameterSet"));
-                    e.parameterSets.push_back(parameterSet);
+                    comp.parameterSets.push_back(parameterSet);
                 } else {
                     if (const auto parameterValues = parameterBinding.second.get_child_optional("ssd:ParameterValues")) {
                         const auto parameterSet = parse_parameter_set(parameterValues->get_child("ssv:ParameterSet"));
-                        e.parameterSets.push_back(parameterSet);
+                        comp.parameterSets.push_back(parameterSet);
                     }
                 }
             }
@@ -150,20 +173,23 @@ ssp_parser::ssp_parser(const boost::filesystem::path& ssdPath)
                 const auto& annotationType = get_attribute<std::string>(annotation.second, "type");
                 if (annotationType == "com.opensimulationplatform") {
                     if (const auto& stepSizeHint = annotation.second.get_child_optional("osp:StepSizeHint")) {
-                        e.stepSizeHint = get_attribute<double>(*stepSizeHint, "value");
+                        comp.stepSizeHint = get_attribute<double>(*stepSizeHint, "value");
                     }
                 }
             }
         }
+        elements_[comp.name] = comp;
     }
 
     if (const auto connections = system.get_child_optional("ssd:Connections")) {
         for (const auto& connection : *connections) {
             auto& c = connections_.emplace_back();
-            c.startElement = get_attribute<std::string>(connection.second, "startElement");
-            c.startConnector = get_attribute<std::string>(connection.second, "startConnector");
-            c.endElement = get_attribute<std::string>(connection.second, "endElement");
-            c.endConnector = get_attribute<std::string>(connection.second, "endConnector");
+            c.startElement = check_component(get_attribute<std::string>(connection.second, "startElement"), elements_);
+            c.startConnector = check_connector(get_attribute<std::string>(connection.second, "startConnector"), c.startElement);
+
+            c.endElement = check_component(get_attribute<std::string>(connection.second, "endElement"), elements_);
+            c.endConnector = check_connector(get_attribute<std::string>(connection.second, "endConnector"), c.endElement);
+
             if (const auto l = connection.second.get_child_optional("ssc:LinearTransformation")) {
                 auto offset = get_attribute<double>(*l, "offset", 0);
                 auto factor = get_attribute<double>(*l, "factor", 1.0);
@@ -175,7 +201,7 @@ ssp_parser::ssp_parser(const boost::filesystem::path& ssdPath)
 
 ssp_parser::~ssp_parser() noexcept = default;
 
-const std::vector<ssp_parser::Component>& ssp_parser::get_elements() const
+const std::unordered_map<std::string, ssp_parser::Component>& ssp_parser::get_elements() const
 {
     return elements_;
 }

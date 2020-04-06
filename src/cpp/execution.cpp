@@ -4,6 +4,7 @@
 #include "cse/exception.hpp"
 #include "cse/slave_simulator.hpp"
 #include "cse/timer.hpp"
+#include "cse/utility/utility.hpp"
 
 #include <algorithm>
 #include <sstream>
@@ -55,6 +56,14 @@ public:
         return index;
     }
 
+    function_index add_function(std::shared_ptr<function> fun)
+    {
+        const auto index = static_cast<function_index>(functions_.size());
+        functions_.push_back(fun);
+        algorithm_->add_function(index, fun.get());
+        return index;
+    }
+
     void add_observer(std::shared_ptr<observer> obs)
     {
         observers_.push_back(obs);
@@ -80,46 +89,20 @@ public:
         }
     }
 
-    void add_connection(std::shared_ptr<connection> conn)
+    void connect_variables(variable_id output, variable_id input)
     {
-        for (const auto& destination : conn->get_destinations()) {
-            if (find_connection(destination)) {
-                std::ostringstream oss;
-                oss << "A connection to this destination variable already exists: "
-                    << destination;
-                throw error(make_error_code(errc::unsupported_feature), oss.str());
-            }
-            validate_variable(destination, variable_causality::input);
-        }
-        for (const auto& source : conn->get_sources()) {
-            validate_variable(source, variable_causality::output);
-        }
-        algorithm_->add_connection(conn);
-        connections_.push_back(conn);
+        connect_variables_impl(ssConnections_, output, input);
     }
 
-    void remove_connection(variable_id destination)
+    void connect_variables(variable_id output, function_io_id input)
     {
-        const auto& toRemove = find_connection(destination);
-        if (!toRemove) {
-            std::ostringstream oss;
-            oss << "Can't find connection connected to destination: " << destination;
-            throw std::out_of_range(oss.str());
-        }
-        algorithm_->remove_connection(toRemove);
-        connections_.erase(
-            std::remove(
-                connections_.begin(),
-                connections_.end(),
-                toRemove),
-            connections_.end());
+        connect_variables_impl(sfConnections_, output, input);
     }
 
-    const std::vector<std::shared_ptr<connection>>& get_connections()
+    void connect_variables(function_io_id output, variable_id input)
     {
-        return connections_;
+        connect_variables_impl(fsConnections_, output, input);
     }
-
 
     time_point current_time() const noexcept
     {
@@ -184,12 +167,12 @@ public:
         timer_.disable_real_time_simulation();
     }
 
-    bool is_real_time_simulation()
+    bool is_real_time_simulation() const
     {
         return timer_.is_real_time_simulation();
     }
 
-    double get_measured_real_time_factor()
+    double get_measured_real_time_factor() const
     {
         return timer_.get_measured_real_time_factor();
     }
@@ -199,12 +182,12 @@ public:
         timer_.set_real_time_factor_target(realTimeFactor);
     }
 
-    double get_real_time_factor_target()
+    double get_real_time_factor_target() const
     {
         return timer_.get_real_time_factor_target();
     }
 
-    std::vector<variable_id> get_modified_variables()
+    std::vector<variable_id> get_modified_variables() const
     {
         std::vector<variable_id> modifiedVariables;
 
@@ -279,6 +262,22 @@ public:
     }
 
 private:
+    template<typename OutputID, typename InputID>
+    void connect_variables_impl(
+        std::unordered_map<InputID, OutputID>& connections,
+        OutputID output,
+        InputID input)
+    {
+        validate_variable(output, variable_causality::output);
+        validate_variable(input, variable_causality::input);
+
+        if (connections.count(input)) {
+            throw std::logic_error("Input variable already connected");
+        }
+        algorithm_->connect_variables(output, input);
+        connections.emplace(input, output);
+    }
+
     void validate_variable(variable_id variable, variable_causality causality)
     {
         const auto variables = simulators_.at(variable.simulator)->model_description().variables;
@@ -297,16 +296,14 @@ private:
         }
     }
 
-    std::shared_ptr<connection> find_connection(variable_id destination)
+    void validate_variable(function_io_id variable, variable_causality causality)
     {
-        for (const auto& c : connections_) {
-            for (const auto& id : c->get_destinations()) {
-                if (id == destination) {
-                    return c;
-                }
-            }
+        const auto description = functions_.at(variable.function)->description();
+        const auto& group = description.io_groups.at(variable.reference.group);
+        const auto& io = group.ios.at(variable.reference.io);
+        if (io.causality != causality) {
+            throw std::logic_error("Error connecting function variable: Wrong causality");
         }
-        return nullptr;
     }
 
     static bool timed_out(std::optional<time_point> endTime, time_point currentTime, duration stepSize)
@@ -325,9 +322,12 @@ private:
 
     std::shared_ptr<algorithm> algorithm_;
     std::vector<std::shared_ptr<simulator>> simulators_;
+    std::vector<std::shared_ptr<function>> functions_;
     std::vector<std::shared_ptr<observer>> observers_;
     std::vector<std::shared_ptr<manipulator>> manipulators_;
-    std::vector<std::shared_ptr<connection>> connections_;
+    std::unordered_map<variable_id, variable_id> ssConnections_;
+    std::unordered_map<function_io_id, variable_id> sfConnections_;
+    std::unordered_map<variable_id, function_io_id> fsConnections_;
     real_time_timer timer_;
 };
 
@@ -349,6 +349,11 @@ simulator_index execution::add_slave(
     return pimpl_->add_slave(std::move(slave), name, stepSizeHint);
 }
 
+function_index execution::add_function(std::shared_ptr<function> fun)
+{
+    return pimpl_->add_function(fun);
+}
+
 void execution::add_observer(std::shared_ptr<observer> obs)
 {
     return pimpl_->add_observer(obs);
@@ -359,19 +364,19 @@ void execution::add_manipulator(std::shared_ptr<manipulator> man)
     return pimpl_->add_manipulator(man);
 }
 
-void execution::add_connection(std::shared_ptr<connection> conn)
+void execution::connect_variables(variable_id output, variable_id input)
 {
-    pimpl_->add_connection(conn);
+    pimpl_->connect_variables(output, input);
 }
 
-void execution::remove_connection(variable_id destination)
+void execution::connect_variables(variable_id output, function_io_id input)
 {
-    pimpl_->remove_connection(destination);
+    pimpl_->connect_variables(output, input);
 }
 
-const std::vector<std::shared_ptr<connection>>& execution::get_connections()
+void execution::connect_variables(function_io_id output, variable_id input)
 {
-    return pimpl_->get_connections();
+    pimpl_->connect_variables(output, input);
 }
 
 time_point execution::current_time() const noexcept
@@ -409,12 +414,12 @@ void execution::disable_real_time_simulation()
     pimpl_->disable_real_time_simulation();
 }
 
-bool execution::is_real_time_simulation()
+bool execution::is_real_time_simulation() const
 {
     return pimpl_->is_real_time_simulation();
 }
 
-double execution::get_measured_real_time_factor()
+double execution::get_measured_real_time_factor() const
 {
     return pimpl_->get_measured_real_time_factor();
 }
@@ -424,12 +429,12 @@ void execution::set_real_time_factor_target(double realTimeFactor)
     pimpl_->set_real_time_factor_target(realTimeFactor);
 }
 
-double execution::get_real_time_factor_target()
+double execution::get_real_time_factor_target() const
 {
     return pimpl_->get_real_time_factor_target();
 }
 
-std::vector<variable_id> execution::get_modified_variables()
+std::vector<variable_id> execution::get_modified_variables() const
 {
     return pimpl_->get_modified_variables();
 }
@@ -453,5 +458,120 @@ void execution::set_string_initial_value(simulator_index sim, value_reference va
 {
     pimpl_->set_string_initial_value(sim, var, value);
 }
+
+
+namespace
+{
+variable_id make_variable_id(
+    const system_structure& systemStructure,
+    const entity_index_maps& indexMaps,
+    const full_variable_name& variableName)
+{
+    const auto& variableDescription =
+        systemStructure.get_variable_description(variableName);
+    return {
+        indexMaps.simulators.at(variableName.entity_name),
+        variableDescription.type,
+        variableDescription.reference};
+}
+
+function_io_id make_function_io_id(
+    const system_structure& systemStructure,
+    const entity_index_maps& indexMaps,
+    const full_variable_name& variableName)
+{
+    const auto& variableDescription =
+        systemStructure.get_function_io_description(variableName);
+    return {
+        indexMaps.functions.at(variableName.entity_name),
+        std::get<variable_type>(variableDescription.description.type),
+        function_io_reference{
+            variableDescription.group_index,
+            variableName.variable_group_instance,
+            variableDescription.io_index,
+            variableName.variable_instance}};
+}
+} // namespace
+
+
+entity_index_maps inject_system_structure(
+    execution& exe,
+    const system_structure& sys,
+    const variable_value_map& initialValues)
+{
+    // Add simulators and functions
+    entity_index_maps indexMaps;
+    for (const auto& entity : sys.entities()) {
+        if (const auto model = entity_type_to<cse::model>(entity.type)) {
+            // Entity is a simulator
+            const auto index = exe.add_slave(
+                model->instantiate(entity.name),
+                entity.name,
+                entity.step_size_hint);
+            indexMaps.simulators.emplace(std::string(entity.name), index);
+        } else {
+            // Entity is a function
+            const auto functionType = entity_type_to<function_type>(entity.type);
+            assert(functionType);
+            const auto index = exe.add_function(
+                functionType->instantiate(entity.parameter_values));
+            indexMaps.functions.emplace(std::string(entity.name), index);
+        }
+    }
+
+    // Connect variables
+    for (const auto& conn : sys.connections()) {
+        if (conn.source.is_simulator_variable()) {
+            if (conn.target.is_simulator_variable()) {
+                // Source is simulator, target is simulator
+                exe.connect_variables(
+                    make_variable_id(sys, indexMaps, conn.source),
+                    make_variable_id(sys, indexMaps, conn.target));
+            } else {
+                // Source is simulator, target is function
+                exe.connect_variables(
+                    make_variable_id(sys, indexMaps, conn.source),
+                    make_function_io_id(sys, indexMaps, conn.target));
+            }
+        } else {
+            // Source is function, target must be simulator
+            exe.connect_variables(
+                make_function_io_id(sys, indexMaps, conn.source),
+                make_variable_id(sys, indexMaps, conn.target));
+        }
+    }
+
+    // Set initial values
+    for (const auto& [var, val] : initialValues) {
+        if (!var.is_simulator_variable()) {
+            throw error(
+                make_error_code(errc::invalid_system_structure),
+                "Cannot set initial value of variable " +
+                    to_text(var) +
+                    " (only supported for simulator variables)");
+        }
+        const auto& varDesc = sys.get_variable_description(var);
+        if (varDesc.causality != variable_causality::parameter &&
+            varDesc.causality != variable_causality::input) {
+            throw error(
+                make_error_code(errc::invalid_system_structure),
+                "Cannot set initial value of variable " +
+                    to_text(var) +
+                    " (only supported for parameters and inputs)");
+        }
+        const auto simIdx = indexMaps.simulators.at(var.entity_name);
+        const auto valRef = varDesc.reference;
+        std::visit(
+            visitor(
+                [&](double v) { exe.set_real_initial_value(simIdx, valRef, v); },
+                [&](int v) { exe.set_integer_initial_value(simIdx, valRef, v); },
+                [&](bool v) { exe.set_boolean_initial_value(simIdx, valRef, v); },
+                [&](const std::string& v) { exe.set_string_initial_value(simIdx, valRef, v); }),
+            val);
+    }
+
+    return indexMaps;
+}
+
 
 } // namespace cse

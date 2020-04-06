@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
-<OspModelDescription xmlns="http://opensimulationplatform.com/MSMI/OSPModelDescription">
+<OspModelDescription xmlns="http://opensimulationplatform.com/MSMI/OSPModelDescription"
+                     version="0.1">
     <UnitDefinitions>
         <Unit name="force~N">
             <BaseUnit kg="1" m="1" s="-2" A="0" K="0" mol="0" cd="0" rad="0" factor="1.0" offset="0.0"/>
@@ -9,20 +10,27 @@
         </Unit>
     </UnitDefinitions>
     <VariableGroups>
-        <VariableGroup type="flow" name="velocity">
-            <Variable name="p_Crane.f[1]" unit="velocity~m_s"/>
-            <Variable name="p_Crane.f[2]" unit="velocity~m_s"/>
-            <Variable name="p_Crane.f[3]" unit="velocity~m_s"/>
-        </VariableGroup>
-        <VariableGroup type="generic" name="actuatorLimits">
-            <Variable name="Act_Limits[1]"/>
-            <Variable name="Act_Limits[2]"/>
-            <Variable name="Act_Limits[3]"/>
-        </VariableGroup>
-        <VariableGroup type="effort" name="force">
-            <Variable name="p_Crane.e[1]" unit="force~N"/>
-            <Variable name="p_Crane.e[2]" unit="force~N"/>
-            <Variable name="p_Crane.e[3]" unit="force~N"/>
-        </VariableGroup>
+        <Generic name="actuatorLimits">
+            <Variable ref="Act_Limits[1]"/>
+            <Variable ref="Act_Limits[2]"/>
+            <Variable ref="Act_Limits[3]"/>
+        </Generic>
+        <Generic name="Test - do not connect">
+            <Generic name="Test2 - do not connect">
+                <Variable ref="Act_Limits[1]"/>
+            </Generic>
+        </Generic>
+        <LinearMechanicalPort name="linear mechanical port">
+            <Force name="force">
+                <Variable ref="p_Crane.e[1]" unit="force~N"/>
+                <Variable ref="p_Crane.e[2]" unit="force~N"/>
+                <Variable ref="p_Crane.e[3]" unit="force~N"/>
+            </Force>
+            <LinearVelocity name="velocity">
+                <Variable ref="p_Crane.f[1]" unit="velocity~m_s"/>
+                <Variable ref="p_Crane.f[2]" unit="velocity~m_s"/>
+                <Variable ref="p_Crane.f[3]" unit="velocity~m_s"/>
+            </LinearVelocity>
+        </LinearMechanicalPort>
     </VariableGroups>
 </OspModelDescription>

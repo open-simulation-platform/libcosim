@@ -6,7 +6,9 @@
 #define CSE_EXECUTION_HPP
 
 #include <cse/async_slave.hpp>
+#include <cse/function/function.hpp>
 #include <cse/model.hpp>
+#include <cse/system_structure.hpp>
 
 #include <boost/fiber/future.hpp>
 #include <boost/functional/hash.hpp>
@@ -14,6 +16,7 @@
 #include <memory>
 #include <optional>
 #include <sstream>
+#include <unordered_map>
 
 
 namespace cse
@@ -22,10 +25,13 @@ namespace cse
 /// An index which identifies a sub-simulator in an execution.
 using simulator_index = int;
 
+/// An index which identifies a function in an execution.
+using function_index = int;
+
 /// An number which identifies a specific time step in an execution.
 using step_number = long long;
 
-/// An object which uniquely identifies a variable in a simulation.
+/// An object which uniquely identifies a simulator variable in a simulation.
 struct variable_id
 {
     /// The simulator that owns the variable.
@@ -50,6 +56,26 @@ inline bool operator!=(const variable_id& a, const variable_id& b) noexcept
     return !operator==(a, b);
 }
 
+/// An object which uniquely identifies a function variable in a simulation.
+struct function_io_id
+{
+    function_index function;
+    variable_type type;
+    function_io_reference reference;
+};
+
+/// Equality operator for `function_io_id`.
+inline bool operator==(const function_io_id& a, const function_io_id& b) noexcept
+{
+    return a.function == b.function && a.type == b.type && a.reference == b.reference;
+}
+
+/// Inequality operator for `function_io_id`.
+inline bool operator!=(const function_io_id& a, const function_io_id& b) noexcept
+{
+    return !operator==(a, b);
+}
+
 /// Writes a textual representation of `v` to `stream`.
 inline std::ostream& operator<<(std::ostream& stream, variable_id v)
 {
@@ -60,7 +86,7 @@ inline std::ostream& operator<<(std::ostream& stream, variable_id v)
 
 } // namespace cse
 
-// Specialisation of std::hash for variable_id
+// Specialisations of std::hash for variable_id and function_io_id
 namespace std
 {
 template<>
@@ -76,6 +102,23 @@ public:
         return seed;
     }
 };
+
+template<>
+class hash<cse::function_io_id>
+{
+public:
+    std::size_t operator()(const cse::function_io_id& v) const noexcept
+    {
+        std::size_t seed = 0;
+        boost::hash_combine(seed, v.function);
+        boost::hash_combine(seed, v.type);
+        boost::hash_combine(seed, v.reference.group);
+        boost::hash_combine(seed, v.reference.group_instance);
+        boost::hash_combine(seed, v.reference.io);
+        boost::hash_combine(seed, v.reference.io_instance);
+        return seed;
+    }
+};
 } // namespace std
 
 namespace cse
@@ -87,7 +130,6 @@ class algorithm;
 class observer;
 class manipulator;
 class simulator;
-class connection;
 
 
 /**
@@ -136,6 +178,9 @@ public:
         std::string_view name,
         duration stepSizeHint = duration::zero());
 
+    /// Adds a function to the execution.
+    function_index add_function(std::shared_ptr<function> fun);
+
     /// Adds an observer to the execution.
     void add_observer(std::shared_ptr<observer> obs);
 
@@ -143,38 +188,49 @@ public:
     void add_manipulator(std::shared_ptr<manipulator> man);
 
     /**
-     *  Adds a connection to the execution.
+     *  Connects a simulator output variable to a simulator input variable.
      *
-     *  After this, the values of the connection's source variables will be
-     *  passed to the connection object, and from there to the connection's
-     *  destination variables at the co-simulation algorithm's discretion.
-     *  Different algorithms may handle this in different ways, and could for
-     *  instance choose to extrapolate or correct the variable value during
-     *  transfer.
+     *  After this, the values of the output variable will be passed to the
+     *  input value at the co-simulation algorithm's discretion.  Different
+     *  algorithms may handle this in different ways, and could for instance
+     *  choose to extrapolate or correct the variable value during transfer.
      *
      *  When calling this method, the validity of both variables are checked
      *  against the metadata of their respective `simulator`s. If either is
      *  found to be invalid (i.e. not found, wrong type or causality, an
-     *  exception will be thrown. If one of the connection's destination
-     *  variables is already connected, an exception will be thrown.
+     *  exception will be thrown.
      */
-    void add_connection(std::shared_ptr<connection> conn);
+    void connect_variables(variable_id output, variable_id input);
 
     /**
-     * Convenience method for removing a connection from the execution.
+     *  Connects a simulator output variable to a function input variable.
      *
-     * Searches for a connection containing a destination variable which
-     * matches the `destination` argument and then removes it. Throws an
-     * exception if no such connection is found.
+     *  After this, the values of the output variable will be passed to the
+     *  input value at the co-simulation algorithm's discretion.  Different
+     *  algorithms may handle this in different ways, and could for instance
+     *  choose to extrapolate or correct the variable value during transfer.
      *
-     * @param destination
-     *      Any of the connection's destination variables.
+     *  When calling this method, the validity of both variables are checked
+     *  against the metadata of their respective `simulator`s. If either is
+     *  found to be invalid (i.e. not found, wrong type or causality, an
+     *  exception will be thrown.
      */
-    void remove_connection(variable_id destination);
+    void connect_variables(variable_id output, function_io_id input);
 
-    /// Returns all variable connections in the execution.
-    const std::vector<std::shared_ptr<connection>>& get_connections();
-
+    /**
+     *  Connects a function output variable to a simulator input variable.
+     *
+     *  After this, the values of the output variable will be passed to the
+     *  input value at the co-simulation algorithm's discretion.  Different
+     *  algorithms may handle this in different ways, and could for instance
+     *  choose to extrapolate or correct the variable value during transfer.
+     *
+     *  When calling this method, the validity of both variables are checked
+     *  against the metadata of their respective `simulator`s. If either is
+     *  found to be invalid (i.e. not found, wrong type or causality, an
+     *  exception will be thrown.
+     */
+    void connect_variables(function_io_id output, variable_id input);
 
     /// Returns the current logical time.
     time_point current_time() const noexcept;
@@ -227,16 +283,16 @@ public:
     void set_real_time_factor_target(double realTimeFactor);
 
     /// Returns if this is a real time simulation
-    bool is_real_time_simulation();
+    bool is_real_time_simulation() const;
 
     /// Returns the current real time factor
-    double get_measured_real_time_factor();
+    double get_measured_real_time_factor() const;
 
     /// Returns the current real time factor target
-    double get_real_time_factor_target();
+    double get_real_time_factor_target() const;
 
     /// Returns a map of currently modified variables
-    std::vector<variable_id> get_modified_variables();
+    std::vector<variable_id> get_modified_variables() const;
 
     /// Set initial value for a variable of type real. Must be called before simulation is started.
     void set_real_initial_value(simulator_index sim, value_reference var, double value);
@@ -256,6 +312,33 @@ private:
     std::unique_ptr<impl> pimpl_;
 };
 
+
+/// Maps entity names to simulator/function indices in an `execution`.
+struct entity_index_maps
+{
+    /// Mapping of simulator names to simulator indices.
+    std::unordered_map<std::string, simulator_index> simulators;
+
+    /// Mapping of function names to function indices.
+    std::unordered_map<std::string, function_index> functions;
+};
+
+
+/**
+ *  Adds simulators and connections to an execution, and sets initial values,
+ *  according to a predefined system structure description.
+ *
+ *  This function may be called multiple times for the same `execution`, as
+ *  long as there is no conflict between the different `system_structure`
+ *  objects.
+ *
+ *  \returns
+ *      Mappings between entity names and their indexes in the execution.
+ */
+entity_index_maps inject_system_structure(
+    execution& exe,
+    const system_structure& sys,
+    const variable_value_map& initialValues);
 
 } // namespace cse
 #endif // header guard
