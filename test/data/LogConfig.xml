@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<simulators>
-    <simulator name="slave" decimationFactor="20">
-        <variable name="realOut"/>
-        <variable name="intOut"/>
-        <variable name="booleanOut"/>
-        <variable name="stringOut"/>
-    </simulator>
-    <simulator name="slave2">
-        <variable name="realOut"/>
-        <variable name="intOut"/>
-    </simulator>
-</simulators>
-<!--simulators>
-    <simulator name="slave"/>
-</simulators-->
+
+<osp:simulators xmlns:osp="http://opensimulationplatform.com/LogConfig" staticFileNames="true">
+
+    <osp:simulator name="slave" decimationFactor="20">
+        <osp:variable name="realOut"/>
+        <osp:variable name="intOut"/>
+        <osp:variable name="booleanOut"/>
+        <osp:variable name="stringOut"/>
+    </osp:simulator>
+    <osp:simulator name="slave2">
+        <osp:variable name="realOut"/>
+        <osp:variable name="intOut"/>
+    </osp:simulator>
+
+</osp:simulators>

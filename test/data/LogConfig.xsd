@@ -9,6 +9,7 @@
         <xs:sequence>
             <xs:element name="simulator" type="osp:TSimulator" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
+        <xs:attribute name="staticFileNames" type="xs:boolean" default="false"/>
     </xs:complexType>
 
     <xs:complexType name="TSimulator">

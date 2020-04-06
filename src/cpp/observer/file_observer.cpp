@@ -38,18 +38,20 @@ std::string format_time(boost::posix_time::ptime now)
 class file_observer::slave_value_writer
 {
 public:
-    slave_value_writer(observable* observable, boost::filesystem::path& logDir)
+    slave_value_writer(observable* observable, boost::filesystem::path& logDir, bool staticFileNames = false)
         : observable_(observable)
         , logDir_(logDir)
+        , staticFileNames_(staticFileNames)
     {
         initialize_default();
     }
 
     slave_value_writer(observable* observable, boost::filesystem::path& logDir, size_t decimationFactor,
-        const std::vector<variable_description>& variables)
+        const std::vector<variable_description>& variables, bool staticFileNames = false)
         : observable_(observable)
         , logDir_(logDir)
         , decimationFactor_(decimationFactor)
+        , staticFileNames_(staticFileNames)
     {
         initialize_config(variables);
     }
@@ -59,7 +61,7 @@ public:
         std::lock_guard<std::mutex> lock(mutex_);
         if (recording_) {
             if (!fsw_.is_open()) {
-                create_log_file();
+                create_log_file(staticFileNames_);
             }
             if (timeStep % decimationFactor_ == 0) {
 
@@ -162,10 +164,15 @@ private:
         }
     }
 
-    void create_log_file()
+    void create_log_file(bool staticFileNames)
     {
-        auto time_str = format_time(boost::posix_time::microsec_clock::local_time());
-        auto filename = observable_->name().append("_").append(time_str).append(".csv");
+        std::string filename;
+        if (staticFileNames) {
+            filename = observable_->name().append(".csv");
+        } else {
+            auto time_str = format_time(boost::posix_time::microsec_clock::local_time());
+            filename = observable_->name().append("_").append(time_str).append(".csv");
+        }
 
         auto filepath = logDir_ / filename;
         boost::filesystem::create_directories(logDir_);
@@ -240,6 +247,7 @@ private:
     std::stringstream ss_;
     std::atomic<bool> recording_ = true;
     std::mutex mutex_;
+    bool staticFileNames_ = false;
 };
 
 file_observer::file_observer(const boost::filesystem::path& logDir)
@@ -282,8 +290,10 @@ void file_observer::simulator_added(
     if (logFromConfig_) {
         // Read all configured model names from the XML. If simulator name is not in the list, do nothing.
         std::vector<std::string> modelNames;
-        for (const auto& simulatorChild : ptree_.get_child("simulators")) {
-            modelNames.push_back(get_attribute<std::string>(simulatorChild.second, "name"));
+        for (const auto& simulatorChild : ptree_.get_child("osp:simulators")) {
+            if (simulatorChild.first == "osp:simulator") {
+                modelNames.push_back(get_attribute<std::string>(simulatorChild.second, "name"));
+            }
         }
         if (std::find(modelNames.begin(), modelNames.end(), simulator->name()) != modelNames.end()) {
             auto config = parse_config(simulator->name());
@@ -292,7 +302,8 @@ void file_observer::simulator_added(
                 simulator,
                 logDir_,
                 config.decimationFactor,
-                config.variables);
+                config.variables,
+                config.staticFileNames);
         } else {
             return;
         }
@@ -382,53 +393,55 @@ cse::observable* find_simulator(
 
 file_observer::simulator_logging_config file_observer::parse_config(const std::string& simulatorName)
 {
-    for (const auto& childElement : ptree_.get_child("simulators")) {
-        auto simulatorElement = childElement.second;
+    auto simulators = ptree_.get_child("osp:simulators");
+    bool staticFileNames = simulators.get<bool>("<xmlattr>.staticFileNames", false);
+    for (const auto& childElement : simulators) {
+        if (childElement.first == "osp:simulator") {
+            auto simulatorElement = childElement.second;
+            auto modelName = get_attribute<std::string>(simulatorElement, "name");
+            if (modelName == simulatorName) {
+                simulator_logging_config config;
+                config.staticFileNames = staticFileNames;
+                config.decimationFactor = get_attribute<size_t>(simulatorElement, "decimationFactor", defaultDecimationFactor_);
 
-        auto modelName = get_attribute<std::string>(simulatorElement, "name");
-        if (modelName == simulatorName) {
-            simulator_logging_config config;
+                const auto& simulator = find_simulator(simulators_, modelName);
+                if (simulatorElement.count("osp:variable") == 0) {
 
-            config.decimationFactor = get_attribute<size_t>(simulatorElement, "decimationFactor", defaultDecimationFactor_);
-
-            const auto& simulator = find_simulator(simulators_, modelName);
-
-            if (simulatorElement.count("variable") == 0) {
-
-                for (const auto& vd : simulator->model_description().variables) {
-                    switch (vd.type) {
-                        case variable_type::real:
-                        case variable_type::integer:
-                        case variable_type::boolean:
-                        case variable_type::string:
-                            config.variables.push_back(vd);
-                            break;
-                        default:
-                            break;
-                    }
-                }
-            } else {
-                for (const auto& [variableElementName, variableElement] : simulatorElement) {
-                    if (variableElementName == "variable") {
-                        const auto name = get_attribute<std::string>(variableElement, "name");
-                        const auto variableDescription =
-                            find_variable(simulator->model_description(), name);
-
-                        switch (variableDescription.type) {
+                    for (const auto& vd : simulator->model_description().variables) {
+                        switch (vd.type) {
                             case variable_type::real:
                             case variable_type::integer:
                             case variable_type::boolean:
                             case variable_type::string:
-                                config.variables.push_back(variableDescription);
-                                BOOST_LOG_SEV(log::logger(), log::info) << "Logging variable: " << modelName << ":" << name;
+                                config.variables.push_back(vd);
                                 break;
                             default:
-                                CSE_PANIC_M("Variable type not supported.");
+                                break;
+                        }
+                    }
+                } else {
+                    for (const auto& [variableElementName, variableElement] : simulatorElement) {
+                        if (variableElementName == "osp:variable") {
+                            const auto name = get_attribute<std::string>(variableElement, "name");
+                            const auto variableDescription =
+                                find_variable(simulator->model_description(), name);
+
+                            switch (variableDescription.type) {
+                                case variable_type::real:
+                                case variable_type::integer:
+                                case variable_type::boolean:
+                                case variable_type::string:
+                                    config.variables.push_back(variableDescription);
+                                    BOOST_LOG_SEV(log::logger(), log::info) << "Logging variable: " << modelName << ":" << name;
+                                    break;
+                                default:
+                                    CSE_PANIC_M("Variable type not supported.");
+                            }
                         }
                     }
                 }
+                return config;
             }
-            return config;
         }
     }
     return simulator_logging_config();
