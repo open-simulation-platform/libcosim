@@ -9,6 +9,7 @@
 #include <cse/exception.hpp>
 #include <cse/log/logger.hpp>
 #include <cse/utility/utility.hpp>
+#include <cse/uri.hpp>
 
 #include <boost/lexical_cast.hpp>
 #include <xercesc/dom/DOM.hpp>
@@ -996,9 +997,15 @@ std::pair<execution, simulator_map> load_cse_config(
         }
 
         std::string msmiFileName = model->description()->name + "_OspModelDescription.xml";
-        const auto msmiFilePath = configFile.parent_path() / msmiFileName;
+        const auto modelUri = resolve_reference(baseURI, simulator.source);
+        auto msmiFilePath = file_uri_to_path(modelUri).remove_leaf() / msmiFileName;
         if (boost::filesystem::exists(msmiFilePath)) {
             emds.emplace(simulator.name, msmiFilePath);
+        } else {
+            msmiFilePath = configFile.parent_path() / msmiFileName;
+            if (boost::filesystem::exists(msmiFilePath)) {
+                emds.emplace(simulator.name, msmiFilePath);
+            }
         }
     }
 
