@@ -1,20 +1,20 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified"
            targetNamespace="http://opensimulationplatform.com/LogConfig"
-           xmlns:osp="http://opensimulationplatform.com/LogConfig">
+           xmlns="http://opensimulationplatform.com/LogConfig">
 
-    <xs:element name="simulators" type="osp:TSimulators"/>
+    <xs:element name="simulators" type="TSimulators"/>
 
     <xs:complexType name="TSimulators">
         <xs:sequence>
-            <xs:element name="simulator" type="osp:TSimulator" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="simulator" type="TSimulator" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
-        <xs:attribute name="staticFileNames" type="xs:boolean" default="false"/>
+        <xs:attribute name="timeStampedFileNames" type="xs:boolean" default="true"/>
     </xs:complexType>
 
     <xs:complexType name="TSimulator">
         <xs:sequence>
-            <xs:element name="variable" type="osp:TVariable" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="variable" type="TVariable" minOccurs="0" maxOccurs="unbounded"/>
         </xs:sequence>
         <xs:attribute name="name" type="xs:string" use="required"/>
         <xs:attribute name="decimationFactor" type="xs:int" default="1"/>

@@ -32,26 +32,34 @@ std::string format_time(boost::posix_time::ptime now)
     std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
     return converter.to_bytes(wss.str());
 }
+
+void clear_file_contents_if_exists(const boost::filesystem::path& filePath, boost::filesystem::ofstream& fsw){
+    if (boost::filesystem::exists(filePath)) {
+        //clear file contents
+        fsw.open(filePath, std::ios_base::out | std::ios_base::trunc);
+        fsw.close();
+    }
+}
 } // namespace
 
 
 class file_observer::slave_value_writer
 {
 public:
-    slave_value_writer(observable* observable, boost::filesystem::path& logDir, bool staticFileNames = false)
+    slave_value_writer(observable* observable, boost::filesystem::path& logDir, bool timeStampedFileNames = true)
         : observable_(observable)
         , logDir_(logDir)
-        , staticFileNames_(staticFileNames)
+        , timeStampedFileNames_(timeStampedFileNames)
     {
         initialize_default();
     }
 
     slave_value_writer(observable* observable, boost::filesystem::path& logDir, size_t decimationFactor,
-        const std::vector<variable_description>& variables, bool staticFileNames = false)
+        const std::vector<variable_description>& variables, bool timeStampedFileNames = true)
         : observable_(observable)
         , logDir_(logDir)
         , decimationFactor_(decimationFactor)
-        , staticFileNames_(staticFileNames)
+        , timeStampedFileNames_(timeStampedFileNames)
     {
         initialize_config(variables);
     }
@@ -61,7 +69,7 @@ public:
         std::lock_guard<std::mutex> lock(mutex_);
         if (recording_) {
             if (!fsw_.is_open()) {
-                create_log_file(staticFileNames_);
+                create_log_file();
             }
             if (timeStep % decimationFactor_ == 0) {
 
@@ -149,6 +157,11 @@ private:
     /** Default constructor initialization, all variables are logged. */
     void initialize_default()
     {
+        if (!timeStampedFileNames_) {
+            const auto filePath = logDir_ / observable_->name().append(".csv");
+            clear_file_contents_if_exists(filePath, fsw_);
+        }
+
         for (const auto& vd : observable_->model_description().variables) {
             if (vd.causality != variable_causality::local) {
                 initialize_variable(vd);
@@ -159,24 +172,29 @@ private:
     /** External config initialization, only configured variables are logged. */
     void initialize_config(const std::vector<variable_description>& variables)
     {
+        if (!timeStampedFileNames_) {
+            const auto filePath = logDir_ / observable_->name().append(".csv");
+            clear_file_contents_if_exists(filePath, fsw_);
+        }
+
         for (const auto& vd : variables) {
             initialize_variable(vd);
         }
     }
 
-    void create_log_file(bool staticFileNames)
+    void create_log_file()
     {
         std::string filename;
-        if (staticFileNames) {
+        if (!timeStampedFileNames_) {
             filename = observable_->name().append(".csv");
         } else {
             auto time_str = format_time(boost::posix_time::microsec_clock::local_time());
             filename = observable_->name().append("_").append(time_str).append(".csv");
         }
 
-        auto filepath = logDir_ / filename;
+        const auto filePath = logDir_ / filename;
         boost::filesystem::create_directories(logDir_);
-        fsw_.open(filepath, std::ios_base::out | std::ios_base::trunc);
+        fsw_.open(filePath, std::ios_base::out | std::ios_base::app);
 
         if (fsw_.fail()) {
             throw std::runtime_error("Failed to open file stream for logging");
@@ -247,7 +265,7 @@ private:
     std::stringstream ss_;
     std::atomic<bool> recording_ = true;
     std::mutex mutex_;
-    bool staticFileNames_ = false;
+    bool timeStampedFileNames_ = true;
 };
 
 file_observer::file_observer(const boost::filesystem::path& logDir)
@@ -290,8 +308,8 @@ void file_observer::simulator_added(
     if (logFromConfig_) {
         // Read all configured model names from the XML. If simulator name is not in the list, do nothing.
         std::vector<std::string> modelNames;
-        for (const auto& simulatorChild : ptree_.get_child("osp:simulators")) {
-            if (simulatorChild.first == "osp:simulator") {
+        for (const auto& simulatorChild : ptree_.get_child("simulators")) {
+            if (simulatorChild.first == "simulator") {
                 modelNames.push_back(get_attribute<std::string>(simulatorChild.second, "name"));
             }
         }
@@ -303,7 +321,7 @@ void file_observer::simulator_added(
                 logDir_,
                 config.decimationFactor,
                 config.variables,
-                config.staticFileNames);
+                config.timeStampedFileNames);
         } else {
             return;
         }
@@ -393,19 +411,19 @@ cse::observable* find_simulator(
 
 file_observer::simulator_logging_config file_observer::parse_config(const std::string& simulatorName)
 {
-    auto simulators = ptree_.get_child("osp:simulators");
-    bool staticFileNames = simulators.get<bool>("<xmlattr>.staticFileNames", false);
+    auto simulators = ptree_.get_child("simulators");
+    bool timeStampedFileNames = simulators.get<bool>("<xmlattr>.timeStampedFileNames", true);
     for (const auto& childElement : simulators) {
-        if (childElement.first == "osp:simulator") {
+        if (childElement.first == "simulator") {
             auto simulatorElement = childElement.second;
             auto modelName = get_attribute<std::string>(simulatorElement, "name");
             if (modelName == simulatorName) {
                 simulator_logging_config config;
-                config.staticFileNames = staticFileNames;
+                config.timeStampedFileNames = timeStampedFileNames;
                 config.decimationFactor = get_attribute<size_t>(simulatorElement, "decimationFactor", defaultDecimationFactor_);
 
                 const auto& simulator = find_simulator(simulators_, modelName);
-                if (simulatorElement.count("osp:variable") == 0) {
+                if (simulatorElement.count("variable") == 0) {
 
                     for (const auto& vd : simulator->model_description().variables) {
                         switch (vd.type) {
@@ -421,7 +439,7 @@ file_observer::simulator_logging_config file_observer::parse_config(const std::s
                     }
                 } else {
                     for (const auto& [variableElementName, variableElement] : simulatorElement) {
-                        if (variableElementName == "osp:variable") {
+                        if (variableElementName == "variable") {
                             const auto name = get_attribute<std::string>(variableElement, "name");
                             const auto variableDescription =
                                 find_variable(simulator->model_description(), name);
