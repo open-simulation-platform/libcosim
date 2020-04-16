@@ -250,9 +250,6 @@ public:
      */
     entity_range entities() const noexcept;
 
-    /// Returns a pointer to the named entity if it exists, null otherwise.
-    const entity* find_entity(std::string_view name) const;
-
     /**
      *  Establishes a connection between two variables.
      *
