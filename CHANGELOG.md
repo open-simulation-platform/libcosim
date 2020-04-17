@@ -14,6 +14,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
      * Include FMI 2.0 unit xsd in OspModelDescription.xml ([#523](https://github.com/open-simulation-platform/cse-core/issues/523))
  * multi-variable connections replaced with functions ([PR#518](https://github.com/open-simulation-platform/cse-core/pull/518))
  * algorithm configuration moved to DefaultExperiment in .ssd ([PR#447](https://github.com/open-simulation-platform/cse-core/pull/447)) 
+ * OspModelDescription file location at FMU path or configuration path ([#462](https://github.com/open-simulation-platform/cse-core/issues/462))
  
 ##### Added
 * `Functions` for calculations between time steps ([PR#517](https://github.com/open-simulation-platform/cse-core/pull/517))
