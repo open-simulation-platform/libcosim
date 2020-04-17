@@ -1,4 +1,7 @@
-<simulators>
+<?xml version="1.0" encoding="UTF-8"?>
+
+<simulators xmlns="http://opensimulationplatform.com/LogConfig">
+
     <simulator name="slave" decimationFactor="20">
         <variable name="realOut"/>
         <variable name="intOut"/>
@@ -9,7 +12,5 @@
         <variable name="realOut"/>
         <variable name="intOut"/>
     </simulator>
+
 </simulators>
-<!--simulators>
-    <simulator name="slave"/>
-</simulators-->
