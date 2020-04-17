@@ -8,6 +8,7 @@
 #include "cse/function/vector_sum.hpp"
 #include <cse/exception.hpp>
 #include <cse/log/logger.hpp>
+#include <cse/uri.hpp>
 #include <cse/utility/utility.hpp>
 
 #include <boost/lexical_cast.hpp>
@@ -590,7 +591,8 @@ struct extended_model_description
         }
     }
 
-    static variable_group_description create_variable_group_description(xercesc::DOMElement *variableGroupElement) {
+    static variable_group_description create_variable_group_description(xercesc::DOMElement* variableGroupElement)
+    {
         variable_group_description variableGroupDescription;
 
         variableGroupDescription.name = tc(variableGroupElement->getAttribute(tc("name").get())).get();
@@ -924,7 +926,7 @@ void connect_vector_sum_functions(
             execution.connect_variables(
                 function_io_id{fn, variable_type::real, vector_sum_function<double>::out_io_reference(i)},
                 targetVariable);
-            }
+        }
     }
 }
 
@@ -996,9 +998,26 @@ std::pair<execution, simulator_map> load_cse_config(
         }
 
         std::string msmiFileName = model->description()->name + "_OspModelDescription.xml";
-        const auto msmiFilePath = configFile.parent_path() / msmiFileName;
-        if (boost::filesystem::exists(msmiFilePath)) {
-            emds.emplace(simulator.name, msmiFilePath);
+        const auto modelUri = resolve_reference(baseURI, simulator.source);
+        boost::filesystem::path msmiFilePath;
+
+        if (modelUri.scheme() == "file") {
+            msmiFilePath = file_uri_to_path(modelUri).remove_leaf() / msmiFileName;
+            if (boost::filesystem::exists(msmiFilePath)) {
+                emds.emplace(simulator.name, msmiFilePath);
+            } else {
+                msmiFilePath = configFile.parent_path() / msmiFileName;
+                if (boost::filesystem::exists(msmiFilePath)) {
+                    emds.emplace(simulator.name, msmiFilePath);
+                }
+            }
+        } else {
+            // Makes it possible to keep OspModelDescription at configuration path
+            // even when there are FMUs with other URI than file (fmu-proxy).
+            msmiFilePath = configFile.parent_path() / msmiFileName;
+            if (boost::filesystem::exists(msmiFilePath)) {
+                emds.emplace(simulator.name, msmiFilePath);
+            }
         }
     }
 
