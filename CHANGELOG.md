@@ -32,7 +32,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 * Persistent FMU cache ([PR#388](https://github.com/open-simulation-platform/cse-core/pull/388))
 * Update fmu-proxy client to match upstream v0.6.1 ([#434](https://github.com/open-simulation-platform/cse-core/issues/434))
 * Scenarios can be written in YAML ([#271](https://github.com/open-simulation-platform/cse-core/issues/271))
-
+* Allow CSV files produced by `file_observer` to be generated without a timestamp ([PR#555](https://github.com/open-simulation-platform/cse-core/pull/555))
 ##### Fixed
 * First line in output files is just zeroes ([#486](https://github.com/open-simulation-platform/cse-core/issues/486)) 
 * `ssp_parser` does not handle connections correctly ([#479](https://github.com/open-simulation-platform/cse-core/issues/479))
