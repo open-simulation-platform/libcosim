@@ -2,7 +2,7 @@
 <ssv:ParameterSet version="1.0" name="initialValues2"
         xmlns:ssv="http://ssp-standard.org/SSP1/SystemStructureParameterValues">
     <ssv:Parameters>
-        <ssv:Parameter name="realOut">
+        <ssv:Parameter name="realIn">
             <ssv:Real value="4" />
         </ssv:Parameter>
     </ssv:Parameters>

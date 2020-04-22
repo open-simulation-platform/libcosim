@@ -1,49 +1,52 @@
 #ifndef CSECORE_SSP_LOADER_HPP
 #define CSECORE_SSP_LOADER_HPP
 
-#include <cse/cse_config.hpp>
-#include <cse/execution.hpp>
+#include <cse/algorithm/algorithm.hpp>
 #include <cse/model.hpp>
 #include <cse/orchestration.hpp>
+#include <cse/system_structure.hpp>
 
 #include <boost/filesystem/path.hpp>
 
-#include <map>
+#include <memory>
 #include <optional>
 #include <string>
+#include <unordered_map>
+
 
 namespace cse
 {
 
-using simulator_map = std::map<std::string, simulator_map_entry>;
+/// A configuration loaded from an SSP file.
+struct ssp_configuration
+{
+    /// The system structure.
+    cse::system_structure system_structure;
+
+    /// The start time.
+    time_point start_time;
+
+    /// The co-simulation algorithm.
+    std::shared_ptr<cse::algorithm> algorithm;
+
+    /**
+     *  Named parameter sets.
+     *
+     *  This always contains at least one parameter set whose key is the
+     *  empty string, which represents the default parameter values.
+     *  (If the SSP configuration does not specify any parameter values,
+     *  this set will be empty but nevertheless present.)
+     */
+    std::unordered_map<std::string, variable_value_map> parameter_sets;
+};
 
 
-// Class for loading an execution from a SSP configuration.
+/// Class for loading an execution from a SSP configuration.
 class ssp_loader
 {
 
 public:
     ssp_loader();
-
-    /**
-     *  Explicitly specifies the simulation start time.
-     *  Overrides the start time specified in the configuration file.
-     *
-     *  \param [in] timePoint
-     *      The (logical) time point at which the simulation should start
-     */
-    virtual void override_start_time(cse::time_point timePoint);
-
-    /**
-     *  Explicitly specify the co-simulation algorithm to use.
-     *  Required if no algorithm is present in the configuration to load.
-     *
-     *  Overrides the algorithm specified in the configuration file.
-     *
-     *  \param [in] algorithm
-     *      The co-simulation algorithm to be used in the execution.
-     */
-    virtual void override_algorithm(std::shared_ptr<cse::algorithm> algorithm);
 
     /**
      * Assign a custom `model_uri_resolver`.
@@ -62,29 +65,18 @@ public:
     void set_ssd_file_name(const std::string& name);
 
     /**
-     * Explicitly specify the name of the parameter set(s) to load.
-     *
-     * /param [in] name
-     *      The name of the parameter set(s) to load
-     */
-    void set_parameter_set_name(const std::string& name);
-
-    /**
-     *  Create an execution based on a SSP configuration.
+     *  Load an SSP configuration.
      *
      *  \param [in] configPath
      *      Path to the .ssp archive, or a directory holding one or more .ssd files.
      */
-    std::pair<execution, simulator_map> load(const boost::filesystem::path& configPath);
+    ssp_configuration load(const boost::filesystem::path& configPath);
 
 private:
     std::optional<std::string> ssdFileName_;
-    std::optional<std::string> parameterSetName_;
-    std::optional<cse::time_point> overrideStartTime_;
-    std::shared_ptr<cse::algorithm> overrideAlgorithm_;
     std::shared_ptr<cse::model_uri_resolver> modelResolver_;
 };
 
-} // namespace cse
 
+} // namespace cse
 #endif

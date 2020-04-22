@@ -8,6 +8,7 @@
         <ssd:Elements>
             <ssd:Component name="identity1" source="../../fmi1/identity.fmu">
                 <ssd:Connectors>
+                    <ssd:Connector name="realIn" kind="input"><ssc:Real/></ssd:Connector>
                     <ssd:Connector name="realOut" kind="output"><ssc:Real/></ssd:Connector>
                 </ssd:Connectors>
                 <ssd:ParameterBindings>

@@ -510,8 +510,6 @@ typedef struct
 {
     /// The slave instance name.
     char name[SLAVE_NAME_MAX_SIZE];
-    /// The slave source (FMU file name).
-    char source[SLAVE_NAME_MAX_SIZE];
     /// The slave's unique index in the exeuction.
     cse_slave_index index;
 } cse_slave_info;

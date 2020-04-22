@@ -49,6 +49,19 @@ struct full_variable_name
         , variable_instance(ioInstance)
     {}
 
+    /**
+     *  Convenience constructor for singular function variables (where
+     *  `variable_group_instance` and `variable_instance` are both zero).
+     */
+    full_variable_name(
+        std::string functionName,
+        std::string ioGroupName,
+        std::string ioName)
+        : entity_name(std::move(functionName))
+        , variable_group_name(std::move(ioGroupName))
+        , variable_name(std::move(ioName))
+    {}
+
     /// The name of an entity.
     std::string entity_name;
 
@@ -236,6 +249,9 @@ public:
      *      A range of `entity` objects.
      */
     entity_range entities() const noexcept;
+
+    /// Returns a pointer to the named entity if it exists, null otherwise.
+    const entity* find_entity(std::string_view name) const;
 
     /**
      *  Establishes a connection between two variables.

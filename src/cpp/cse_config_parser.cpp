@@ -969,7 +969,7 @@ std::pair<execution, simulator_map> load_cse_config(
             slave,
             simulator.name,
             simulator.stepSize ? to_duration(*simulator.stepSize) : duration::zero());
-        simulatorMap[simulator.name] = simulator_map_entry{index, simulator.source, *model->description()};
+        simulatorMap[simulator.name] = simulator_map_entry{index, *model->description()};
 
         for (const auto& v : model->description()->variables) {
             slaves[simulator.name].variables[v.name] = v;
