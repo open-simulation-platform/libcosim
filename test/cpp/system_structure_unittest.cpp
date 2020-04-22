@@ -61,7 +61,7 @@ BOOST_AUTO_TEST_CASE(system_structure_basic_use)
     ss.add_entity("simC", model);
     BOOST_CHECK_THROW(ss.add_entity("simB", model), cse::error); // simB exists
     BOOST_CHECK_THROW(ss.add_entity("func", func, funcParams), cse::error); // func exists
-    BOOST_CHECK_THROW(ss.add_entity("sim\nB", model), cse::error); // invalid name
+    BOOST_CHECK_THROW(ss.add_entity("", model), cse::error); // invalid name
     BOOST_CHECK_THROW(ss.add_entity("simB", model, -timeStep), cse::error); // negative step size
 
     ss.connect_variables({"simA", "realOut"}, {"simB", "realIn"}); // sim-sim connection

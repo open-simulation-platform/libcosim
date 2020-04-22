@@ -357,20 +357,6 @@ std::shared_ptr<T> entity_type_to(system_structure::entity_type et) noexcept
 
 
 /**
- *  Checks whether `name` is a valid entity name.
- *
- *  The rules are the same as for C(++) identifiers:  The name may only
- *  consist of ASCII letters, numbers and underscores, and the first
- *  character must be a letter or an underscore.
- *
- *  If `reason` is non-null and the function returns `false`, a
- *  human-readable reason will be stored in the string pointed to by
- *  `reason`.
- */
-bool is_valid_entity_name(std::string_view name, std::string* reason) noexcept;
-
-
-/**
  *  Checks whether `value` is a valid value for a variable described by
  *  `variable`.
  *
