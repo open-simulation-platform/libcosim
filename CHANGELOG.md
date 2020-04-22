@@ -3,6 +3,42 @@ All notable changes to cse-core will be documented in this file. This includes n
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
+### [v0.6.0] – 2020-mm-dd
+##### Changed
+* MSMI configuration (OspSystemStructure.xml and OspModelDescription.xml) updated 
+     * plugs, sockets and bonds replaced with variable groups 
+     ([PR#496](https://github.com/open-simulation-platform/cse-core/pull/496),
+      [PR#530](https://github.com/open-simulation-platform/cse-core/pull/530), 
+      [PR#537](https://github.com/open-simulation-platform/cse-core/pull/537))
+     * configuration for `Function` to `FMU` connections ([PR#517](https://github.com/open-simulation-platform/cse-core/pull/517))
+     * Include FMI 2.0 unit xsd in OspModelDescription.xml ([#523](https://github.com/open-simulation-platform/cse-core/issues/523))
+ * multi-variable connections replaced with functions ([PR#518](https://github.com/open-simulation-platform/cse-core/pull/518))
+ * algorithm configuration moved to DefaultExperiment in .ssd ([PR#447](https://github.com/open-simulation-platform/cse-core/pull/447)) 
+ * OspModelDescription file location at FMU path or configuration path ([#462](https://github.com/open-simulation-platform/cse-core/issues/462))
+ 
+##### Added
+* `Functions` for calculations between time steps ([PR#517](https://github.com/open-simulation-platform/cse-core/pull/517))
+* Support setting initial values through C API ([#328](https://github.com/open-simulation-platform/cse-core/issues/328))
+* Increased SSP support:
+    * support .ssp files ([#491](https://github.com/open-simulation-platform/cse-core/issues/491))
+    * support individual model step-size configuration in SSP ([#435](https://github.com/open-simulation-platform/cse-core/issues/435))
+    * support external ssv files (parameter sets) ([PR#489](https://github.com/open-simulation-platform/cse-core/pull/489))
+    * support multiple ParameterSets in SSP ([#483](https://github.com/open-simulation-platform/cse-core/issues/483))
+    * support multiple .ssd in an .ssp ([#483](https://github.com/open-simulation-platform/cse-core/issues/483))
+    * support linear transformations ([#451](https://github.com/open-simulation-platform/cse-core/issues/451))
+* Support on/off toggling of file observer ([#508](https://github.com/open-simulation-platform/cse-core/issues/508))
+* Add functionality for offline model building ([#114](https://github.com/open-simulation-platform/cse-core/issues/114))
+* Support stateful and/or time-dependent manipulators ([#203](https://github.com/open-simulation-platform/cse-core/issues/203))
+* Persistent FMU cache ([PR#388](https://github.com/open-simulation-platform/cse-core/pull/388))
+* Update fmu-proxy client to match upstream v0.6.1 ([#434](https://github.com/open-simulation-platform/cse-core/issues/434))
+* Scenarios can be written in YAML ([#271](https://github.com/open-simulation-platform/cse-core/issues/271))
+* Allow CSV files produced by `file_observer` to be generated without a timestamp ([PR#555](https://github.com/open-simulation-platform/cse-core/pull/555))
+##### Fixed
+* First line in output files is just zeroes ([#486](https://github.com/open-simulation-platform/cse-core/issues/486)) 
+* `ssp_parser` does not handle connections correctly ([#479](https://github.com/open-simulation-platform/cse-core/issues/479))
+* Typo causes SSP parser to ignore "Connector" elements ([#274](https://github.com/open-simulation-platform/cse-core/issues/274))
+
+
 ### [v0.5.1] – 2019-11-01
 ##### Changed
 * Move `visitor` to utility header ([PR#425](https://github.com/open-simulation-platform/cse-core/pull/425))
@@ -80,3 +116,4 @@ First OSP JIP partner release
 [v0.4.0]: https://github.com/open-simulation-platform/cse-core/compare/v0.3.0...v0.4.0
 [v0.5.0]: https://github.com/open-simulation-platform/cse-core/compare/v0.4.0...v0.5.0
 [v0.5.1]: https://github.com/open-simulation-platform/cse-core/compare/v0.5.0...v0.5.1
+[v0.6.0]: https://github.com/open-simulation-platform/cse-core/compare/v0.5.1...v0.6.0
