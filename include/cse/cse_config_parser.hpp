@@ -1,29 +1,29 @@
-
 #ifndef CSECORE_CONFIG_PARSER_HPP
 #define CSECORE_CONFIG_PARSER_HPP
 
-#include <cse/cse_config.hpp>
-#include <cse/execution.hpp>
 #include <cse/model.hpp>
 #include <cse/orchestration.hpp>
+#include <cse/system_structure.hpp>
 
 #include <boost/filesystem/path.hpp>
-
-#include <map>
-#include <optional>
-#include <string>
 
 
 namespace cse
 {
 
-using simulator_map = std::map<std::string, simulator_map_entry>;
 
-std::pair<execution, simulator_map> load_cse_config(
-    cse::model_uri_resolver&,
+struct cse_config
+{
+    cse::system_structure system_structure;
+    time_point start_time;
+    duration step_size;
+    variable_value_map initial_values;
+};
+
+cse_config load_cse_config(
     const boost::filesystem::path& configPath,
-    std::optional<cse::time_point> overrideStartTime = {});
+    cse::model_uri_resolver&);
+
 
 } // namespace cse
-
 #endif //CSECORE_CONFIG_PARSER_HPP

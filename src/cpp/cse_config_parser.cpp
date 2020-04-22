@@ -2,14 +2,10 @@
 
 #include "cse_system_structure.hpp"
 
-#include "cse/algorithm.hpp"
-#include "cse/fmi/fmu.hpp"
 #include "cse/function/linear_transformation.hpp"
 #include "cse/function/vector_sum.hpp"
-#include <cse/exception.hpp>
-#include <cse/log/logger.hpp>
-#include <cse/uri.hpp>
-#include <cse/utility/utility.hpp>
+#include "cse/log/logger.hpp"
+#include "cse/uri.hpp"
 
 #include <boost/lexical_cast.hpp>
 #include <xercesc/dom/DOM.hpp>
@@ -18,8 +14,14 @@
 #include <xercesc/util/PlatformUtils.hpp>
 #include <xercesc/util/XMLString.hpp>
 
+#include <ios>
 #include <memory>
+#include <stdexcept>
+#include <sstream>
 #include <string>
+#include <unordered_map>
+#include <vector>
+#include <utility>
 
 
 namespace cse
@@ -553,13 +555,6 @@ bool cse_config_parser::parse_boolean_value(const std::string& s)
     return bool_value;
 }
 
-struct slave_info
-{
-    simulator_index index;
-    std::map<std::string, variable_description> variables;
-};
-
-
 struct variable_group_description
 {
     std::string name;
@@ -617,28 +612,6 @@ struct extended_model_description
 namespace
 {
 
-std::pair<variable_id, variable_causality> get_variable(
-    const std::unordered_map<std::string, slave_info>& slaves,
-    const std::string& element,
-    const std::string& connector)
-{
-    auto slaveIt = slaves.find(element);
-    if (slaveIt == slaves.end()) {
-        std::ostringstream oss;
-        oss << "Cannot find simulator: " << element;
-        throw std::out_of_range(oss.str());
-    }
-    auto slave = slaveIt->second;
-    auto vdIt = slave.variables.find(connector);
-    if (vdIt == slave.variables.end()) {
-        std::ostringstream oss;
-        oss << "Cannot find variable: " << element << ":" << connector;
-        throw std::out_of_range(oss.str());
-    }
-    auto variable = vdIt->second;
-    return {{slave.index, variable.type, variable.reference}, variable.causality};
-}
-
 cse_config_parser::SignalConnection find_signal_connection(
     const std::vector<cse_config_parser::SignalConnection>& signalConnections,
     const std::string& functionName,
@@ -656,62 +629,28 @@ cse_config_parser::SignalConnection find_signal_connection(
     return *it;
 }
 
-void verify_causality(variable_causality actual, variable_causality expected, const cse_config_parser::SignalConnection& conn)
-{
-    if (actual != expected) {
-        std::ostringstream oss;
-        oss << "Cannot create connection. There is a causality imbalance between "
-            << conn.variable.simulator << ":" << conn.variable.name
-            << " and "
-            << conn.signal.function << ":" << conn.signal.name;
-        throw std::runtime_error(oss.str());
-    }
-}
-
-void verify_type(variable_type actual, variable_type expected, const cse_config_parser::SignalConnection& conn)
-{
-    if (actual != expected) {
-        std::ostringstream oss;
-        oss << "Cannot create connection. There is a type mismatch between "
-            << conn.variable.simulator << ":" << conn.variable.name
-            << " and "
-            << conn.signal.function << ":" << conn.signal.name;
-        throw std::runtime_error(oss.str());
-    }
-}
-
 } // namespace
 
 void connect_variables(
     const std::vector<cse_config_parser::VariableConnection>& variableConnections,
-    const std::unordered_map<std::string, slave_info>& slaves,
-    cse::execution& execution)
+    system_structure systemStructure)
 {
     for (const auto& connection : variableConnections) {
-        auto [variableIdA, causalityA] =
-            get_variable(slaves, connection.variableA.simulator, connection.variableA.name);
-        auto [variableIdB, causalityB] =
-            get_variable(slaves, connection.variableB.simulator, connection.variableB.name);
+        const auto variableA = full_variable_name(
+            connection.variableA.simulator,
+            connection.variableA.name);
+        const auto variableB = full_variable_name(
+            connection.variableB.simulator,
+            connection.variableB.name);
 
-        variable_id output;
-        variable_id input;
-        if (variable_causality::input == causalityA && variable_causality::output == causalityB) {
-            output = variableIdB;
-            input = variableIdA;
-        } else if (variable_causality::output == causalityA && variable_causality::input == causalityB) {
-            output = variableIdA;
-            input = variableIdB;
+        const auto causalityA =
+            systemStructure.get_variable_description(variableA).causality;
+        if (causalityA == variable_causality::output ||
+            causalityA == variable_causality::calculated_parameter) {
+            systemStructure.connect_variables(variableA, variableB);
         } else {
-            std::ostringstream oss;
-            oss << "Cannot create connection. There is a causality imbalance between variables "
-                << connection.variableA.simulator << ":" << connection.variableA.name
-                << " (" << causalityA << ") and "
-                << connection.variableB.simulator << ":" << connection.variableB.name
-                << " (" << causalityB << ").";
-            throw std::runtime_error(oss.str());
+            systemStructure.connect_variables(variableB, variableA);
         }
-
-        execution.connect_variables(output, input);
     }
 }
 
@@ -764,10 +703,10 @@ std::vector<cse::variable_group_description> get_variable_groups(
     return groupIt->second.variable_group_descriptions;
 }
 
+
 void connect_variable_groups(
     const std::vector<cse_config_parser::VariableConnection>& variableGroupConnections,
-    const std::unordered_map<std::string, slave_info>& slaves,
-    cse::execution& execution,
+    system_structure& systemStructure,
     const std::unordered_map<std::string, extended_model_description>& emds)
 {
 
@@ -797,7 +736,7 @@ void connect_variable_groups(
                 {connection.variableB.simulator, variableGroupsB.at(i).name}});
         }
         // clang-format on
-        connect_variable_groups(nestedVariableGroupConnections, slaves, execution, emds);
+        connect_variable_groups(nestedVariableGroupConnections, systemStructure, emds);
 
         if (variablesA.size() != variablesB.size()) {
             std::ostringstream oss;
@@ -819,125 +758,109 @@ void connect_variable_groups(
         }
         // clang-format on
 
-        connect_variables(variableConnections, slaves, execution);
+        connect_variables(variableConnections, systemStructure);
     }
 }
 
 void connect_linear_transformation_functions(
     const std::unordered_map<std::string, cse_config_parser::LinearTransformationFunction>& functions,
     const std::vector<cse_config_parser::SignalConnection>& signalConnections,
-    const std::unordered_map<std::string, slave_info>& slaves,
-    cse::execution& execution)
+    system_structure& systemStructure)
 {
     for (const auto& [functionName, function] : functions) {
+        function_parameter_value_map functionParams;
+        functionParams[linear_transformation_function_type::offset_parameter_index] = function.offset;
+        functionParams[linear_transformation_function_type::factor_parameter_index] = function.factor;
+        systemStructure.add_entity(
+            functionName,
+            std::make_shared<linear_transformation_function_type>(),
+            functionParams);
+
         const auto inConn = find_signal_connection(signalConnections, functionName, function.in.name);
-        const auto [sourceVar, sourceVarCausality] = get_variable(slaves, inConn.variable.simulator, inConn.variable.name);
-        verify_causality(sourceVarCausality, variable_causality::output, inConn);
-        verify_type(sourceVar.type, variable_type::real, inConn);
-
         const auto outConn = find_signal_connection(signalConnections, functionName, function.out.name);
-        const auto [targetVar, targetVarCausality] = get_variable(slaves, outConn.variable.simulator, outConn.variable.name);
-        verify_causality(targetVarCausality, variable_causality::input, outConn);
-        verify_type(targetVar.type, variable_type::real, inConn);
-
-        const auto fn = execution.add_function(
-            std::make_shared<linear_transformation_function>(function.offset, function.factor));
-        execution.connect_variables(
-            sourceVar,
-            function_io_id{fn, variable_type::real, linear_transformation_function::in_io_reference});
-        execution.connect_variables(
-            function_io_id{fn, variable_type::real, linear_transformation_function::out_io_reference},
-            targetVar);
+        systemStructure.connect_variables(
+            full_variable_name(inConn.variable.simulator, inConn.variable.name),
+            full_variable_name(functionName, "in", ""));
+        systemStructure.connect_variables(
+            full_variable_name(functionName, "out", ""),
+            full_variable_name(outConn.variable.simulator, outConn.variable.name));
     }
 }
 
 void connect_sum_functions(
     const std::unordered_map<std::string, cse_config_parser::SumFunction>& functions,
     const std::vector<cse_config_parser::SignalConnection>& signalConnections,
-    const std::unordered_map<std::string, slave_info>& slaves,
-    cse::execution& execution)
+    system_structure& systemStructure)
 {
     for (const auto& [functionName, function] : functions) {
-        std::vector<variable_id> sourceVars;
+        function_parameter_value_map functionParams;
+        functionParams[vector_sum_function_type::inputCount_parameter_index] = function.inputCount;
+        systemStructure.add_entity(
+            functionName,
+            std::make_shared<vector_sum_function_type>(),
+            functionParams);
+
         for (int i = 0; i < function.inputCount; i++) {
             const auto inConn = find_signal_connection(signalConnections, functionName, function.ins.at(i).name);
-            const auto [sourceVar, sourceVarCausality] = get_variable(slaves, inConn.variable.simulator, inConn.variable.name);
-            verify_causality(sourceVarCausality, variable_causality::output, inConn);
-            verify_type(sourceVar.type, variable_type::real, inConn);
-            sourceVars.push_back(sourceVar);
+            systemStructure.connect_variables(
+                full_variable_name(inConn.variable.simulator, inConn.variable.name),
+                full_variable_name(functionName, "in", i, "", 0));
         }
         const auto outConn = find_signal_connection(signalConnections, functionName, function.out.name);
-        const auto [targetVar, targetVarCausality] = get_variable(slaves, outConn.variable.simulator, outConn.variable.name);
-        verify_causality(targetVarCausality, variable_causality::input, outConn);
-        verify_type(targetVar.type, variable_type::real, outConn);
-
-        const auto fn = execution.add_function(
-            std::make_shared<vector_sum_function<double>>(function.inputCount, 1));
-        for (int i = 0; i < function.inputCount; ++i) {
-            execution.connect_variables(
-                sourceVars.at(i),
-                function_io_id{fn, variable_type::real, vector_sum_function<double>::in_io_reference(i, 0)});
-        }
-        execution.connect_variables(
-            function_io_id{fn, variable_type::real, vector_sum_function<double>::out_io_reference(0)},
-            targetVar);
+        systemStructure.connect_variables(
+            full_variable_name(functionName, "out", ""),
+            full_variable_name(outConn.variable.simulator, outConn.variable.name));
     }
 }
 
 void connect_vector_sum_functions(
     const std::unordered_map<std::string, cse_config_parser::VectorSumFunction>& functions,
     const std::vector<cse_config_parser::SignalConnection>& signalGroupConnections,
-    const std::unordered_map<std::string, slave_info>& slaves,
-    cse::execution& execution,
+    system_structure& systemStructure,
     const std::unordered_map<std::string, extended_model_description>& emds)
 {
     for (const auto& [functionName, function] : functions) {
-        const auto fn = execution.add_function(
-            std::make_shared<vector_sum_function<double>>(function.inputCount, function.dimension));
+        function_parameter_value_map functionParams;
+        functionParams[vector_sum_function_type::inputCount_parameter_index] = function.inputCount;
+        functionParams[vector_sum_function_type::dimension_parameter_index] = function.dimension;
+        systemStructure.add_entity(
+            functionName,
+            std::make_shared<vector_sum_function_type>(),
+            functionParams);
 
-        for (int i = 0; i < function.dimension; i++) {
+        for (int i = 0; i < function.inputCount; ++i) {
+            const auto inGroupConn = find_signal_connection(
+                signalGroupConnections, functionName, function.inGroups.at(i).name);
+            const auto& inEmd = emds.at(inGroupConn.variable.simulator);
+            const auto& inVariableGroup = inEmd.variableGroups.at(inGroupConn.variable.name);
 
-            const auto outGroupConn = find_signal_connection(signalGroupConnections, functionName, function.outGroup.name);
-            const auto& emd = emds.at(outGroupConn.variable.simulator);
-            const auto& variableGroup = emd.variableGroups.at(outGroupConn.variable.name);
-            const auto& variableName = variableGroup.variables.at(i);
-            const auto [targetVar, targetVarCausality] = get_variable(slaves, outGroupConn.variable.simulator, variableName);
-            verify_causality(targetVarCausality, variable_causality::input, outGroupConn);
-            verify_type(targetVar.type, variable_type::real, outGroupConn);
-            variable_id targetVariable = targetVar;
-
-            std::vector<variable_id> sourceVariables;
-            for (int j = 0; j < function.inputCount; j++) {
-                const auto inGroupConn = find_signal_connection(signalGroupConnections, functionName, function.inGroups.at(j).name);
-                const auto& inEmd = emds.at(inGroupConn.variable.simulator);
-                const auto& inVariableGroup = inEmd.variableGroups.at(inGroupConn.variable.name);
-                const auto& inVariableName = inVariableGroup.variables.at(i);
-                const auto [sourceVar, sourceVarCausality] = get_variable(slaves, inGroupConn.variable.simulator, inVariableName);
-                verify_causality(sourceVarCausality, variable_causality::output, inGroupConn);
-                verify_type(sourceVar.type, variable_type::real, inGroupConn);
-                sourceVariables.push_back(sourceVar);
+            for (int j = 0; j < function.dimension; ++j) {
+                const auto& inVariableName = inVariableGroup.variables.at(j);
+                systemStructure.connect_variables(
+                    full_variable_name(inGroupConn.variable.simulator, inVariableName),
+                    full_variable_name(functionName, "in", i, "", j));
             }
+        }
 
-            for (int j = 0; j < function.inputCount; ++j) {
-                execution.connect_variables(
-                    sourceVariables.at(j),
-                    function_io_id{fn, variable_type::real, vector_sum_function<double>::in_io_reference(j, i)});
-            }
-            execution.connect_variables(
-                function_io_id{fn, variable_type::real, vector_sum_function<double>::out_io_reference(i)},
-                targetVariable);
+        const auto outGroupConn = find_signal_connection(
+                signalGroupConnections, functionName, function.outGroup.name);
+        const auto& outEmd = emds.at(outGroupConn.variable.simulator);
+        const auto& outVariableGroup = outEmd.variableGroups.at(outGroupConn.variable.name);
+        for (int j = 0; j < function.dimension; ++j) {
+            const auto& outVariableName = outVariableGroup.variables.at(j);
+            systemStructure.connect_variables(
+                full_variable_name(functionName, "out", 0, "", j),
+                full_variable_name(outGroupConn.variable.simulator, outVariableName));
         }
     }
 }
 
 } // namespace
 
-std::pair<execution, simulator_map> load_cse_config(
-    model_uri_resolver& resolver,
+cse_config load_cse_config(
     const boost::filesystem::path& configPath,
-    std::optional<time_point> overrideStartTime)
+    model_uri_resolver& resolver)
 {
-    simulator_map simulatorMap;
     const auto absolutePath = boost::filesystem::absolute(configPath);
     const auto configFile = boost::filesystem::is_regular_file(absolutePath)
         ? absolutePath
@@ -953,48 +876,25 @@ std::pair<execution, simulator_map> load_cse_config(
         BOOST_LOG_SEV(log::logger(), log::error) << oss.str();
         throw std::invalid_argument(oss.str());
     }
-    const duration stepSize = to_duration(simInfo.stepSize);
+
+    cse_config config;
+    config.start_time = to_time_point(simInfo.startTime);
+    config.step_size = to_duration(simInfo.stepSize);
 
     auto simulators = parser.get_elements();
 
-    const auto startTime = overrideStartTime ? *overrideStartTime : to_time_point(simInfo.startTime);
-    auto exec = execution(startTime, std::make_shared<fixed_step_algorithm>(stepSize));
-
-    std::unordered_map<std::string, slave_info> slaves;
     std::unordered_map<std::string, extended_model_description> emds;
     for (const auto& simulator : simulators) {
         auto model = resolver.lookup_model(baseURI, simulator.source);
-        auto slave = model->instantiate(simulator.name);
-        simulator_index index = slaves[simulator.name].index = exec.add_slave(
-            slave,
+        config.system_structure.add_entity(
             simulator.name,
+            model,
             simulator.stepSize ? to_duration(*simulator.stepSize) : duration::zero());
-        simulatorMap[simulator.name] = simulator_map_entry{index, *model->description()};
-
-        for (const auto& v : model->description()->variables) {
-            slaves[simulator.name].variables[v.name] = v;
-        }
 
         for (const auto& p : simulator.initialValues) {
-            auto reference = find_variable(*model->description(), p.name).reference;
-            BOOST_LOG_SEV(log::logger(), log::info)
-                << "Initializing variable " << simulator.name << ":" << p.name << " with value " << streamer{p.value};
-            switch (p.type) {
-                case variable_type::real:
-                    exec.set_real_initial_value(index, reference, std::get<double>(p.value));
-                    break;
-                case variable_type::integer:
-                    exec.set_integer_initial_value(index, reference, std::get<int>(p.value));
-                    break;
-                case variable_type::boolean:
-                    exec.set_boolean_initial_value(index, reference, std::get<bool>(p.value));
-                    break;
-                case variable_type::string:
-                    exec.set_string_initial_value(index, reference, std::get<std::string>(p.value));
-                    break;
-                default:
-                    throw error(make_error_code(errc::unsupported_feature), "Variable type not supported yet");
-            }
+            config.initial_values.emplace(
+                full_variable_name(simulator.name, p.name),
+                p.value);
         }
 
         std::string msmiFileName = model->description()->name + "_OspModelDescription.xml";
@@ -1021,13 +921,13 @@ std::pair<execution, simulator_map> load_cse_config(
         }
     }
 
-    connect_variables(parser.get_variable_connections(), slaves, exec);
-    connect_variable_groups(parser.get_variable_group_connections(), slaves, exec, emds);
-    connect_linear_transformation_functions(parser.get_linear_transformation_functions(), parser.get_signal_connections(), slaves, exec);
-    connect_sum_functions(parser.get_sum_functions(), parser.get_signal_connections(), slaves, exec);
-    connect_vector_sum_functions(parser.get_vector_sum_functions(), parser.get_signal_group_connections(), slaves, exec, emds);
+    connect_variables(parser.get_variable_connections(), config.system_structure);
+    connect_variable_groups(parser.get_variable_group_connections(), config.system_structure, emds);
+    connect_linear_transformation_functions(parser.get_linear_transformation_functions(), parser.get_signal_connections(), config.system_structure);
+    connect_sum_functions(parser.get_sum_functions(), parser.get_signal_connections(), config.system_structure);
+    connect_vector_sum_functions(parser.get_vector_sum_functions(), parser.get_signal_group_connections(), config.system_structure, emds);
 
-    return std::make_pair(std::move(exec), std::move(simulatorMap));
+    return config;
 }
 
 } // namespace cse

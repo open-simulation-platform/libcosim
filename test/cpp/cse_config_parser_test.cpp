@@ -1,3 +1,4 @@
+#include <cse/algorithm/fixed_step_algorithm.hpp>
 #include <cse/cse_config_parser.hpp>
 #include <cse/log/simple.hpp>
 #include <cse/observer/last_value_observer.hpp>
@@ -15,11 +16,14 @@
 void test(const boost::filesystem::path& configPath)
 {
     auto resolver = cse::default_model_uri_resolver();
-    auto simulation = cse::load_cse_config(*resolver, configPath, cse::to_time_point(0.0));
-    auto& execution = simulation.first;
-    auto& simulator_map = simulation.second;
+    const auto config = cse::load_cse_config(configPath, *resolver);
+    auto execution = cse::execution(
+        config.start_time,
+        std::make_shared<cse::fixed_step_algorithm>(config.step_size));
 
-    REQUIRE(simulator_map.size() == 4);
+    const auto entityMaps = cse::inject_system_structure(
+        execution, config.system_structure, config.initial_values);
+    REQUIRE(entityMaps.simulators.size() == 4);
 
     auto obs = std::make_shared<cse::last_value_observer>();
     execution.add_observer(obs);
@@ -27,10 +31,11 @@ void test(const boost::filesystem::path& configPath)
     auto result = execution.simulate_until(cse::to_time_point(1e-3));
     REQUIRE(result.get());
 
-    cse::simulator_index i = simulator_map.at("CraneController").index;
+    const auto simIndex = entityMaps.simulators.at("CraneController");
+    const auto varReference =
+        config.system_structure.get_variable_description({"CraneController", "cl1_min"}).reference;
     double realValue = -1.0;
-    cse::value_reference reference = cse::find_variable(simulator_map.at("CraneController").description, "cl1_min").reference;
-    obs->get_real(i, gsl::make_span(&reference, 1), gsl::make_span(&realValue, 1));
+    obs->get_real(simIndex, gsl::make_span(&varReference, 1), gsl::make_span(&realValue, 1));
 
     double magicNumberFromConf = 2.2;
     REQUIRE(std::fabs(realValue - magicNumberFromConf) < 1e-9);

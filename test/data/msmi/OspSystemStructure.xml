@@ -26,7 +26,7 @@
                 </InitialValue>
             </InitialValues>
         </Simulator>
-        <Simulator name="1Identity" source="../fmi1/identity.fmu" stepSize="2.03e-4">
+        <Simulator name="OneIdentity" source="../fmi1/identity.fmu" stepSize="2.03e-4">
             <InitialValues>
                 <InitialValue variable="booleanIn">
                     <Boolean value="true"/>
@@ -67,7 +67,7 @@
         </SignalConnection>
         <SignalConnection>
             <Signal function="myScaling" name="out"/>
-            <Variable simulator="1Identity" name="realIn"/>
+            <Variable simulator="OneIdentity" name="realIn"/>
         </SignalConnection>
     </Connections>
 </OspSystemStructure>
