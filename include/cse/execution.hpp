@@ -283,19 +283,19 @@ public:
     void set_real_time_factor_target(double realTimeFactor);
 
     /// Returns if this is a real time simulation
-    bool is_real_time_simulation();
+    bool is_real_time_simulation() const;
 
     /// Returns the current real time factor
-    double get_measured_real_time_factor();
+    double get_measured_real_time_factor() const;
 
     /// Returns the current real time factor target
-    double get_real_time_factor_target();
+    double get_real_time_factor_target() const;
 
     /// Returns the simulator with the given index
     std::shared_ptr<const simulator> get_simulator(simulator_index index) const;
 
     /// Returns a map of currently modified variables
-    std::vector<variable_id> get_modified_variables();
+    std::vector<variable_id> get_modified_variables() const;
 
     /// Set initial value for a variable of type real. Must be called before simulation is started.
     void set_real_initial_value(simulator_index sim, value_reference var, double value);

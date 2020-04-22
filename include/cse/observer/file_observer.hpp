@@ -95,6 +95,7 @@ private:
     {
         std::vector<variable_description> variables;
         size_t decimationFactor;
+        bool timeStampedFileNames;
     };
 
     simulator_logging_config parse_config(const std::string& simulatorName);

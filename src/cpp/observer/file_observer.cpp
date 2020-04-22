@@ -32,24 +32,34 @@ std::string format_time(boost::posix_time::ptime now)
     std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
     return converter.to_bytes(wss.str());
 }
+
+void clear_file_contents_if_exists(const boost::filesystem::path& filePath, boost::filesystem::ofstream& fsw){
+    if (boost::filesystem::exists(filePath)) {
+        //clear file contents
+        fsw.open(filePath, std::ios_base::out | std::ios_base::trunc);
+        fsw.close();
+    }
+}
 } // namespace
 
 
 class file_observer::slave_value_writer
 {
 public:
-    slave_value_writer(observable* observable, boost::filesystem::path& logDir)
+    slave_value_writer(observable* observable, boost::filesystem::path& logDir, bool timeStampedFileNames = true)
         : observable_(observable)
         , logDir_(logDir)
+        , timeStampedFileNames_(timeStampedFileNames)
     {
         initialize_default();
     }
 
     slave_value_writer(observable* observable, boost::filesystem::path& logDir, size_t decimationFactor,
-        const std::vector<variable_description>& variables)
+        const std::vector<variable_description>& variables, bool timeStampedFileNames = true)
         : observable_(observable)
         , logDir_(logDir)
         , decimationFactor_(decimationFactor)
+        , timeStampedFileNames_(timeStampedFileNames)
     {
         initialize_config(variables);
     }
@@ -147,6 +157,11 @@ private:
     /** Default constructor initialization, all variables are logged. */
     void initialize_default()
     {
+        if (!timeStampedFileNames_) {
+            const auto filePath = logDir_ / observable_->name().append(".csv");
+            clear_file_contents_if_exists(filePath, fsw_);
+        }
+
         for (const auto& vd : observable_->model_description().variables) {
             if (vd.causality != variable_causality::local) {
                 initialize_variable(vd);
@@ -157,6 +172,11 @@ private:
     /** External config initialization, only configured variables are logged. */
     void initialize_config(const std::vector<variable_description>& variables)
     {
+        if (!timeStampedFileNames_) {
+            const auto filePath = logDir_ / observable_->name().append(".csv");
+            clear_file_contents_if_exists(filePath, fsw_);
+        }
+
         for (const auto& vd : variables) {
             initialize_variable(vd);
         }
@@ -164,12 +184,17 @@ private:
 
     void create_log_file()
     {
-        auto time_str = format_time(boost::posix_time::microsec_clock::local_time());
-        auto filename = observable_->name().append("_").append(time_str).append(".csv");
+        std::string filename;
+        if (!timeStampedFileNames_) {
+            filename = observable_->name().append(".csv");
+        } else {
+            auto time_str = format_time(boost::posix_time::microsec_clock::local_time());
+            filename = observable_->name().append("_").append(time_str).append(".csv");
+        }
 
-        auto filepath = logDir_ / filename;
+        const auto filePath = logDir_ / filename;
         boost::filesystem::create_directories(logDir_);
-        fsw_.open(filepath, std::ios_base::out | std::ios_base::app);
+        fsw_.open(filePath, std::ios_base::out | std::ios_base::app);
 
         if (fsw_.fail()) {
             throw std::runtime_error("Failed to open file stream for logging");
@@ -240,6 +265,7 @@ private:
     std::stringstream ss_;
     std::atomic<bool> recording_ = true;
     std::mutex mutex_;
+    bool timeStampedFileNames_ = true;
 };
 
 file_observer::file_observer(const boost::filesystem::path& logDir)
@@ -283,7 +309,9 @@ void file_observer::simulator_added(
         // Read all configured model names from the XML. If simulator name is not in the list, do nothing.
         std::vector<std::string> modelNames;
         for (const auto& simulatorChild : ptree_.get_child("simulators")) {
-            modelNames.push_back(get_attribute<std::string>(simulatorChild.second, "name"));
+            if (simulatorChild.first == "simulator") {
+                modelNames.push_back(get_attribute<std::string>(simulatorChild.second, "name"));
+            }
         }
         if (std::find(modelNames.begin(), modelNames.end(), simulator->name()) != modelNames.end()) {
             auto config = parse_config(simulator->name());
@@ -292,7 +320,8 @@ void file_observer::simulator_added(
                 simulator,
                 logDir_,
                 config.decimationFactor,
-                config.variables);
+                config.variables,
+                config.timeStampedFileNames);
         } else {
             return;
         }
@@ -382,53 +411,55 @@ cse::observable* find_simulator(
 
 file_observer::simulator_logging_config file_observer::parse_config(const std::string& simulatorName)
 {
-    for (const auto& childElement : ptree_.get_child("simulators")) {
-        auto simulatorElement = childElement.second;
+    auto simulators = ptree_.get_child("simulators");
+    bool timeStampedFileNames = simulators.get<bool>("<xmlattr>.timeStampedFileNames", true);
+    for (const auto& childElement : simulators) {
+        if (childElement.first == "simulator") {
+            auto simulatorElement = childElement.second;
+            auto modelName = get_attribute<std::string>(simulatorElement, "name");
+            if (modelName == simulatorName) {
+                simulator_logging_config config;
+                config.timeStampedFileNames = timeStampedFileNames;
+                config.decimationFactor = get_attribute<size_t>(simulatorElement, "decimationFactor", defaultDecimationFactor_);
 
-        auto modelName = get_attribute<std::string>(simulatorElement, "name");
-        if (modelName == simulatorName) {
-            simulator_logging_config config;
+                const auto& simulator = find_simulator(simulators_, modelName);
+                if (simulatorElement.count("variable") == 0) {
 
-            config.decimationFactor = get_attribute<size_t>(simulatorElement, "decimationFactor", defaultDecimationFactor_);
-
-            const auto& simulator = find_simulator(simulators_, modelName);
-
-            if (simulatorElement.count("variable") == 0) {
-
-                for (const auto& vd : simulator->model_description().variables) {
-                    switch (vd.type) {
-                        case variable_type::real:
-                        case variable_type::integer:
-                        case variable_type::boolean:
-                        case variable_type::string:
-                            config.variables.push_back(vd);
-                            break;
-                        default:
-                            break;
-                    }
-                }
-            } else {
-                for (const auto& [variableElementName, variableElement] : simulatorElement) {
-                    if (variableElementName == "variable") {
-                        const auto name = get_attribute<std::string>(variableElement, "name");
-                        const auto variableDescription =
-                            find_variable(simulator->model_description(), name);
-
-                        switch (variableDescription.type) {
+                    for (const auto& vd : simulator->model_description().variables) {
+                        switch (vd.type) {
                             case variable_type::real:
                             case variable_type::integer:
                             case variable_type::boolean:
                             case variable_type::string:
-                                config.variables.push_back(variableDescription);
-                                BOOST_LOG_SEV(log::logger(), log::info) << "Logging variable: " << modelName << ":" << name;
+                                config.variables.push_back(vd);
                                 break;
                             default:
-                                CSE_PANIC_M("Variable type not supported.");
+                                break;
+                        }
+                    }
+                } else {
+                    for (const auto& [variableElementName, variableElement] : simulatorElement) {
+                        if (variableElementName == "variable") {
+                            const auto name = get_attribute<std::string>(variableElement, "name");
+                            const auto variableDescription =
+                                find_variable(simulator->model_description(), name);
+
+                            switch (variableDescription.type) {
+                                case variable_type::real:
+                                case variable_type::integer:
+                                case variable_type::boolean:
+                                case variable_type::string:
+                                    config.variables.push_back(variableDescription);
+                                    BOOST_LOG_SEV(log::logger(), log::info) << "Logging variable: " << modelName << ":" << name;
+                                    break;
+                                default:
+                                    CSE_PANIC_M("Variable type not supported.");
+                            }
                         }
                     }
                 }
+                return config;
             }
-            return config;
         }
     }
     return simulator_logging_config();
