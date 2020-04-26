@@ -633,7 +633,7 @@ cse_config_parser::SignalConnection find_signal_connection(
 
 void connect_variables(
     const std::vector<cse_config_parser::VariableConnection>& variableConnections,
-    system_structure systemStructure)
+    system_structure& systemStructure)
 {
     for (const auto& connection : variableConnections) {
         const auto variableA = full_variable_name(
