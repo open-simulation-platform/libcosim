@@ -13,7 +13,7 @@
 #define REQUIRE(test) \
     if (!(test)) throw std::runtime_error("Requirement not satisfied: " #test)
 
-void test(const boost::filesystem::path& configPath, int expectedNumConnections)
+void test(const boost::filesystem::path& configPath, size_t expectedNumConnections)
 {
     auto resolver = cse::default_model_uri_resolver();
     const auto config = cse::load_cse_config(configPath, *resolver);
