@@ -13,7 +13,7 @@
 #define REQUIRE(test) \
     if (!(test)) throw std::runtime_error("Requirement not satisfied: " #test)
 
-void test(const boost::filesystem::path& configPath)
+void test(const boost::filesystem::path& configPath, int expectedNumConnections)
 {
     auto resolver = cse::default_model_uri_resolver();
     const auto config = cse::load_cse_config(configPath, *resolver);
@@ -24,6 +24,7 @@ void test(const boost::filesystem::path& configPath)
     const auto entityMaps = cse::inject_system_structure(
         execution, config.system_structure, config.initial_values);
     REQUIRE(entityMaps.simulators.size() == 4);
+    REQUIRE(boost::size(config.system_structure.connections()) == expectedNumConnections);
 
     auto obs = std::make_shared<cse::last_value_observer>();
     execution.add_observer(obs);
@@ -49,8 +50,8 @@ int main()
 
         const auto testDataDir = std::getenv("TEST_DATA_DIR");
         REQUIRE(testDataDir);
-        test(boost::filesystem::path(testDataDir) / "msmi");
-        test(boost::filesystem::path(testDataDir) / "msmi" / "OspSystemStructure_Bond.xml");
+        test(boost::filesystem::path(testDataDir) / "msmi",7);
+        test(boost::filesystem::path(testDataDir) / "msmi" / "OspSystemStructure_Bond.xml",9);
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what();
         return 1;
