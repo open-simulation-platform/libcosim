@@ -3,7 +3,7 @@ All notable changes to cse-core will be documented in this file. This includes n
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
-### [v0.6.0] – 2020-mm-dd
+### [v0.6.0] – 2020-04-27
 ##### Changed
 * MSMI configuration (OspSystemStructure.xml and OspModelDescription.xml) updated 
      * plugs, sockets and bonds replaced with variable groups 
