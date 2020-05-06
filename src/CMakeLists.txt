@@ -130,8 +130,8 @@ set(allSources ${publicHeadersFull} ${privateHeaders} ${generatedHeaders} ${sour
 
 add_custom_command(
     OUTPUT cse_system_structure.hpp
-    COMMAND csexsdembedder "${CMAKE_CURRENT_SOURCE_DIR}/cse/xsd/OspSystemStructure.xsd" cse_system_structure.hpp
-    DEPENDS cse/xsd/OspSystemStructure.xsd)
+    COMMAND csexsdembedder "${CMAKE_SOURCE_DIR}/data/xsd/OspSystemStructure.xsd" cse_system_structure.hpp
+    DEPENDS ${CMAKE_SOURCE_DIR}/data/xsd/OspSystemStructure.xsd)
 
 add_library(csecorecpp ${allSources})
 target_compile_definitions(csecorecpp PUBLIC "BOOST_ALL_DYN_LINK=1" "BOOST_ALL_NO_LIB=1" "BOOST_CONFIG_SUPPRESS_OUTDATED_MESSAGE=1")

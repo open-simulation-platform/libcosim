@@ -134,7 +134,7 @@ add_subdirectory("src")
 add_subdirectory("tools/cse_xsd_embedder")
 if(CSECORE_BUILD_TESTS)
     enable_testing()
-    add_subdirectory("test/cpp")
+    add_subdirectory("tests")
 endif()
 
 # ==============================================================================
