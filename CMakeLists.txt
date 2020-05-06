@@ -55,9 +55,8 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang
     endif()
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     add_compile_options("/W4")
-    if(CMAKE_GENERATOR STREQUAL "NMake Makefiles")
+    if(CMAKE_GENERATOR MATCHES "NMake Makefiles.*")
         string(REPLACE "/W3" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
-        string(REPLACE "/W3" "" CMAKE_C_FLAGS ${CMAKE_C_FLAGS})
     endif()
     add_compile_options("/wd4996")
     if(CSECORE_TREAT_WARNINGS_AS_ERRORS)
@@ -132,12 +131,10 @@ endif()
 # ==============================================================================
 
 add_subdirectory("src/cpp")
-add_subdirectory("src/c")
 add_subdirectory("tools/cse_xsd_embedder")
 if(CSECORE_BUILD_TESTS)
     enable_testing()
     add_subdirectory("test/cpp")
-    add_subdirectory("test/c")
 endif()
 
 # ==============================================================================
@@ -164,11 +161,9 @@ if(DOXYGEN_FOUND)
     if(CSECORE_BUILD_PRIVATE_APIDOC)
         list(APPEND doxygenInputs
             "${CMAKE_SOURCE_DIR}/src/cpp"
-            "${CMAKE_SOURCE_DIR}/src/c"
         )
         list(APPEND DOXYGEN_STRIP_FROM_INC_PATH
             "${CMAKE_SOURCE_DIR}/src/cpp"
-            "${CMAKE_SOURCE_DIR}/src/c"
         )
         list(APPEND DOXYGEN_STRIP_FROM_PATH "${CMAKE_SOURCE_DIR}")
     endif()

@@ -67,5 +67,4 @@ class CSECoreConan(ConanFile):
         cmake.install()
         cmake.build(target="install-doc")
 
-    def package_info(self):
-        self.cpp_info.libs = [ "csecorecpp", "csecorec" ]
+    def package_info(self):        self.cpp_info.libs = [ "csecorecpp" ]
