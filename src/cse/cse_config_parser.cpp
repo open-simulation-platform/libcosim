@@ -1,6 +1,6 @@
 #include "cse/cse_config_parser.hpp"
 
-#include "cse_system_structure.hpp"
+#include "osp_system_structure_schema.hpp"
 
 #include "cse/function/linear_transformation.hpp"
 #include "cse/function/vector_sum.hpp"

@@ -58,7 +58,7 @@ set(privateHeaders
     "cse/utility/zip.hpp"
 )
 set(generatedHeaders
-    "cse_system_structure.hpp"
+    "osp_system_structure_schema.hpp"
 )
 set(sources
     "cse/algorithm/fixed_step_algorithm.cpp"
@@ -129,9 +129,9 @@ endforeach()
 set(allSources ${publicHeadersFull} ${privateHeaders} ${generatedHeaders} ${sources})
 
 add_custom_command(
-    OUTPUT cse_system_structure.hpp
-    COMMAND csexsdembedder "${CMAKE_SOURCE_DIR}/data/xsd/OspSystemStructure.xsd" cse_system_structure.hpp
-    DEPENDS ${CMAKE_SOURCE_DIR}/data/xsd/OspSystemStructure.xsd csexsdembedder)
+    OUTPUT osp_system_structure_schema.hpp
+    COMMAND osp-xsd-embedder "${CMAKE_SOURCE_DIR}/data/xsd/OspSystemStructure.xsd" osp_system_structure_schema.hpp
+    DEPENDS ${CMAKE_SOURCE_DIR}/data/xsd/OspSystemStructure.xsd osp-xsd-embedder)
 
 add_library(csecorecpp ${allSources})
 target_compile_definitions(csecorecpp PUBLIC "BOOST_ALL_DYN_LINK=1" "BOOST_ALL_NO_LIB=1" "BOOST_CONFIG_SUPPRESS_OUTDATED_MESSAGE=1")

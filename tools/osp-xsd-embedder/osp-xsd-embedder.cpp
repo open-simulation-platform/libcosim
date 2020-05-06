@@ -23,7 +23,7 @@ int main(int argc, char** argv)
 {
     if (argc != 3) {
         std::cerr << "Wrong number of arguments!" << std::endl;
-        std::cout << "csexsdembedder requires 2 arguments:" << std::endl;
+        std::cout << "ospxsdembedder requires 2 arguments:" << std::endl;
         std::cout << " 1: Name of input file" << std::endl;
         std::cout << " 2: Name of output file" << std::endl;
         return 1;
