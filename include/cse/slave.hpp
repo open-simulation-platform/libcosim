@@ -13,7 +13,7 @@
 #include <string>
 
 
-namespace cse
+namespace cosim
 {
 
 
@@ -49,7 +49,7 @@ public:
     virtual ~slave() {}
 
     /// Returns a model description.
-    virtual cse::model_description model_description() const = 0;
+    virtual cosim::model_description model_description() const = 0;
 
     /**
      *  Instructs the slave to perform pre-simulation setup and enter

@@ -17,27 +17,27 @@
 int main()
 {
     try {
-        cse::log::setup_simple_console_logging();
-        cse::log::set_global_output_level(cse::log::trace);
+        cosim::log::setup_simple_console_logging();
+        cosim::log::set_global_output_level(cosim::log::trace);
 
-        constexpr cse::time_point startTime = cse::to_time_point(0.0);
-        constexpr cse::time_point endTime = cse::to_time_point(1.0);
-        constexpr cse::duration stepSize = cse::to_duration(0.1);
+        constexpr cosim::time_point startTime = cosim::to_time_point(0.0);
+        constexpr cosim::time_point endTime = cosim::to_time_point(1.0);
+        constexpr cosim::duration stepSize = cosim::to_duration(0.1);
 
-        auto execution = cse::execution(startTime, std::make_unique<cse::fixed_step_algorithm>(stepSize));
+        auto execution = cosim::execution(startTime, std::make_unique<cosim::fixed_step_algorithm>(stepSize));
 
-        auto observer = std::make_shared<cse::time_series_observer>();
-        auto manipulator = std::make_shared<cse::override_manipulator>();
+        auto observer = std::make_shared<cosim::time_series_observer>();
+        auto manipulator = std::make_shared<cosim::override_manipulator>();
         execution.add_observer(observer);
         execution.add_manipulator(manipulator);
 
         auto simIndex = execution.add_slave(
-            cse::make_pseudo_async(std::make_unique<mock_slave>(
+            cosim::make_pseudo_async(std::make_unique<mock_slave>(
                 [](double x) { return x + 1.234; },
                 [](int y) { return y + 2; })),
             "Slave");
 
-        observer->start_observing(cse::variable_id{simIndex, cse::variable_type::integer, mock_slave::integer_out_reference});
+        observer->start_observing(cosim::variable_id{simIndex, cosim::variable_type::integer, mock_slave::integer_out_reference});
 
         manipulator->override_integer_variable(simIndex, mock_slave::integer_out_reference, 1);
 
@@ -46,8 +46,8 @@ int main()
 
         const int numSamples = 10;
         int intOutputValues[numSamples];
-        cse::step_number steps[numSamples];
-        cse::time_point times[numSamples];
+        cosim::step_number steps[numSamples];
+        cosim::time_point times[numSamples];
 
         size_t samplesRead = observer->get_integer_samples(simIndex, mock_slave::integer_out_reference, 1, gsl::make_span(intOutputValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
         REQUIRE(samplesRead == 10);
@@ -60,7 +60,7 @@ int main()
         REQUIRE(modifiedVariables.size() == 1);
 
         for (auto var : modifiedVariables) {
-            REQUIRE(var.type == cse::variable_type::integer);
+            REQUIRE(var.type == cosim::variable_type::integer);
             REQUIRE(var.reference == 0);
         }
 

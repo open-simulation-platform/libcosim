@@ -4,7 +4,7 @@
 
 #include <mutex>
 
-namespace cse
+namespace cosim
 {
 
 namespace
@@ -33,16 +33,16 @@ slave_value_provider::slave_value_provider(observable* observable)
     for (const auto& vd : observable->model_description().variables) {
         observable->expose_for_getting(vd.type, vd.reference);
         switch (vd.type) {
-            case cse::variable_type::real:
+            case cosim::variable_type::real:
                 realSamples_[vd.reference] = double();
                 break;
-            case cse::variable_type::integer:
+            case cosim::variable_type::integer:
                 intSamples_[vd.reference] = int();
                 break;
-            case cse::variable_type::boolean:
+            case cosim::variable_type::boolean:
                 boolSamples_[vd.reference] = bool();
                 break;
-            case cse::variable_type::string:
+            case cosim::variable_type::string:
                 stringSamples_[vd.reference] = std::string();
                 break;
             default:

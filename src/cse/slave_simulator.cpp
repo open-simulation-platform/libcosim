@@ -13,7 +13,7 @@
 #include <unordered_map>
 
 
-namespace cse
+namespace cosim
 {
 namespace
 {
@@ -239,7 +239,7 @@ public:
         return name_;
     }
 
-    cse::model_description model_description() const
+    cosim::model_description model_description() const
     {
         return modelDescription_;
     }
@@ -522,7 +522,7 @@ private:
 private:
     std::shared_ptr<async_slave> slave_;
     std::string name_;
-    cse::model_description modelDescription_;
+    cosim::model_description modelDescription_;
 
     get_variable_cache<double> realGetCache_;
     get_variable_cache<int> integerGetCache_;
@@ -562,7 +562,7 @@ std::string slave_simulator::name() const
 }
 
 
-cse::model_description slave_simulator::model_description() const
+cosim::model_description slave_simulator::model_description() const
 {
     return pimpl_->model_description();
 }

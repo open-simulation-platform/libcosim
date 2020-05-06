@@ -4,7 +4,7 @@
 #include <boost/uuid/uuid_io.hpp>
 
 
-namespace cse
+namespace cosim
 {
 namespace utility
 {

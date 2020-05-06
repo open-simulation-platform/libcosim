@@ -14,20 +14,20 @@
 #include <unordered_map>
 
 
-namespace cse
+namespace cosim
 {
 
 /// A configuration loaded from an SSP file.
 struct ssp_configuration
 {
     /// The system structure.
-    cse::system_structure system_structure;
+    cosim::system_structure system_structure;
 
     /// The start time.
     time_point start_time;
 
     /// The co-simulation algorithm.
-    std::shared_ptr<cse::algorithm> algorithm;
+    std::shared_ptr<cosim::algorithm> algorithm;
 
     /**
      *  Named parameter sets.
@@ -54,7 +54,7 @@ public:
      * \param [in] modelResolver
      *      The `model_uri_resolver` to use by the loader.
      */
-    void set_model_uri_resolver(std::shared_ptr<cse::model_uri_resolver> resolver);
+    void set_model_uri_resolver(std::shared_ptr<cosim::model_uri_resolver> resolver);
 
     /**
      * Specify a non-default SystemStructureDefinition (.ssd) file to load.
@@ -74,7 +74,7 @@ public:
 
 private:
     std::optional<std::string> ssdFileName_;
-    std::shared_ptr<cse::model_uri_resolver> modelResolver_;
+    std::shared_ptr<cosim::model_uri_resolver> modelResolver_;
 };
 
 

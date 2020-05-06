@@ -16,7 +16,7 @@
 #endif
 
 
-namespace cse
+namespace cosim
 {
 namespace utility
 {

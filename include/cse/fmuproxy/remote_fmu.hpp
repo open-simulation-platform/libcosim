@@ -15,7 +15,7 @@
 
 #include <memory>
 
-namespace cse
+namespace cosim
 {
 
 namespace fmuproxy
@@ -23,7 +23,7 @@ namespace fmuproxy
 
 class fmuproxy_client;
 
-class remote_fmu : public cse::model
+class remote_fmu : public cosim::model
 {
 
     friend class fmuproxy_client;
@@ -32,16 +32,16 @@ public:
     remote_fmu(const ::fmuproxy::thrift::FmuId& fmuId,
         std::shared_ptr<thrift_state> state);
 
-    std::shared_ptr<const cse::model_description> description() const noexcept override;
+    std::shared_ptr<const cosim::model_description> description() const noexcept override;
 
-    std::shared_ptr<cse::slave> instantiate_slave();
+    std::shared_ptr<cosim::slave> instantiate_slave();
 
-    std::shared_ptr<cse::async_slave> instantiate(std::string_view name = "") override;
+    std::shared_ptr<cosim::async_slave> instantiate(std::string_view name = "") override;
 
 private:
     const std::string fmuId_;
     std::shared_ptr<thrift_state> state_;
-    std::shared_ptr<const cse::model_description> modelDescription_;
+    std::shared_ptr<const cosim::model_description> modelDescription_;
 };
 
 } // namespace fmuproxy

@@ -10,7 +10,7 @@
 #include "fmilib.h"
 
 
-namespace cse
+namespace cosim
 {
 namespace fmi
 {

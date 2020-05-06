@@ -10,7 +10,7 @@
 #include <string>
 #include <unordered_map>
 
-namespace cse
+namespace cosim
 {
 
 class ssp_parser
@@ -24,7 +24,7 @@ public:
     {
         double startTime = 0.0;
         std::optional<double> stopTime;
-        std::shared_ptr<cse::algorithm> algorithm;
+        std::shared_ptr<cosim::algorithm> algorithm;
     };
 
     const DefaultExperiment& get_default_experiment() const;
@@ -46,13 +46,13 @@ public:
     {
         std::string name;
         std::string kind;
-        cse::variable_type type;
+        cosim::variable_type type;
     };
 
     struct Parameter
     {
         std::string name;
-        cse::variable_type type;
+        cosim::variable_type type;
         scalar_value value;
     };
 
@@ -100,13 +100,13 @@ private:
 
 struct slave_info
 {
-    cse::simulator_index index;
-    std::map<std::string, cse::variable_description> variables;
+    cosim::simulator_index index;
+    std::map<std::string, cosim::variable_description> variables;
 };
 
-cse::time_point get_default_start_time(const ssp_parser& parser);
+cosim::time_point get_default_start_time(const ssp_parser& parser);
 
-cse::variable_id get_variable(
+cosim::variable_id get_variable(
     const std::map<std::string,
         slave_info>& slaves,
     const std::string& element,

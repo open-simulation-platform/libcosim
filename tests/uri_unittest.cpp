@@ -5,7 +5,7 @@
 
 #include <stdexcept>
 
-using namespace cse;
+using namespace cosim;
 
 
 BOOST_AUTO_TEST_CASE(uri_parser)

@@ -4,7 +4,7 @@
 #include <exception>
 
 
-namespace cse
+namespace cosim
 {
 namespace detail
 {

@@ -12,7 +12,7 @@
 #include <string_view>
 
 
-namespace cse
+namespace cosim
 {
 
 
@@ -31,7 +31,7 @@ public:
 
     // `observable` methods
     std::string name() const override;
-    cse::model_description model_description() const override;
+    cosim::model_description model_description() const override;
 
     void expose_for_getting(variable_type type, value_reference ref) override;
     double get_real(value_reference reference) const override;

@@ -9,7 +9,7 @@
 #    include <cse/fmuproxy/fmuproxy_uri_sub_resolver.hpp>
 #endif
 
-namespace cse
+namespace cosim
 {
 
 // =============================================================================

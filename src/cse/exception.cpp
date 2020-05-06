@@ -5,7 +5,7 @@
 #include "cse/lib_info.hpp"
 
 
-namespace cse
+namespace cosim
 {
 
 

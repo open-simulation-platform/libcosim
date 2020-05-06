@@ -18,7 +18,7 @@
 #include <ios>
 
 
-namespace cse
+namespace cosim
 {
 namespace log
 {

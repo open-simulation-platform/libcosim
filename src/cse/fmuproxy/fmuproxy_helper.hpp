@@ -13,65 +13,65 @@
 namespace
 {
 
-inline cse::variable_causality parse_causality(const std::string& c)
+inline cosim::variable_causality parse_causality(const std::string& c)
 {
     if (c == "input") {
-        return cse::variable_causality::input;
+        return cosim::variable_causality::input;
     } else if (c == "output") {
-        return cse::variable_causality::output;
+        return cosim::variable_causality::output;
     } else if (c == "parameter") {
-        return cse::variable_causality::parameter;
+        return cosim::variable_causality::parameter;
     } else if (c == "calculated_parameter") {
-        return cse::variable_causality::calculated_parameter;
+        return cosim::variable_causality::calculated_parameter;
     } else if (c == "local" || c == "independent" || c == "unknown" || c == "") {
-        return cse::variable_causality::local;
+        return cosim::variable_causality::local;
     } else {
         const auto err = "Failed to parse causality: '" + c + "'";
         CSE_PANIC_M(err.c_str());
     }
 }
 
-inline cse::variable_variability parse_variability(const std::string& v)
+inline cosim::variable_variability parse_variability(const std::string& v)
 {
     if (v == "constant") {
-        return cse::variable_variability::constant;
+        return cosim::variable_variability::constant;
     } else if (v == "discrete") {
-        return cse::variable_variability::discrete;
+        return cosim::variable_variability::discrete;
     } else if (v == "fixed") {
-        return cse::variable_variability::fixed;
+        return cosim::variable_variability::fixed;
     } else if (v == "tunable") {
-        return cse::variable_variability::tunable;
+        return cosim::variable_variability::tunable;
     } else if (v == "continuous" || v == "unknown" || v == "") {
-        return cse::variable_variability::continuous;
+        return cosim::variable_variability::continuous;
     } else {
         const auto err = "Failed to parse variability: '" + v + "'";
         CSE_PANIC_M(err.c_str());
     }
 }
 
-inline cse::variable_type get_type(const fmuproxy::thrift::ScalarVariable& v)
+inline cosim::variable_type get_type(const fmuproxy::thrift::ScalarVariable& v)
 {
     if (v.attribute.__isset.integer_attribute) {
-        return cse::variable_type::integer;
+        return cosim::variable_type::integer;
     } else if (v.attribute.__isset.real_attribute) {
-        return cse::variable_type::real;
+        return cosim::variable_type::real;
     } else if (v.attribute.__isset.string_attribute) {
-        return cse::variable_type::string;
+        return cosim::variable_type::string;
     } else if (v.attribute.__isset.boolean_attribute) {
-        return cse::variable_type::boolean;
+        return cosim::variable_type::boolean;
     } else if (v.attribute.__isset.enumeration_attribute) {
-        return cse::variable_type::enumeration;
+        return cosim::variable_type::enumeration;
     } else {
         const auto err = "Failed to get type of variable: '" + v.name + "'";
         CSE_PANIC_M(err.c_str());
     }
 }
 
-inline cse::variable_description convert(const fmuproxy::thrift::ScalarVariable& v)
+inline cosim::variable_description convert(const fmuproxy::thrift::ScalarVariable& v)
 {
-    cse::variable_description var;
+    cosim::variable_description var;
     var.name = v.name;
-    var.reference = (cse::value_reference)v.value_reference;
+    var.reference = (cosim::value_reference)v.value_reference;
     var.causality = parse_causality(v.causality);
     var.variability = parse_variability(v.variability);
     var.type = get_type(v);
@@ -89,18 +89,18 @@ inline cse::variable_description convert(const fmuproxy::thrift::ScalarVariable&
     return var;
 }
 
-inline std::vector<cse::variable_description> convert(fmuproxy::thrift::ModelVariables& vars)
+inline std::vector<cosim::variable_description> convert(fmuproxy::thrift::ModelVariables& vars)
 {
-    std::vector<cse::variable_description> modelVariables;
+    std::vector<cosim::variable_description> modelVariables;
     for (const auto& v : vars) {
         modelVariables.push_back(convert(v));
     }
     return modelVariables;
 }
 
-inline std::shared_ptr<cse::model_description> convert(fmuproxy::thrift::ModelDescription& md)
+inline std::shared_ptr<cosim::model_description> convert(fmuproxy::thrift::ModelDescription& md)
 {
-    auto modelDescription = std::make_shared<cse::model_description>();
+    auto modelDescription = std::make_shared<cosim::model_description>();
     modelDescription->name = md.modelName;
     modelDescription->author = md.author;
     modelDescription->uuid = md.guid;

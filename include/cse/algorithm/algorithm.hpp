@@ -13,7 +13,7 @@
 #include <unordered_set>
 #include <utility>
 
-namespace cse
+namespace cosim
 {
 
 /**

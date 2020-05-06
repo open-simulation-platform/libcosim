@@ -50,7 +50,7 @@ int main(int argc, char** argv)
             << "#include <regex>" << std::endl
             << "#define cse_system_structure_xsd \"" << encoded_xsd_str << "\"" << std::endl
             << std::endl
-            << "namespace cse" << std::endl
+            << "namespace cosim" << std::endl
             << "{" << std::endl
             << "std::string get_embedded_cse_config_xsd() {" << std::endl
             << "  std::string xsd_str(cse_system_structure_xsd);" << std::endl

@@ -13,7 +13,7 @@
 #include <unordered_map>
 
 
-namespace cse
+namespace cosim
 {
 
 std::string to_text(const full_variable_name& v)
@@ -94,7 +94,7 @@ void system_structure::add_entity(const entity& e)
     }
     assert(!functionCache_.count(e.name));
 
-    if (const auto model = entity_type_to<cse::model>(e.type)) {
+    if (const auto model = entity_type_to<cosim::model>(e.type)) {
         if (e.step_size_hint < duration::zero()) {
             throw error(
                 make_error_code(errc::invalid_system_structure),
@@ -204,7 +204,7 @@ const variable_description& system_structure::get_variable_description(
             make_error_code(errc::invalid_system_structure),
             "Unknown simulator name: " + v.entity_name);
     }
-    const auto model = entity_type_to<cse::model>(sit->second.type);
+    const auto model = entity_type_to<cosim::model>(sit->second.type);
     if (!model) {
         throw std::logic_error("Not a simulator: " + to_text(v));
     }

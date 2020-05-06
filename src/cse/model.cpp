@@ -1,7 +1,7 @@
 #include "cse/model.hpp"
 
 
-namespace cse
+namespace cosim
 {
 
 const variable_description find_variable(const model_description& description, const std::string& variable_name)

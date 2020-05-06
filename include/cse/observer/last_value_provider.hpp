@@ -9,7 +9,7 @@
 
 #include <string>
 
-namespace cse
+namespace cosim
 {
 
 /**

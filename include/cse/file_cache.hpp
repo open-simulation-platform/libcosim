@@ -7,7 +7,7 @@
 #include <string_view>
 
 
-namespace cse
+namespace cosim
 {
 
 

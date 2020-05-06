@@ -20,28 +20,28 @@
 int main()
 {
     try {
-        cse::log::setup_simple_console_logging();
-        cse::log::set_global_output_level(cse::log::debug);
+        cosim::log::setup_simple_console_logging();
+        cosim::log::set_global_output_level(cosim::log::debug);
 
-        constexpr cse::time_point startTime = cse::to_time_point(0.0);
-        constexpr cse::time_point endTime = cse::to_time_point(10.0);
-        constexpr cse::duration stepSize = cse::to_duration(0.1);
+        constexpr cosim::time_point startTime = cosim::to_time_point(0.0);
+        constexpr cosim::time_point endTime = cosim::to_time_point(10.0);
+        constexpr cosim::duration stepSize = cosim::to_duration(0.1);
 
         const auto logPath = boost::filesystem::current_path() / "logs";
         boost::filesystem::path csvPath = boost::filesystem::path(logPath);
 
         // Set up the execution
-        auto execution = cse::execution(startTime, std::make_unique<cse::fixed_step_algorithm>(stepSize));
+        auto execution = cosim::execution(startTime, std::make_unique<cosim::fixed_step_algorithm>(stepSize));
 
         // Set up and add file observer to the execution
-        auto csv_observer = std::make_shared<cse::file_observer>(csvPath);
+        auto csv_observer = std::make_shared<cosim::file_observer>(csvPath);
         execution.add_observer(csv_observer);
 
         // Add a slave to the execution and connect variables
         execution.add_slave(
-            cse::make_pseudo_async(std::make_unique<mock_slave>([](double x) { return x + 1.234; })), "slave uno");
+            cosim::make_pseudo_async(std::make_unique<mock_slave>([](double x) { return x + 1.234; })), "slave uno");
         execution.add_slave(
-            cse::make_pseudo_async(std::make_unique<mock_slave>([](double x) { return x + 1.234; },
+            cosim::make_pseudo_async(std::make_unique<mock_slave>([](double x) { return x + 1.234; },
                 [](int y) { return y - 4; },
                 [](bool z) { return !z; })),
             "slave dos");

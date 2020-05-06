@@ -8,7 +8,7 @@
 #include "cse/scenario_parser.hpp"
 
 
-namespace cse
+namespace cosim
 {
 
 class scenario_manager::impl

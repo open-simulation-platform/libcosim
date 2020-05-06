@@ -18,7 +18,7 @@ struct zip;
 struct zip_file;
 
 
-namespace cse
+namespace cosim
 {
 namespace utility
 {
@@ -219,7 +219,7 @@ private:
 
 
 /// Exception class for errors that occur while dealing with ZIP files.
-class error : public cse::error
+class error : public cosim::error
 {
 public:
     /**

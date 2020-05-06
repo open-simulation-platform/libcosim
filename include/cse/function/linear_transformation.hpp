@@ -8,7 +8,7 @@
 #include <cse/function/function.hpp>
 
 
-namespace cse
+namespace cosim
 {
 
 

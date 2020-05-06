@@ -5,7 +5,7 @@
 
 #include <memory>
 
-namespace cse
+namespace cosim
 {
 
 /**

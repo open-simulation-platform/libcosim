@@ -8,7 +8,7 @@
 using namespace std::literals;
 
 
-namespace cse
+namespace cosim
 {
 namespace
 {

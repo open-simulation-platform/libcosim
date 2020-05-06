@@ -3,7 +3,7 @@
 
 #include <variant>
 
-namespace cse
+namespace cosim
 {
 
 

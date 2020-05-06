@@ -16,36 +16,36 @@
 int main()
 {
     try {
-        cse::log::setup_simple_console_logging();
-        cse::log::set_global_output_level(cse::log::debug);
+        cosim::log::setup_simple_console_logging();
+        cosim::log::set_global_output_level(cosim::log::debug);
 
-        constexpr cse::time_point startTime = cse::to_time_point(0.0);
-        constexpr cse::time_point time1 = cse::to_time_point(1.0);
-        constexpr cse::time_point time2 = cse::to_time_point(2.0);
-        constexpr cse::time_point endTime = cse::to_time_point(3.0);
-        constexpr cse::duration stepSize = cse::to_duration(0.1);
+        constexpr cosim::time_point startTime = cosim::to_time_point(0.0);
+        constexpr cosim::time_point time1 = cosim::to_time_point(1.0);
+        constexpr cosim::time_point time2 = cosim::to_time_point(2.0);
+        constexpr cosim::time_point endTime = cosim::to_time_point(3.0);
+        constexpr cosim::duration stepSize = cosim::to_duration(0.1);
 
-        auto execution = cse::execution(startTime, std::make_unique<cse::fixed_step_algorithm>(stepSize));
+        auto execution = cosim::execution(startTime, std::make_unique<cosim::fixed_step_algorithm>(stepSize));
 
-        auto observer = std::make_shared<cse::time_series_observer>();
+        auto observer = std::make_shared<cosim::time_series_observer>();
         execution.add_observer(observer);
 
-        auto bufferedObserver = std::make_shared<cse::time_series_observer>(3);
+        auto bufferedObserver = std::make_shared<cosim::time_series_observer>(3);
         execution.add_observer(bufferedObserver);
 
         auto simIndex = execution.add_slave(
-            cse::make_pseudo_async(std::make_unique<mock_slave>([](double x) { return x + 1.234; })), "slave uno");
+            cosim::make_pseudo_async(std::make_unique<mock_slave>([](double x) { return x + 1.234; })), "slave uno");
 
-        auto variableId = cse::variable_id{simIndex, cse::variable_type::real, 0};
+        auto variableId = cosim::variable_id{simIndex, cosim::variable_type::real, 0};
 
-        cse::step_number stepNumbers[2];
+        cosim::step_number stepNumbers[2];
         try {
-            observer->get_step_numbers(0, cse::to_duration(10.0), gsl::make_span(stepNumbers, 2));
+            observer->get_step_numbers(0, cosim::to_duration(10.0), gsl::make_span(stepNumbers, 2));
         } catch (const std::exception& e) {
             std::cout << "Got expected exception: " << e.what() << std::endl;
         }
         try {
-            observer->get_step_numbers(0, cse::to_time_point(0.0), cse::to_time_point(10.0), gsl::make_span(stepNumbers, 2));
+            observer->get_step_numbers(0, cosim::to_time_point(0.0), cosim::to_time_point(10.0), gsl::make_span(stepNumbers, 2));
         } catch (const std::exception& e) {
             std::cout << "Got expected exception: " << e.what() << std::endl;
         }
@@ -55,15 +55,15 @@ int main()
         REQUIRE(simResult.get());
 
         const int numSamples = 15;
-        const cse::value_reference varIndex = 0;
+        const cosim::value_reference varIndex = 0;
         double realValues[numSamples];
-        cse::step_number steps[numSamples];
-        cse::time_point times[numSamples];
+        cosim::step_number steps[numSamples];
+        cosim::time_point times[numSamples];
 
         size_t samplesRead = observer->get_real_samples(simIndex, varIndex, 0, gsl::make_span(realValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
         REQUIRE(samplesRead == 0);
 
-        observer->start_observing(cse::variable_id{simIndex, cse::variable_type::integer, 0});
+        observer->start_observing(cosim::variable_id{simIndex, cosim::variable_type::integer, 0});
         int intValues[numSamples];
         try {
             observer->get_integer_samples(simIndex, varIndex, 0, gsl::make_span(intValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));

@@ -12,7 +12,7 @@ BOOST_AUTO_TEST_CASE(temp_dir)
     namespace fs = boost::filesystem;
     fs::path d;
     {
-        auto tmp = cse::utility::temp_dir();
+        auto tmp = cosim::utility::temp_dir();
         d = tmp.path();
         BOOST_TEST_REQUIRE(!d.empty());
         BOOST_TEST_REQUIRE(fs::exists(d));
@@ -24,7 +24,7 @@ BOOST_AUTO_TEST_CASE(temp_dir)
         BOOST_TEST(tmp2.path() == d);
         BOOST_TEST(fs::exists(d));
 
-        auto tmp3 = cse::utility::temp_dir();
+        auto tmp3 = cosim::utility::temp_dir();
         const auto d3 = tmp3.path();
         BOOST_TEST(fs::exists(d3));
         BOOST_TEST_REQUIRE(!fs::equivalent(d, d3));

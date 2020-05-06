@@ -8,7 +8,7 @@
 #include <boost/filesystem.hpp>
 
 
-namespace cse
+namespace cosim
 {
 namespace utility
 {

@@ -8,7 +8,7 @@
 #include <system_error>
 
 
-namespace cse
+namespace cosim
 {
 
 
@@ -135,7 +135,7 @@ namespace std
 {
 // Enable implicit conversions from errc to std::error_condition.
 template<>
-struct is_error_condition_enum<cse::errc> : public true_type
+struct is_error_condition_enum<cosim::errc> : public true_type
 {
 };
 } // namespace std

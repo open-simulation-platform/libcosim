@@ -21,22 +21,22 @@
 int main()
 {
     try {
-        cse::log::setup_simple_console_logging();
-        cse::log::set_global_output_level(cse::log::debug);
+        cosim::log::setup_simple_console_logging();
+        cosim::log::set_global_output_level(cosim::log::debug);
 
-        constexpr cse::time_point startTime;
-        constexpr cse::duration stepSize = cse::to_duration(0.5);
+        constexpr cosim::time_point startTime;
+        constexpr cosim::duration stepSize = cosim::to_duration(0.5);
 
         // Set up execution
-        auto execution = cse::execution(
+        auto execution = cosim::execution(
             startTime,
-            std::make_unique<cse::fixed_step_algorithm>(stepSize));
+            std::make_unique<cosim::fixed_step_algorithm>(stepSize));
 
-        auto observer = std::make_shared<cse::last_value_observer>();
+        auto observer = std::make_shared<cosim::last_value_observer>();
         execution.add_observer(observer);
 
         const auto sim = execution.add_slave(
-            cse::make_pseudo_async(std::make_unique<mock_slave>(
+            cosim::make_pseudo_async(std::make_unique<mock_slave>(
                 [](double x) { return x + 1.234; },
                 [](int i) { return i + 1; },
                 [](bool b) { return !b; },
@@ -45,14 +45,14 @@ int main()
 
         execution.step();
 
-        const cse::value_reference realOutRef = mock_slave::real_out_reference;
-        const cse::value_reference realInRef  = mock_slave::real_in_reference;
-        const cse::value_reference intOutRef = mock_slave::integer_out_reference;
-        const cse::value_reference intInRef  = mock_slave::integer_in_reference;
-        const cse::value_reference boolOutRef = mock_slave::boolean_out_reference;
-        const cse::value_reference boolInRef  = mock_slave::boolean_in_reference;
-        const cse::value_reference stringOutRef = mock_slave::string_out_reference;
-        const cse::value_reference stringInRef  = mock_slave::string_in_reference;
+        const cosim::value_reference realOutRef = mock_slave::real_out_reference;
+        const cosim::value_reference realInRef  = mock_slave::real_in_reference;
+        const cosim::value_reference intOutRef = mock_slave::integer_out_reference;
+        const cosim::value_reference intInRef  = mock_slave::integer_in_reference;
+        const cosim::value_reference boolOutRef = mock_slave::boolean_out_reference;
+        const cosim::value_reference boolInRef  = mock_slave::boolean_in_reference;
+        const cosim::value_reference stringOutRef = mock_slave::string_out_reference;
+        const cosim::value_reference stringInRef  = mock_slave::string_in_reference;
 
         double realInValue = -1.0;
         double realOutValue = -1.0;
@@ -82,7 +82,7 @@ int main()
         REQUIRE(stringInValue == "");
         REQUIRE(stringOutValue == "bar");
 
-        auto manipulator = std::make_shared<cse::override_manipulator>();
+        auto manipulator = std::make_shared<cosim::override_manipulator>();
         execution.add_manipulator(manipulator);
 
         manipulator->override_real_variable(sim, realInRef, 2.0);

@@ -12,7 +12,7 @@
 #include <string_view>
 
 
-namespace cse
+namespace cosim
 {
 
 /// Interface for observable entities in a simulation.
@@ -23,7 +23,7 @@ public:
     virtual std::string name() const = 0;
 
     /// Returns a description of the entity.
-    virtual cse::model_description model_description() const = 0;
+    virtual cosim::model_description model_description() const = 0;
 
     /**
      *  Exposes a variable for retrieval with `get_xxx()`.

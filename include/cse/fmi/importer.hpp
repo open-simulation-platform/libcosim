@@ -20,7 +20,7 @@ typedef fmi_xml_context_t fmi_import_context_t;
 struct jm_callbacks;
 
 
-namespace cse
+namespace cosim
 {
 namespace fmi
 {

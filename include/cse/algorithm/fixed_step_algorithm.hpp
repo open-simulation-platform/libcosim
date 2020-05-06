@@ -3,7 +3,7 @@
 
 #include <cse/algorithm/algorithm.hpp>
 
-namespace cse
+namespace cosim
 {
 
 /**

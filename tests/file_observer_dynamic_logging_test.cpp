@@ -35,30 +35,30 @@ void remove_directory_contents(const boost::filesystem::path& path)
 int main()
 {
     try {
-        cse::log::setup_simple_console_logging();
-        cse::log::set_global_output_level(cse::log::debug);
+        cosim::log::setup_simple_console_logging();
+        cosim::log::set_global_output_level(cosim::log::debug);
 
-        constexpr cse::time_point startTime = cse::to_time_point(0.0);
-        constexpr cse::duration stepSize = cse::to_duration(0.1);
+        constexpr cosim::time_point startTime = cosim::to_time_point(0.0);
+        constexpr cosim::duration stepSize = cosim::to_duration(0.1);
 
         const auto logPath = boost::filesystem::current_path() / "logs" / "clean";
         boost::filesystem::create_directories(logPath);
         boost::filesystem::remove_all(logPath);
 
         // Set up the execution
-        auto execution = cse::execution(startTime, std::make_unique<cse::fixed_step_algorithm>(stepSize));
+        auto execution = cosim::execution(startTime, std::make_unique<cosim::fixed_step_algorithm>(stepSize));
 
         // Set up and add file observer to the execution
-        auto observer = std::make_shared<cse::file_observer>(logPath);
+        auto observer = std::make_shared<cosim::file_observer>(logPath);
         execution.add_observer(observer);
 
         // Add slaves to the execution
         execution.add_slave(
-            cse::make_pseudo_async(std::make_unique<mock_slave>(
+            cosim::make_pseudo_async(std::make_unique<mock_slave>(
                 [](double x) { return x - 1.1; })),
             "slave_one");
         execution.add_slave(
-            cse::make_pseudo_async(std::make_unique<mock_slave>(
+            cosim::make_pseudo_async(std::make_unique<mock_slave>(
                 [](double x) { return x + 1.1; },
                 [](int y) { return y - 4; },
                 [](bool z) { return !z; })),

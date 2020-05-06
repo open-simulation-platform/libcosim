@@ -19,7 +19,7 @@
 #include <vector>
 
 
-namespace cse
+namespace cosim
 {
 
 namespace detail

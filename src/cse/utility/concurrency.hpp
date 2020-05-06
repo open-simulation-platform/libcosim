@@ -17,7 +17,7 @@
 #include <variant>
 
 
-namespace cse
+namespace cosim
 {
 namespace utility
 {

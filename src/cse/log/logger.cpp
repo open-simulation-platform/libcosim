@@ -1,7 +1,7 @@
 #include "cse/log/logger.hpp"
 
 
-namespace cse
+namespace cosim
 {
 namespace log
 {

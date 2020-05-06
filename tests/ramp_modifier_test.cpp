@@ -17,34 +17,34 @@
     if (!(test)) throw std::runtime_error("Requirement not satisfied: " #test)
 
 
-class test_manipulator : public cse::manipulator
+class test_manipulator : public cosim::manipulator
 {
 public:
     test_manipulator(const test_manipulator&) = delete;
     test_manipulator& operator=(const test_manipulator&) = delete;
 
-    explicit test_manipulator(cse::variable_id variable, cse::time_point startTime, bool input)
+    explicit test_manipulator(cosim::variable_id variable, cosim::time_point startTime, bool input)
         : variable_(variable)
         , input_(input)
     {
         double slope = 1.0;
-        f_ = std::function<double(double, cse::duration)>(
-            [=, acc = 0.0](double original, cse::duration deltaT) mutable {
-                acc += slope * cse::to_double_duration(deltaT, startTime);
+        f_ = std::function<double(double, cosim::duration)>(
+            [=, acc = 0.0](double original, cosim::duration deltaT) mutable {
+                acc += slope * cosim::to_double_duration(deltaT, startTime);
                 return original + acc;
             });
     }
 
-    void simulator_added(cse::simulator_index, cse::manipulable* man, cse::time_point) override
+    void simulator_added(cosim::simulator_index, cosim::manipulable* man, cosim::time_point) override
     {
         man_ = man;
     }
 
-    void simulator_removed(cse::simulator_index, cse::time_point) override
+    void simulator_removed(cosim::simulator_index, cosim::time_point) override
     {
     }
 
-    void step_commencing(cse::time_point) override
+    void step_commencing(cosim::time_point) override
     {
         if (!initialized_) {
             if (input_) {
@@ -61,9 +61,9 @@ public:
     ~test_manipulator() noexcept override = default;
 
 private:
-    cse::manipulable* man_;
-    cse::variable_id variable_;
-    std::function<double(double, cse::duration)> f_;
+    cosim::manipulable* man_;
+    cosim::variable_id variable_;
+    std::function<double(double, cosim::duration)> f_;
     bool initialized_ = false;
     bool input_;
 };
@@ -71,25 +71,25 @@ private:
 int main()
 {
     try {
-        cse::log::setup_simple_console_logging();
-        cse::log::set_global_output_level(cse::log::debug);
+        cosim::log::setup_simple_console_logging();
+        cosim::log::set_global_output_level(cosim::log::debug);
 
-        constexpr cse::time_point startTime = cse::to_time_point(0.0);
-        constexpr cse::duration stepSize = cse::to_duration(0.1);
+        constexpr cosim::time_point startTime = cosim::to_time_point(0.0);
+        constexpr cosim::duration stepSize = cosim::to_duration(0.1);
 
-        auto execution = cse::execution(startTime, std::make_unique<cse::fixed_step_algorithm>(stepSize));
+        auto execution = cosim::execution(startTime, std::make_unique<cosim::fixed_step_algorithm>(stepSize));
 
-        auto observer = std::make_shared<cse::last_value_observer>();
+        auto observer = std::make_shared<cosim::last_value_observer>();
         execution.add_observer(observer);
 
 
         auto simIndex = execution.add_slave(
-            cse::make_pseudo_async(
+            cosim::make_pseudo_async(
                 std::make_unique<mock_slave>()),
             "mock");
 
-        const auto input = cse::variable_id{simIndex, cse::variable_type::real, 1};
-        const auto output = cse::variable_id{simIndex, cse::variable_type::real, 0};
+        const auto input = cosim::variable_id{simIndex, cosim::variable_type::real, 1};
+        const auto output = cosim::variable_id{simIndex, cosim::variable_type::real, 0};
 
         auto inputManipulator = std::make_shared<test_manipulator>(input, startTime, true);
         auto outputManipulator = std::make_shared<test_manipulator>(output, startTime, false);

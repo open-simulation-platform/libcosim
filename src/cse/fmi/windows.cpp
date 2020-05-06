@@ -7,7 +7,7 @@
 #    include <mutex>
 
 
-namespace cse
+namespace cosim
 {
 namespace fmi
 {

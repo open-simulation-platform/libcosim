@@ -12,7 +12,7 @@
 #include <string_view>
 
 
-namespace cse
+namespace cosim
 {
 namespace fmi
 {
@@ -50,7 +50,7 @@ public:
     virtual fmi::fmi_version fmi_version() const = 0;
 
     /// A description of this FMU.
-    virtual std::shared_ptr<const cse::model_description>
+    virtual std::shared_ptr<const cosim::model_description>
     model_description() const = 0;
 
     /// Creates a co-simulation slave instance of this FMU.
@@ -65,13 +65,13 @@ public:
 
 
 /// An FMI co-simulation slave instance.
-class slave_instance : public cse::slave
+class slave_instance : public cosim::slave
 {
 public:
     /// Returns a reference to the FMU of which this is an instance.
     virtual std::shared_ptr<fmi::fmu> fmu() const = 0;
 
-    cse::model_description model_description() const final override
+    cosim::model_description model_description() const final override
     {
         return *(fmu()->model_description());
     }

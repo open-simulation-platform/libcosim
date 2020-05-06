@@ -17,7 +17,7 @@
 #include <sstream>
 #include <vector>
 
-namespace cse
+namespace cosim
 {
 
 namespace
@@ -398,7 +398,7 @@ void file_observer::stop_recording()
     }
 }
 
-cse::observable* find_simulator(
+cosim::observable* find_simulator(
     const std::unordered_map<simulator_index, observable*>& simulators,
     const std::string& simulatorName)
 {

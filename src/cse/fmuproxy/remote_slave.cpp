@@ -4,27 +4,27 @@
 #include <utility>
 
 
-cse::fmuproxy::remote_slave::remote_slave(std::string instanceId,
-    std::shared_ptr<cse::fmuproxy::thrift_state> state,
-    std::shared_ptr<const cse::model_description> modelDescription)
+cosim::fmuproxy::remote_slave::remote_slave(std::string instanceId,
+    std::shared_ptr<cosim::fmuproxy::thrift_state> state,
+    std::shared_ptr<const cosim::model_description> modelDescription)
     : terminated_(false)
     , instanceId_(std::move(instanceId))
     , state_(std::move(state))
     , modelDescription_(std::move(modelDescription))
 {}
 
-cse::model_description cse::fmuproxy::remote_slave::model_description() const
+cosim::model_description cosim::fmuproxy::remote_slave::model_description() const
 {
     return *modelDescription_;
 }
 
-void cse::fmuproxy::remote_slave::setup(cse::time_point startTime, std::optional<cse::time_point> stopTime,
+void cosim::fmuproxy::remote_slave::setup(cosim::time_point startTime, std::optional<cosim::time_point> stopTime,
     std::optional<double> relativeTolerance)
 {
     startTime_ = startTime;
 
     double start = to_double_time_point(startTime);
-    double stop = to_double_time_point(stopTime.value_or(cse::to_time_point(0)));
+    double stop = to_double_time_point(stopTime.value_or(cosim::to_time_point(0)));
     double tolerance = relativeTolerance.value_or(0);
 
     ::fmuproxy::thrift::Status::type status;
@@ -38,7 +38,7 @@ void cse::fmuproxy::remote_slave::setup(cse::time_point startTime, std::optional
     }
 }
 
-void cse::fmuproxy::remote_slave::start_simulation()
+void cosim::fmuproxy::remote_slave::start_simulation()
 {
     auto status = state_->client().exit_initialization_mode(instanceId_);
     if (status != ::fmuproxy::thrift::Status::OK_STATUS) {
@@ -46,7 +46,7 @@ void cse::fmuproxy::remote_slave::start_simulation()
     }
 }
 
-void cse::fmuproxy::remote_slave::end_simulation()
+void cosim::fmuproxy::remote_slave::end_simulation()
 {
     if (!terminated_) {
         auto status = state_->client().terminate(instanceId_);
@@ -57,7 +57,7 @@ void cse::fmuproxy::remote_slave::end_simulation()
     }
 }
 
-cse::step_result cse::fmuproxy::remote_slave::do_step(cse::time_point, cse::duration deltaT)
+cosim::step_result cosim::fmuproxy::remote_slave::do_step(cosim::time_point, cosim::duration deltaT)
 {
 
     double dt = to_double_duration(deltaT, startTime_);
@@ -67,10 +67,10 @@ cse::step_result cse::fmuproxy::remote_slave::do_step(cse::time_point, cse::dura
     if (result.status != ::fmuproxy::thrift::Status::OK_STATUS) {
         CSE_PANIC();
     }
-    return cse::step_result::complete;
+    return cosim::step_result::complete;
 }
 
-void cse::fmuproxy::remote_slave::get_real_variables(gsl::span<const cse::value_reference> variables,
+void cosim::fmuproxy::remote_slave::get_real_variables(gsl::span<const cosim::value_reference> variables,
     gsl::span<double> values) const
 {
     CSE_INPUT_CHECK(variables.size() == values.size());
@@ -86,7 +86,7 @@ void cse::fmuproxy::remote_slave::get_real_variables(gsl::span<const cse::value_
     }
 }
 
-void cse::fmuproxy::remote_slave::get_integer_variables(gsl::span<const cse::value_reference> variables,
+void cosim::fmuproxy::remote_slave::get_integer_variables(gsl::span<const cosim::value_reference> variables,
     gsl::span<int> values) const
 {
     CSE_INPUT_CHECK(variables.size() == values.size());
@@ -102,7 +102,7 @@ void cse::fmuproxy::remote_slave::get_integer_variables(gsl::span<const cse::val
     }
 }
 
-void cse::fmuproxy::remote_slave::get_boolean_variables(gsl::span<const cse::value_reference> variables,
+void cosim::fmuproxy::remote_slave::get_boolean_variables(gsl::span<const cosim::value_reference> variables,
     gsl::span<bool> values) const
 {
     CSE_INPUT_CHECK(variables.size() == values.size());
@@ -118,7 +118,7 @@ void cse::fmuproxy::remote_slave::get_boolean_variables(gsl::span<const cse::val
     }
 }
 
-void cse::fmuproxy::remote_slave::get_string_variables(gsl::span<const cse::value_reference> variables,
+void cosim::fmuproxy::remote_slave::get_string_variables(gsl::span<const cosim::value_reference> variables,
     gsl::span<std::string> values) const
 {
     CSE_INPUT_CHECK(variables.size() == values.size());
@@ -131,7 +131,7 @@ void cse::fmuproxy::remote_slave::get_string_variables(gsl::span<const cse::valu
     }
 }
 
-void cse::fmuproxy::remote_slave::set_real_variables(gsl::span<const cse::value_reference> variables,
+void cosim::fmuproxy::remote_slave::set_real_variables(gsl::span<const cosim::value_reference> variables,
     gsl::span<const double> values)
 {
     CSE_INPUT_CHECK(variables.size() == values.size());
@@ -143,7 +143,7 @@ void cse::fmuproxy::remote_slave::set_real_variables(gsl::span<const cse::value_
     }
 }
 
-void cse::fmuproxy::remote_slave::set_integer_variables(gsl::span<const cse::value_reference> variables,
+void cosim::fmuproxy::remote_slave::set_integer_variables(gsl::span<const cosim::value_reference> variables,
     gsl::span<const int> values)
 {
     CSE_INPUT_CHECK(variables.size() == values.size());
@@ -155,7 +155,7 @@ void cse::fmuproxy::remote_slave::set_integer_variables(gsl::span<const cse::val
     }
 }
 
-void cse::fmuproxy::remote_slave::set_boolean_variables(gsl::span<const cse::value_reference> variables,
+void cosim::fmuproxy::remote_slave::set_boolean_variables(gsl::span<const cosim::value_reference> variables,
     gsl::span<const bool> values)
 {
     CSE_INPUT_CHECK(variables.size() == values.size());
@@ -167,7 +167,7 @@ void cse::fmuproxy::remote_slave::set_boolean_variables(gsl::span<const cse::val
     }
 }
 
-void cse::fmuproxy::remote_slave::set_string_variables(gsl::span<const cse::value_reference> variables,
+void cosim::fmuproxy::remote_slave::set_string_variables(gsl::span<const cosim::value_reference> variables,
     gsl::span<const std::string> values)
 {
     CSE_INPUT_CHECK(variables.size() == values.size());
@@ -179,7 +179,7 @@ void cse::fmuproxy::remote_slave::set_string_variables(gsl::span<const cse::valu
     }
 }
 
-cse::fmuproxy::remote_slave::~remote_slave()
+cosim::fmuproxy::remote_slave::~remote_slave()
 {
     end_simulation();
     state_->client().freeInstance(instanceId_);

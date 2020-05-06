@@ -13,7 +13,7 @@
  *
  *  \ingroup csecore
  */
-namespace cse
+namespace cosim
 {
 }
 

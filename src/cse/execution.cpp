@@ -14,7 +14,7 @@
 #include <vector>
 
 
-namespace cse
+namespace cosim
 {
 
 class execution::impl
@@ -294,8 +294,8 @@ private:
         if (it == variables.end()) {
             std::ostringstream oss;
             oss << "Problem adding connection: Cannot find variable with reference " << variable.reference
-                << ", causality " << cse::to_text(causality)
-                << " and type " << cse::to_text(variable.type)
+                << ", causality " << cosim::to_text(causality)
+                << " and type " << cosim::to_text(variable.type)
                 << " for simulator with index " << variable.simulator
                 << " and name " << simulators_.at(variable.simulator)->name();
             throw std::out_of_range(oss.str());
@@ -514,7 +514,7 @@ entity_index_maps inject_system_structure(
     // Add simulators and functions
     entity_index_maps indexMaps;
     for (const auto& entity : sys.entities()) {
-        if (const auto model = entity_type_to<cse::model>(entity.type)) {
+        if (const auto model = entity_type_to<cosim::model>(entity.type)) {
             // Entity is a simulator
             const auto index = exe.add_slave(
                 model->instantiate(entity.name),

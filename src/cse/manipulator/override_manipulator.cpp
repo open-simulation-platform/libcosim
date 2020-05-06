@@ -5,16 +5,16 @@
 
 #include <sstream>
 
-namespace cse
+namespace cosim
 {
 
 namespace
 {
 
-cse::variable_causality find_variable_causality(
+cosim::variable_causality find_variable_causality(
     const std::vector<variable_description>& variables,
-    const cse::variable_type type,
-    const cse::value_reference reference)
+    const cosim::variable_type type,
+    const cosim::value_reference reference)
 {
     for (const auto& vd : variables) {
         if ((vd.reference == reference) && (vd.type == type)) {
@@ -27,7 +27,7 @@ cse::variable_causality find_variable_causality(
     throw std::invalid_argument(oss.str());
 }
 
-bool is_input(cse::variable_causality causality)
+bool is_input(cosim::variable_causality causality)
 {
     switch (causality) {
         case input:

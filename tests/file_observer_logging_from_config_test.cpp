@@ -20,12 +20,12 @@
 int main()
 {
     try {
-        cse::log::setup_simple_console_logging();
-        cse::log::set_global_output_level(cse::log::debug);
+        cosim::log::setup_simple_console_logging();
+        cosim::log::set_global_output_level(cosim::log::debug);
 
-        constexpr cse::time_point startTime = cse::to_time_point(0.0);
-        constexpr cse::time_point endTime = cse::to_time_point(10.0);
-        constexpr cse::duration stepSize = cse::to_duration(0.1);
+        constexpr cosim::time_point startTime = cosim::to_time_point(0.0);
+        constexpr cosim::time_point endTime = cosim::to_time_point(10.0);
+        constexpr cosim::duration stepSize = cosim::to_duration(0.1);
 
         const auto testDataDir = std::getenv("TEST_DATA_DIR");
         REQUIRE(testDataDir);
@@ -36,13 +36,13 @@ int main()
 
 
         // Set up the execution and add observer
-        auto execution = cse::execution(startTime, std::make_unique<cse::fixed_step_algorithm>(stepSize));
-        auto csv_observer = std::make_shared<cse::file_observer>(csvPath, configPath);
+        auto execution = cosim::execution(startTime, std::make_unique<cosim::fixed_step_algorithm>(stepSize));
+        auto csv_observer = std::make_shared<cosim::file_observer>(csvPath, configPath);
         execution.add_observer(csv_observer);
 
         // Add two slaves to the execution and connect variables
         execution.add_slave(
-            cse::make_pseudo_async(std::make_unique<mock_slave>(
+            cosim::make_pseudo_async(std::make_unique<mock_slave>(
                 [](double x) { return x + 1.234; },
                 [](int x) { return x + 1; },
                 [](bool x) { return x; },
@@ -50,13 +50,13 @@ int main()
             "slave");
 
         execution.add_slave(
-            cse::make_pseudo_async(std::make_unique<mock_slave>(
+            cosim::make_pseudo_async(std::make_unique<mock_slave>(
                 [](double x) { return x + 123.456; },
                 [](int x) { return x - 1; })),
             "slave1");
 
         execution.add_slave(
-            cse::make_pseudo_async(std::make_unique<mock_slave>(
+            cosim::make_pseudo_async(std::make_unique<mock_slave>(
                 [](double x) { return x + 1.234; },
                 [](int x) { return x + 1; })),
             "slave2");

@@ -9,7 +9,7 @@
 
 #include <string>
 
-namespace cse
+namespace cosim
 {
 
 namespace fmuproxy
@@ -21,9 +21,9 @@ class remote_slave : public slave
 public:
     remote_slave(std::string instanceId,
         std::shared_ptr<thrift_state> state,
-        std::shared_ptr<const cse::model_description> modelDescription);
+        std::shared_ptr<const cosim::model_description> modelDescription);
 
-    cse::model_description model_description() const override;
+    cosim::model_description model_description() const override;
 
     void setup(time_point startTime, std::optional<time_point> stopTime,
         std::optional<double> relativeTolerance) override;
@@ -32,7 +32,7 @@ public:
 
     void end_simulation() override;
 
-    cse::step_result do_step(time_point currentT, duration deltaT) override;
+    cosim::step_result do_step(time_point currentT, duration deltaT) override;
 
     void get_real_variables(gsl::span<const value_reference> variables, gsl::span<double> values) const override;
 
@@ -57,9 +57,9 @@ public:
 private:
     bool terminated_;
     std::string instanceId_;
-    cse::time_point startTime_;
-    std::shared_ptr<cse::fmuproxy::thrift_state> state_;
-    std::shared_ptr<const cse::model_description> modelDescription_;
+    cosim::time_point startTime_;
+    std::shared_ptr<cosim::fmuproxy::thrift_state> state_;
+    std::shared_ptr<const cosim::model_description> modelDescription_;
 };
 
 } // namespace fmuproxy

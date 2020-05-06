@@ -24,7 +24,7 @@
 #include <utility>
 
 
-namespace cse
+namespace cosim
 {
 
 namespace
@@ -99,7 +99,7 @@ public:
     struct InitialValue
     {
         std::string name;
-        cse::variable_type type;
+        cosim::variable_type type;
         scalar_value value;
     };
 
@@ -116,8 +116,8 @@ public:
     struct Signal
     {
         std::string name;
-        cse::variable_type type;
-        cse::variable_causality causality;
+        cosim::variable_type type;
+        cosim::variable_causality causality;
     };
 
     struct SignalGroup
@@ -521,19 +521,19 @@ const std::vector<cse_config_parser::SignalConnection>& cse_config_parser::get_s
 variable_type cse_config_parser::parse_variable_type(const std::string& str)
 {
     if ("Real" == str) {
-        return cse::variable_type::real;
+        return cosim::variable_type::real;
     }
     if ("Integer" == str) {
-        return cse::variable_type::integer;
+        return cosim::variable_type::integer;
     }
     if ("Boolean" == str) {
-        return cse::variable_type::boolean;
+        return cosim::variable_type::boolean;
     }
     if ("String" == str) {
-        return cse::variable_type::string;
+        return cosim::variable_type::string;
     }
     if ("Enumeration" == str) {
-        return cse::variable_type::enumeration;
+        return cosim::variable_type::enumeration;
     }
     throw std::runtime_error("Failed to parse variable type: " + str);
 }
@@ -692,7 +692,7 @@ std::vector<std::string> get_variable_group_variables(
     return groupVariables;
 }
 
-std::vector<cse::variable_group_description> get_variable_groups(
+std::vector<cosim::variable_group_description> get_variable_groups(
     const std::unordered_map<std::string, variable_group_description>& descriptions,
     const std::string& connector)
 {

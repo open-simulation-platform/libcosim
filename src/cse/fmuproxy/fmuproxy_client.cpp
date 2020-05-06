@@ -50,7 +50,7 @@ void read_data(const std::string& fileName, std::string& data)
 
 } // namespace
 
-cse::fmuproxy::fmuproxy_client::fmuproxy_client(const std::string& host, const unsigned int port,
+cosim::fmuproxy::fmuproxy_client::fmuproxy_client(const std::string& host, const unsigned int port,
     const bool concurrent)
 {
     std::shared_ptr<TTransport> socket(new TSocket(host, port));
@@ -71,8 +71,8 @@ cse::fmuproxy::fmuproxy_client::fmuproxy_client(const std::string& host, const u
     state_ = std::make_shared<thrift_state>(client, transport);
 }
 
-std::shared_ptr<cse::fmuproxy::remote_fmu>
-cse::fmuproxy::fmuproxy_client::from_url(const std::string& url)
+std::shared_ptr<cosim::fmuproxy::remote_fmu>
+cosim::fmuproxy::fmuproxy_client::from_url(const std::string& url)
 {
     BOOST_LOG_SEV(log::logger(), log::debug) << "fmu-proxy will load FMU from url '" << url << "'";
     FmuId fmuId;
@@ -80,8 +80,8 @@ cse::fmuproxy::fmuproxy_client::from_url(const std::string& url)
     return from_guid(fmuId);
 }
 
-std::shared_ptr<cse::fmuproxy::remote_fmu>
-cse::fmuproxy::fmuproxy_client::from_file(const std::string& file)
+std::shared_ptr<cosim::fmuproxy::remote_fmu>
+cosim::fmuproxy::fmuproxy_client::from_file(const std::string& file)
 {
     BOOST_LOG_SEV(log::logger(), log::debug) << "fmu-proxy will load FMU from file '" << file << "'";
 
@@ -100,8 +100,8 @@ cse::fmuproxy::fmuproxy_client::from_file(const std::string& file)
     return from_guid(fmuId);
 }
 
-std::shared_ptr<cse::fmuproxy::remote_fmu>
-cse::fmuproxy::fmuproxy_client::from_guid(const std::string& guid)
+std::shared_ptr<cosim::fmuproxy::remote_fmu>
+cosim::fmuproxy::fmuproxy_client::from_guid(const std::string& guid)
 {
-    return std::make_shared<cse::fmuproxy::remote_fmu>(guid, state_);
+    return std::make_shared<cosim::fmuproxy::remote_fmu>(guid, state_);
 }

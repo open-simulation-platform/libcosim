@@ -10,7 +10,7 @@
 #include <cstdlib>
 
 
-using namespace cse;
+using namespace cosim;
 
 BOOST_TEST_DONT_PRINT_LOG_VALUE(fmi::fmi_version)
 BOOST_TEST_DONT_PRINT_LOG_VALUE(step_result)
@@ -29,7 +29,7 @@ void run_tests(std::shared_ptr<fmi::fmu> fmu)
     BOOST_TEST(d->version == "0.3");
     BOOST_TEST(std::static_pointer_cast<fmi::v1::fmu>(fmu)->fmilib_handle() != nullptr);
 
-    cse::value_reference
+    cosim::value_reference
         realIn = 0,
         integerIn = 0, booleanIn = 0, stringIn = 0,
         realOut = 0, integerOut = 0, booleanOut = 0, stringOut = 0;
@@ -72,9 +72,9 @@ void run_tests(std::shared_ptr<fmi::fmu> fmu)
         }
     }
 
-    const auto tStart = cse::time_point();
-    const auto tMax = cse::to_time_point(1.0);
-    const auto dt = cse::to_duration(0.1);
+    const auto tStart = cosim::time_point();
+    const auto tMax = cosim::to_time_point(1.0);
+    const auto dt = cosim::to_duration(0.1);
     double realVal = 0.0;
     int integerVal = 0;
     bool booleanVal = false;

@@ -21,13 +21,13 @@
 #endif
 
 
-namespace cse
+namespace cosim
 {
 
 namespace
 {
 
-std::pair<cse::simulator_index, cse::manipulable*> find_simulator(
+std::pair<cosim::simulator_index, cosim::manipulable*> find_simulator(
     const std::unordered_map<simulator_index, manipulable*>& simulators,
     const std::string& model)
 {
@@ -41,7 +41,7 @@ std::pair<cse::simulator_index, cse::manipulable*> find_simulator(
     throw std::invalid_argument(oss.str());
 }
 
-bool is_input(cse::variable_causality causality)
+bool is_input(cosim::variable_causality causality)
 {
     switch (causality) {
         case input:
@@ -89,38 +89,38 @@ std::function<std::string(std::string_view, duration)> generate_string_modifier(
         return [value](std::string_view /*original*/, duration) { return value; };
     }
     std::ostringstream oss;
-    oss << "Can't process unsupported modifier kind: " << kind << " for type " << to_text(cse::variable_type::string);
+    oss << "Can't process unsupported modifier kind: " << kind << " for type " << to_text(cosim::variable_type::string);
     throw std::invalid_argument(oss.str());
 }
 
-cse::scenario::variable_action generate_action(
+cosim::scenario::variable_action generate_action(
     const YAML::Node& event,
     const std::string& mode,
-    cse::simulator_index sim,
-    cse::variable_type type,
+    cosim::simulator_index sim,
+    cosim::variable_type type,
     bool isInput,
-    cse::value_reference var)
+    cosim::value_reference var)
 {
     switch (type) {
-        case cse::variable_type::real: {
+        case cosim::variable_type::real: {
             auto f = generate_modifier<double>(mode, event);
-            return cse::scenario::variable_action{
-                sim, var, cse::scenario::real_modifier{f}, isInput};
+            return cosim::scenario::variable_action{
+                sim, var, cosim::scenario::real_modifier{f}, isInput};
         }
-        case cse::variable_type::integer: {
+        case cosim::variable_type::integer: {
             auto f = generate_modifier<int>(mode, event);
-            return cse::scenario::variable_action{
-                sim, var, cse::scenario::integer_modifier{f}, isInput};
+            return cosim::scenario::variable_action{
+                sim, var, cosim::scenario::integer_modifier{f}, isInput};
         }
-        case cse::variable_type::boolean: {
+        case cosim::variable_type::boolean: {
             auto f = generate_modifier<bool>(mode, event);
-            return cse::scenario::variable_action{
-                sim, var, cse::scenario::boolean_modifier{f}, isInput};
+            return cosim::scenario::variable_action{
+                sim, var, cosim::scenario::boolean_modifier{f}, isInput};
         }
-        case cse::variable_type::string: {
+        case cosim::variable_type::string: {
             auto f = generate_string_modifier(mode, event);
-            return cse::scenario::variable_action{
-                sim, var, cse::scenario::string_modifier{f}, isInput};
+            return cosim::scenario::variable_action{
+                sim, var, cosim::scenario::string_modifier{f}, isInput};
         }
         default:
             std::ostringstream oss;
@@ -174,7 +174,7 @@ std::string specified_or_default(
     throw std::invalid_argument(oss.str());
 }
 
-std::optional<cse::time_point> parse_end_time(const YAML::Node& j)
+std::optional<cosim::time_point> parse_end_time(const YAML::Node& j)
 {
     if (j["end"]) {
         auto endTime = j["end"].as<double>();

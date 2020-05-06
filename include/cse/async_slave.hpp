@@ -16,7 +16,7 @@
 #include <string>
 
 
-namespace cse
+namespace cosim
 {
 
 
@@ -119,7 +119,7 @@ public:
      *
      *  \see slave::model_description()
      */
-    virtual boost::fibers::future<cse::model_description> model_description() = 0;
+    virtual boost::fibers::future<cosim::model_description> model_description() = 0;
 
     /**
      *  Instructs the slave to perform pre-simulation setup and enter

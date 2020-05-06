@@ -10,7 +10,7 @@
 BOOST_AUTO_TEST_CASE(shared_box_copyable)
 {
     constexpr int itemCount = 1000;
-    cse::utility::shared_box<int> box;
+    cosim::utility::shared_box<int> box;
 
     // reader
     std::thread reader([&]() {
@@ -49,7 +49,7 @@ struct noncopyable
 BOOST_AUTO_TEST_CASE(shared_box_noncopyable)
 {
     constexpr int itemCount = 1000;
-    cse::utility::shared_box<noncopyable> box;
+    cosim::utility::shared_box<noncopyable> box;
 
     // reader
     std::thread reader([&]() {
@@ -127,21 +127,21 @@ void test_locking(F1&& getMutex1, F2&& getMutex2, F3&& getMutex3)
 
 BOOST_AUTO_TEST_CASE(shared_mutex)
 {
-    cse::utility::shared_mutex mutex1;
-    cse::utility::shared_mutex mutex2;
-    cse::utility::shared_mutex mutex3;
+    cosim::utility::shared_mutex mutex1;
+    cosim::utility::shared_mutex mutex2;
+    cosim::utility::shared_mutex mutex3;
     test_locking(
-        [&]() -> cse::utility::shared_mutex& { return mutex1; },
-        [&]() -> cse::utility::shared_mutex& { return mutex2; },
-        [&]() -> cse::utility::shared_mutex& { return mutex3; });
+        [&]() -> cosim::utility::shared_mutex& { return mutex1; },
+        [&]() -> cosim::utility::shared_mutex& { return mutex2; },
+        [&]() -> cosim::utility::shared_mutex& { return mutex3; });
 }
 
 
 BOOST_AUTO_TEST_CASE(file_lock)
 {
-    const auto workDir = cse::utility::temp_dir();
+    const auto workDir = cosim::utility::temp_dir();
     test_locking(
-        [&] { return cse::utility::file_lock(workDir.path() / "lockfile1"); },
-        [&] { return cse::utility::file_lock(workDir.path() / "lockfile2"); },
-        [&] { return cse::utility::file_lock(workDir.path() / "lockfile3"); });
+        [&] { return cosim::utility::file_lock(workDir.path() / "lockfile1"); },
+        [&] { return cosim::utility::file_lock(workDir.path() / "lockfile2"); },
+        [&] { return cosim::utility::file_lock(workDir.path() / "lockfile3"); });
 }

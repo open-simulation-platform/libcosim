@@ -25,9 +25,9 @@ std::pair<std::string, unsigned int> parse_authority(std::string_view auth)
 
 } // namespace
 
-std::shared_ptr<cse::model> cse::fmuproxy::fmuproxy_uri_sub_resolver::lookup_model(
-    const cse::uri& baseUri,
-    const cse::uri& modelUriReference)
+std::shared_ptr<cosim::model> cosim::fmuproxy::fmuproxy_uri_sub_resolver::lookup_model(
+    const cosim::uri& baseUri,
+    const cosim::uri& modelUriReference)
 {
     const auto& mur = modelUriReference;
     const auto query = mur.query();
@@ -37,7 +37,7 @@ std::shared_ptr<cse::model> cse::fmuproxy::fmuproxy_uri_sub_resolver::lookup_mod
             return model_uri_sub_resolver::lookup_model(
                 baseUri, uri(mur.scheme(), mur.authority(), mur.path(), newQuery, mur.fragment()));
         } else if (query->find("file=") < query->size()) {
-            const auto pathToAppend = cse::file_uri_to_path(baseUri).parent_path().string();
+            const auto pathToAppend = cosim::file_uri_to_path(baseUri).parent_path().string();
             const auto newQuery = "file=" + pathToAppend + "/" + std::string(query->substr(5));
             return model_uri_sub_resolver::lookup_model(
                 baseUri, uri(mur.scheme(), mur.authority(), mur.path(), newQuery, mur.fragment()));
@@ -46,7 +46,7 @@ std::shared_ptr<cse::model> cse::fmuproxy::fmuproxy_uri_sub_resolver::lookup_mod
     return model_uri_sub_resolver::lookup_model(baseUri, mur);
 }
 
-std::shared_ptr<cse::model> cse::fmuproxy::fmuproxy_uri_sub_resolver::lookup_model(const cse::uri& modelUri)
+std::shared_ptr<cosim::model> cosim::fmuproxy::fmuproxy_uri_sub_resolver::lookup_model(const cosim::uri& modelUri)
 {
     assert(modelUri.scheme().has_value());
     if (*modelUri.scheme() != "fmu-proxy") return nullptr;
@@ -55,7 +55,7 @@ std::shared_ptr<cse::model> cse::fmuproxy::fmuproxy_uri_sub_resolver::lookup_mod
 
     const auto query = *modelUri.query();
     const auto auth = parse_authority(*modelUri.authority());
-    auto client = cse::fmuproxy::fmuproxy_client(auth.first, auth.second);
+    auto client = cosim::fmuproxy::fmuproxy_client(auth.first, auth.second);
 
     if (query.substr(0, 5) == "guid=") {
         const auto guid = std::string(query.substr(5));

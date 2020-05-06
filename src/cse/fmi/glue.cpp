@@ -7,7 +7,7 @@
 #include <cassert>
 
 
-namespace cse
+namespace cosim
 {
 namespace fmi
 {

@@ -16,32 +16,32 @@
 int main()
 {
     try {
-        cse::log::setup_simple_console_logging();
-        cse::log::set_global_output_level(cse::log::debug);
+        cosim::log::setup_simple_console_logging();
+        cosim::log::set_global_output_level(cosim::log::debug);
 
-        constexpr cse::time_point startTime = cse::to_time_point(0.0);
-        constexpr cse::time_point midTime = cse::to_time_point(1.0);
-        constexpr cse::time_point endTime = cse::to_time_point(2.0);
-        constexpr cse::duration stepSize = cse::to_duration(0.1);
+        constexpr cosim::time_point startTime = cosim::to_time_point(0.0);
+        constexpr cosim::time_point midTime = cosim::to_time_point(1.0);
+        constexpr cosim::time_point endTime = cosim::to_time_point(2.0);
+        constexpr cosim::duration stepSize = cosim::to_duration(0.1);
 
-        auto algorithm = std::make_shared<cse::fixed_step_algorithm>(stepSize);
-        auto execution = cse::execution(startTime, algorithm);
+        auto algorithm = std::make_shared<cosim::fixed_step_algorithm>(stepSize);
+        auto execution = cosim::execution(startTime, algorithm);
 
-        auto observer = std::make_shared<cse::time_series_observer>();
+        auto observer = std::make_shared<cosim::time_series_observer>();
         execution.add_observer(observer);
 
         double x1 = 0;
         auto simIndex1 = execution.add_slave(
-            cse::make_pseudo_async(std::make_unique<mock_slave>([&x1](double x) { return x + x1++; })), "slave uno");
+            cosim::make_pseudo_async(std::make_unique<mock_slave>([&x1](double x) { return x + x1++; })), "slave uno");
 
         double x2 = 0;
         auto simIndex2 = execution.add_slave(
-            cse::make_pseudo_async(std::make_unique<mock_slave>([&x2](double x) { return x + x2++; })), "slave dos");
+            cosim::make_pseudo_async(std::make_unique<mock_slave>([&x2](double x) { return x + x2++; })), "slave dos");
 
         algorithm->set_stepsize_decimation_factor(simIndex2, 2);
 
-        auto variableId1 = cse::variable_id{simIndex1, cse::variable_type::real, 0};
-        auto variableId2 = cse::variable_id{simIndex2, cse::variable_type::real, 0};
+        auto variableId1 = cosim::variable_id{simIndex1, cosim::variable_type::real, 0};
+        auto variableId2 = cosim::variable_id{simIndex2, cosim::variable_type::real, 0};
 
         observer->start_observing(variableId1);
 
@@ -55,7 +55,7 @@ int main()
         REQUIRE(simResult.get());
 
         const int numSamples = 20;
-        const cse::value_reference varIndex = 0;
+        const cosim::value_reference varIndex = 0;
         double realValues1[numSamples];
         double realValues2[numSamples];
 

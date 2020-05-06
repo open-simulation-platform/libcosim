@@ -6,8 +6,8 @@
 
 BOOST_AUTO_TEST_CASE(to_double_time_point_duration_addition)
 {
-    constexpr cse::duration time[] = {
-        cse::duration(0),
+    constexpr cosim::duration time[] = {
+        cosim::duration(0),
         std::chrono::nanoseconds(1),
         std::chrono::microseconds(1),
         std::chrono::milliseconds(1),
@@ -19,14 +19,14 @@ BOOST_AUTO_TEST_CASE(to_double_time_point_duration_addition)
 
     for (const auto t : time) {
         for (const auto dt : time) {
-            const auto t1 = cse::time_point{t};
-            BOOST_TEST(cse::to_double_time_point(t1) + cse::to_double_duration(dt, t1) == cse::to_double_time_point(t1 + dt));
+            const auto t1 = cosim::time_point{t};
+            BOOST_TEST(cosim::to_double_time_point(t1) + cosim::to_double_duration(dt, t1) == cosim::to_double_time_point(t1 + dt));
         }
     }
 }
 
-BOOST_TEST_DONT_PRINT_LOG_VALUE(cse::duration)
-BOOST_TEST_DONT_PRINT_LOG_VALUE(cse::time_point)
+BOOST_TEST_DONT_PRINT_LOG_VALUE(cosim::duration)
+BOOST_TEST_DONT_PRINT_LOG_VALUE(cosim::time_point)
 
 BOOST_AUTO_TEST_CASE(to_time_point_duration_addition)
 {
@@ -34,7 +34,7 @@ BOOST_AUTO_TEST_CASE(to_time_point_duration_addition)
 
     for (const auto t1 : time) {
         for (const auto dt : time) {
-            BOOST_TEST(cse::to_time_point(t1) + cse::to_duration(dt, t1) == cse::to_time_point(t1 + dt));
+            BOOST_TEST(cosim::to_time_point(t1) + cosim::to_duration(dt, t1) == cosim::to_time_point(t1 + dt));
         }
     }
 }

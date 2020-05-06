@@ -6,7 +6,7 @@
 #define CSE_LIB_INFO_HPP
 
 
-namespace cse
+namespace cosim
 {
 
 

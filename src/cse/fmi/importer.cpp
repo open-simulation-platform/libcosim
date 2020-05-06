@@ -19,7 +19,7 @@
 #include <new>
 
 
-namespace cse
+namespace cosim
 {
 namespace fmi
 {
@@ -162,9 +162,9 @@ std::shared_ptr<fmu> importer::import(const boost::filesystem::path& fmuPath)
 
     // Unzip the model description into a temporary folder
     const auto tempMdDir = utility::temp_dir();
-    const auto zip = cse::utility::zip::archive(fmuPath);
+    const auto zip = cosim::utility::zip::archive(fmuPath);
     const auto modelDescriptionIndex = zip.find_entry("modelDescription.xml");
-    if (modelDescriptionIndex == cse::utility::zip::invalid_entry_index) {
+    if (modelDescriptionIndex == cosim::utility::zip::invalid_entry_index) {
         throw error(
             make_error_code(errc::bad_file),
             fmuPath.string() + " does not contain modelDescription.xml");

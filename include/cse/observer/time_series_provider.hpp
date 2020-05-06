@@ -12,7 +12,7 @@
 #include <gsl/span>
 
 
-namespace cse
+namespace cosim
 {
 
 

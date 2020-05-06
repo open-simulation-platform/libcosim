@@ -11,8 +11,8 @@
 
 BOOST_AUTO_TEST_CASE(zip_archive)
 {
-    namespace ut = cse::utility;
-    namespace uz = cse::utility::zip;
+    namespace ut = cosim::utility;
+    namespace uz = cosim::utility::zip;
     namespace fs = boost::filesystem;
 
     // Info about the test archive file and its contents

@@ -83,7 +83,7 @@
 #define CSE_PRECONDITION(condition)                                         \
     do {                                                                    \
         if (!(condition)) {                                                 \
-            ::cse::detail::precondition_violated(__FUNCTION__, #condition); \
+            ::cosim::detail::precondition_violated(__FUNCTION__, #condition); \
         }                                                                   \
     } while (false)
 
@@ -99,7 +99,7 @@
  */
 #define CSE_PANIC()                                        \
     do {                                                   \
-        ::cse::detail::panic(__FILE__, __LINE__, nullptr); \
+        ::cosim::detail::panic(__FILE__, __LINE__, nullptr); \
     } while (false)
 
 /**
@@ -113,11 +113,11 @@
  */
 #define CSE_PANIC_M(message)                               \
     do {                                                   \
-        ::cse::detail::panic(__FILE__, __LINE__, message); \
+        ::cosim::detail::panic(__FILE__, __LINE__, message); \
     } while (false)
 
 
-namespace cse
+namespace cosim
 {
 namespace detail
 {

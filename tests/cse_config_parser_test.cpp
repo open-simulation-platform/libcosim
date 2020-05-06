@@ -15,21 +15,21 @@
 
 void test(const boost::filesystem::path& configPath, size_t expectedNumConnections)
 {
-    auto resolver = cse::default_model_uri_resolver();
-    const auto config = cse::load_cse_config(configPath, *resolver);
-    auto execution = cse::execution(
+    auto resolver = cosim::default_model_uri_resolver();
+    const auto config = cosim::load_cse_config(configPath, *resolver);
+    auto execution = cosim::execution(
         config.start_time,
-        std::make_shared<cse::fixed_step_algorithm>(config.step_size));
+        std::make_shared<cosim::fixed_step_algorithm>(config.step_size));
 
-    const auto entityMaps = cse::inject_system_structure(
+    const auto entityMaps = cosim::inject_system_structure(
         execution, config.system_structure, config.initial_values);
     REQUIRE(entityMaps.simulators.size() == 4);
     REQUIRE(boost::size(config.system_structure.connections()) == expectedNumConnections);
 
-    auto obs = std::make_shared<cse::last_value_observer>();
+    auto obs = std::make_shared<cosim::last_value_observer>();
     execution.add_observer(obs);
 
-    auto result = execution.simulate_until(cse::to_time_point(1e-3));
+    auto result = execution.simulate_until(cosim::to_time_point(1e-3));
     REQUIRE(result.get());
 
     const auto simIndex = entityMaps.simulators.at("CraneController");
@@ -45,8 +45,8 @@ void test(const boost::filesystem::path& configPath, size_t expectedNumConnectio
 int main()
 {
     try {
-        cse::log::setup_simple_console_logging();
-        cse::log::set_global_output_level(cse::log::info);
+        cosim::log::setup_simple_console_logging();
+        cosim::log::set_global_output_level(cosim::log::info);
 
         const auto testDataDir = std::getenv("TEST_DATA_DIR");
         REQUIRE(testDataDir);

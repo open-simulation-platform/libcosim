@@ -17,7 +17,7 @@
 #include <variant>
 
 
-namespace cse
+namespace cosim
 {
 
 /**
@@ -132,9 +132,9 @@ std::string to_text(const full_variable_name& v);
 namespace std
 {
 template<>
-struct hash<cse::full_variable_name>
+struct hash<cosim::full_variable_name>
 {
-    std::size_t operator()(const cse::full_variable_name& v) const noexcept
+    std::size_t operator()(const cosim::full_variable_name& v) const noexcept
     {
         std::size_t h = 0;
         boost::hash_combine(h, v.entity_name);
@@ -148,7 +148,7 @@ struct hash<cse::full_variable_name>
 } // namespace std
 
 
-namespace cse
+namespace cosim
 {
 
 /**
@@ -227,7 +227,7 @@ public:
     /// \overload
     void add_entity(
         std::string_view name,
-        std::shared_ptr<cse::model> type,
+        std::shared_ptr<cosim::model> type,
         duration stepSizeHint = duration::zero())
     {
         add_entity({std::string(name), type, stepSizeHint, {}});
@@ -299,7 +299,7 @@ public:
     {
         int group_index = 0;
         int io_index = 0;
-        cse::function_io_description description;
+        cosim::function_io_description description;
     };
 
     /**

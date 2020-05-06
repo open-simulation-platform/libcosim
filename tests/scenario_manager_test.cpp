@@ -18,68 +18,68 @@
 int main()
 {
     try {
-        cse::log::setup_simple_console_logging();
-        cse::log::set_global_output_level(cse::log::trace);
+        cosim::log::setup_simple_console_logging();
+        cosim::log::set_global_output_level(cosim::log::trace);
 
-        constexpr cse::time_point startTime = cse::to_time_point(0.0);
-        constexpr cse::time_point endTime = cse::to_time_point(1.1);
-        constexpr cse::duration stepSize = cse::to_duration(0.1);
+        constexpr cosim::time_point startTime = cosim::to_time_point(0.0);
+        constexpr cosim::time_point endTime = cosim::to_time_point(1.1);
+        constexpr cosim::duration stepSize = cosim::to_duration(0.1);
 
-        auto execution = cse::execution(startTime, std::make_unique<cse::fixed_step_algorithm>(stepSize));
+        auto execution = cosim::execution(startTime, std::make_unique<cosim::fixed_step_algorithm>(stepSize));
 
-        auto observer = std::make_shared<cse::time_series_observer>();
+        auto observer = std::make_shared<cosim::time_series_observer>();
         execution.add_observer(observer);
-        auto scenarioManager = std::make_shared<cse::scenario_manager>();
+        auto scenarioManager = std::make_shared<cosim::scenario_manager>();
         execution.add_manipulator(scenarioManager);
 
         auto simIndex = execution.add_slave(
-            cse::make_pseudo_async(std::make_unique<mock_slave>(
+            cosim::make_pseudo_async(std::make_unique<mock_slave>(
                 [](double x) { return x + 1.234; },
                 [](int y) { return y + 2; })),
             "slave uno");
 
         observer->start_observing(
-            cse::variable_id{simIndex, cse::variable_type::real, mock_slave::real_in_reference});
+            cosim::variable_id{simIndex, cosim::variable_type::real, mock_slave::real_in_reference});
         observer->start_observing(
-            cse::variable_id{simIndex, cse::variable_type::real, mock_slave::real_out_reference});
+            cosim::variable_id{simIndex, cosim::variable_type::real, mock_slave::real_out_reference});
         observer->start_observing(
-            cse::variable_id{simIndex, cse::variable_type::integer, mock_slave::integer_in_reference});
+            cosim::variable_id{simIndex, cosim::variable_type::integer, mock_slave::integer_in_reference});
         observer->start_observing(
-            cse::variable_id{simIndex, cse::variable_type::integer, mock_slave::integer_out_reference});
+            cosim::variable_id{simIndex, cosim::variable_type::integer, mock_slave::integer_out_reference});
 
         constexpr bool input = true;
         constexpr bool output = false;
 
-        auto realModifier1 = cse::scenario::real_modifier{[](double original, cse::duration) { return original + 1.001; }};
-        auto realAction1 = cse::scenario::variable_action{simIndex, mock_slave::real_in_reference, realModifier1, input};
-        auto realEvent1 = cse::scenario::event{cse::to_time_point(0.5), realAction1};
+        auto realModifier1 = cosim::scenario::real_modifier{[](double original, cosim::duration) { return original + 1.001; }};
+        auto realAction1 = cosim::scenario::variable_action{simIndex, mock_slave::real_in_reference, realModifier1, input};
+        auto realEvent1 = cosim::scenario::event{cosim::to_time_point(0.5), realAction1};
 
-        auto realModifier2 = cse::scenario::real_modifier{[](double /*original*/, cse::duration) { return -1.0; }};
-        auto realAction2 = cse::scenario::variable_action{simIndex, mock_slave::real_out_reference, realModifier2, output};
-        auto realEvent2 = cse::scenario::event{cse::to_time_point(0.2), realAction2};
+        auto realModifier2 = cosim::scenario::real_modifier{[](double /*original*/, cosim::duration) { return -1.0; }};
+        auto realAction2 = cosim::scenario::variable_action{simIndex, mock_slave::real_out_reference, realModifier2, output};
+        auto realEvent2 = cosim::scenario::event{cosim::to_time_point(0.2), realAction2};
 
-        auto realModifier3 = cse::scenario::real_modifier{nullptr};
-        auto realAction3 = cse::scenario::variable_action{simIndex, mock_slave::real_out_reference, realModifier3, output};
-        auto realEvent3 = cse::scenario::event{cse::to_time_point(0.3), realAction3};
+        auto realModifier3 = cosim::scenario::real_modifier{nullptr};
+        auto realAction3 = cosim::scenario::variable_action{simIndex, mock_slave::real_out_reference, realModifier3, output};
+        auto realEvent3 = cosim::scenario::event{cosim::to_time_point(0.3), realAction3};
 
-        auto intModifier1 = cse::scenario::integer_modifier{[](int /*original*/, cse::duration) { return 2; }};
-        auto intAction1 = cse::scenario::variable_action{simIndex, mock_slave::integer_in_reference, intModifier1, input};
-        auto intEvent1 = cse::scenario::event{cse::to_time_point(0.65), intAction1};
+        auto intModifier1 = cosim::scenario::integer_modifier{[](int /*original*/, cosim::duration) { return 2; }};
+        auto intAction1 = cosim::scenario::variable_action{simIndex, mock_slave::integer_in_reference, intModifier1, input};
+        auto intEvent1 = cosim::scenario::event{cosim::to_time_point(0.65), intAction1};
 
-        auto intModifier2 = cse::scenario::integer_modifier{[](int /*original*/, cse::duration) { return 5; }};
-        auto intAction2 = cse::scenario::variable_action{simIndex, mock_slave::integer_out_reference, intModifier2, output};
-        auto intEvent2 = cse::scenario::event{cse::to_time_point(0.8), intAction2};
+        auto intModifier2 = cosim::scenario::integer_modifier{[](int /*original*/, cosim::duration) { return 5; }};
+        auto intAction2 = cosim::scenario::variable_action{simIndex, mock_slave::integer_out_reference, intModifier2, output};
+        auto intEvent2 = cosim::scenario::event{cosim::to_time_point(0.8), intAction2};
 
-        auto events = std::vector<cse::scenario::event>();
+        auto events = std::vector<cosim::scenario::event>();
         events.push_back(realEvent1);
         events.push_back(realEvent2);
         events.push_back(realEvent3);
         events.push_back(intEvent1);
         events.push_back(intEvent2);
 
-        auto end = cse::to_time_point(1.0);
+        auto end = cosim::to_time_point(1.0);
 
-        auto scenario = cse::scenario::scenario{events, end};
+        auto scenario = cosim::scenario::scenario{events, end};
 
         scenarioManager->load_scenario(scenario, startTime);
 
@@ -91,8 +91,8 @@ int main()
         double realOutputValues[numSamples];
         int intInputValues[numSamples];
         int intOutputValues[numSamples];
-        cse::step_number steps[numSamples];
-        cse::time_point times[numSamples];
+        cosim::step_number steps[numSamples];
+        cosim::time_point times[numSamples];
 
         size_t samplesRead = observer->get_real_samples(
             simIndex,

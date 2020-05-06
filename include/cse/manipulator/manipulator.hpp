@@ -13,7 +13,7 @@
 #include <functional>
 #include <string>
 
-namespace cse
+namespace cosim
 {
 
 /// Interface for manipulable entities in a simulation.

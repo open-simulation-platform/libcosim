@@ -6,7 +6,7 @@
 
 #include <boost/filesystem/path.hpp>
 
-namespace cse
+namespace cosim
 {
 /**
  * Parses a scenario from file.

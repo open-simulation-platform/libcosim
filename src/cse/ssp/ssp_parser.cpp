@@ -5,7 +5,7 @@
 #include <boost/filesystem/operations.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 
-namespace cse
+namespace cosim
 {
 
 namespace
@@ -113,7 +113,7 @@ ssp_parser::ssp_parser(const boost::filesystem::path& ssdPath)
                     for (const auto& algorithm : annotation.second.get_child("osp:Algorithm")) {
                         if (algorithm.first == "osp:FixedStepAlgorithm") {
                             auto baseStepSize = get_attribute<double>(algorithm.second, "baseStepSize");
-                            defaultExperiment_.algorithm = std::make_unique<cse::fixed_step_algorithm>(cse::to_duration(baseStepSize));
+                            defaultExperiment_.algorithm = std::make_unique<cosim::fixed_step_algorithm>(cosim::to_duration(baseStepSize));
                         } else {
                             throw std::runtime_error("Unknown algorithm: " + algorithm.first);
                         }
@@ -216,12 +216,12 @@ const ssp_parser::DefaultExperiment& ssp_parser::get_default_experiment() const
     return defaultExperiment_;
 }
 
-cse::time_point get_default_start_time(const ssp_parser& parser)
+cosim::time_point get_default_start_time(const ssp_parser& parser)
 {
-    return cse::to_time_point(parser.get_default_experiment().startTime);
+    return cosim::to_time_point(parser.get_default_experiment().startTime);
 }
 
-cse::variable_id get_variable(
+cosim::variable_id get_variable(
     const std::map<std::string,
         slave_info>& slaves,
     const std::string& element,

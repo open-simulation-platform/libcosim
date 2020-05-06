@@ -11,7 +11,7 @@
 #include <string_view>
 #include <unordered_set>
 
-namespace cse
+namespace cosim
 {
 
 /**

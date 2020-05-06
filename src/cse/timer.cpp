@@ -10,7 +10,7 @@
 typedef std::chrono::steady_clock Time;
 constexpr std::chrono::microseconds MIN_SLEEP(100);
 
-namespace cse
+namespace cosim
 {
 
 

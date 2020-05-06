@@ -18,7 +18,7 @@
 #include <variant>
 
 
-namespace cse
+namespace cosim
 {
 namespace
 {
@@ -133,13 +133,13 @@ auto big_stack_async(F&& f)
  */
 void set_all_variables(
     slave& slave,
-    gsl::span<const cse::value_reference> realVariables,
+    gsl::span<const cosim::value_reference> realVariables,
     gsl::span<const double> realValues,
-    gsl::span<const cse::value_reference> integerVariables,
+    gsl::span<const cosim::value_reference> integerVariables,
     gsl::span<const int> integerValues,
-    gsl::span<const cse::value_reference> booleanVariables,
+    gsl::span<const cosim::value_reference> booleanVariables,
     gsl::span<const bool> booleanValues,
-    gsl::span<const cse::value_reference> stringVariables,
+    gsl::span<const cosim::value_reference> stringVariables,
     gsl::span<const std::string> stringValues)
 {
     bool nonfatalBadValue = false;
@@ -182,10 +182,10 @@ boost::container::vector<std::remove_cv_t<T>> to_vector(gsl::span<T> span)
 }
 
 
-class pseudo_async_slave : public cse::async_slave
+class pseudo_async_slave : public cosim::async_slave
 {
 public:
-    pseudo_async_slave(std::shared_ptr<cse::slave> slave)
+    pseudo_async_slave(std::shared_ptr<cosim::slave> slave)
         : slave_(std::move(slave))
         , state_(slave_state::created)
     {}
@@ -204,7 +204,7 @@ public:
         return state_;
     }
 
-    boost::fibers::future<cse::model_description> model_description() override
+    boost::fibers::future<cosim::model_description> model_description() override
     {
         CSE_PRECONDITION(
             state_ != slave_state::error &&
@@ -215,7 +215,7 @@ public:
     }
 
     boost::fibers::future<void> setup(
-        cse::time_point startTime,
+        cosim::time_point startTime,
         std::optional<time_point> stopTime,
         std::optional<double> relativeTolerance)
         override
@@ -242,9 +242,9 @@ public:
         });
     }
 
-    boost::fibers::future<cse::step_result> do_step(
-        cse::time_point currentT,
-        cse::duration deltaT)
+    boost::fibers::future<cosim::step_result> do_step(
+        cosim::time_point currentT,
+        cosim::duration deltaT)
         override
     {
         CSE_PRECONDITION(state_ == slave_state::simulation);
@@ -256,10 +256,10 @@ public:
     // clang-format off
 
     boost::fibers::future<variable_values> get_variables(
-        gsl::span<const cse::value_reference> realVariables,
-        gsl::span<const cse::value_reference> integerVariables,
-        gsl::span<const cse::value_reference> booleanVariables,
-        gsl::span<const cse::value_reference> stringVariables)
+        gsl::span<const cosim::value_reference> realVariables,
+        gsl::span<const cosim::value_reference> integerVariables,
+        gsl::span<const cosim::value_reference> booleanVariables,
+        gsl::span<const cosim::value_reference> stringVariables)
         override
     {
         CSE_PRECONDITION(
@@ -293,13 +293,13 @@ public:
     }
 
     boost::fibers::future<void> set_variables(
-        gsl::span<const cse::value_reference> realVariables,
+        gsl::span<const cosim::value_reference> realVariables,
         gsl::span<const double> realValues,
-        gsl::span<const cse::value_reference> integerVariables,
+        gsl::span<const cosim::value_reference> integerVariables,
         gsl::span<const int> integerValues,
-        gsl::span<const cse::value_reference> booleanVariables,
+        gsl::span<const cosim::value_reference> booleanVariables,
         gsl::span<const bool> booleanValues,
-        gsl::span<const cse::value_reference> stringVariables,
+        gsl::span<const cosim::value_reference> stringVariables,
         gsl::span<const std::string> stringValues)
         override
     {
@@ -337,7 +337,7 @@ public:
     // clang-format on
 
 private:
-    std::shared_ptr<cse::slave> slave_;
+    std::shared_ptr<cosim::slave> slave_;
     slave_state state_;
 
     // We need Boost's vector<bool> to avoid the issues with std::vector<bool>.
@@ -389,24 +389,24 @@ struct do_step_request
 };
 struct get_variables_request
 {
-    gsl::span<const cse::value_reference> realVariables;
+    gsl::span<const cosim::value_reference> realVariables;
     gsl::span<double> realValues;
-    gsl::span<const cse::value_reference> integerVariables;
+    gsl::span<const cosim::value_reference> integerVariables;
     gsl::span<int> integerValues;
-    gsl::span<const cse::value_reference> booleanVariables;
+    gsl::span<const cosim::value_reference> booleanVariables;
     gsl::span<bool> booleanValues;
-    gsl::span<const cse::value_reference> stringVariables;
+    gsl::span<const cosim::value_reference> stringVariables;
     gsl::span<std::string> stringValues;
 };
 struct set_variables_request
 {
-    gsl::span<const cse::value_reference> realVariables;
+    gsl::span<const cosim::value_reference> realVariables;
     gsl::span<const double> realValues;
-    gsl::span<const cse::value_reference> integerVariables;
+    gsl::span<const cosim::value_reference> integerVariables;
     gsl::span<const int> integerValues;
-    gsl::span<const cse::value_reference> booleanVariables;
+    gsl::span<const cosim::value_reference> booleanVariables;
     gsl::span<const bool> booleanValues;
-    gsl::span<const cse::value_reference> stringVariables;
+    gsl::span<const cosim::value_reference> stringVariables;
     gsl::span<const std::string> stringValues;
 };
 
@@ -556,14 +556,14 @@ public:
         return state_;
     }
 
-    boost::fibers::future<cse::model_description> model_description() override
+    boost::fibers::future<cosim::model_description> model_description() override
     {
         CSE_PRECONDITION(
             state_ != slave_state::error &&
             state_ != slave_state::indeterminate);
         return boost::fibers::async([=, _ = state_guard(state_)] {
             requestChannel_->put(model_description_request());
-            return get_reply<cse::model_description>(*replyChannel_);
+            return get_reply<cosim::model_description>(*replyChannel_);
         });
     }
 
@@ -611,10 +611,10 @@ public:
     // clang-format off
 
     boost::fibers::future<variable_values> get_variables(
-        gsl::span<const cse::value_reference> realVariables,
-        gsl::span<const cse::value_reference> integerVariables,
-        gsl::span<const cse::value_reference> booleanVariables,
-        gsl::span<const cse::value_reference> stringVariables)
+        gsl::span<const cosim::value_reference> realVariables,
+        gsl::span<const cosim::value_reference> integerVariables,
+        gsl::span<const cosim::value_reference> booleanVariables,
+        gsl::span<const cosim::value_reference> stringVariables)
         override
     {
         CSE_PRECONDITION(
@@ -656,13 +656,13 @@ public:
     }
 
     boost::fibers::future<void> set_variables(
-        gsl::span<const cse::value_reference> realVariables,
+        gsl::span<const cosim::value_reference> realVariables,
         gsl::span<const double> realValues,
-        gsl::span<const cse::value_reference> integerVariables,
+        gsl::span<const cosim::value_reference> integerVariables,
         gsl::span<const int> integerValues,
-        gsl::span<const cse::value_reference> booleanVariables,
+        gsl::span<const cosim::value_reference> booleanVariables,
         gsl::span<const bool> booleanValues,
-        gsl::span<const cse::value_reference> stringVariables,
+        gsl::span<const cosim::value_reference> stringVariables,
         gsl::span<const std::string> stringValues)
         override
     {

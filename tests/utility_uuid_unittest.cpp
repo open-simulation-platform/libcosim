@@ -6,7 +6,7 @@
 
 BOOST_AUTO_TEST_CASE(random_uuid)
 {
-    const auto u = cse::utility::random_uuid();
+    const auto u = cosim::utility::random_uuid();
     BOOST_TEST(u.size() == 36);
-    BOOST_TEST(cse::utility::random_uuid() != u);
+    BOOST_TEST(cosim::utility::random_uuid() != u);
 }

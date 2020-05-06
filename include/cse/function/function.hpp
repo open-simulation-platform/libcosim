@@ -11,7 +11,7 @@
 #include <unordered_map>
 
 
-namespace cse
+namespace cosim
 {
 
 

@@ -21,7 +21,7 @@
 struct fmi1_import_t;
 
 
-namespace cse
+namespace cosim
 {
 namespace fmi
 {
@@ -66,7 +66,7 @@ public:
     // fmi::fmu methods
     fmi::fmi_version fmi_version() const override;
 
-    std::shared_ptr<const cse::model_description>
+    std::shared_ptr<const cosim::model_description>
     model_description() const override;
 
     std::shared_ptr<fmi::slave_instance> instantiate_slave(
@@ -98,7 +98,7 @@ private:
     std::unique_ptr<file_cache::directory_ro> dir_;
 
     fmi1_import_t* handle_;
-    cse::model_description modelDescription_;
+    cosim::model_description modelDescription_;
     std::vector<std::weak_ptr<slave_instance>> instances_;
 
 #ifdef _WIN32

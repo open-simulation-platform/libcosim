@@ -10,15 +10,15 @@
 #include <random>
 
 
-namespace cse
+namespace cosim
 {
 
 
 ssp_loader::ssp_loader()
-    : modelResolver_(cse::default_model_uri_resolver())
+    : modelResolver_(cosim::default_model_uri_resolver())
 {}
 
-void ssp_loader::set_model_uri_resolver(std::shared_ptr<cse::model_uri_resolver> resolver)
+void ssp_loader::set_model_uri_resolver(std::shared_ptr<cosim::model_uri_resolver> resolver)
 {
     modelResolver_ = std::move(resolver);
 }
@@ -67,10 +67,10 @@ void add_parameter_set(
 ssp_configuration ssp_loader::load(const boost::filesystem::path& configPath)
 {
     auto sspFile = configPath;
-    std::optional<cse::utility::temp_dir> temp_ssp_dir;
+    std::optional<cosim::utility::temp_dir> temp_ssp_dir;
     if (sspFile.extension() == ".ssp") {
-        temp_ssp_dir = cse::utility::temp_dir();
-        auto archive = cse::utility::zip::archive(sspFile);
+        temp_ssp_dir = cosim::utility::temp_dir();
+        auto archive = cosim::utility::zip::archive(sspFile);
         archive.extract_all(temp_ssp_dir->path());
         sspFile = temp_ssp_dir->path();
     }
@@ -93,7 +93,7 @@ ssp_configuration ssp_loader::load(const boost::filesystem::path& configPath)
         configuration.system_structure.add_entity(
             componentName,
             modelResolver_->lookup_model(baseURI, component.source),
-            cse::to_duration(component.stepSizeHint.value_or(0)));
+            cosim::to_duration(component.stepSizeHint.value_or(0)));
 
         for (const auto& paramSet : component.parameterSets) {
             add_parameter_set(

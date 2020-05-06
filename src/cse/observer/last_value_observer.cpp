@@ -7,7 +7,7 @@
 #include <mutex>
 
 
-namespace cse
+namespace cosim
 {
 
 last_value_observer::last_value_observer()

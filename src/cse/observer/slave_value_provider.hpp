@@ -12,7 +12,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace cse
+namespace cosim
 {
 
 class slave_value_provider

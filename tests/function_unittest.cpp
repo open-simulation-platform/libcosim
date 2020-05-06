@@ -14,7 +14,7 @@
 #include <string>
 #include <utility>
 
-int find_param(const cse::function_type_description& ftd, const std::string& name)
+int find_param(const cosim::function_type_description& ftd, const std::string& name)
 {
     for (int i = 0; i < static_cast<int>(ftd.parameters.size()); ++i) {
         if (ftd.parameters[i].name == name) return i;
@@ -24,7 +24,7 @@ int find_param(const cse::function_type_description& ftd, const std::string& nam
 
 
 std::pair<int, int> find_io(
-    const cse::function_description& fd,
+    const cosim::function_description& fd,
     const std::string& groupName,
     const std::string& varName = "")
 {
@@ -44,10 +44,10 @@ BOOST_AUTO_TEST_CASE(linear_transformation_standalone)
     constexpr double offset = 3.0;
     constexpr double factor = 5.0;
 
-    auto type = cse::linear_transformation_function_type();
+    auto type = cosim::linear_transformation_function_type();
     const auto typeDesc = type.description();
 
-    std::unordered_map<int, cse::function_parameter_value> params;
+    std::unordered_map<int, cosim::function_parameter_value> params;
     params[find_param(typeDesc, "offset")] = offset;
     params[find_param(typeDesc, "factor")] = factor;
 
@@ -73,13 +73,13 @@ BOOST_AUTO_TEST_CASE(linear_transformation_standalone)
 BOOST_AUTO_TEST_CASE(vector_sum_standalone)
 {
     constexpr int inputCount = 3;
-    constexpr auto numericType = cse::variable_type::integer;
+    constexpr auto numericType = cosim::variable_type::integer;
     constexpr int dimension = 2;
 
-    auto type = cse::vector_sum_function_type();
+    auto type = cosim::vector_sum_function_type();
     const auto typeDesc = type.description();
 
-    std::unordered_map<int, cse::function_parameter_value> params;
+    std::unordered_map<int, cosim::function_parameter_value> params;
     params[find_param(typeDesc, "inputCount")] = inputCount;
     params[find_param(typeDesc, "numericType")] = numericType;
     params[find_param(typeDesc, "dimension")] = dimension;
@@ -91,8 +91,8 @@ BOOST_AUTO_TEST_CASE(vector_sum_standalone)
     BOOST_TEST_REQUIRE(funDesc.io_groups[1].ios.size() == 1);
     BOOST_TEST(std::get<int>(funDesc.io_groups[0].count) == inputCount);
     BOOST_TEST(std::get<int>(funDesc.io_groups[1].count) == 1);
-    BOOST_TEST(std::get<cse::variable_type>(funDesc.io_groups[0].ios[0].type) == numericType);
-    BOOST_TEST(std::get<cse::variable_type>(funDesc.io_groups[1].ios[0].type) == numericType);
+    BOOST_TEST(std::get<cosim::variable_type>(funDesc.io_groups[0].ios[0].type) == numericType);
+    BOOST_TEST(std::get<cosim::variable_type>(funDesc.io_groups[1].ios[0].type) == numericType);
     BOOST_TEST(std::get<int>(funDesc.io_groups[0].ios[0].count) == dimension);
     BOOST_TEST(std::get<int>(funDesc.io_groups[1].ios[0].count) == dimension);
 
@@ -128,12 +128,12 @@ BOOST_AUTO_TEST_CASE(function_in_execution)
     // Test parameters
     constexpr auto offset = 1.0;
     constexpr auto factor = 2.0;
-    constexpr auto startTime = cse::time_point();
-    constexpr auto stopTime = cse::time_point(std::chrono::seconds(3));
+    constexpr auto startTime = cosim::time_point();
+    constexpr auto stopTime = cosim::time_point(std::chrono::seconds(3));
     constexpr auto stepSize = std::chrono::milliseconds(100);
-    constexpr auto event1Time = cse::time_point(std::chrono::seconds(1));
+    constexpr auto event1Time = cosim::time_point(std::chrono::seconds(1));
     constexpr auto event1Value = 10.0;
-    constexpr auto event2Time = cse::time_point(std::chrono::seconds(2));
+    constexpr auto event2Time = cosim::time_point(std::chrono::seconds(2));
     constexpr auto event2Value = -10.0;
     constexpr auto bufferSize = (stopTime - startTime) / stepSize + 1;
 
@@ -141,69 +141,69 @@ BOOST_AUTO_TEST_CASE(function_in_execution)
     constexpr auto mockRealOut = 0;
     constexpr auto mockRealIn = 1;
 
-    auto exe = cse::execution(
+    auto exe = cosim::execution(
         startTime,
-        std::make_shared<cse::fixed_step_algorithm>(stepSize));
+        std::make_shared<cosim::fixed_step_algorithm>(stepSize));
 
     // Set up time series observer and scenario manager
-    const auto observer = std::make_shared<cse::time_series_observer>(bufferSize);
+    const auto observer = std::make_shared<cosim::time_series_observer>(bufferSize);
     exe.add_observer(observer);
-    const auto scenarioManager = std::make_shared<cse::scenario_manager>();
+    const auto scenarioManager = std::make_shared<cosim::scenario_manager>();
     exe.add_manipulator(scenarioManager);
 
     // Set up slaves and function
     const auto s1 = std::make_shared<mock_slave>();
-    const auto idS1 = exe.add_slave(cse::make_pseudo_async(s1), "S1");
-    const auto f = std::make_shared<cse::linear_transformation_function>(offset, factor);
+    const auto idS1 = exe.add_slave(cosim::make_pseudo_async(s1), "S1");
+    const auto f = std::make_shared<cosim::linear_transformation_function>(offset, factor);
     const auto idF = exe.add_function(f);
     const auto s2 = std::make_shared<mock_slave>();
-    const auto idS2 = exe.add_slave(cse::make_pseudo_async(s2), "S2");
+    const auto idS2 = exe.add_slave(cosim::make_pseudo_async(s2), "S2");
     exe.connect_variables(
-        cse::variable_id{idS1, cse::variable_type::real, mockRealOut},
-        cse::function_io_id{idF, cse::variable_type::real, cse::linear_transformation_function::in_io_reference});
+        cosim::variable_id{idS1, cosim::variable_type::real, mockRealOut},
+        cosim::function_io_id{idF, cosim::variable_type::real, cosim::linear_transformation_function::in_io_reference});
     exe.connect_variables(
-        cse::function_io_id{idF, cse::variable_type::real, cse::linear_transformation_function::out_io_reference},
-        cse::variable_id{idS2, cse::variable_type::real, mockRealIn});
+        cosim::function_io_id{idF, cosim::variable_type::real, cosim::linear_transformation_function::out_io_reference},
+        cosim::variable_id{idS2, cosim::variable_type::real, mockRealIn});
 
     // Set up a scenario that modifies S1's input value, and thereby indirectly
     // its output value.
-    cse::scenario::scenario scenario;
+    cosim::scenario::scenario scenario;
     scenario.events.push_back(
-        cse::scenario::event{
+        cosim::scenario::event{
             event1Time,
-            cse::scenario::variable_action{
+            cosim::scenario::variable_action{
                 idS1,
                 mockRealIn,
-                cse::scenario::real_modifier{[=](double, cse::duration) { return event1Value; }},
+                cosim::scenario::real_modifier{[=](double, cosim::duration) { return event1Value; }},
                 true}});
     scenario.events.push_back(
-        cse::scenario::event{
+        cosim::scenario::event{
             event2Time,
-            cse::scenario::variable_action{
+            cosim::scenario::variable_action{
                 idS1,
                 mockRealIn,
-                cse::scenario::real_modifier{[=](double, cse::duration) { return event2Value; }},
+                cosim::scenario::real_modifier{[=](double, cosim::duration) { return event2Value; }},
                 true}});
     scenario.end = stopTime;
     scenarioManager->load_scenario(scenario, exe.current_time());
 
     // Collect S2's output values
     observer->start_observing(
-        cse::variable_id{idS2, cse::variable_type::real, mockRealOut});
+        cosim::variable_id{idS2, cosim::variable_type::real, mockRealOut});
 
     // Run simulation and verify results
     auto success = exe.simulate_until(stopTime);
     BOOST_TEST_REQUIRE(success.get());
 
     auto outputs = std::vector<double>(bufferSize);
-    auto steps = std::vector<cse::step_number>(bufferSize);
-    auto times = std::vector<cse::time_point>(bufferSize);
+    auto steps = std::vector<cosim::step_number>(bufferSize);
+    auto times = std::vector<cosim::time_point>(bufferSize);
     observer->get_real_samples(
         idS2, mockRealOut, 0,
         gsl::make_span(outputs),
         gsl::make_span(steps),
         gsl::make_span(times));
-    for (int i = 0; i < bufferSize; ++i) std::cout << steps[i] << "  " << cse::to_double_time_point(times[i]) << "  " << outputs[i] << std::endl;
+    for (int i = 0; i < bufferSize; ++i) std::cout << steps[i] << "  " << cosim::to_double_time_point(times[i]) << "  " << outputs[i] << std::endl;
 
     // Check outputs at times halfway between startTime and event1Time, between
     // event1Time and event2Time, and between event2Time and stopTime.

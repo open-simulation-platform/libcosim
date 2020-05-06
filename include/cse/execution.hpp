@@ -19,7 +19,7 @@
 #include <unordered_map>
 
 
-namespace cse
+namespace cosim
 {
 
 /// An index which identifies a sub-simulator in an execution.
@@ -90,10 +90,10 @@ inline std::ostream& operator<<(std::ostream& stream, variable_id v)
 namespace std
 {
 template<>
-class hash<cse::variable_id>
+class hash<cosim::variable_id>
 {
 public:
-    std::size_t operator()(const cse::variable_id& v) const noexcept
+    std::size_t operator()(const cosim::variable_id& v) const noexcept
     {
         std::size_t seed = 0;
         boost::hash_combine(seed, v.simulator);
@@ -104,10 +104,10 @@ public:
 };
 
 template<>
-class hash<cse::function_io_id>
+class hash<cosim::function_io_id>
 {
 public:
-    std::size_t operator()(const cse::function_io_id& v) const noexcept
+    std::size_t operator()(const cosim::function_io_id& v) const noexcept
     {
         std::size_t seed = 0;
         boost::hash_combine(seed, v.function);
@@ -121,7 +121,7 @@ public:
 };
 } // namespace std
 
-namespace cse
+namespace cosim
 {
 
 

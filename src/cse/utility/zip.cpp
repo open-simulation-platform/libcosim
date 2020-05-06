@@ -10,7 +10,7 @@
 #include <vector>
 
 
-namespace cse
+namespace cosim
 {
 namespace utility
 {
@@ -281,17 +281,17 @@ boost::filesystem::path archive::extract_file_to(
 // =============================================================================
 
 error::error(const std::string& msg) noexcept
-    : cse::error(make_error_code(errc::zip_error), msg)
+    : cosim::error(make_error_code(errc::zip_error), msg)
 {
 }
 
 error::error(::zip* archive) noexcept
-    : cse::error(make_error_code(errc::zip_error), zip_strerror(archive))
+    : cosim::error(make_error_code(errc::zip_error), zip_strerror(archive))
 {
 }
 
 error::error(zip_file* file) noexcept
-    : cse::error(make_error_code(errc::zip_error), zip_file_strerror(file))
+    : cosim::error(make_error_code(errc::zip_error), zip_file_strerror(file))
 {
 }
 

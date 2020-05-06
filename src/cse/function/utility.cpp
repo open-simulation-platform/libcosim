@@ -6,7 +6,7 @@
 #include <type_traits>
 
 
-namespace cse
+namespace cosim
 {
 namespace
 {

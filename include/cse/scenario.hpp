@@ -10,7 +10,7 @@
 #include <variant>
 #include <vector>
 
-namespace cse
+namespace cosim
 {
 
 namespace scenario

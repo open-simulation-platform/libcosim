@@ -6,13 +6,13 @@
 
 #include <stdexcept>
 
-using namespace cse;
+using namespace cosim;
 
 
 class test_slave : public slave
 {
 public:
-    cse::model_description model_description() const override { return cse::model_description(); }
+    cosim::model_description model_description() const override { return cosim::model_description(); }
 
     void setup(time_point startTime, std::optional<time_point> stopTime, std::optional<double>) override
     {

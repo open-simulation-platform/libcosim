@@ -15,7 +15,7 @@
 #include <boost/log/trivial.hpp>
 
 
-namespace cse
+namespace cosim
 {
 namespace log
 {

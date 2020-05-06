@@ -6,7 +6,7 @@
 #include <boost/test/unit_test.hpp>
 
 
-using namespace cse;
+using namespace cosim;
 
 BOOST_TEST_DONT_PRINT_LOG_VALUE(fmi::fmi_version)
 
@@ -32,8 +32,8 @@ BOOST_AUTO_TEST_CASE(v2_fmu)
 
     auto instance = fmu->instantiate_slave("testSlave");
     instance->setup(
-        cse::to_time_point(0.0),
-        cse::to_time_point(1.0),
+        cosim::to_time_point(0.0),
+        cosim::to_time_point(1.0),
         std::nullopt);
 
     bool foundValve = false;

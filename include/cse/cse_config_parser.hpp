@@ -8,13 +8,13 @@
 #include <boost/filesystem/path.hpp>
 
 
-namespace cse
+namespace cosim
 {
 
 
 struct cse_config
 {
-    cse::system_structure system_structure;
+    cosim::system_structure system_structure;
     time_point start_time;
     duration step_size;
     variable_value_map initial_values;
@@ -22,7 +22,7 @@ struct cse_config
 
 cse_config load_cse_config(
     const boost::filesystem::path& configPath,
-    cse::model_uri_resolver&);
+    cosim::model_uri_resolver&);
 
 
 } // namespace cse

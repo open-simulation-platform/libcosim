@@ -7,7 +7,7 @@
 #include <sstream>
 
 
-namespace cse
+namespace cosim
 {
 
 namespace

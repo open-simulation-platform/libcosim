@@ -7,7 +7,7 @@
 #include <boost/filesystem/path.hpp>
 
 
-namespace cse
+namespace cosim
 {
 
 /**

@@ -23,7 +23,7 @@
 #include <vector>
 
 
-namespace cse
+namespace cosim
 {
 namespace fmi
 {
@@ -89,9 +89,9 @@ fmi::fmi_version fmu::fmi_version() const
 }
 
 
-std::shared_ptr<const cse::model_description> fmu::model_description() const
+std::shared_ptr<const cosim::model_description> fmu::model_description() const
 {
-    return std::shared_ptr<const cse::model_description>(
+    return std::shared_ptr<const cosim::model_description>(
         shared_from_this(),
         &modelDescription_);
 }

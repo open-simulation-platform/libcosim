@@ -6,7 +6,7 @@
 #include <utility>
 
 
-namespace cse
+namespace cosim
 {
 namespace utility
 {

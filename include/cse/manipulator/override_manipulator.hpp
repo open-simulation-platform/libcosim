@@ -8,7 +8,7 @@
 #include <unordered_map>
 #include <variant>
 
-namespace cse
+namespace cosim
 {
 
 /**

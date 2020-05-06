@@ -19,37 +19,37 @@ namespace
 // See https://www.boost.org/doc/libs/1_65_0/libs/test/doc/html/boost_test/utf_reference/testing_tool_ref/assertion_boost_level_close.html
 constexpr double tolerance = 0.0001;
 
-constexpr cse::time_point startTime = cse::to_time_point(0.0);
-constexpr cse::time_point endTime = cse::to_time_point(1.1);
-constexpr cse::duration stepSize = cse::to_duration(0.1);
+constexpr cosim::time_point startTime = cosim::to_time_point(0.0);
+constexpr cosim::time_point endTime = cosim::to_time_point(1.1);
+constexpr cosim::duration stepSize = cosim::to_duration(0.1);
 
 void test(const boost::filesystem::path& scenarioFile)
 {
 
-    cse::log::setup_simple_console_logging();
-    cse::log::set_global_output_level(cse::log::trace);
+    cosim::log::setup_simple_console_logging();
+    cosim::log::set_global_output_level(cosim::log::trace);
 
-    auto execution = cse::execution(startTime, std::make_unique<cse::fixed_step_algorithm>(stepSize));
+    auto execution = cosim::execution(startTime, std::make_unique<cosim::fixed_step_algorithm>(stepSize));
 
-    auto observer = std::make_shared<cse::time_series_observer>();
+    auto observer = std::make_shared<cosim::time_series_observer>();
     execution.add_observer(observer);
-    auto scenarioManager = std::make_shared<cse::scenario_manager>();
+    auto scenarioManager = std::make_shared<cosim::scenario_manager>();
     execution.add_manipulator(scenarioManager);
 
     auto simIndex = execution.add_slave(
-        cse::make_pseudo_async(std::make_unique<mock_slave>(
+        cosim::make_pseudo_async(std::make_unique<mock_slave>(
             [](double x) { return x + 1.234; },
             [](int y) { return y + 2; })),
         "slave uno");
 
     observer->start_observing(
-        cse::variable_id{simIndex, cse::variable_type::real, mock_slave::real_in_reference});
+        cosim::variable_id{simIndex, cosim::variable_type::real, mock_slave::real_in_reference});
     observer->start_observing(
-        cse::variable_id{simIndex, cse::variable_type::real, mock_slave::real_out_reference});
+        cosim::variable_id{simIndex, cosim::variable_type::real, mock_slave::real_out_reference});
     observer->start_observing(
-            cse::variable_id{simIndex, cse::variable_type::integer, mock_slave::integer_in_reference});
+        cosim::variable_id{simIndex, cosim::variable_type::integer, mock_slave::integer_in_reference});
     observer->start_observing(
-        cse::variable_id{simIndex, cse::variable_type::integer, mock_slave::integer_out_reference});
+        cosim::variable_id{simIndex, cosim::variable_type::integer, mock_slave::integer_out_reference});
 
     scenarioManager->load_scenario(scenarioFile, startTime);
 
@@ -61,8 +61,8 @@ void test(const boost::filesystem::path& scenarioFile)
     double realOutputValues[numSamples];
     int intInputValues[numSamples];
     int intOutputValues[numSamples];
-    cse::step_number steps[numSamples];
-    cse::time_point times[numSamples];
+    cosim::step_number steps[numSamples];
+    cosim::time_point times[numSamples];
 
     size_t samplesRead = observer->get_real_samples(
         simIndex,

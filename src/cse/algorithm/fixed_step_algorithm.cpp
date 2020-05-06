@@ -16,7 +16,7 @@
 #include <vector>
 
 
-namespace cse
+namespace cosim
 {
 namespace
 {
@@ -243,7 +243,7 @@ public:
         return std::pair(baseStepSize_, std::move(finished));
     }
 
-    void set_stepsize_decimation_factor(cse::simulator_index i, int factor)
+    void set_stepsize_decimation_factor(cosim::simulator_index i, int factor)
     {
         CSE_INPUT_CHECK(factor > 0);
         simulators_.at(i).decimationFactor = factor;
@@ -537,7 +537,7 @@ std::pair<duration, std::unordered_set<simulator_index>> fixed_step_algorithm::d
     return pimpl_->do_step(currentT);
 }
 
-void fixed_step_algorithm::set_stepsize_decimation_factor(cse::simulator_index simulator, int factor)
+void fixed_step_algorithm::set_stepsize_decimation_factor(cosim::simulator_index simulator, int factor)
 {
     pimpl_->set_stepsize_decimation_factor(simulator, factor);
 }
