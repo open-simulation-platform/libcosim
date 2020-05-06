@@ -349,7 +349,7 @@ cse_config_parser::cse_config_parser(
                 int inputCount = boost::lexical_cast<int>(tc(functionElement->getAttribute(tc("inputCount").get())));
                 function.inputCount = inputCount;
                 int dimension = boost::lexical_cast<int>(tc(functionElement->getAttribute(tc("dimension").get())));
-                function.dimension = inputCount;
+                function.dimension = dimension;
 
                 for (int i = 0; i < inputCount; i++) {
                     const std::string sgName = "in[" + std::to_string(i) + "]";
