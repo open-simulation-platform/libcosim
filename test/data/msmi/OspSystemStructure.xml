@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <OspSystemStructure
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="http://opensimulationplatform.com/MSMI/OSPSystemStructure ../../../src/cpp/xsd/OspSystemStructure.xsd"
+        xsi:schemaLocation="http://opensimulationplatform.com/MSMI/OSPSystemStructure ../../../src/cse/xsd/OspSystemStructure.xsd"
         xmlns="http://opensimulationplatform.com/MSMI/OSPSystemStructure"
         version="0.1">
     <StartTime>0.0</StartTime>

@@ -130,7 +130,7 @@ endif()
 # Targets
 # ==============================================================================
 
-add_subdirectory("src/cpp")
+add_subdirectory("src")
 add_subdirectory("tools/cse_xsd_embedder")
 if(CSECORE_BUILD_TESTS)
     enable_testing()
