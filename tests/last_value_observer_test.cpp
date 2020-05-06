@@ -1,11 +1,11 @@
 #include "mock_slave.hpp"
 
-#include <cse/algorithm.hpp>
-#include <cse/async_slave.hpp>
-#include <cse/execution.hpp>
-#include <cse/log/simple.hpp>
-#include <cse/manipulator/override_manipulator.hpp>
-#include <cse/observer/last_value_observer.hpp>
+#include <cosim/algorithm.hpp>
+#include <cosim/async_slave.hpp>
+#include <cosim/execution.hpp>
+#include <cosim/log/simple.hpp>
+#include <cosim/manipulator/override_manipulator.hpp>
+#include <cosim/observer/last_value_observer.hpp>
 
 #include <cmath>
 #include <exception>

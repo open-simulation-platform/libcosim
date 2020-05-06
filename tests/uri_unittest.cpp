@@ -1,5 +1,5 @@
 #define BOOST_TEST_MODULE uri.hpp unittests
-#include <cse/uri.hpp>
+#include <cosim/uri.hpp>
 
 #include <boost/test/unit_test.hpp>
 

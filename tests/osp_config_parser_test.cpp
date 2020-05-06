@@ -1,8 +1,8 @@
-#include <cse/algorithm/fixed_step_algorithm.hpp>
-#include <cse/log/simple.hpp>
-#include <cse/observer/last_value_observer.hpp>
-#include <cse/orchestration.hpp>
-#include <cse/osp_config_parser.hpp>
+#include <cosim/algorithm/fixed_step_algorithm.hpp>
+#include <cosim/log/simple.hpp>
+#include <cosim/observer/last_value_observer.hpp>
+#include <cosim/orchestration.hpp>
+#include <cosim/osp_config_parser.hpp>
 
 #include <boost/filesystem.hpp>
 

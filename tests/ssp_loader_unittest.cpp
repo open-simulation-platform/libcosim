@@ -1,8 +1,8 @@
 #define BOOST_TEST_MODULE ssp_loader.hpp unittests
-#include <cse/algorithm/fixed_step_algorithm.hpp>
-#include <cse/log/simple.hpp>
-#include <cse/observer/last_value_observer.hpp>
-#include <cse/ssp/ssp_loader.hpp>
+#include <cosim/algorithm/fixed_step_algorithm.hpp>
+#include <cosim/log/simple.hpp>
+#include <cosim/observer/last_value_observer.hpp>
+#include <cosim/ssp/ssp_loader.hpp>
 
 #include <boost/filesystem.hpp>
 #include <boost/test/unit_test.hpp>

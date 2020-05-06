@@ -1,12 +1,12 @@
 #define BOOST_TEST_MODULE system_structure unittests
 #include "mock_slave.hpp"
 
-#include <cse/algorithm/fixed_step_algorithm.hpp>
-#include <cse/exception.hpp>
-#include <cse/execution.hpp>
-#include <cse/function/linear_transformation.hpp>
-#include <cse/observer/last_value_observer.hpp>
-#include <cse/system_structure.hpp>
+#include <cosim/algorithm/fixed_step_algorithm.hpp>
+#include <cosim/exception.hpp>
+#include <cosim/execution.hpp>
+#include <cosim/function/linear_transformation.hpp>
+#include <cosim/observer/last_value_observer.hpp>
+#include <cosim/system_structure.hpp>
 
 #include <boost/test/unit_test.hpp>
 

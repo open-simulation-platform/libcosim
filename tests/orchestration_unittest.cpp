@@ -1,6 +1,6 @@
 #define BOOST_TEST_MODULE orchestration.hpp unittests
-#include <cse/orchestration.hpp>
-#include <cse/uri.hpp>
+#include <cosim/orchestration.hpp>
+#include <cosim/uri.hpp>
 
 #include <boost/filesystem.hpp>
 #include <boost/test/unit_test.hpp>

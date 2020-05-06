@@ -1,6 +1,6 @@
 #define BOOST_TEST_MODULE cse::utility::zip unittest
-#include <cse/utility/filesystem.hpp>
-#include <cse/utility/zip.hpp>
+#include <cosim/utility/filesystem.hpp>
+#include <cosim/utility/zip.hpp>
 
 #include <boost/filesystem.hpp>
 #include <boost/test/unit_test.hpp>

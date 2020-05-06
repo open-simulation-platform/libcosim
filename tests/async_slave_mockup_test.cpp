@@ -1,7 +1,7 @@
 #include "mock_slave.hpp"
 
-#include <cse/async_slave.hpp>
-#include <cse/log/simple.hpp>
+#include <cosim/async_slave.hpp>
+#include <cosim/log/simple.hpp>
 
 #include <boost/fiber/future.hpp>
 

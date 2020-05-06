@@ -1,5 +1,5 @@
-#include <cse/log/simple.hpp>
-#include <cse/ssp/ssp_loader.hpp>
+#include <cosim/log/simple.hpp>
+#include <cosim/ssp/ssp_loader.hpp>
 
 #include <boost/filesystem.hpp>
 

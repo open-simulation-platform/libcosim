@@ -5,7 +5,7 @@
 #ifndef CSE_TEST_MOCK_SLAVE_HPP
 #define CSE_TEST_MOCK_SLAVE_HPP
 
-#include <cse/slave.hpp>
+#include <cosim/slave.hpp>
 
 #include <functional>
 #include <stdexcept>

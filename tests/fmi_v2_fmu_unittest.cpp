@@ -1,6 +1,6 @@
 #define BOOST_TEST_MODULE cse::fmi::v2::fmu unittest
-#include <cse/fmi/importer.hpp>
-#include <cse/fmi/v2/fmu.hpp>
+#include <cosim/fmi/importer.hpp>
+#include <cosim/fmi/v2/fmu.hpp>
 
 #include <boost/filesystem.hpp>
 #include <boost/test/unit_test.hpp>

@@ -1,6 +1,6 @@
 #define BOOST_TEST_MODULE cse::utility unittests
-#include <cse/utility/concurrency.hpp>
-#include <cse/utility/filesystem.hpp>
+#include <cosim/utility/concurrency.hpp>
+#include <cosim/utility/filesystem.hpp>
 
 #include <boost/test/unit_test.hpp>
 

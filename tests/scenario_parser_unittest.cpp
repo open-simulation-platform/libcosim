@@ -2,10 +2,10 @@
 
 #include "mock_slave.hpp"
 
-#include <cse/algorithm.hpp>
-#include <cse/log/simple.hpp>
-#include <cse/manipulator.hpp>
-#include <cse/observer/time_series_observer.hpp>
+#include <cosim/algorithm.hpp>
+#include <cosim/log/simple.hpp>
+#include <cosim/manipulator.hpp>
+#include <cosim/observer/time_series_observer.hpp>
 
 #include <boost/test/unit_test.hpp>
 

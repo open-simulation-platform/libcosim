@@ -1,12 +1,12 @@
 #define BOOST_TEST_MODULE function unittests
 #include "mock_slave.hpp"
 
-#include <cse/algorithm/fixed_step_algorithm.hpp>
-#include <cse/execution.hpp>
-#include <cse/function/linear_transformation.hpp>
-#include <cse/function/vector_sum.hpp>
-#include <cse/manipulator/scenario_manager.hpp>
-#include <cse/observer/time_series_observer.hpp>
+#include <cosim/algorithm/fixed_step_algorithm.hpp>
+#include <cosim/execution.hpp>
+#include <cosim/function/linear_transformation.hpp>
+#include <cosim/function/vector_sum.hpp>
+#include <cosim/manipulator/scenario_manager.hpp>
+#include <cosim/observer/time_series_observer.hpp>
 
 #include <boost/test/unit_test.hpp>
 
