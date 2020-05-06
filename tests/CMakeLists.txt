@@ -1,6 +1,5 @@
 set(tests
     "async_slave_mockup_test"
-    "cse_config_parser_test"
     "fixed_step_algorithm_test"
     "file_observer_dynamic_logging_test"
     "file_observer_logging_test"
@@ -8,6 +7,7 @@ set(tests
     "last_value_observer_test"
     "monitor_modified_variables_test"
     "multi_fixed_step_algorithm_test"
+    "osp_config_parser_test"
     "ramp_modifier_test"
     "time_series_observer_test"
     "trend_buffer_test"

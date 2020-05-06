@@ -1,8 +1,8 @@
 #include <cse/algorithm/fixed_step_algorithm.hpp>
-#include <cse/cse_config_parser.hpp>
 #include <cse/log/simple.hpp>
 #include <cse/observer/last_value_observer.hpp>
 #include <cse/orchestration.hpp>
+#include <cse/osp_config_parser.hpp>
 
 #include <boost/filesystem.hpp>
 
@@ -16,7 +16,7 @@
 void test(const boost::filesystem::path& configPath, size_t expectedNumConnections)
 {
     auto resolver = cosim::default_model_uri_resolver();
-    const auto config = cosim::load_cse_config(configPath, *resolver);
+    const auto config = cosim::load_osp_config(configPath, *resolver);
     auto execution = cosim::execution(
         config.start_time,
         std::make_shared<cosim::fixed_step_algorithm>(config.step_size));

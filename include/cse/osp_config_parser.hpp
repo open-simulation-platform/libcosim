@@ -1,5 +1,5 @@
-#ifndef LIBCOSIM_CONFIG_PARSER_HPP
-#define LIBCOSIM_CONFIG_PARSER_HPP
+#ifndef LIBCOSIM_OSP_CONFIG_PARSER_HPP
+#define LIBCOSIM_OSP_CONFIG_PARSER_HPP
 
 #include <cse/model.hpp>
 #include <cse/orchestration.hpp>
@@ -12,7 +12,7 @@ namespace cosim
 {
 
 
-struct cse_config
+struct osp_config
 {
     cosim::system_structure system_structure;
     time_point start_time;
@@ -20,10 +20,10 @@ struct cse_config
     variable_value_map initial_values;
 };
 
-cse_config load_cse_config(
+osp_config load_osp_config(
     const boost::filesystem::path& configPath,
-    cosim::model_uri_resolver&);
+    cosim::model_uri_resolver& resolver);
 
 
 } // namespace cse
-#endif //LIBCOSIM_CONFIG_PARSER_HPP
+#endif //LIBCOSIM_OSP_CONFIG_PARSER_HPP

@@ -1,4 +1,4 @@
-#include "cse/cse_config_parser.hpp"
+#include "cse/osp_config_parser.hpp"
 
 #include "osp_system_structure_schema.hpp"
 
@@ -16,12 +16,12 @@
 
 #include <ios>
 #include <memory>
-#include <stdexcept>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <unordered_map>
-#include <vector>
 #include <utility>
+#include <vector>
 
 
 namespace cosim
@@ -857,7 +857,7 @@ void connect_vector_sum_functions(
 
 } // namespace
 
-cse_config load_cse_config(
+osp_config load_osp_config(
     const boost::filesystem::path& configPath,
     model_uri_resolver& resolver)
 {
@@ -877,7 +877,7 @@ cse_config load_cse_config(
         throw std::invalid_argument(oss.str());
     }
 
-    cse_config config;
+    osp_config config;
     config.start_time = to_time_point(simInfo.startTime);
     config.step_size = to_duration(simInfo.stepSize);
 
