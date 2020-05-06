@@ -1,5 +1,5 @@
-#ifndef CSECORE_TIMER_H
-#define CSECORE_TIMER_H
+#ifndef LIBCOSIM_TIMER_H
+#define LIBCOSIM_TIMER_H
 
 #include <cse/model.hpp>
 
@@ -62,4 +62,4 @@ private:
 };
 
 } // namespace cse
-#endif //CSECORE_TIMER_H
+#endif //LIBCOSIM_TIMER_H

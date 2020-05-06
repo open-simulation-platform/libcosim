@@ -1,5 +1,5 @@
-#ifndef CSECORE_ALGORITHM_SIMULATOR_HPP
-#define CSECORE_ALGORITHM_SIMULATOR_HPP
+#ifndef LIBCOSIM_ALGORITHM_SIMULATOR_HPP
+#define LIBCOSIM_ALGORITHM_SIMULATOR_HPP
 
 #include <cse/manipulator/manipulator.hpp>
 #include <cse/model.hpp>

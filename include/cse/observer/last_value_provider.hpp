@@ -1,6 +1,6 @@
 
-#ifndef CSECORE_LAST_VALUE_PROVIDER_HPP
-#define CSECORE_LAST_VALUE_PROVIDER_HPP
+#ifndef LIBCOSIM_LAST_VALUE_PROVIDER_HPP
+#define LIBCOSIM_LAST_VALUE_PROVIDER_HPP
 
 #include <cse/model.hpp>
 #include <cse/observer/observer.hpp>
@@ -72,4 +72,4 @@ public:
 
 } // namespace cse
 
-#endif //CSECORE_LAST_VALUE_PROVIDER_HPP
+#endif //LIBCOSIM_LAST_VALUE_PROVIDER_HPP

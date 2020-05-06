@@ -1,20 +1,20 @@
 cmake_minimum_required(VERSION 3.9)
 file(STRINGS "${CMAKE_SOURCE_DIR}/version.txt" projectVersion)
-project("csecore" VERSION ${projectVersion})
-message("Current cse-core version: ${CMAKE_PROJECT_VERSION}\n")
+project("libcosim" VERSION ${projectVersion})
+message("Current libcosim version: ${CMAKE_PROJECT_VERSION}\n")
 
 # ==============================================================================
 # Build settings
 # ==============================================================================
 
 option(BUILD_SHARED_LIBS "Build shared libraries instead of static libraries" ON)
-option(CSECORE_TREAT_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" ON)
-option(CSECORE_BUILD_TESTS "Build test suite" ON)
-option(CSECORE_BUILD_PRIVATE_APIDOC "Build private API documentation" OFF)
-option(CSECORE_STANDALONE_INSTALLATION "Whether to build for a standalone installation (Linux only; sets a relative RPATH)" OFF)
-option(CSECORE_USING_CONAN "Whether Conan is used for package management" OFF)
-option(CSECORE_WITH_FMUPROXY "Whether or not to build with fmuproxy integration" OFF)
-option(CSECORE_TEST_FMUPROXY "Whether or not to run fmuproxy tests (only if CSECORE_WITH_FMUPROXY=ON)" ON)
+option(LIBCOSIM_TREAT_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" ON)
+option(LIBCOSIM_BUILD_TESTS "Build test suite" ON)
+option(LIBCOSIM_BUILD_PRIVATE_APIDOC "Build private API documentation" OFF)
+option(LIBCOSIM_STANDALONE_INSTALLATION "Whether to build for a standalone installation (Linux only; sets a relative RPATH)" OFF)
+option(LIBCOSIM_USING_CONAN "Whether Conan is used for package management" OFF)
+option(LIBCOSIM_WITH_FMUPROXY "Whether or not to build with fmuproxy integration" OFF)
+option(LIBCOSIM_TEST_FMUPROXY "Whether or not to run fmuproxy tests (only if LIBCOSIM_WITH_FMUPROXY=ON)" ON)
 
 # ==============================================================================
 # Global internal configuration
@@ -50,7 +50,7 @@ endforeach()
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     add_compile_options("-Wall" "-Wextra" "-Wpedantic")
     add_compile_options("-Wno-parentheses")
-    if(CSECORE_TREAT_WARNINGS_AS_ERRORS)
+    if(LIBCOSIM_TREAT_WARNINGS_AS_ERRORS)
         add_compile_options("-Werror")
     endif()
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
@@ -59,10 +59,10 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
         string(REPLACE "/W3" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
     endif()
     add_compile_options("/wd4996")
-    if(CSECORE_TREAT_WARNINGS_AS_ERRORS)
+    if(LIBCOSIM_TREAT_WARNINGS_AS_ERRORS)
         add_compile_options("/WX")
     endif()
-    if(CSECORE_USING_CONAN)
+    if(LIBCOSIM_USING_CONAN)
         # C4251: 'identifier' : class 'type' needs to have dll-interface to be
         #        used by clients of class 'type2'
         #
@@ -83,26 +83,26 @@ set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # Prepare for export and installation.
-set(CSECORE_HEADER_INSTALL_DIR "include")
+set(LIBCOSIM_HEADER_INSTALL_DIR "include")
 if(WIN32)
-    set(CSECORE_CMAKE_INSTALL_DIR "cmake")
-    set(CSECORE_DOC_INSTALL_DIR   "doc")
+    set(LIBCOSIM_CMAKE_INSTALL_DIR "cmake")
+    set(LIBCOSIM_DOC_INSTALL_DIR   "doc")
 else()
-    set(CSECORE_CMAKE_INSTALL_DIR "share/${PROJECT_NAME}/cmake")
-    set(CSECORE_DOC_INSTALL_DIR   "share/doc/${PROJECT_NAME}")
+    set(LIBCOSIM_CMAKE_INSTALL_DIR "share/${PROJECT_NAME}/cmake")
+    set(LIBCOSIM_DOC_INSTALL_DIR   "share/doc/${PROJECT_NAME}")
 endif()
-set(CSECORE_INSTALL_DESTINATIONS
+set(LIBCOSIM_INSTALL_DESTINATIONS
     ARCHIVE DESTINATION "lib"
     LIBRARY DESTINATION "lib"
     RUNTIME DESTINATION "bin"
-    INCLUDES DESTINATION "${CSECORE_HEADER_INSTALL_DIR}")
-set(CSECORE_EXPORT_TARGET "${PROJECT_NAME}-targets")
+    INCLUDES DESTINATION "${LIBCOSIM_HEADER_INSTALL_DIR}")
+set(LIBCOSIM_EXPORT_TARGET "${PROJECT_NAME}-targets")
 
 # ==============================================================================
 # Dependencies
 # ==============================================================================
 
-if(CSECORE_USING_CONAN)
+if(LIBCOSIM_USING_CONAN)
     if(EXISTS ${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
         include("${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")
         conan_basic_setup(NO_OUTPUT_DIRS)
@@ -112,7 +112,7 @@ if(CSECORE_USING_CONAN)
 endif()
 
 set(Boost_components date_time fiber filesystem log)
-if (CSECORE_BUILD_TESTS)
+if (LIBCOSIM_BUILD_TESTS)
     list(APPEND Boost_components timer unit_test_framework)
 endif()
 
@@ -122,7 +122,7 @@ find_package(FMILibrary REQUIRED)
 find_package(LIBZIP REQUIRED)
 find_package(YAML_CPP REQUIRED)
 find_package(XercesC REQUIRED)
-if(CSECORE_WITH_FMUPROXY)
+if(LIBCOSIM_WITH_FMUPROXY)
     find_package(THRIFT REQUIRED)
 endif()
 
@@ -132,7 +132,7 @@ endif()
 
 add_subdirectory("src")
 add_subdirectory("tools/cse_xsd_embedder")
-if(CSECORE_BUILD_TESTS)
+if(LIBCOSIM_BUILD_TESTS)
     enable_testing()
     add_subdirectory("tests")
 endif()
@@ -158,7 +158,7 @@ if(DOXYGEN_FOUND)
     set(DOXYGEN_MULTILINE_CPP_IS_BRIEF "YES")
     set(DOXYGEN_EXCLUDE_PATTERNS "*.cpp" "*.c" "*/fmuproxy/*service*")
     set(doxygenInputs "${CMAKE_SOURCE_DIR}/include")
-    if(CSECORE_BUILD_PRIVATE_APIDOC)
+    if(LIBCOSIM_BUILD_PRIVATE_APIDOC)
         list(APPEND doxygenInputs
             "${CMAKE_SOURCE_DIR}/src/cpp"
         )
@@ -172,7 +172,7 @@ if(DOXYGEN_FOUND)
         install-doc
         "${CMAKE_COMMAND}" "-E" "copy_directory"
             "${DOXYGEN_OUTPUT_DIRECTORY}"
-            "${CMAKE_INSTALL_PREFIX}/${CSECORE_DOC_INSTALL_DIR}/"
+            "${CMAKE_INSTALL_PREFIX}/${LIBCOSIM_DOC_INSTALL_DIR}/"
         DEPENDS doc
     )
 else()
@@ -185,11 +185,11 @@ endif()
 
 install(
     FILES "README.md" "LICENCE.txt"
-    DESTINATION "${CSECORE_DOC_INSTALL_DIR}"
+    DESTINATION "${LIBCOSIM_DOC_INSTALL_DIR}"
 )
 install(
-    EXPORT "${CSECORE_EXPORT_TARGET}"
-    DESTINATION "${CSECORE_CMAKE_INSTALL_DIR}"
+    EXPORT "${LIBCOSIM_EXPORT_TARGET}"
+    DESTINATION "${LIBCOSIM_CMAKE_INSTALL_DIR}"
     NAMESPACE "${PROJECT_NAME}::"
 )
 
@@ -197,14 +197,14 @@ include(CMakePackageConfigHelpers)
 
 # Generate and install package-config file.
 set(configFile "${CMAKE_BINARY_DIR}/${PROJECT_NAME}-config.cmake")
-set(targetsFile "${CSECORE_CMAKE_INSTALL_DIR}/${CSECORE_EXPORT_TARGET}.cmake")
+set(targetsFile "${LIBCOSIM_CMAKE_INSTALL_DIR}/${LIBCOSIM_EXPORT_TARGET}.cmake")
 configure_package_config_file(
     "${CMAKE_SOURCE_DIR}/cmake/project-config.cmake.in"
     "${configFile}"
-    INSTALL_DESTINATION "${CSECORE_CMAKE_INSTALL_DIR}"
+    INSTALL_DESTINATION "${LIBCOSIM_CMAKE_INSTALL_DIR}"
     PATH_VARS targetsFile
 )
-install(FILES "${configFile}" DESTINATION "${CSECORE_CMAKE_INSTALL_DIR}")
+install(FILES "${configFile}" DESTINATION "${LIBCOSIM_CMAKE_INSTALL_DIR}")
 
 # Generate and install package-version file
 set(versionFile "${CMAKE_BINARY_DIR}/${PROJECT_NAME}-config-version.cmake")
@@ -212,7 +212,7 @@ write_basic_package_version_file(
     "${versionFile}"
     VERSION "${PROJECT_VERSION}"
     COMPATIBILITY "SameMajorVersion")
-install(FILES "${versionFile}" DESTINATION "${CSECORE_CMAKE_INSTALL_DIR}")
+install(FILES "${versionFile}" DESTINATION "${LIBCOSIM_CMAKE_INSTALL_DIR}")
 
 # Install custom find modules
 install(FILES
@@ -222,5 +222,5 @@ install(FILES
         "${CMAKE_SOURCE_DIR}/cmake/FindTHRIFT.cmake"
         "${CMAKE_SOURCE_DIR}/cmake/FindYAML_CPP.cmake"
         DESTINATION
-        "${CSECORE_CMAKE_INSTALL_DIR}"
+        "${LIBCOSIM_CMAKE_INSTALL_DIR}"
 )

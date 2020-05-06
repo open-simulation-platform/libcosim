@@ -1,5 +1,5 @@
-#ifndef CSECORE_SSP_LOADER_HPP
-#define CSECORE_SSP_LOADER_HPP
+#ifndef LIBCOSIM_SSP_LOADER_HPP
+#define LIBCOSIM_SSP_LOADER_HPP
 
 #include <cse/algorithm/algorithm.hpp>
 #include <cse/model.hpp>

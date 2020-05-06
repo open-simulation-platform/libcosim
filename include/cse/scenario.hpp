@@ -1,5 +1,5 @@
-#ifndef CSECORE_SCENARIO_HPP
-#define CSECORE_SCENARIO_HPP
+#ifndef LIBCOSIM_SCENARIO_HPP
+#define LIBCOSIM_SCENARIO_HPP
 
 #include <cse/execution.hpp>
 #include <cse/model.hpp>
@@ -88,4 +88,4 @@ struct scenario
 
 } // namespace cse
 
-#endif //CSECORE_SCENARIO_HPP
+#endif //LIBCOSIM_SCENARIO_HPP

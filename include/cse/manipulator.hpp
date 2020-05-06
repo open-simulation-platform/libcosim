@@ -4,8 +4,8 @@
  *          concrete manipulator classes.
  */
 
-#ifndef CSECORE_MANIPULATOR_HPP
-#define CSECORE_MANIPULATOR_HPP
+#ifndef LIBCOSIM_MANIPULATOR_HPP
+#define LIBCOSIM_MANIPULATOR_HPP
 
 #include <cse/manipulator/manipulator.hpp>
 #include <cse/manipulator/override_manipulator.hpp>

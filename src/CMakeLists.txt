@@ -98,7 +98,7 @@ set(sources
     "cse/utility/zip.cpp"
 )
 
-if(CSECORE_WITH_FMUPROXY)
+if(LIBCOSIM_WITH_FMUPROXY)
     list(APPEND publicHeaders
             "cse/fmuproxy/fmu_service.hpp"
             "cse/fmuproxy/fmuproxy_client.hpp"
@@ -158,7 +158,7 @@ target_link_libraries(csecorecpp
         yaml-cpp
     )
 
-if(CSECORE_WITH_FMUPROXY)
+if(LIBCOSIM_WITH_FMUPROXY)
     target_compile_definitions(csecorecpp PRIVATE "HAS_FMUPROXY")
     target_link_libraries(csecorecpp
         PUBLIC
@@ -172,16 +172,16 @@ endif()
 if(WIN32 AND NOT BUILD_SHARED_LIBS)
     set_target_properties(csecorecpp PROPERTIES OUTPUT_NAME "libcsecorecpp")
 endif()
-if(CSECORE_STANDALONE_INSTALLATION)
+if(LIBCOSIM_STANDALONE_INSTALLATION)
     set_target_properties(csecorecpp PROPERTIES INSTALL_RPATH "\$ORIGIN")
 endif()
 
 install(
     TARGETS csecorecpp
-    EXPORT "${CSECORE_EXPORT_TARGET}"
-    ${CSECORE_INSTALL_DESTINATIONS}
+    EXPORT "${LIBCOSIM_EXPORT_TARGET}"
+    ${LIBCOSIM_INSTALL_DESTINATIONS}
 )
 install(
     DIRECTORY "${publicHeaderDir}"
-    DESTINATION "${CSECORE_HEADER_INSTALL_DIR}"
+    DESTINATION "${LIBCOSIM_HEADER_INSTALL_DIR}"
 )

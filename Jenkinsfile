@@ -354,7 +354,7 @@ pipeline {
                         stage('Build Debug') {
                             steps {
                                 dir('debug-build') {
-                                    sh 'cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=../install/linux/debug -DCSECORE_USING_CONAN=FALSE -DCSECORE_BUILD_PRIVATE_APIDOC=ON ../cse-core'
+                                    sh 'cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=../install/linux/debug -DLIBCOSIM_USING_CONAN=FALSE -DLIBCOSIM_BUILD_PRIVATE_APIDOC=ON ../cse-core'
                                     sh 'cmake --build .'
                                     sh 'cmake --build . --target install'
                                 }
@@ -363,7 +363,7 @@ pipeline {
                         stage('Build Release') {
                             steps {
                                 dir('release-build') {
-                                    sh 'cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../install/linux/release -DCSECORE_USING_CONAN=FALSE -DCSECORE_BUILD_PRIVATE_APIDOC=ON ../cse-core'
+                                    sh 'cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../install/linux/release -DLIBCOSIM_USING_CONAN=FALSE -DLIBCOSIM_BUILD_PRIVATE_APIDOC=ON ../cse-core'
                                     sh 'cmake --build .'
                                     sh 'cmake --build . --target install'
                                 }

@@ -3,8 +3,8 @@
  *  \brief Defines the `manipulator` and `manipulable` interfaces.
  */
 
-#ifndef CSECORE_MANIPULATOR_MANIPULATOR_HPP
-#define CSECORE_MANIPULATOR_MANIPULATOR_HPP
+#ifndef LIBCOSIM_MANIPULATOR_MANIPULATOR_HPP
+#define LIBCOSIM_MANIPULATOR_MANIPULATOR_HPP
 
 #include <cse/execution.hpp>
 #include <cse/model.hpp>

@@ -4,8 +4,8 @@
  * DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
  *  @generated
  */
-#ifndef CSECORE_FMUPROXY_FMU_SERVICE_HPP
-#define CSECORE_FMUPROXY_FMU_SERVICE_HPP
+#ifndef LIBCOSIM_FMUPROXY_FMU_SERVICE_HPP
+#define LIBCOSIM_FMUPROXY_FMU_SERVICE_HPP
 
 #include <thrift/TDispatchProcessor.h>
 #include <thrift/async/TConcurrentClientSyncInfo.h>

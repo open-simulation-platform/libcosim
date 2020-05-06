@@ -1,5 +1,5 @@
-#ifndef CSECORE_SCENARIO_PARSER_H
-#define CSECORE_SCENARIO_PARSER_H
+#ifndef LIBCOSIM_SCENARIO_PARSER_H
+#define LIBCOSIM_SCENARIO_PARSER_H
 
 #include <cse/algorithm.hpp>
 #include <cse/scenario.hpp>
@@ -22,4 +22,4 @@ scenario::scenario parse_scenario(
     const std::unordered_map<simulator_index, manipulable*>& simulators);
 } // namespace cse
 
-#endif //CSECORE_SCENARIO_PARSER_H
+#endif //LIBCOSIM_SCENARIO_PARSER_H

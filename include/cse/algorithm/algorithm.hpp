@@ -1,5 +1,5 @@
-#ifndef CSECORE_ALGORITHM_ALGORITHM_HPP
-#define CSECORE_ALGORITHM_ALGORITHM_HPP
+#ifndef LIBCOSIM_ALGORITHM_ALGORITHM_HPP
+#define LIBCOSIM_ALGORITHM_ALGORITHM_HPP
 
 #include <cse/algorithm/simulator.hpp>
 #include <cse/execution.hpp>

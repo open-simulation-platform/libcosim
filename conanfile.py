@@ -48,12 +48,12 @@ class CSECoreConan(ConanFile):
 
     def configure_cmake(self):
         cmake = CMake(self)
-        cmake.definitions["CSECORE_USING_CONAN"] = "ON"
+        cmake.definitions["LIBCOSIM_USING_CONAN"] = "ON"
         if self.settings.build_type == "Debug":
-            cmake.definitions["CSECORE_BUILD_PRIVATE_APIDOC"] = "ON"
+            cmake.definitions["LIBCOSIM_BUILD_PRIVATE_APIDOC"] = "ON"
         if self.options.fmuproxy:
-            cmake.definitions["CSECORE_WITH_FMUPROXY"] = "ON"
-            cmake.definitions["CSECORE_TEST_FMUPROXY"] = "OFF" # since we can't test on Jenkins yet
+            cmake.definitions["LIBCOSIM_WITH_FMUPROXY"] = "ON"
+            cmake.definitions["LIBCOSIM_TEST_FMUPROXY"] = "OFF" # since we can't test on Jenkins yet
         cmake.configure()
         return cmake
 
@@ -67,4 +67,5 @@ class CSECoreConan(ConanFile):
         cmake.install()
         cmake.build(target="install-doc")
 
-    def package_info(self):        self.cpp_info.libs = [ "csecorecpp" ]
+    def package_info(self):
+        self.cpp_info.libs = [ "csecorecpp" ]

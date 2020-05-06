@@ -1,5 +1,5 @@
-#ifndef CSECORE_SSP_PARSER_HPP
-#define CSECORE_SSP_PARSER_HPP
+#ifndef LIBCOSIM_SSP_PARSER_HPP
+#define LIBCOSIM_SSP_PARSER_HPP
 
 #include "cse/algorithm.hpp"
 

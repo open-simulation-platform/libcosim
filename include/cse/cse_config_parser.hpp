@@ -1,5 +1,5 @@
-#ifndef CSECORE_CONFIG_PARSER_HPP
-#define CSECORE_CONFIG_PARSER_HPP
+#ifndef LIBCOSIM_CONFIG_PARSER_HPP
+#define LIBCOSIM_CONFIG_PARSER_HPP
 
 #include <cse/model.hpp>
 #include <cse/orchestration.hpp>
@@ -26,4 +26,4 @@ cse_config load_cse_config(
 
 
 } // namespace cse
-#endif //CSECORE_CONFIG_PARSER_HPP
+#endif //LIBCOSIM_CONFIG_PARSER_HPP

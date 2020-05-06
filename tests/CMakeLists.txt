@@ -15,7 +15,7 @@ set(tests
     "synchronized_xy_series_test"
 )
 
-if(CSECORE_WITH_FMUPROXY AND CSECORE_TEST_FMUPROXY)
+if(LIBCOSIM_WITH_FMUPROXY AND LIBCOSIM_TEST_FMUPROXY)
     list(APPEND tests
         "ssp_loader_fmuproxy_test"
     )
