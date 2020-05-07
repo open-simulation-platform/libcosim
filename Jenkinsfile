@@ -68,7 +68,7 @@ pipeline {
                                         sh "conan upload libcosim/*@osp/${COSIM_CONAN_CHANNEL} --all -r=osp --confirm --force"
                                     }
                                     dir('debug-build/package') {
-                                        archiveArtifacts artifacts: '**',  fingerprint: true
+                                        archiveArtifacts artifacts: '**',  fingerprint: false
                                     }
                                 }
                                 cleanup {
@@ -100,7 +100,7 @@ pipeline {
                                         sh "conan upload libcosim/*@osp/${COSIM_CONAN_CHANNEL} --all -r=osp --confirm --force"
                                     }
                                     dir('release-build/package') {
-                                        archiveArtifacts artifacts: '**',  fingerprint: true
+                                        archiveArtifacts artifacts: '**',  fingerprint: false
                                     }
                                 }
                                 cleanup {
@@ -158,7 +158,7 @@ pipeline {
                                         sh "conan upload libcosim/*@osp/${COSIM_CONAN_CHANNEL} --all -r=osp --confirm --force"
                                     }
                                     dir('release-build-fmuproxy/package') {
-                                        archiveArtifacts artifacts: '**',  fingerprint: true
+                                        archiveArtifacts artifacts: '**',  fingerprint: false
                                     }
                                 }
                                 cleanup {
@@ -232,7 +232,7 @@ pipeline {
                                         sh "conan upload libcosim/*@osp/${COSIM_CONAN_CHANNEL} --all -r=osp --confirm --force"
                                     }
                                     dir('debug-build-conan/package') {
-                                        archiveArtifacts artifacts: '**',  fingerprint: true
+                                        archiveArtifacts artifacts: '**',  fingerprint: false
                                     }
                                 }
                                 cleanup {
@@ -264,7 +264,7 @@ pipeline {
                                         sh "conan upload libcosim/*@osp/${COSIM_CONAN_CHANNEL} --all -r=osp --confirm --force"
                                     }
                                     dir('release-build-conan/package') {
-                                        archiveArtifacts artifacts: '**',  fingerprint: true
+                                        archiveArtifacts artifacts: '**',  fingerprint: false
                                     }
                                 }
                                 cleanup {
@@ -329,7 +329,7 @@ pipeline {
                                         sh "conan upload libcosim/*@osp/${COSIM_CONAN_CHANNEL} --all -r=osp --confirm --force"
                                     }
                                     dir('release-build-conan-fmuproxy/package') {
-                                        archiveArtifacts artifacts: '**',  fingerprint: true
+                                        archiveArtifacts artifacts: '**',  fingerprint: false
                                     }
                                 }
                                 cleanup {
@@ -395,7 +395,7 @@ pipeline {
                         }
                         success {
                             dir('install') {
-                                archiveArtifacts artifacts: '**',  fingerprint: true
+                                archiveArtifacts artifacts: '**',  fingerprint: false
                             }
                         }
                         cleanup {
