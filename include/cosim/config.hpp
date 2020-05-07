@@ -6,12 +6,9 @@
 #define COSIM_CONFIG_HPP
 
 
-/// \defgroup csecore CSE core C++ library
-
 /**
- *  Top-level CSE library namespace
+ *  Top-level libcosim namespace
  *
- *  \ingroup csecore
  */
 namespace cosim
 {
