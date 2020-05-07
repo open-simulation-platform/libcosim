@@ -2,8 +2,8 @@
  *  \file
  *  Exceptions and error codes.
  */
-#ifndef CSE_EXCEPTION_HPP
-#define CSE_EXCEPTION_HPP
+#ifndef COSIM_EXCEPTION_HPP
+#define COSIM_EXCEPTION_HPP
 
 #include <system_error>
 

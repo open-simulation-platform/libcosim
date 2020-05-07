@@ -2,8 +2,8 @@
  *  \file
  *  \brief Observers that log simulation results to disk files.
  */
-#ifndef CSE_OBSERVER_FILE_OBSERVER_HPP
-#define CSE_OBSERVER_FILE_OBSERVER_HPP
+#ifndef COSIM_OBSERVER_FILE_OBSERVER_HPP
+#define COSIM_OBSERVER_FILE_OBSERVER_HPP
 
 #include <cosim/observer/observer.hpp>
 

@@ -2,8 +2,8 @@
  *  \file
  *  Information about this library.
  */
-#ifndef CSE_LIB_INFO_HPP
-#define CSE_LIB_INFO_HPP
+#ifndef COSIM_LIB_INFO_HPP
+#define COSIM_LIB_INFO_HPP
 
 
 namespace cosim

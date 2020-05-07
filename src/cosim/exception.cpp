@@ -40,7 +40,7 @@ public:
             case errc::zip_error:
                 return "ZIP file error";
             default:
-                CSE_PANIC();
+                COSIM_PANIC();
         }
     }
 };

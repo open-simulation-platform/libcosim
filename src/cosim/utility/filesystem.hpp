@@ -2,8 +2,8 @@
  *  \file
  *  File system utilities.
  */
-#ifndef CSE_UTILITY_FILESYSTEM_HPP
-#define CSE_UTILITY_FILESYSTEM_HPP
+#ifndef COSIM_UTILITY_FILESYSTEM_HPP
+#define COSIM_UTILITY_FILESYSTEM_HPP
 
 #include <boost/filesystem.hpp>
 

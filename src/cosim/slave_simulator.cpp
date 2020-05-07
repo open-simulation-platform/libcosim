@@ -261,7 +261,7 @@ public:
                 stringGetCache_.expose(ref);
                 break;
             case variable_type::enumeration:
-                CSE_PANIC();
+                COSIM_PANIC();
         }
     }
 
@@ -302,7 +302,7 @@ public:
                 stringSetCache_.expose(ref, get_start_value<std::string>(vd));
                 break;
             case variable_type::enumeration:
-                CSE_PANIC();
+                COSIM_PANIC();
         }
     }
 
@@ -431,7 +431,7 @@ public:
     boost::fibers::future<void> start_simulation()
     {
         if (slave_->state() != slave_state::initialisation) {
-            CSE_PANIC();
+            COSIM_PANIC();
         }
         return boost::fibers::async([=]() {
             slave_->start_simulation().get();

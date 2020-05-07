@@ -2,8 +2,8 @@
  *  \file
  *  Simple and convenient functions for setting up and controlling logging.
  */
-#ifndef CSE_LOG_SIMPLE_HPP
-#define CSE_LOG_SIMPLE_HPP
+#ifndef COSIM_LOG_SIMPLE_HPP
+#define COSIM_LOG_SIMPLE_HPP
 
 #include <cosim/log/logger.hpp>
 

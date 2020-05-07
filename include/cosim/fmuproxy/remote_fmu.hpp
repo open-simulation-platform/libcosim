@@ -1,6 +1,6 @@
 
-#ifndef CSE_FMUPROXY_REMOTE_FMU_HPP
-#define CSE_FMUPROXY_REMOTE_FMU_HPP
+#ifndef COSIM_FMUPROXY_REMOTE_FMU_HPP
+#define COSIM_FMUPROXY_REMOTE_FMU_HPP
 
 #ifdef _WIN32
 //must be included before <windows.h>

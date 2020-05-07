@@ -2,8 +2,8 @@
  *  \file
  *  \brief Concurrency utilities.
  */
-#ifndef CSE_UTILITY_CONCURRENCY
-#define CSE_UTILITY_CONCURRENCY
+#ifndef COSIM_UTILITY_CONCURRENCY
+#define COSIM_UTILITY_CONCURRENCY
 
 #include <boost/fiber/condition_variable.hpp>
 #include <boost/fiber/mutex.hpp>

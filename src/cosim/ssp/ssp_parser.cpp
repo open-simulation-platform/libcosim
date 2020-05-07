@@ -35,9 +35,9 @@ variable_type parse_connector_type(const boost::property_tree::ptree& tree)
     } else if (tree.get_child_optional("ssc:String")) {
         return variable_type::string;
     } else if (tree.get_child_optional("ssc:Enumeration")) {
-        CSE_PANIC_M("Don't know how to handle Enumeration type!");
+        COSIM_PANIC_M("Don't know how to handle Enumeration type!");
     } else if (tree.get_child_optional("ssc:Binary")) {
-        CSE_PANIC_M("Don't know how to handle Binary type!");
+        COSIM_PANIC_M("Don't know how to handle Binary type!");
     } else {
         throw std::invalid_argument("A valid connector type was not found!");
     }
@@ -62,7 +62,7 @@ ssp_parser::ParameterSet parse_parameter_set(const boost::property_tree::ptree& 
             const auto value = get_attribute<std::string>(*stringParameter, "value");
             parameterSet.parameters.push_back({name, variable_type::string, value});
         } else {
-            CSE_PANIC();
+            COSIM_PANIC();
         }
     }
     return parameterSet;

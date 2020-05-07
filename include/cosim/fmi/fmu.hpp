@@ -2,8 +2,8 @@
  *  \file
  *  Defines a version-independent FMU interface.
  */
-#ifndef CSE_FMI_FMU_HPP
-#define CSE_FMI_FMU_HPP
+#ifndef COSIM_FMI_FMU_HPP
+#define COSIM_FMI_FMU_HPP
 
 #include <cosim/model.hpp>
 #include <cosim/slave.hpp>

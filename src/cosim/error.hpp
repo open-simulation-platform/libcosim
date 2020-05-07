@@ -2,8 +2,8 @@
  *  \file
  *  Error handling facilities.
  */
-#ifndef CSE_ERROR_HPP
-#define CSE_ERROR_HPP
+#ifndef COSIM_ERROR_HPP
+#define COSIM_ERROR_HPP
 
 #include <cerrno>
 #include <stdexcept>
@@ -12,7 +12,7 @@
 
 
 /**
- *  \def    CSE_INPUT_CHECK(test)
+ *  \def    COSIM_INPUT_CHECK(test)
  *  Checks the value of one or more function input parameters, and
  *  throws an `std::invalid_argument` if they do not fulfill the
  *  given requirements.
@@ -21,7 +21,7 @@
  *
  *      void foo(int x)
  *      {
- *          CSE_INPUT_CHECK(x > 0);
+ *          COSIM_INPUT_CHECK(x > 0);
  *          ...
  *      }
  *
@@ -62,7 +62,7 @@
  *
  *  \param[in] test An expression which can be implicitly converted to `bool`.
  */
-#define CSE_INPUT_CHECK(test)                                                             \
+#define COSIM_INPUT_CHECK(test)                                                             \
     do {                                                                                  \
         if (!(test)) {                                                                    \
             throw std::invalid_argument(                                                  \
@@ -72,7 +72,7 @@
 
 
 /**
- *  \def CSE_PRECONDITION()
+ *  \def COSIM_PRECONDITION()
  *  Checks that a function's precondition holds, and if not, prints an
  *  error message to the standard error stream and terminates the program.
  *
@@ -80,7 +80,7 @@
  *  precondition was violated.  The program is terminated by calling
  *  `std::terminate()`.
  */
-#define CSE_PRECONDITION(condition)                                           \
+#define COSIM_PRECONDITION(condition)                                           \
     do {                                                                      \
         if (!(condition)) {                                                   \
             ::cosim::detail::precondition_violated(__FUNCTION__, #condition); \
@@ -89,7 +89,7 @@
 
 
 /**
- *  \def    CSE_PANIC()
+ *  \def    COSIM_PANIC()
  *  Prints an error message to the standard error stream and terminates
  *  the program.
  *
@@ -97,13 +97,13 @@
  *  the macro is invoked.  The program is terminated by calling
  *  `std::terminate()`.
  */
-#define CSE_PANIC()                                          \
+#define COSIM_PANIC()                                          \
     do {                                                     \
         ::cosim::detail::panic(__FILE__, __LINE__, nullptr); \
     } while (false)
 
 /**
- *  \def    CSE_PANIC_M(message)
+ *  \def    COSIM_PANIC_M(message)
  *  Prints a custom error message to the standard error stream and
  *  terminates the program.
  *
@@ -111,7 +111,7 @@
  *  the macro is invoked, in addition to the text provided in `message`.
  *  The program is terminated by calling `std::terminate()`.
  */
-#define CSE_PANIC_M(message)                                 \
+#define COSIM_PANIC_M(message)                                 \
     do {                                                     \
         ::cosim::detail::panic(__FILE__, __LINE__, message); \
     } while (false)

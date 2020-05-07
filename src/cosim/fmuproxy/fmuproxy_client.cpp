@@ -66,7 +66,7 @@ cosim::fmuproxy::fmuproxy_client::fmuproxy_client(const std::string& host, const
         transport->open();
     } catch (TTransportException&) {
         std::string msg = "Failed to connect to remote FMU @ " + host + ":" + std::to_string(port);
-        CSE_PANIC_M(msg.c_str());
+        COSIM_PANIC_M(msg.c_str());
     }
     state_ = std::make_shared<thrift_state>(client, transport);
 }
@@ -87,7 +87,7 @@ cosim::fmuproxy::fmuproxy_client::from_file(const std::string& file)
 
     if (!fs::exists(file)) {
         std::string msg = "No such file '" + file + "'!";
-        CSE_PANIC_M(msg.c_str());
+        COSIM_PANIC_M(msg.c_str());
     }
 
     const auto name = fs::path(file).stem().string();

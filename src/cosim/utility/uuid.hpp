@@ -2,8 +2,8 @@
  *  \file
  *  Utility functions for dealing with UUIDs.
  */
-#ifndef CSE_UTILITY_UUID_HPP
-#define CSE_UTILITY_UUID_HPP
+#ifndef COSIM_UTILITY_UUID_HPP
+#define COSIM_UTILITY_UUID_HPP
 
 #include <string>
 

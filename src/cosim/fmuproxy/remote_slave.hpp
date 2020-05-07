@@ -1,6 +1,6 @@
 
-#ifndef CSE_FMUPROXY_REMOTE_SLAVE_HPP
-#define CSE_FMUPROXY_REMOTE_SLAVE_HPP
+#ifndef COSIM_FMUPROXY_REMOTE_SLAVE_HPP
+#define COSIM_FMUPROXY_REMOTE_SLAVE_HPP
 
 #include <cosim/async_slave.hpp>
 #include <cosim/fmuproxy/fmu_service.hpp>

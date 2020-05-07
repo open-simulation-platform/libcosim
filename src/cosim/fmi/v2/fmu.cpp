@@ -118,7 +118,7 @@ void prune(std::vector<std::weak_ptr<slave_instance>>& instances)
 std::shared_ptr<v2::slave_instance> fmu::instantiate_v2_slave(
     std::string_view instanceName)
 {
-    CSE_INPUT_CHECK(!instanceName.empty());
+    COSIM_INPUT_CHECK(!instanceName.empty());
 #ifdef _WIN32
     if (!additionalDllSearchPath_) {
         additionalDllSearchPath_ =
@@ -399,7 +399,7 @@ void slave_instance::get_real_variables(
     gsl::span<const value_reference> variables,
     gsl::span<double> values) const
 {
-    CSE_INPUT_CHECK(variables.size() == values.size());
+    COSIM_INPUT_CHECK(variables.size() == values.size());
     if (variables.empty()) return;
     const auto status = fmi2_import_get_real(
         handle_, variables.data(), variables.size(), values.data());
@@ -415,7 +415,7 @@ void slave_instance::get_integer_variables(
     gsl::span<const value_reference> variables,
     gsl::span<int> values) const
 {
-    CSE_INPUT_CHECK(variables.size() == values.size());
+    COSIM_INPUT_CHECK(variables.size() == values.size());
     if (variables.empty()) return;
     const auto status = fmi2_import_get_integer(
         handle_, variables.data(), variables.size(), values.data());
@@ -431,7 +431,7 @@ void slave_instance::get_boolean_variables(
     gsl::span<const value_reference> variables,
     gsl::span<bool> values) const
 {
-    CSE_INPUT_CHECK(variables.size() == values.size());
+    COSIM_INPUT_CHECK(variables.size() == values.size());
     if (variables.empty()) return;
     std::vector<fmi2_boolean_t> fmiValues(values.size());
     const auto status = fmi2_import_get_boolean(
@@ -451,7 +451,7 @@ void slave_instance::get_string_variables(
     gsl::span<const value_reference> variables,
     gsl::span<std::string> values) const
 {
-    CSE_INPUT_CHECK(variables.size() == values.size());
+    COSIM_INPUT_CHECK(variables.size() == values.size());
     if (variables.empty()) return;
     std::vector<fmi2_string_t> fmiValues(values.size());
     const auto status = fmi2_import_get_string(
@@ -472,7 +472,7 @@ void slave_instance::set_real_variables(
     gsl::span<const value_reference> variables,
     gsl::span<const double> values)
 {
-    CSE_INPUT_CHECK(variables.size() == values.size());
+    COSIM_INPUT_CHECK(variables.size() == values.size());
     if (variables.empty()) return;
     const auto status = fmi2_import_set_real(
         handle_, variables.data(), variables.size(), values.data());
@@ -492,7 +492,7 @@ void slave_instance::set_integer_variables(
     gsl::span<const value_reference> variables,
     gsl::span<const int> values)
 {
-    CSE_INPUT_CHECK(variables.size() == values.size());
+    COSIM_INPUT_CHECK(variables.size() == values.size());
     if (variables.empty()) return;
     const auto status = fmi2_import_set_integer(
         handle_, variables.data(), variables.size(), values.data());
@@ -512,7 +512,7 @@ void slave_instance::set_boolean_variables(
     gsl::span<const value_reference> variables,
     gsl::span<const bool> values)
 {
-    CSE_INPUT_CHECK(variables.size() == values.size());
+    COSIM_INPUT_CHECK(variables.size() == values.size());
     if (variables.empty()) return;
     std::vector<fmi2_boolean_t> fmiValues(values.size());
     for (int i = 0; i < values.size(); ++i) {
@@ -537,7 +537,7 @@ void slave_instance::set_string_variables(
     gsl::span<const value_reference> variables,
     gsl::span<const std::string> values)
 {
-    CSE_INPUT_CHECK(variables.size() == values.size());
+    COSIM_INPUT_CHECK(variables.size() == values.size());
     if (variables.empty()) return;
     std::vector<fmi2_string_t> fmiValues(values.size());
     for (int i = 0; i < values.size(); ++i) {

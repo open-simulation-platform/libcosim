@@ -2,8 +2,8 @@
  *  \file
  *  Utilities for `function` implementers.
  */
-#ifndef CSE_FUNCTION_UTILITY_HPP
-#define CSE_FUNCTION_UTILITY_HPP
+#ifndef COSIM_FUNCTION_UTILITY_HPP
+#define COSIM_FUNCTION_UTILITY_HPP
 
 #include <cosim/function/description.hpp>
 

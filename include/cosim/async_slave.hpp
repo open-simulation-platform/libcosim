@@ -2,8 +2,8 @@
  *  \file
  *  \brief Asynchronous slave interface.
  */
-#ifndef CSE_ASYNC_SLAVE_HPP
-#define CSE_ASYNC_SLAVE_HPP
+#ifndef COSIM_ASYNC_SLAVE_HPP
+#define COSIM_ASYNC_SLAVE_HPP
 
 #include <cosim/model.hpp>
 #include <cosim/slave.hpp>

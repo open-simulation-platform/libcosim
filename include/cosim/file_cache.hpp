@@ -1,5 +1,5 @@
-#ifndef CSE_FILE_CACHE_HPP
-#define CSE_FILE_CACHE_HPP
+#ifndef COSIM_FILE_CACHE_HPP
+#define COSIM_FILE_CACHE_HPP
 
 #include <boost/filesystem.hpp>
 

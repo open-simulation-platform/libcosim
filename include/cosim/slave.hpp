@@ -2,8 +2,8 @@
  *  \file
  *  Slave interface.
  */
-#ifndef CSE_SLAVE_HPP
-#define CSE_SLAVE_HPP
+#ifndef COSIM_SLAVE_HPP
+#define COSIM_SLAVE_HPP
 
 #include <cosim/model.hpp>
 

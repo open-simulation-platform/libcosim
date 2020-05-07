@@ -151,7 +151,7 @@ private:
                 boolVars_.push_back(vd);
                 break;
             case variable_type::enumeration:
-                CSE_PANIC();
+                COSIM_PANIC();
         }
     }
 
@@ -454,7 +454,7 @@ file_observer::simulator_logging_config file_observer::parse_config(const std::s
                                     BOOST_LOG_SEV(log::logger(), log::info) << "Logging variable: " << modelName << ":" << name;
                                     break;
                                 default:
-                                    CSE_PANIC_M("Variable type not supported.");
+                                    COSIM_PANIC_M("Variable type not supported.");
                             }
                         }
                     }

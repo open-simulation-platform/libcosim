@@ -44,7 +44,7 @@ std::shared_ptr<model> model_uri_resolver::lookup_model(
     const uri& baseUri,
     const uri& modelUriReference)
 {
-    CSE_INPUT_CHECK(baseUri.scheme().has_value() ||
+    COSIM_INPUT_CHECK(baseUri.scheme().has_value() ||
         modelUriReference.scheme().has_value());
     for (auto sr : subResolvers_) {
         if (auto r = sr->lookup_model(baseUri, modelUriReference)) return r;
@@ -56,7 +56,7 @@ std::shared_ptr<model> model_uri_resolver::lookup_model(
 
 std::shared_ptr<model> model_uri_resolver::lookup_model(const uri& modelUri)
 {
-    CSE_INPUT_CHECK(modelUri.scheme().has_value());
+    COSIM_INPUT_CHECK(modelUri.scheme().has_value());
     for (auto sr : subResolvers_) {
         if (auto r = sr->lookup_model(modelUri)) return r;
     }

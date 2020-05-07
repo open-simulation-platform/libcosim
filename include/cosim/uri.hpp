@@ -2,8 +2,8 @@
  *  \file
  *  \brief URI parsing and handling.
  */
-#ifndef CSE_URI_HPP
-#define CSE_URI_HPP
+#ifndef COSIM_URI_HPP
+#define COSIM_URI_HPP
 
 #include <boost/filesystem.hpp>
 

@@ -70,7 +70,7 @@ public:
 
     void set_real_time_factor_target(double realTimeFactor)
     {
-        CSE_INPUT_CHECK(realTimeFactor > 0.0);
+        COSIM_INPUT_CHECK(realTimeFactor > 0.0);
 
         start(lastSimulationTime_);
         realTimeFactorTarget_.store(realTimeFactor);

@@ -2,8 +2,8 @@
  *  \file
  *  \brief Observer-related functionality.
  */
-#ifndef CSE_OBSERVER_LAST_VALUE_OBSERVER_HPP
-#define CSE_OBSERVER_LAST_VALUE_OBSERVER_HPP
+#ifndef COSIM_OBSERVER_LAST_VALUE_OBSERVER_HPP
+#define COSIM_OBSERVER_LAST_VALUE_OBSERVER_HPP
 
 #include <cosim/execution.hpp>
 #include <cosim/model.hpp>

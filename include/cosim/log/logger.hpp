@@ -5,8 +5,8 @@
  *  For convenience, this header also includes some Boost.Log headers that
  *  provide useful short-hand logging macros (like `BOOST_LOG_SEV`).
  */
-#ifndef CSE_LOG_LOGGER_HPP
-#define CSE_LOG_LOGGER_HPP
+#ifndef COSIM_LOG_LOGGER_HPP
+#define COSIM_LOG_LOGGER_HPP
 
 #include <boost/log/expressions/keyword.hpp>
 #include <boost/log/sources/record_ostream.hpp> // for convenience

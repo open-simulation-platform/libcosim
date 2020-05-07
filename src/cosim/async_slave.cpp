@@ -205,7 +205,7 @@ public:
 
     boost::fibers::future<cosim::model_description> model_description() override
     {
-        CSE_PRECONDITION(
+        COSIM_PRECONDITION(
             state_ != slave_state::error &&
             state_ != slave_state::indeterminate);
         return big_stack_async([=, _ = state_guard(state_)] {
@@ -219,7 +219,7 @@ public:
         std::optional<double> relativeTolerance)
         override
     {
-        CSE_PRECONDITION(state_ == slave_state::created);
+        COSIM_PRECONDITION(state_ == slave_state::created);
         return big_stack_async([=, _ = state_guard(state_, slave_state::initialisation)] {
             slave_->setup(startTime, stopTime, relativeTolerance);
         });
@@ -227,7 +227,7 @@ public:
 
     boost::fibers::future<void> start_simulation() override
     {
-        CSE_PRECONDITION(state_ == slave_state::initialisation);
+        COSIM_PRECONDITION(state_ == slave_state::initialisation);
         return big_stack_async([=, _ = state_guard(state_, slave_state::simulation)] {
             slave_->start_simulation();
         });
@@ -235,7 +235,7 @@ public:
 
     boost::fibers::future<void> end_simulation() override
     {
-        CSE_PRECONDITION(state_ == slave_state::simulation);
+        COSIM_PRECONDITION(state_ == slave_state::simulation);
         return big_stack_async([=, _ = state_guard(state_, slave_state::terminated)] {
             slave_->end_simulation();
         });
@@ -246,7 +246,7 @@ public:
         cosim::duration deltaT)
         override
     {
-        CSE_PRECONDITION(state_ == slave_state::simulation);
+        COSIM_PRECONDITION(state_ == slave_state::simulation);
         return big_stack_async([=, _ = state_guard(state_)] {
             return slave_->do_step(currentT, deltaT);
         });
@@ -261,7 +261,7 @@ public:
         gsl::span<const cosim::value_reference> stringVariables)
         override
     {
-        CSE_PRECONDITION(
+        COSIM_PRECONDITION(
             state_ == slave_state::initialisation ||
             state_ == slave_state::simulation);
 
@@ -302,7 +302,7 @@ public:
         gsl::span<const std::string> stringValues)
         override
     {
-        CSE_PRECONDITION(
+        COSIM_PRECONDITION(
             state_ == slave_state::initialisation ||
             state_ == slave_state::simulation);
 
@@ -450,7 +450,7 @@ T get_reply(reply_channel& replyChannel)
     } else if (const auto e = std::get_if<std::exception_ptr>(&reply)) {
         std::rethrow_exception(*e);
     } else {
-        CSE_PANIC_M("Unexpected reply type");
+        COSIM_PANIC_M("Unexpected reply type");
     }
 }
 
@@ -557,7 +557,7 @@ public:
 
     boost::fibers::future<cosim::model_description> model_description() override
     {
-        CSE_PRECONDITION(
+        COSIM_PRECONDITION(
             state_ != slave_state::error &&
             state_ != slave_state::indeterminate);
         return boost::fibers::async([=, _ = state_guard(state_)] {
@@ -571,7 +571,7 @@ public:
         std::optional<time_point> stopTime,
         std::optional<double> relativeTolerance) override
     {
-        CSE_PRECONDITION(state_ == slave_state::created);
+        COSIM_PRECONDITION(state_ == slave_state::created);
         return boost::fibers::async([=, _ = state_guard(state_, slave_state::initialisation)] {
             requestChannel_->put(setup_request{startTime, stopTime, relativeTolerance});
             get_reply<void_reply>(*replyChannel_);
@@ -580,7 +580,7 @@ public:
 
     boost::fibers::future<void> start_simulation() override
     {
-        CSE_PRECONDITION(state_ == slave_state::initialisation);
+        COSIM_PRECONDITION(state_ == slave_state::initialisation);
         return boost::fibers::async([=, _ = state_guard(state_, slave_state::simulation)] {
             requestChannel_->put(start_simulation_request{});
             get_reply<void_reply>(*replyChannel_);
@@ -589,7 +589,7 @@ public:
 
     boost::fibers::future<void> end_simulation() override
     {
-        CSE_PRECONDITION(state_ == slave_state::simulation);
+        COSIM_PRECONDITION(state_ == slave_state::simulation);
         return boost::fibers::async([=, _ = state_guard(state_, slave_state::terminated)] {
             requestChannel_->put(end_simulation_request{});
             get_reply<void_reply>(*replyChannel_);
@@ -600,7 +600,7 @@ public:
         time_point currentT,
         duration deltaT) override
     {
-        CSE_PRECONDITION(state_ == slave_state::simulation);
+        COSIM_PRECONDITION(state_ == slave_state::simulation);
         return boost::fibers::async([=, _ = state_guard(state_)] {
             requestChannel_->put(do_step_request{currentT, deltaT});
             return get_reply<step_result>(*replyChannel_);
@@ -616,7 +616,7 @@ public:
         gsl::span<const cosim::value_reference> stringVariables)
         override
     {
-        CSE_PRECONDITION(
+        COSIM_PRECONDITION(
             state_ == slave_state::initialisation ||
             state_ == slave_state::simulation);
 
@@ -665,7 +665,7 @@ public:
         gsl::span<const std::string> stringValues)
         override
     {
-        CSE_PRECONDITION(
+        COSIM_PRECONDITION(
             state_ == slave_state::initialisation ||
             state_ == slave_state::simulation);
 
@@ -718,7 +718,7 @@ private:
 
 std::shared_ptr<async_slave> make_background_thread_slave(std::shared_ptr<slave> slave)
 {
-    CSE_INPUT_CHECK(slave);
+    COSIM_INPUT_CHECK(slave);
     return std::make_shared<background_thread_slave_frontend>(slave);
 }
 

@@ -1,5 +1,5 @@
-#ifndef CSE_SYSTEM_STRUCTURE_HPP
-#define CSE_SYSTEM_STRUCTURE_HPP
+#ifndef COSIM_SYSTEM_STRUCTURE_HPP
+#define COSIM_SYSTEM_STRUCTURE_HPP
 
 #include <cosim/function/function.hpp>
 #include <cosim/model.hpp>

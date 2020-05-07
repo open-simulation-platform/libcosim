@@ -2,8 +2,8 @@
  *  \file
  *  \brief Types and functions for running an execution.
  */
-#ifndef CSE_EXECUTION_HPP
-#define CSE_EXECUTION_HPP
+#ifndef COSIM_EXECUTION_HPP
+#define COSIM_EXECUTION_HPP
 
 #include <cosim/async_slave.hpp>
 #include <cosim/function/function.hpp>

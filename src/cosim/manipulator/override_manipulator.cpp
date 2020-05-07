@@ -182,7 +182,7 @@ void override_manipulator::reset_variable(
             add_action(index, variable, variable_type::string, scenario::string_modifier{nullptr});
             break;
         default:
-            CSE_PANIC();
+            COSIM_PANIC();
     }
 }
 

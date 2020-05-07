@@ -61,7 +61,7 @@ public:
     explicit impl(duration baseStepSize)
         : baseStepSize_(baseStepSize)
     {
-        CSE_INPUT_CHECK(baseStepSize.count() > 0);
+        COSIM_INPUT_CHECK(baseStepSize.count() > 0);
     }
 
     ~impl() noexcept = default;
@@ -244,7 +244,7 @@ public:
 
     void set_stepsize_decimation_factor(cosim::simulator_index i, int factor)
     {
-        CSE_INPUT_CHECK(factor > 0);
+        COSIM_INPUT_CHECK(factor > 0);
         simulators_.at(i).decimationFactor = factor;
     }
 
@@ -392,7 +392,7 @@ private:
                 simulators_.at(c.target.simulator).sim->set_string(c.target.reference, simulators_.at(c.source.simulator).sim->get_string(c.source.reference));
                 break;
             case variable_type::enumeration:
-                CSE_PANIC_M("Can't handle variable of type 'enumeration' yet");
+                COSIM_PANIC_M("Can't handle variable of type 'enumeration' yet");
         }
     }
 
@@ -413,7 +413,7 @@ private:
                 functions_.at(c.target.function).fun->set_string(c.target.reference, simulators_.at(c.source.simulator).sim->get_string(c.source.reference));
                 break;
             case variable_type::enumeration:
-                CSE_PANIC_M("Can't handle variable of type 'enumeration' yet");
+                COSIM_PANIC_M("Can't handle variable of type 'enumeration' yet");
         }
     }
 
@@ -434,7 +434,7 @@ private:
                 simulators_.at(c.target.simulator).sim->set_string(c.target.reference, functions_.at(c.source.function).fun->get_string(c.source.reference));
                 break;
             case variable_type::enumeration:
-                CSE_PANIC_M("Can't handle variable of type 'enumeration' yet");
+                COSIM_PANIC_M("Can't handle variable of type 'enumeration' yet");
         }
     }
 

@@ -2,8 +2,8 @@
  *  \file
  *  \brief Defines the `time_series_provider` interface.
  */
-#ifndef CSE_OBSERVER_TIME_SERIES_PROVIDER_HPP
-#define CSE_OBSERVER_TIME_SERIES_PROVIDER_HPP
+#ifndef COSIM_OBSERVER_TIME_SERIES_PROVIDER_HPP
+#define COSIM_OBSERVER_TIME_SERIES_PROVIDER_HPP
 
 #include <cosim/execution.hpp>
 #include <cosim/model.hpp>

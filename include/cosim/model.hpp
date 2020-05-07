@@ -2,8 +2,8 @@
  *  \file
  *  Model-descriptive types and constants.
  */
-#ifndef CSE_MODEL_HPP
-#define CSE_MODEL_HPP
+#ifndef COSIM_MODEL_HPP
+#define COSIM_MODEL_HPP
 
 #include <chrono>
 #include <cstdint>

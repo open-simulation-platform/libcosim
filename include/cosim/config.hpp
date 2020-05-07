@@ -2,8 +2,8 @@
  *  \file
  *  Library-wide configuration macros.
  */
-#ifndef CSE_CONFIG_HPP
-#define CSE_CONFIG_HPP
+#ifndef COSIM_CONFIG_HPP
+#define COSIM_CONFIG_HPP
 
 
 /// \defgroup csecore CSE core C++ library

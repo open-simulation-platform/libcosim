@@ -2,8 +2,8 @@
  *  \file
  *  \brief  Interfaces for orchestration of remote as well as local simulations.
  */
-#ifndef CSE_ORCHESTRATION_HPP
-#define CSE_ORCHESTRATION_HPP
+#ifndef COSIM_ORCHESTRATION_HPP
+#define COSIM_ORCHESTRATION_HPP
 
 #include <cosim/async_slave.hpp>
 #include <cosim/file_cache.hpp>

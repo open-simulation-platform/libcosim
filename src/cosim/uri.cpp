@@ -176,12 +176,12 @@ uri::uri(
     std::optional<std::string_view> query,
     std::optional<std::string_view> fragment)
 {
-    CSE_INPUT_CHECK(!scheme ||
+    COSIM_INPUT_CHECK(!scheme ||
         (!scheme->empty() && all_chars_satisfy(is_scheme_char, *scheme)));
-    CSE_INPUT_CHECK(!authority || all_chars_satisfy(is_authority_char, *authority));
-    CSE_INPUT_CHECK(!authority || path.empty() || path.front() == '/');
-    CSE_INPUT_CHECK(all_chars_satisfy(is_path_char, path));
-    CSE_INPUT_CHECK(!query || all_chars_satisfy(is_query_char, path));
+    COSIM_INPUT_CHECK(!authority || all_chars_satisfy(is_authority_char, *authority));
+    COSIM_INPUT_CHECK(!authority || path.empty() || path.front() == '/');
+    COSIM_INPUT_CHECK(all_chars_satisfy(is_path_char, path));
+    COSIM_INPUT_CHECK(!query || all_chars_satisfy(is_query_char, path));
     data_.reserve(
         (scheme ? scheme->size() + 1 : 0) +
         (authority ? authority->size() + 2 : 0) +
@@ -342,7 +342,7 @@ std::string_view remove_dot_segments(
 
 uri resolve_reference(const uri& base, const uri& reference)
 {
-    CSE_INPUT_CHECK(base.scheme().has_value());
+    COSIM_INPUT_CHECK(base.scheme().has_value());
 
     std::string_view scheme;
     std::optional<std::string_view> authority;
@@ -487,7 +487,7 @@ uri percent_encode_uri(
 
 uri path_to_file_uri(const boost::filesystem::path& path)
 {
-    CSE_INPUT_CHECK(path.empty() || path.has_root_directory());
+    COSIM_INPUT_CHECK(path.empty() || path.has_root_directory());
 
 #ifdef _WIN32
     // Windows has some special rules for file URIs; better use the built-in
@@ -523,8 +523,8 @@ uri path_to_file_uri(const boost::filesystem::path& path)
 
 boost::filesystem::path file_uri_to_path(const uri& fileUri)
 {
-    CSE_INPUT_CHECK(fileUri.scheme() && *fileUri.scheme() == "file");
-    CSE_INPUT_CHECK(fileUri.authority() &&
+    COSIM_INPUT_CHECK(fileUri.scheme() && *fileUri.scheme() == "file");
+    COSIM_INPUT_CHECK(fileUri.authority() &&
         (fileUri.authority()->empty() || *fileUri.authority() == "localhost"));
 
 #ifdef _WIN32

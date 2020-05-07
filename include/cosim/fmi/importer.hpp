@@ -2,8 +2,8 @@
  *  \file
  *  FMU import functionality.
  */
-#ifndef CSE_FMI_IMPORTER_HPP
-#define CSE_FMI_IMPORTER_HPP
+#ifndef COSIM_FMI_IMPORTER_HPP
+#define COSIM_FMI_IMPORTER_HPP
 
 #include <cosim/file_cache.hpp>
 

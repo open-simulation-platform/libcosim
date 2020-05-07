@@ -50,8 +50,8 @@ std::shared_ptr<cosim::model> cosim::fmuproxy::fmuproxy_uri_sub_resolver::lookup
 {
     assert(modelUri.scheme().has_value());
     if (*modelUri.scheme() != "fmu-proxy") return nullptr;
-    CSE_INPUT_CHECK(modelUri.authority());
-    CSE_INPUT_CHECK(modelUri.query());
+    COSIM_INPUT_CHECK(modelUri.authority());
+    COSIM_INPUT_CHECK(modelUri.query());
 
     const auto query = *modelUri.query();
     const auto auth = parse_authority(*modelUri.authority());

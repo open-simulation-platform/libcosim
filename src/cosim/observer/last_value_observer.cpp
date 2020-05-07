@@ -61,7 +61,7 @@ void last_value_observer::get_real(
     gsl::span<const value_reference> variables,
     gsl::span<double> values)
 {
-    CSE_INPUT_CHECK(variables.size() == values.size());
+    COSIM_INPUT_CHECK(variables.size() == values.size());
     valueProviders_.at(sim)->get_real(variables, values);
 }
 
@@ -70,7 +70,7 @@ void last_value_observer::get_integer(
     gsl::span<const value_reference> variables,
     gsl::span<int> values)
 {
-    CSE_INPUT_CHECK(variables.size() == values.size());
+    COSIM_INPUT_CHECK(variables.size() == values.size());
     valueProviders_.at(sim)->get_int(variables, values);
 }
 
@@ -79,7 +79,7 @@ void last_value_observer::get_boolean(
     gsl::span<const value_reference> variables,
     gsl::span<bool> values)
 {
-    CSE_INPUT_CHECK(variables.size() == values.size());
+    COSIM_INPUT_CHECK(variables.size() == values.size());
     valueProviders_.at(sim)->get_boolean(variables, values);
 }
 
@@ -88,7 +88,7 @@ void last_value_observer::get_string(
     gsl::span<const value_reference> variables,
     gsl::span<std::string> values)
 {
-    CSE_INPUT_CHECK(variables.size() == values.size());
+    COSIM_INPUT_CHECK(variables.size() == values.size());
     valueProviders_.at(sim)->get_string(variables, values);
 }
 

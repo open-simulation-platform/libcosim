@@ -2,8 +2,8 @@
  *  \file
  *  \brief Defines the `observer` and `observable` interfaces.
  */
-#ifndef CSE_OBSERVER_OBSERVER_HPP
-#define CSE_OBSERVER_OBSERVER_HPP
+#ifndef COSIM_OBSERVER_OBSERVER_HPP
+#define COSIM_OBSERVER_OBSERVER_HPP
 
 #include <cosim/execution.hpp>
 #include <cosim/model.hpp>

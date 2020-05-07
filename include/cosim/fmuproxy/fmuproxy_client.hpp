@@ -1,6 +1,6 @@
 
-#ifndef CSE_FMUPROXY_FMUPROXYCLIENT_HPP
-#define CSE_FMUPROXY_FMUPROXYCLIENT_HPP
+#ifndef COSIM_FMUPROXY_FMUPROXYCLIENT_HPP
+#define COSIM_FMUPROXY_FMUPROXYCLIENT_HPP
 
 #include <cosim/fmuproxy/fmu_service.hpp>
 #include <cosim/fmuproxy/remote_fmu.hpp>

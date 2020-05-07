@@ -272,8 +272,8 @@ std::size_t time_series_observer::get_real_samples(
     gsl::span<step_number> steps,
     gsl::span<time_point> times)
 {
-    CSE_INPUT_CHECK(values.size() == steps.size());
-    CSE_INPUT_CHECK(times.size() == values.size());
+    COSIM_INPUT_CHECK(values.size() == steps.size());
+    COSIM_INPUT_CHECK(times.size() == values.size());
     return slaveObservers_.at(sim)->get_real_samples(valueReference, fromStep, values, steps, times);
 }
 
@@ -285,8 +285,8 @@ std::size_t time_series_observer::get_integer_samples(
     gsl::span<step_number> steps,
     gsl::span<time_point> times)
 {
-    CSE_INPUT_CHECK(values.size() == steps.size());
-    CSE_INPUT_CHECK(times.size() == values.size());
+    COSIM_INPUT_CHECK(values.size() == steps.size());
+    COSIM_INPUT_CHECK(times.size() == values.size());
     return slaveObservers_.at(sim)->get_int_samples(valueReference, fromStep, values, steps, times);
 }
 
@@ -316,7 +316,7 @@ std::size_t time_series_observer::get_synchronized_real_series(
     gsl::span<double> values1,
     gsl::span<double> values2)
 {
-    CSE_INPUT_CHECK(values1.size() == values2.size());
+    COSIM_INPUT_CHECK(values1.size() == values2.size());
 
     const auto realSamples1 = slaveObservers_.at(sim1)->get_real_samples_map(valueReference1);
     const auto realSamples2 = slaveObservers_.at(sim2)->get_real_samples_map(valueReference2);

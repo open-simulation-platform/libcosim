@@ -2,8 +2,8 @@
  *  \file
  *  Types that describe functions.
  */
-#ifndef CSE_FUNCTION_DESCRIPTION_HPP
-#define CSE_FUNCTION_DESCRIPTION_HPP
+#ifndef COSIM_FUNCTION_DESCRIPTION_HPP
+#define COSIM_FUNCTION_DESCRIPTION_HPP
 
 #include <cosim/model.hpp>
 

@@ -2,8 +2,8 @@
  *  \file
  *  Conversions between FMI variable attributes and "our" attributes.
  */
-#ifndef CSE_FMI_GLUE_HPP
-#define CSE_FMI_GLUE_HPP
+#ifndef COSIM_FMI_GLUE_HPP
+#define COSIM_FMI_GLUE_HPP
 
 #include "cosim/fmi/fmilib.h"
 #include "cosim/model.hpp"

@@ -2,8 +2,8 @@
  *  \file
  *  The `function` API.
  */
-#ifndef CSE_FUNCTION_FUNCTION_HPP
-#define CSE_FUNCTION_FUNCTION_HPP
+#ifndef COSIM_FUNCTION_FUNCTION_HPP
+#define COSIM_FUNCTION_FUNCTION_HPP
 
 #include <cosim/function/description.hpp>
 

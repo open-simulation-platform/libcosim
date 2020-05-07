@@ -46,7 +46,7 @@ slave_value_provider::slave_value_provider(observable* observable)
                 stringSamples_[vd.reference] = std::string();
                 break;
             default:
-                CSE_PANIC();
+                COSIM_PANIC();
         }
     }
 }

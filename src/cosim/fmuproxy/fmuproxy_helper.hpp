@@ -1,6 +1,6 @@
 
-#ifndef CSE_FMUPROXY_FMUPROXY_HELPER_HPP
-#define CSE_FMUPROXY_FMUPROXY_HELPER_HPP
+#ifndef COSIM_FMUPROXY_FMUPROXY_HELPER_HPP
+#define COSIM_FMUPROXY_FMUPROXY_HELPER_HPP
 
 #include "cosim/error.hpp"
 #include "cosim/fmuproxy/service_types.hpp"
@@ -26,7 +26,7 @@ inline cosim::variable_causality parse_causality(const std::string& c)
         return cosim::variable_causality::local;
     } else {
         const auto err = "Failed to parse causality: '" + c + "'";
-        CSE_PANIC_M(err.c_str());
+        COSIM_PANIC_M(err.c_str());
     }
 }
 
@@ -44,7 +44,7 @@ inline cosim::variable_variability parse_variability(const std::string& v)
         return cosim::variable_variability::continuous;
     } else {
         const auto err = "Failed to parse variability: '" + v + "'";
-        CSE_PANIC_M(err.c_str());
+        COSIM_PANIC_M(err.c_str());
     }
 }
 
@@ -62,7 +62,7 @@ inline cosim::variable_type get_type(const fmuproxy::thrift::ScalarVariable& v)
         return cosim::variable_type::enumeration;
     } else {
         const auto err = "Failed to get type of variable: '" + v.name + "'";
-        CSE_PANIC_M(err.c_str());
+        COSIM_PANIC_M(err.c_str());
     }
 }
 

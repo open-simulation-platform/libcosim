@@ -3,8 +3,8 @@
  *  Includes the FMI Library header, locally disabling some compilation
  *  warnings for it.
  */
-#ifndef CSE_FMI_FMILIB_H
-#define CSE_FMI_FMILIB_H
+#ifndef COSIM_FMI_FMILIB_H
+#define COSIM_FMI_FMILIB_H
 
 #ifdef _MSC_VER
 #    pragma warning(push, 0)

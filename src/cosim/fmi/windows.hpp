@@ -2,8 +2,8 @@
  *  \file
  *  Windows-specific things.
  */
-#ifndef CSE_FMI_WINDOWS_HPP
-#define CSE_FMI_WINDOWS_HPP
+#ifndef COSIM_FMI_WINDOWS_HPP
+#define COSIM_FMI_WINDOWS_HPP
 #ifdef _WIN32
 
 #    include <boost/filesystem.hpp>

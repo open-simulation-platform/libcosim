@@ -2,8 +2,8 @@
  *  \file
  *  Linear transformation function.
  */
-#ifndef CSE_FUNCTION_LINEAR_TRANSFORMATION_HPP
-#define CSE_FUNCTION_LINEAR_TRANSFORMATION_HPP
+#ifndef COSIM_FUNCTION_LINEAR_TRANSFORMATION_HPP
+#define COSIM_FUNCTION_LINEAR_TRANSFORMATION_HPP
 
 #include <cosim/function/function.hpp>
 

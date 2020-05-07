@@ -2,8 +2,8 @@
  *  \file
  *  \brief  Mock slave classes for use in tests.
  */
-#ifndef CSE_TEST_MOCK_SLAVE_HPP
-#define CSE_TEST_MOCK_SLAVE_HPP
+#ifndef COSIM_TEST_MOCK_SLAVE_HPP
+#define COSIM_TEST_MOCK_SLAVE_HPP
 
 #include <cosim/slave.hpp>
 

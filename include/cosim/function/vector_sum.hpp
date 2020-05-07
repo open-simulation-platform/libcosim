@@ -2,8 +2,8 @@
  *  \file
  *  Vector sum function.
  */
-#ifndef CSE_FUNCTION_VECTOR_SUM_HPP
-#define CSE_FUNCTION_VECTOR_SUM_HPP
+#ifndef COSIM_FUNCTION_VECTOR_SUM_HPP
+#define COSIM_FUNCTION_VECTOR_SUM_HPP
 
 #include <cosim/function/function.hpp>
 

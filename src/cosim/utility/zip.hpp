@@ -2,8 +2,8 @@
  * \file
  * ZIP file manipulation
  */
-#ifndef CSE_UTILITY_ZIP_HPP
-#define CSE_UTILITY_ZIP_HPP
+#ifndef COSIM_UTILITY_ZIP_HPP
+#define COSIM_UTILITY_ZIP_HPP
 
 #include <cosim/exception.hpp>
 

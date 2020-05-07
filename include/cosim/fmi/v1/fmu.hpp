@@ -2,8 +2,8 @@
  *  \file
  *  Classes for dealing with FMI 1.0 FMUs.
  */
-#ifndef CSE_FMI_V1_FMU_HPP
-#define CSE_FMI_V1_FMU_HPP
+#ifndef COSIM_FMI_V1_FMU_HPP
+#define COSIM_FMI_V1_FMU_HPP
 
 #include <cosim/file_cache.hpp>
 #include <cosim/fmi/fmu.hpp>

@@ -2,8 +2,8 @@
  *  \file
  *  \brief Defines `cosim::slave_simulator`
  */
-#ifndef CSE_SLAVE_SIMULATOR_HPP
-#define CSE_SLAVE_SIMULATOR_HPP
+#ifndef COSIM_SLAVE_SIMULATOR_HPP
+#define COSIM_SLAVE_SIMULATOR_HPP
 
 #include <cosim/algorithm.hpp>
 #include <cosim/async_slave.hpp>
