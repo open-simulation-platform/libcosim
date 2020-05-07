@@ -15,7 +15,7 @@ namespace utility
 temp_dir::temp_dir(const boost::filesystem::path& parent)
 {
     if (parent.empty()) {
-        path_ = boost::filesystem::temp_directory_path() / ("cse_" + random_uuid());
+        path_ = boost::filesystem::temp_directory_path() / ("libcosim_" + random_uuid());
     } else if (parent.is_absolute()) {
         path_ = parent / random_uuid();
     } else {
