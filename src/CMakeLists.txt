@@ -133,17 +133,17 @@ add_custom_command(
     COMMAND osp-xsd-embedder "${CMAKE_SOURCE_DIR}/data/xsd/OspSystemStructure.xsd" osp_system_structure_schema.hpp
     DEPENDS ${CMAKE_SOURCE_DIR}/data/xsd/OspSystemStructure.xsd osp-xsd-embedder)
 
-add_library(csecorecpp ${allSources})
-target_compile_definitions(csecorecpp PUBLIC "BOOST_ALL_DYN_LINK=1" "BOOST_ALL_NO_LIB=1" "BOOST_CONFIG_SUPPRESS_OUTDATED_MESSAGE=1")
-target_compile_features(csecorecpp PUBLIC "cxx_std_17")
-target_include_directories(csecorecpp
+add_library(cosim ${allSources})
+target_compile_definitions(cosim PUBLIC "BOOST_ALL_DYN_LINK=1" "BOOST_ALL_NO_LIB=1" "BOOST_CONFIG_SUPPRESS_OUTDATED_MESSAGE=1")
+target_compile_features(cosim PUBLIC "cxx_std_17")
+target_include_directories(cosim
     PUBLIC
         "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>"
     PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}"
         "${CMAKE_CURRENT_BINARY_DIR}"
 )
-target_link_libraries(csecorecpp
+target_link_libraries(cosim
     PUBLIC
         Boost::boost
         Boost::date_time
@@ -159,25 +159,25 @@ target_link_libraries(csecorecpp
     )
 
 if(LIBCOSIM_WITH_FMUPROXY)
-    target_compile_definitions(csecorecpp PRIVATE "HAS_FMUPROXY")
-    target_link_libraries(csecorecpp
+    target_compile_definitions(cosim PRIVATE "HAS_FMUPROXY")
+    target_link_libraries(cosim
         PUBLIC
             thrift::thrift
         )
 endif()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    target_link_libraries(csecorecpp INTERFACE "atomic")
+    target_link_libraries(cosim INTERFACE "atomic")
 endif()
 if(WIN32 AND NOT BUILD_SHARED_LIBS)
-    set_target_properties(csecorecpp PROPERTIES OUTPUT_NAME "libcsecorecpp")
+    set_target_properties(cosim PROPERTIES OUTPUT_NAME "libcosim")
 endif()
 if(LIBCOSIM_STANDALONE_INSTALLATION)
-    set_target_properties(csecorecpp PROPERTIES INSTALL_RPATH "\$ORIGIN")
+    set_target_properties(cosim PROPERTIES INSTALL_RPATH "\$ORIGIN")
 endif()
 
 install(
-    TARGETS csecorecpp
+    TARGETS cosim
     EXPORT "${LIBCOSIM_EXPORT_TARGET}"
     ${LIBCOSIM_INSTALL_DESTINATIONS}
 )

@@ -44,7 +44,7 @@ foreach(test IN LISTS tests)
         "cpp_${test}"
         FOLDER "C++ tests"
         SOURCES "${test}.cpp"
-        DEPENDENCIES csecorecpp
+        DEPENDENCIES cosim
         DATA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/data"
     )
 endforeach()
@@ -54,8 +54,8 @@ foreach(test IN LISTS unittests)
         "cpp_${test}"
         FOLDER "C++ unit tests"
         SOURCES "${test}.cpp"
-        DEPENDENCIES csecorecpp "Boost::unit_test_framework" "Boost::timer"
+        DEPENDENCIES cosim "Boost::unit_test_framework" "Boost::timer"
         DATA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/data"
     )
-    target_include_directories("cpp_${test}" PRIVATE "$<TARGET_PROPERTY:csecorecpp,SOURCE_DIR>")
+    target_include_directories("cpp_${test}" PRIVATE "$<TARGET_PROPERTY:cosim,SOURCE_DIR>")
 endforeach()
