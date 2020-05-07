@@ -182,6 +182,6 @@ install(
     ${LIBCOSIM_INSTALL_DESTINATIONS}
 )
 install(
-    FILES "${publicHeaders}"
+    DIRECTORY "${publicHeaderDir}/cosim"
     DESTINATION "${LIBCOSIM_HEADER_INSTALL_DIR}"
 )
