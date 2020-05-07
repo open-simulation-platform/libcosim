@@ -33,7 +33,7 @@ struct full_variable_name
     full_variable_name(std::string simulatorName, std::string variableName)
         : entity_name(std::move(simulatorName))
         , variable_name(std::move(variableName))
-    {}
+    { }
 
     /// Constructor for function variables.
     full_variable_name(
@@ -47,7 +47,7 @@ struct full_variable_name
         , variable_group_instance(ioGroupInstance)
         , variable_name(std::move(ioName))
         , variable_instance(ioInstance)
-    {}
+    { }
 
     /**
      *  Convenience constructor for singular function variables (where
@@ -60,7 +60,7 @@ struct full_variable_name
         : entity_name(std::move(functionName))
         , variable_group_name(std::move(ioGroupName))
         , variable_name(std::move(ioName))
-    {}
+    { }
 
     /// The name of an entity.
     std::string entity_name;
@@ -127,7 +127,7 @@ inline std::ostream& operator<<(std::ostream& s, const full_variable_name& v)
 /// Returns a string representation of a `full_variable_name`.
 std::string to_text(const full_variable_name& v);
 
-} // namespace cse
+} // namespace cosim
 
 namespace std
 {
@@ -430,5 +430,5 @@ void add_variable_value(
     scalar_value value);
 
 
-} // namespace cse
+} // namespace cosim
 #endif // header guard

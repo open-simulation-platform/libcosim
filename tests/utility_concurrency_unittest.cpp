@@ -34,7 +34,7 @@ struct noncopyable
 {
     explicit noncopyable(int n)
         : number(n)
-    {}
+    { }
 
     noncopyable(const noncopyable&) = delete;
     noncopyable& operator=(const noncopyable&) = delete;

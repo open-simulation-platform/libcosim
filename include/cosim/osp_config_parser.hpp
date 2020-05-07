@@ -25,5 +25,5 @@ osp_config load_osp_config(
     cosim::model_uri_resolver& resolver);
 
 
-} // namespace cse
+} // namespace cosim
 #endif //LIBCOSIM_OSP_CONFIG_PARSER_HPP

@@ -323,5 +323,5 @@ inline bool operator!=(
 }
 
 
-} // namespace cse
+} // namespace cosim
 #endif // header guard

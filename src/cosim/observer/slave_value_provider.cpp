@@ -95,4 +95,4 @@ void slave_value_provider::get_string(gsl::span<const value_reference> variables
     get<std::string>(variables, stringSamples_, values);
 }
 
-} // namespace cse
+} // namespace cosim

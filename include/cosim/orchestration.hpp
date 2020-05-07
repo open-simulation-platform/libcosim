@@ -189,5 +189,5 @@ std::shared_ptr<model_uri_resolver> default_model_uri_resolver(
     std::shared_ptr<file_cache> cache = nullptr);
 
 
-} // namespace cse
+} // namespace cosim
 #endif // header guard

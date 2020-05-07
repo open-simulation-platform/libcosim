@@ -19,7 +19,7 @@ public:
         const std::vector<function_parameter_description>& parameterDescriptions)
         : parameterValues_(parameterValues)
         , parameterDescriptions_(parameterDescriptions)
-    {}
+    { }
 
     T operator()(const T& value) { return value; }
 
@@ -92,4 +92,4 @@ function_description substitute_function_parameters(
     return functionDescription;
 }
 
-} // namespace cse
+} // namespace cosim

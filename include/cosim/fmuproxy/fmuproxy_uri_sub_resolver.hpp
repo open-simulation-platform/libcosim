@@ -30,6 +30,6 @@ public:
 
 } // namespace fmuproxy
 
-} // namespace cse
+} // namespace cosim
 
 #endif

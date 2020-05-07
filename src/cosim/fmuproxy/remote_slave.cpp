@@ -1,6 +1,7 @@
 #include <cosim/error.hpp>
 #include <cosim/fmuproxy/fmuproxy_helper.hpp>
 #include <cosim/fmuproxy/remote_slave.hpp>
+
 #include <utility>
 
 
@@ -11,7 +12,7 @@ cosim::fmuproxy::remote_slave::remote_slave(std::string instanceId,
     , instanceId_(std::move(instanceId))
     , state_(std::move(state))
     , modelDescription_(std::move(modelDescription))
-{}
+{ }
 
 cosim::model_description cosim::fmuproxy::remote_slave::model_description() const
 {

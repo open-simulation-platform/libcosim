@@ -1,10 +1,9 @@
 #include "cosim/async_slave.hpp"
 
 #include "cosim/error.hpp"
+#include "cosim/exception.hpp"
 #include "cosim/utility/concurrency.hpp"
 #include "cosim/utility/utility.hpp"
-
-#include "cosim/exception.hpp"
 
 #include <boost/container/vector.hpp>
 #include <boost/fiber/fixedsize_stack.hpp>
@@ -53,7 +52,7 @@ public:
      */
     state_guard(slave_state& stateVariable)
         : state_guard(stateVariable, stateVariable)
-    {}
+    { }
 
     /**
      *  Manually sets the managed variable to its final value and relinquishes
@@ -188,7 +187,7 @@ public:
     pseudo_async_slave(std::shared_ptr<cosim::slave> slave)
         : slave_(std::move(slave))
         , state_(slave_state::created)
-    {}
+    { }
 
     ~pseudo_async_slave() = default;
 

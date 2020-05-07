@@ -11,7 +11,7 @@ namespace cosim
 {
 
 last_value_observer::last_value_observer()
-{}
+{ }
 
 void last_value_observer::simulator_added(simulator_index index, observable* simulator, time_point /*currentTime*/)
 {
@@ -94,4 +94,4 @@ void last_value_observer::get_string(
 
 last_value_observer::~last_value_observer() noexcept = default;
 
-} // namespace cse
+} // namespace cosim

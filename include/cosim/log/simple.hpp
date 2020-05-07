@@ -67,5 +67,5 @@ inline void setup_simple_console_logging()
 
 
 } // namespace log
-} // namespace cse
+} // namespace cosim
 #endif // header guard

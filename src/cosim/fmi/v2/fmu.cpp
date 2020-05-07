@@ -1,12 +1,11 @@
 #include "cosim/fmi/v2/fmu.hpp"
 
 #include "cosim/error.hpp"
+#include "cosim/exception.hpp"
 #include "cosim/fmi/fmilib.h"
 #include "cosim/fmi/glue.hpp"
-#include "cosim/fmi/windows.hpp"
-
-#include "cosim/exception.hpp"
 #include "cosim/fmi/importer.hpp"
+#include "cosim/fmi/windows.hpp"
 #include "cosim/log/logger.hpp"
 
 #include <gsl/gsl_util>
@@ -169,11 +168,11 @@ void step_finished_placeholder(fmi2_component_environment_t, fmi2_status_t)
 
 struct log_record
 {
-    log_record() {}
+    log_record() { }
     log_record(fmi2_status_t s, const std::string& m)
         : status{s}
         , message(m)
-    {}
+    { }
     fmi2_status_t status = fmi2_status_ok;
     std::string message;
 };
@@ -572,4 +571,4 @@ fmi2_import_t* slave_instance::fmilib_handle() const
 
 } // namespace v2
 } // namespace fmi
-} // namespace cse
+} // namespace cosim

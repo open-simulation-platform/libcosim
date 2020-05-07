@@ -63,7 +63,7 @@ boost::filesystem::path fmu_binaries_dir(const boost::filesystem::path& baseDir)
 
 
 } // namespace fmi
-} // namespace cse
+} // namespace cosim
 
 #endif // _WIN32
 #endif // header guard

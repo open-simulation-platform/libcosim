@@ -36,7 +36,7 @@ struct streamer
 };
 
 template<class T>
-streamer(T)->streamer<T>;
+streamer(T) -> streamer<T>;
 
 template<class T>
 std::ostream& operator<<(std::ostream& os, streamer<T> s)
@@ -52,5 +52,5 @@ std::ostream& operator<<(std::ostream& os, streamer<std::variant<Ts...>> sv)
     return os;
 }
 
-} // namespace cse
+} // namespace cosim
 #endif // header guard

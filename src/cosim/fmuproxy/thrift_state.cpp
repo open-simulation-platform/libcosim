@@ -6,7 +6,7 @@ cosim::fmuproxy::thrift_state::thrift_state(std::shared_ptr<::fmuproxy::thrift::
     std::shared_ptr<apache::thrift::transport::TTransport> transport_)
     : client_(std::move(client_))
     , transport_(std::move(transport_))
-{}
+{ }
 
 ::fmuproxy::thrift::fmu_service_if& cosim::fmuproxy::thrift_state::client()
 {

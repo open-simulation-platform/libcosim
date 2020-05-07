@@ -263,4 +263,4 @@ std::optional<ssp_parser::ParameterSet> get_parameter_set(
     return std::nullopt;
 }
 
-} // namespace cse
+} // namespace cosim

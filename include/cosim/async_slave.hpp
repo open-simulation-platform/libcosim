@@ -298,5 +298,5 @@ std::shared_ptr<async_slave> make_pseudo_async(std::shared_ptr<slave> s);
 std::shared_ptr<async_slave> make_background_thread_slave(std::shared_ptr<slave> slave);
 
 
-} // namespace cse
+} // namespace cosim
 #endif // header guard

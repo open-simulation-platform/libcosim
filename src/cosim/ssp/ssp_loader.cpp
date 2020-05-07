@@ -1,11 +1,10 @@
 #include "cosim/ssp/ssp_loader.hpp"
 
+#include "cosim/function/linear_transformation.hpp"
+#include "cosim/log/logger.hpp"
 #include "cosim/ssp/ssp_parser.hpp"
 #include "cosim/utility/filesystem.hpp"
 #include "cosim/utility/zip.hpp"
-
-#include "cosim/function/linear_transformation.hpp"
-#include "cosim/log/logger.hpp"
 
 #include <random>
 
@@ -16,7 +15,7 @@ namespace cosim
 
 ssp_loader::ssp_loader()
     : modelResolver_(cosim::default_model_uri_resolver())
-{}
+{ }
 
 void ssp_loader::set_model_uri_resolver(std::shared_ptr<cosim::model_uri_resolver> resolver)
 {
@@ -144,4 +143,4 @@ ssp_configuration ssp_loader::load(const boost::filesystem::path& configPath)
     return configuration;
 }
 
-} // namespace cse
+} // namespace cosim

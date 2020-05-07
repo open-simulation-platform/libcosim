@@ -47,7 +47,7 @@ class error_handler : public xercesc::DOMErrorHandler
 public:
     error_handler()
         : failed_(false)
-    {}
+    { }
 
     bool failed() const { return failed_; }
 
@@ -843,7 +843,7 @@ void connect_vector_sum_functions(
         }
 
         const auto outGroupConn = find_signal_connection(
-                signalGroupConnections, functionName, function.outGroup.name);
+            signalGroupConnections, functionName, function.outGroup.name);
         const auto& outEmd = emds.at(outGroupConn.variable.simulator);
         const auto& outVariableGroup = outEmd.variableGroups.at(outGroupConn.variable.name);
         for (int j = 0; j < function.dimension; ++j) {
@@ -930,4 +930,4 @@ osp_config load_osp_config(
     return config;
 }
 
-} // namespace cse
+} // namespace cosim

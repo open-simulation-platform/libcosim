@@ -14,4 +14,4 @@ const variable_description find_variable(const model_description& description, c
     throw std::invalid_argument("Can't find variable descriptor with name " + variable_name + " for model with name " + description.name);
 }
 
-} // namespace cse
+} // namespace cosim

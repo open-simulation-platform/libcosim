@@ -81,7 +81,7 @@ public:
     explicit error(std::error_code ec)
         : std::runtime_error(ec.message())
         , code_(ec)
-    {}
+    { }
 
     /**
      *  Constructs an exception with the given error code and an additional
@@ -94,7 +94,7 @@ public:
     error(std::error_code ec, const std::string& msg)
         : std::runtime_error(ec.message() + ": " + msg)
         , code_(ec)
-    {}
+    { }
 
     /// Returns an error code.
     const std::error_code& code() const noexcept { return code_; }
@@ -119,16 +119,16 @@ public:
     /// Constructs an exception with a default error message.
     nonfatal_bad_value()
         : error(make_error_code(errc::nonfatal_bad_value))
-    {}
+    { }
 
     /// Constructs an exception with a custom error message.
     explicit nonfatal_bad_value(const std::string& msg)
         : error(make_error_code(errc::nonfatal_bad_value), msg)
-    {}
+    { }
 };
 
 
-} // namespace cse
+} // namespace cosim
 
 
 namespace std

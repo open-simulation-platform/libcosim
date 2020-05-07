@@ -1,7 +1,6 @@
 #include "cosim/orchestration.hpp"
 
 #include "cosim/error.hpp"
-
 #include "cosim/fmi/fmu.hpp"
 #include "cosim/log/logger.hpp"
 
@@ -77,7 +76,7 @@ class fmu_model : public model
 public:
     fmu_model(std::shared_ptr<fmi::fmu> fmu)
         : fmu_(fmu)
-    {}
+    { }
 
     std::shared_ptr<const model_description> description() const noexcept
     {
@@ -150,4 +149,4 @@ std::shared_ptr<model_uri_resolver> default_model_uri_resolver(
     return resolver;
 }
 
-} // namespace cse
+} // namespace cosim

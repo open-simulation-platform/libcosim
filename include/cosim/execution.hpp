@@ -84,7 +84,7 @@ inline std::ostream& operator<<(std::ostream& stream, variable_id v)
                   << ", variable " << v.reference << ")";
 }
 
-} // namespace cse
+} // namespace cosim
 
 // Specialisations of std::hash for variable_id and function_io_id
 namespace std
@@ -343,5 +343,5 @@ entity_index_maps inject_system_structure(
     const system_structure& sys,
     const variable_value_map& initialValues);
 
-} // namespace cse
+} // namespace cosim
 #endif // header guard

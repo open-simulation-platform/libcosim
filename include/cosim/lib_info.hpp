@@ -17,5 +17,5 @@ namespace cosim
 constexpr const char* library_short_name = "cse-core";
 
 
-} // namespace cse
+} // namespace cosim
 #endif // header guard

@@ -60,7 +60,7 @@ public:
     /// The `fmi::importer` which was used to import this FMU.
     virtual std::shared_ptr<fmi::importer> importer() const = 0;
 
-    virtual ~fmu() {}
+    virtual ~fmu() { }
 };
 
 
@@ -76,10 +76,10 @@ public:
         return *(fmu()->model_description());
     }
 
-    virtual ~slave_instance() {}
+    virtual ~slave_instance() { }
 };
 
 
 } // namespace fmi
-} // namespace cse
+} // namespace cosim
 #endif // header guard

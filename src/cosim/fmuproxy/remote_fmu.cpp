@@ -1,7 +1,6 @@
-#include <cosim/fmuproxy/remote_fmu.hpp>
-
 #include <cosim/error.hpp>
 #include <cosim/fmuproxy/fmuproxy_helper.hpp>
+#include <cosim/fmuproxy/remote_fmu.hpp>
 #include <cosim/fmuproxy/remote_slave.hpp>
 
 using namespace fmuproxy::thrift;

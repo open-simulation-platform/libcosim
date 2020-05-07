@@ -68,5 +68,5 @@ private:
 
 
 } // namespace utility
-} // namespace cse
+} // namespace cosim
 #endif // header guard

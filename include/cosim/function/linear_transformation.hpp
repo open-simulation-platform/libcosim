@@ -86,7 +86,8 @@ class linear_transformation_function_type : public function_type
 {
 public:
     /// Parameter indexes, for convenience.
-    enum {
+    enum
+    {
         offset_parameter_index,
         factor_parameter_index,
     };
@@ -99,5 +100,5 @@ public:
 };
 
 
-} // namespace cse
+} // namespace cosim
 #endif // header guard

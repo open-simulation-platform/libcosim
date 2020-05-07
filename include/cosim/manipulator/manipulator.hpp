@@ -165,9 +165,9 @@ public:
     virtual void step_commencing(
         time_point currentTime) = 0;
 
-    virtual ~manipulator() noexcept {}
+    virtual ~manipulator() noexcept { }
 };
 
-} // namespace cse
+} // namespace cosim
 
 #endif

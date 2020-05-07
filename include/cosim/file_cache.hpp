@@ -146,5 +146,5 @@ private:
 };
 
 
-} // namespace cse
+} // namespace cosim
 #endif

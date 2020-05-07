@@ -1,7 +1,6 @@
 #include "cosim/fmi/glue.hpp"
 
 #include "cosim/error.hpp"
-
 #include "cosim/exception.hpp"
 
 #include <cassert>
@@ -177,4 +176,4 @@ variable_description to_variable_description(fmi2_import_variable_t* fmiVariable
 
 
 } // namespace fmi
-} // namespace cse
+} // namespace cosim

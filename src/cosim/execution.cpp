@@ -1,11 +1,10 @@
 #include "cosim/execution.hpp"
 
-#include "cosim/slave_simulator.hpp"
-#include "cosim/utility/utility.hpp"
-
 #include "cosim/algorithm.hpp"
 #include "cosim/exception.hpp"
+#include "cosim/slave_simulator.hpp"
 #include "cosim/timer.hpp"
+#include "cosim/utility/utility.hpp"
 
 #include <algorithm>
 #include <sstream>
@@ -586,4 +585,4 @@ entity_index_maps inject_system_structure(
 }
 
 
-} // namespace cse
+} // namespace cosim

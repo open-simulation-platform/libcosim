@@ -103,4 +103,4 @@ std::unique_ptr<function> vector_sum_function_type::instantiate(
 }
 
 
-} // namespace cse
+} // namespace cosim

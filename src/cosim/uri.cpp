@@ -554,4 +554,4 @@ boost::filesystem::path file_uri_to_path(const uri& fileUri)
 }
 
 
-} // namespace cse
+} // namespace cosim

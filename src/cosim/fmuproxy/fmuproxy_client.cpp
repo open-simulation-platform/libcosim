@@ -1,3 +1,4 @@
+#include <cosim/error.hpp>
 #include <cosim/fmuproxy/fmuproxy_client.hpp>
 #include <cosim/fmuproxy/thrift_state.hpp>
 #include <cosim/log/logger.hpp>
@@ -5,7 +6,6 @@
 #include <boost/filesystem.hpp>
 
 #include <cstdio>
-#include <cosim/error.hpp>
 #include <string>
 
 #ifdef _MSC_VER

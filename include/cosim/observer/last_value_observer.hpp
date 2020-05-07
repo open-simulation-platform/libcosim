@@ -77,5 +77,5 @@ private:
 };
 
 
-} // namespace cse
+} // namespace cosim
 #endif // header guard

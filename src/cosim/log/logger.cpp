@@ -15,4 +15,4 @@ logger_type& logger()
 
 
 } // namespace log
-} // namespace cse
+} // namespace cosim

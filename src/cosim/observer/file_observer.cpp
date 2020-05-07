@@ -1,7 +1,6 @@
 #include "cosim/observer/file_observer.hpp"
 
 #include "cosim/error.hpp"
-
 #include "cosim/log/logger.hpp"
 
 #include <boost/date_time/local_time/local_time.hpp>
@@ -34,7 +33,8 @@ std::string format_time(boost::posix_time::ptime now)
     return converter.to_bytes(wss.str());
 }
 
-void clear_file_contents_if_exists(const boost::filesystem::path& filePath, boost::filesystem::ofstream& fsw){
+void clear_file_contents_if_exists(const boost::filesystem::path& filePath, boost::filesystem::ofstream& fsw)
+{
     if (boost::filesystem::exists(filePath)) {
         //clear file contents
         fsw.open(filePath, std::ios_base::out | std::ios_base::trunc);
@@ -469,4 +469,4 @@ file_observer::simulator_logging_config file_observer::parse_config(const std::s
 file_observer::~file_observer() = default;
 
 
-} // namespace cse
+} // namespace cosim

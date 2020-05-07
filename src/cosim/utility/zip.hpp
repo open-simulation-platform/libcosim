@@ -244,5 +244,5 @@ public:
 
 } // namespace zip
 } // namespace utility
-} // namespace cse
+} // namespace cosim
 #endif // header guard

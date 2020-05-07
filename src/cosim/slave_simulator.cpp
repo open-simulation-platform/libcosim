@@ -730,4 +730,4 @@ boost::fibers::future<step_result> slave_simulator::do_step(
 }
 
 
-} // namespace cse
+} // namespace cosim

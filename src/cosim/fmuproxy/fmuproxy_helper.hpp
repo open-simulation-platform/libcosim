@@ -3,7 +3,6 @@
 #define CSE_FMUPROXY_FMUPROXY_HELPER_HPP
 
 #include "cosim/error.hpp"
-
 #include "cosim/fmuproxy/service_types.hpp"
 #include "cosim/model.hpp"
 

@@ -70,6 +70,6 @@ public:
         gsl::span<std::string> values) = 0;
 };
 
-} // namespace cse
+} // namespace cosim
 
 #endif //LIBCOSIM_LAST_VALUE_PROVIDER_HPP

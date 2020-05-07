@@ -67,5 +67,5 @@ function_description substitute_function_parameters(
     const function_parameter_value_map& parameterValues);
 
 
-} // namespace cse
+} // namespace cosim
 #endif // header guard

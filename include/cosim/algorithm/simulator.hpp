@@ -135,6 +135,6 @@ public:
         duration deltaT) = 0;
 };
 
-} // namespace cse
+} // namespace cosim
 
 #endif

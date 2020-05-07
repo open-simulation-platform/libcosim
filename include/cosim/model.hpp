@@ -345,5 +345,5 @@ enum class step_result
 };
 
 
-} // namespace cse
+} // namespace cosim
 #endif // header guard

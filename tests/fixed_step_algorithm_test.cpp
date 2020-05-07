@@ -59,7 +59,7 @@ int main()
                     cosim::make_pseudo_async(
                         std::make_unique<mock_slave>([](double x) {
                             return x + 1.234;
-                    })),
+                        })),
                     "adder_slave" + std::to_string(i)));
             execution.connect_variables(
                 cosim::variable_id{slaves[i - 1], cosim::variable_type::real, realOutRef},
@@ -95,9 +95,9 @@ int main()
             gsl::make_span(timeValues, numSamples));
 
         for (int k = 1; k < numSamples; k++) {
-            REQUIRE(steps[k] > steps[k-1]);
-            REQUIRE(realValues[k] > realValues[k-1]);
-            REQUIRE(timeValues[k] - timeValues[k-1] == stepSize);
+            REQUIRE(steps[k] > steps[k - 1]);
+            REQUIRE(realValues[k] > realValues[k - 1]);
+            REQUIRE(timeValues[k] - timeValues[k - 1] == stepSize);
         }
 
         // Run for another period with an RTF target > 1

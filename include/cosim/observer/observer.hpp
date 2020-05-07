@@ -65,7 +65,7 @@ public:
      */
     virtual std::string_view get_string(value_reference) const = 0;
 
-    virtual ~observable() noexcept {}
+    virtual ~observable() noexcept { }
 };
 
 
@@ -109,9 +109,9 @@ public:
         duration lastStepSize,
         time_point currentTime) = 0;
 
-    virtual ~observer() noexcept {}
+    virtual ~observer() noexcept { }
 };
 
 
-} // namespace cse
+} // namespace cosim
 #endif // header guard

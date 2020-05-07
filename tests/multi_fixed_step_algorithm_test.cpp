@@ -87,7 +87,8 @@ int main()
         auto idx1 = execution.add_slave(cosim::make_pseudo_async(slave1), "slave 1");
 
         int i = 0;
-        auto slave2 = std::make_shared<set_logging_mock_slave>(nullptr, [&i](int /*x*/) { return i + 1; }, nullptr, nullptr, [&i] { ++i; });
+        auto slave2 = std::make_shared<set_logging_mock_slave>(
+            nullptr, [&i](int /*x*/) { return i + 1; }, nullptr, nullptr, [&i] { ++i; });
         auto idx2 = execution.add_slave(cosim::make_pseudo_async(slave2), "slave 2");
 
         execution.connect_variables(

@@ -173,6 +173,6 @@ public:
     virtual ~algorithm() noexcept = default;
 };
 
-} // namespace cse
+} // namespace cosim
 
 #endif

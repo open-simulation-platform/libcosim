@@ -344,4 +344,4 @@ std::size_t time_series_observer::get_synchronized_real_series(
 
 time_series_observer::~time_series_observer() noexcept = default;
 
-} // namespace cse
+} // namespace cosim

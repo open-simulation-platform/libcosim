@@ -19,5 +19,5 @@ std::string random_uuid() noexcept;
 
 
 } // namespace utility
-} // namespace cse
+} // namespace cosim
 #endif // header guard

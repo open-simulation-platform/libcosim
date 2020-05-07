@@ -173,4 +173,4 @@ std::unique_ptr<function> linear_transformation_function_type::instantiate(
     return std::make_unique<linear_transformation_function>(offset, factor);
 }
 
-} // namespace cse
+} // namespace cosim

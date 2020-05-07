@@ -185,5 +185,4 @@ BOOST_AUTO_TEST_CASE(ssp_multiple_parameter_sets_test)
         config.system_structure.get_variable_description({"identity1", "realOut"}).reference;
     observer->get_real(slave1, gsl::make_span(&v1Ref, 1), gsl::make_span(&initialValue, 1));
     BOOST_REQUIRE_CLOSE(initialValue, 4.0, tolerance);
-
 }

@@ -1,7 +1,6 @@
 #include "cosim/exception.hpp"
 
 #include "cosim/error.hpp"
-
 #include "cosim/lib_info.hpp"
 
 
@@ -67,4 +66,4 @@ std::error_code make_error_code(errc e) noexcept
 }
 
 
-} // namespace cse
+} // namespace cosim

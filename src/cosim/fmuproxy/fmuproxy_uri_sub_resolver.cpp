@@ -1,10 +1,10 @@
 
+#include <cosim/error.hpp>
 #include <cosim/fmuproxy/fmuproxy_client.hpp>
 #include <cosim/fmuproxy/fmuproxy_uri_sub_resolver.hpp>
 #include <cosim/fmuproxy/remote_fmu.hpp>
 #include <cosim/uri.hpp>
 
-#include <cosim/error.hpp>
 #include <string>
 
 // examples of uri to resolve

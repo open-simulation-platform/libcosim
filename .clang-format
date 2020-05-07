@@ -22,7 +22,7 @@ BraceWrapping:
   AfterClass: true
   SplitEmptyFunction: false
   AfterFunction: true
-  AfterNamespace : true
+  AfterNamespace: true
   AfterControlStatement: false
 IncludeBlocks: Regroup
 IncludeCategories:

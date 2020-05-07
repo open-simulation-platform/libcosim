@@ -1,9 +1,8 @@
 #include "cosim/system_structure.hpp"
 
-#include "cosim/utility/utility.hpp"
-
 #include "cosim/exception.hpp"
 #include "cosim/function/utility.hpp"
+#include "cosim/utility/utility.hpp"
 
 #include <cassert>
 #include <cctype>
@@ -118,7 +117,7 @@ void system_structure::add_entity(const entity& e)
             throw error(
                 make_error_code(errc::invalid_system_structure),
                 "Invalid or incomplete function parameter set: " + e.name +
-                " (" + ex.what() + ")");
+                    " (" + ex.what() + ")");
         }
         info.ios = make_variable_lookup_table(info.description);
         functionCache_.emplace(e.name, std::move(info));
@@ -396,4 +395,4 @@ void add_variable_value(
 }
 
 
-} // namespace cse
+} // namespace cosim

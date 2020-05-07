@@ -1,10 +1,9 @@
 #include "cosim/file_cache.hpp"
 
-#include "cosim/utility/concurrency.hpp"
-#include "cosim/utility/filesystem.hpp"
-
 #include "cosim/log/logger.hpp"
 #include "cosim/uri.hpp"
+#include "cosim/utility/concurrency.hpp"
+#include "cosim/utility/filesystem.hpp"
 
 #include <stdexcept>
 #include <string>
@@ -71,7 +70,7 @@ class temporary_file_cache::impl
 public:
     impl()
         : root_(std::make_shared<utility::temp_dir>())
-    {}
+    { }
 
     std::unique_ptr<directory_rw> get_directory_rw(std::string_view key)
     {
@@ -320,4 +319,4 @@ void persistent_file_cache::cleanup()
 }
 
 
-} // namespace cse
+} // namespace cosim

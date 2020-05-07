@@ -4,7 +4,6 @@
 #include "cosim/algorithm/fixed_step_algorithm.hpp"
 
 #include "cosim/error.hpp"
-
 #include "cosim/exception.hpp"
 #include "cosim/log/logger.hpp"
 
@@ -454,7 +453,7 @@ fixed_step_algorithm::fixed_step_algorithm(duration baseStepSize)
 }
 
 
-fixed_step_algorithm::~fixed_step_algorithm() noexcept {}
+fixed_step_algorithm::~fixed_step_algorithm() noexcept { }
 
 
 fixed_step_algorithm::fixed_step_algorithm(fixed_step_algorithm&& other) noexcept
@@ -543,4 +542,4 @@ void fixed_step_algorithm::set_stepsize_decimation_factor(cosim::simulator_index
 }
 
 
-} // namespace cse
+} // namespace cosim

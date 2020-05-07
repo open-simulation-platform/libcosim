@@ -35,4 +35,4 @@ void panic(const char* file, int line, const char* msg) noexcept
     std::terminate();
 }
 } // namespace detail
-} // namespace cse
+} // namespace cosim

@@ -46,6 +46,6 @@ private:
 
 } // namespace fmuproxy
 
-} // namespace cse
+} // namespace cosim
 
 #endif

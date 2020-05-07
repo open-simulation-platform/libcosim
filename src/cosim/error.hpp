@@ -80,11 +80,11 @@
  *  precondition was violated.  The program is terminated by calling
  *  `std::terminate()`.
  */
-#define CSE_PRECONDITION(condition)                                         \
-    do {                                                                    \
-        if (!(condition)) {                                                 \
+#define CSE_PRECONDITION(condition)                                           \
+    do {                                                                      \
+        if (!(condition)) {                                                   \
             ::cosim::detail::precondition_violated(__FUNCTION__, #condition); \
-        }                                                                   \
+        }                                                                     \
     } while (false)
 
 
@@ -97,8 +97,8 @@
  *  the macro is invoked.  The program is terminated by calling
  *  `std::terminate()`.
  */
-#define CSE_PANIC()                                        \
-    do {                                                   \
+#define CSE_PANIC()                                          \
+    do {                                                     \
         ::cosim::detail::panic(__FILE__, __LINE__, nullptr); \
     } while (false)
 
@@ -111,8 +111,8 @@
  *  the macro is invoked, in addition to the text provided in `message`.
  *  The program is terminated by calling `std::terminate()`.
  */
-#define CSE_PANIC_M(message)                               \
-    do {                                                   \
+#define CSE_PANIC_M(message)                                 \
+    do {                                                     \
         ::cosim::detail::panic(__FILE__, __LINE__, message); \
     } while (false)
 
@@ -154,5 +154,5 @@ inline std::system_error make_system_error(const std::string& msg) noexcept
 }
 
 
-} // namespace cse
+} // namespace cosim
 #endif // header guard

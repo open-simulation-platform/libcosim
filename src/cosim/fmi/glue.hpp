@@ -5,8 +5,8 @@
 #ifndef CSE_FMI_GLUE_HPP
 #define CSE_FMI_GLUE_HPP
 
-#include "cosim/model.hpp"
 #include "cosim/fmi/fmilib.h"
+#include "cosim/model.hpp"
 
 
 namespace cosim
@@ -55,5 +55,5 @@ variable_description to_variable_description(fmi2_import_variable_t* fmiVariable
 
 
 } // namespace fmi
-} // namespace cse
+} // namespace cosim
 #endif // header guard

@@ -107,5 +107,5 @@ private:
 
 
 } // namespace fmi
-} // namespace cse
+} // namespace cosim
 #endif // header guard

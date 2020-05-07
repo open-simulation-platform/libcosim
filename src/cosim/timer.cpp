@@ -1,10 +1,10 @@
 #include "cosim/timer.hpp"
 
+#include "cosim/error.hpp"
 #include "cosim/log/logger.hpp"
 
 #include <atomic>
 #include <chrono>
-#include "cosim/error.hpp"
 #include <thread>
 
 typedef std::chrono::steady_clock Time;
@@ -159,4 +159,4 @@ double real_time_timer::get_real_time_factor_target() const
 }
 
 
-} // namespace cse
+} // namespace cosim

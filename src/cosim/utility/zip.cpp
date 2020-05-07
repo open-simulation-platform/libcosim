@@ -298,4 +298,4 @@ error::error(zip_file* file) noexcept
 
 } // namespace zip
 } // namespace utility
-} // namespace cse
+} // namespace cosim

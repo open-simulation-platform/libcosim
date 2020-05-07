@@ -1,14 +1,13 @@
 #include "cosim/fmi/importer.hpp"
 
 #include "cosim/error.hpp"
-#include "cosim/utility/filesystem.hpp"
-#include "cosim/utility/zip.hpp"
-
+#include "cosim/fmi/fmilib.h"
 #include "cosim/fmi/v1/fmu.hpp"
 #include "cosim/fmi/v2/fmu.hpp"
 #include "cosim/log/logger.hpp"
+#include "cosim/utility/filesystem.hpp"
+#include "cosim/utility/zip.hpp"
 
-#include "cosim/fmi/fmilib.h"
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
@@ -226,7 +225,7 @@ class existing_directory_ro : public file_cache::directory_ro
 public:
     explicit existing_directory_ro(const boost::filesystem::path& path)
         : path_(path)
-    {}
+    { }
 
     boost::filesystem::path path() const override { return path_; }
 
@@ -288,4 +287,4 @@ void importer::prune_ptr_caches()
 
 
 } // namespace fmi
-} // namespace cse
+} // namespace cosim

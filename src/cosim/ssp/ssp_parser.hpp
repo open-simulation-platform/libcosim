@@ -117,6 +117,6 @@ std::optional<ssp_parser::ParameterSet> get_parameter_set(
     const ssp_parser::Component& component,
     std::optional<std::string> parameterSetName);
 
-} // namespace cse
+} // namespace cosim
 
 #endif

@@ -111,13 +111,13 @@ public:
     virtual void set_real(const function_io_reference& reference, double value) = 0;
 
     /// Sets the value of an integer input variable.
-    virtual void set_integer( const function_io_reference& reference, int value) = 0;
+    virtual void set_integer(const function_io_reference& reference, int value) = 0;
 
     /// Sets the value of a boolean input variable.
-    virtual void set_boolean( const function_io_reference& reference, bool value) = 0;
+    virtual void set_boolean(const function_io_reference& reference, bool value) = 0;
 
     /// Sets the value of a boolean input variable.
-    virtual void set_string( const function_io_reference& reference, std::string_view value) = 0;
+    virtual void set_string(const function_io_reference& reference, std::string_view value) = 0;
 
     /**
      *  Retrieves the value of a real variable.
@@ -201,5 +201,5 @@ public:
 };
 
 
-} // namespace cse
+} // namespace cosim
 #endif // header guard

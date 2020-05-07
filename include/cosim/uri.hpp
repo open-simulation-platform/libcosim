@@ -57,10 +57,10 @@ public:
     // Enable indirect implicit conversions from various string types.
     /*implicit*/ uri(std::string_view string)
         : uri(std::string(string))
-    {}
+    { }
     /*implicit*/ uri(const char* string)
         : uri(std::string(string))
-    {}
+    { }
 
     /**
      *  Composes a URI reference from its individual components.
@@ -269,5 +269,5 @@ uri path_to_file_uri(const boost::filesystem::path& path);
 boost::filesystem::path file_uri_to_path(const uri& fileUri);
 
 
-} // namespace cse
+} // namespace cosim
 #endif // header guard

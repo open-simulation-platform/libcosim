@@ -290,7 +290,7 @@ void file_lock::boost_wrapper::unlock_shared()
 
 file_lock::file_mutex::file_mutex(const boost::filesystem::path& path)
     : file(path)
-{}
+{ }
 
 
 std::shared_ptr<file_lock::file_mutex> file_lock::get_file_mutex(
@@ -331,4 +331,4 @@ std::shared_ptr<file_lock::file_mutex> file_lock::get_file_mutex(
 
 
 } // namespace utility
-} // namespace cse
+} // namespace cosim

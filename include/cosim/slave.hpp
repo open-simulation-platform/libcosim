@@ -46,7 +46,7 @@ namespace cosim
 class slave
 {
 public:
-    virtual ~slave() {}
+    virtual ~slave() { }
 
     /// Returns a model description.
     virtual cosim::model_description model_description() const = 0;
@@ -218,5 +218,5 @@ public:
 };
 
 
-} // namespace cse
+} // namespace cosim
 #endif // header guard

@@ -61,5 +61,5 @@ private:
     std::unique_ptr<impl> pimpl_;
 };
 
-} // namespace cse
+} // namespace cosim
 #endif //LIBCOSIM_TIMER_H

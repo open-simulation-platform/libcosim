@@ -52,6 +52,6 @@ private:
     std::mutex lock_;
 };
 
-} // namespace cse
+} // namespace cosim
 
 #endif

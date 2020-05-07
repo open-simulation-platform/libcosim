@@ -19,14 +19,14 @@ public:
         if (startTime > *stopTime) throw std::logic_error("Invalid time interval");
     }
 
-    void start_simulation() override {}
-    void end_simulation() override {}
+    void start_simulation() override { }
+    void end_simulation() override { }
     step_result do_step(time_point, duration) override { return step_result::complete; }
 
-    void get_real_variables(gsl::span<const value_reference>, gsl::span<double>) const override {}
-    void get_integer_variables(gsl::span<const value_reference>, gsl::span<int>) const override {}
-    void get_boolean_variables(gsl::span<const value_reference>, gsl::span<bool>) const override {}
-    void get_string_variables(gsl::span<const value_reference>, gsl::span<std::string>) const override {}
+    void get_real_variables(gsl::span<const value_reference>, gsl::span<double>) const override { }
+    void get_integer_variables(gsl::span<const value_reference>, gsl::span<int>) const override { }
+    void get_boolean_variables(gsl::span<const value_reference>, gsl::span<bool>) const override { }
+    void get_string_variables(gsl::span<const value_reference>, gsl::span<std::string>) const override { }
 
     void set_real_variables(
         gsl::span<const value_reference>,

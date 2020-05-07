@@ -223,4 +223,4 @@ scenario::scenario parse_scenario(
     auto end = parse_end_time(j);
     return scenario::scenario{events, end};
 }
-} // namespace cse
+} // namespace cosim

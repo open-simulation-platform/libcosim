@@ -124,5 +124,5 @@ public:
 };
 
 
-} // namespace cse
+} // namespace cosim
 #endif // header guard

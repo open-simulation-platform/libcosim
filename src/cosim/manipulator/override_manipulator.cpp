@@ -1,7 +1,6 @@
 #include "cosim/error.hpp"
-#include "cosim/utility/utility.hpp"
-
 #include "cosim/manipulator.hpp"
+#include "cosim/utility/utility.hpp"
 
 #include <sstream>
 
@@ -189,4 +188,4 @@ void override_manipulator::reset_variable(
 
 override_manipulator::~override_manipulator() = default;
 
-} // namespace cse
+} // namespace cosim

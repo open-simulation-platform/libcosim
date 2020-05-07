@@ -186,5 +186,5 @@ private:
 
 } // namespace v1
 } // namespace fmi
-} // namespace cse
+} // namespace cosim
 #endif // header guard

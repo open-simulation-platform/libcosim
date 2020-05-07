@@ -1,11 +1,10 @@
 #include "cosim/manipulator/scenario_manager.hpp"
 
-#include "cosim/utility/utility.hpp"
-
 #include "cosim/algorithm.hpp"
 #include "cosim/log/logger.hpp"
 #include "cosim/scenario.hpp"
 #include "cosim/scenario_parser.hpp"
+#include "cosim/utility/utility.hpp"
 
 
 namespace cosim
@@ -273,4 +272,4 @@ void scenario_manager::abort_scenario()
     pimpl_->abort_scenario();
 }
 
-} // namespace cse
+} // namespace cosim

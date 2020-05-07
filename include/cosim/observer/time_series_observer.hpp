@@ -118,5 +118,5 @@ private:
     std::unordered_map<simulator_index, std::unique_ptr<single_slave_observer>> slaveObservers_;
 };
 
-} // namespace cse
+} // namespace cosim
 #endif // header guard

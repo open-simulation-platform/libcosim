@@ -46,13 +46,13 @@ int main()
         execution.step();
 
         const cosim::value_reference realOutRef = mock_slave::real_out_reference;
-        const cosim::value_reference realInRef  = mock_slave::real_in_reference;
+        const cosim::value_reference realInRef = mock_slave::real_in_reference;
         const cosim::value_reference intOutRef = mock_slave::integer_out_reference;
-        const cosim::value_reference intInRef  = mock_slave::integer_in_reference;
+        const cosim::value_reference intInRef = mock_slave::integer_in_reference;
         const cosim::value_reference boolOutRef = mock_slave::boolean_out_reference;
-        const cosim::value_reference boolInRef  = mock_slave::boolean_in_reference;
+        const cosim::value_reference boolInRef = mock_slave::boolean_in_reference;
         const cosim::value_reference stringOutRef = mock_slave::string_out_reference;
-        const cosim::value_reference stringInRef  = mock_slave::string_in_reference;
+        const cosim::value_reference stringInRef = mock_slave::string_in_reference;
 
         double realInValue = -1.0;
         double realOutValue = -1.0;

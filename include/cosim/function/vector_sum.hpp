@@ -206,7 +206,8 @@ class vector_sum_function_type : public function_type
 {
 public:
     /// Parameter indexes, for convenience.
-    enum {
+    enum
+    {
         inputCount_parameter_index,
         numericType_parameter_index,
         dimension_parameter_index,
@@ -220,5 +221,5 @@ public:
 };
 
 
-} // namespace cse
+} // namespace cosim
 #endif // header guard
