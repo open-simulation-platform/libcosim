@@ -723,4 +723,4 @@ std::shared_ptr<async_slave> make_background_thread_slave(std::shared_ptr<slave>
 }
 
 
-} // namespace cse
+} // namespace cosim
