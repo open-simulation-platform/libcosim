@@ -94,7 +94,7 @@ public:
  *
  *  This class groups resolvers for multiple model URI schemes into one.
  *  Use `default_model_uri_resolver()` to create one which handles all
- *  schemes that have built-in support in CSE.
+ *  schemes that have built-in support in libcosim.
  *
  *  A custom URI resolver can be created by starting with a default-constructed
  *  object and adding scheme-specific resolvers using `add_sub_resolver()`.
@@ -179,7 +179,7 @@ private:
 
 
 /**
- *  Returns a resolver for all URI schemes supported natively by CSE.
+ *  Returns a resolver for all URI schemes supported natively by libcosim.
  *
  *  If `cache` is not null, it will be used for caching by the URI
  *  resolvers that support it (e.g. for unpacking of FMUs by the `file`
