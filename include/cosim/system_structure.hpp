@@ -420,7 +420,7 @@ using variable_value_map = std::unordered_map<full_variable_name, scalar_value>;
  *  for that variable, and then adds the variable-value pair to
  *  `variableValues`.
  *
- *  \throws `cse::error` with code `cosim::errc::invalid_system_structure`
+ *  \throws `cosim::error` with code `cosim::errc::invalid_system_structure`
  *      if any of the above-mentioned checks fail.
  */
 void add_variable_value(

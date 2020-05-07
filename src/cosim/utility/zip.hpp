@@ -75,7 +75,7 @@ public:
      *  \param [in] path
      *      The path to a ZIP archive file.
      *
-     *  \throws cse::utility::zip::error
+     *  \throws cosim::utility::zip::error
      *      If there was an error opening the archive.
      */
     explicit archive(const boost::filesystem::path& path);
@@ -97,7 +97,7 @@ public:
      *
      *  \param [in] path
      *      The path to a ZIP archive file.
-     *  \throws cse::utility::zip::error
+     *  \throws cosim::utility::zip::error
      *      If there was an error opening the archive.
      *  \pre
      *      `is_open() == false`
@@ -132,7 +132,7 @@ public:
      *  \returns
      *      The index of the entry with the given name, or `invalid_entry_index`
      *      if no such entry was found.
-     *  \throws cse::utility::zip::error
+     *  \throws cosim::utility::zip::error
      *      If there was an error accessing the archive.
      *  \pre
      *      `is_open() == true`
@@ -146,7 +146,7 @@ public:
      *      An archive entry index in the range `[0,entry_count())`.
      *  \returns
      *      The full name of the entry with the given index.
-     *  \throws cse::utility::zip::error
+     *  \throws cosim::utility::zip::error
      *      If there was an error accessing the archive.
      *  \pre
      *      `is_open() == true`
@@ -163,7 +163,7 @@ public:
      *      An archive entry index in the range `[0,entry_count())`.
      *  \returns
      *      Whether the entry with the given index is a directory.
-     *  \throws cse::utility::zip::error
+     *  \throws cosim::utility::zip::error
      *      If there was an error accessing the archive.
      *  \pre
      *      `is_open() == true`
@@ -178,7 +178,7 @@ public:
      *
      *  \param [in] targetDir
      *      The directory to which the files should be extracted.
-     *  \throws cse::utility::zip::error
+     *  \throws cosim::utility::zip::error
      *      If there was an error accessing the archive.
      *  \throws std::system_error
      *      On I/O error.
@@ -202,7 +202,7 @@ public:
      *  \returns
      *      The full path to the extracted file, i.e. the base name of the archive
      *      entry appended to the target directory.
-     *  \throws cse::utility::zip::error
+     *  \throws cosim::utility::zip::error
      *      If there was an error accessing the archive.
      *  \throws std::system_error
      *      On I/O error.

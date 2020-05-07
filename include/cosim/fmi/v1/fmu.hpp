@@ -125,7 +125,7 @@ public:
 
     ~slave_instance() noexcept;
 
-    // cse::slave methods
+    // cosim::slave methods
     void setup(
         time_point startTime,
         std::optional<time_point> stopTime,

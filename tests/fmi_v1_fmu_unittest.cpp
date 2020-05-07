@@ -1,4 +1,4 @@
-#define BOOST_TEST_MODULE cse::fmi::v1::fmu unittest
+#define BOOST_TEST_MODULE cosim::fmi::v1::fmu unittest
 #include <cosim/fmi/importer.hpp>
 #include <cosim/fmi/v1/fmu.hpp>
 #include <cosim/utility/filesystem.hpp>

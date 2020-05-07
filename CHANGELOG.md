@@ -69,7 +69,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
    
  ##### Fixed
  * `cse_local_slave_create` is broken when adding more than one instance of the same FMU ([#381](https://github.com/open-simulation-platform/cse-core/issues/381))
- * Memory error when moving a cse::uri ([#361](https://github.com/open-simulation-platform/cse-core/issues/361))
+ * Memory error when moving a cosim::uri ([#361](https://github.com/open-simulation-platform/cse-core/issues/361))
  * Cryptic error message with ill-defined or missing osp:FixedStepMaster in SSP ([#338](https://github.com/open-simulation-platform/cse-core/issues/338))
  * Invalid connections in SSP are not properly handled ([#336](https://github.com/open-simulation-platform/cse-core/issues/336))
  * Cannot use "." as file_observer output directory ([#310](https://github.com/open-simulation-platform/cse-core/issues/310))

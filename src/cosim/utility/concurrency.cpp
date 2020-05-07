@@ -223,7 +223,7 @@ file_lock::boost_wrapper::boost_wrapper(const boost::filesystem::path& path)
  *
  *  Note also that boost_wrapper does not deal with *exclusive* locks at all.
  *  This is handled at a higher level by the shared_mutex in
- *  cse::utility::file_lock, which prevents several threads from attempting to
+ *  cosim::utility::file_lock, which prevents several threads from attempting to
  *  acquire exclusive file locks at once, since they have to get the mutex
  *  first.  (See file_lock::lock().)
  */

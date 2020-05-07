@@ -1,4 +1,4 @@
-#define BOOST_TEST_MODULE cse::utility filesystem unittests
+#define BOOST_TEST_MODULE cosim::utility filesystem unittests
 #include <cosim/utility/filesystem.hpp>
 
 #include <boost/filesystem.hpp>

@@ -1,4 +1,4 @@
-#define BOOST_TEST_MODULE cse::utility unittests
+#define BOOST_TEST_MODULE cosim::utility unittests
 #include <cosim/utility/concurrency.hpp>
 #include <cosim/utility/filesystem.hpp>
 

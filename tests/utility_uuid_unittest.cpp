@@ -1,4 +1,4 @@
-#define BOOST_TEST_MODULE cse::utility uuid unittests
+#define BOOST_TEST_MODULE cosim::utility uuid unittests
 #include <cosim/utility/uuid.hpp>
 
 #include <boost/test/unit_test.hpp>

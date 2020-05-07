@@ -1,4 +1,4 @@
-#define BOOST_TEST_MODULE cse::utility::zip unittest
+#define BOOST_TEST_MODULE cosim::utility::zip unittest
 #include <cosim/utility/filesystem.hpp>
 #include <cosim/utility/zip.hpp>
 

@@ -197,7 +197,7 @@ public:
     pseudo_async_slave(const pseudo_async_slave&) = delete;
     pseudo_async_slave& operator=(const pseudo_async_slave&) = delete;
 
-    // cse::async_slave function implementations
+    // cosim::async_slave function implementations
     slave_state state() const noexcept override
     {
         return state_;
@@ -549,7 +549,7 @@ public:
     background_thread_slave_frontend(const background_thread_slave_frontend&) = delete;
     background_thread_slave_frontend& operator=(const background_thread_slave_frontend&) = delete;
 
-    // cse::async_slave function implementations
+    // cosim::async_slave function implementations
     slave_state state() const noexcept override
     {
         return state_;
