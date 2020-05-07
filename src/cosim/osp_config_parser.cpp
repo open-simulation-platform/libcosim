@@ -71,13 +71,13 @@ private:
     bool failed_;
 };
 
-class cse_config_parser
+class osp_config_parser
 {
 
 public:
-    cse_config_parser(
+    osp_config_parser(
         const boost::filesystem::path& configPath);
-    ~cse_config_parser() noexcept;
+    ~osp_config_parser() noexcept;
 
     struct SimulationInformation
     {
@@ -219,7 +219,7 @@ T attribute_or(xercesc::DOMElement* el, const char* attributeName, T defaultValu
 
 } // namespace
 
-cse_config_parser::cse_config_parser(
+osp_config_parser::osp_config_parser(
     const boost::filesystem::path& configPath)
 {
     // Root node
@@ -468,57 +468,57 @@ cse_config_parser::cse_config_parser(
     }
 }
 
-cse_config_parser::~cse_config_parser() noexcept = default;
+osp_config_parser::~osp_config_parser() noexcept = default;
 
-const cse_config_parser::SimulationInformation& cse_config_parser::get_simulation_information() const
+const osp_config_parser::SimulationInformation& osp_config_parser::get_simulation_information() const
 {
     return simulationInformation_;
 }
 
-const std::vector<cse_config_parser::Simulator>& cse_config_parser::get_elements() const
+const std::vector<osp_config_parser::Simulator>& osp_config_parser::get_elements() const
 {
     return simulators_;
 }
 
-const std::unordered_map<std::string, cse_config_parser::LinearTransformationFunction>&
-cse_config_parser::get_linear_transformation_functions() const
+const std::unordered_map<std::string, osp_config_parser::LinearTransformationFunction>&
+osp_config_parser::get_linear_transformation_functions() const
 {
     return linearTransformationFunctions_;
 }
 
-const std::unordered_map<std::string, cse_config_parser::SumFunction>&
-cse_config_parser::get_sum_functions() const
+const std::unordered_map<std::string, osp_config_parser::SumFunction>&
+osp_config_parser::get_sum_functions() const
 {
     return sumFunctions_;
 }
 
-const std::unordered_map<std::string, cse_config_parser::VectorSumFunction>&
-cse_config_parser::get_vector_sum_functions() const
+const std::unordered_map<std::string, osp_config_parser::VectorSumFunction>&
+osp_config_parser::get_vector_sum_functions() const
 {
     return vectorSumFunctions_;
 }
 
-const std::vector<cse_config_parser::VariableConnection>& cse_config_parser::get_variable_connections() const
+const std::vector<osp_config_parser::VariableConnection>& osp_config_parser::get_variable_connections() const
 {
     return variableConnections_;
 }
 
-const std::vector<cse_config_parser::SignalConnection>& cse_config_parser::get_signal_connections() const
+const std::vector<osp_config_parser::SignalConnection>& osp_config_parser::get_signal_connections() const
 {
     return signalConnections_;
 }
 
-const std::vector<cse_config_parser::VariableConnection>& cse_config_parser::get_variable_group_connections() const
+const std::vector<osp_config_parser::VariableConnection>& osp_config_parser::get_variable_group_connections() const
 {
     return variableGroupConnections_;
 }
 
-const std::vector<cse_config_parser::SignalConnection>& cse_config_parser::get_signal_group_connections() const
+const std::vector<osp_config_parser::SignalConnection>& osp_config_parser::get_signal_group_connections() const
 {
     return signalGroupConnections_;
 }
 
-variable_type cse_config_parser::parse_variable_type(const std::string& str)
+variable_type osp_config_parser::parse_variable_type(const std::string& str)
 {
     if ("Real" == str) {
         return cosim::variable_type::real;
@@ -538,7 +538,7 @@ variable_type cse_config_parser::parse_variable_type(const std::string& str)
     throw std::runtime_error("Failed to parse variable type: " + str);
 }
 
-bool cse_config_parser::parse_boolean_value(const std::string& s)
+bool osp_config_parser::parse_boolean_value(const std::string& s)
 {
     bool bool_value;
     std::istringstream iss(s);
@@ -612,8 +612,8 @@ struct extended_model_description
 namespace
 {
 
-cse_config_parser::SignalConnection find_signal_connection(
-    const std::vector<cse_config_parser::SignalConnection>& signalConnections,
+osp_config_parser::SignalConnection find_signal_connection(
+    const std::vector<osp_config_parser::SignalConnection>& signalConnections,
     const std::string& functionName,
     const std::string& signalName)
 {
@@ -632,7 +632,7 @@ cse_config_parser::SignalConnection find_signal_connection(
 } // namespace
 
 void connect_variables(
-    const std::vector<cse_config_parser::VariableConnection>& variableConnections,
+    const std::vector<osp_config_parser::VariableConnection>& variableConnections,
     system_structure& systemStructure)
 {
     for (const auto& connection : variableConnections) {
@@ -669,7 +669,7 @@ extended_model_description get_emd(
 
 std::vector<std::string> get_variable_group_variables(
     const std::unordered_map<std::string, variable_group_description>& descriptions,
-    const cse_config_parser::VariableEndpoint& endpoint)
+    const osp_config_parser::VariableEndpoint& endpoint)
 {
     std::vector<std::string> groupVariables;
     auto groupIt = descriptions.find(endpoint.name);
@@ -705,7 +705,7 @@ std::vector<cosim::variable_group_description> get_variable_groups(
 
 
 void connect_variable_groups(
-    const std::vector<cse_config_parser::VariableConnection>& variableGroupConnections,
+    const std::vector<osp_config_parser::VariableConnection>& variableGroupConnections,
     system_structure& systemStructure,
     const std::unordered_map<std::string, extended_model_description>& emds)
 {
@@ -728,7 +728,7 @@ void connect_variable_groups(
             throw std::runtime_error(oss.str());
         }
 
-        std::vector<cse_config_parser::VariableConnection> nestedVariableGroupConnections;
+        std::vector<osp_config_parser::VariableConnection> nestedVariableGroupConnections;
         // clang-format off
         for (std::size_t i = 0; i < variableGroupsA.size(); ++i) {
             nestedVariableGroupConnections.push_back({
@@ -748,7 +748,7 @@ void connect_variable_groups(
             throw std::runtime_error(oss.str());
         }
 
-        std::vector<cse_config_parser::VariableConnection> variableConnections;
+        std::vector<osp_config_parser::VariableConnection> variableConnections;
 
         // clang-format off
         for (std::size_t i = 0; i < variablesA.size(); ++i) {
@@ -763,8 +763,8 @@ void connect_variable_groups(
 }
 
 void connect_linear_transformation_functions(
-    const std::unordered_map<std::string, cse_config_parser::LinearTransformationFunction>& functions,
-    const std::vector<cse_config_parser::SignalConnection>& signalConnections,
+    const std::unordered_map<std::string, osp_config_parser::LinearTransformationFunction>& functions,
+    const std::vector<osp_config_parser::SignalConnection>& signalConnections,
     system_structure& systemStructure)
 {
     for (const auto& [functionName, function] : functions) {
@@ -788,8 +788,8 @@ void connect_linear_transformation_functions(
 }
 
 void connect_sum_functions(
-    const std::unordered_map<std::string, cse_config_parser::SumFunction>& functions,
-    const std::vector<cse_config_parser::SignalConnection>& signalConnections,
+    const std::unordered_map<std::string, osp_config_parser::SumFunction>& functions,
+    const std::vector<osp_config_parser::SignalConnection>& signalConnections,
     system_structure& systemStructure)
 {
     for (const auto& [functionName, function] : functions) {
@@ -814,8 +814,8 @@ void connect_sum_functions(
 }
 
 void connect_vector_sum_functions(
-    const std::unordered_map<std::string, cse_config_parser::VectorSumFunction>& functions,
-    const std::vector<cse_config_parser::SignalConnection>& signalGroupConnections,
+    const std::unordered_map<std::string, osp_config_parser::VectorSumFunction>& functions,
+    const std::vector<osp_config_parser::SignalConnection>& signalGroupConnections,
     system_structure& systemStructure,
     const std::unordered_map<std::string, extended_model_description>& emds)
 {
@@ -867,7 +867,7 @@ osp_config load_osp_config(
         : absolutePath / "OspSystemStructure.xml";
     const auto baseURI = path_to_file_uri(configFile);
 
-    const auto parser = cse_config_parser(configFile);
+    const auto parser = osp_config_parser(configFile);
 
     const auto& simInfo = parser.get_simulation_information();
     if (simInfo.stepSize <= 0.0) {
