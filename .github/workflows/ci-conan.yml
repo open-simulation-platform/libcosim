@@ -44,6 +44,8 @@ jobs:
   conan-on-windows:
     name: Conan
     runs-on: ${{ matrix.os }}
+    env:
+      CONAN_USE_ALWAYS_SHORT_PATHS: True
     strategy:
       fail-fast: false
       matrix:
