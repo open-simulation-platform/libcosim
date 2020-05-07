@@ -182,6 +182,6 @@ install(
     ${LIBCOSIM_INSTALL_DESTINATIONS}
 )
 install(
-    DIRECTORY "${publicHeaderDir}"
+    FILES "${publicHeadersFull}"
     DESTINATION "${LIBCOSIM_HEADER_INSTALL_DIR}"
 )
