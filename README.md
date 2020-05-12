@@ -70,16 +70,16 @@ Then, acquire dependencies with Conan:
 information.)
 
 Now, we can run CMake to generate the build system.  (If you have not installed
-Doxygen at this point, append `-DCSECORE_BUILD_APIDOC=OFF` to the next command
+Doxygen at this point, append `-DLIBCOSIM_BUILD_APIDOC=OFF` to the next command
 to disable API documentation generation.)
 
 For **Visual Studio**, enter:
 
-    cmake .. -DCSECORE_USING_CONAN=TRUE -A x64
+    cmake .. -DLIBCOSIM_USING_CONAN=TRUE -A x64
 
 For **GCC**, run:
 
-    cmake .. -DCSECORE_USING_CONAN=TRUE -DCMAKE_BUILD_TYPE=Debug
+    cmake .. -DLIBCOSIM_USING_CONAN=TRUE -DCMAKE_BUILD_TYPE=Debug
 
 At this point, we are ready to build and test the software.  But first, here are
 some things worth noting about what we just did:

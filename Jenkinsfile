@@ -4,10 +4,10 @@ pipeline {
     environment {
         CONAN_USER_HOME_SHORT = 'None'
         OSP_CONAN_CREDS = credentials('jenkins-osp-conan-creds')
-        CSE_CONAN_CHANNEL = "${env.BRANCH_NAME}".take(51).replaceAll("/", "_")
+        COSIM_CONAN_CHANNEL = "${env.BRANCH_NAME}".take(51).replaceAll("/", "_")
     }
 
-    options { checkoutToSubdirectory('cse-core') }
+    options { checkoutToSubdirectory('libcosim') }
 
     stages {
 
@@ -31,18 +31,18 @@ pipeline {
                         stage('Build Debug') {
                             steps {
                                 dir('debug-build') {
-                                    bat 'conan install ../cse-core -s build_type=Debug -b missing -u'
-                                    bat 'conan build ../cse-core'
-                                    bat 'conan package ../cse-core -pf package/windows/debug'
+                                    bat 'conan install ../libcosim -s build_type=Debug -b missing -u'
+                                    bat 'conan build ../libcosim'
+                                    bat 'conan package ../libcosim -pf package/windows/debug'
                                 }
                             }
                         }
                         stage('Build Release') {
                             steps {
                                 dir('release-build') {
-                                    bat 'conan install ../cse-core -s build_type=Release -b missing -u'
-                                    bat 'conan build ../cse-core'
-                                    bat 'conan package ../cse-core -pf package/windows/release'
+                                    bat 'conan install ../libcosim -s build_type=Release -b missing -u'
+                                    bat 'conan build ../libcosim'
+                                    bat 'conan package ../libcosim -pf package/windows/release'
                                 }
                             }
                         }
@@ -63,12 +63,12 @@ pipeline {
                                 }
                                 success {
                                     dir('debug-build') {
-                                        sh "conan remove cse-core --force"
-                                        sh "conan export-pkg ../cse-core osp/${CSE_CONAN_CHANNEL} -pf package/windows/debug --force"
-                                        sh "conan upload cse-core/*@osp/${CSE_CONAN_CHANNEL} --all -r=osp --confirm --force"
+                                        sh "conan remove libcosim --force"
+                                        sh "conan export-pkg ../libcosim osp/${COSIM_CONAN_CHANNEL} -pf package/windows/debug --force"
+                                        sh "conan upload libcosim/*@osp/${COSIM_CONAN_CHANNEL} --all -r=osp --confirm --force"
                                     }
                                     dir('debug-build/package') {
-                                        archiveArtifacts artifacts: '**',  fingerprint: true
+                                        archiveArtifacts artifacts: '**',  fingerprint: false
                                     }
                                 }
                                 cleanup {
@@ -95,12 +95,12 @@ pipeline {
                                 }
                                 success {
                                     dir('release-build') {
-                                        sh "conan remove cse-core --force"
-                                        sh "conan export-pkg ../cse-core osp/${CSE_CONAN_CHANNEL} -pf package/windows/release --force"
-                                        sh "conan upload cse-core/*@osp/${CSE_CONAN_CHANNEL} --all -r=osp --confirm --force"
+                                        sh "conan remove libcosim --force"
+                                        sh "conan export-pkg ../libcosim osp/${COSIM_CONAN_CHANNEL} -pf package/windows/release --force"
+                                        sh "conan upload libcosim/*@osp/${COSIM_CONAN_CHANNEL} --all -r=osp --confirm --force"
                                     }
                                     dir('release-build/package') {
-                                        archiveArtifacts artifacts: '**',  fingerprint: true
+                                        archiveArtifacts artifacts: '**',  fingerprint: false
                                     }
                                 }
                                 cleanup {
@@ -130,9 +130,9 @@ pipeline {
                         stage('Build Release') {
                             steps {
                                 dir('release-build-fmuproxy') {
-                                    bat 'conan install ../cse-core -s build_type=Release -o fmuproxy=True -b missing -u'
-                                    bat 'conan build ../cse-core'
-                                    bat 'conan package ../cse-core -pf package/windows/release'
+                                    bat 'conan install ../libcosim -s build_type=Release -o fmuproxy=True -b missing -u'
+                                    bat 'conan build ../libcosim'
+                                    bat 'conan package ../libcosim -pf package/windows/release'
                                 }
                             }
                         }
@@ -153,12 +153,12 @@ pipeline {
                                 }
                                 success {
                                     dir('release-build-fmuproxy') {
-                                        sh "conan remove cse-core --force"
-                                        sh "conan export-pkg ../cse-core osp/${CSE_CONAN_CHANNEL} -pf package/windows/release --force"
-                                        sh "conan upload cse-core/*@osp/${CSE_CONAN_CHANNEL} --all -r=osp --confirm --force"
+                                        sh "conan remove libcosim --force"
+                                        sh "conan export-pkg ../libcosim osp/${COSIM_CONAN_CHANNEL} -pf package/windows/release --force"
+                                        sh "conan upload libcosim/*@osp/${COSIM_CONAN_CHANNEL} --all -r=osp --confirm --force"
                                     }
                                     dir('release-build-fmuproxy/package') {
-                                        archiveArtifacts artifacts: '**',  fingerprint: true
+                                        archiveArtifacts artifacts: '**',  fingerprint: false
                                     }
                                 }
                                 cleanup {
@@ -174,7 +174,7 @@ pipeline {
                     agent {
                         dockerfile {
                             filename 'Dockerfile.conan-build'
-                            dir 'cse-core/.dockerfiles'
+                            dir 'libcosim/.dockerfiles'
                             label 'linux && docker'
                             args '-v ${SLAVE_HOME}/conan-repositories/${EXECUTOR_NUMBER}:/conan_repo'
                         }
@@ -195,18 +195,18 @@ pipeline {
                         stage('Build Debug') {
                             steps {
                                 dir('debug-build-conan') {
-                                    sh 'conan install ../cse-core -s compiler.libcxx=libstdc++11 -s build_type=Debug -b missing -u'
-                                    sh 'conan build ../cse-core'
-                                    sh 'conan package ../cse-core -pf package/linux/debug'
+                                    sh 'conan install ../libcosim -s compiler.libcxx=libstdc++11 -s build_type=Debug -b missing -u'
+                                    sh 'conan build ../libcosim'
+                                    sh 'conan package ../libcosim -pf package/linux/debug'
                                 }
                             }
                         }
                         stage('Build Release') {
                             steps {
                                 dir('release-build-conan') {
-                                    sh 'conan install ../cse-core -s compiler.libcxx=libstdc++11 -s build_type=Release -b missing -u'
-                                    sh 'conan build ../cse-core'
-                                    sh 'conan package ../cse-core -pf package/linux/release'
+                                    sh 'conan install ../libcosim -s compiler.libcxx=libstdc++11 -s build_type=Release -b missing -u'
+                                    sh 'conan build ../libcosim'
+                                    sh 'conan package ../libcosim -pf package/linux/release'
                                 }
                             }
                         }
@@ -227,12 +227,12 @@ pipeline {
                                 }
                                 success {
                                     dir('debug-build-conan') {
-                                        sh "conan remove cse-core --force"
-                                        sh "conan export-pkg ../cse-core osp/${CSE_CONAN_CHANNEL} -pf package/linux/debug --force"
-                                        sh "conan upload cse-core/*@osp/${CSE_CONAN_CHANNEL} --all -r=osp --confirm --force"
+                                        sh "conan remove libcosim --force"
+                                        sh "conan export-pkg ../libcosim osp/${COSIM_CONAN_CHANNEL} -pf package/linux/debug --force"
+                                        sh "conan upload libcosim/*@osp/${COSIM_CONAN_CHANNEL} --all -r=osp --confirm --force"
                                     }
                                     dir('debug-build-conan/package') {
-                                        archiveArtifacts artifacts: '**',  fingerprint: true
+                                        archiveArtifacts artifacts: '**',  fingerprint: false
                                     }
                                 }
                                 cleanup {
@@ -259,12 +259,12 @@ pipeline {
                                 }
                                 success {
                                     dir('release-build-conan') {
-                                        sh "conan remove cse-core --force"
-                                        sh "conan export-pkg ../cse-core osp/${CSE_CONAN_CHANNEL} -pf package/linux/release --force"
-                                        sh "conan upload cse-core/*@osp/${CSE_CONAN_CHANNEL} --all -r=osp --confirm --force"
+                                        sh "conan remove libcosim --force"
+                                        sh "conan export-pkg ../libcosim osp/${COSIM_CONAN_CHANNEL} -pf package/linux/release --force"
+                                        sh "conan upload libcosim/*@osp/${COSIM_CONAN_CHANNEL} --all -r=osp --confirm --force"
                                     }
                                     dir('release-build-conan/package') {
-                                        archiveArtifacts artifacts: '**',  fingerprint: true
+                                        archiveArtifacts artifacts: '**',  fingerprint: false
                                     }
                                 }
                                 cleanup {
@@ -280,7 +280,7 @@ pipeline {
                     agent {
                         dockerfile {
                             filename 'Dockerfile.conan-build'
-                            dir 'cse-core/.dockerfiles'
+                            dir 'libcosim/.dockerfiles'
                             label 'linux && docker'
                             args '-v ${SLAVE_HOME}/conan-repositories/${EXECUTOR_NUMBER}:/conan_repo'
                         }
@@ -301,9 +301,9 @@ pipeline {
                         stage('Build Release') {
                             steps {
                                 dir('release-build-conan-fmuproxy') {
-                                    sh 'conan install ../cse-core -s compiler.libcxx=libstdc++11 -s build_type=Release -o fmuproxy=True -b missing -u'
-                                    sh 'conan build ../cse-core'
-                                    sh 'conan package ../cse-core -pf package/linux/release'
+                                    sh 'conan install ../libcosim -s compiler.libcxx=libstdc++11 -s build_type=Release -o fmuproxy=True -b missing -u'
+                                    sh 'conan build ../libcosim'
+                                    sh 'conan package ../libcosim -pf package/linux/release'
                                 }
                             }
                         }
@@ -324,12 +324,12 @@ pipeline {
                                 }
                                 success {
                                     dir('release-build-conan-fmuproxy') {
-                                        sh "conan remove cse-core --force"
-                                        sh "conan export-pkg ../cse-core osp/${CSE_CONAN_CHANNEL} -pf package/linux/release --force"
-                                        sh "conan upload cse-core/*@osp/${CSE_CONAN_CHANNEL} --all -r=osp --confirm --force"
+                                        sh "conan remove libcosim --force"
+                                        sh "conan export-pkg ../libcosim osp/${COSIM_CONAN_CHANNEL} -pf package/linux/release --force"
+                                        sh "conan upload libcosim/*@osp/${COSIM_CONAN_CHANNEL} --all -r=osp --confirm --force"
                                     }
                                     dir('release-build-conan-fmuproxy/package') {
-                                        archiveArtifacts artifacts: '**',  fingerprint: true
+                                        archiveArtifacts artifacts: '**',  fingerprint: false
                                     }
                                 }
                                 cleanup {
@@ -345,7 +345,7 @@ pipeline {
                     agent {
                         dockerfile {
                             filename 'Dockerfile.build'
-                            dir 'cse-core/.dockerfiles'
+                            dir 'libcosim/.dockerfiles'
                             label 'linux && docker'
                         }
                     }
@@ -354,7 +354,7 @@ pipeline {
                         stage('Build Debug') {
                             steps {
                                 dir('debug-build') {
-                                    sh 'cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=../install/linux/debug -DCSECORE_USING_CONAN=FALSE -DCSECORE_BUILD_PRIVATE_APIDOC=ON ../cse-core'
+                                    sh 'cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=../install/linux/debug -DLIBCOSIM_USING_CONAN=FALSE -DLIBCOSIM_BUILD_PRIVATE_APIDOC=ON ../libcosim'
                                     sh 'cmake --build .'
                                     sh 'cmake --build . --target install'
                                 }
@@ -363,7 +363,7 @@ pipeline {
                         stage('Build Release') {
                             steps {
                                 dir('release-build') {
-                                    sh 'cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../install/linux/release -DCSECORE_USING_CONAN=FALSE -DCSECORE_BUILD_PRIVATE_APIDOC=ON ../cse-core'
+                                    sh 'cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=../install/linux/release -DLIBCOSIM_USING_CONAN=FALSE -DLIBCOSIM_BUILD_PRIVATE_APIDOC=ON ../libcosim'
                                     sh 'cmake --build .'
                                     sh 'cmake --build . --target install'
                                 }
@@ -395,7 +395,7 @@ pipeline {
                         }
                         success {
                             dir('install') {
-                                archiveArtifacts artifacts: '**',  fingerprint: true
+                                archiveArtifacts artifacts: '**',  fingerprint: false
                             }
                         }
                         cleanup {

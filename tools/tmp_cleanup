@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# This script removes cse generated files from the temp directory,
+# This script removes libcosim generated files from the temp directory,
 # which for some reason has not been disposed due to a program crash etc.
 #
 # Works on Windows and Linux
@@ -8,8 +8,8 @@
 
 cd /tmp
 
-# cse-core and cse-core4j
-rm -rf cse_*
+# libcosim and libcosim4j
+rm -rf libcosim_*
 
 # FMI4j (fmu-proxy)
 rm -rf fmi4j_*

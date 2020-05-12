@@ -3,7 +3,7 @@ include ("@PACKAGE_targetsFile@")
 
 include(CMakeFindDependencyMacro)
 
-list(APPEND CMAKE_MODULE_PATH "${PACKAGE_PREFIX_DIR}/@CSECORE_CMAKE_INSTALL_DIR@")
+list(APPEND CMAKE_MODULE_PATH "${PACKAGE_PREFIX_DIR}/@LIBCOSIM_CMAKE_INSTALL_DIR@")
 
 find_dependency(MS_GSL REQUIRED)
 find_dependency(Boost REQUIRED COMPONENTS date_time fiber filesystem log)
@@ -12,7 +12,7 @@ find_dependency(LIBZIP REQUIRED)
 find_dependency(YAML_CPP REQUIRED)
 find_dependency(XercesC REQUIRED)
 
-if(@CSECORE_WITH_FMUPROXY@)
+if(@LIBCOSIM_WITH_FMUPROXY@)
     find_dependency(THRIFT REQUIRED)
 endif()
 

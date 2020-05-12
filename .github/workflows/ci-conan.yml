@@ -1,0 +1,80 @@
+name: libcosim CI Conan
+
+# This workflow is triggered on pushes to the repository.
+on: [push]
+
+env:
+  CONAN_LOGIN_USERNAME_OSP: ${{ secrets.osp_conan_usr }}
+  CONAN_PASSWORD_OSP: ${{ secrets.osp_conan_pwd }}
+  CONAN_REVISIONS_ENABLED: 1
+  CONAN_NON_INTERACTIVE: True
+
+jobs:
+  conan-on-linux:
+    name: Conan
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-18.04]
+        build_type: [Debug, Release]
+        compiler_version: [7]
+        compiler_libcxx: [libstdc++11]
+        option_fmuproxy: ['fmuproxy=True', 'fmuproxy=False']
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install prerequisites
+        run: |
+          sudo pip3 install --upgrade setuptools pip
+          sudo pip3 install conan
+          sudo apt-get install -y doxygen
+      - name: Configure Conan
+        run: conan remote add osp https://osp-conan.azurewebsites.net/artifactory/api/conan/public --force
+      - name: Conan create
+        run: |
+          BRANCH=${GITHUB_REF#refs/heads/}
+          SHORT_BRANCH=${BRANCH:0:50}
+          CHANNEL=${SHORT_BRANCH//\//_}
+          conan create -s build_type=${{ matrix.build_type }} -s compiler.version=${{ matrix.compiler_version }} -s compiler.libcxx=${{ matrix.compiler_libcxx }} -o ${{ matrix.option_fmuproxy }} . osp/${CHANNEL}
+      - name: Conan upload
+        run: |
+          conan upload --all -c -r osp 'libcosim*'
+
+  conan-on-windows:
+    name: Conan
+    runs-on: ${{ matrix.os }}
+    env:
+      CONAN_USER_HOME_SHORT: C:\c
+      CONAN_USE_ALWAYS_SHORT_PATHS: 1
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2016]
+        build_type: [Debug, Release]
+        compiler_version: [15]
+        option_fmuproxy: ['fmuproxy=True', 'fmuproxy=False']
+
+        exclude:
+          - os: windows-2016
+            build_type: Debug
+            option_fmuproxy: 'fmuproxy=True'
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install prerequisites
+        run: |
+          pip3 install --upgrade setuptools pip
+          pip3 install conan
+          choco install doxygen.install
+      - name: Configure Conan
+        run: conan remote add osp https://osp-conan.azurewebsites.net/artifactory/api/conan/public --force
+      - name: Conan create
+        shell: bash
+        run: |
+          BRANCH=${GITHUB_REF#refs/heads/}
+          SHORT_BRANCH=${BRANCH:0:50}
+          CHANNEL=${SHORT_BRANCH//\//_}
+          conan create -s build_type=${{ matrix.build_type }} -s compiler.version=${{ matrix.compiler_version }} -o ${{ matrix.option_fmuproxy }} . osp/${CHANNEL}
+      - name: Conan upload
+        run: conan upload --all -c -r osp 'libcosim*'

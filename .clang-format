@@ -22,11 +22,11 @@ BraceWrapping:
   AfterClass: true
   SplitEmptyFunction: false
   AfterFunction: true
-  AfterNamespace : true
+  AfterNamespace: true
   AfterControlStatement: false
 IncludeBlocks: Regroup
 IncludeCategories:
-  - Regex:      '^[<"]cse[/.]'
+  - Regex:      '^[<"]cosim[/.]'
     Priority:   20
   - Regex:      '^[<"](boost|event2|fmilib|gsl|nlohmann|xercesc|zip)[/.]'
     Priority:   30
