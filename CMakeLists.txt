@@ -184,7 +184,7 @@ endif()
 # ==============================================================================
 
 install(
-    FILES "README.md" "LICENCE.txt"
+    FILES "README.md" "LICENSE"
     DESTINATION "${LIBCOSIM_DOC_INSTALL_DIR}"
 )
 install(

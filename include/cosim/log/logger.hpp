@@ -4,6 +4,11 @@
  *
  *  For convenience, this header also includes some Boost.Log headers that
  *  provide useful short-hand logging macros (like `BOOST_LOG_SEV`).
+ *
+ *  \copyright
+ *      This Source Code Form is subject to the terms of the Mozilla Public
+ *      License, v. 2.0. If a copy of the MPL was not distributed with this
+ *      file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 #ifndef COSIM_LOG_LOGGER_HPP
 #define COSIM_LOG_LOGGER_HPP

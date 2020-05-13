@@ -6,7 +6,7 @@ This repository contains two libraries:
   * A C++ library for distributed co-simulations.
   * A C library which wraps and exposes a subset of the C++ library's functions.
 
-See [`CONTRIBUTING.md`] for contributor guidelines and [`LICENCE.txt`] for
+See [`CONTRIBUTING.md`] for contributor guidelines and [`LICENSE`] for
 terms of use.
 
 
@@ -124,7 +124,7 @@ All generated files can be found in the directory `build/output`.
 
 
 [`CONTRIBUTING.md`]: ./CONTRIBUTING.md
-[`LICENCE.txt`]: ./LICENCE.txt
+[`LICENSE`]: ./LICENSE
 [Visual Studio]: https://visualstudio.microsoft.com
 [CMake]: https://cmake.org
 [Doxygen]: http://www.doxygen.org

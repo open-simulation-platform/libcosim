@@ -1,6 +1,11 @@
 /**
  *  \file
- *  \brief Observer-related functionality.
+ *  Observer-related functionality.
+ *
+ *  \copyright
+ *      This Source Code Form is subject to the terms of the Mozilla Public
+ *      License, v. 2.0. If a copy of the MPL was not distributed with this
+ *      file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 #ifndef COSIM_OBSERVER_LAST_VALUE_OBSERVER_HPP
 #define COSIM_OBSERVER_LAST_VALUE_OBSERVER_HPP
