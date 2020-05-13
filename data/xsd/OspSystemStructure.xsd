@@ -21,7 +21,7 @@
         </xs:complexType>
     </xs:element>
     <xs:complexType name="connections">
-        <xs:sequence>
+        <xs:choice maxOccurs="unbounded">
             <xs:element name="VariableConnection" minOccurs="0" maxOccurs="unbounded">
                 <xs:complexType>
                     <xs:sequence>
@@ -52,7 +52,7 @@
                     </xs:all>
                 </xs:complexType>
             </xs:element>
-        </xs:sequence>
+        </xs:choice>
     </xs:complexType>
     <xs:complexType name="variableEndpoint">
         <xs:attribute name="simulator" use="required" type="xs:string"/>
