@@ -1,3 +1,12 @@
+/**
+ *  \file
+ *  Defines the class for a fixed step algorithm
+ *
+ *  \copyright
+ *      This Source Code Form is subject to the terms of the Mozilla Public
+ *      License, v. 2.0. If a copy of the MPL was not distributed with this
+ *      file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
 #ifndef LIBCOSIM_ALGORITHM_FIXED_STEP_ALGORITHM_HPP
 #define LIBCOSIM_ALGORITHM_FIXED_STEP_ALGORITHM_HPP
 

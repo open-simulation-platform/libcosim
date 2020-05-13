@@ -1,6 +1,11 @@
 /**
  *  \file
  *  Model-descriptive types and constants.
+ *
+ *  \copyright
+ *      This Source Code Form is subject to the terms of the Mozilla Public
+ *      License, v. 2.0. If a copy of the MPL was not distributed with this
+ *      file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 #ifndef COSIM_MODEL_HPP
 #define COSIM_MODEL_HPP
@@ -25,7 +30,7 @@ namespace cosim
 namespace detail
 {
 
-/*
+/**
  *  A clock type for simulation time points.
  *
  *  This class fulfils the syntactic requirements of the "Clock" concept

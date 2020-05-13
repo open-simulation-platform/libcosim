@@ -1,6 +1,11 @@
 /**
  *  \file
- *  \brief  Interfaces for orchestration of remote as well as local simulations.
+ *  Interfaces for orchestration of remote as well as local simulations.
+ *
+ *  \copyright
+ *      This Source Code Form is subject to the terms of the Mozilla Public
+ *      License, v. 2.0. If a copy of the MPL was not distributed with this
+ *      file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 #ifndef COSIM_ORCHESTRATION_HPP
 #define COSIM_ORCHESTRATION_HPP
