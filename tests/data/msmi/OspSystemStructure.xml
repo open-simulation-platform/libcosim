@@ -39,15 +39,16 @@
         <Sum name="mySum" inputCount="3"/>
     </Functions>
     <Connections>
+        <SignalConnection>
+            <Variable simulator="KnuckleBoomCrane" name="p_Crane.f[1]"/>
+            <Signal function="mySum" name="in[0]"/>
+        </SignalConnection>
+
         <VariableConnection>
             <Variable simulator="CraneController" name="p_Crane.e[1]"/>
             <Variable simulator="KnuckleBoomCrane" name="p_Crane.e[1]"/>
         </VariableConnection>
 
-        <SignalConnection>
-            <Variable simulator="KnuckleBoomCrane" name="p_Crane.f[1]"/>
-            <Signal function="mySum" name="in[0]"/>
-        </SignalConnection>
         <SignalConnection>
             <Variable simulator="KnuckleBoomCrane" name="p_Crane.f[2]"/>
             <Signal function="mySum" name="in[1]"/>
