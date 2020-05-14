@@ -1,5 +1,5 @@
-CSE co-simulation core
-======================
+libcosim - A co-simulation library for C++
+==========================================
 
 This repository contains two libraries:
 
@@ -56,7 +56,7 @@ directory—that is, the directory which contains this README file—and call it
 `build`.  Note, however, that it may be located anywhere and be called anything
 you like.
 
-From the cse-core source directory, create and enter the build directory:
+From the libcosim source directory, create and enter the build directory:
 
     mkdir build
     cd build
@@ -97,7 +97,7 @@ some things worth noting about what we just did:
   * The `-A` (architecture) switch we used for Visual Studio ensures that we build
     in 64-bit mode, which is the default for Conan, but not for Visual Studio.
   * In addition to generating build files for MSBuild, CMake generates solution
-    files for the Visual Studio IDE.  Open the `csecore.sln` file with VS if you
+    files for the Visual Studio IDE.  Open the `libcosim.sln` file with VS if you
     want to check it out.
   * For GCC, CMake normally uses a Makefile generator which, unlike Visual
     Studio, is a *single-configuration* generator.  Therefore, the choice of

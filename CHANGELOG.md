@@ -1,5 +1,5 @@
 # Change log
-All notable changes to cse-core will be documented in this file. This includes new features, bug fixes and breaking changes. For a more detailed list of all changes, click the header links for each version. 
+All notable changes to libcosim will be documented in this file. This includes new features, bug fixes and breaking changes. For a more detailed list of all changes, click the header links for each version. 
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
