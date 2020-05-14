@@ -17,7 +17,7 @@ class LibcosimConan(ConanFile):
     generators = "cmake", "virtualrunenv"
     requires = (
         "boost/1.66.0@conan/stable",
-        "FMILibrary/2.0.3@kyllingstad/testing",
+        "fmilibrary/2.0.3",
         "gsl_microsoft/20171020@bincrafters/stable",
         "libzip/1.5.2@bincrafters/stable",
         "openssl/1.0.2u",
