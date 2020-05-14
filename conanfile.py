@@ -4,12 +4,15 @@ from conans import ConanFile, CMake, tools
 from os import path
 
 
-
 class LibcosimConan(ConanFile):
     name = "libcosim"
     author = "osp"
     exports = "version.txt"
-    scm = "auto"
+    scm = {
+        "type": "git",
+        "url": "auto",
+        "revision": "auto"
+    }
     settings = "os", "compiler", "build_type", "arch"
     generators = "cmake", "virtualrunenv"
     requires = (
@@ -22,13 +25,13 @@ class LibcosimConan(ConanFile):
         "yaml-cpp/0.6.3",
         "bzip2/1.0.8",
         "xerces-c/3.2.2"
-        )
+    )
 
     options = {"fmuproxy": [True, False]}
     default_options = (
         "fmuproxy=False",
         "boost:shared=True"
-        )
+    )
 
     def set_version(self):
         self.version = tools.load(path.join(self.recipe_folder, "version.txt")).strip()
@@ -49,7 +52,7 @@ class LibcosimConan(ConanFile):
             cmake.definitions["LIBCOSIM_BUILD_PRIVATE_APIDOC"] = "ON"
         if self.options.fmuproxy:
             cmake.definitions["LIBCOSIM_WITH_FMUPROXY"] = "ON"
-            cmake.definitions["LIBCOSIM_TEST_FMUPROXY"] = "OFF" # since we can't test on Jenkins yet
+            cmake.definitions["LIBCOSIM_TEST_FMUPROXY"] = "OFF"  # since we can't test on Jenkins yet
         cmake.configure()
         return cmake
 
@@ -64,4 +67,4 @@ class LibcosimConan(ConanFile):
         cmake.build(target="install-doc")
 
     def package_info(self):
-        self.cpp_info.libs = [ "cosim" ]
+        self.cpp_info.libs = ["cosim"]
