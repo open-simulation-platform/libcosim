@@ -9,11 +9,7 @@ class LibcosimConan(ConanFile):
     name = "libcosim"
     author = "osp"
     exports = "version.txt"
-    scm = {
-        "type": "git",
-        "url": "git@github.com:open-simulation-platform/cse-core.git",
-        "revision": "auto"
-    }
+    scm = "auto"
     settings = "os", "compiler", "build_type", "arch"
     generators = "cmake", "virtualrunenv"
     requires = (
