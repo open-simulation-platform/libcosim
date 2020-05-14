@@ -36,10 +36,10 @@ jobs:
           BRANCH=${GITHUB_REF#refs/heads/}
           SHORT_BRANCH=${BRANCH:0:50}
           CHANNEL=${SHORT_BRANCH//\//_}
-          conan create -s build_type=${{ matrix.build_type }} -s compiler.version=${{ matrix.compiler_version }} -s compiler.libcxx=${{ matrix.compiler_libcxx }} -o ${{ matrix.option_fmuproxy }} . osp/${CHANNEL}
+          conan create -s build_type=${{ matrix.build_type }} -s compiler.version=${{ matrix.compiler_version }} -s compiler.libcxx=${{ matrix.compiler_libcxx }} -o ${{ matrix.option_fmuproxy }} -b missing . osp/${CHANNEL}
       - name: Conan upload
         run: |
-          conan upload --all -c -r osp 'libcosim*'
+          conan upload --all -c -r osp '*'
 
   conan-on-windows:
     name: Conan
@@ -75,6 +75,6 @@ jobs:
           BRANCH=${GITHUB_REF#refs/heads/}
           SHORT_BRANCH=${BRANCH:0:50}
           CHANNEL=${SHORT_BRANCH//\//_}
-          conan create -s build_type=${{ matrix.build_type }} -s compiler.version=${{ matrix.compiler_version }} -o ${{ matrix.option_fmuproxy }} . osp/${CHANNEL}
+          conan create -s build_type=${{ matrix.build_type }} -s compiler.version=${{ matrix.compiler_version }} -o ${{ matrix.option_fmuproxy }} -b missing . osp/${CHANNEL}
       - name: Conan upload
-        run: conan upload --all -c -r osp 'libcosim*'
+        run: conan upload --all -c -r osp '*'
