@@ -8,6 +8,7 @@ env:
   CONAN_PASSWORD_OSP: ${{ secrets.osp_conan_pwd }}
   CONAN_REVISIONS_ENABLED: 1
   CONAN_NON_INTERACTIVE: True
+  CONAN_USE_ALWAYS_SHORT_PATHS: True
 
 jobs:
   conan-on-linux:
