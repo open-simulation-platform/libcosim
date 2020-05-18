@@ -79,7 +79,7 @@ public:
         condition_.wait(lock, [&] { return value_.has_value(); });
         auto value = std::move(value_.value());
         value_.reset();
-        return std::move(value);
+        return value;
     }
 
     /// Returns `true` if there is no item in the container.
