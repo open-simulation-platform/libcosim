@@ -1,4 +1,4 @@
-name: cosim CI CMake
+name: libcosim CI CMake
 
 # This workflow is triggered on pushes to the repository.
 on: [push]
@@ -26,7 +26,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: |
-          cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -B build
+          cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -B build
           cmake --build build
           ctest build
 
@@ -48,6 +48,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: |
-          cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -A x64 -B build
+          cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -A x64 -B build
           cmake --build build --config ${{ matrix.build_type }}
           ctest build
