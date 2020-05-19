@@ -15,16 +15,12 @@ jobs:
       matrix:
         os: [ubuntu-18.04, windows-2016]
         build_type: [Debug, Release]
-        compiler_version: [7, 8, 9]
-        option_fmuproxy: ['fmuproxy=True', 'fmuproxy=False']
-
-        exclude:
-          - os: ubuntu-18.04
-            build_type: Debug
-            option_fmuproxy: 'fmuproxy=True'
+        compiler_version: [7]
+        #option_fmuproxy: ['fmuproxy=True', 'fmuproxy=False']
 
     steps:
       - uses: actions/checkout@v2
+      - run: sudo apt-get install -y --no-install-recommends libmsgsl-dev
       - run: |
           cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -B build
           cmake --build build
@@ -38,12 +34,7 @@ jobs:
       matrix:
         os: [windows-2016]
         build_type: [Debug, Release]
-        option_fmuproxy: ['fmuproxy=True', 'fmuproxy=False']
-
-        exclude:
-          - os: windows-2016
-            build_type: Debug
-            option_fmuproxy: 'fmuproxy=True'
+        #option_fmuproxy: ['fmuproxy=True', 'fmuproxy=False']
 
     steps:
       - uses: actions/checkout@v2
