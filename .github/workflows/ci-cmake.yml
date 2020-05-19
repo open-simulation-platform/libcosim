@@ -1,0 +1,53 @@
+name: cosim CI CMake
+
+# This workflow is triggered on pushes to the repository.
+on: [push]
+
+jobs:
+  cmake-on-linux:
+    name: CMake
+    runs-on: ${{ matrix.os }}
+    env:
+      CC: gcc-${{ matrix.compiler_version }}
+      CXX: g++-${{ matrix.compiler_version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-18.04, windows-2016]
+        build_type: [Debug, Release]
+        compiler_version: [7, 8, 9]
+        option_fmuproxy: ['fmuproxy=True', 'fmuproxy=False']
+
+        exclude:
+          - os: ubuntu-18.04
+            build_type: Debug
+            option_fmuproxy: 'fmuproxy=True'
+
+    steps:
+      - uses: actions/checkout@v2
+      - run: |
+          cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -B build
+          cmake --build build
+          ctest build
+
+  cmake-on-windows:
+    name: CMake
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2016]
+        build_type: [Debug, Release]
+        option_fmuproxy: ['fmuproxy=True', 'fmuproxy=False']
+
+        exclude:
+          - os: windows-2016
+            build_type: Debug
+            option_fmuproxy: 'fmuproxy=True'
+
+    steps:
+      - uses: actions/checkout@v2
+      - run: |
+          cmake .. -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -A x64 -B build
+          cmake --build build --config ${{ matrix.build_type }}
+          ctest build
