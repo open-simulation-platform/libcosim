@@ -13,14 +13,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-18.04, windows-2016]
+        os: [ubuntu-18.04]
         build_type: [Debug, Release]
         compiler_version: [7]
         #option_fmuproxy: ['fmuproxy=True', 'fmuproxy=False']
 
     steps:
       - uses: actions/checkout@v2
-      - run: sudo apt-get install -y --no-install-recommends libmsgsl-dev
+      - run: sudo apt-get install -y --no-install-recommends libmsgsl-dev libyaml-cpp-dev libxerces-c-dev libxerces-c3.2
       - run: |
           cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -B build
           cmake --build build
@@ -42,3 +42,4 @@ jobs:
           cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -A x64 -B build
           cmake --build build --config ${{ matrix.build_type }}
           ctest build
+        shell: bash
