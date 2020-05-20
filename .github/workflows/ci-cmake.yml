@@ -35,7 +35,8 @@ jobs:
             libmsgsl-dev \
             libyaml-cpp-dev \
             libxerces-c-dev \
-            libxerces-c3.2
+            libxerces-c3.2 \
+            libzip-dev
           conan remote add osp https://osp-conan.azurewebsites.net/artifactory/api/conan/public --force
           conan install fmilibrary/2.0.3@ -s build_type=${{ matrix.build_type }} -s compiler.libcxx=libstdc++11 -g deploy
       - run: |
