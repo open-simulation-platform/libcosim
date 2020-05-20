@@ -75,8 +75,7 @@ jobs:
       - name: CMake - configure
         shell: bash
         run: |
-          cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -A x64 \
-            -DCMAKE_PREFIX_PATH=gsl_microsoft;boost;fmilibrary;libzip;xerces-c;yaml-cpp -B build
+          cmake . -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -A x64 -DCMAKE_PREFIX_PATH="gsl_microsoft;boost;fmilibrary;libzip;xerces-c;yaml-cpp;bzip2;zlipb" -B build
       - name: CMake - build
         run: cmake --build build --config ${{ matrix.build_type }}
       - name: CMake - test
