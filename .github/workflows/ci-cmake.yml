@@ -32,6 +32,7 @@ jobs:
           sudo pip3 install conan
           sudo apt-get install -y --no-install-recommends \
             doxygen \
+            libboost-dev \
             libmsgsl-dev \
             libyaml-cpp-dev \
             libxerces-c-dev \
@@ -39,17 +40,16 @@ jobs:
             libzip-dev
           conan remote add osp https://osp-conan.azurewebsites.net/artifactory/api/conan/public --force
           conan install fmilibrary/2.0.3@ -s build_type=${{ matrix.build_type }} -s compiler.libcxx=libstdc++11 -g deploy
-      - run: |
+      - name: CMake - configure
+        run: |
           cmake \
             -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
-            -DBOOST_ROOT=$BOOST_ROOT_1_69_0 \
-            -DBoost_ADDITIONAL_VERSIONS=1.69.0 \
-            -DBoost_ARCHITECTURE=-x64 \
             -DCMAKE_PREFIX_PATH=fmilibrary \
             -B build
-
-          cmake --build build
-          ctest build
+      - name: CMake - build
+        run: cmake --build build
+      - name: CMake - test
+        run: ctest build
 
   cmake-on-windows:
     name: CMake
@@ -63,8 +63,19 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - run: |
-          cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -A x64 -B build
-          cmake --build build --config ${{ matrix.build_type }}
-          ctest build
+      - name: Install prerequisites
+        run: |
+          pip3 install --upgrade setuptools pip
+          pip3 install conan
+          choco install doxygen.install
+          conan remote add osp https://osp-conan.azurewebsites.net/artifactory/api/conan/public --force
+          conan install . -s build_type=${{ matrix.build_type }} -g deploy
+      - name: CMake - configure
         shell: bash
+        run: |
+          cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -A x64 \
+            -DCMAKE_PREFIX_DIR=gsl_microsoft;boost;fmilibrary:libzip:xerces-c;yaml-cpp -B build
+      - name: CMake - build
+        run: cmake --build build --config ${{ matrix.build_type }}
+      - name: CMake - test
+        run: ctest build
