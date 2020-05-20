@@ -32,7 +32,7 @@ jobs:
           sudo pip3 install conan
           sudo apt-get install -y --no-install-recommends \
             doxygen \
-            libboost-dev \
+            libboost-all-dev \
             libmsgsl-dev \
             libyaml-cpp-dev \
             libxerces-c-dev \
@@ -74,7 +74,7 @@ jobs:
         shell: bash
         run: |
           cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -A x64 \
-            -DCMAKE_PREFIX_DIR=gsl_microsoft;boost;fmilibrary:libzip:xerces-c;yaml-cpp -B build
+            -DCMAKE_PREFIX_PATH=gsl_microsoft;boost;fmilibrary;libzip;xerces-c;yaml-cpp -B build
       - name: CMake - build
         run: cmake --build build --config ${{ matrix.build_type }}
       - name: CMake - test
