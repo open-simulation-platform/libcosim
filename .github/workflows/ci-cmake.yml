@@ -49,7 +49,9 @@ jobs:
       - name: CMake - build
         run: cmake --build build
       - name: CMake - test
-        run: ctest build
+        run: |
+          cd build
+          ctest
 
   cmake-on-windows:
     name: CMake
@@ -78,4 +80,7 @@ jobs:
       - name: CMake - build
         run: cmake --build build --config ${{ matrix.build_type }}
       - name: CMake - test
-        run: ctest build
+        run: |
+          activate_run.bat
+          cd build
+          ctest -C ${{ matrix.build_type }}
