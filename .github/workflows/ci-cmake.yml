@@ -3,6 +3,12 @@ name: libcosim CI CMake
 # This workflow is triggered on pushes to the repository.
 on: [push]
 
+env:
+  CONAN_LOGIN_USERNAME_OSP: ${{ secrets.osp_conan_usr }}
+  CONAN_PASSWORD_OSP: ${{ secrets.osp_conan_pwd }}
+  CONAN_REVISIONS_ENABLED: 1
+  CONAN_NON_INTERACTIVE: True
+
 jobs:
   cmake-on-linux:
     name: CMake
@@ -20,9 +26,27 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - run: sudo apt-get install -y --no-install-recommends libmsgsl-dev libyaml-cpp-dev libxerces-c-dev libxerces-c3.2
+      - name: Install prerequisites
+        run: |
+          sudo pip3 install --upgrade setuptools pip
+          sudo pip3 install conan
+          sudo apt-get install -y --no-install-recommends \
+            doxygen \
+            libmsgsl-dev \
+            libyaml-cpp-dev \
+            libxerces-c-dev \
+            libxerces-c3.2
+          conan remote add osp https://osp-conan.azurewebsites.net/artifactory/api/conan/public --force
+          conan install fmilibrary/2.0.3@ -s build_type=${{ matrix.build_type }} -s compiler.libcxx=libstdc++11 -g deploy
       - run: |
-          cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DBOOST_ROOT=$BOOST_ROOT_1_69_0 -DBoost_ADDITIONAL_VERSIONS=1.69.0 -DBoost_ARCHITECTURE=-x64 -B build
+          cmake \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -DBOOST_ROOT=$BOOST_ROOT_1_69_0 \
+            -DBoost_ADDITIONAL_VERSIONS=1.69.0 \
+            -DBoost_ARCHITECTURE=-x64 \
+            -DCMAKE_PREFIX_PATH=fmilibrary \
+            -B build
+
           cmake --build build
           ctest build
 
