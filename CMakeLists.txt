@@ -58,20 +58,10 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     if(CMAKE_GENERATOR MATCHES "NMake Makefiles.*")
         string(REPLACE "/W3" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
     endif()
+    add_compile_options("/wd4251")
     add_compile_options("/wd4996")
     if(LIBCOSIM_TREAT_WARNINGS_AS_ERRORS)
         add_compile_options("/WX")
-    endif()
-    if(LIBCOSIM_USING_CONAN)
-        # C4251: 'identifier' : class 'type' needs to have dll-interface to be
-        #        used by clients of class 'type2'
-        #
-        # This could be a problem if a dependent DLL is compiled against a
-        # different version or variant of the C++ runtime than the one we
-        # use.  An example would be if Boost was built in release mode and
-        # we are compiling in release mode. However, when we use Conan, this
-        # should not be a problem, so we disable the warning.
-        add_compile_options("/wd4251")
     endif()
     add_definitions("-D_SCL_SECURE_NO_WARNINGS" "-D_CRT_SECURE_NO_WARNINGS")
 endif()
