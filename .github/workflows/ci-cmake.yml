@@ -22,24 +22,22 @@ jobs:
         os: [ubuntu-18.04]
         build_type: [Debug, Release]
         compiler_version: [7]
-        #option_fmuproxy: ['fmuproxy=True', 'fmuproxy=False']
 
     steps:
       - uses: actions/checkout@v2
       - name: Install prerequisites
         run: |
-          sudo pip3 install --upgrade setuptools pip
-          sudo pip3 install conan
           sudo apt-get install -y --no-install-recommends \
             doxygen \
             libboost-all-dev \
             libmsgsl-dev \
             libyaml-cpp-dev \
             libxerces-c-dev \
-            libxerces-c3.2 \
             libzip-dev
-          conan remote add osp https://osp-conan.azurewebsites.net/artifactory/api/conan/public --force
-          conan install fmilibrary/2.0.3@ -s build_type=${{ matrix.build_type }} -s compiler.libcxx=libstdc++11 -g deploy
+          wget \
+              "https://github.com/viproma/debian-fmilib/releases/download/debian%2F2.0.3-1/libfmilib2_2.0.3-1_amd64.deb" \
+              "https://github.com/viproma/debian-fmilib/releases/download/debian%2F2.0.3-1/libfmilib2-dev_2.0.3-1_amd64.deb"
+          dpkg -i libfmilib2_2.0.3-1_amd64.deb libfmilib2-dev_2.0.3-1_amd64.deb
       - name: CMake - configure
         run: |
           cmake \
@@ -61,7 +59,6 @@ jobs:
       matrix:
         os: [windows-2016]
         build_type: [Debug, Release]
-        #option_fmuproxy: ['fmuproxy=True', 'fmuproxy=False']
 
     steps:
       - uses: actions/checkout@v2
