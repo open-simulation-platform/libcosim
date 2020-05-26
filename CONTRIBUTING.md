@@ -17,6 +17,9 @@ additions to source code and other files under source control, shall be made
 via pull requests.  A pull request must always be reviewed and merged by someone
 other than its author.
 
+Before a pull request can be approved and merged into the code base, the author 
+must sign the "OSP Contributor License Agreement". This agreement is pending, but 
+will be included in this repository with guidelines once concluded.
 
 Programming language and style
 ------------------------------
@@ -83,15 +86,15 @@ The following are *recommendations*:
 
 Directory structure
 -------------------
-The source directories are organised as follows:
+`libcosim` follows the [pitchfork layout](https://api.csswg.org/bikeshed/?force=1&url=https://raw.githubusercontent.com/vector-of-bool/pitchfork/develop/data/spec.bs)
+and the source directories are organised as follows:
 
   * `cmake/`:       CMake scripts and other build system files.
+  * `data/`:        Additional files included in revision control, but not explicitly code.
   * `include/`:     Header files that define the public API.
-  * `src/cpp/`:     Source code for the C++ library.
-  * `src/c/`:       Source code for the C library.
-  * `test/cpp/`:    Test suite for the C++ library.
-  * `test/c/`:      Test suite for the C library.
-  * `test/data`:    Resources used by the test suites.
+  * `src/cosim/`:   Source code with merged header placement for internal headers.
+  * `tests/`:       Test suite for the library.
+  * `test/data`:    Resources used by the test suite.
 
 
 File names
@@ -100,8 +103,6 @@ Use the following file extensions:
 
   * `.hpp` for C++ headers
   * `.cpp` for C++ sources
-  * `.h` for pure C headers
-  * `.c` for pure C sources
 
 Use underscores to separate words in file names (`like_this.hpp`).
 
