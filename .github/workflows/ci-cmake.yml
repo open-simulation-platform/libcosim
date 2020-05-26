@@ -37,7 +37,7 @@ jobs:
           wget \
               "https://github.com/viproma/debian-fmilib/releases/download/debian%2F2.0.3-1/libfmilib2_2.0.3-1_amd64.deb" \
               "https://github.com/viproma/debian-fmilib/releases/download/debian%2F2.0.3-1/libfmilib2-dev_2.0.3-1_amd64.deb"
-          dpkg -i libfmilib2_2.0.3-1_amd64.deb libfmilib2-dev_2.0.3-1_amd64.deb
+          sudo dpkg -i libfmilib2_2.0.3-1_amd64.deb libfmilib2-dev_2.0.3-1_amd64.deb
       - name: CMake - configure
         run: |
           cmake \
