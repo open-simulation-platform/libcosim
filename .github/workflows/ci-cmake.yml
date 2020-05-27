@@ -43,13 +43,25 @@ jobs:
           cmake \
             -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
             -DCMAKE_PREFIX_PATH=fmilibrary \
+            -DCMAKE_INSTALL_PREFIX=install \
             -B build
       - name: CMake - build
         run: cmake --build build
+      - name: CMake - build doc
+        run: cmake --build build --target doc
       - name: CMake - test
         run: |
           cd build
           ctest
+      - name: CMake - install
+        run: |
+            cmake --build build --target install
+            cmake --build build --target install-doc
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: libcosim-${{ runner.os }}-${{ matrix.build_type }}-gcc${{ matrix.compiler_version }}
+          path: install
 
   cmake-on-windows:
     name: CMake
@@ -72,11 +84,27 @@ jobs:
       - name: CMake - configure
         shell: bash
         run: |
-          cmake . -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -A x64 -DCMAKE_PREFIX_PATH="gsl_microsoft;boost;fmilibrary;libzip;xerces-c;yaml-cpp;bzip2;zlipb" -B build
+          cmake . \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -A x64 \
+            -DCMAKE_PREFIX_PATH="gsl_microsoft;boost;fmilibrary;libzip;xerces-c;yaml-cpp;bzip2;zlipb" \
+            -DCMAKE_INSTALL_PREFIX=install \
+            -B build
       - name: CMake - build
         run: cmake --build build --config ${{ matrix.build_type }}
+      - name: CMake - build doc
+        run: cmake --build build --config ${{ matrix.build_type }} --target doc
       - name: CMake - test
         run: |
           .\activate_run.ps1
           cd build
           ctest -C ${{ matrix.build_type }}
+      - name: CMake - install
+        run: |
+            cmake --build build --target install
+            cmake --build build --target install-doc
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: libcosim-${{ runner.os }}-${{ matrix.build_type }}
+          path: install
