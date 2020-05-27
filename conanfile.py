@@ -16,11 +16,10 @@ class LibcosimConan(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
     generators = "cmake", "virtualrunenv"
     requires = (
-        "boost/1.66.0@conan/stable",
+        "boost/1.71.0",
         "fmilibrary/2.0.3",
-        "gsl_microsoft/20171020@bincrafters/stable",
+        "ms-gsl/2.1.0",
         "libzip/1.5.2@bincrafters/stable",
-        "openssl/1.0.2u",
         "zlib/1.2.11",
         "yaml-cpp/0.6.3",
         "bzip2/1.0.8",

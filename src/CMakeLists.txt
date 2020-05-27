@@ -103,17 +103,15 @@ set(generatedSources
 )
 
 if(LIBCOSIM_WITH_FMUPROXY)
-    list(APPEND publicHeaders
+    list(APPEND privateHeaders
             "cosim/fmuproxy/fmu_service.hpp"
             "cosim/fmuproxy/fmuproxy_client.hpp"
+            "cosim/fmuproxy/fmuproxy_helper.hpp"
             "cosim/fmuproxy/fmuproxy_uri_sub_resolver.hpp"
             "cosim/fmuproxy/remote_fmu.hpp"
+            "cosim/fmuproxy/remote_slave.hpp"
             "cosim/fmuproxy/service_types.hpp"
             "cosim/fmuproxy/thrift_state.hpp"
-    )
-    list(APPEND privateHeaders
-            "cosim/fmuproxy/fmuproxy_helper.hpp"
-            "cosim/fmuproxy/remote_slave.hpp"
     )
     list(APPEND sources
             "cosim/fmuproxy/fmu_service.cpp"

@@ -229,7 +229,7 @@ osp_config_parser::osp_config_parser(
 {
     // Root node
     xercesc::XMLPlatformUtils::Initialize();
-    const auto xerces_cleanup = gsl::final_act([]() {
+    const auto xerces_cleanup = gsl::final_action([]() {
         xercesc::XMLPlatformUtils::Terminate();
     });
 
@@ -573,7 +573,7 @@ struct extended_model_description
     explicit extended_model_description(const boost::filesystem::path& ospModelDescription)
     {
         xercesc::XMLPlatformUtils::Initialize();
-        const auto xerces_cleanup = gsl::final_act([]() {
+        const auto xerces_cleanup = gsl::final_action([]() {
             xercesc::XMLPlatformUtils::Terminate();
         });
         const auto domImpl = xercesc::DOMImplementationRegistry::getDOMImplementation(tc("LS").get());
