@@ -11,7 +11,8 @@
 #define COSIM_OBSERVER_OBSERVER_HPP
 
 #include <cosim/execution.hpp>
-#include <cosim/model.hpp>
+#include <cosim/model_description.hpp>
+#include <cosim/time.hpp>
 
 #include <string>
 #include <string_view>

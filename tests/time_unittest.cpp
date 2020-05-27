@@ -1,5 +1,5 @@
-#define BOOST_TEST_MODULE model.hpp unittests
-#include <cosim/model.hpp>
+#define BOOST_TEST_MODULE time.hpp unittests
+#include <cosim/time.hpp>
 
 #include <boost/test/unit_test.hpp>
 

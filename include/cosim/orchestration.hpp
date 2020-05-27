@@ -13,7 +13,7 @@
 #include <cosim/async_slave.hpp>
 #include <cosim/file_cache.hpp>
 #include <cosim/fmi/importer.hpp>
-#include <cosim/model.hpp>
+#include <cosim/model_description.hpp>
 #include <cosim/uri.hpp>
 
 #include <memory>

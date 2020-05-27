@@ -11,7 +11,7 @@
 #define COSIM_FMI_GLUE_HPP
 
 #include "cosim/fmi/fmilib.h"
-#include "cosim/model.hpp"
+#include "cosim/model_description.hpp"
 
 
 namespace cosim

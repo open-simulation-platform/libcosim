@@ -13,7 +13,8 @@
 #include <cosim/file_cache.hpp>
 #include <cosim/fmi/fmu.hpp>
 #include <cosim/fmi/importer.hpp>
-#include <cosim/model.hpp>
+#include <cosim/model_description.hpp>
+#include <cosim/time.hpp>
 
 #include <boost/filesystem.hpp>
 

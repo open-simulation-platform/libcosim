@@ -10,8 +10,9 @@
 #ifndef COSIM_ASYNC_SLAVE_HPP
 #define COSIM_ASYNC_SLAVE_HPP
 
-#include <cosim/model.hpp>
+#include <cosim/model_description.hpp>
 #include <cosim/slave.hpp>
+#include <cosim/time.hpp>
 
 #include <boost/fiber/future/future.hpp>
 #include <gsl/span>

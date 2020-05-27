@@ -11,8 +11,9 @@
 #define COSIM_OBSERVER_LAST_VALUE_OBSERVER_HPP
 
 #include <cosim/execution.hpp>
-#include <cosim/model.hpp>
+#include <cosim/model_description.hpp>
 #include <cosim/observer/last_value_provider.hpp>
+#include <cosim/time.hpp>
 
 #include <memory>
 #include <unordered_map>

@@ -11,8 +11,9 @@
 #define COSIM_OBSERVER_TIME_SERIES_PROVIDER_HPP
 
 #include <cosim/execution.hpp>
-#include <cosim/model.hpp>
+#include <cosim/model_description.hpp>
 #include <cosim/observer/observer.hpp>
+#include <cosim/time.hpp>
 
 #include <gsl/span>
 

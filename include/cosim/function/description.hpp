@@ -10,7 +10,7 @@
 #ifndef COSIM_FUNCTION_DESCRIPTION_HPP
 #define COSIM_FUNCTION_DESCRIPTION_HPP
 
-#include <cosim/model.hpp>
+#include <cosim/model_description.hpp>
 
 #include <optional>
 #include <string>

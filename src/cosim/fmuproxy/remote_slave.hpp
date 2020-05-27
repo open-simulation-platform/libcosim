@@ -12,7 +12,8 @@
 #include <cosim/async_slave.hpp>
 #include <cosim/fmuproxy/fmu_service.hpp>
 #include <cosim/fmuproxy/thrift_state.hpp>
-#include <cosim/model.hpp>
+#include <cosim/model_description.hpp>
+#include <cosim/time.hpp>
 
 #include <string>
 

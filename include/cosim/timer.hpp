@@ -9,7 +9,7 @@
 #ifndef LIBCOSIM_TIMER_H
 #define LIBCOSIM_TIMER_H
 
-#include <cosim/model.hpp>
+#include <cosim/time.hpp>
 
 #include <memory>
 

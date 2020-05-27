@@ -10,7 +10,8 @@
 #ifndef COSIM_SLAVE_HPP
 #define COSIM_SLAVE_HPP
 
-#include <cosim/model.hpp>
+#include <cosim/model_description.hpp>
+#include <cosim/time.hpp>
 
 #include <gsl/span>
 

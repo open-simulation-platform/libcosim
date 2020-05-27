@@ -12,8 +12,9 @@
 
 #include <cosim/async_slave.hpp>
 #include <cosim/function/function.hpp>
-#include <cosim/model.hpp>
+#include <cosim/model_description.hpp>
 #include <cosim/system_structure.hpp>
+#include <cosim/time.hpp>
 
 #include <boost/fiber/future.hpp>
 #include <boost/functional/hash.hpp>

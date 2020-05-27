@@ -3,13 +3,15 @@
  *  License, v. 2.0. If a copy of the MPL was not distributed with this
  *  file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
-#include "cosim/model.hpp"
+#include "cosim/model_description.hpp"
+
+#include <stdexcept>
 
 
 namespace cosim
 {
 
-const variable_description find_variable(const model_description& description, const std::string& variable_name)
+variable_description find_variable(const model_description& description, const std::string& variable_name)
 {
     for (const auto& variable : description.variables) {
         if (variable.name == variable_name) {

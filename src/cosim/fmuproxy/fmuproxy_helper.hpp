@@ -11,7 +11,7 @@
 
 #include "cosim/error.hpp"
 #include "cosim/fmuproxy/service_types.hpp"
-#include "cosim/model.hpp"
+#include "cosim/model_description.hpp"
 
 #include <vector>
 

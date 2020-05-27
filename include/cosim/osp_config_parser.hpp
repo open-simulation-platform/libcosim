@@ -9,9 +9,10 @@
 #ifndef LIBCOSIM_OSP_CONFIG_PARSER_HPP
 #define LIBCOSIM_OSP_CONFIG_PARSER_HPP
 
-#include <cosim/model.hpp>
+#include <cosim/model_description.hpp>
 #include <cosim/orchestration.hpp>
 #include <cosim/system_structure.hpp>
+#include <cosim/time.hpp>
 
 #include <boost/filesystem/path.hpp>
 
