@@ -9,7 +9,7 @@
 #ifndef COSIM_FMUPROXY_SHARED_THRIFT_STATE_HPP
 #define COSIM_FMUPROXY_SHARED_THRIFT_STATE_HPP
 
-#include <cosim/fmuproxy/fmu_service.hpp>
+#include "FmuService.h"
 
 #include <memory>
 
@@ -29,17 +29,17 @@ class thrift_state
     friend class fmuproxy_client;
 
 public:
-    thrift_state(std::shared_ptr<::fmuproxy::thrift::fmu_service_if> client_,
+    thrift_state(std::shared_ptr<::fmuproxy::thrift::FmuServiceIf> client_,
         std::shared_ptr<apache::thrift::transport::TTransport> transport_);
 
-    ::fmuproxy::thrift::fmu_service_if& client();
+    ::fmuproxy::thrift::FmuServiceIf& client();
 
     apache::thrift::transport::TTransport& transport();
 
     ~thrift_state();
 
 private:
-    const std::shared_ptr<::fmuproxy::thrift::fmu_service_if> client_;
+    const std::shared_ptr<::fmuproxy::thrift::FmuServiceIf> client_;
     const std::shared_ptr<apache::thrift::transport::TTransport> transport_;
 };
 

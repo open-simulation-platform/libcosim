@@ -102,26 +102,36 @@ set(generatedSources
     "cosim/lib_info.cpp"
 )
 
+set(generatedSourcesFull)
 if(LIBCOSIM_WITH_FMUPROXY)
+    set(fmuProxyGenerated
+        "${CMAKE_BINARY_DIR}/gen-cpp/FmuService.h"
+        "${CMAKE_BINARY_DIR}/gen-cpp/FmuService.cpp"
+        "${CMAKE_BINARY_DIR}/gen-cpp/service_types.h"
+        "${CMAKE_BINARY_DIR}/gen-cpp/service_types.cpp"
+    )
+    add_custom_command(
+        OUTPUT ${fmuProxyGenerated}
+        COMMAND "${THRIFT_EXECUTABLE}" "--gen" "cpp:no_skeleton" "${CMAKE_CURRENT_SOURCE_DIR}/cosim/fmuproxy/service.thrift"
+        DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/cosim/fmuproxy/service.thrift"
+        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+    )
     list(APPEND privateHeaders
-            "cosim/fmuproxy/fmu_service.hpp"
             "cosim/fmuproxy/fmuproxy_client.hpp"
             "cosim/fmuproxy/fmuproxy_helper.hpp"
             "cosim/fmuproxy/fmuproxy_uri_sub_resolver.hpp"
             "cosim/fmuproxy/remote_fmu.hpp"
             "cosim/fmuproxy/remote_slave.hpp"
-            "cosim/fmuproxy/service_types.hpp"
             "cosim/fmuproxy/thrift_state.hpp"
     )
     list(APPEND sources
-            "cosim/fmuproxy/fmu_service.cpp"
             "cosim/fmuproxy/fmuproxy_client.cpp"
             "cosim/fmuproxy/fmuproxy_uri_sub_resolver.cpp"
             "cosim/fmuproxy/remote_slave.cpp"
             "cosim/fmuproxy/remote_fmu.cpp"
-            "cosim/fmuproxy/service_types.cpp"
             "cosim/fmuproxy/thrift_state.cpp"
     )
+    list(APPEND generatedSourcesFull ${fmuProxyGenerated})
 endif()
 
 set(publicHeadersFull)
@@ -129,7 +139,6 @@ foreach(h IN LISTS publicHeaders)
     list(APPEND publicHeadersFull "${publicHeaderDir}/${h}")
 endforeach()
 
-set(generatedSourcesFull)
 foreach(src IN LISTS generatedSources)
     set(tgt "${CMAKE_CURRENT_BINARY_DIR}/${src}")
     configure_file(
@@ -178,6 +187,7 @@ if(LIBCOSIM_WITH_FMUPROXY)
         PUBLIC
             thrift::thrift
         )
+    target_include_directories(cosim PRIVATE "${CMAKE_BINARY_DIR}/gen-cpp")
 endif()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")

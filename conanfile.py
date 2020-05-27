@@ -44,6 +44,10 @@ class LibcosimConan(ConanFile):
         if self.options.fmuproxy:
             self.requires("thrift/0.12.0@bincrafters/stable")
 
+    def build_requirements(self):
+        if self.options.fmuproxy:
+            self.build_requires("thrift_installer/0.12.0@bincrafters/stable")
+
     def configure_cmake(self):
         cmake = CMake(self)
         cmake.definitions["LIBCOSIM_USING_CONAN"] = "ON"
