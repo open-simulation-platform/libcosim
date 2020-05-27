@@ -13,8 +13,9 @@
 #include <cosim/algorithm/simulator.hpp>
 #include <cosim/execution.hpp>
 #include <cosim/function/function.hpp>
-#include <cosim/model.hpp>
+#include <cosim/model_description.hpp>
 #include <cosim/observer/observer.hpp>
+#include <cosim/time.hpp>
 
 #include <functional>
 #include <memory>

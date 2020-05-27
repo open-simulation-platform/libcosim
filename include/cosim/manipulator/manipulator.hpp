@@ -11,8 +11,9 @@
 #define LIBCOSIM_MANIPULATOR_MANIPULATOR_HPP
 
 #include <cosim/execution.hpp>
-#include <cosim/model.hpp>
+#include <cosim/model_description.hpp>
 #include <cosim/observer/observer.hpp>
+#include <cosim/time.hpp>
 
 #include <functional>
 #include <string>

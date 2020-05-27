@@ -10,7 +10,8 @@
 #define LIBCOSIM_SCENARIO_HPP
 
 #include <cosim/execution.hpp>
-#include <cosim/model.hpp>
+#include <cosim/model_description.hpp>
+#include <cosim/time.hpp>
 
 #include <functional>
 #include <string>

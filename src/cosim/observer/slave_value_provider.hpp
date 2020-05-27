@@ -10,7 +10,7 @@
 #define COSIM_OBSERVER_SLAVE_VALUE_PROVIDER_HPP
 
 #include <cosim/execution.hpp>
-#include <cosim/model.hpp>
+#include <cosim/model_description.hpp>
 #include <cosim/observer/observer.hpp>
 
 #include <gsl/span>

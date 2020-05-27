@@ -11,7 +11,8 @@
 #define LIBCOSIM_ALGORITHM_SIMULATOR_HPP
 
 #include <cosim/manipulator/manipulator.hpp>
-#include <cosim/model.hpp>
+#include <cosim/model_description.hpp>
+#include <cosim/time.hpp>
 
 #include <boost/fiber/future.hpp>
 

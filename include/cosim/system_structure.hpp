@@ -10,8 +10,9 @@
 #define COSIM_SYSTEM_STRUCTURE_HPP
 
 #include <cosim/function/function.hpp>
-#include <cosim/model.hpp>
+#include <cosim/model_description.hpp>
 #include <cosim/orchestration.hpp>
+#include <cosim/time.hpp>
 
 #include <boost/functional/hash.hpp>
 #include <boost/range/adaptor/map.hpp>

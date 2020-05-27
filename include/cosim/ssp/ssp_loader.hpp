@@ -10,9 +10,9 @@
 #define LIBCOSIM_SSP_LOADER_HPP
 
 #include <cosim/algorithm/algorithm.hpp>
-#include <cosim/model.hpp>
 #include <cosim/orchestration.hpp>
 #include <cosim/system_structure.hpp>
+#include <cosim/time.hpp>
 
 #include <boost/filesystem/path.hpp>
 

@@ -9,7 +9,7 @@
 #ifndef LIBCOSIM_LAST_VALUE_PROVIDER_HPP
 #define LIBCOSIM_LAST_VALUE_PROVIDER_HPP
 
-#include <cosim/model.hpp>
+#include <cosim/model_description.hpp>
 #include <cosim/observer/observer.hpp>
 
 #include <gsl/span>
