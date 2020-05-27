@@ -10,11 +10,12 @@ message("Current libcosim version: ${CMAKE_PROJECT_VERSION}\n")
 option(BUILD_SHARED_LIBS "Build shared libraries instead of static libraries" ON)
 option(LIBCOSIM_TREAT_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" ON)
 option(LIBCOSIM_BUILD_TESTS "Build test suite" ON)
-option(LIBCOSIM_BUILD_PRIVATE_APIDOC "Build private API documentation" OFF)
+option(LIBCOSIM_BUILD_APIDOC "Build API documentation (requires Doxygen)" ON)
+option(LIBCOSIM_BUILD_PRIVATE_APIDOC "Build private API documentation (only used if LIBCOSIM_BUILD_APIDOC=ON)" OFF)
 option(LIBCOSIM_STANDALONE_INSTALLATION "Whether to build for a standalone installation (Linux only; sets a relative RPATH)" OFF)
 option(LIBCOSIM_USING_CONAN "Whether Conan is used for package management" OFF)
 option(LIBCOSIM_WITH_FMUPROXY "Whether or not to build with fmuproxy integration" OFF)
-option(LIBCOSIM_TEST_FMUPROXY "Whether or not to run fmuproxy tests (only if LIBCOSIM_WITH_FMUPROXY=ON)" ON)
+option(LIBCOSIM_TEST_FMUPROXY "Whether or not to run fmuproxy tests (only if LIBCOSIM_BUILD_TESTS=ON and LIBCOSIM_WITH_FMUPROXY=ON)" ON)
 
 # ==============================================================================
 # Global internal configuration
@@ -130,9 +131,8 @@ endif()
 # API documentation
 # ==============================================================================
 
-find_package(Doxygen)
-if(DOXYGEN_FOUND)
-    message("Found Doxygen, API documentation will be built.")
+if(LIBCOSIM_BUILD_APIDOC)
+    find_package(Doxygen REQUIRED)
     set(DOXYGEN_PROJECT_NAME "libcosim")
     set(DOXYGEN_PROJECT_BRIEF "C++ library for distributed co-simulation")
     set(DOXYGEN_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/output/doc")
@@ -164,8 +164,6 @@ if(DOXYGEN_FOUND)
             "${CMAKE_INSTALL_PREFIX}/${LIBCOSIM_DOC_INSTALL_DIR}/"
         DEPENDS doc
     )
-else()
-    message(WARNING "API documentation will not be built since Doxygen was not found.")
 endif()
 
 # ==============================================================================

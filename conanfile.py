@@ -48,23 +48,20 @@ class LibcosimConan(ConanFile):
     def configure_cmake(self):
         cmake = CMake(self)
         cmake.definitions["LIBCOSIM_USING_CONAN"] = "ON"
-        if self.settings.build_type == "Debug":
-            cmake.definitions["LIBCOSIM_BUILD_PRIVATE_APIDOC"] = "ON"
+        cmake.definitions["LIBCOSIM_BUILD_APIDOC"] = "OFF"
+        cmake.definitions["LIBCOSIM_BUILD_TESTS"] = "OFF"
         if self.options.fmuproxy:
             cmake.definitions["LIBCOSIM_WITH_FMUPROXY"] = "ON"
-            cmake.definitions["LIBCOSIM_TEST_FMUPROXY"] = "OFF"  # since we can't test on Jenkins yet
         cmake.configure()
         return cmake
 
     def build(self):
         cmake = self.configure_cmake()
         cmake.build()
-        cmake.build(target="doc")
 
     def package(self):
         cmake = self.configure_cmake()
         cmake.install()
-        cmake.build(target="install-doc")
 
     def package_info(self):
         self.cpp_info.libs = ["cosim"]
