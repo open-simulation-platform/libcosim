@@ -1,0 +1,16 @@
+#include "cosim/lib_info.hpp"
+
+
+namespace cosim
+{
+
+
+version library_version()
+{
+    // clang-format off
+    return { @PROJECT_VERSION_MAJOR@, @PROJECT_VERSION_MINOR@, @PROJECT_VERSION_PATCH@ };
+    // clang-format on
+}
+
+
+} // namespace cosim
