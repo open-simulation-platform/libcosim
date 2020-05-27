@@ -97,6 +97,9 @@ set(sources
     "cosim/utility/uuid.cpp"
     "cosim/utility/zip.cpp"
 )
+set(generatedSources
+    "cosim/lib_info.cpp"
+)
 
 if(LIBCOSIM_WITH_FMUPROXY)
     list(APPEND publicHeaders
@@ -126,7 +129,19 @@ set(publicHeadersFull)
 foreach(h IN LISTS publicHeaders)
     list(APPEND publicHeadersFull "${publicHeaderDir}/${h}")
 endforeach()
-set(allSources ${publicHeadersFull} ${privateHeaders} ${generatedHeaders} ${sources})
+
+set(generatedSourcesFull)
+foreach(src IN LISTS generatedSources)
+    set(tgt "${CMAKE_CURRENT_BINARY_DIR}/${src}")
+    configure_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/${src}.in"
+        "${tgt}"
+        @ONLY
+    )
+    list(APPEND generatedSourcesFull "${tgt}")
+endforeach()
+
+set(allSources ${publicHeadersFull} ${privateHeaders} ${generatedHeaders} ${sources} ${generatedSourcesFull})
 
 add_custom_command(
     OUTPUT osp_system_structure_schema.hpp

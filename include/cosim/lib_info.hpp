@@ -22,5 +22,18 @@ namespace cosim
 constexpr const char* library_short_name = "libcosim";
 
 
+/// Software version
+struct version
+{
+    int major = 0;
+    int minor = 0;
+    int patch = 0;
+};
+
+
+/// Returns the version of the libcosim library.
+version library_version();
+
+
 } // namespace cosim
 #endif // header guard
