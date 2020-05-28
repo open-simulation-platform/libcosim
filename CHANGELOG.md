@@ -3,6 +3,20 @@ All notable changes to libcosim will be documented in this file. This includes n
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
+### [v0.7.0] – 2020-05-28
+
+##### Changed
+* Renamed library to libcosim ([PR#571](https://github.com/open-simulation-platform/libcosim/pull/571))
+* C API moved to separate repository [libcosimc](https://github.com/open-simulation-platform/libcosimc) ([PR#571](https://github.com/open-simulation-platform/libcosim/pull/571))
+* Split `model.hpp` into `model_description.hpp` and `time.hpp` ([PR#587](https://github.com/open-simulation-platform/libcosim/pull/587))
+
+##### Added
+* Provide library version in API ([PR#586](https://github.com/open-simulation-platform/libcosim/pull/586))
+ 
+##### Fixed
+* Incorrect parsing of VectorSum function dimension ([PR#580](https://github.com/open-simulation-platform/libcosim/pull/580))
+* Arbitrary order for child elements in OspSystemStructure.xml `<connections>`([PR#575](https://github.com/open-simulation-platform/libcosim/pull/575))
+
 ### [v0.6.0] – 2020-04-27
 ##### Changed
 * MSMI configuration (OspSystemStructure.xml and OspModelDescription.xml) updated 
@@ -117,3 +131,4 @@ First OSP JIP partner release
 [v0.5.0]: https://github.com/open-simulation-platform/cse-core/compare/v0.4.0...v0.5.0
 [v0.5.1]: https://github.com/open-simulation-platform/cse-core/compare/v0.5.0...v0.5.1
 [v0.6.0]: https://github.com/open-simulation-platform/cse-core/compare/v0.5.1...v0.6.0
+[v0.7.0]: https://github.com/open-simulation-platform/cse-core/compare/v0.6.0...v0.7.0
