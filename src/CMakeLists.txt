@@ -1,5 +1,9 @@
 set(publicHeaderDir "${CMAKE_SOURCE_DIR}/include")
 
+# ==============================================================================
+# Source files
+# ==============================================================================
+
 set(publicHeaders
     "cosim/algorithm.hpp"
     "cosim/algorithm/algorithm.hpp"
@@ -58,9 +62,6 @@ set(privateHeaders
     "cosim/utility/uuid.hpp"
     "cosim/utility/zip.hpp"
 )
-set(generatedHeaders
-    "osp_system_structure_schema.hpp"
-)
 set(sources
     "cosim/algorithm/fixed_step_algorithm.cpp"
     "cosim/async_slave.cpp"
@@ -102,61 +103,89 @@ set(generatedSources
     "cosim/lib_info.cpp"
 )
 
-set(generatedSourcesFull)
 if(LIBCOSIM_WITH_FMUPROXY)
-    set(fmuProxyGenerated
-        "${CMAKE_BINARY_DIR}/gen-cpp/FmuService.h"
-        "${CMAKE_BINARY_DIR}/gen-cpp/FmuService.cpp"
-        "${CMAKE_BINARY_DIR}/gen-cpp/service_types.h"
-        "${CMAKE_BINARY_DIR}/gen-cpp/service_types.cpp"
-    )
-    add_custom_command(
-        OUTPUT ${fmuProxyGenerated}
-        COMMAND "${THRIFT_EXECUTABLE}" "--gen" "cpp:no_skeleton" "${CMAKE_CURRENT_SOURCE_DIR}/cosim/fmuproxy/service.thrift"
-        DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/cosim/fmuproxy/service.thrift"
-        WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-    )
     list(APPEND privateHeaders
-            "cosim/fmuproxy/fmuproxy_client.hpp"
-            "cosim/fmuproxy/fmuproxy_helper.hpp"
-            "cosim/fmuproxy/fmuproxy_uri_sub_resolver.hpp"
-            "cosim/fmuproxy/remote_fmu.hpp"
-            "cosim/fmuproxy/remote_slave.hpp"
-            "cosim/fmuproxy/thrift_state.hpp"
+        "cosim/fmuproxy/fmuproxy_client.hpp"
+        "cosim/fmuproxy/fmuproxy_helper.hpp"
+        "cosim/fmuproxy/fmuproxy_uri_sub_resolver.hpp"
+        "cosim/fmuproxy/remote_fmu.hpp"
+        "cosim/fmuproxy/remote_slave.hpp"
+        "cosim/fmuproxy/thrift_state.hpp"
     )
     list(APPEND sources
-            "cosim/fmuproxy/fmuproxy_client.cpp"
-            "cosim/fmuproxy/fmuproxy_uri_sub_resolver.cpp"
-            "cosim/fmuproxy/remote_slave.cpp"
-            "cosim/fmuproxy/remote_fmu.cpp"
-            "cosim/fmuproxy/thrift_state.cpp"
+        "cosim/fmuproxy/fmuproxy_client.cpp"
+        "cosim/fmuproxy/fmuproxy_uri_sub_resolver.cpp"
+        "cosim/fmuproxy/remote_slave.cpp"
+        "cosim/fmuproxy/remote_fmu.cpp"
+        "cosim/fmuproxy/thrift_state.cpp"
     )
-    list(APPEND generatedSourcesFull ${fmuProxyGenerated})
 endif()
+
+# ==============================================================================
+# Code generation
+# ==============================================================================
+
+set(generatedSourcesDir "${CMAKE_BINARY_DIR}/generated")
+file(MAKE_DIRECTORY "${generatedSourcesDir}")
+
+# Generate sources from .in files
+set(generatedFiles)
+foreach(src IN LISTS generatedSources)
+    set(tgt "${generatedSourcesDir}/${src}")
+    configure_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/${src}.in"
+        "${tgt}"
+        @ONLY
+    )
+    list(APPEND generatedFiles "${tgt}")
+endforeach()
+
+# Generate header file from OSP XSD
+set(ospSystemStructureXSD "${CMAKE_SOURCE_DIR}/data/xsd/OspSystemStructure.xsd")
+set(ospSystemStructureHeader "${generatedSourcesDir}/osp_system_structure_schema.hpp")
+add_custom_command(
+    OUTPUT "${ospSystemStructureHeader}"
+    COMMAND osp-xsd-embedder "${ospSystemStructureXSD}" "${ospSystemStructureHeader}"
+    DEPENDS osp-xsd-embedder "${ospSystemStructureXSD}"
+)
+list(APPEND generatedFiles "${ospSystemStructureHeader}")
+
+# Generate FMU-proxy classes from Thrift service definitions
+if(LIBCOSIM_WITH_FMUPROXY)
+    if(NOT THRIFT_EXECUTABLE)
+        message(FATAL_ERROR "The thrift compiler was not found. Cannot build with FMU-Proxy support.")
+    endif()
+    set(thriftServiceDefinition "${CMAKE_CURRENT_SOURCE_DIR}/cosim/fmuproxy/service.thrift")
+    set(thriftGenerated
+        "${generatedSourcesDir}/FmuService.h"
+        "${generatedSourcesDir}/FmuService.cpp"
+        "${generatedSourcesDir}/service_types.h"
+        "${generatedSourcesDir}/service_types.cpp"
+    )
+    add_custom_command(
+        OUTPUT ${thriftGenerated}
+        COMMAND "${THRIFT_EXECUTABLE}"
+            "--gen" "cpp:no_skeleton"
+            "-out" "${generatedSourcesDir}"
+            "${thriftServiceDefinition}"
+        DEPENDS "${thriftServiceDefinition}"
+    )
+    add_library(fmuproxy-service OBJECT ${thriftGenerated})
+    set_target_properties(fmuproxy-service PROPERTIES POSITION_INDEPENDENT_CODE ON)
+    list(APPEND generatedFiles "$<TARGET_OBJECTS:fmuproxy-service>")
+endif()
+
+# ==============================================================================
+# Target definition
+# ==============================================================================
 
 set(publicHeadersFull)
 foreach(h IN LISTS publicHeaders)
     list(APPEND publicHeadersFull "${publicHeaderDir}/${h}")
 endforeach()
 
-foreach(src IN LISTS generatedSources)
-    set(tgt "${CMAKE_CURRENT_BINARY_DIR}/${src}")
-    configure_file(
-        "${CMAKE_CURRENT_SOURCE_DIR}/${src}.in"
-        "${tgt}"
-        @ONLY
-    )
-    list(APPEND generatedSourcesFull "${tgt}")
-endforeach()
+add_library(cosim ${publicHeadersFull} ${privateHeaders} ${sources} ${generatedFiles})
 
-set(allSources ${publicHeadersFull} ${privateHeaders} ${generatedHeaders} ${sources} ${generatedSourcesFull})
-
-add_custom_command(
-    OUTPUT osp_system_structure_schema.hpp
-    COMMAND osp-xsd-embedder "${CMAKE_SOURCE_DIR}/data/xsd/OspSystemStructure.xsd" osp_system_structure_schema.hpp
-    DEPENDS ${CMAKE_SOURCE_DIR}/data/xsd/OspSystemStructure.xsd osp-xsd-embedder)
-
-add_library(cosim ${allSources})
 target_compile_definitions(cosim PUBLIC "BOOST_ALL_DYN_LINK=1" "BOOST_ALL_NO_LIB=1" "BOOST_CONFIG_SUPPRESS_OUTDATED_MESSAGE=1")
 target_compile_features(cosim PUBLIC "cxx_std_17")
 target_include_directories(cosim
@@ -164,7 +193,7 @@ target_include_directories(cosim
         "$<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>"
     PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}"
-        "${CMAKE_CURRENT_BINARY_DIR}"
+        "${generatedSourcesDir}"
 )
 target_link_libraries(cosim
     PUBLIC
@@ -187,7 +216,6 @@ if(LIBCOSIM_WITH_FMUPROXY)
         PUBLIC
             thrift::thrift
         )
-    target_include_directories(cosim PRIVATE "${CMAKE_BINARY_DIR}/gen-cpp")
 endif()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
@@ -199,6 +227,10 @@ endif()
 if(LIBCOSIM_STANDALONE_INSTALLATION)
     set_target_properties(cosim PROPERTIES INSTALL_RPATH "\$ORIGIN")
 endif()
+
+# ==============================================================================
+# Installation rules
+# ==============================================================================
 
 install(
     TARGETS cosim
