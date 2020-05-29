@@ -36,7 +36,7 @@ jobs:
         run: conan remote add osp https://osp-conan.azurewebsites.net/artifactory/api/conan/public --force
       - name: Conan create
         run: |
-          BRANCH=${GITHUB_REF#refs/heads/}
+          BRANCH=${GITHUB_REF#refs/*/}
           SHORT_BRANCH=${BRANCH:0:50}
           CHANNEL=${SHORT_BRANCH//\//_}
           conan create -s build_type=${{ matrix.build_type }} -s compiler.version=${{ matrix.compiler_version }} -s compiler.libcxx=${{ matrix.compiler_libcxx }} -o ${{ matrix.option_fmuproxy }} -b missing . osp/${CHANNEL}
@@ -74,7 +74,7 @@ jobs:
       - name: Conan create
         shell: bash
         run: |
-          BRANCH=${GITHUB_REF#refs/heads/}
+          BRANCH=${GITHUB_REF#refs/*/}
           SHORT_BRANCH=${BRANCH:0:50}
           CHANNEL=${SHORT_BRANCH//\//_}
           conan create -s build_type=${{ matrix.build_type }} -s compiler.version=${{ matrix.compiler_version }} -o ${{ matrix.option_fmuproxy }} -b missing . osp/${CHANNEL}
