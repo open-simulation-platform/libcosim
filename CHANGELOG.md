@@ -3,7 +3,7 @@ All notable changes to libcosim will be documented in this file. This includes n
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
-### [v0.7.0] – 2020-05-28
+### [v0.7.0] – 2020-05-29
 
 ##### Changed
 * Renamed library from csecore to libcosim ([PR#571](https://github.com/open-simulation-platform/libcosim/pull/571))
