@@ -76,6 +76,8 @@ private:
     bool failed_;
 };
 
+// The following class was copied from Microsoft Guidelines Support Library
+// https://github.com/microsoft/GSL
 // final_action allows you to ensure something gets run at the end of a scope
 template <class F>
 class final_action
