@@ -61,11 +61,11 @@ cosim::fmuproxy::fmuproxy_client::fmuproxy_client(const std::string& host, const
     std::shared_ptr<TTransport> socket(new TSocket(host, port));
     std::shared_ptr<TTransport> transport(new TFramedTransport(socket));
     std::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
-    std::shared_ptr<::fmuproxy::thrift::fmu_service_if> client;
+    std::shared_ptr<::fmuproxy::thrift::FmuServiceIf> client;
     if (!concurrent) {
-        client = std::make_shared<fmu_service_client>(protocol);
+        client = std::make_shared<FmuServiceClient>(protocol);
     } else {
-        client = std::make_shared<fmu_service_concurrent_client>(protocol);
+        client = std::make_shared<FmuServiceConcurrentClient>(protocol);
     }
     try {
         transport->open();

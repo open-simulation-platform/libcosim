@@ -7,13 +7,13 @@
 
 #include <utility>
 
-cosim::fmuproxy::thrift_state::thrift_state(std::shared_ptr<::fmuproxy::thrift::fmu_service_if> client_,
+cosim::fmuproxy::thrift_state::thrift_state(std::shared_ptr<::fmuproxy::thrift::FmuServiceIf> client_,
     std::shared_ptr<apache::thrift::transport::TTransport> transport_)
     : client_(std::move(client_))
     , transport_(std::move(transport_))
 { }
 
-::fmuproxy::thrift::fmu_service_if& cosim::fmuproxy::thrift_state::client()
+::fmuproxy::thrift::FmuServiceIf& cosim::fmuproxy::thrift_state::client()
 {
     return *client_;
 }

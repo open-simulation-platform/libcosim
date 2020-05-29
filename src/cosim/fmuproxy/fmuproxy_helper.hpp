@@ -9,8 +9,9 @@
 #ifndef COSIM_FMUPROXY_FMUPROXY_HELPER_HPP
 #define COSIM_FMUPROXY_FMUPROXY_HELPER_HPP
 
+#include "service_types.h"
+
 #include "cosim/error.hpp"
-#include "cosim/fmuproxy/service_types.hpp"
 #include "cosim/model_description.hpp"
 
 #include <vector>

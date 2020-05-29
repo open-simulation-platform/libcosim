@@ -13,6 +13,9 @@ mark_as_advanced(THRIFT_INCLUDE_DIR)
 find_library(THRIFT_LIBRARY NAMES thrift thriftd thriftmd thriftmdd)
 mark_as_advanced(THRIFT_LIBRARY)
 
+find_program(THRIFT_EXECUTABLE NAMES thrift)
+mark_as_advanced(THRIFT_EXECUTABLE)
+
 include(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(THRIFT
         REQUIRED_VARS THRIFT_LIBRARY THRIFT_INCLUDE_DIR)

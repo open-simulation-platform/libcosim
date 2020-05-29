@@ -87,7 +87,7 @@ jobs:
           cmake . \
             -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
             -A x64 \
-            -DCMAKE_PREFIX_PATH="gsl_microsoft;boost;fmilibrary;libzip;xerces-c;yaml-cpp;bzip2;zlipb" \
+            -DCMAKE_PREFIX_PATH="ms-gsl;boost;fmilibrary;libzip;xerces-c;yaml-cpp;bzip2;zlib" \
             -DCMAKE_INSTALL_PREFIX=install \
             -B build
       - name: CMake - build

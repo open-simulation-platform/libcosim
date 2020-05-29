@@ -76,6 +76,31 @@ private:
     bool failed_;
 };
 
+// The following class was copied from Microsoft Guidelines Support Library
+// https://github.com/microsoft/GSL
+// final_action allows you to ensure something gets run at the end of a scope
+template <class F>
+class final_action
+{
+public:
+    explicit final_action(F f) noexcept : f_(std::move(f)) {}
+
+    final_action(final_action&& other) noexcept : f_(std::move(other.f_)), invoke_(std::exchange(other.invoke_, false)) {}
+
+    final_action(const final_action&) = delete;
+    final_action& operator=(const final_action&) = delete;
+    final_action& operator=(final_action&&) = delete;
+
+    ~final_action() noexcept
+    {
+        if (invoke_) f_();
+    }
+
+private:
+    F f_;
+    bool invoke_{true};
+};
+
 class osp_config_parser
 {
 
@@ -229,7 +254,7 @@ osp_config_parser::osp_config_parser(
 {
     // Root node
     xercesc::XMLPlatformUtils::Initialize();
-    const auto xerces_cleanup = gsl::final_act([]() {
+    const auto xerces_cleanup = final_action([]() {
         xercesc::XMLPlatformUtils::Terminate();
     });
 
@@ -573,7 +598,7 @@ struct extended_model_description
     explicit extended_model_description(const boost::filesystem::path& ospModelDescription)
     {
         xercesc::XMLPlatformUtils::Initialize();
-        const auto xerces_cleanup = gsl::final_act([]() {
+        const auto xerces_cleanup = final_action([]() {
             xercesc::XMLPlatformUtils::Terminate();
         });
         const auto domImpl = xercesc::DOMImplementationRegistry::getDOMImplementation(tc("LS").get());

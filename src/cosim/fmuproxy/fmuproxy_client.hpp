@@ -10,7 +10,8 @@
 #ifndef COSIM_FMUPROXY_FMUPROXYCLIENT_HPP
 #define COSIM_FMUPROXY_FMUPROXYCLIENT_HPP
 
-#include <cosim/fmuproxy/fmu_service.hpp>
+#include "FmuService.h"
+
 #include <cosim/fmuproxy/remote_fmu.hpp>
 
 #include <memory>
