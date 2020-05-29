@@ -85,7 +85,6 @@ jobs:
         shell: bash
         run: |
           cmake . \
-            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
             -A x64 \
             -DCMAKE_PREFIX_PATH="ms-gsl;boost;fmilibrary;libzip;xerces-c;yaml-cpp;bzip2;zlib" \
             -DCMAKE_INSTALL_PREFIX=install \
@@ -101,8 +100,8 @@ jobs:
           ctest -C ${{ matrix.build_type }}
       - name: CMake - install
         run: |
-            cmake --build build --target install
-            cmake --build build --target install-doc
+            cmake --build build --config ${{ matrix.build_type }} --target install
+            cmake --build build --config ${{ matrix.build_type }} --target install-doc
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
