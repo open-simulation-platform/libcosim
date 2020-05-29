@@ -6,7 +6,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### [v0.7.0] – 2020-05-28
 
 ##### Changed
-* Renamed library to libcosim ([PR#571](https://github.com/open-simulation-platform/libcosim/pull/571))
+* Renamed library from csecore to libcosim ([PR#571](https://github.com/open-simulation-platform/libcosim/pull/571))
 * C API moved to separate repository [libcosimc](https://github.com/open-simulation-platform/libcosimc) ([PR#571](https://github.com/open-simulation-platform/libcosim/pull/571))
 * Split `model.hpp` into `model_description.hpp` and `time.hpp` ([PR#587](https://github.com/open-simulation-platform/libcosim/pull/587))
 
