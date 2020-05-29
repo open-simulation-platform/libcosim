@@ -32,7 +32,6 @@ jobs:
         run: |
           sudo pip3 install --upgrade setuptools pip
           sudo pip3 install conan
-          sudo apt-get install -y doxygen
       - name: Configure Conan
         run: conan remote add osp https://osp-conan.azurewebsites.net/artifactory/api/conan/public --force
       - name: Conan create
@@ -70,7 +69,6 @@ jobs:
         run: |
           pip3 install --upgrade setuptools pip
           pip3 install conan
-          choco install doxygen.install
       - name: Configure Conan
         run: conan remote add osp https://osp-conan.azurewebsites.net/artifactory/api/conan/public --force
       - name: Conan create
