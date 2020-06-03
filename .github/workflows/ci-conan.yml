@@ -90,3 +90,33 @@ jobs:
           conan create -s build_type=${{ matrix.build_type }} -s compiler.version=${{ matrix.compiler_version }} -o ${{ matrix.option_fmuproxy }} -b missing . osp/${CHANNEL}
       - name: Conan upload
         run: conan upload --all -c -r osp '*'
+
+  conan-on-macos:
+    name: Conan
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest]
+        build_type: [Debug, Release]
+        compiler_version: ['11.0']
+        compiler_cppstd: [11]
+        option_fmuproxy: ['fmuproxy=True', 'fmuproxy=False']
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install prerequisites
+        run: |
+          brew install conan
+      - name: Configure Conan
+        run: conan remote add osp https://osp.jfrog.io/artifactory/api/conan/conan-public --force
+      - name: Conan create
+        run: |
+          BRANCH=${GITHUB_REF#refs/*/}
+          SHORT_BRANCH=${BRANCH:0:50}
+          CHANNEL=${SHORT_BRANCH//\//_}
+          conan create -s build_type=${{ matrix.build_type }} -s compiler.version=${{ matrix.compiler_version }} -s compiler.cppstd=${{ matrix.compiler_cppstd }} -o ${{ matrix.option_fmuproxy }} -b missing . osp/${CHANNEL}
+      - name: Conan upload
+        run: |
+          conan upload --all -c -r osp '*'
+
