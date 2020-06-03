@@ -218,6 +218,14 @@ if(LIBCOSIM_WITH_FMUPROXY)
         )
 endif()
 
+if(APPLE)
+    target_link_libraries(cosim
+        PRIVATE
+            ${COREFOUNDATION_LIBRARY}
+            ${CORESERVICES_LIBRARY}
+        )
+
+endif()
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_link_libraries(cosim INTERFACE "atomic")
 endif()
