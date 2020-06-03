@@ -20,17 +20,22 @@ class LibcosimConan(ConanFile):
         "fmilibrary/2.0.3",
         "ms-gsl/2.1.0",
         "libzip/1.5.2@bincrafters/stable",
+        "yaml-cpp/0.6.3",
+        "xerces-c/3.2.2",
+        # Only for conflict resolution
+        "bzip2/1.0.8",
         "openssl/1.0.2u",
         "zlib/1.2.11",
-        "yaml-cpp/0.6.3",
-        "bzip2/1.0.8",
-        "xerces-c/3.2.2"
     )
 
     options = {"fmuproxy": [True, False]}
     default_options = (
         "fmuproxy=False",
-        "boost:shared=True"
+        "boost:shared=True",
+        "fmilibrary:shared=True",
+        "libzip:shared=True",
+        "yaml-cpp:shared=True",
+        "xerces-c:shared=True"
     )
 
     def set_version(self):
