@@ -36,9 +36,19 @@ jobs:
         run: conan remote add osp https://osp-conan.azurewebsites.net/artifactory/api/conan/public --force
       - name: Conan create
         run: |
-          BRANCH=${GITHUB_REF#refs/*/}
-          SHORT_BRANCH=${BRANCH:0:50}
-          CHANNEL=${SHORT_BRANCH//\//_}
+          BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          TAGS=$(git tag --points-at HEAD)
+          VERSION=$(<version.txt)
+          if [ "$BRANCH" = "master" ]; then
+            if { echo "$TAGS" | grep -q "^v$VERSION\$"; }; then
+              CHANNEL="stable"
+            else
+              CHANNEL="testing"
+            fi
+          else
+            SHORT_BRANCH="${BRANCH:0:40}"
+            CHANNEL="testing-${SHORT_BRANCH//\//_}"
+          fi
           conan create -s build_type=${{ matrix.build_type }} -s compiler.version=${{ matrix.compiler_version }} -s compiler.libcxx=${{ matrix.compiler_libcxx }} -o ${{ matrix.option_fmuproxy }} -b missing . osp/${CHANNEL}
       - name: Conan upload
         run: |
@@ -74,9 +84,19 @@ jobs:
       - name: Conan create
         shell: bash
         run: |
-          BRANCH=${GITHUB_REF#refs/*/}
-          SHORT_BRANCH=${BRANCH:0:50}
-          CHANNEL=${SHORT_BRANCH//\//_}
+          BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          TAGS=$(git tag --points-at HEAD)
+          VERSION=$(<version.txt)
+          if [ "$BRANCH" = "master" ]; then
+            if { echo "$TAGS" | grep -q "^v$VERSION\$"; }; then
+              CHANNEL="stable"
+            else
+              CHANNEL="testing"
+            fi
+          else
+            SHORT_BRANCH="${BRANCH:0:40}"
+            CHANNEL="testing-${SHORT_BRANCH//\//_}"
+          fi
           conan create -s build_type=${{ matrix.build_type }} -s compiler.version=${{ matrix.compiler_version }} -o ${{ matrix.option_fmuproxy }} -b missing . osp/${CHANNEL}
       - name: Conan upload
         run: conan upload --all -c -r osp '*'
