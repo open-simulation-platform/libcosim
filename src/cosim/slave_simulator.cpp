@@ -239,12 +239,12 @@ public:
 
     impl& operator=(impl&&) noexcept = delete;
 
-    std::string name() const
+    const std::string& name() const
     {
         return name_;
     }
 
-    cosim::model_description model_description() const
+    const cosim::model_description& model_description() const
     {
         return modelDescription_;
     }
@@ -561,13 +561,13 @@ slave_simulator::slave_simulator(slave_simulator&&) noexcept = default;
 slave_simulator& slave_simulator::operator=(slave_simulator&&) noexcept = default;
 
 
-std::string slave_simulator::name() const
+const std::string& slave_simulator::name() const
 {
     return pimpl_->name();
 }
 
 
-cosim::model_description slave_simulator::model_description() const
+const cosim::model_description& slave_simulator::model_description() const
 {
     return pimpl_->model_description();
 }

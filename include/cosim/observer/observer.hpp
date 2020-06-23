@@ -26,10 +26,10 @@ class observable
 {
 public:
     /// Returns the entity's name.
-    virtual std::string name() const = 0;
+    virtual const std::string& name() const = 0;
 
     /// Returns a description of the entity.
-    virtual cosim::model_description model_description() const = 0;
+    virtual const cosim::model_description& model_description() const = 0;
 
     /**
      *  Exposes a variable for retrieval with `get_xxx()`.
