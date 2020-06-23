@@ -192,9 +192,9 @@ public:
         return timer_.get_real_time_factor_target();
     }
 
-    std::shared_ptr<const simulator> get_simulator(simulator_index index) const
+    const model_description& get_model_description(simulator_index index) const
     {
-        return simulators_.at(index);
+        return simulators_.at(index)->model_description();
     }
 
     std::vector<variable_id> get_modified_variables() const
@@ -444,10 +444,9 @@ double execution::get_real_time_factor_target() const
     return pimpl_->get_real_time_factor_target();
 }
 
-std::shared_ptr<const simulator> execution::get_simulator(
-    simulator_index index) const
+const model_description& execution::get_model_description(simulator_index index) const
 {
-    return pimpl_->get_simulator(index);
+    return pimpl_->get_model_description(index);
 }
 
 std::vector<variable_id> execution::get_modified_variables() const

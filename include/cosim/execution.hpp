@@ -297,8 +297,8 @@ public:
     /// Returns the current real time factor target
     double get_real_time_factor_target() const;
 
-    /// Returns the simulator with the given index
-    std::shared_ptr<const simulator> get_simulator(simulator_index index) const;
+    /// Returns the model description for a simulator with the given index
+    const model_description& get_model_description(simulator_index index) const;
 
     /// Returns a map of currently modified variables
     std::vector<variable_id> get_modified_variables() const;
