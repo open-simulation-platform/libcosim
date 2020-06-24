@@ -32,12 +32,12 @@ public:
         rtStartTime_ = startTime_;
         rtCounter_ = 0L;
         measuredRealTimeFactor_ = 1.0;
+        totalAverageRealTimeFactor_ = 1.0;
     }
 
     void sleep(time_point currentTime)
     {
         Time::time_point current = Time::now();
-        update_real_time_factor(current, currentTime);
         lastSimulationTime_ = currentTime;
         if (realTimeSimulation_) {
             const auto elapsed = current - startTime_;
@@ -48,6 +48,7 @@ public:
                 std::this_thread::sleep_for(simulationSleepTime);
             }
         }
+        update_real_time_factor(Time::now(), currentTime);
     }
 
     void enable_real_time_simulation()
@@ -60,6 +61,9 @@ public:
 
     void disable_real_time_simulation()
     {
+        if (realTimeSimulation_) {
+            start(lastSimulationTime_);
+        }
         realTimeSimulation_ = false;
     }
 
@@ -71,6 +75,11 @@ public:
     double get_measured_real_time_factor()
     {
         return measuredRealTimeFactor_;
+    }
+
+    double get_total_average_real_time_factor()
+    {
+        return totalAverageRealTimeFactor_;
     }
 
     void set_real_time_factor_target(double realTimeFactor)
@@ -90,6 +99,7 @@ public:
 private:
     long rtCounter_ = 0L;
     std::atomic<double> measuredRealTimeFactor_ = 1.0;
+    std::atomic<double> totalAverageRealTimeFactor_ = 1.0;
     std::atomic<bool> realTimeSimulation_ = false;
     std::atomic<double> realTimeFactorTarget_ = 1.0;
     Time::time_point startTime_;
@@ -100,14 +110,16 @@ private:
 
     void update_real_time_factor(Time::time_point currentTime, time_point currentSimulationTime)
     {
+        const auto relativeSimTime = currentSimulationTime - simulationStartTime_;
+        const auto relativeRealTime = currentTime - startTime_;
+        totalAverageRealTimeFactor_ = relativeSimTime.count() / (1.0 * relativeRealTime.count());
+
         constexpr int stepsToMonitor = 5;
         if (rtCounter_ >= stepsToMonitor) {
+            const auto elapsedSimTime = currentSimulationTime - rtSimulationStartTime_;
+            const auto elapsedRealTime = currentTime - rtStartTime_;
 
-            const duration expectedSimulationTime = currentSimulationTime - rtSimulationStartTime_;
-            const auto expected = std::chrono::duration_cast<std::chrono::nanoseconds>(expectedSimulationTime);
-
-            Time::duration elapsed = currentTime - rtStartTime_;
-            measuredRealTimeFactor_ = expected.count() / (1.0 * elapsed.count());
+            measuredRealTimeFactor_ = elapsedSimTime.count() / (1.0 * elapsedRealTime.count());
             rtStartTime_ = currentTime;
             rtSimulationStartTime_ = currentSimulationTime;
             rtCounter_ = 0L;
@@ -151,6 +163,11 @@ bool real_time_timer::is_real_time_simulation() const
 double real_time_timer::get_measured_real_time_factor() const
 {
     return pimpl_->get_measured_real_time_factor();
+}
+
+double real_time_timer::get_total_average_real_time_factor() const
+{
+    return pimpl_->get_total_average_real_time_factor();
 }
 
 void real_time_timer::set_real_time_factor_target(double realTimeFactor)

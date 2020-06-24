@@ -16,6 +16,16 @@
 namespace cosim
 {
 
+struct timer_config{
+    bool real_time_simulation;
+    double real_time_factor_target;
+};
+
+struct real_time_info {
+    double rolling_average_real_time_factor;
+    double total_average_real_time_factor;
+};
+
 /**
  *  A class for controlling real-time execution.
  */
@@ -51,8 +61,11 @@ public:
     /// Returns if this is a real time simulation
     bool is_real_time_simulation() const;
 
-    /// Returns the current real time factor
+    /// Returns the rolling average real time factor
     double get_measured_real_time_factor() const;
+
+    /// Returns the total average real time factor
+    double get_total_average_real_time_factor() const;
 
     /// Sets a custom real time factor
     void set_real_time_factor_target(double realTimeFactor);

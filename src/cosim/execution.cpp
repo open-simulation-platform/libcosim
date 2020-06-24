@@ -182,6 +182,11 @@ public:
         return timer_.get_measured_real_time_factor();
     }
 
+    double get_total_average_real_time_factor() const
+    {
+        return timer_.get_total_average_real_time_factor();
+    }
+
     void set_real_time_factor_target(double realTimeFactor)
     {
         timer_.set_real_time_factor_target(realTimeFactor);
@@ -432,6 +437,11 @@ bool execution::is_real_time_simulation() const
 double execution::get_measured_real_time_factor() const
 {
     return pimpl_->get_measured_real_time_factor();
+}
+
+double execution::get_total_average_real_time_factor() const
+{
+    return pimpl_->get_total_average_real_time_factor();
 }
 
 void execution::set_real_time_factor_target(double realTimeFactor)

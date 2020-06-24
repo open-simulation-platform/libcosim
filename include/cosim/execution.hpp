@@ -291,8 +291,11 @@ public:
     /// Returns if this is a real time simulation
     bool is_real_time_simulation() const;
 
-    /// Returns the current real time factor
+    /// Returns the rolling average real time factor
     double get_measured_real_time_factor() const;
+
+    /// Returns the total average real time factor
+    double get_total_average_real_time_factor() const;
 
     /// Returns the current real time factor target
     double get_real_time_factor_target() const;
