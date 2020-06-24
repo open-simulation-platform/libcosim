@@ -23,19 +23,22 @@ class real_time_timer;
 class real_time_config
 {
 public:
-    /// Toggles real time execution.
+    /// Toggles real-time-synchronized simulation on or off.
     void set_real_time_simulation(bool enable);
 
-    /// Returns if this is a real time simulation
+    /// Returns if this is a real-time-synchronized simulation.
     bool is_real_time_simulation() const;
 
-    /// Sets a custom real time factor
+    /// Sets the real time factor target used for real-time-synchronized simulation.
     void set_real_time_factor_target(double factor);
 
-    /// Returns the current real time factor target
+    /// Returns the real time factor target used for real-time-synchronized simulation.
     double get_real_time_factor_target() const;
 
-    /// Set the number of steps to use in the rolling average real time factor calculation.
+    /**
+     * Sets the number of steps to use in the rolling average real time factor calculation.
+     * This value is used for monitoring purposes only.
+     */
     void set_steps_to_monitor(int steps);
 
     /// Returns the number of steps used in the rolling average real time factor calculation.
@@ -53,9 +56,9 @@ private:
 /// A struct containing real time metrics.
 struct real_time_metrics
 {
-    /// The current rolling average real time factor.
+    /// The current rolling average real time factor measurement.
     std::atomic<double> rolling_average_real_time_factor = 1.0;
-    /// The total average real time factor since the simulation was started.
+    /// The total average real time factor measurement since the simulation was started.
     std::atomic<double> total_average_real_time_factor = 1.0;
 };
 
