@@ -36,18 +36,13 @@ jobs:
         run: conan remote add osp https://osp-conan.azurewebsites.net/artifactory/api/conan/public --force
       - name: Conan create
         run: |
-          BRANCH=$(git rev-parse --abbrev-ref HEAD)
-          TAGS=$(git tag --points-at HEAD)
-          VERSION=$(<version.txt)
-          if [ "$BRANCH" = "master" ]; then
-            if { echo "$TAGS" | grep -q "^v$VERSION\$"; }; then
-              CHANNEL="stable"
-            else
-              CHANNEL="testing"
-            fi
+          REFNAME="${GITHUB_REF#refs/*/}"
+          VERSION="v$(<version.txt)"
+          if [[ $GITHUB_REF == refs/tags/* ]] && [[ $REFNAME == $VERSION ]]; then CHANNEL="stable"
+          elif [[ $REFNAME == master ]]; then CHANNEL="testing"
           else
-            SHORT_BRANCH="${BRANCH:0:40}"
-            CHANNEL="testing-${SHORT_BRANCH//\//_}"
+            SHORT_REFNAME="${REFNAME:0:40}"
+            CHANNEL="testing-${SHORT_REFNAME//\//_}"
           fi
           conan create -s build_type=${{ matrix.build_type }} -s compiler.version=${{ matrix.compiler_version }} -s compiler.libcxx=${{ matrix.compiler_libcxx }} -o ${{ matrix.option_fmuproxy }} -b missing . osp/${CHANNEL}
       - name: Conan upload
@@ -84,18 +79,13 @@ jobs:
       - name: Conan create
         shell: bash
         run: |
-          BRANCH=$(git rev-parse --abbrev-ref HEAD)
-          TAGS=$(git tag --points-at HEAD)
-          VERSION=$(<version.txt)
-          if [ "$BRANCH" = "master" ]; then
-            if { echo "$TAGS" | grep -q "^v$VERSION\$"; }; then
-              CHANNEL="stable"
-            else
-              CHANNEL="testing"
-            fi
+          REFNAME="${GITHUB_REF#refs/*/}"
+          VERSION="v$(<version.txt)"
+          if [[ $GITHUB_REF == refs/tags/* ]] && [[ $REFNAME == $VERSION ]]; then CHANNEL="stable"
+          elif [[ $REFNAME == master ]]; then CHANNEL="testing"
           else
-            SHORT_BRANCH="${BRANCH:0:40}"
-            CHANNEL="testing-${SHORT_BRANCH//\//_}"
+            SHORT_REFNAME="${REFNAME:0:40}"
+            CHANNEL="testing-${SHORT_REFNAME//\//_}"
           fi
           conan create -s build_type=${{ matrix.build_type }} -s compiler.version=${{ matrix.compiler_version }} -o ${{ matrix.option_fmuproxy }} -b missing . osp/${CHANNEL}
       - name: Conan upload
