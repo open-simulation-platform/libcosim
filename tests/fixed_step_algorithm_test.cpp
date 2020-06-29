@@ -7,7 +7,6 @@
 #include <cosim/observer/last_value_observer.hpp>
 #include <cosim/observer/time_series_observer.hpp>
 
-#include <cmath>
 #include <exception>
 #include <memory>
 #include <stdexcept>
@@ -36,7 +35,7 @@ int main()
 
         // Default should not be real time
         const auto realTimeConfig = execution.get_real_time_config();
-        REQUIRE(!realTimeConfig->is_real_time_simulation());
+        REQUIRE(!realTimeConfig->real_time_simulation);
 
         auto observer = std::make_shared<cosim::last_value_observer>();
         execution.add_observer(observer);
@@ -107,12 +106,11 @@ int main()
         // Run for another period with an RTF target > 1
         constexpr auto finalTime = cosim::to_time_point(2.0);
         constexpr double rtfTarget = 2.25;
-        realTimeConfig->set_real_time_simulation(true);
-        realTimeConfig->set_real_time_factor_target(rtfTarget);
-        realTimeConfig->set_steps_to_monitor(1);
+        realTimeConfig->real_time_simulation = true;
+        realTimeConfig->real_time_factor_target = rtfTarget;
+        realTimeConfig->steps_to_monitor = 3;
         simResult = execution.simulate_until(finalTime);
         REQUIRE(simResult.get());
-        REQUIRE(std::fabs(realTimeConfig->get_real_time_factor_target() - rtfTarget) < 1.0e-9);
 
         std::cout << "Rolling average RTF: " << realTimeMetrics->rolling_average_real_time_factor << std::endl;
         std::cout << "  Total average RTF: " << realTimeMetrics->total_average_real_time_factor << std::endl;

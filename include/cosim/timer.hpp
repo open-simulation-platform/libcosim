@@ -11,47 +11,57 @@
 
 #include <cosim/time.hpp>
 
+#include <boost/functional/hash.hpp>
+
 #include <atomic>
 #include <memory>
 
 namespace cosim
 {
 
-class real_time_timer;
-
-/// A class containing real time execution configuration.
-class real_time_config
+/// A struct containing real time execution configuration.
+struct real_time_config
 {
-public:
-    /// Toggles real-time-synchronized simulation on or off.
-    void set_real_time_simulation(bool enable);
-
-    /// Returns if this is a real-time-synchronized simulation.
-    bool is_real_time_simulation() const;
-
-    /// Sets the real time factor target used for real-time-synchronized simulation.
-    void set_real_time_factor_target(double factor);
-
-    /// Returns the real time factor target used for real-time-synchronized simulation.
-    double get_real_time_factor_target() const;
+    /// Real-time-synchronized simulation on or off.
+    std::atomic<bool> real_time_simulation = false;
 
     /**
-     * Sets the number of steps to use in the rolling average real time factor calculation.
+     * Real time factor target used for real-time-synchronized simulation.
+     * Values smaller than or equal to zero will disable real-time synchronization.
+     */
+    std::atomic<double> real_time_factor_target = 1.0;
+
+    /**
+     * The number of steps used in the rolling average real time factor calculation.
      * This value is used for monitoring purposes only.
      */
-    void set_steps_to_monitor(int steps);
-
-    /// Returns the number of steps used in the rolling average real time factor calculation.
-    int get_steps_to_monitor() const;
-
-private:
-    friend class real_time_timer;
-
-    std::atomic<bool> configChanged_ = false;
-    std::atomic<bool> realTimeSimulation_ = false;
-    std::atomic<double> realTimeFactorTarget_ = 1.0;
-    std::atomic<int> stepsToMonitor_ = 5;
+    std::atomic<int> steps_to_monitor = 5;
 };
+
+} // namespace cosim
+
+// Specialisations of std::hash for real_time_config
+namespace std
+{
+
+template<>
+class hash<cosim::real_time_config>
+{
+public:
+    std::size_t operator()(const cosim::real_time_config& v) const noexcept
+    {
+        std::size_t seed = 0;
+        boost::hash_combine(seed, v.real_time_simulation);
+        boost::hash_combine(seed, v.real_time_factor_target);
+        boost::hash_combine(seed, v.steps_to_monitor);
+        return seed;
+    }
+};
+
+} // namespace std
+
+namespace cosim
+{
 
 /// A struct containing real time metrics.
 struct real_time_metrics

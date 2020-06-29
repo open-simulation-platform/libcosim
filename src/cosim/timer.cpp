@@ -5,8 +5,6 @@
  */
 #include "cosim/timer.hpp"
 
-#include "cosim/error.hpp"
-
 #include <chrono>
 #include <thread>
 
@@ -16,53 +14,12 @@ constexpr std::chrono::microseconds MIN_SLEEP(100);
 namespace cosim
 {
 
-void real_time_config::set_real_time_simulation(bool enable)
-{
-    if (realTimeSimulation_ != enable) {
-        configChanged_.store(true);
-        realTimeSimulation_.store(enable);
-    }
-}
-
-bool real_time_config::is_real_time_simulation() const
-{
-    return realTimeSimulation_.load();
-}
-
-void real_time_config::set_real_time_factor_target(double factor)
-{
-    COSIM_INPUT_CHECK(factor > 0.0);
-    if (realTimeFactorTarget_.load() != factor) {
-        configChanged_.store(true);
-        realTimeFactorTarget_.store(factor);
-    }
-}
-
-double real_time_config::get_real_time_factor_target() const
-{
-    return realTimeFactorTarget_.load();
-}
-
-void real_time_config::set_steps_to_monitor(int steps)
-{
-    COSIM_INPUT_CHECK(steps > 0);
-    if (stepsToMonitor_.load() != steps) {
-        configChanged_.store(true);
-        stepsToMonitor_.store(steps);
-    }
-}
-
-int real_time_config::get_steps_to_monitor() const
-{
-    return stepsToMonitor_.load();
-}
-
-
 class real_time_timer::impl
 {
 public:
     impl()
         : config_(std::make_shared<real_time_config>())
+        , configHashValue_(std::hash<real_time_config>()(*config_))
         , metrics_(std::make_shared<real_time_metrics>())
     {}
 
@@ -77,13 +34,14 @@ public:
 
     void sleep(time_point currentTime)
     {
-        if (config_->configChanged_.load()) {
+        const auto newHash = std::hash<real_time_config>()(*config_);
+        if (newHash != configHashValue_) {
             start(currentTime);
-            config_->configChanged_.store(false);
+            configHashValue_ = newHash;
         }
-        if (config_->is_real_time_simulation()) {
+        if (config_->real_time_simulation && config_->real_time_factor_target.load() > 0.0) {
             const auto elapsed = Time::now() - startTime_;
-            const auto expectedSimulationTime = (currentTime - simulationStartTime_) / config_->realTimeFactorTarget_.load();
+            const auto expectedSimulationTime = (currentTime - simulationStartTime_) / config_->real_time_factor_target.load();
             const auto simulationSleepTime = expectedSimulationTime - elapsed;
 
             if (simulationSleepTime > MIN_SLEEP) {
@@ -111,6 +69,7 @@ private:
     time_point simulationStartTime_;
     time_point rtSimulationStartTime_;
     std::shared_ptr<real_time_config> config_;
+    size_t configHashValue_;
     std::shared_ptr<real_time_metrics> metrics_;
 
     void update_real_time_factor(Time::time_point currentTime, time_point currentSimulationTime)
@@ -119,7 +78,7 @@ private:
         const auto relativeRealTime = currentTime - startTime_;
         metrics_->total_average_real_time_factor = relativeSimTime.count() / (1.0 * relativeRealTime.count());
 
-        if (rtCounter_ >= config_->stepsToMonitor_.load()) {
+        if (rtCounter_ >= config_->steps_to_monitor.load()) {
             const auto elapsedSimTime = currentSimulationTime - rtSimulationStartTime_;
             const auto elapsedRealTime = currentTime - rtStartTime_;
 
