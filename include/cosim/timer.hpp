@@ -51,9 +51,9 @@ public:
     std::size_t operator()(const cosim::real_time_config& v) const noexcept
     {
         std::size_t seed = 0;
-        boost::hash_combine(seed, v.real_time_simulation);
-        boost::hash_combine(seed, v.real_time_factor_target);
-        boost::hash_combine(seed, v.steps_to_monitor);
+        boost::hash_combine(seed, v.real_time_simulation.load());
+        boost::hash_combine(seed, v.real_time_factor_target.load());
+        boost::hash_combine(seed, v.steps_to_monitor.load());
         return seed;
     }
 };
