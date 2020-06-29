@@ -922,7 +922,9 @@ osp_config load_osp_config(
             simulator.stepSize ? to_duration(*simulator.stepSize) : duration::zero());
 
         for (const auto& p : simulator.initialValues) {
-            config.initial_values.emplace(
+            add_variable_value(
+                config.initial_values,
+                config.system_structure,
                 full_variable_name(simulator.name, p.name),
                 p.value);
         }
