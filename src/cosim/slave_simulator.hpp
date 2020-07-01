@@ -35,8 +35,8 @@ public:
     slave_simulator& operator=(slave_simulator&&) noexcept;
 
     // `observable` methods
-    const std::string& name() const override;
-    const cosim::model_description& model_description() const override;
+    std::string name() const override;
+    cosim::model_description model_description() const override;
 
     void expose_for_getting(variable_type type, value_reference ref) override;
     double get_real(value_reference reference) const override;

@@ -164,8 +164,7 @@ private:
     void initialize_default()
     {
         if (!timeStampedFileNames_) {
-            auto name = observable_->name();
-            const auto filePath = logDir_ / name.append(".csv");
+            const auto filePath = logDir_ / observable_->name().append(".csv");
             clear_file_contents_if_exists(filePath, fsw_);
         }
 
@@ -180,8 +179,7 @@ private:
     void initialize_config(const std::vector<variable_description>& variables)
     {
         if (!timeStampedFileNames_) {
-            auto name = observable_->name();
-            const auto filePath = logDir_ / name.append(".csv");
+            const auto filePath = logDir_ / observable_->name().append(".csv");
             clear_file_contents_if_exists(filePath, fsw_);
         }
 
@@ -193,12 +191,11 @@ private:
     void create_log_file()
     {
         std::string filename;
-        auto name = observable_->name();
         if (!timeStampedFileNames_) {
-            filename = name.append(".csv");
+            filename = observable_->name().append(".csv");
         } else {
             auto time_str = format_time(boost::posix_time::microsec_clock::local_time());
-            filename = name.append("_").append(time_str).append(".csv");
+            filename = observable_->name().append("_").append(time_str).append(".csv");
         }
 
         const auto filePath = logDir_ / filename;
