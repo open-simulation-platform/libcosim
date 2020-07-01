@@ -39,9 +39,10 @@ public:
             start(currentTime);
             configHashValue_ = newHash;
         }
-        if (config_->real_time_simulation && config_->real_time_factor_target.load() > 0.0) {
+        double rtfTarget = config_->real_time_factor_target.load();
+        if (config_->real_time_simulation && rtfTarget > 0.0) {
             const auto elapsed = Time::now() - startTime_;
-            const auto expectedSimulationTime = (currentTime - simulationStartTime_) / config_->real_time_factor_target.load();
+            const auto expectedSimulationTime = (currentTime - simulationStartTime_) / rtfTarget;
             const auto simulationSleepTime = expectedSimulationTime - elapsed;
 
             if (simulationSleepTime > MIN_SLEEP) {
