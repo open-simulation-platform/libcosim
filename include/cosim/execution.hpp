@@ -15,6 +15,7 @@
 #include <cosim/model_description.hpp>
 #include <cosim/system_structure.hpp>
 #include <cosim/time.hpp>
+#include <cosim/timer.hpp>
 
 #include <boost/fiber/future.hpp>
 #include <boost/functional/hash.hpp>
@@ -279,23 +280,11 @@ public:
     /// Is the simulation loop currently running
     bool is_running() const noexcept;
 
-    /// Enables real time simulation
-    void enable_real_time_simulation();
+    /// Returns a pointer to an object containing real time configuration
+    const std::shared_ptr<real_time_config> get_real_time_config() const;
 
-    /// Disables real time simulation
-    void disable_real_time_simulation();
-
-    /// Sets the custom real time factor for the simulation
-    void set_real_time_factor_target(double realTimeFactor);
-
-    /// Returns if this is a real time simulation
-    bool is_real_time_simulation() const;
-
-    /// Returns the current real time factor
-    double get_measured_real_time_factor() const;
-
-    /// Returns the current real time factor target
-    double get_real_time_factor_target() const;
+    /// Returns a pointer to an object containing real time metrics
+    std::shared_ptr<const real_time_metrics> get_real_time_metrics() const;
 
     /// Returns the model description for a simulator with the given index
     model_description get_model_description(simulator_index index) const;

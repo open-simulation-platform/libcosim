@@ -8,7 +8,6 @@
 #include "cosim/algorithm.hpp"
 #include "cosim/exception.hpp"
 #include "cosim/slave_simulator.hpp"
-#include "cosim/timer.hpp"
 #include "cosim/utility/utility.hpp"
 
 #include <algorithm>
@@ -162,34 +161,14 @@ public:
         stopped_ = true;
     }
 
-    void enable_real_time_simulation()
+    std::shared_ptr<real_time_config> get_real_time_config() const
     {
-        timer_.enable_real_time_simulation();
+        return timer_.get_real_time_config();
     }
 
-    void disable_real_time_simulation()
+    std::shared_ptr<const real_time_metrics> get_real_time_metrics() const
     {
-        timer_.disable_real_time_simulation();
-    }
-
-    bool is_real_time_simulation() const
-    {
-        return timer_.is_real_time_simulation();
-    }
-
-    double get_measured_real_time_factor() const
-    {
-        return timer_.get_measured_real_time_factor();
-    }
-
-    void set_real_time_factor_target(double realTimeFactor)
-    {
-        timer_.set_real_time_factor_target(realTimeFactor);
-    }
-
-    double get_real_time_factor_target() const
-    {
-        return timer_.get_real_time_factor_target();
+        return timer_.get_real_time_metrics();
     }
 
     model_description get_model_description(simulator_index index) const
@@ -414,34 +393,14 @@ void execution::stop_simulation()
     pimpl_->stop_simulation();
 }
 
-void execution::enable_real_time_simulation()
+const std::shared_ptr<real_time_config> execution::get_real_time_config() const
 {
-    pimpl_->enable_real_time_simulation();
+    return pimpl_->get_real_time_config();
 }
 
-void execution::disable_real_time_simulation()
+std::shared_ptr<const real_time_metrics> execution::get_real_time_metrics() const
 {
-    pimpl_->disable_real_time_simulation();
-}
-
-bool execution::is_real_time_simulation() const
-{
-    return pimpl_->is_real_time_simulation();
-}
-
-double execution::get_measured_real_time_factor() const
-{
-    return pimpl_->get_measured_real_time_factor();
-}
-
-void execution::set_real_time_factor_target(double realTimeFactor)
-{
-    pimpl_->set_real_time_factor_target(realTimeFactor);
-}
-
-double execution::get_real_time_factor_target() const
-{
-    return pimpl_->get_real_time_factor_target();
+    return pimpl_->get_real_time_metrics();
 }
 
 model_description execution::get_model_description(simulator_index index) const

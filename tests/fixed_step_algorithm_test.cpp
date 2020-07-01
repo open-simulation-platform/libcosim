@@ -7,7 +7,6 @@
 #include <cosim/observer/last_value_observer.hpp>
 #include <cosim/observer/time_series_observer.hpp>
 
-#include <cmath>
 #include <exception>
 #include <memory>
 #include <stdexcept>
@@ -35,7 +34,8 @@ int main()
             std::make_unique<cosim::fixed_step_algorithm>(stepSize));
 
         // Default should not be real time
-        REQUIRE(!execution.is_real_time_simulation());
+        const auto realTimeConfig = execution.get_real_time_config();
+        REQUIRE(!realTimeConfig->real_time_simulation);
 
         auto observer = std::make_shared<cosim::last_value_observer>();
         execution.add_observer(observer);
@@ -77,7 +77,10 @@ int main()
         REQUIRE(simResult.get());
         REQUIRE(std::chrono::abs(execution.current_time() - midTime) < std::chrono::microseconds(1));
         // Actual performance should not be tested here - just check that we get a positive value
-        REQUIRE(execution.get_measured_real_time_factor() > 0.0);
+        const auto realTimeMetrics = execution.get_real_time_metrics();
+        REQUIRE(realTimeMetrics->rolling_average_real_time_factor > 0.0);
+        REQUIRE(realTimeMetrics->total_average_real_time_factor > 0.0);
+
         simResult = execution.simulate_until(endTime);
         REQUIRE(simResult.get());
 
@@ -103,11 +106,14 @@ int main()
         // Run for another period with an RTF target > 1
         constexpr auto finalTime = cosim::to_time_point(2.0);
         constexpr double rtfTarget = 2.25;
-        execution.enable_real_time_simulation();
-        execution.set_real_time_factor_target(rtfTarget);
+        realTimeConfig->real_time_simulation = true;
+        realTimeConfig->real_time_factor_target = rtfTarget;
+        realTimeConfig->steps_to_monitor = 3;
         simResult = execution.simulate_until(finalTime);
         REQUIRE(simResult.get());
-        REQUIRE(std::fabs(execution.get_real_time_factor_target() - rtfTarget) < 1.0e-9);
+
+        std::cout << "Rolling average RTF: " << realTimeMetrics->rolling_average_real_time_factor << std::endl;
+        std::cout << "  Total average RTF: " << realTimeMetrics->total_average_real_time_factor << std::endl;
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;

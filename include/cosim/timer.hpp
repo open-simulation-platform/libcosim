@@ -11,10 +11,66 @@
 
 #include <cosim/time.hpp>
 
+#include <boost/functional/hash.hpp>
+
+#include <atomic>
 #include <memory>
 
 namespace cosim
 {
+
+/// A struct containing real time execution configuration.
+struct real_time_config
+{
+    /// Real-time-synchronized simulation on or off.
+    std::atomic<bool> real_time_simulation = false;
+
+    /**
+     * Real time factor target used for real-time-synchronized simulation.
+     * Values smaller than or equal to zero will disable real-time synchronization.
+     */
+    std::atomic<double> real_time_factor_target = 1.0;
+
+    /**
+     * The number of steps used in the rolling average real time factor calculation.
+     * This value is used for monitoring purposes only.
+     */
+    std::atomic<int> steps_to_monitor = 5;
+};
+
+} // namespace cosim
+
+// Specialisations of std::hash for real_time_config
+namespace std
+{
+
+template<>
+class hash<cosim::real_time_config>
+{
+public:
+    std::size_t operator()(const cosim::real_time_config& v) const noexcept
+    {
+        std::size_t seed = 0;
+        boost::hash_combine(seed, v.real_time_simulation.load());
+        boost::hash_combine(seed, v.real_time_factor_target.load());
+        boost::hash_combine(seed, v.steps_to_monitor.load());
+        return seed;
+    }
+};
+
+} // namespace std
+
+namespace cosim
+{
+
+/// A struct containing real time metrics.
+struct real_time_metrics
+{
+    /// The current rolling average real time factor measurement.
+    std::atomic<double> rolling_average_real_time_factor = 1.0;
+    /// The total average real time factor measurement since the simulation was started.
+    std::atomic<double> total_average_real_time_factor = 1.0;
+};
 
 /**
  *  A class for controlling real-time execution.
@@ -42,23 +98,10 @@ public:
      */
     void sleep(time_point currentTime);
 
-    /// Enables real time simulation
-    void enable_real_time_simulation();
+    std::shared_ptr<real_time_config> get_real_time_config() const;
 
-    /// Disables real time simulation
-    void disable_real_time_simulation();
-
-    /// Returns if this is a real time simulation
-    bool is_real_time_simulation() const;
-
-    /// Returns the current real time factor
-    double get_measured_real_time_factor() const;
-
-    /// Sets a custom real time factor
-    void set_real_time_factor_target(double realTimeFactor);
-
-    /// Returns the current real time factor target
-    double get_real_time_factor_target() const;
+    /// Returns a pointer to an object containing real time metrics
+    std::shared_ptr<const real_time_metrics> get_real_time_metrics() const;
 
     /// Constructor
     real_time_timer();
