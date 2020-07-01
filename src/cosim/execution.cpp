@@ -192,7 +192,7 @@ public:
         return timer_.get_real_time_factor_target();
     }
 
-    const model_description& get_model_description(simulator_index index) const
+    model_description get_model_description(simulator_index index) const
     {
         return simulators_.at(index)->model_description();
     }
@@ -444,7 +444,7 @@ double execution::get_real_time_factor_target() const
     return pimpl_->get_real_time_factor_target();
 }
 
-const model_description& execution::get_model_description(simulator_index index) const
+model_description execution::get_model_description(simulator_index index) const
 {
     return pimpl_->get_model_description(index);
 }
