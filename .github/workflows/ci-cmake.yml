@@ -4,8 +4,8 @@ name: libcosim CI CMake
 on: [push]
 
 env:
-  CONAN_LOGIN_USERNAME_OSP: ${{ secrets.osp_conan_usr }}
-  CONAN_PASSWORD_OSP: ${{ secrets.osp_conan_pwd }}
+  CONAN_LOGIN_USERNAME_OSP: ${{ secrets.osp_artifactory_usr }}
+  CONAN_PASSWORD_OSP: ${{ secrets.osp_artifactory_pwd }}
   CONAN_REVISIONS_ENABLED: 1
   CONAN_NON_INTERACTIVE: True
 
@@ -79,7 +79,7 @@ jobs:
           pip3 install --upgrade setuptools pip
           pip3 install conan
           choco install doxygen.install
-          conan remote add osp https://osp-conan.azurewebsites.net/artifactory/api/conan/public --force
+          conan remote add osp https://osp.jfrog.io/artifactory/api/conan/conan-public --force
           conan install . -s build_type=${{ matrix.build_type }} -g deploy
       - name: CMake - configure
         shell: bash

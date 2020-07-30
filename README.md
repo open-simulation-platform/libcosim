@@ -27,7 +27,7 @@ of course you can always build and install dependencies manually.
 
 First, add the OSP Conan repository as a remote:
 
-    conan remote add osp https://osp-conan.azurewebsites.net/artifactory/api/conan/public
+    conan remote add osp https://osp.jfrog.io/artifactory/api/conan/conan-public
 
 As we will build the library using the *debug* configuration in this guide (as
 opposed to *release*), we must use the Conan setting `build_type=Debug`.  For
