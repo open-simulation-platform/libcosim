@@ -4,8 +4,8 @@ name: libcosim CI Conan
 on: [push]
 
 env:
-  CONAN_LOGIN_USERNAME_OSP: ${{ secrets.osp_conan_usr }}
-  CONAN_PASSWORD_OSP: ${{ secrets.osp_conan_pwd }}
+  CONAN_LOGIN_USERNAME_OSP: ${{ secrets.osp_artifactory_usr }}
+  CONAN_PASSWORD_OSP: ${{ secrets.osp_artifactory_pwd }}
   CONAN_REVISIONS_ENABLED: 1
   CONAN_NON_INTERACTIVE: True
   CONAN_USE_ALWAYS_SHORT_PATHS: True
@@ -33,7 +33,7 @@ jobs:
           sudo pip3 install --upgrade setuptools pip
           sudo pip3 install conan
       - name: Configure Conan
-        run: conan remote add osp https://osp-conan.azurewebsites.net/artifactory/api/conan/public --force
+        run: conan remote add osp https://osp.jfrog.io/artifactory/api/conan/conan-public --force
       - name: Conan create
         run: |
           REFNAME="${GITHUB_REF#refs/*/}"
@@ -75,7 +75,7 @@ jobs:
           pip3 install --upgrade setuptools pip
           pip3 install conan
       - name: Configure Conan
-        run: conan remote add osp https://osp-conan.azurewebsites.net/artifactory/api/conan/public --force
+        run: conan remote add osp https://osp.jfrog.io/artifactory/api/conan/conan-public --force
       - name: Conan create
         shell: bash
         run: |
