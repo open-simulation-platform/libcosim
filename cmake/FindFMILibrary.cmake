@@ -50,7 +50,10 @@ if (FMILibrary_LIBRARY)
 endif ()
 
 # Find shared/import library and append its path prefix to the HINTS option.
-if (UNIX)
+if (APPLE)
+    set (CMAKE_FIND_LIBRARY_SUFFIXES ".dylib")
+    set (_FMILibrary_shlibs "fmilib_shared" "fmilib2" "fmilib")
+elseif (UNIX)
     set (CMAKE_FIND_LIBRARY_SUFFIXES ".so")
     set (_FMILibrary_shlibs "fmilib_shared" "fmilib2" "fmilib")
 else ()
