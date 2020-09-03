@@ -55,18 +55,17 @@ void read_data(const std::string& fileName, std::string& data)
 
 } // namespace
 
-cosim::fmuproxy::fmuproxy_client::fmuproxy_client(const std::string& host, const unsigned int port,
-    const bool concurrent)
+cosim::fmuproxy::fmuproxy_client::fmuproxy_client(
+    const std::string& host,
+    const unsigned int port)
 {
     std::shared_ptr<TTransport> socket(new TSocket(host, port));
     std::shared_ptr<TTransport> transport(new TFramedTransport(socket));
     std::shared_ptr<TProtocol> protocol(new TBinaryProtocol(transport));
     std::shared_ptr<::fmuproxy::thrift::FmuServiceIf> client;
-    if (!concurrent) {
-        client = std::make_shared<FmuServiceClient>(protocol);
-    } else {
-        client = std::make_shared<FmuServiceConcurrentClient>(protocol);
-    }
+
+    client = std::make_shared<FmuServiceClient>(protocol);
+
     try {
         transport->open();
     } catch (TTransportException&) {
