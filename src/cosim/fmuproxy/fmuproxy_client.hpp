@@ -26,9 +26,9 @@ class fmuproxy_client
 {
 
 public:
-    fmuproxy_client(const std::string& host,
-        unsigned int port,
-        bool concurrent = false);
+    fmuproxy_client(
+        const std::string& host,
+        unsigned int port);
 
     std::shared_ptr<remote_fmu> from_url(const std::string& url);
 

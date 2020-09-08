@@ -116,7 +116,7 @@ find_package(LIBZIP REQUIRED)
 find_package(YAML_CPP REQUIRED)
 find_package(XercesC REQUIRED)
 if(LIBCOSIM_WITH_FMUPROXY)
-    find_package(THRIFT REQUIRED)
+    find_package(THRIFT 0.13.0 REQUIRED)
 endif()
 
 # ==============================================================================
