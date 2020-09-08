@@ -107,3 +107,52 @@ jobs:
         with:
           name: libcosim-${{ runner.os }}-${{ matrix.build_type }}
           path: install
+
+  cmake-on-macos:
+    name: CMake
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ macos-latest ]
+        build_type: [ Debug, Release ]
+        compiler_version: [ '11.0' ]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install prerequisites
+        run: |
+          brew install \
+            boost \
+            doxygen \
+            libzip \
+            yaml-cpp \
+            xerces-c \
+            conan
+          conan remote add osp https://osp.jfrog.io/artifactory/api/conan/conan-public --force
+          conan install . -s build_type=${{ matrix.build_type }} -s compiler.cppstd=${{ matrix.compiler_cppstd }} -g deploy
+      - name: CMake - configure
+        run: |
+          cmake \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -DCMAKE_PREFIX_PATH="ms-gsl;fmilibrary" \
+            -DCMAKE_INSTALL_PREFIX=install \
+            -B build
+      - name: CMake - build
+        run: cmake --build build
+      - name: CMake - build doc
+        run: cmake --build build --target doc
+      - name: CMake - test
+        run: |
+          cd build
+          ctest
+      - name: CMake - install
+        run: |
+          cmake --build build --target install
+          cmake --build build --target install-doc
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: libcosim-${{ runner.os }}-${{ matrix.build_type }}-apple-clang${{ matrix.compiler_version }}
+          path: install
