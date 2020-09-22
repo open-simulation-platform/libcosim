@@ -19,13 +19,9 @@ class LibcosimConan(ConanFile):
         "boost/1.71.0",
         "fmilibrary/2.0.3",
         "ms-gsl/2.1.0",
-        "libzip/1.5.2@bincrafters/stable",
+        "libzip/1.7.3",
         "yaml-cpp/0.6.3",
-        "xerces-c/3.2.2",
-        # Only for conflict resolution
-        "bzip2/1.0.8",
-        "openssl/1.0.2u",
-        "zlib/1.2.11",
+        "xerces-c/3.2.2"
     )
 
     options = {"fmuproxy": [True, False]}
