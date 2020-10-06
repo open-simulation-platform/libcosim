@@ -21,14 +21,26 @@ namespace cosim
 {
 
 
+/// The information contained in an OSP-IS system structure file.
 struct osp_config
 {
+    /// The system structure
     cosim::system_structure system_structure;
+
+    /// The default start time for a simulation
     time_point start_time;
+
+    /// The default/recommended step size for a simulation
     duration step_size;
+
+    /// A set of default initial values
     variable_value_map initial_values;
 };
 
+
+/**
+ *  Loads an OSP-IS system structure file.
+ */
 osp_config load_osp_config(
     const boost::filesystem::path& configPath,
     cosim::model_uri_resolver& resolver);
