@@ -149,7 +149,7 @@ if(LIBCOSIM_BUILD_APIDOC)
     set(DOXYGEN_QT_AUTOBRIEF "YES")
     set(DOXYGEN_MULTILINE_CPP_IS_BRIEF "YES")
     set(DOXYGEN_EXCLUDE_PATTERNS "*.cpp" "*.c" "*/fmuproxy/*service*")
-    set(doxygenInputs "${CMAKE_SOURCE_DIR}/include")
+    set(doxygenInputs "${CMAKE_SOURCE_DIR}/docs" "${CMAKE_SOURCE_DIR}/include")
     if(LIBCOSIM_BUILD_PRIVATE_APIDOC)
         list(APPEND doxygenInputs
             "${CMAKE_SOURCE_DIR}/src/cpp"
