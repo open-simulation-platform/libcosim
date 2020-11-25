@@ -8,10 +8,15 @@ This repository contains the OSP C++ library for co-simulations.
 See [`CONTRIBUTING.md`] for contributor guidelines and [`LICENSE`] for
 terms of use.
 
+The libcosim library is demonstrated in [cosim] and [Cosim Demo Application].
+The applications can be downloaded from their release pages: 
+- cosim [releases](https://github.com/open-simulation-platform/cosim-cli/releases)
+- Cosim Demo Application [releases](https://github.com/open-simulation-platform/cosim-demo-app/releases)  
+ 
 How to use
 ------------
 To use libcosim in your application you either build the library as described 
-[here](#how-to-build') or you can use conan. As libcosim is made available as a 
+in the section below or you can use conan. As libcosim is made available as a 
 conan package on https://osp.jfrog.io, you can include it in your application
 following these steps:
 
