@@ -21,7 +21,9 @@ conan package on https://osp.jfrog.io, you can include it in your application
 following these steps:
 
 * Install [Conan] >= 1.7
-* Add the OSP Conan repository as a remote: `conan remote add osp https://osp.jfrog.io/artifactory/api/conan/local`
+* Add the OSP Conan repository as a remote: 
+
+       conan remote add osp https://osp.jfrog.io/artifactory/api/conan/local
 * As our repository has enabled revision support you must set the envorinmental variable `CONAN_REVISIONS_ENABLED=1`
 * Include libcosim as a requirement in your conanfile 
 * Run `conan install` to aquire the libcosim package
