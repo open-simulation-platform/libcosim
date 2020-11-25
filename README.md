@@ -8,6 +8,20 @@ This repository contains the OSP C++ library for co-simulations.
 See [`CONTRIBUTING.md`] for contributor guidelines and [`LICENSE`] for
 terms of use.
 
+How to use
+------------
+To use libcosim in your application you either build the library as described 
+[here](#how-to-build') or you can use conan. As libcosim is made available as a 
+conan package on https://osp.jfrog.io, you can include it in your application
+following these steps:
+
+* Install [Conan] >= 1.7
+* Add the OSP Conan repository as a remote: `conan remote add osp https://osp.jfrog.io/artifactory/api/conan/local`
+* As our repository has enabled revision support you must set the envorinmental variable `CONAN_REVISIONS_ENABLED=1`
+* Include libcosim as a requirement in your conanfile 
+* Run `conan install` to aquire the libcosim package
+
+[cosim], [cosim4j] and [Cosim Demo Application] are examples of how to use the libcosim with conan.
 
 How to build
 ------------
@@ -27,7 +41,11 @@ of course you can always build and install dependencies manually.
 
 First, add the OSP Conan repository as a remote:
 
-    conan remote add osp https://osp.jfrog.io/artifactory/api/conan/conan-public
+    conan remote add osp https://osp.jfrog.io/artifactory/api/conan/local
+
+The Conan repository has enabled revision support meaning that you must set 
+the envorinmental variable `CONAN_REVISIONS_ENABLED=1` for you client to be
+compatible.
 
 As we will build the library using the *debug* configuration in this guide (as
 opposed to *release*), we must use the Conan setting `build_type=Debug`.  For
@@ -131,3 +149,6 @@ All generated files can be found in the directory `build/output`.
 [kyllingstad/conan-fmilibrary]: https://github.com/kyllingstad/conan-fmilibrary
 [Bincrafters' public-conan repository]: https://bintray.com/bincrafters/public-conan
 [Conan profile]: https://docs.conan.io/en/latest/using_packages/using_profiles.html
+[cosim]: https://github.com/open-simulation-platform/cosim-cli/blob/master/conanfile.txt
+[Cosim Demo Application]: https://github.com/open-simulation-platform/cosim-demo-app/blob/master/conanfile.txt
+[cosim4j]: https://github.com/open-simulation-platform/cosim4j/blob/master/cosim4j-native/conanfile.txt
