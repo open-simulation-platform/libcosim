@@ -154,4 +154,4 @@ All generated files can be found in the directory `build/output`.
 [cosim]: https://github.com/open-simulation-platform/cosim-cli/blob/master/conanfile.txt
 [Cosim Demo Application]: https://github.com/open-simulation-platform/cosim-demo-app/blob/master/conanfile.txt
 [cosim4j]: https://github.com/open-simulation-platform/cosim4j/blob/master/cosim4j-native/conanfile.txt
-[How to activate the revisions]:https://docs.conan.io/en/latest/versioning/revisions.html
+[How to activate the revisions]:https://docs.conan.io/en/latest/versioning/revisions.html?highlight=revisions#how-to-activate-the-revisions
