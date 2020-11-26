@@ -24,7 +24,7 @@ following these steps:
 * Add the OSP Conan repository as a remote: 
 
        conan remote add osp https://osp.jfrog.io/artifactory/api/conan/local
-* As our repository has enabled revision support you must set the envorinmental variable `CONAN_REVISIONS_ENABLED=1`
+* Package revisions must be enabled. See [How to activate the revisions].
 * Include libcosim as a requirement in your conanfile 
 * Run `conan install` to aquire the libcosim package
 
@@ -50,9 +50,7 @@ First, add the OSP Conan repository as a remote:
 
     conan remote add osp https://osp.jfrog.io/artifactory/api/conan/local
 
-The Conan repository has enabled revision support meaning that you must set 
-the environmental variable `CONAN_REVISIONS_ENABLED=1` for your client to be
-compatible.
+Package revisions must be enabled. See [How to activate the revisions].
 
 As we will build the library using the *debug* configuration in this guide (as
 opposed to *release*), we must use the Conan setting `build_type=Debug`.  For
@@ -159,3 +157,4 @@ All generated files can be found in the directory `build/output`.
 [cosim]: https://github.com/open-simulation-platform/cosim-cli/blob/master/conanfile.txt
 [Cosim Demo Application]: https://github.com/open-simulation-platform/cosim-demo-app/blob/master/conanfile.txt
 [cosim4j]: https://github.com/open-simulation-platform/cosim4j/blob/master/cosim4j-native/conanfile.txt
+[How to activate the revisions]:(https://docs.conan.io/en/latest/versioning/revisions.html?highlight=revisions#how-to-activate-the-revisions)
