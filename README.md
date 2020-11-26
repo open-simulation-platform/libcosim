@@ -51,7 +51,7 @@ First, add the OSP Conan repository as a remote:
     conan remote add osp https://osp.jfrog.io/artifactory/api/conan/local
 
 The Conan repository has enabled revision support meaning that you must set 
-the envorinmental variable `CONAN_REVISIONS_ENABLED=1` for you client to be
+the environmental variable `CONAN_REVISIONS_ENABLED=1` for your client to be
 compatible.
 
 As we will build the library using the *debug* configuration in this guide (as
