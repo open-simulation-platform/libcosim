@@ -150,11 +150,8 @@ All generated files can be found in the directory `build/output`.
 [Doxygen]: http://www.doxygen.org
 [Conan]: https://conan.io
 [vcpkg]: https://github.com/Microsoft/vcpkg
-[FMI Library]: http://jmodelica.org
-[kyllingstad/conan-fmilibrary]: https://github.com/kyllingstad/conan-fmilibrary
-[Bincrafters' public-conan repository]: https://bintray.com/bincrafters/public-conan
 [Conan profile]: https://docs.conan.io/en/latest/using_packages/using_profiles.html
 [cosim]: https://github.com/open-simulation-platform/cosim-cli/blob/master/conanfile.txt
 [Cosim Demo Application]: https://github.com/open-simulation-platform/cosim-demo-app/blob/master/conanfile.txt
 [cosim4j]: https://github.com/open-simulation-platform/cosim4j/blob/master/cosim4j-native/conanfile.txt
-[How to activate the revisions]:(https://docs.conan.io/en/latest/versioning/revisions.html?highlight=revisions#how-to-activate-the-revisions)
+[How to activate the revisions]:https://docs.conan.io/en/latest/versioning/revisions.html
