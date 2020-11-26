@@ -8,7 +8,8 @@ This repository contains the OSP C++ library for co-simulations.
 See [`CONTRIBUTING.md`] for contributor guidelines and [`LICENSE`] for
 terms of use.
 
-The libcosim library is demonstrated in [cosim] and [Cosim Demo Application].
+The libcosim library is demonstrated in [cosim](https://github.com/open-simulation-platform/cosim-cli) and 
+[Cosim Demo Application](https://github.com/open-simulation-platform/cosim-demo-app).
 The applications can be downloaded from their release pages: 
 - cosim [releases](https://github.com/open-simulation-platform/cosim-cli/releases)
 - Cosim Demo Application [releases](https://github.com/open-simulation-platform/cosim-demo-app/releases)  
