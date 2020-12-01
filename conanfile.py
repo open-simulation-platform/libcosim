@@ -24,9 +24,7 @@ class LibcosimConan(ConanFile):
         "xerces-c/3.2.2"
     )
 
-    options = {"fmuproxy": [True, False]}
     default_options = (
-        "fmuproxy=False",
         "boost:shared=True",
         "fmilibrary:shared=True",
         "libzip:shared=True",
@@ -42,17 +40,11 @@ class LibcosimConan(ConanFile):
         self.copy("*.dll", dst=binDir, keep_path=False)
         self.copy("*.pdb", dst=binDir, keep_path=False)
 
-    def requirements(self):
-        if self.options.fmuproxy:
-            self.requires("thrift/0.13.0")
-
     def configure_cmake(self):
         cmake = CMake(self)
         cmake.definitions["LIBCOSIM_USING_CONAN"] = "ON"
         cmake.definitions["LIBCOSIM_BUILD_APIDOC"] = "OFF"
         cmake.definitions["LIBCOSIM_BUILD_TESTS"] = "OFF"
-        if self.options.fmuproxy:
-            cmake.definitions["LIBCOSIM_WITH_FMUPROXY"] = "ON"
         cmake.configure()
         return cmake
 

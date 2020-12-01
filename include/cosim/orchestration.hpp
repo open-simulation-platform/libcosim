@@ -44,8 +44,7 @@ public:
  *  URI schemes.
  *
  *  Examples could be a file URI resolver which handles URIs like
- *  `file:///models/my_model.fmu` or an FMU-proxy URI resolver which handles
- *  URIs like `fmu-proxy://sim.example.com:6345`.
+ *  `file:///models/my_model.fmu`
  *
  *  Client code will normally not use this directly to resolve URIs, but rather
  *  as one of many sub-resolvers in a `model_uri_resolver`.

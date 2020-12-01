@@ -15,12 +15,6 @@ set(tests
     "synchronized_xy_series_test"
 )
 
-if(LIBCOSIM_WITH_FMUPROXY AND LIBCOSIM_TEST_FMUPROXY)
-    list(APPEND tests
-        "ssp_loader_fmuproxy_test"
-    )
-endif()
-
 set(unittests
     "async_slave_unittest"
     "function_unittest"

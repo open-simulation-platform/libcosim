@@ -945,7 +945,7 @@ osp_config load_osp_config(
             }
         } else {
             // Makes it possible to keep OspModelDescription at configuration path
-            // even when there are FMUs with other URI than file (fmu-proxy).
+            // even when there are FMUs with other URI than file.
             msmiFilePath = configFile.parent_path() / msmiFileName;
             if (boost::filesystem::exists(msmiFilePath)) {
                 emds.emplace(simulator.name, msmiFilePath);
