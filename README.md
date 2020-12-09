@@ -24,8 +24,7 @@ following these steps:
 * Install [Conan] >= 1.7
 * Add the OSP Conan repository as a remote: 
 
-       conan remote add osp https://osp.jfrog.io/artifactory/api/conan/local
-* Package revisions must be enabled. See [How to activate the revisions].
+       conan remote add osp https://osp.jfrog.io/artifactory/api/conan/conan-local
 * Include libcosim as a requirement in your conanfile 
 * Run `conan install` to aquire the libcosim package
 
