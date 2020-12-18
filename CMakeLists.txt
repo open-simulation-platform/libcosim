@@ -101,18 +101,23 @@ if(LIBCOSIM_USING_CONAN)
     endif()
 endif()
 
+
+
 set(Boost_components date_time fiber filesystem log)
 if (LIBCOSIM_BUILD_TESTS)
     list(APPEND Boost_components timer unit_test_framework)
 endif()
-
-find_package(MS_GSL REQUIRED)
+if(NOT BUILD_SHARED_LIBS AND NOT DEFINED Boost_USE_STATIC_LIBS)
+    set(Boost_USE_STATIC_LIBS ON)
+endif()
 find_package(Boost REQUIRED COMPONENTS ${Boost_components})
+
 if(BUILD_SHARED_LIBS AND NOT DEFINED FMILibrary_USE_SHARED_LIB)
     set(FMILibrary_USE_SHARED_LIB TRUE)
 endif()
 find_package(FMILibrary REQUIRED)
 find_package(LIBZIP REQUIRED)
+find_package(MS_GSL REQUIRED)
 find_package(YAML_CPP REQUIRED)
 find_package(XercesC REQUIRED)
 if(LIBCOSIM_WITH_FMUPROXY)

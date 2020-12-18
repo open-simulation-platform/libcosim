@@ -24,18 +24,23 @@ class LibcosimConan(ConanFile):
         "xerces-c/3.2.2"
     )
 
-    options = {"fmuproxy": [True, False]}
+    options = {
+        "shared": [True, False],
+        "fmuproxy": [True, False]}
     default_options = (
         "fmuproxy=False",
-        "boost:shared=True",
-        "fmilibrary:shared=True",
-        "libzip:shared=True",
-        "yaml-cpp:shared=True",
-        "xerces-c:shared=True"
+        "shared=True"
     )
 
     def set_version(self):
         self.version = tools.load(path.join(self.recipe_folder, "version.txt")).strip()
+
+    def configure(self):
+        self.options["boost"].shared = self.options.shared
+        self.options["fmilibrary"].shared = self.options.shared
+        self.options["libzip"].shared = self.options.shared
+        self.options["yaml-cpp"].shared = self.options.shared
+        self.options["xerces-c"].shared = self.options.shared
 
     def imports(self):
         binDir = os.path.join("output", str(self.settings.build_type).lower(), "bin")
@@ -51,8 +56,8 @@ class LibcosimConan(ConanFile):
         cmake.definitions["LIBCOSIM_USING_CONAN"] = "ON"
         cmake.definitions["LIBCOSIM_BUILD_APIDOC"] = "OFF"
         cmake.definitions["LIBCOSIM_BUILD_TESTS"] = "OFF"
-        if self.options.fmuproxy:
-            cmake.definitions["LIBCOSIM_WITH_FMUPROXY"] = "ON"
+        cmake.definitions["BUILD_SHARED_LIBS"] = self.options.shared
+        cmake.definitions["LIBCOSIM_WITH_FMUPROXY"] = self.options.fmuproxy
         cmake.configure()
         return cmake
 
