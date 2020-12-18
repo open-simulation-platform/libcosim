@@ -73,7 +73,9 @@ jobs:
       matrix:
         os: [windows-2016]
         build_type: [Debug, Release]
-        shared_libs: [ON, OFF]
+        shared: ["True", "False"]
+
+
 
     steps:
       - uses: actions/checkout@v2
@@ -83,7 +85,7 @@ jobs:
           pip3 install conan
           choco install doxygen.install
           conan remote add osp https://osp.jfrog.io/artifactory/api/conan/conan-public --force
-          conan install . -s build_type=${{ matrix.build_type }} -g deploy
+          conan install . -s build_type=${{ matrix.build_type }} -o shared=${{ matrix.shared }} -g deploy
       - name: CMake - configure
         shell: bash
         run: |
@@ -91,7 +93,7 @@ jobs:
             -A x64 \
             -DCMAKE_PREFIX_PATH="ms-gsl;boost;fmilibrary;libzip;xerces-c;yaml-cpp;bzip2;zlib" \
             -DCMAKE_INSTALL_PREFIX=install \
-            -DBUILD_SHARED_LIBS=${{ matrix.shared_libs }} \
+            -DBUILD_SHARED_LIBS=${{ matrix.shared }} \
             -B build
       - name: CMake - build
         run: cmake --build build --config ${{ matrix.build_type }}
