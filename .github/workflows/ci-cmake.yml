@@ -91,7 +91,7 @@ jobs:
         run: |
           cmake . \
             -A x64 \
-            -DCMAKE_PREFIX_PATH="ms-gsl;boost;fmilibrary;libzip;xerces-c;yaml-cpp;bzip2;zlib" \
+            -DCMAKE_PREFIX_PATH="ms-gsl;boost;fmilibrary;libzip;xerces-c;yaml-cpp;bzip2;zlib;xz_utils" \
             -DCMAKE_INSTALL_PREFIX=install \
             -DBUILD_SHARED_LIBS=${{ matrix.shared }} \
             -B build
