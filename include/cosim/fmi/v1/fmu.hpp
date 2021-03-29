@@ -67,7 +67,7 @@ public:
     fmu(fmu&&) = delete;
     fmu& operator=(fmu&&) = delete;
 
-    ~fmu();
+    ~fmu() override;
 
     // fmi::fmu methods
     fmi::fmi_version fmi_version() const override;
@@ -129,7 +129,7 @@ public:
     slave_instance(slave_instance&&) = delete;
     slave_instance& operator=(slave_instance&&) = delete;
 
-    ~slave_instance() noexcept;
+    ~slave_instance() noexcept override;
 
     // cosim::slave methods
     void setup(
@@ -180,7 +180,6 @@ public:
 
 private:
     std::shared_ptr<v1::fmu> fmu_;
-    fmi1_import_t* handle_;
 
     bool simStarted_ = false;
 

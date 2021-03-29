@@ -38,6 +38,107 @@ namespace v1
 // fmu
 // =============================================================================
 
+namespace
+{
+void step_finished_placeholder(fmi1_component_t, fmi1_status_t)
+{
+    BOOST_LOG_SEV(log::logger(), log::debug)
+        << "FMU instance completed asynchronous step, "
+           "but this feature is currently not supported";
+}
+
+struct log_record
+{
+    log_record() { }
+    log_record(fmi1_status_t s, const std::string& m)
+        : status{s}
+        , message(m)
+    { }
+    fmi1_status_t status = fmi1_status_ok;
+    std::string message;
+};
+std::unordered_map<std::string, log_record> g_logRecords;
+std::mutex g_logMutex;
+
+void log_message(
+    fmi1_component_t,
+    fmi1_string_t instanceName,
+    fmi1_status_t status,
+    fmi1_string_t category,
+    fmi1_string_t message,
+    ...)
+{
+    std::va_list args;
+        va_start(args, message);
+    const auto msgLength = std::vsnprintf(nullptr, 0, message, args);
+        va_end(args);
+    auto msgBuffer = std::vector<char>(msgLength + 1);
+        va_start(args, message);
+    std::vsnprintf(msgBuffer.data(), msgBuffer.size(), message, args);
+        va_end(args);
+    assert(msgBuffer.back() == '\0');
+
+    std::string statusName = "unknown";
+    log::severity_level logLevel = log::error;
+    switch (status) {
+        case fmi1_status_ok:
+            statusName = "ok";
+            logLevel = log::trace;
+            break;
+        case fmi1_status_warning:
+            statusName = "warning";
+            logLevel = log::warning;
+            break;
+        case fmi1_status_discard:
+            // Don't know if this ever happens, but we should at least
+            // print a debug message if it does.
+            statusName = "discard";
+            logLevel = log::debug;
+            break;
+        case fmi1_status_error:
+            statusName = "error";
+            logLevel = log::error;
+            break;
+        case fmi1_status_fatal:
+            statusName = "fatal";
+            logLevel = log::error;
+            break;
+        case fmi1_status_pending:
+            // Don't know if this ever happens, but we should at least
+            // print a debug message if it does.
+            statusName = "pending";
+            logLevel = log::debug;
+            break;
+    }
+    BOOST_LOG_SEV(log::logger(), logLevel)
+        << "[FMI status=" << statusName << ", category=" << category << "] "
+        << msgBuffer.data();
+
+    g_logMutex.lock();
+    g_logRecords[instanceName] =
+        log_record{status, std::string(msgBuffer.data())};
+    g_logMutex.unlock();
+}
+
+log_record last_log_record(const std::string& instanceName)
+{
+    std::lock_guard<std::mutex> lock(g_logMutex);
+    const auto it = g_logRecords.find(instanceName);
+    if (it == g_logRecords.end()) {
+        return log_record{};
+    } else {
+        // Note the use of c_str() here, to force the string to be copied.
+        // The C++ standard now disallows copy-on-write, but some compilers
+        // still use it, which could lead to problems in multithreaded
+        // programs.
+        return log_record{
+            it->second.status,
+            std::string(it->second.message.c_str())};
+    }
+}
+} // namespace
+
+
 fmu::fmu(
     std::shared_ptr<fmi::importer> importer,
     std::unique_ptr<file_cache::directory_ro> fmuDir)
@@ -56,6 +157,20 @@ fmu::fmu(
         throw error(
             make_error_code(errc::unsupported_feature),
             "Not a co-simulation FMU");
+    }
+
+    fmi1_callback_functions_t callbacks;
+    callbacks.allocateMemory = std::calloc;
+    callbacks.freeMemory = std::free;
+    callbacks.logger = log_message;
+    callbacks.stepFinished = step_finished_placeholder;
+
+    if (fmi1_import_create_dllfmu(fmilib_handle(), callbacks, false) != jm_status_success) {
+        const auto msg = importer_->last_error_message();
+        fmi1_import_free(fmilib_handle());
+        throw error(
+            make_error_code(errc::dl_load_error),
+            importer_->last_error_message());
     }
 
     modelDescription_.name = fmi1_import_get_model_name(handle_);
@@ -84,6 +199,7 @@ fmu::fmu(
 
 fmu::~fmu()
 {
+    fmi1_import_destroy_dllfmu(fmilib_handle());
     fmi1_import_free(handle_);
 }
 
@@ -162,137 +278,16 @@ fmi1_import_t* fmu::fmilib_handle() const
 // slave_instance
 // =============================================================================
 
-namespace
-{
-void step_finished_placeholder(fmi1_component_t, fmi1_status_t)
-{
-    BOOST_LOG_SEV(log::logger(), log::debug)
-        << "FMU instance completed asynchronous step, "
-           "but this feature is currently not supported";
-}
-
-struct log_record
-{
-    log_record() { }
-    log_record(fmi1_status_t s, const std::string& m)
-        : status{s}
-        , message(m)
-    { }
-    fmi1_status_t status = fmi1_status_ok;
-    std::string message;
-};
-std::unordered_map<std::string, log_record> g_logRecords;
-std::mutex g_logMutex;
-
-void log_message(
-    fmi1_component_t,
-    fmi1_string_t instanceName,
-    fmi1_status_t status,
-    fmi1_string_t category,
-    fmi1_string_t message,
-    ...)
-{
-    std::va_list args;
-    va_start(args, message);
-    const auto msgLength = std::vsnprintf(nullptr, 0, message, args);
-    va_end(args);
-    auto msgBuffer = std::vector<char>(msgLength + 1);
-    va_start(args, message);
-    std::vsnprintf(msgBuffer.data(), msgBuffer.size(), message, args);
-    va_end(args);
-    assert(msgBuffer.back() == '\0');
-
-    std::string statusName = "unknown";
-    log::severity_level logLevel = log::error;
-    switch (status) {
-        case fmi1_status_ok:
-            statusName = "ok";
-            logLevel = log::trace;
-            break;
-        case fmi1_status_warning:
-            statusName = "warning";
-            logLevel = log::warning;
-            break;
-        case fmi1_status_discard:
-            // Don't know if this ever happens, but we should at least
-            // print a debug message if it does.
-            statusName = "discard";
-            logLevel = log::debug;
-            break;
-        case fmi1_status_error:
-            statusName = "error";
-            logLevel = log::error;
-            break;
-        case fmi1_status_fatal:
-            statusName = "fatal";
-            logLevel = log::error;
-            break;
-        case fmi1_status_pending:
-            // Don't know if this ever happens, but we should at least
-            // print a debug message if it does.
-            statusName = "pending";
-            logLevel = log::debug;
-            break;
-    }
-    BOOST_LOG_SEV(log::logger(), logLevel)
-        << "[FMI status=" << statusName << ", category=" << category << "] "
-        << msgBuffer.data();
-
-    g_logMutex.lock();
-    g_logRecords[instanceName] =
-        log_record{status, std::string(msgBuffer.data())};
-    g_logMutex.unlock();
-}
-
-log_record last_log_record(const std::string& instanceName)
-{
-    std::lock_guard<std::mutex> lock(g_logMutex);
-    const auto it = g_logRecords.find(instanceName);
-    if (it == g_logRecords.end()) {
-        return log_record{};
-    } else {
-        // Note the use of c_str() here, to force the string to be copied.
-        // The C++ standard now disallows copy-on-write, but some compilers
-        // still use it, which could lead to problems in multithreaded
-        // programs.
-        return log_record{
-            it->second.status,
-            std::string(it->second.message.c_str())};
-    }
-}
-} // namespace
-
-
 slave_instance::slave_instance(
     std::shared_ptr<v1::fmu> fmu,
     std::string_view instanceName)
     : fmu_{fmu}
-    , handle_{fmi1_import_parse_xml(fmu->importer()->fmilib_handle(), fmu->directory().string().c_str())}
     , instanceName_(instanceName)
 {
     assert(!instanceName.empty());
-    if (handle_ == nullptr) {
-        throw error(
-            make_error_code(errc::bad_file),
-            fmu->importer()->last_error_message());
-    }
-
-    fmi1_callback_functions_t callbacks;
-    callbacks.allocateMemory = std::calloc;
-    callbacks.freeMemory = std::free;
-    callbacks.logger = log_message;
-    callbacks.stepFinished = step_finished_placeholder;
-
-    if (fmi1_import_create_dllfmu(handle_, callbacks, false) != jm_status_success) {
-        const auto msg = fmu->importer()->last_error_message();
-        fmi1_import_free(handle_);
-        throw error(
-            make_error_code(errc::dl_load_error),
-            fmu->importer()->last_error_message());
-    }
 
     const auto rc = fmi1_import_instantiate_slave(
-        handle_,
+        fmilib_handle(),
         instanceName_.c_str(),
         nullptr, // fmuLocation
         nullptr, // mimeType
@@ -300,8 +295,6 @@ slave_instance::slave_instance(
         fmi1_false, // visible
         fmi1_false); // interactive
     if (rc != jm_status_success) {
-        fmi1_import_destroy_dllfmu(handle_);
-        fmi1_import_free(handle_);
         throw error(
             make_error_code(errc::model_error),
             last_log_record(instanceName_).message);
@@ -312,11 +305,9 @@ slave_instance::slave_instance(
 slave_instance::~slave_instance() noexcept
 {
     if (simStarted_) {
-        fmi1_import_terminate_slave(handle_);
+        fmi1_import_terminate_slave(fmilib_handle());
     }
-    fmi1_import_free_slave_instance(handle_);
-    fmi1_import_destroy_dllfmu(handle_);
-    fmi1_import_free(handle_);
+    fmi1_import_free_slave_instance(fmilib_handle());
 }
 
 
@@ -334,7 +325,7 @@ void slave_instance::start_simulation()
 {
     assert(!simStarted_);
     const auto rc = fmi1_import_initialize_slave(
-        handle_,
+        fmilib_handle(),
         to_double_time_point(startTime_),
         stopTime_.has_value(),
         stopTime_ ? to_double_time_point(*stopTime_) : 0.0);
@@ -350,7 +341,7 @@ void slave_instance::start_simulation()
 void slave_instance::end_simulation()
 {
     assert(simStarted_);
-    const auto rc = fmi1_import_terminate_slave(handle_);
+    const auto rc = fmi1_import_terminate_slave(fmilib_handle());
     simStarted_ = false;
     if (rc != fmi1_status_ok && rc != fmi1_status_warning) {
         throw error(
@@ -364,7 +355,7 @@ step_result slave_instance::do_step(time_point currentT, duration deltaT)
 {
     assert(simStarted_);
     const auto rc = fmi1_import_do_step(
-        handle_,
+        fmilib_handle(),
         to_double_time_point(currentT),
         to_double_duration(deltaT, currentT),
         true);
@@ -387,7 +378,7 @@ void slave_instance::get_real_variables(
     COSIM_INPUT_CHECK(variables.size() == values.size());
     if (variables.empty()) return;
     const auto status = fmi1_import_get_real(
-        handle_, variables.data(), variables.size(), values.data());
+        fmilib_handle(), variables.data(), variables.size(), values.data());
     if (status != fmi1_status_ok && status != fmi1_status_warning) {
         throw error(
             make_error_code(errc::model_error),
@@ -403,7 +394,7 @@ void slave_instance::get_integer_variables(
     COSIM_INPUT_CHECK(variables.size() == values.size());
     if (variables.empty()) return;
     const auto status = fmi1_import_get_integer(
-        handle_, variables.data(), variables.size(), values.data());
+        fmilib_handle(), variables.data(), variables.size(), values.data());
     if (status != fmi1_status_ok && status != fmi1_status_warning) {
         throw error(
             make_error_code(errc::model_error),
@@ -420,7 +411,7 @@ void slave_instance::get_boolean_variables(
     if (variables.empty()) return;
     std::vector<fmi1_boolean_t> fmiValues(values.size());
     const auto status = fmi1_import_get_boolean(
-        handle_, variables.data(), variables.size(), fmiValues.data());
+        fmilib_handle(), variables.data(), variables.size(), fmiValues.data());
     if (status != fmi1_status_ok && status != fmi1_status_warning) {
         throw error(
             make_error_code(errc::model_error),
@@ -440,7 +431,7 @@ void slave_instance::get_string_variables(
     if (variables.empty()) return;
     std::vector<fmi1_string_t> fmiValues(values.size());
     const auto status = fmi1_import_get_string(
-        handle_, variables.data(), variables.size(), fmiValues.data());
+        fmilib_handle(), variables.data(), variables.size(), fmiValues.data());
     if (status != fmi1_status_ok && status != fmi1_status_warning) {
         throw error(
             make_error_code(errc::model_error),
@@ -460,7 +451,7 @@ void slave_instance::set_real_variables(
     COSIM_INPUT_CHECK(variables.size() == values.size());
     if (variables.empty()) return;
     const auto status = fmi1_import_set_real(
-        handle_, variables.data(), variables.size(), values.data());
+        fmilib_handle(), variables.data(), variables.size(), values.data());
     if (status == fmi1_status_ok || status == fmi1_status_warning) {
         return;
     } else if (status == fmi1_status_discard) {
@@ -480,7 +471,7 @@ void slave_instance::set_integer_variables(
     COSIM_INPUT_CHECK(variables.size() == values.size());
     if (variables.empty()) return;
     const auto status = fmi1_import_set_integer(
-        handle_, variables.data(), variables.size(), values.data());
+        fmilib_handle(), variables.data(), variables.size(), values.data());
     if (status == fmi1_status_ok || status == fmi1_status_warning) {
         return;
     } else if (status == fmi1_status_discard) {
@@ -505,7 +496,7 @@ void slave_instance::set_boolean_variables(
             static_cast<fmi1_boolean_t>(values[i] ? fmi1_true : fmi1_false);
     }
     const auto status = fmi1_import_set_boolean(
-        handle_, variables.data(), variables.size(), fmiValues.data());
+        fmilib_handle(), variables.data(), variables.size(), fmiValues.data());
     if (status == fmi1_status_ok || status == fmi1_status_warning) {
         return;
     } else if (status == fmi1_status_discard) {
@@ -529,7 +520,7 @@ void slave_instance::set_string_variables(
         fmiValues[i] = values[i].c_str();
     }
     const auto status = fmi1_import_set_string(
-        handle_, variables.data(), variables.size(), fmiValues.data());
+        fmilib_handle(), variables.data(), variables.size(), fmiValues.data());
     if (status == fmi1_status_ok || status == fmi1_status_warning) {
         return;
     } else if (status == fmi1_status_discard) {
@@ -550,7 +541,7 @@ std::shared_ptr<v1::fmu> slave_instance::v1_fmu() const
 
 fmi1_import_t* slave_instance::fmilib_handle() const
 {
-    return handle_;
+    return fmu_->fmilib_handle();
 }
 
 
