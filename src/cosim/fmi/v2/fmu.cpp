@@ -164,9 +164,8 @@ fmu::fmu(
     callbacks.stepFinished = step_finished_placeholder;
     callbacks.componentEnvironment = nullptr;
 
-    if (fmi2_import_create_dllfmu(fmilib_handle(), fmi2_fmu_kind_cs, &callbacks) != jm_status_success) {
+    if (fmi2_import_create_dllfmu(handle_, fmi2_fmu_kind_cs, &callbacks) != jm_status_success) {
         const auto msg = importer_->last_error_message();
-        fmi2_import_free(fmilib_handle());
         throw error(
             make_error_code(errc::dl_load_error),
             importer_->last_error_message());

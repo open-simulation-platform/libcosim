@@ -165,9 +165,8 @@ fmu::fmu(
     callbacks.logger = log_message;
     callbacks.stepFinished = step_finished_placeholder;
 
-    if (fmi1_import_create_dllfmu(fmilib_handle(), callbacks, false) != jm_status_success) {
+    if (fmi1_import_create_dllfmu(handle_, callbacks, false) != jm_status_success) {
         const auto msg = importer_->last_error_message();
-        fmi1_import_free(fmilib_handle());
         throw error(
             make_error_code(errc::dl_load_error),
             importer_->last_error_message());
