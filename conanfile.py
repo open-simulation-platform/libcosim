@@ -21,7 +21,9 @@ class LibcosimConan(ConanFile):
         "ms-gsl/2.1.0",
         "libzip/1.7.3",
         "yaml-cpp/0.6.3",
-        "xerces-c/3.2.2"
+        "xerces-c/3.2.2",
+        # conflict resolution
+        "openssl/1.1.1k"
     )
 
     options = {"fmuproxy": [True, False]}
