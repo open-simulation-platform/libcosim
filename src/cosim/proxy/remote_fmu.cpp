@@ -27,15 +27,15 @@ cosim::variable_type get_type(const proxyfmu::fmi::scalar_variable& v)
 
 cosim::variable_causality get_causality(const proxyfmu::fmi::scalar_variable& v)
 {
-    if (v.name == "output") {
+    if (v.causality == "output") {
         return cosim::variable_causality::output;
-    } else if (v.name == "input") {
+    } else if (v.causality == "input") {
         return cosim::variable_causality::input;
-    } else if (v.name == "parameter") {
+    } else if (v.causality == "parameter") {
         return cosim::variable_causality::parameter;
-    } else if (v.name == "calculated_parameter") {
+    } else if (v.causality == "calculated_parameter") {
         return cosim::variable_causality::calculated_parameter;
-    } else if (v.name == "local") {
+    } else if (v.causality == "local") {
         return cosim::variable_causality::local;
     } else {
         return cosim::variable_causality::local;
@@ -44,15 +44,15 @@ cosim::variable_causality get_causality(const proxyfmu::fmi::scalar_variable& v)
 
 cosim::variable_variability get_variability(const proxyfmu::fmi::scalar_variable& v)
 {
-    if (v.name == "discrete") {
+    if (v.variability == "discrete") {
         return cosim::variable_variability::discrete;
-    } else if (v.name == "fixed") {
+    } else if (v.variability == "fixed") {
         return cosim::variable_variability::fixed;
-    } else if (v.name == "tunable") {
+    } else if (v.variability == "tunable") {
         return cosim::variable_variability::tunable;
-    } else if (v.name == "constant") {
+    } else if (v.variability == "constant") {
         return cosim::variable_variability::constant;
-    } else if (v.name == "continuous") {
+    } else if (v.variability == "continuous") {
         return cosim::variable_variability::continuous;
     } else {
         return cosim::variable_variability::continuous;

@@ -8,7 +8,17 @@
 #include <cosim/proxy/proxy_uri_sub_resolver.hpp>
 #include <cosim/proxy/remote_fmu.hpp>
 
-#include <filesystem>
+std::pair<std::string, unsigned int> parse_authority(std::string_view auth)
+{
+    const auto colonIdx = auth.find(':');
+    if (colonIdx == std::string::npos) {
+        return {std::string(auth), -1};
+    } else {
+        const auto host = std::string(auth.substr(0, colonIdx));
+        const auto port = std::stoi(std::string(auth.substr(colonIdx + 1)));
+        return {host, port};
+    }
+}
 
 std::shared_ptr<cosim::model> cosim::proxy::proxy_uri_sub_resolver::lookup_model(
     const cosim::uri& baseUri,
@@ -35,14 +45,16 @@ std::shared_ptr<cosim::model> cosim::proxy::proxy_uri_sub_resolver::lookup_model
 {
     assert(modelUri.scheme().has_value());
     if (*modelUri.scheme() != "proxy-fmu") return nullptr;
-    //COSIM_INPUT_CHECK(modelUri.authority());
-    //COSIM_INPUT_CHECK(modelUri.query());
+    COSIM_INPUT_CHECK(modelUri.authority());
+    COSIM_INPUT_CHECK(modelUri.query());
 
-    const auto query = modelUri.path();
-    if (query.substr(12, 5) == "file=") {
-        const auto file = std::string(query.substr(12));
+    const auto auth = parse_authority(*modelUri.authority());
+    const auto query = *modelUri.query();
+    if (query.substr(0, 5) == "file=") {
+        const auto file = std::filesystem::path(std::string(query.substr(5)));
+        assert(std::filesystem::exists(file));
         return std::make_shared<remote_fmu>(file);
-    } else if (query.substr(12, 4) == "url=") {
+    } else if (query.substr(0, 4) == "url=") {
         //TODO
         return nullptr;
     } else {

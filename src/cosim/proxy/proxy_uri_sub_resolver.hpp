@@ -20,7 +20,7 @@ namespace proxy
 /**
  *  Class for resolving fmu-proxy URI schemes.
  *
- *  From file: 'proxy-file:///models/my_model.fmu'
+ *  From file: 'proxy-file:///localhost?models/my_model.fmu'
  */
 class proxy_uri_sub_resolver : public model_uri_sub_resolver
 {
