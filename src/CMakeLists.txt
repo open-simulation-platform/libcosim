@@ -169,6 +169,7 @@ target_link_libraries(cosim
         gsl
     PRIVATE
         ${FMILibrary_LIBRARIES}
+        ${PROXY_FMU_LIBRARIES}
         libzip::libzip
         XercesC::XercesC
         yaml-cpp
