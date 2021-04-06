@@ -6,30 +6,27 @@
  *      License, v. 2.0. If a copy of the MPL was not distributed with this
  *      file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
-#ifndef COSIM_FMUPROXY_REMOTE_SLAVE_HPP
-#define COSIM_FMUPROXY_REMOTE_SLAVE_HPP
-
-#include "FmuService.h"
+#ifndef COSIM_PROXY_REMOTE_SLAVE_HPP
+#define COSIM_PROXY_REMOTE_SLAVE_HPP
 
 #include <cosim/async_slave.hpp>
-#include <cosim/fmuproxy/thrift_state.hpp>
 #include <cosim/model_description.hpp>
 #include <cosim/time.hpp>
 
+#include <proxyfmu/fmi/slave.hpp>
 #include <string>
 
 namespace cosim
 {
 
-namespace fmuproxy
+namespace proxy
 {
 
 class remote_slave : public slave
 {
 
 public:
-    remote_slave(std::string instanceId,
-        std::shared_ptr<thrift_state> state,
+    remote_slave(std::unique_ptr<proxyfmu::fmi::slave> slave,
         std::shared_ptr<const cosim::model_description> modelDescription);
 
     cosim::model_description model_description() const override;
@@ -65,13 +62,12 @@ public:
 
 private:
     bool terminated_;
-    std::string instanceId_;
     cosim::time_point startTime_;
-    std::shared_ptr<cosim::fmuproxy::thrift_state> state_;
+    std::unique_ptr<proxyfmu::fmi::slave> slave_;
     std::shared_ptr<const cosim::model_description> modelDescription_;
 };
 
-} // namespace fmuproxy
+} // namespace proxy
 
 } // namespace cosim
 
