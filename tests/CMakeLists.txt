@@ -9,17 +9,12 @@ set(tests
     "multi_fixed_step_algorithm_test"
     "osp_config_parser_test"
     "ramp_modifier_test"
+    "ssp_loader_proxy_test"
     "time_series_observer_test"
     "trend_buffer_test"
     "scenario_manager_test"
     "synchronized_xy_series_test"
 )
-
-#if(LIBCOSIM_WITH_FMUPROXY AND LIBCOSIM_TEST_FMUPROXY)
-#    list(APPEND tests
-#        "ssp_loader_fmuproxy_test"
-#    )
-#endif()
 
 set(unittests
     "async_slave_unittest"

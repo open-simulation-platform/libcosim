@@ -25,28 +25,49 @@ cosim::variable_type get_type(const proxyfmu::fmi::scalar_variable& v)
     }
 }
 
-cosim::variable_causality get_causality(const proxyfmu::fmi::scalar_variable&)
+cosim::variable_causality get_causality(const proxyfmu::fmi::scalar_variable& v)
 {
-    //TODO
-    return cosim::variable_causality::local;
+    if (v.name == "output") {
+        return cosim::variable_causality::output;
+    } else if (v.name == "input") {
+        return cosim::variable_causality::input;
+    } else if (v.name == "parameter") {
+        return cosim::variable_causality::parameter;
+    } else if (v.name == "calculated_parameter") {
+        return cosim::variable_causality::calculated_parameter;
+    } else if (v.name == "local") {
+        return cosim::variable_causality::local;
+    } else {
+        return cosim::variable_causality::local;
+    }
 }
 
-cosim::variable_variability get_variability(const proxyfmu::fmi::scalar_variable&)
+cosim::variable_variability get_variability(const proxyfmu::fmi::scalar_variable& v)
 {
-    //TODO
-    return cosim::variable_variability::continuous;
+    if (v.name == "discrete") {
+        return cosim::variable_variability::discrete;
+    } else if (v.name == "fixed") {
+        return cosim::variable_variability::fixed;
+    } else if (v.name == "tunable") {
+        return cosim::variable_variability::tunable;
+    } else if (v.name == "constant") {
+        return cosim::variable_variability::constant;
+    } else if (v.name == "continuous") {
+        return cosim::variable_variability::continuous;
+    } else {
+        return cosim::variable_variability::continuous;
+    }
 }
 
 std::unique_ptr<cosim::model_description> parse_model_description(const proxyfmu::fmi::model_description& md)
 {
     auto _md = std::make_unique<cosim::model_description>();
     _md->uuid = md.guid;
+    _md->author = md.author;
     _md->name = md.model_name;
     _md->description = md.description;
-    _md->author = md.author;
 
-    auto vars = md.model_variables;
-    for (auto& var : vars) {
+    for (auto& var : md.model_variables) {
         cosim::variable_description vd;
         vd.name = var.name;
         vd.reference = var.vr;
@@ -72,8 +93,8 @@ std::shared_ptr<const cosim::model_description> cosim::proxy::remote_fmu::descri
     return modelDescription_;
 }
 
-std::shared_ptr<cosim::async_slave> cosim::proxy::remote_fmu::instantiate(std::string_view /*instanceName*/)
+std::shared_ptr<cosim::async_slave> cosim::proxy::remote_fmu::instantiate(std::string_view instanceName)
 {
-    auto slave = std::make_shared<remote_slave>(fmu_->new_instance(""), modelDescription_);
+    auto slave = std::make_shared<remote_slave>(fmu_->new_instance(std::string(instanceName)), modelDescription_);
     return cosim::make_background_thread_slave(slave);
 }

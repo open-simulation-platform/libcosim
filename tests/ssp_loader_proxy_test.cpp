@@ -17,7 +17,7 @@ int main()
 
         const auto testDataDir = std::getenv("TEST_DATA_DIR");
         REQUIRE(testDataDir);
-        boost::filesystem::path sspFile = boost::filesystem::path(testDataDir) / "ssp" / "demo" / "fmuproxy";
+        boost::filesystem::path sspFile = boost::filesystem::path(testDataDir) / "ssp" / "demo" / "proxy";
 
         cosim::ssp_loader loader;
         const auto config = loader.load(sspFile);

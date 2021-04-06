@@ -4,11 +4,11 @@
  *  file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 #include "cosim/orchestration.hpp"
-#include "cosim/proxy/proxy_file_uri_sub_resolver.hpp"
 
 #include "cosim/error.hpp"
 #include "cosim/fmi/fmu.hpp"
 #include "cosim/log/logger.hpp"
+#include "cosim/proxy/proxy_uri_sub_resolver.hpp"
 
 namespace cosim
 {
@@ -144,7 +144,7 @@ std::shared_ptr<model_uri_resolver> default_model_uri_resolver(
         resolver->add_sub_resolver(
             std::make_shared<fmu_file_uri_sub_resolver>());
     }
-    resolver->add_sub_resolver(std::make_shared<proxy::proxy_file_uri_sub_resolver>());
+    resolver->add_sub_resolver(std::make_shared<proxy::proxy_uri_sub_resolver>());
     return resolver;
 }
 

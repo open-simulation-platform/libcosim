@@ -41,10 +41,6 @@ class LibcosimConan(ConanFile):
         self.copy("*.dll", dst=binDir, keep_path=False)
         self.copy("*.pdb", dst=binDir, keep_path=False)
 
-    # def requirements(self):
-    #     if self.options.fmuproxy:
-    #         self.requires("thrift/0.13.0")
-
     def configure_cmake(self):
         cmake = CMake(self)
         cmake.definitions["LIBCOSIM_USING_CONAN"] = "ON"
