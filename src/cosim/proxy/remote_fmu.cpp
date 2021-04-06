@@ -64,10 +64,10 @@ std::unique_ptr<cosim::model_description> parse_model_description(const proxyfmu
     auto _md = std::make_unique<cosim::model_description>();
     _md->uuid = md.guid;
     _md->author = md.author;
-    _md->name = md.model_name;
+    _md->name = md.modelName;
     _md->description = md.description;
 
-    for (auto& var : md.model_variables) {
+    for (auto& var : md.modelVariables) {
         cosim::variable_description vd;
         vd.name = var.name;
         vd.reference = var.vr;
