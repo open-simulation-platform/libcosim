@@ -23,6 +23,8 @@ class LibcosimConan(ConanFile):
         "yaml-cpp/0.6.3",
         "xerces-c/3.2.2",
         "proxy-fmu/0.1.0"
+        # conflict resolution
+        "openssl/1.1.1k"
     )
 
     default_options = (
