@@ -14,6 +14,9 @@ rm -rf libcosim_*
 # FMI4j (fmu-proxy)
 rm -rf fmi4j_*
 
+# proxy-fmu
+rm -rf proxy_fmu_*
+
 # Other known FMI related files
 
 # sintef vessel model FMU

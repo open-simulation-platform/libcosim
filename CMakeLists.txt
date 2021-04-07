@@ -14,6 +14,7 @@ option(LIBCOSIM_BUILD_APIDOC "Build API documentation (requires Doxygen)" ON)
 option(LIBCOSIM_BUILD_PRIVATE_APIDOC "Build private API documentation (only used if LIBCOSIM_BUILD_APIDOC=ON)" OFF)
 option(LIBCOSIM_STANDALONE_INSTALLATION "Whether to build for a standalone installation (Linux only; sets a relative RPATH)" OFF)
 option(LIBCOSIM_USING_CONAN "Whether Conan is used for package management" OFF)
+option(LIBCOSIM_USING_PROXY_FMU "Whether or not to build with proxy-fmu integration" OFF)
 
 # ==============================================================================
 # Global internal configuration
@@ -113,7 +114,9 @@ find_package(FMILibrary REQUIRED)
 find_package(LIBZIP REQUIRED)
 find_package(YAML_CPP REQUIRED)
 find_package(XercesC REQUIRED)
-find_package(PROXY_FMU REQUIRED)
+if(LIBCOSIM_USING_PROXY_FMU)
+    find_package(PROXY_FMU REQUIRED)
+endif()
 
 # ==============================================================================
 # Targets
@@ -144,7 +147,7 @@ if(LIBCOSIM_BUILD_APIDOC)
     set(DOXYGEN_JAVADOC_AUTOBRIEF "YES")
     set(DOXYGEN_QT_AUTOBRIEF "YES")
     set(DOXYGEN_MULTILINE_CPP_IS_BRIEF "YES")
-    set(DOXYGEN_EXCLUDE_PATTERNS "*.cpp" "*.c" "*/fmuproxy/*service*")
+    set(DOXYGEN_EXCLUDE_PATTERNS "*.cpp" "*.c")
     set(doxygenInputs "${CMAKE_SOURCE_DIR}/docs" "${CMAKE_SOURCE_DIR}/include")
     if(LIBCOSIM_BUILD_PRIVATE_APIDOC)
         list(APPEND doxygenInputs
@@ -206,6 +209,7 @@ install(FILES
         "${CMAKE_SOURCE_DIR}/cmake/FindLIBZIP.cmake"
         "${CMAKE_SOURCE_DIR}/cmake/FindMS_GSL.cmake"
         "${CMAKE_SOURCE_DIR}/cmake/FindYAML_CPP.cmake"
+        "${CMAKE_SOURCE_DIR}/cmake/FindPROXY_FMU_.cmake"
         DESTINATION
         "${LIBCOSIM_CMAKE_INSTALL_DIR}"
 )

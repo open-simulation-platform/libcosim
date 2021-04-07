@@ -8,7 +8,10 @@
 #include "cosim/error.hpp"
 #include "cosim/fmi/fmu.hpp"
 #include "cosim/log/logger.hpp"
-#include "cosim/proxy/proxy_uri_sub_resolver.hpp"
+
+#ifdef HAS_PROXYFMU
+#    include "cosim/proxy/proxy_uri_sub_resolver.hpp"
+#endif
 
 namespace cosim
 {
@@ -144,7 +147,9 @@ std::shared_ptr<model_uri_resolver> default_model_uri_resolver(
         resolver->add_sub_resolver(
             std::make_shared<fmu_file_uri_sub_resolver>());
     }
+#ifdef HAS_PROXYFMU
     resolver->add_sub_resolver(std::make_shared<proxy::proxy_uri_sub_resolver>());
+#endif
     return resolver;
 }
 

@@ -54,9 +54,6 @@ set(privateHeaders
     "cosim/fmi/glue.hpp"
     "cosim/fmi/windows.hpp"
     "cosim/observer/slave_value_provider.hpp"
-    "cosim/proxy/proxy_uri_sub_resolver.hpp"
-    "cosim/proxy/remote_fmu.hpp"
-    "cosim/proxy/remote_slave.hpp"
     "cosim/slave_simulator.hpp"
     "cosim/ssp/ssp_parser.hpp"
     "cosim/utility/concurrency.hpp"
@@ -90,9 +87,6 @@ set(sources
     "cosim/observer/time_series_observer.cpp"
     "cosim/orchestration.cpp"
     "cosim/osp_config_parser.cpp"
-    "cosim/proxy/proxy_uri_sub_resolver.cpp"
-    "cosim/proxy/remote_fmu.cpp"
-    "cosim/proxy/remote_slave.cpp"
     "cosim/scenario_parser.cpp"
     "cosim/slave_simulator.cpp"
     "cosim/ssp/ssp_loader.cpp"
@@ -108,6 +102,19 @@ set(sources
 set(generatedSources
     "cosim/lib_info.cpp"
 )
+
+if(LIBCOSIM_USING_PROXY_FMU)
+    list(APPEND privateHeaders
+        "cosim/proxy/proxy_uri_sub_resolver.hpp"
+        "cosim/proxy/remote_fmu.hpp"
+        "cosim/proxy/remote_slave.hpp"
+    )
+    list(APPEND sources
+        "cosim/proxy/proxy_uri_sub_resolver.cpp"
+        "cosim/proxy/remote_fmu.cpp"
+        "cosim/proxy/remote_slave.cpp"
+    )
+endif()
 
 # ==============================================================================
 # Code generation
@@ -169,11 +176,15 @@ target_link_libraries(cosim
         gsl
     PRIVATE
         ${FMILibrary_LIBRARIES}
-        ${PROXY_FMU_LIBRARIES}
         libzip::libzip
         XercesC::XercesC
         yaml-cpp
     )
+
+if(LIBCOSIM_USING_PROXY_FMU)
+    target_compile_definitions(cosim PRIVATE "HAS_PROXYFMU")
+    target_link_libraries(cosim PRIVATE ${PROXY_FMU_LIBRARIES})
+endif ()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_link_libraries(cosim INTERFACE "atomic")

@@ -22,12 +22,13 @@ class LibcosimConan(ConanFile):
         "libzip/1.7.3",
         "yaml-cpp/0.6.3",
         "xerces-c/3.2.2",
-        "proxy-fmu/0.1.0"
         # conflict resolution
         "openssl/1.1.1k"
     )
 
+    options = {"proxyfmu": [True, False]}
     default_options = (
+        "proxyfmu=False",
         "boost:shared=True",
         "fmilibrary:shared=True",
         "libzip:shared=True",
@@ -37,6 +38,10 @@ class LibcosimConan(ConanFile):
 
     def set_version(self):
         self.version = tools.load(path.join(self.recipe_folder, "version.txt")).strip()
+
+    def requirements(self):
+        if self.options.proxyfmu:
+            self.requires("proxy-fmu/0.1.0")
 
     def imports(self):
         binDir = os.path.join("output", str(self.settings.build_type).lower(), "bin")
@@ -48,6 +53,8 @@ class LibcosimConan(ConanFile):
         cmake.definitions["LIBCOSIM_USING_CONAN"] = "ON"
         cmake.definitions["LIBCOSIM_BUILD_APIDOC"] = "OFF"
         cmake.definitions["LIBCOSIM_BUILD_TESTS"] = "OFF"
+        if self.options.proxyfmu:
+            cmake.definitions["LIBCOSIM_WITH_PROXYFMU"] = "ON"
         cmake.configure()
         return cmake
 
