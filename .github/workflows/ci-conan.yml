@@ -61,12 +61,12 @@ jobs:
         os: [windows-2016]
         build_type: [Debug, Release]
         compiler_version: [15]
-        option_fmuproxy: ['proxyfmu=True', 'proxyfmu=False']
+        option_proxyfmu: ['proxyfmu=True', 'proxyfmu=False']
 
         exclude:
           - os: windows-2016
             build_type: Debug
-            option_fmuproxy: 'proxyfmu=True'
+            option_proxyfmu: 'proxyfmu=True'
 
     steps:
       - uses: actions/checkout@v2
