@@ -17,7 +17,7 @@ set(tests
 
 if(LIBCOSIM_WITH_PROXYFMU)
     list(APPEND tests
-            "ssp_loader_proxy_test"
+        "ssp_loader_proxy_test"
     )
 endif()
 

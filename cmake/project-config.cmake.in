@@ -13,7 +13,7 @@ find_dependency(LIBZIP REQUIRED)
 find_dependency(YAML_CPP REQUIRED)
 find_dependency(XercesC REQUIRED)
 
-if(@LIBCOSIM_USING_PROXY_FMU@)
+if(@LIBCOSIM_WITH_PROXYFMU@)
   find_dependency(PROXY_FMU REQUIRED)
 endif()
 

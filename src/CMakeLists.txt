@@ -103,7 +103,7 @@ set(generatedSources
     "cosim/lib_info.cpp"
 )
 
-if(LIBCOSIM_USING_PROXY_FMU)
+if(LIBCOSIM_WITH_PROXYFMU)
     list(APPEND privateHeaders
         "cosim/proxy/proxy_uri_sub_resolver.hpp"
         "cosim/proxy/remote_fmu.hpp"
@@ -181,7 +181,7 @@ target_link_libraries(cosim
         yaml-cpp
     )
 
-if(LIBCOSIM_USING_PROXY_FMU)
+if(LIBCOSIM_WITH_PROXYFMU)
     target_compile_definitions(cosim PRIVATE "HAS_PROXYFMU")
     target_link_libraries(cosim PRIVATE ${PROXY_FMU_LIBRARIES})
 endif ()
