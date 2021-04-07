@@ -24,7 +24,7 @@ jobs:
         build_type: [Debug, Release]
         compiler_version: [7, 8, 9]
         compiler_libcxx: [libstdc++11]
-        option_fmuproxy: ['proxyfmu=True', 'proxyfmu=False']
+        option_proxyfmu: ['proxyfmu=True', 'proxyfmu=False']
 
     steps:
       - uses: actions/checkout@v2
