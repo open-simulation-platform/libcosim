@@ -45,6 +45,7 @@ class LibcosimConan(ConanFile):
 
     def imports(self):
         binDir = os.path.join("output", str(self.settings.build_type).lower(), "bin")
+        self.copy("proxy_server.exe", dst=binDir, src="bin", keep_path=False)
         self.copy("*.dll", dst=binDir, keep_path=False)
         self.copy("*.pdb", dst=binDir, keep_path=False)
 
