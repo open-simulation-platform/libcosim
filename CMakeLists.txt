@@ -115,7 +115,7 @@ find_package(LIBZIP REQUIRED)
 find_package(YAML_CPP REQUIRED)
 find_package(XercesC REQUIRED)
 if(LIBCOSIM_WITH_PROXYFMU)
-    find_package(PROXY_FMU REQUIRED)
+    find_package(PROXYFMU CONFIG REQUIRED)
 endif()
 
 # ==============================================================================

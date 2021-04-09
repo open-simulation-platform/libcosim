@@ -16,6 +16,7 @@
 #include <filesystem>
 #include <memory>
 #include <proxyfmu/fmi/fmu.hpp>
+#include <proxyfmu/remote_info.hpp>
 
 namespace cosim
 {
@@ -27,7 +28,7 @@ class remote_fmu : public cosim::model
 {
 
 public:
-    explicit remote_fmu(const std::filesystem::path& fmuPath);
+    explicit remote_fmu(const std::filesystem::path& fmuPath, const std::optional<proxyfmu::remote_info>& remote = std::nullopt);
 
     std::shared_ptr<const cosim::model_description> description() const noexcept override;
 
