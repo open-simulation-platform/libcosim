@@ -99,6 +99,7 @@ std::shared_ptr<const cosim::model_description> cosim::proxy::remote_fmu::descri
 
 std::shared_ptr<cosim::async_slave> cosim::proxy::remote_fmu::instantiate(std::string_view instanceName)
 {
-    auto slave = std::make_shared<remote_slave>(fmu_->new_instance(std::string(instanceName)), modelDescription_);
+    auto proxySlave = fmu_->new_instance(std::string(instanceName));
+    auto slave = std::make_shared<remote_slave>(std::move(proxySlave), modelDescription_);
     return cosim::make_background_thread_slave(slave);
 }

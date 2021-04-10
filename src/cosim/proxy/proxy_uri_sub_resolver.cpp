@@ -7,9 +7,8 @@
 #include <cosim/error.hpp>
 #include <cosim/proxy/proxy_uri_sub_resolver.hpp>
 #include <cosim/proxy/remote_fmu.hpp>
-#include <proxyfmu/remote_info.hpp>
 
-std::pair<std::string, unsigned int> parse_authority(std::string_view auth)
+std::pair<std::string, int> parse_authority(std::string_view auth)
 {
     const auto colonIdx = auth.find(':');
     if (colonIdx == std::string::npos) {
@@ -54,7 +53,7 @@ std::shared_ptr<cosim::model> cosim::proxy::proxy_uri_sub_resolver::lookup_model
     if (query.substr(0, 5) == "file=") {
         const auto file = proxyfmu::filesystem::path(std::string(query.substr(5)));
         assert(std::filesystem::exists(file));
-        if (auth.first == "localhost") {
+        if (auth.first == "localhost" && auth.second == -1) {
             return std::make_shared<remote_fmu>(file);
         } else {
             return std::make_shared<remote_fmu>(file, proxyfmu::remote_info(auth.first, auth.second));
