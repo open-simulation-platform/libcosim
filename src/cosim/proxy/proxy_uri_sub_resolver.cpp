@@ -44,7 +44,7 @@ std::shared_ptr<cosim::model> cosim::proxy::proxy_uri_sub_resolver::lookup_model
 std::shared_ptr<cosim::model> cosim::proxy::proxy_uri_sub_resolver::lookup_model(const cosim::uri& modelUri)
 {
     assert(modelUri.scheme().has_value());
-    if (*modelUri.scheme() != "proxy-fmu") return nullptr;
+    if (*modelUri.scheme() != "proxyfmu") return nullptr;
     COSIM_INPUT_CHECK(modelUri.authority());
     COSIM_INPUT_CHECK(modelUri.query());
 
