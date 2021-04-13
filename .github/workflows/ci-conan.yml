@@ -22,7 +22,7 @@ jobs:
       matrix:
         os: [ubuntu-18.04]
         build_type: [Debug, Release]
-        compiler_version: [7, 8, 9]
+        compiler_version: [7, 9]
         compiler_libcxx: [libstdc++11]
         option_fmuproxy: ['fmuproxy=True', 'fmuproxy=False']
 
