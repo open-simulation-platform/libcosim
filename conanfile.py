@@ -41,11 +41,11 @@ class LibcosimConan(ConanFile):
 
     def requirements(self):
         if self.options.proxyfmu:
-            self.requires("proxy-fmu/0.2.0@osp/testing")
+            self.requires("proxyfmu/0.2.0@osp/testing")
 
     def imports(self):
         binDir = os.path.join("output", str(self.settings.build_type).lower(), "bin")
-        self.copy("proxy_server.exe", dst=binDir, src="bin", keep_path=False)
+        self.copy("proxyfmu.exe", dst=binDir, src="bin", keep_path=False)
         self.copy("*.dll", dst=binDir, keep_path=False)
         self.copy("*.pdb", dst=binDir, keep_path=False)
 

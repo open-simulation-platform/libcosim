@@ -183,7 +183,7 @@ target_link_libraries(cosim
 
 if(LIBCOSIM_WITH_PROXYFMU)
     target_compile_definitions(cosim PRIVATE "HAS_PROXYFMU")
-    target_link_libraries(cosim PRIVATE proxyfmu::proxy-client)
+    target_link_libraries(cosim PRIVATE proxyfmu::proxyfmu-client)
 endif ()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
