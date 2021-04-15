@@ -30,7 +30,6 @@ class LibcosimConan(ConanFile):
     default_options = (
         "proxyfmu=False",
         "boost:shared=True",
-        "fmilibrary:shared=True",
         "libzip:shared=True",
         "yaml-cpp:shared=True",
         "xerces-c:shared=True"
