@@ -209,7 +209,6 @@ install(FILES
         "${CMAKE_SOURCE_DIR}/cmake/FindLIBZIP.cmake"
         "${CMAKE_SOURCE_DIR}/cmake/FindMS_GSL.cmake"
         "${CMAKE_SOURCE_DIR}/cmake/FindYAML_CPP.cmake"
-        "${CMAKE_SOURCE_DIR}/cmake/FindPROXY_FMU.cmake"
         DESTINATION
         "${LIBCOSIM_CMAKE_INSTALL_DIR}"
 )

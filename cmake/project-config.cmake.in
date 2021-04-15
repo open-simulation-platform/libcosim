@@ -14,7 +14,7 @@ find_dependency(YAML_CPP REQUIRED)
 find_dependency(XercesC REQUIRED)
 
 if(@LIBCOSIM_WITH_PROXYFMU@)
-  find_dependency(PROXY_FMU REQUIRED)
+  find_dependency(PROXYFMU CONFIG REQUIRED)
 endif()
 
 list(REMOVE_AT CMAKE_MODULE_PATH -1)
