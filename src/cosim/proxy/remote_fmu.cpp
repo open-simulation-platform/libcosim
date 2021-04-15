@@ -86,7 +86,7 @@ std::unique_ptr<cosim::model_description> parse_model_description(const proxyfmu
 
 } // namespace
 
-cosim::proxy::remote_fmu::remote_fmu(const std::filesystem::path& fmuPath, const std::optional<remote_info>& remote)
+cosim::proxy::remote_fmu::remote_fmu(const proxyfmu::filesystem::path& fmuPath, const std::optional<remote_info>& remote)
     : fmu_(std::make_unique<proxy_fmu>(fmuPath, remote))
     , modelDescription_(parse_model_description(fmu_->get_model_description()))
 {
