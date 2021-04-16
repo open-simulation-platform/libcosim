@@ -15,12 +15,6 @@ set(tests
     "synchronized_xy_series_test"
 )
 
-if(LIBCOSIM_WITH_PROXYFMU)
-    list(APPEND tests
-        "ssp_loader_proxy_test"
-    )
-endif()
-
 set(unittests
     "async_slave_unittest"
     "function_unittest"
@@ -37,6 +31,12 @@ set(unittests
     "utility_uuid_unittest"
     "utility_zip_unittest"
 )
+
+if(LIBCOSIM_WITH_PROXYFMU)
+    list(APPEND unittests
+            "proxyfmu_unittest"
+            )
+endif()
 
 include("AddTestExecutable")
 foreach(test IN LISTS tests)

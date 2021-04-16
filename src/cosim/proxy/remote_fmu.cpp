@@ -78,6 +78,21 @@ std::unique_ptr<cosim::model_description> parse_model_description(const proxyfmu
         vd.type = get_type(var);
         vd.causality = get_causality(var);
         vd.variability = get_variability(var);
+
+        if (var.is_real()) {
+            const auto type = std::get<proxyfmu::fmi::real>(var.typeAttribute);
+            vd.start = type.start;
+        } else if (var.is_integer()) {
+            const auto type = std::get<proxyfmu::fmi::integer>(var.typeAttribute);
+            vd.start = type.start;
+        } else if (var.is_boolean()) {
+            const auto type = std::get<proxyfmu::fmi::boolean>(var.typeAttribute);
+            vd.start = type.start;
+        } else if (var.is_string()) {
+            const auto type = std::get<proxyfmu::fmi::string>(var.typeAttribute);
+            vd.start = type.start;
+        }
+
         _md->variables.push_back(vd);
     }
 
