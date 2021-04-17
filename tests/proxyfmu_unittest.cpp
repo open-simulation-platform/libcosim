@@ -1,8 +1,8 @@
 #define BOOST_TEST_MODULE proxyfmu unittests
 
 #include <cosim/log/simple.hpp>
-#include <cosim/ssp/ssp_loader.hpp>
 #include <cosim/proxy/remote_fmu.hpp>
+#include <cosim/ssp/ssp_loader.hpp>
 
 #include <boost/test/unit_test.hpp>
 
@@ -44,7 +44,7 @@ BOOST_AUTO_TEST_CASE(test_fmi1)
     BOOST_TEST(d->name == "no.viproma.demo.identity");
     BOOST_TEST(d->uuid.size() == 36U);
     BOOST_TEST(d->description ==
-               "Has one input and one output of each type, and outputs are always set equal to inputs");
+        "Has one input and one output of each type, and outputs are always set equal to inputs");
     BOOST_TEST(d->author == "Lars Tandle Kyllingstad");
 
     value_reference
@@ -106,10 +106,11 @@ BOOST_AUTO_TEST_CASE(test_fmi1)
     for (auto t = tStart; t < tMax; t += dt) {
 
         auto vars = instance->get_variables(
-            gsl::make_span(&realOut, 1),
-            gsl::make_span(&integerOut, 1),
-            gsl::make_span(&booleanOut, 1),
-            gsl::make_span(&stringOut, 1)).get();
+                                gsl::make_span(&realOut, 1),
+                                gsl::make_span(&integerOut, 1),
+                                gsl::make_span(&booleanOut, 1),
+                                gsl::make_span(&stringOut, 1))
+                        .get();
 
         BOOST_TEST(vars.real[0] == realVal);
         BOOST_TEST(vars.integer[0] == integerVal);
@@ -124,12 +125,63 @@ BOOST_AUTO_TEST_CASE(test_fmi1)
         instance->do_step(t, dt).get();
 
         instance->set_variables(
-            gsl::make_span(&realIn, 1), gsl::make_span(&realVal, 1),
-            gsl::make_span(&integerIn, 1), gsl::make_span(&integerVal, 1),
-            gsl::make_span(&booleanIn, 1), gsl::make_span(&booleanVal, 1),
-            gsl::make_span(&stringIn, 1), gsl::make_span(&stringVal, 1)).get();
-
+                    gsl::make_span(&realIn, 1), gsl::make_span(&realVal, 1),
+                    gsl::make_span(&integerIn, 1), gsl::make_span(&integerVal, 1),
+                    gsl::make_span(&booleanIn, 1), gsl::make_span(&booleanVal, 1),
+                    gsl::make_span(&stringIn, 1), gsl::make_span(&stringVal, 1))
+            .get();
     }
 
     instance->end_simulation().get();
+}
+
+BOOST_AUTO_TEST_CASE(test_fmi2)
+{
+    const auto testDataDir = std::getenv("TEST_DATA_DIR");
+    BOOST_TEST_REQUIRE(!!testDataDir);
+
+    auto path = proxyfmu::filesystem::path(testDataDir) / "fmi2" / "WaterTank_Control.fmu";
+    auto fmu = proxy::remote_fmu(path);
+
+    const auto d = fmu.description();
+    BOOST_TEST(d->name == "WaterTank.Control");
+    BOOST_TEST(d->uuid == "{ad6d7bad-97d1-4fb9-ab3e-00a0d051e42c}");
+    BOOST_TEST(d->description.empty());
+    BOOST_TEST(d->author.empty());
+    BOOST_TEST(d->version.empty());
+
+    auto instance = fmu.instantiate("testSlave");
+    instance->setup(
+                cosim::to_time_point(0.0),
+                cosim::to_time_point(1.0),
+                std::nullopt)
+        .get();
+
+    bool foundValve = false;
+    bool foundMinlevel = false;
+    for (const auto& v : d->variables) {
+        if (v.name == "valve") {
+            foundValve = true;
+            BOOST_TEST(v.variability == variable_variability::continuous);
+            BOOST_TEST(v.causality == variable_causality::output);
+            double start = std::get<double>(*v.start);
+            BOOST_TEST(start == 0.0);
+            const auto varID = v.reference;
+            double varVal = -1.0;
+            varVal = instance->get_variables(gsl::make_span(&varID, 1), {}, {}, {}).get().real[0];
+            BOOST_TEST(varVal == 0.0);
+        } else if (v.name == "minlevel") {
+            foundMinlevel = true;
+            BOOST_TEST(v.variability == variable_variability::fixed);
+            BOOST_TEST(v.causality == variable_causality::parameter);
+            double start = std::get<double>(*v.start);
+            BOOST_TEST(start == 1.0);
+            const auto varID = v.reference;
+            double varVal = -1.0;
+            varVal = instance->get_variables(gsl::make_span(&varID, 1), {}, {}, {}).get().real[0];
+            BOOST_TEST(varVal == 1.0);
+        }
+    }
+    BOOST_TEST(foundValve);
+    BOOST_TEST(foundMinlevel);
 }
