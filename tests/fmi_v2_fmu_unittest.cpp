@@ -2,7 +2,7 @@
 #include <cosim/fmi/importer.hpp>
 #include <cosim/fmi/v2/fmu.hpp>
 
-#include <boost/filesystem.hpp>
+#include <cosim/fs_portability.hpp>
 #include <boost/test/unit_test.hpp>
 
 
@@ -17,7 +17,7 @@ BOOST_AUTO_TEST_CASE(v2_fmu)
     auto importer = fmi::importer::create();
     const std::string modelName = "WaterTank_Control";
     auto fmu = importer->import(
-        boost::filesystem::path(testDataDir) / "fmi2" / (modelName + ".fmu"));
+        cosim::filesystem::path(testDataDir) / "fmi2" / (modelName + ".fmu"));
 
     BOOST_TEST(fmu->fmi_version() == fmi::fmi_version::v2_0);
     const auto d = fmu->model_description();
@@ -27,7 +27,7 @@ BOOST_AUTO_TEST_CASE(v2_fmu)
     BOOST_TEST(d->author.empty());
     BOOST_TEST(d->version.empty());
     BOOST_TEST(std::static_pointer_cast<fmi::v2::fmu>(fmu)->fmilib_handle() != nullptr);
-    BOOST_TEST(boost::filesystem::exists(
+    BOOST_TEST(cosim::filesystem::exists(
         std::static_pointer_cast<fmi::v2::fmu>(fmu)->directory() / "modelDescription.xml"));
 
     auto instance = fmu->instantiate_slave("testSlave");

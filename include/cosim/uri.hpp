@@ -10,7 +10,7 @@
 #ifndef COSIM_URI_HPP
 #define COSIM_URI_HPP
 
-#include <boost/filesystem.hpp>
+#include <cosim/fs_portability.hpp>
 
 #include <cstddef>
 #include <optional>
@@ -258,7 +258,7 @@ uri percent_encode_uri(
  *      `file:///<os-dependent path>`, except when `path` is empty, in which
  *      case the function returns `file:`.
  */
-uri path_to_file_uri(const boost::filesystem::path& path);
+uri path_to_file_uri(const cosim::filesystem::path& path);
 
 
 /**
@@ -271,7 +271,7 @@ uri path_to_file_uri(const boost::filesystem::path& path);
  *  \returns
  *      The path that corresponds to `fileUri`.
  */
-boost::filesystem::path file_uri_to_path(const uri& fileUri);
+cosim::filesystem::path file_uri_to_path(const uri& fileUri);
 
 
 } // namespace cosim

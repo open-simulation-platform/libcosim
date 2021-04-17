@@ -6,7 +6,7 @@
 #include <cosim/log/simple.hpp>
 #include <cosim/observer/file_observer.hpp>
 
-#include <boost/filesystem.hpp>
+#include <cosim/fs_portability.hpp>
 
 #include <exception>
 #include <memory>
@@ -29,10 +29,10 @@ int main()
 
         const auto testDataDir = std::getenv("TEST_DATA_DIR");
         REQUIRE(testDataDir);
-        boost::filesystem::path configPath = boost::filesystem::path(testDataDir) / "LogConfig.xml";
+        cosim::filesystem::path configPath = cosim::filesystem::path(testDataDir) / "LogConfig.xml";
 
-        const auto logPath = boost::filesystem::current_path() / "logs";
-        boost::filesystem::path csvPath = boost::filesystem::path(logPath);
+        const auto logPath = cosim::filesystem::current_path() / "logs";
+        cosim::filesystem::path csvPath = cosim::filesystem::path(logPath);
 
 
         // Set up the execution and add observer

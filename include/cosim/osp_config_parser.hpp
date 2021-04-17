@@ -14,9 +14,6 @@
 #include <cosim/system_structure.hpp>
 #include <cosim/time.hpp>
 
-#include <boost/filesystem/path.hpp>
-
-
 namespace cosim
 {
 
@@ -42,7 +39,7 @@ struct osp_config
  *  Loads an OSP-IS system structure file.
  */
 osp_config load_osp_config(
-    const boost::filesystem::path& configPath,
+    const cosim::filesystem::path& configPath,
     cosim::model_uri_resolver& resolver);
 
 

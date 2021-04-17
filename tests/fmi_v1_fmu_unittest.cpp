@@ -4,7 +4,6 @@
 #include <cosim/utility/filesystem.hpp>
 #include <cosim/utility/zip.hpp>
 
-#include <boost/filesystem.hpp>
 #include <boost/test/unit_test.hpp>
 
 #include <cstdlib>
@@ -124,7 +123,7 @@ BOOST_AUTO_TEST_CASE(v1_fmu)
     BOOST_TEST_REQUIRE(!!testDataDir);
     auto importer = fmi::importer::create();
     auto fmu = importer->import(
-        boost::filesystem::path(testDataDir) / "fmi1" / "identity.fmu");
+        cosim::filesystem::path(testDataDir) / "fmi1" / "identity.fmu");
     run_tests(fmu);
 }
 
@@ -135,7 +134,7 @@ BOOST_AUTO_TEST_CASE(v1_fmu_unpacked)
     BOOST_TEST_REQUIRE(!!testDataDir);
     utility::temp_dir unpackDir;
     utility::zip::archive(
-        boost::filesystem::path(testDataDir) / "fmi1" / "identity.fmu")
+        cosim::filesystem::path(testDataDir) / "fmi1" / "identity.fmu")
         .extract_all(unpackDir.path());
 
     auto importer = fmi::importer::create();

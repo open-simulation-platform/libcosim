@@ -6,9 +6,8 @@
 #include <cosim/error.hpp>
 #include <cosim/fmuproxy/fmuproxy_client.hpp>
 #include <cosim/fmuproxy/thrift_state.hpp>
+#include <cosim/fs_portability.hpp>
 #include <cosim/log/logger.hpp>
-
-#include <boost/filesystem.hpp>
 
 #include <cstdio>
 #include <string>
@@ -30,7 +29,7 @@ using namespace fmuproxy::thrift;
 using namespace apache::thrift::transport;
 using namespace apache::thrift::protocol;
 
-namespace fs = boost::filesystem;
+namespace fs = cosim::filesystem;
 
 namespace
 {

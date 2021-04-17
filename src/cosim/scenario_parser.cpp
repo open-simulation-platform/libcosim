@@ -5,9 +5,8 @@
  */
 #include "cosim/scenario_parser.hpp"
 
-#include <boost/filesystem/fstream.hpp>
-
 #include <cstdlib>
+#include <fstream>
 #include <functional>
 #include <iostream>
 #include <optional>
@@ -192,11 +191,11 @@ std::optional<cosim::time_point> parse_end_time(const YAML::Node& j)
 
 
 scenario::scenario parse_scenario(
-    const boost::filesystem::path& scenarioFile,
+    const cosim::filesystem::path& scenarioFile,
     const std::unordered_map<simulator_index,
         manipulable*>& simulators)
 {
-    boost::filesystem::ifstream i(scenarioFile);
+    std::ifstream i(scenarioFile);
     if (!i) {
         std::ostringstream oss;
         oss << "Cannot load scenario. Failed to open file " << scenarioFile;

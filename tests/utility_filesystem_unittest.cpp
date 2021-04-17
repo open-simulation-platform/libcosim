@@ -1,7 +1,7 @@
 #define BOOST_TEST_MODULE cosim::utility filesystem unittests
 #include <cosim/utility/filesystem.hpp>
 
-#include <boost/filesystem.hpp>
+#include <cosim/fs_portability.hpp>
 #include <boost/test/unit_test.hpp>
 
 #include <utility>
@@ -9,7 +9,7 @@
 
 BOOST_AUTO_TEST_CASE(temp_dir)
 {
-    namespace fs = boost::filesystem;
+    namespace fs = cosim::filesystem;
     fs::path d;
     {
         auto tmp = cosim::utility::temp_dir();

@@ -6,7 +6,7 @@
 #include <cosim/log/simple.hpp>
 #include <cosim/observer/file_observer.hpp>
 
-#include <boost/filesystem.hpp>
+#include <cosim/fs_portability.hpp>
 
 #include <exception>
 #include <memory>
@@ -17,18 +17,18 @@
 #define REQUIRE(test) \
     if (!(test)) throw std::runtime_error("Requirement not satisfied: " #test)
 
-int64_t filecount(const boost::filesystem::path& path)
+int64_t filecount(const cosim::filesystem::path& path)
 {
     return std::count_if(
-        boost::filesystem::directory_iterator(path),
-        boost::filesystem::directory_iterator(),
-        static_cast<bool (*)(const boost::filesystem::path&)>(boost::filesystem::is_regular_file));
+        cosim::filesystem::directory_iterator(path),
+        cosim::filesystem::directory_iterator(),
+        static_cast<bool (*)(const cosim::filesystem::path&)>(cosim::filesystem::is_regular_file));
 }
 
-void remove_directory_contents(const boost::filesystem::path& path)
+void remove_directory_contents(const cosim::filesystem::path& path)
 {
-    for (boost::filesystem::directory_iterator end_dir_it, it(path); it != end_dir_it; ++it) {
-        boost::filesystem::remove_all(it->path());
+    for (cosim::filesystem::directory_iterator end_dir_it, it(path); it != end_dir_it; ++it) {
+        cosim::filesystem::remove_all(it->path());
     }
 }
 
@@ -41,9 +41,9 @@ int main()
         constexpr cosim::time_point startTime = cosim::to_time_point(0.0);
         constexpr cosim::duration stepSize = cosim::to_duration(0.1);
 
-        const auto logPath = boost::filesystem::current_path() / "logs" / "clean";
-        boost::filesystem::create_directories(logPath);
-        boost::filesystem::remove_all(logPath);
+        const auto logPath = cosim::filesystem::current_path() / "logs" / "clean";
+        cosim::filesystem::create_directories(logPath);
+        cosim::filesystem::remove_all(logPath);
 
         // Set up the execution
         auto execution = cosim::execution(startTime, std::make_unique<cosim::fixed_step_algorithm>(stepSize));

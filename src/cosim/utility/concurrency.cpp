@@ -95,7 +95,7 @@ void shared_mutex::unlock_shared()
 
 
 file_lock::file_lock(
-    const boost::filesystem::path& path,
+    const cosim::filesystem::path& path,
     file_lock_initial_state initialState)
     : fileMutex_(get_file_mutex(path))
 {
@@ -173,7 +173,7 @@ void file_lock::unlock_shared()
 }
 
 
-file_lock::boost_wrapper::boost_wrapper(const boost::filesystem::path& path)
+file_lock::boost_wrapper::boost_wrapper(const cosim::filesystem::path& path)
 {
 #ifdef _WIN32
     // NOTE: The share mode flags must match those used by boost::interprocess.
@@ -293,17 +293,17 @@ void file_lock::boost_wrapper::unlock_shared()
 }
 
 
-file_lock::file_mutex::file_mutex(const boost::filesystem::path& path)
+file_lock::file_mutex::file_mutex(const cosim::filesystem::path& path)
     : file(path)
 { }
 
 
 std::shared_ptr<file_lock::file_mutex> file_lock::get_file_mutex(
-    const boost::filesystem::path& path)
+    const cosim::filesystem::path& path)
 {
     struct file_mutex_cache_entry
     {
-        boost::filesystem::path path;
+        cosim::filesystem::path path;
         std::weak_ptr<file_mutex> fileMutex;
     };
     static std::vector<file_mutex_cache_entry> fileMutexCache;
@@ -315,7 +315,7 @@ std::shared_ptr<file_lock::file_mutex> file_lock::get_file_mutex(
     std::lock_guard<decltype(cacheMutex)> guard(cacheMutex);
     for (auto it = fileMutexCache.begin(); it != fileMutexCache.end();) {
         if (auto fm = it->fileMutex.lock()) {
-            if (boost::filesystem::equivalent(path, it->path)) {
+            if (cosim::filesystem::equivalent(path, it->path)) {
                 assert(!fileMutex);
                 fileMutex = std::move(fm);
             }
@@ -328,7 +328,7 @@ std::shared_ptr<file_lock::file_mutex> file_lock::get_file_mutex(
     // If no element corresponding to the given path was found, create one.
     if (!fileMutex) {
         fileMutex = std::make_shared<file_mutex>(path);
-        fileMutexCache.push_back({boost::filesystem::canonical(path), fileMutex});
+        fileMutexCache.push_back({cosim::filesystem::canonical(path), fileMutex});
     }
 
     return fileMutex;

@@ -6,7 +6,7 @@
 #include <cosim/log/simple.hpp>
 #include <cosim/observer/file_observer.hpp>
 
-#include <boost/filesystem.hpp>
+#include <cosim/fs_portability.hpp>
 
 #include <exception>
 #include <memory>
@@ -27,8 +27,8 @@ int main()
         constexpr cosim::time_point endTime = cosim::to_time_point(10.0);
         constexpr cosim::duration stepSize = cosim::to_duration(0.1);
 
-        const auto logPath = boost::filesystem::current_path() / "logs";
-        boost::filesystem::path csvPath = boost::filesystem::path(logPath);
+        const auto logPath = cosim::filesystem::current_path() / "logs";
+        cosim::filesystem::path csvPath = cosim::filesystem::path(logPath);
 
         // Set up the execution
         auto execution = cosim::execution(startTime, std::make_unique<cosim::fixed_step_algorithm>(stepSize));

@@ -490,7 +490,7 @@ uri percent_encode_uri(
 }
 
 
-uri path_to_file_uri(const boost::filesystem::path& path)
+uri path_to_file_uri(const cosim::filesystem::path& path)
 {
     COSIM_INPUT_CHECK(path.empty() || path.has_root_directory());
 
@@ -526,7 +526,7 @@ uri path_to_file_uri(const boost::filesystem::path& path)
 }
 
 
-boost::filesystem::path file_uri_to_path(const uri& fileUri)
+cosim::filesystem::path file_uri_to_path(const uri& fileUri)
 {
     COSIM_INPUT_CHECK(fileUri.scheme() && *fileUri.scheme() == "file");
     COSIM_INPUT_CHECK(fileUri.authority() &&
@@ -551,10 +551,10 @@ boost::filesystem::path file_uri_to_path(const uri& fileUri)
     if (rc != S_OK) {
         throw std::system_error(rc, std::system_category());
     }
-    return boost::filesystem::path(pathBuffer, pathBuffer + pathSize);
+    return cosim::filesystem::path(pathBuffer, pathBuffer + pathSize);
 
 #else
-    return boost::filesystem::path(percent_decode(fileUri.path()));
+    return cosim::filesystem::path(percent_decode(fileUri.path()));
 #endif
 }
 

@@ -13,10 +13,9 @@
 #include <cosim/file_cache.hpp>
 #include <cosim/fmi/fmu.hpp>
 #include <cosim/fmi/importer.hpp>
+#include <cosim/fs_portability.hpp>
 #include <cosim/model_description.hpp>
 #include <cosim/time.hpp>
-
-#include <boost/filesystem.hpp>
 
 #include <memory>
 #include <string>
@@ -94,7 +93,7 @@ public:
         std::string_view instanceName);
 
     /// The path to the directory in which this FMU was unpacked.
-    boost::filesystem::path directory() const;
+    cosim::filesystem::path directory() const;
 
     /// Returns the underlying C API handle (for FMI Library)
     fmi1_import_t* fmilib_handle() const;
