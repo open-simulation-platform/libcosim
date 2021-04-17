@@ -17,7 +17,7 @@ namespace filesystem = std::filesystem;
 }
 #else
 #    include <experimental/filesystem>
-namespace proxyfmu
+namespace cosim
 {
 namespace filesystem = std::experimental::filesystem;
 }
