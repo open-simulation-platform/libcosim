@@ -184,4 +184,7 @@ BOOST_AUTO_TEST_CASE(test_fmi2)
     }
     BOOST_TEST(foundValve);
     BOOST_TEST(foundMinlevel);
+
+    instance->start_simulation().get();
+    instance->end_simulation().get();
 }
