@@ -3,10 +3,6 @@
  *  License, v. 2.0. If a copy of the MPL was not distributed with this
  *  file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
-#if defined(_WIN32) && !defined(NOMINMAX)
-#    define NOMINMAX
-#endif
-
 #include "cosim/utility/concurrency.hpp"
 
 #include <cassert>
