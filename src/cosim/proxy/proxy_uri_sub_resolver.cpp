@@ -52,7 +52,7 @@ std::shared_ptr<cosim::model> cosim::proxy::proxy_uri_sub_resolver::lookup_model
     const auto query = *modelUri.query();
     if (query.substr(0, 5) == "file=") {
         const auto file = proxyfmu::filesystem::path(std::string(query.substr(5)));
-        assert(std::filesystem::exists(file));
+        assert(proxyfmu::filesystem::exists(file));
         if (auth.first == "localhost" && auth.second == -1) {
             return std::make_shared<remote_fmu>(file);
         } else {
