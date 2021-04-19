@@ -26,11 +26,6 @@ jobs:
         compiler_libcxx: [libstdc++11]
         option_proxyfmu: ['proxyfmu=True', 'proxyfmu=False']
 
-        exclude:
-          - os: ubuntu-18.04
-            build_type: Debug
-            option_proxyfmu: 'proxyfmu=True'
-
     steps:
       - uses: actions/checkout@v2
       - name: Install prerequisites
@@ -69,11 +64,6 @@ jobs:
         build_type: [Debug, Release]
         compiler_version: [15]
         option_proxyfmu: ['proxyfmu=True', 'proxyfmu=False']
-
-        exclude:
-          - os: windows-2016
-            build_type: Debug
-            option_proxyfmu: 'proxyfmu=True'
 
     steps:
       - uses: actions/checkout@v2
