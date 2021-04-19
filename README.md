@@ -94,10 +94,6 @@ To include proxyfmu support, run conan install with the additional option:
 ```bash
 -o proxyfmu=True
 ```
-Note that it currently must be built in Release mode e.g.
-```bash
-conan install .. -s build_type=Release --build=missing -o proxyfmu=True
-```
 
 Now, we can run CMake to generate the build system.  (If you have not installed
 Doxygen at this point, append `-DLIBCOSIM_BUILD_APIDOC=OFF` to the next command
