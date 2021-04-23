@@ -30,9 +30,9 @@ jobs:
       - uses: actions/checkout@v2
       - name: Install prerequisites
         run: |
+          sudo apt-get install -y --no-install-recommends g++-8
           sudo pip3 install --upgrade setuptools pip
           sudo pip3 install conan
-          sudo pip3 install g++-8
       - name: Configure Conan
         run: conan remote add osp https://osp.jfrog.io/artifactory/api/conan/conan-local --force
       - name: Conan create
