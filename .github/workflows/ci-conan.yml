@@ -32,6 +32,7 @@ jobs:
         run: |
           sudo pip3 install --upgrade setuptools pip
           sudo pip3 install conan
+          sudo pip3 install g++-8
       - name: Configure Conan
         run: conan remote add osp https://osp.jfrog.io/artifactory/api/conan/conan-local --force
       - name: Conan create
