@@ -263,6 +263,11 @@ log_record last_log_record(const std::string& instanceName)
 } // namespace
 
 
+// NOTE: We have to re-parse the model description XML every time we
+// instantiate a new slave because of a shortcoming in FMI Library.
+// (In brief, fmi1_import_create_dllfmu() and fmi1_import_instantiate_slave()
+// both store their results in the fmi1_import_t object created by
+// fmi1_import_parse_xml().)
 slave_instance::slave_instance(
     std::shared_ptr<v1::fmu> fmu,
     std::string_view instanceName)
