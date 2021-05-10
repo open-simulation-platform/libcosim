@@ -310,18 +310,22 @@ std::shared_ptr<file_lock::file_mutex> file_lock::get_file_mutex(
     static boost::fibers::mutex cacheMutex;
     std::shared_ptr<file_mutex> fileMutex;
 
-    // Do a linear search for an element corresponding to the given path
-    // in `fileMutexes`, cleaning up expired elements along the way.
+    // If the file already exists, we need to check whether it is already
+    // associated with a mutex.  We do so by performing a linear search for
+    // an element corresponding to the given path in `fileMutexes`
+    // (cleaning up any expired elements along the way).
     std::lock_guard<decltype(cacheMutex)> guard(cacheMutex);
-    for (auto it = fileMutexCache.begin(); it != fileMutexCache.end();) {
-        if (auto fm = it->fileMutex.lock()) {
-            if (cosim::filesystem::equivalent(path, it->path)) {
-                assert(!fileMutex);
-                fileMutex = std::move(fm);
+    if (cosim::filesystem::exists(path)) {
+        for (auto it = fileMutexCache.begin(); it != fileMutexCache.end();) {
+            if (auto fm = it->fileMutex.lock()) {
+                if (cosim::filesystem::equivalent(path, it->path)) {
+                    assert(!fileMutex);
+                    fileMutex = std::move(fm);
+                }
+                ++it;
+            } else {
+                it = fileMutexCache.erase(it);
             }
-            ++it;
-        } else {
-            it = fileMutexCache.erase(it);
         }
     }
 
