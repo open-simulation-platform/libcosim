@@ -31,5 +31,4 @@ done
 echo "running clang-format"
 git ls-files \
     | egrep "$clangFormattableFiles" \
-    | egrep -v "$excludeFromClangFormat" \
     | xargs -r clang-format -i -style=file

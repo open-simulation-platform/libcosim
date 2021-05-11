@@ -13,10 +13,11 @@
 #include <cosim/model_description.hpp>
 #include <cosim/orchestration.hpp>
 
-#include <memory>
 #include <proxyfmu/fmi/fmu.hpp>
 #include <proxyfmu/fs_portability.hpp>
 #include <proxyfmu/remote_info.hpp>
+
+#include <memory>
 
 namespace cosim
 {

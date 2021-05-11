@@ -6,6 +6,7 @@
 #include <cosim/error.hpp>
 #include <cosim/proxy/remote_fmu.hpp>
 #include <cosim/proxy/remote_slave.hpp>
+
 #include <proxyfmu/client/proxy_fmu.hpp>
 
 using namespace proxyfmu;

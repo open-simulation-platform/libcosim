@@ -14,6 +14,7 @@
 #include <cosim/time.hpp>
 
 #include <proxyfmu/fmi/slave.hpp>
+
 #include <string>
 
 namespace cosim
