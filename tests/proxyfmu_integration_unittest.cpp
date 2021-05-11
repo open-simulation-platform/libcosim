@@ -1,4 +1,4 @@
-#define BOOST_TEST_MODULE proxyfmu unittests
+#define BOOST_TEST_MODULE proxyfmu_integration unittests
 
 #include <cosim/log/simple.hpp>
 #include <cosim/proxy/remote_fmu.hpp>

@@ -34,7 +34,8 @@ set(unittests
 
 if(LIBCOSIM_WITH_PROXYFMU)
     list(APPEND unittests
-            "proxyfmu_unittest"
+            "proxyfmu_integration_unittest"
+            "proxyfmu_library_unittest"
             )
 endif()
 
@@ -50,11 +51,17 @@ foreach(test IN LISTS tests)
 endforeach()
 
 foreach(test IN LISTS unittests)
+
+    set(dependencies cosim "Boost::unit_test_framework" "Boost::timer")
+    if (LIBCOSIM_WITH_PROXYFMU)
+        list(APPEND dependencies "proxyfmu::proxyfmu-client")
+    endif()
+
     add_test_executable(
         "cpp_${test}"
         FOLDER "C++ unit tests"
         SOURCES "${test}.cpp"
-        DEPENDENCIES cosim "Boost::unit_test_framework" "Boost::timer"
+        DEPENDENCIES ${dependencies}
         DATA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/data"
     )
     target_include_directories("cpp_${test}" PRIVATE "$<TARGET_PROPERTY:cosim,SOURCE_DIR>")
