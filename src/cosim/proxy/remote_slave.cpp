@@ -4,10 +4,22 @@
  *  file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 #include <cosim/error.hpp>
+#include <cosim/exception.hpp>
 #include <cosim/proxy/remote_slave.hpp>
 
 #include <utility>
 
+
+namespace
+{
+
+void bad_status_throw(const std::string& method)
+{
+    std::string reason("Bad status returned from remote slave during call to '" + method + "'.");
+    throw cosim::error(make_error_code(cosim::errc::model_error), reason);
+}
+
+} // namespace
 
 cosim::proxy::remote_slave::remote_slave(
     std::unique_ptr<proxyfmu::fmi::slave> slave,
@@ -33,11 +45,11 @@ void cosim::proxy::remote_slave::setup(cosim::time_point startTime, std::optiona
 
     auto status = slave_->setup_experiment(start, stop, tolerance);
     if (!status) {
-        COSIM_PANIC();
+        bad_status_throw("setup_experiment");
     }
     status = slave_->enter_initialization_mode();
     if (!status) {
-        COSIM_PANIC();
+        bad_status_throw("enter_initialization_mode");
     }
 }
 
@@ -45,7 +57,7 @@ void cosim::proxy::remote_slave::start_simulation()
 {
     auto status = slave_->exit_initialization_mode();
     if (!status) {
-        COSIM_PANIC();
+        bad_status_throw("exit_initialization_mode");
     }
 }
 
@@ -61,7 +73,7 @@ cosim::step_result cosim::proxy::remote_slave::do_step(cosim::time_point current
 {
     auto status = slave_->step(to_double_time_point(currentTime), to_double_duration(deltaT, startTime_));
     if (!status) {
-        COSIM_PANIC();
+        bad_status_throw("step");
     }
     return cosim::step_result::complete;
 }
@@ -76,7 +88,7 @@ void cosim::proxy::remote_slave::get_real_variables(gsl::span<const cosim::value
     auto data = std::vector<double>(vr.size());
     auto status = slave_->get_real(vr, data);
     if (!status) {
-        COSIM_PANIC();
+        bad_status_throw("get_real");
     }
     for (unsigned int i = 0; i < data.size(); i++) {
         values[i] = data[i];
@@ -93,7 +105,7 @@ void cosim::proxy::remote_slave::get_integer_variables(gsl::span<const cosim::va
     auto data = std::vector<int>(vr.size());
     auto status = slave_->get_integer(vr, data);
     if (!status) {
-        COSIM_PANIC();
+        bad_status_throw("get_integer");
     }
     for (unsigned int i = 0; i < data.size(); i++) {
         values[i] = data[i];
@@ -110,7 +122,7 @@ void cosim::proxy::remote_slave::get_boolean_variables(gsl::span<const cosim::va
     auto data = std::vector<bool>(vr.size());
     auto status = slave_->get_boolean(vr, data);
     if (!status) {
-        COSIM_PANIC();
+        bad_status_throw("get_boolean");
     }
     for (unsigned int i = 0; i < data.size(); i++) {
         values[i] = data[i];
@@ -127,7 +139,7 @@ void cosim::proxy::remote_slave::get_string_variables(gsl::span<const cosim::val
     auto data = std::vector<std::string>(vr.size());
     auto status = slave_->get_string(vr, data);
     if (!status) {
-        COSIM_PANIC();
+        bad_status_throw("get_string");
     }
     for (unsigned int i = 0; i < data.size(); i++) {
         values[i] = data[i];
@@ -144,7 +156,7 @@ void cosim::proxy::remote_slave::set_real_variables(gsl::span<const cosim::value
     const auto _values = std::vector<double>(values.begin(), values.end());
     auto status = slave_->set_real(vr, _values);
     if (!status) {
-        COSIM_PANIC();
+        bad_status_throw("set_real");
     }
 }
 
@@ -158,7 +170,7 @@ void cosim::proxy::remote_slave::set_integer_variables(gsl::span<const cosim::va
     const auto _values = std::vector<int>(values.begin(), values.end());
     auto status = slave_->set_integer(vr, _values);
     if (!status) {
-        COSIM_PANIC();
+        bad_status_throw("set_integer");
     }
 }
 
@@ -172,7 +184,7 @@ void cosim::proxy::remote_slave::set_boolean_variables(gsl::span<const cosim::va
     const auto _values = std::vector<bool>(values.begin(), values.end());
     auto status = slave_->set_boolean(vr, _values);
     if (!status) {
-        COSIM_PANIC();
+        bad_status_throw("set_boolean");
     }
 }
 
@@ -186,7 +198,7 @@ void cosim::proxy::remote_slave::set_string_variables(gsl::span<const cosim::val
     const auto _values = std::vector<std::string>(values.begin(), values.end());
     auto status = slave_->set_string(vr, _values);
     if (!status) {
-        COSIM_PANIC();
+        bad_status_throw("set_string");
     }
 }
 
