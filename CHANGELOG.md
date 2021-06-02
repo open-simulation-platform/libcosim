@@ -3,6 +3,22 @@ All notable changes to libcosim will be documented in this file. This includes n
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
+### [v0.7.1] – 2021-06-??
+
+##### Added
+* improving documentation ([PR#617](https://github.com/open-simulation-platform/libcosim/pull/617))
+ 
+##### Fixed
+* Compile using VS2019([PR#638](https://github.com/open-simulation-platform/libcosim/pull/638))
+* Allow empty sequence of initial values in OspSystemStructure ([PR#613](https://github.com/open-simulation-platform/libcosim/pull/613))
+* Model description only exposed through execution ([PR#603](https://github.com/open-simulation-platform/libcosim/pull/603))
+* Validate initial variable values from OspSystemStructure ([PR#604](https://github.com/open-simulation-platform/libcosim/pull/604))
+* Real time timer improvements ([PR#605](https://github.com/open-simulation-platform/libcosim/pull/605))
+* Link dependencies dynamically ([PR#596](https://github.com/open-simulation-platform/libcosim/pull/596))
+* updating dependencies and resolving conflicts ([PR#610](https://github.com/open-simulation-platform/libcosim/pull/610), 
+[PR#632](https://github.com/open-simulation-platform/libcosim/pull/632), 
+[PR#641](https://github.com/open-simulation-platform/libcosim/pull/641))
+
 ### [v0.7.0] – 2020-05-29
 
 ##### Changed
