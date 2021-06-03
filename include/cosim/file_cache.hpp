@@ -9,7 +9,7 @@
 #ifndef COSIM_FILE_CACHE_HPP
 #define COSIM_FILE_CACHE_HPP
 
-#include <boost/filesystem.hpp>
+#include <cosim/fs_portability.hpp>
 
 #include <memory>
 #include <string_view>
@@ -41,7 +41,7 @@ public:
     {
     public:
         /// The filesystem path to the subdirectory.
-        virtual boost::filesystem::path path() const = 0;
+        virtual cosim::filesystem::path path() const = 0;
         virtual ~directory_rw() = default;
     };
 
@@ -50,7 +50,7 @@ public:
     {
     public:
         /// The filesystem path to the subdirectory.
-        virtual boost::filesystem::path path() const = 0;
+        virtual cosim::filesystem::path path() const = 0;
         virtual ~directory_ro() = default;
     };
 
@@ -129,7 +129,7 @@ public:
      *  It is recommended that this directory be managed in its entirety by
      *  `persistent_file_cache`, i.e., that no other files are stored in it.
      */
-    explicit persistent_file_cache(const boost::filesystem::path& cacheRoot);
+    explicit persistent_file_cache(const cosim::filesystem::path& cacheRoot);
 
     persistent_file_cache(const persistent_file_cache&) = delete;
     persistent_file_cache& operator=(const persistent_file_cache&) = delete;

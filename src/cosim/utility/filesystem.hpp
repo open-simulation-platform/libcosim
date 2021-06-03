@@ -10,7 +10,7 @@
 #ifndef COSIM_UTILITY_FILESYSTEM_HPP
 #define COSIM_UTILITY_FILESYSTEM_HPP
 
-#include <boost/filesystem.hpp>
+#include <cosim/fs_portability.hpp>
 
 
 namespace cosim
@@ -41,7 +41,7 @@ public:
      *    - If `parent` is absolute: `parent/name`
     */
     explicit temp_dir(
-        const boost::filesystem::path& parent = boost::filesystem::path());
+        const cosim::filesystem::path& parent = cosim::filesystem::path());
 
     temp_dir(const temp_dir&) = delete;
     temp_dir& operator=(const temp_dir&) = delete;
@@ -63,12 +63,12 @@ public:
     ~temp_dir() noexcept;
 
     /// Returns the path to the directory.
-    const boost::filesystem::path& path() const;
+    const cosim::filesystem::path& path() const;
 
 private:
     void delete_noexcept() noexcept;
 
-    boost::filesystem::path path_;
+    cosim::filesystem::path path_;
 };
 
 

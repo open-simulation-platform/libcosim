@@ -79,13 +79,18 @@ private:
 // The following class was copied from Microsoft Guidelines Support Library
 // https://github.com/microsoft/GSL
 // final_action allows you to ensure something gets run at the end of a scope
-template <class F>
+template<class F>
 class final_action
 {
 public:
-    explicit final_action(F f) noexcept : f_(std::move(f)) {}
+    explicit final_action(F f) noexcept
+        : f_(std::move(f))
+    { }
 
-    final_action(final_action&& other) noexcept : f_(std::move(other.f_)), invoke_(std::exchange(other.invoke_, false)) {}
+    final_action(final_action&& other) noexcept
+        : f_(std::move(other.f_))
+        , invoke_(std::exchange(other.invoke_, false))
+    { }
 
     final_action(const final_action&) = delete;
     final_action& operator=(const final_action&) = delete;
@@ -106,7 +111,7 @@ class osp_config_parser
 
 public:
     osp_config_parser(
-        const boost::filesystem::path& configPath);
+        const cosim::filesystem::path& configPath);
     ~osp_config_parser() noexcept;
 
     struct SimulationInformation
@@ -250,7 +255,7 @@ T attribute_or(xercesc::DOMElement* el, const char* attributeName, T defaultValu
 } // namespace
 
 osp_config_parser::osp_config_parser(
-    const boost::filesystem::path& configPath)
+    const cosim::filesystem::path& configPath)
 {
     // Root node
     xercesc::XMLPlatformUtils::Initialize();
@@ -595,7 +600,7 @@ struct variable_group_description
 
 struct extended_model_description
 {
-    explicit extended_model_description(const boost::filesystem::path& ospModelDescription)
+    explicit extended_model_description(const cosim::filesystem::path& ospModelDescription)
     {
         xercesc::XMLPlatformUtils::Initialize();
         const auto xerces_cleanup = final_action([]() {
@@ -888,11 +893,11 @@ void connect_vector_sum_functions(
 } // namespace
 
 osp_config load_osp_config(
-    const boost::filesystem::path& configPath,
+    const cosim::filesystem::path& configPath,
     model_uri_resolver& resolver)
 {
-    const auto absolutePath = boost::filesystem::absolute(configPath);
-    const auto configFile = boost::filesystem::is_regular_file(absolutePath)
+    const auto absolutePath = cosim::filesystem::absolute(configPath);
+    const auto configFile = cosim::filesystem::is_regular_file(absolutePath)
         ? absolutePath
         : absolutePath / "OspSystemStructure.xml";
     const auto baseURI = path_to_file_uri(configFile);
@@ -931,15 +936,15 @@ osp_config load_osp_config(
 
         std::string msmiFileName = model->description()->name + "_OspModelDescription.xml";
         const auto modelUri = resolve_reference(baseURI, simulator.source);
-        boost::filesystem::path msmiFilePath;
+        cosim::filesystem::path msmiFilePath;
 
         if (modelUri.scheme() == "file") {
-            msmiFilePath = file_uri_to_path(modelUri).remove_leaf() / msmiFileName;
-            if (boost::filesystem::exists(msmiFilePath)) {
+            msmiFilePath = file_uri_to_path(modelUri).remove_filename() / msmiFileName;
+            if (cosim::filesystem::exists(msmiFilePath)) {
                 emds.emplace(simulator.name, msmiFilePath);
             } else {
                 msmiFilePath = configFile.parent_path() / msmiFileName;
-                if (boost::filesystem::exists(msmiFilePath)) {
+                if (cosim::filesystem::exists(msmiFilePath)) {
                     emds.emplace(simulator.name, msmiFilePath);
                 }
             }
@@ -947,7 +952,7 @@ osp_config load_osp_config(
             // Makes it possible to keep OspModelDescription at configuration path
             // even when there are FMUs with other URI than file (fmu-proxy).
             msmiFilePath = configFile.parent_path() / msmiFileName;
-            if (boost::filesystem::exists(msmiFilePath)) {
+            if (cosim::filesystem::exists(msmiFilePath)) {
                 emds.emplace(simulator.name, msmiFilePath);
             }
         }

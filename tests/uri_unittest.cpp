@@ -200,7 +200,7 @@ BOOST_AUTO_TEST_CASE(file_uri_conversions)
 {
     // From path to URI
     BOOST_TEST(path_to_file_uri("/foo bar/baz") == "file:///foo%20bar/baz");
-    BOOST_TEST(path_to_file_uri(boost::filesystem::path()) == "file:");
+    BOOST_TEST(path_to_file_uri(cosim::filesystem::path()) == "file:");
 #ifdef _WIN32
     BOOST_TEST(path_to_file_uri("\\foo bar\\baz") == "file:///foo%20bar/baz");
     BOOST_TEST(path_to_file_uri("/foo bar/baz") == "file:///foo%20bar/baz");

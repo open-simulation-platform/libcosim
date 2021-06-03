@@ -14,8 +14,6 @@
 #include <cosim/system_structure.hpp>
 #include <cosim/time.hpp>
 
-#include <boost/filesystem/path.hpp>
-
 #include <memory>
 #include <optional>
 #include <string>
@@ -78,7 +76,7 @@ public:
      *  \param [in] configPath
      *      Path to the .ssp archive, or a directory holding one or more .ssd files.
      */
-    ssp_configuration load(const boost::filesystem::path& configPath);
+    ssp_configuration load(const cosim::filesystem::path& configPath);
 
 private:
     std::optional<std::string> ssdFileName_;

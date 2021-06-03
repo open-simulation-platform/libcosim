@@ -108,7 +108,7 @@ struct minimal_model_description
 
 // Reads the 'fmiVersion' and 'guid' attributes from the XML file.
 minimal_model_description peek_model_description(
-    const boost::filesystem::path& fmuUnpackDir)
+    const cosim::filesystem::path& fmuUnpackDir)
 {
     const auto xmlFile = fmuUnpackDir / "modelDescription.xml";
     boost::property_tree::ptree xml;
@@ -148,17 +148,17 @@ minimal_model_description peek_model_description(
 }
 
 bool is_outdated(
-    const boost::filesystem::path& file,
-    const boost::filesystem::path& comparator)
+    const cosim::filesystem::path& file,
+    const cosim::filesystem::path& comparator)
 {
-    return !boost::filesystem::exists(file) ||
-        boost::filesystem::last_write_time(comparator) > boost::filesystem::last_write_time(file);
+    return !cosim::filesystem::exists(file) ||
+        cosim::filesystem::last_write_time(comparator) > cosim::filesystem::last_write_time(file);
 }
 
 } // namespace
 
 
-std::shared_ptr<fmu> importer::import(const boost::filesystem::path& fmuPath)
+std::shared_ptr<fmu> importer::import(const cosim::filesystem::path& fmuPath)
 {
     prune_ptr_caches();
     auto pit = pathCache_.find(fmuPath);
@@ -203,8 +203,8 @@ std::shared_ptr<fmu> importer::import(const boost::filesystem::path& fmuPath)
         } catch (...) {
             // Remove model description again, so we don't erroneously think
             // that the unpacking was successful the next time we try it.
-            boost::system::error_code ignoredError;
-            boost::filesystem::remove(modelDescriptionPath, ignoredError);
+            std::error_code ignoredError;
+            cosim::filesystem::remove(modelDescriptionPath, ignoredError);
             throw;
         }
     }
@@ -228,20 +228,20 @@ namespace
 class existing_directory_ro : public file_cache::directory_ro
 {
 public:
-    explicit existing_directory_ro(const boost::filesystem::path& path)
+    explicit existing_directory_ro(const cosim::filesystem::path& path)
         : path_(path)
     { }
 
-    boost::filesystem::path path() const override { return path_; }
+    cosim::filesystem::path path() const override { return path_; }
 
 private:
-    boost::filesystem::path path_;
+    cosim::filesystem::path path_;
 };
 } // namespace
 
 
 std::shared_ptr<fmu> importer::import_unpacked(
-    const boost::filesystem::path& unpackedFMUPath)
+    const cosim::filesystem::path& unpackedFMUPath)
 {
     prune_ptr_caches();
     const auto minModelDesc = peek_model_description(unpackedFMUPath);

@@ -23,7 +23,8 @@ class LibcosimConan(ConanFile):
         "yaml-cpp/0.6.3",
         "xerces-c/3.2.2",
         # conflict resolution
-        "openssl/1.1.1k"
+        "openssl/1.1.1k",
+        "xz_utils/5.2.5"
     )
 
     options = {"proxyfmu": [True, False]}

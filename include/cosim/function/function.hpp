@@ -169,6 +169,8 @@ public:
 
     /// Performs the function calculations.
     virtual void calculate() = 0;
+
+    virtual ~function() = default;
 };
 
 
@@ -203,6 +205,8 @@ public:
      */
     virtual std::unique_ptr<function> instantiate(
         const function_parameter_value_map& parameters) = 0;
+
+    virtual ~function_type() = default;
 };
 
 

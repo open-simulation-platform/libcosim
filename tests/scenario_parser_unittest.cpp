@@ -23,7 +23,7 @@ constexpr cosim::time_point startTime = cosim::to_time_point(0.0);
 constexpr cosim::time_point endTime = cosim::to_time_point(1.1);
 constexpr cosim::duration stepSize = cosim::to_duration(0.1);
 
-void test(const boost::filesystem::path& scenarioFile)
+void test(const cosim::filesystem::path& scenarioFile)
 {
 
     cosim::log::setup_simple_console_logging();
@@ -117,7 +117,7 @@ BOOST_AUTO_TEST_CASE(json_test)
     const auto testDataDir = std::getenv("TEST_DATA_DIR");
     BOOST_REQUIRE(testDataDir != nullptr);
 
-    test(boost::filesystem::path(testDataDir) / "scenarios" / "scenario1.json");
+    test(cosim::filesystem::path(testDataDir) / "scenarios" / "scenario1.json");
 }
 
 BOOST_AUTO_TEST_CASE(yaml_test)
@@ -125,5 +125,5 @@ BOOST_AUTO_TEST_CASE(yaml_test)
     const auto testDataDir = std::getenv("TEST_DATA_DIR");
     BOOST_REQUIRE(testDataDir != nullptr);
 
-    test(boost::filesystem::path(testDataDir) / "scenarios" / "scenario1.yml");
+    test(cosim::filesystem::path(testDataDir) / "scenarios" / "scenario1.yml");
 }

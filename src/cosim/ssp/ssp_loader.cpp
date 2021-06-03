@@ -68,7 +68,7 @@ void add_parameter_set(
 }
 } // namespace
 
-ssp_configuration ssp_loader::load(const boost::filesystem::path& configPath)
+ssp_configuration ssp_loader::load(const cosim::filesystem::path& configPath)
 {
     auto sspFile = configPath;
     std::optional<cosim::utility::temp_dir> temp_ssp_dir;
@@ -80,8 +80,8 @@ ssp_configuration ssp_loader::load(const boost::filesystem::path& configPath)
     }
 
     const auto ssdFileName = ssdFileName_ ? *ssdFileName_ : "SystemStructure";
-    const auto absolutePath = boost::filesystem::absolute(sspFile);
-    const auto configFile = boost::filesystem::is_regular_file(absolutePath)
+    const auto absolutePath = cosim::filesystem::absolute(sspFile);
+    const auto configFile = cosim::filesystem::is_regular_file(absolutePath)
         ? absolutePath
         : absolutePath / std::string(ssdFileName + ".ssd");
     const auto baseURI = path_to_file_uri(configFile);
