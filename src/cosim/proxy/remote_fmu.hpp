@@ -29,7 +29,7 @@ class remote_fmu : public cosim::model
 {
 
 public:
-    explicit remote_fmu(const proxyfmu::filesystem::path& fmuPath, const std::optional<proxyfmu::remote_info>& remote = std::nullopt);
+    explicit remote_fmu(const cosim::filesystem::path& fmuPath, const std::optional<proxyfmu::remote_info>& remote = std::nullopt);
 
     std::shared_ptr<const cosim::model_description> description() const noexcept override;
 

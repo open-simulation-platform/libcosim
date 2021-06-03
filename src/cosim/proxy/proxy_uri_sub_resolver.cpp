@@ -52,8 +52,8 @@ std::shared_ptr<cosim::model> cosim::proxy::proxy_uri_sub_resolver::lookup_model
     const auto auth = parse_authority(*modelUri.authority());
     const auto query = *modelUri.query();
     if (query.substr(0, 5) == "file=") {
-        const auto file = proxyfmu::filesystem::path(std::string(query.substr(5)));
-        if (!proxyfmu::filesystem::exists(file)) {
+        const auto file = cosim::filesystem::path(std::string(query.substr(5)));
+        if (!cosim::filesystem::exists(file)) {
             throw error(make_error_code(errc::bad_file), "No such file: " + file.string());
         }
         if (auth.first == "localhost" && auth.second == -1) {

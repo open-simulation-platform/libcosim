@@ -17,7 +17,7 @@ BOOST_AUTO_TEST_CASE(test_ssp)
 
     const auto testDataDir = std::getenv("TEST_DATA_DIR");
     BOOST_REQUIRE(testDataDir != nullptr);
-    boost::filesystem::path sspFile = boost::filesystem::path(testDataDir) / "ssp" / "demo" / "proxy";
+    cosim::filesystem::path sspFile = cosim::filesystem::path(testDataDir) / "ssp" / "demo" / "proxy";
 
     ssp_loader loader;
     const auto config = loader.load(sspFile);
