@@ -7,7 +7,6 @@
 
 #include "cosim/error.hpp"
 
-#include <boost/filesystem/operations.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 
 namespace cosim
@@ -97,7 +96,7 @@ inline ssp_parser::Connector check_connector(const std::string& name, ssp_parser
 
 } // namespace
 
-ssp_parser::ssp_parser(const boost::filesystem::path& ssdPath)
+ssp_parser::ssp_parser(const cosim::filesystem::path& ssdPath)
 {
     boost::property_tree::ptree root;
     boost::property_tree::read_xml(ssdPath.string(), root,
@@ -154,8 +153,8 @@ ssp_parser::ssp_parser(const boost::filesystem::path& ssdPath)
             for (const auto& parameterBinding : *parameterBindings) {
                 if (const auto& source = get_optional_attribute<std::string>(parameterBinding.second, "source")) {
                     boost::property_tree::ptree binding;
-                    boost::filesystem::path ssvPath = ssdPath.parent_path() / *source;
-                    if (!boost::filesystem::exists(ssvPath)) {
+                    cosim::filesystem::path ssvPath = ssdPath.parent_path() / *source;
+                    if (!cosim::filesystem::exists(ssvPath)) {
                         std::ostringstream oss;
                         oss << "File '" << ssvPath << "' does not exists!";
                         throw std::runtime_error(oss.str());

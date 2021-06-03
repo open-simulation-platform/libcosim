@@ -11,7 +11,7 @@
 #define COSIM_FMI_WINDOWS_HPP
 #ifdef _WIN32
 
-#    include <boost/filesystem.hpp>
+#    include <cosim/fs_portability.hpp>
 
 #    include <string>
 
@@ -50,7 +50,7 @@ class additional_path
 {
 public:
     /// Constructor. Adds `p` to `PATH`.
-    additional_path(const boost::filesystem::path& p);
+    additional_path(const cosim::filesystem::path& p);
 
     /// Destructor.  Removes the path from `PATH` again.
     ~additional_path();
@@ -64,7 +64,7 @@ private:
 
 
 /// Given `path/to/fmu`, returns `path/to/fmu/binaries/<platform>`
-boost::filesystem::path fmu_binaries_dir(const boost::filesystem::path& baseDir);
+cosim::filesystem::path fmu_binaries_dir(const cosim::filesystem::path& baseDir);
 
 
 } // namespace fmi

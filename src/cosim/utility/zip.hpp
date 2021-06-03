@@ -11,8 +11,7 @@
 #define COSIM_UTILITY_ZIP_HPP
 
 #include <cosim/exception.hpp>
-
-#include <boost/filesystem.hpp>
+#include <cosim/fs_portability.hpp>
 
 #include <cstdint>
 #include <string>
@@ -83,7 +82,7 @@ public:
      *  \throws cosim::utility::zip::error
      *      If there was an error opening the archive.
      */
-    explicit archive(const boost::filesystem::path& path);
+    explicit archive(const cosim::filesystem::path& path);
 
     // Disable copying.
     archive(const archive&) = delete;
@@ -107,7 +106,7 @@ public:
      *  \pre
      *      `is_open() == false`
      */
-    void open(const boost::filesystem::path& path);
+    void open(const cosim::filesystem::path& path);
 
     /**
      *  Closes the archive.
@@ -190,7 +189,7 @@ public:
      *  \pre
      *      `is_open() == true`
      */
-    void extract_all(const boost::filesystem::path& targetDir) const;
+    void extract_all(const cosim::filesystem::path& targetDir) const;
 
     /**
      *  Extracts a single file from the archive, placing it in a specific
@@ -214,9 +213,9 @@ public:
      *  \pre
      *      `is_open() == true`
      */
-    boost::filesystem::path extract_file_to(
+    cosim::filesystem::path extract_file_to(
         entry_index index,
-        const boost::filesystem::path& targetDir) const;
+        const cosim::filesystem::path& targetDir) const;
 
 private:
     ::zip* m_archive;

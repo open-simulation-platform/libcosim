@@ -2,7 +2,7 @@
 #include <cosim/utility/filesystem.hpp>
 #include <cosim/utility/zip.hpp>
 
-#include <boost/filesystem.hpp>
+#include <cosim/fs_portability.hpp>
 #include <boost/test/unit_test.hpp>
 
 #include <cstdlib>
@@ -13,7 +13,7 @@ BOOST_AUTO_TEST_CASE(zip_archive)
 {
     namespace ut = cosim::utility;
     namespace uz = cosim::utility::zip;
-    namespace fs = boost::filesystem;
+    namespace fs = cosim::filesystem;
 
     // Info about the test archive file and its contents
     const std::uint64_t archiveEntryCount = 3;

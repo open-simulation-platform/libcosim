@@ -11,8 +11,7 @@
 #define COSIM_FMI_IMPORTER_HPP
 
 #include <cosim/file_cache.hpp>
-
-#include <boost/filesystem.hpp>
+#include <cosim/fs_portability.hpp>
 
 #include <map>
 #include <memory>
@@ -75,7 +74,7 @@ public:
      *  \returns
      *      An object which represents the imported FMU.
      */
-    std::shared_ptr<fmu> import(const boost::filesystem::path& fmuPath);
+    std::shared_ptr<fmu> import(const cosim::filesystem::path& fmuPath);
 
     /**
      *  Imports and loads an FMU that has already been unpacked.
@@ -90,7 +89,7 @@ public:
      *      An object which represents the imported FMU.
      */
     std::shared_ptr<fmu> import_unpacked(
-        const boost::filesystem::path& unpackedFMUPath);
+        const cosim::filesystem::path& unpackedFMUPath);
 
     /// Returns the last FMI Library error message.
     std::string last_error_message();
@@ -106,7 +105,7 @@ private:
     std::unique_ptr<jm_callbacks> callbacks_;
     std::unique_ptr<fmi_import_context_t, void (*)(fmi_import_context_t*)> handle_;
 
-    std::map<boost::filesystem::path, std::weak_ptr<fmu>> pathCache_;
+    std::map<cosim::filesystem::path, std::weak_ptr<fmu>> pathCache_;
     std::map<std::string, std::weak_ptr<fmu>> guidCache_;
 };
 

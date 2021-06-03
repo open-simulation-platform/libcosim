@@ -146,7 +146,7 @@ std::shared_ptr<v2::slave_instance> fmu::instantiate_v2_slave(
 }
 
 
-boost::filesystem::path fmu::directory() const
+cosim::filesystem::path fmu::directory() const
 {
     return dir_->path();
 }

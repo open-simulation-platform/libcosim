@@ -17,16 +17,16 @@ namespace utility
 {
 
 
-temp_dir::temp_dir(const boost::filesystem::path& parent)
+temp_dir::temp_dir(const cosim::filesystem::path& parent)
 {
     if (parent.empty()) {
-        path_ = boost::filesystem::temp_directory_path() / ("libcosim_" + random_uuid());
+        path_ = cosim::filesystem::temp_directory_path() / ("libcosim_" + random_uuid());
     } else if (parent.is_absolute()) {
         path_ = parent / random_uuid();
     } else {
-        path_ = boost::filesystem::temp_directory_path() / parent / random_uuid();
+        path_ = cosim::filesystem::temp_directory_path() / parent / random_uuid();
     }
-    boost::filesystem::create_directories(path_);
+    cosim::filesystem::create_directories(path_);
 }
 
 temp_dir::temp_dir(temp_dir&& other) noexcept
@@ -48,7 +48,7 @@ temp_dir::~temp_dir()
     delete_noexcept();
 }
 
-const boost::filesystem::path& temp_dir::path() const
+const cosim::filesystem::path& temp_dir::path() const
 {
     return path_;
 }
@@ -56,8 +56,8 @@ const boost::filesystem::path& temp_dir::path() const
 void temp_dir::delete_noexcept() noexcept
 {
     if (!path_.empty()) {
-        boost::system::error_code errorCode;
-        boost::filesystem::remove_all(path_, errorCode);
+        std::error_code errorCode;
+        cosim::filesystem::remove_all(path_, errorCode);
         path_.clear();
     }
 }

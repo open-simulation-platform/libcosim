@@ -1,7 +1,6 @@
+#include <cosim/fs_portability.hpp>
 #include <cosim/log/simple.hpp>
 #include <cosim/ssp/ssp_loader.hpp>
-
-#include <boost/filesystem.hpp>
 
 #include <cstdlib>
 #include <exception>
@@ -17,7 +16,7 @@ int main()
 
         const auto testDataDir = std::getenv("TEST_DATA_DIR");
         REQUIRE(testDataDir);
-        boost::filesystem::path sspFile = boost::filesystem::path(testDataDir) / "ssp" / "demo" / "fmuproxy";
+        cosim::filesystem::path sspFile = cosim::filesystem::path(testDataDir) / "ssp" / "demo" / "fmuproxy";
 
         cosim::ssp_loader loader;
         const auto config = loader.load(sspFile);

@@ -10,9 +10,10 @@
 #ifndef COSIM_UTILITY_CONCURRENCY
 #define COSIM_UTILITY_CONCURRENCY
 
+#include <cosim/fs_portability.hpp>
+
 #include <boost/fiber/condition_variable.hpp>
 #include <boost/fiber/mutex.hpp>
-#include <boost/filesystem.hpp>
 #include <boost/interprocess/sync/file_lock.hpp>
 
 #include <memory>
@@ -196,7 +197,7 @@ public:
      *  If it does not exist, it will be created.
      *
      *  Two different paths `p1` and `p2` are considered to refer to the
-     *  same file if `boost::filesystem::equivalent(p1,p2)` is `true`.
+     *  same file if `cosim::filesystem::equivalent(p1,p2)` is `true`.
      *
      *  \param [in] path
      *      The path to the lock file.
@@ -208,7 +209,7 @@ public:
      *      if the file could not be opened or created.
      */
     explicit file_lock(
-        const boost::filesystem::path& path,
+        const cosim::filesystem::path& path,
         file_lock_initial_state initialState = file_lock_initial_state::not_locked);
 
     /**
@@ -280,7 +281,7 @@ private:
     class boost_wrapper
     {
     public:
-        explicit boost_wrapper(const boost::filesystem::path& path);
+        explicit boost_wrapper(const cosim::filesystem::path& path);
         void lock();
         bool try_lock();
         void unlock();
@@ -297,14 +298,14 @@ private:
     // Holds the mutex and file lock associated with a particular file.
     struct file_mutex
     {
-        file_mutex(const boost::filesystem::path& path);
+        file_mutex(const cosim::filesystem::path& path);
         shared_mutex mutex;
         boost_wrapper file;
     };
 
     // Returns the mutex and file lock associated with the file at `path`.
     static std::shared_ptr<file_mutex> get_file_mutex(
-        const boost::filesystem::path& path);
+        const cosim::filesystem::path& path);
 
     // The mutex and file lock associated with this object.
     std::shared_ptr<file_mutex> fileMutex_;

@@ -48,7 +48,7 @@ class temporary_file_cache_directory
 public:
     temporary_file_cache_directory(
         std::shared_ptr<utility::temp_dir> cache,
-        const boost::filesystem::path& path,
+        const cosim::filesystem::path& path,
         std::shared_ptr<dummy> ownership)
         : cache_(cache)
         , path_(path)
@@ -56,14 +56,14 @@ public:
     {
     }
 
-    boost::filesystem::path path() const override
+    cosim::filesystem::path path() const override
     {
         return path_;
     }
 
 private:
     std::shared_ptr<utility::temp_dir> cache_;
-    boost::filesystem::path path_;
+    cosim::filesystem::path path_;
     std::shared_ptr<dummy> ownership_;
 };
 
@@ -85,7 +85,7 @@ public:
                 "Cache subdirectory already in use: " + std::string(key));
         }
         const auto path = root_->path() / percent_encode(key);
-        boost::filesystem::create_directories(path);
+        cosim::filesystem::create_directories(path);
 
         auto ownership = std::make_shared<dummy>();
         owns.rw = ownership;
@@ -164,20 +164,20 @@ class persistent_file_cache_directory
 {
 public:
     persistent_file_cache_directory(
-        const boost::filesystem::path& path,
+        const cosim::filesystem::path& path,
         utility::file_lock lock)
         : path_(path)
         , lock_(std::move(lock))
     {
     }
 
-    boost::filesystem::path path() const override
+    cosim::filesystem::path path() const override
     {
         return path_;
     }
 
 private:
-    boost::filesystem::path path_;
+    cosim::filesystem::path path_;
     utility::file_lock lock_;
 };
 
@@ -185,10 +185,10 @@ private:
 class persistent_file_cache::impl
 {
 public:
-    explicit impl(const boost::filesystem::path& root)
+    explicit impl(const cosim::filesystem::path& root)
         : root_(root)
     {
-        boost::filesystem::create_directories(root_);
+        cosim::filesystem::create_directories(root_);
     }
 
     std::unique_ptr<directory_rw> get_directory_rw(std::string_view key)
@@ -202,7 +202,7 @@ public:
             subdir_lock_file_path(key),
             utility::file_lock_initial_state::locked);
 
-        boost::filesystem::create_directories(path);
+        cosim::filesystem::create_directories(path);
         return std::make_unique<persistent_file_cache_directory>(path, std::move(lock));
     }
 
@@ -217,7 +217,7 @@ public:
             subdir_lock_file_path(key),
             utility::file_lock_initial_state::locked_shared);
 
-        if (boost::filesystem::exists(path)) {
+        if (cosim::filesystem::exists(path)) {
             return std::make_unique<persistent_file_cache_directory>(path, std::move(lock));
         } else {
             throw std::logic_error(
@@ -231,10 +231,10 @@ public:
             root_lock_file_path(),
             utility::file_lock_initial_state::locked);
 
-        for (auto it = boost::filesystem::directory_iterator(root_);
-             it != boost::filesystem::directory_iterator();
+        for (auto it = cosim::filesystem::directory_iterator(root_);
+             it != cosim::filesystem::directory_iterator();
              ++it) {
-            if (it->status().type() == boost::filesystem::directory_file &&
+            if (cosim::filesystem::is_directory(*it) &&
                 it->path().extension() == ".data") {
 
                 // Remove non-locked subdirectories and their lock files
@@ -245,10 +245,10 @@ public:
                     utility::file_lock_initial_state::not_locked);
                 if (!subdirLock.try_lock()) continue;
 
-                boost::system::error_code ignoredError;
-                boost::filesystem::remove_all(*it, ignoredError);
-                boost::filesystem::remove(subdirLockFilePath);
-            } else if (it->status().type() == boost::filesystem::regular_file &&
+                std::error_code ignoredError;
+                cosim::filesystem::remove_all(*it, ignoredError);
+                cosim::filesystem::remove(subdirLockFilePath);
+            } else if (cosim::filesystem::is_regular_file(*it) &&
                 it->path().extension() == ".lock") {
 
                 // Remove lock files left over by get_directory_ro() for
@@ -260,21 +260,21 @@ public:
 
                 auto subdirPath = it->path();
                 subdirPath.replace_extension(".data");
-                if (!boost::filesystem::exists(subdirPath)) {
-                    boost::system::error_code ignoredError;
-                    boost::filesystem::remove(*it, ignoredError);
+                if (!cosim::filesystem::exists(subdirPath)) {
+                    std::error_code ignoredError;
+                    cosim::filesystem::remove(*it, ignoredError);
                 }
             }
         }
     }
 
 private:
-    boost::filesystem::path root_lock_file_path() const
+    cosim::filesystem::path root_lock_file_path() const
     {
         return root_ / "lock";
     }
 
-    boost::filesystem::path subdir_path(std::string_view key) const
+    cosim::filesystem::path subdir_path(std::string_view key) const
     {
         auto p = root_;
         p /= percent_encode(key);
@@ -282,7 +282,7 @@ private:
         return p;
     }
 
-    boost::filesystem::path subdir_lock_file_path(std::string_view key) const
+    cosim::filesystem::path subdir_lock_file_path(std::string_view key) const
     {
         auto p = root_;
         p /= percent_encode(key);
@@ -290,12 +290,12 @@ private:
         return p;
     }
 
-    boost::filesystem::path root_;
+    cosim::filesystem::path root_;
 };
 
 
 persistent_file_cache::persistent_file_cache(
-    const boost::filesystem::path& cacheRoot)
+    const cosim::filesystem::path& cacheRoot)
     : impl_(std::make_unique<impl>(cacheRoot))
 {
 }

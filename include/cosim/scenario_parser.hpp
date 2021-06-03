@@ -12,8 +12,6 @@
 #include <cosim/algorithm.hpp>
 #include <cosim/scenario.hpp>
 
-#include <boost/filesystem/path.hpp>
-
 namespace cosim
 {
 /**
@@ -26,7 +24,7 @@ namespace cosim
  *  A map containing the simulators currently loaded in the execution.
  */
 scenario::scenario parse_scenario(
-    const boost::filesystem::path& scenarioFile,
+    const cosim::filesystem::path& scenarioFile,
     const std::unordered_map<simulator_index, manipulable*>& simulators);
 } // namespace cosim
 

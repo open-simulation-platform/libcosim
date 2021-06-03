@@ -11,7 +11,6 @@
 
 #include "cosim/algorithm.hpp"
 
-#include <boost/filesystem/path.hpp>
 #include <boost/property_tree/ptree.hpp>
 
 #include <optional>
@@ -25,7 +24,7 @@ class ssp_parser
 {
 
 public:
-    explicit ssp_parser(const boost::filesystem::path& xmlPath);
+    explicit ssp_parser(const cosim::filesystem::path& xmlPath);
     ~ssp_parser() noexcept;
 
     struct DefaultExperiment

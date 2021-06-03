@@ -10,9 +10,9 @@
 #ifndef COSIM_OBSERVER_FILE_OBSERVER_HPP
 #define COSIM_OBSERVER_FILE_OBSERVER_HPP
 
+#include <cosim/fs_portability.hpp>
 #include <cosim/observer/observer.hpp>
 
-#include <boost/filesystem/path.hpp>
 #include <boost/property_tree/ptree.hpp>
 
 #include <atomic>
@@ -37,7 +37,7 @@ public:
      *
      * \param logDir the directory where log files will be created.
      */
-    file_observer(const boost::filesystem::path& logDir);
+    file_observer(const cosim::filesystem::path& logDir);
 
     /**
      * Creates an observer which logs selected variable values to file in csv format.
@@ -45,7 +45,7 @@ public:
      * \param logDir the directory where log files will be created.
      * \param configPath the path to an xml file containing the logging configuration.
      */
-    file_observer(const boost::filesystem::path& logDir, const boost::filesystem::path& configPath);
+    file_observer(const cosim::filesystem::path& logDir, const cosim::filesystem::path& configPath);
 
     /**
      * Returns whether the observer is currently recording values.
@@ -91,7 +91,7 @@ public:
         duration lastStepSize,
         time_point currentTime) override;
 
-    boost::filesystem::path get_log_path();
+    cosim::filesystem::path get_log_path();
 
     ~file_observer() override;
 
@@ -109,8 +109,8 @@ private:
     std::unordered_map<simulator_index, std::unique_ptr<slave_value_writer>> valueWriters_;
     std::unordered_map<simulator_index, observable*> simulators_;
     boost::property_tree::ptree ptree_;
-    boost::filesystem::path configPath_;
-    boost::filesystem::path logDir_;
+    cosim::filesystem::path configPath_;
+    cosim::filesystem::path logDir_;
     bool logFromConfig_ = false;
     size_t defaultDecimationFactor_ = 1;
     std::atomic<bool> recording_ = true;

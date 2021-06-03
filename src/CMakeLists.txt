@@ -18,6 +18,7 @@ set(publicHeaders
     "cosim/fmi/importer.hpp"
     "cosim/fmi/v1/fmu.hpp"
     "cosim/fmi/v2/fmu.hpp"
+    "cosim/fs_portability.hpp"
     "cosim/function/description.hpp"
     "cosim/function/function.hpp"
     "cosim/function/linear_transformation.hpp"
@@ -200,7 +201,6 @@ target_link_libraries(cosim
         Boost::boost
         Boost::date_time
         Boost::fiber
-        Boost::filesystem
         Boost::log
         gsl
     PRIVATE
@@ -219,7 +219,7 @@ if(LIBCOSIM_WITH_FMUPROXY)
 endif()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    target_link_libraries(cosim INTERFACE "atomic")
+    target_link_libraries(cosim INTERFACE "atomic" "stdc++fs")
 endif()
 if(WIN32)
     if(BUILD_SHARED_LIBS)
