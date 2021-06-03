@@ -3,7 +3,7 @@ All notable changes to libcosim will be documented in this file. This includes n
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
-### [v0.7.1] – 2021-06-??
+### [v0.7.1] – 2021-06-03
 
 ##### Added
 * improving documentation ([PR#617](https://github.com/open-simulation-platform/libcosim/pull/617))
