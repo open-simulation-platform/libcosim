@@ -1,6 +1,6 @@
 import os
 
-from conans import ConanFile, CMake, tools
+from conans import ConanFile, CMake, RunEnvironment, tools
 from os import path
 
 
@@ -37,16 +37,21 @@ class LibcosimConan(ConanFile):
         "xerces-c:shared=True"
     )
 
+    @staticmethod
+    def is_tests_enabled():
+        return os.getenv("COSIM_RUN_TESTS_ON_CONAN_BUILD", "False").lower() in ("true", "1")
+
     def set_version(self):
         self.version = tools.load(path.join(self.recipe_folder, "version.txt")).strip()
 
     def requirements(self):
         if self.options.proxyfmu:
-            self.requires("proxyfmu/0.2.1@osp/testing")
+            self.requires("proxyfmu/0.2.2@osp/testing")
 
     def imports(self):
         binDir = os.path.join("output", str(self.settings.build_type).lower(), "bin")
         self.copy("proxyfmu*", dst=binDir, src="bin", keep_path=False)
+        self.copy("proxyfmu*", dst="tests", src="bin", keep_path=False)
         self.copy("*.dll", dst=binDir, keep_path=False)
         self.copy("*.pdb", dst=binDir, keep_path=False)
 
@@ -54,7 +59,7 @@ class LibcosimConan(ConanFile):
         cmake = CMake(self)
         cmake.definitions["LIBCOSIM_USING_CONAN"] = "ON"
         cmake.definitions["LIBCOSIM_BUILD_APIDOC"] = "OFF"
-        cmake.definitions["LIBCOSIM_BUILD_TESTS"] = "OFF"
+        cmake.definitions["LIBCOSIM_BUILD_TESTS"] = is_tests_enabled()
         if self.options.proxyfmu:
             cmake.definitions["LIBCOSIM_WITH_PROXYFMU"] = "ON"
         cmake.configure()
@@ -63,6 +68,11 @@ class LibcosimConan(ConanFile):
     def build(self):
         cmake = self.configure_cmake()
         cmake.build()
+        if is_tests_enabled():
+            env_run = RunEnvironment(self)
+            with tools.environment_append(env_run.vars):
+                cmake.test(output_on_failure=True)
+
 
     def package(self):
         cmake = self.configure_cmake()
