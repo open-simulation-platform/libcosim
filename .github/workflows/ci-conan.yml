@@ -67,6 +67,7 @@ jobs:
       CONAN_NON_INTERACTIVE: True
       CONAN_USE_ALWAYS_SHORT_PATHS: True
       CONAN_USER_HOME_SHORT: C:\c
+      LIBCOSIM_RUN_TESTS_ON_CONAN_BUILD: True
     strategy:
       fail-fast: false
       matrix:
