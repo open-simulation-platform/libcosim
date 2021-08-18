@@ -28,7 +28,6 @@
 #    FMILibrary_LIBRARY         - Path to static library.
 #    FMILibrary_SHARED_LIBRARY  - Path to shared/import library.
 #
-cmake_minimum_required (VERSION 2.8.11)
 
 # Find static library, and use its path prefix to provide a HINTS option to the
 # other find_*() commands.
@@ -97,31 +96,35 @@ unset (_FMILibrary_hints)
 
 # Create the IMPORTED targets.
 if (FMILibrary_LIBRARY)
-    add_library ("fmilib::static" STATIC IMPORTED)
-    set_target_properties ("fmilib::static" PROPERTIES
-        IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-        IMPORTED_LINK_INTERFACE_LIBRARIES "${CMAKE_DL_LIBS}"
-        IMPORTED_LOCATION "${FMILibrary_LIBRARY}"
-        INTERFACE_COMPILE_DEFINITIONS "FMILibrary_STATIC_LIB_ONLY"
-        INTERFACE_INCLUDE_DIRECTORIES "${FMILibrary_INCLUDE_DIRS}")
+    if (NOT TARGET fmilib::static)
+        add_library ("fmilib::static" STATIC IMPORTED)
+        set_target_properties ("fmilib::static" PROPERTIES
+            IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+            IMPORTED_LINK_INTERFACE_LIBRARIES "${CMAKE_DL_LIBS}"
+            IMPORTED_LOCATION "${FMILibrary_LIBRARY}"
+            INTERFACE_COMPILE_DEFINITIONS "FMILibrary_STATIC_LIB_ONLY"
+            INTERFACE_INCLUDE_DIRECTORIES "${FMILibrary_INCLUDE_DIRS}")
+    endif()
 endif ()
 
 if (FMILibrary_SHARED_LIBRARY)
-    add_library ("fmilib::shared" SHARED IMPORTED)
-    set_target_properties ("fmilib::shared" PROPERTIES
-        IMPORTED_LINK_INTERFACE_LANGUAGES "C"
-        INTERFACE_INCLUDE_DIRECTORIES "${FMILibrary_INCLUDE_DIRS}")
-    if (WIN32)
+    if (NOT TARGET fmilib::shared)
+        add_library ("fmilib::shared" SHARED IMPORTED)
         set_target_properties ("fmilib::shared" PROPERTIES
-            IMPORTED_IMPLIB "${FMILibrary_SHARED_LIBRARY}")
-        if (FMILibrary_DLL)
+            IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+            INTERFACE_INCLUDE_DIRECTORIES "${FMILibrary_INCLUDE_DIRS}")
+        if (WIN32)
             set_target_properties ("fmilib::shared" PROPERTIES
-                IMPORTED_LOCATION "${FMILibrary_DLL}")
+                IMPORTED_IMPLIB "${FMILibrary_SHARED_LIBRARY}")
+            if (FMILibrary_DLL)
+                set_target_properties ("fmilib::shared" PROPERTIES
+                    IMPORTED_LOCATION "${FMILibrary_DLL}")
+            endif ()
+        else () # not WIN32
+            set_target_properties ("fmilib::shared" PROPERTIES
+                IMPORTED_LOCATION "${FMILibrary_SHARED_LIBRARY}")
         endif ()
-    else () # not WIN32
-        set_target_properties ("fmilib::shared" PROPERTIES
-            IMPORTED_LOCATION "${FMILibrary_SHARED_LIBRARY}")
-    endif ()
+    endif()
 endif ()
 
 # Set the FMILibrary_LIBRARIES variable.

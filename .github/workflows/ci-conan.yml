@@ -13,7 +13,7 @@ jobs:
         build_type: [Debug, Release]
         compiler_version: [7, 8, 9]
         compiler_libcxx: [libstdc++11]
-        option_fmuproxy: ['fmuproxy=True', 'fmuproxy=False']
+        option_proxyfmu: ['proxyfmu=True', 'proxyfmu=False']
 
     steps:
       - uses: actions/checkout@v2
@@ -46,7 +46,7 @@ jobs:
             SHORT_REFNAME="${REFNAME:0:40}"
             CHANNEL="testing-${SHORT_REFNAME//\//_}"
           fi
-          conan create -s build_type=${{ matrix.build_type }} -s compiler.version=${{ matrix.compiler_version }} -s compiler.libcxx=${{ matrix.compiler_libcxx }} -o ${{ matrix.option_fmuproxy }} -b missing . osp/${CHANNEL}
+          conan create -s build_type=${{ matrix.build_type }} -s compiler.version=${{ matrix.compiler_version }} -s compiler.libcxx=${{ matrix.compiler_libcxx }} -o ${{ matrix.option_proxyfmu }} -b missing . osp/${CHANNEL}
           conan upload --all -c -r osp '*'
           EOF
           chmod 0755 /tmp/osp-builder-docker/entrypoint.sh
@@ -74,7 +74,7 @@ jobs:
         os: [windows-2016]
         build_type: [Debug, Release]
         compiler_version: [15]
-        option_fmuproxy: ['fmuproxy=True', 'fmuproxy=False']
+        option_proxyfmu: ['proxyfmu=True', 'proxyfmu=False']
 
     steps:
       - uses: actions/checkout@v2
@@ -95,6 +95,6 @@ jobs:
             SHORT_REFNAME="${REFNAME:0:40}"
             CHANNEL="testing-${SHORT_REFNAME//\//_}"
           fi
-          conan create -s build_type=${{ matrix.build_type }} -s compiler.version=${{ matrix.compiler_version }} -o ${{ matrix.option_fmuproxy }} -b missing . osp/${CHANNEL}
+          conan create -s build_type=${{ matrix.build_type }} -s compiler.version=${{ matrix.compiler_version }} -o ${{ matrix.option_proxyfmu }} -b missing . osp/${CHANNEL}
       - name: Conan upload
         run: conan upload --all -c -r osp '*'

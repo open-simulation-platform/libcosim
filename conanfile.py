@@ -27,9 +27,9 @@ class LibcosimConan(ConanFile):
         "xz_utils/5.2.5"
     )
 
-    options = {"fmuproxy": [True, False]}
+    options = {"proxyfmu": [True, False]}
     default_options = (
-        "fmuproxy=False",
+        "proxyfmu=False",
         "boost:shared=True",
         "fmilibrary:shared=True",
         "libzip:shared=True",
@@ -43,23 +43,24 @@ class LibcosimConan(ConanFile):
     def set_version(self):
         self.version = tools.load(path.join(self.recipe_folder, "version.txt")).strip()
 
+    def requirements(self):
+        if self.options.proxyfmu:
+            self.requires("proxyfmu/0.2.2@osp/testing")
+
     def imports(self):
         binDir = os.path.join("output", str(self.settings.build_type).lower(), "bin")
+        self.copy("proxyfmu*", dst=binDir, src="bin", keep_path=False)
+        self.copy("proxyfmu*", dst="tests", src="bin", keep_path=False)
         self.copy("*.dll", dst=binDir, keep_path=False)
         self.copy("*.pdb", dst=binDir, keep_path=False)
-
-    def requirements(self):
-        if self.options.fmuproxy:
-            self.requires("thrift/0.13.0")
 
     def configure_cmake(self):
         cmake = CMake(self)
         cmake.definitions["LIBCOSIM_USING_CONAN"] = "ON"
         cmake.definitions["LIBCOSIM_BUILD_APIDOC"] = "OFF"
         cmake.definitions["LIBCOSIM_BUILD_TESTS"] = self.is_tests_enabled()
-        if self.options.fmuproxy:
-            cmake.definitions["LIBCOSIM_WITH_FMUPROXY"] = "ON"
-            cmake.definitions["LIBCOSIM_TEST_FMUPROXY"] = "OFF" # Temporary, to be removed again in PR #633
+        if self.options.proxyfmu:
+            cmake.definitions["LIBCOSIM_WITH_PROXYFMU"] = "ON"
         cmake.configure()
         return cmake
 

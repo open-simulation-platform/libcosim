@@ -89,14 +89,10 @@ Then, acquire dependencies with Conan:
 `--settings compiler.libcxx=libstdc++11` to this command; see Step 1 for more
 information.)
 
-#### FMU-Proxy
-To include FMU-Proxy support, run conan install with the additional option:
+#### proxyfmu
+To include proxyfmu support, run conan install with the additional option:
 ```bash
--o fmuproxy=True
-```
-Note that it currently must be built in Release mode e.g.
-```bash
-conan install .. -s build_type=Release --build=missing -o fmuproxy=True
+-o proxyfmu=True
 ```
 
 Now, we can run CMake to generate the build system.  (If you have not installed

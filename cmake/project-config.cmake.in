@@ -13,8 +13,8 @@ find_dependency(LIBZIP REQUIRED)
 find_dependency(YAML_CPP REQUIRED)
 find_dependency(XercesC REQUIRED)
 
-if(@LIBCOSIM_WITH_FMUPROXY@)
-    find_dependency(THRIFT REQUIRED)
+if(@LIBCOSIM_WITH_PROXYFMU@)
+  find_dependency(PROXYFMU CONFIG REQUIRED)
 endif()
 
 list(REMOVE_AT CMAKE_MODULE_PATH -1)
