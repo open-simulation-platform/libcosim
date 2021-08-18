@@ -191,7 +191,7 @@ public:
         steps[1] = lastStep;
     }
 
-    const std::map<step_number, double> get_real_samples_map(value_reference idx)
+    std::map<step_number, double> get_real_samples_map(value_reference idx)
     {
         std::lock_guard<std::mutex> lock(lock_);
         return realSamples_.at(idx);
@@ -207,7 +207,7 @@ private:
 };
 
 time_series_observer::time_series_observer()
-    : bufSize_(0)
+    : bufSize_(20000)
 {
 }
 

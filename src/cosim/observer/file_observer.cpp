@@ -9,6 +9,7 @@
 #include "cosim/log/logger.hpp"
 
 #include <boost/date_time/local_time/local_time.hpp>
+#include <utility>
 #include <boost/property_tree/xml_parser.hpp>
 
 #include <algorithm>
@@ -130,7 +131,7 @@ public:
 
 private:
     template<typename T>
-    void write(const std::vector<T>& values)
+    void write(const std::vector<T>& values, std::stringstream& ss_)
     {
         for (auto it = values.begin(); it != values.end(); ++it) {
             ss_ << "," << *it;
@@ -190,6 +191,7 @@ private:
     void create_log_file()
     {
         std::string filename;
+        std::stringstream ss_;
         if (!timeStampedFileNames_) {
             filename = observable_->name().append(".csv");
         } else {
@@ -229,17 +231,16 @@ private:
 
     void persist()
     {
-        ss_.clear();
-
+        std::stringstream ss_;
         if (fsw_.is_open()) {
 
             for (const auto& [stepCount, times] : timeSamples_) {
                 ss_ << times << "," << stepCount;
 
-                if (realSamples_.count(stepCount)) write<double>(realSamples_[stepCount]);
-                if (intSamples_.count(stepCount)) write<int>(intSamples_[stepCount]);
-                if (boolSamples_.count(stepCount)) write<bool>(boolSamples_[stepCount]);
-                if (stringSamples_.count(stepCount)) write<std::string_view>(stringSamples_[stepCount]);
+                if (realSamples_.count(stepCount)) write<double>(realSamples_[stepCount], ss_);
+                if (intSamples_.count(stepCount)) write<int>(intSamples_[stepCount], ss_);
+                if (boolSamples_.count(stepCount)) write<bool>(boolSamples_[stepCount], ss_);
+                if (stringSamples_.count(stepCount)) write<std::string_view>(stringSamples_[stepCount], ss_);
 
                 ss_ << std::endl;
             }
@@ -267,7 +268,6 @@ private:
     cosim::filesystem::path logDir_;
     size_t decimationFactor_ = 1;
     std::ofstream fsw_;
-    std::stringstream ss_;
     std::atomic<bool> recording_ = true;
     std::mutex mutex_;
     bool timeStampedFileNames_ = true;
@@ -278,8 +278,8 @@ file_observer::file_observer(const cosim::filesystem::path& logDir)
 {
 }
 
-file_observer::file_observer(const cosim::filesystem::path& logDir, const cosim::filesystem::path& configPath)
-    : configPath_(configPath)
+file_observer::file_observer(const cosim::filesystem::path& logDir, cosim::filesystem::path  configPath)
+    : configPath_(std::move(configPath))
     , logDir_(cosim::filesystem::absolute(logDir))
     , logFromConfig_(true)
 {

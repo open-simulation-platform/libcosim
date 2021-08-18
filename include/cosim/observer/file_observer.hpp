@@ -45,7 +45,7 @@ public:
      * \param logDir the directory where log files will be created.
      * \param configPath the path to an xml file containing the logging configuration.
      */
-    file_observer(const cosim::filesystem::path& logDir, const cosim::filesystem::path& configPath);
+    file_observer(const cosim::filesystem::path& logDir, cosim::filesystem::path  configPath);
 
     /**
      * Returns whether the observer is currently recording values.
