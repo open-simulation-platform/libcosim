@@ -64,10 +64,10 @@ jobs:
       CONAN_LOGIN_USERNAME_OSP: ${{ secrets.osp_artifactory_usr }}
       CONAN_PASSWORD_OSP: ${{ secrets.osp_artifactory_pwd }}
       CONAN_REVISIONS_ENABLED: 1
-      CONAN_NON_INTERACTIVE: True
-      CONAN_USE_ALWAYS_SHORT_PATHS: True
+      CONAN_NON_INTERACTIVE: 1
+      CONAN_USE_ALWAYS_SHORT_PATHS: 1
       CONAN_USER_HOME_SHORT: C:\c
-      LIBCOSIM_RUN_TESTS_ON_CONAN_BUILD: True
+      LIBCOSIM_RUN_TESTS_ON_CONAN_BUILD: 1
     strategy:
       fail-fast: false
       matrix:
