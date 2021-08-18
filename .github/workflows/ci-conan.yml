@@ -25,9 +25,9 @@ jobs:
           ENV CONAN_LOGIN_USERNAME_OSP=${{ secrets.osp_artifactory_usr }}
           ENV CONAN_PASSWORD_OSP=${{ secrets.osp_artifactory_pwd }}
           ENV CONAN_REVISIONS_ENABLED=1
-          ENV CONAN_NON_INTERACTIVE=True
-          ENV CONAN_USE_ALWAYS_SHORT_PATHS=True
-          ENV LIBCOSIM_RUN_TESTS_ON_CONAN_BUILD=True
+          ENV CONAN_NON_INTERACTIVE=1
+          ENV CONAN_USE_ALWAYS_SHORT_PATHS=1
+          ENV LIBCOSIM_RUN_TESTS_ON_CONAN_BUILD=1
           COPY entrypoint.sh /
           ENTRYPOINT /entrypoint.sh
           EOF
