@@ -1,6 +1,6 @@
 import os
 
-from conans import ConanFile, CMake, tools
+from conans import ConanFile, CMake, RunEnvironment, tools
 from os import path
 
 
@@ -37,6 +37,9 @@ class LibcosimConan(ConanFile):
         "xerces-c:shared=True"
     )
 
+    def is_tests_enabled(self):
+        return os.getenv("LIBCOSIM_RUN_TESTS_ON_CONAN_BUILD", "False").lower() in ("true", "1")
+
     def set_version(self):
         self.version = tools.load(path.join(self.recipe_folder, "version.txt")).strip()
 
@@ -53,15 +56,21 @@ class LibcosimConan(ConanFile):
         cmake = CMake(self)
         cmake.definitions["LIBCOSIM_USING_CONAN"] = "ON"
         cmake.definitions["LIBCOSIM_BUILD_APIDOC"] = "OFF"
-        cmake.definitions["LIBCOSIM_BUILD_TESTS"] = "OFF"
+        cmake.definitions["LIBCOSIM_BUILD_TESTS"] = self.is_tests_enabled()
         if self.options.fmuproxy:
             cmake.definitions["LIBCOSIM_WITH_FMUPROXY"] = "ON"
+            cmake.definitions["LIBCOSIM_TEST_FMUPROXY"] = "OFF" # Temporary, to be removed again in PR #633
         cmake.configure()
         return cmake
 
     def build(self):
         cmake = self.configure_cmake()
         cmake.build()
+        if self.is_tests_enabled():
+            env_run = RunEnvironment(self)
+            with tools.environment_append(env_run.vars):
+                cmake.test(output_on_failure=True)
+
 
     def package(self):
         cmake = self.configure_cmake()
