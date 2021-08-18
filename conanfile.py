@@ -38,7 +38,7 @@ class LibcosimConan(ConanFile):
     )
 
     def is_tests_enabled(self):
-        return os.getenv("COSIM_RUN_TESTS_ON_CONAN_BUILD", "False").lower() in ("true", "1")
+        return os.getenv("LIBCOSIM_RUN_TESTS_ON_CONAN_BUILD", "False").lower() in ("true", "1")
 
     def set_version(self):
         self.version = tools.load(path.join(self.recipe_folder, "version.txt")).strip()
