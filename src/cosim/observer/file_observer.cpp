@@ -9,7 +9,6 @@
 #include "cosim/log/logger.hpp"
 
 #include <boost/date_time/local_time/local_time.hpp>
-#include <utility>
 #include <boost/property_tree/xml_parser.hpp>
 
 #include <algorithm>
