@@ -204,13 +204,19 @@ private:
 };
 
 time_series_observer::time_series_observer()
-    : bufSize_(20000)
+    : bufSize_(10000)
 {
 }
 
 time_series_observer::time_series_observer(size_t bufferSize)
 {
-    if (bufferSize > 0) bufSize_ = bufferSize;
+    if (bufferSize > 0)  {
+        bufSize_ = bufferSize;
+    } else {
+        std::ostringstream oss;
+        oss << "Can't define an observer with buffer size " << bufferSize << ", minimum allowed buffer size is 1.";
+        throw std::invalid_argument(oss.str());
+    }
 }
 
 void time_series_observer::simulator_added(simulator_index index, observable* simulator, time_point currentTime)
