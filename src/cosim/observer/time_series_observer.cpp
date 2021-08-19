@@ -58,9 +58,6 @@ size_t get_samples(
 template<typename T>
 void adjustIfFull(std::map<step_number, T>& buffer, size_t maxSize)
 {
-    if (maxSize <= 0) {
-        return;
-    }
     if (buffer.size() > maxSize) {
         buffer.erase(buffer.begin());
     }
@@ -212,8 +209,8 @@ time_series_observer::time_series_observer()
 }
 
 time_series_observer::time_series_observer(size_t bufferSize)
-    : bufSize_(bufferSize)
 {
+    if (bufferSize > 0) bufSize_ = bufferSize;
 }
 
 void time_series_observer::simulator_added(simulator_index index, observable* simulator, time_point currentTime)
