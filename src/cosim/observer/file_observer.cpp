@@ -278,8 +278,8 @@ file_observer::file_observer(const cosim::filesystem::path& logDir)
 {
 }
 
-file_observer::file_observer(const cosim::filesystem::path& logDir, cosim::filesystem::path  configPath)
-    : configPath_(std::move(configPath))
+file_observer::file_observer(const cosim::filesystem::path& logDir, const cosim::filesystem::path& configPath)
+    : configPath_(configPath)
     , logDir_(cosim::filesystem::absolute(logDir))
     , logFromConfig_(true)
 {
