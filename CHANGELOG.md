@@ -7,7 +7,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ##### Changed
 * Replacing JVM based fmu-proxy with [proxy-fmu](https://github.com/open-simulation-platform/proxy-fmu) ([PR#633](https://github.com/open-simulation-platform/libcosim/pull/633))
-* replacing `boost::filesystem`with `std::filesystem` ([PR#637](https://github.com/open-simulation-platform/libcosim/pull/637))
+* replacing `boost::filesystem` with `std::filesystem` ([PR#637](https://github.com/open-simulation-platform/libcosim/pull/637))
  
 ##### Fixed
 * Memory leaks in observers ([PR#647](https://github.com/open-simulation-platform/libcosim/pull/647))
