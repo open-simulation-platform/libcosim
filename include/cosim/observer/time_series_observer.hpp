@@ -33,7 +33,7 @@ class time_series_observer : public time_series_provider
 {
 public:
     /**
-     * Default constructor. Creates an unbuffered `time_series_observer`.
+     * Default constructor. Creates a buffered `time_series_observer`, with a fixed buffer size of 10000 samples for each observed variable.
      */
     time_series_observer();
 

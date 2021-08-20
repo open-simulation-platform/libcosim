@@ -130,10 +130,10 @@ public:
 
 private:
     template<typename T>
-    void write(const std::vector<T>& values)
+    void write(const std::vector<T>& values, std::stringstream& ss)
     {
         for (auto it = values.begin(); it != values.end(); ++it) {
-            ss_ << "," << *it;
+            ss << "," << *it;
         }
     }
 
@@ -190,6 +190,7 @@ private:
     void create_log_file()
     {
         std::string filename;
+        std::stringstream ss;
         if (!timeStampedFileNames_) {
             filename = observable_->name().append(".csv");
         } else {
@@ -205,46 +206,45 @@ private:
             throw std::runtime_error("Failed to open file stream for logging");
         }
 
-        ss_ << "Time,StepCount";
+        ss << "Time,StepCount";
 
         for (const auto& vd : realVars_) {
-            ss_ << "," << vd.name << " [" << vd.reference << " " << vd.type << " " << vd.causality << "]";
+            ss << "," << vd.name << " [" << vd.reference << " " << vd.type << " " << vd.causality << "]";
         }
         for (const auto& vd : intVars_) {
-            ss_ << "," << vd.name << " [" << vd.reference << " " << vd.type << " " << vd.causality << "]";
+            ss << "," << vd.name << " [" << vd.reference << " " << vd.type << " " << vd.causality << "]";
         }
         for (const auto& vd : boolVars_) {
-            ss_ << "," << vd.name << " [" << vd.reference << " " << vd.type << " " << vd.causality << "]";
+            ss << "," << vd.name << " [" << vd.reference << " " << vd.type << " " << vd.causality << "]";
         }
         for (const auto& vd : stringVars_) {
-            ss_ << "," << vd.name << " [" << vd.reference << " " << vd.type << " " << vd.causality << "]";
+            ss << "," << vd.name << " [" << vd.reference << " " << vd.type << " " << vd.causality << "]";
         }
 
-        ss_ << std::endl;
+        ss << std::endl;
 
         if (fsw_.is_open()) {
-            fsw_ << ss_.rdbuf();
+            fsw_ << ss.rdbuf();
         }
     }
 
     void persist()
     {
-        ss_.clear();
-
+        std::stringstream ss;
         if (fsw_.is_open()) {
 
             for (const auto& [stepCount, times] : timeSamples_) {
-                ss_ << times << "," << stepCount;
+                ss << times << "," << stepCount;
 
-                if (realSamples_.count(stepCount)) write<double>(realSamples_[stepCount]);
-                if (intSamples_.count(stepCount)) write<int>(intSamples_[stepCount]);
-                if (boolSamples_.count(stepCount)) write<bool>(boolSamples_[stepCount]);
-                if (stringSamples_.count(stepCount)) write<std::string_view>(stringSamples_[stepCount]);
+                if (realSamples_.count(stepCount)) write<double>(realSamples_[stepCount], ss);
+                if (intSamples_.count(stepCount)) write<int>(intSamples_[stepCount], ss);
+                if (boolSamples_.count(stepCount)) write<bool>(boolSamples_[stepCount], ss);
+                if (stringSamples_.count(stepCount)) write<std::string_view>(stringSamples_[stepCount], ss);
 
-                ss_ << std::endl;
+                ss << std::endl;
             }
 
-            fsw_ << ss_.rdbuf();
+            fsw_ << ss.rdbuf();
         }
 
         realSamples_.clear();
@@ -267,7 +267,6 @@ private:
     cosim::filesystem::path logDir_;
     size_t decimationFactor_ = 1;
     std::ofstream fsw_;
-    std::stringstream ss_;
     std::atomic<bool> recording_ = true;
     std::mutex mutex_;
     bool timeStampedFileNames_ = true;

@@ -58,9 +58,6 @@ size_t get_samples(
 template<typename T>
 void adjustIfFull(std::map<step_number, T>& buffer, size_t maxSize)
 {
-    if (maxSize <= 0) {
-        return;
-    }
     if (buffer.size() > maxSize) {
         buffer.erase(buffer.begin());
     }
@@ -191,7 +188,7 @@ public:
         steps[1] = lastStep;
     }
 
-    const std::map<step_number, double> get_real_samples_map(value_reference idx)
+    std::map<step_number, double> get_real_samples_map(value_reference idx)
     {
         std::lock_guard<std::mutex> lock(lock_);
         return realSamples_.at(idx);
@@ -207,13 +204,19 @@ private:
 };
 
 time_series_observer::time_series_observer()
-    : bufSize_(0)
+    : bufSize_(10000)
 {
 }
 
 time_series_observer::time_series_observer(size_t bufferSize)
-    : bufSize_(bufferSize)
 {
+    if (bufferSize > 0)  {
+        bufSize_ = bufferSize;
+    } else {
+        std::ostringstream oss;
+        oss << "Can't define an observer with buffer size " << bufferSize << ", minimum allowed buffer size is 1.";
+        throw std::invalid_argument(oss.str());
+    }
 }
 
 void time_series_observer::simulator_added(simulator_index index, observable* simulator, time_point currentTime)
