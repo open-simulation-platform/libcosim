@@ -3,6 +3,15 @@ All notable changes to libcosim will be documented in this file. This includes n
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
+### [v0.8.0] – 2021-08-23
+
+##### Changed
+* Replacing JVM based fmu-proxy with [proxy-fmu](https://github.com/open-simulation-platform/proxy-fmu) ([PR#633](https://github.com/open-simulation-platform/libcosim/pull/633))
+* Replacing `boost::filesystem` with `std::filesystem` ([PR#637](https://github.com/open-simulation-platform/libcosim/pull/637))
+ 
+##### Fixed
+* Memory leaks in observers ([PR#647](https://github.com/open-simulation-platform/libcosim/pull/647))
+
 ### [v0.7.1] – 2021-06-03
 
 ##### Added
@@ -149,3 +158,4 @@ First OSP JIP partner release
 [v0.6.0]: https://github.com/open-simulation-platform/cse-core/compare/v0.5.1...v0.6.0
 [v0.7.0]: https://github.com/open-simulation-platform/cse-core/compare/v0.6.0...v0.7.0
 [v0.7.1]: https://github.com/open-simulation-platform/cse-core/compare/v0.7.0...v0.7.1
+[v0.8.0]: https://github.com/open-simulation-platform/cse-core/compare/v0.7.1...v0.8.0
