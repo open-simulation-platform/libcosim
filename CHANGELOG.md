@@ -3,7 +3,7 @@ All notable changes to libcosim will be documented in this file. This includes n
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
-### [v0.8.0] – 2021-08-23
+### [v0.8.0] – 2021-09-03
 
 ##### Changed
 * Replacing JVM based fmu-proxy with [proxy-fmu](https://github.com/open-simulation-platform/proxy-fmu) ([PR#633](https://github.com/open-simulation-platform/libcosim/pull/633))
