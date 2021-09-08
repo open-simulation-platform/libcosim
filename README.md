@@ -48,7 +48,7 @@ of course you can always build and install dependencies manually.
 
 First, add the OSP Conan repository as a remote:
 
-    conan remote add osp https://osp.jfrog.io/artifactory/api/conan/local
+    conan remote add osp https://osp.jfrog.io/artifactory/api/conan/conan-local
 
 Package revisions must be enabled. See [How to activate the revisions].
 
