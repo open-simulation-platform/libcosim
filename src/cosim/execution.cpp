@@ -151,8 +151,10 @@ public:
             do {
                 stepSize = step();
                 timer_.sleep(currentTime_);
-            } while (!stopped_ && !timed_out(endTime, currentTime_, stepSize));
-            return !stopped_;
+            }  while (!stopped_ && !timed_out(endTime, currentTime_, stepSize));
+            bool isStopped = stopped_;
+            stopped_ = true;
+            return !isStopped;
         });
     }
 
