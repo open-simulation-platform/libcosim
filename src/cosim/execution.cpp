@@ -152,7 +152,9 @@ public:
                 stepSize = step();
                 timer_.sleep(currentTime_);
             } while (!stopped_ && !timed_out(endTime, currentTime_, stepSize));
-            return !stopped_;
+            bool isStopped = stopped_;
+            stopped_ = true;
+            return !isStopped;
         });
     }
 
