@@ -6,7 +6,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### [v0.8.1] – 2021-09-15
 ##### Fixed
 * Using proxyfmu v0.2.3 that fixes an assumtion that proxyfmu executable being located in working directory ([PR#657](https://github.com/open-simulation-platform/libcosim/pull/657), [proxyfmu#40](https://github.com/open-simulation-platform/proxy-fmu/issues/40))
-* stopped-flag not reset when end-time exceeded ([PR#656](https://github.com/open-simulation-platform/libcosim/pull/656))
+* Stopped-flag not reset when end-time exceeded ([PR#656](https://github.com/open-simulation-platform/libcosim/pull/656))
 
 ### [v0.8.0] – 2021-09-03
 
