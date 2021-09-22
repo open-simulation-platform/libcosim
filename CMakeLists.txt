@@ -92,12 +92,31 @@ set(LIBCOSIM_EXPORT_TARGET "${PROJECT_NAME}-targets")
 # ==============================================================================
 
 if(LIBCOSIM_USING_CONAN)
-    if(EXISTS ${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-        include("${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")
-        conan_basic_setup(NO_OUTPUT_DIRS)
+
+    if(CONAN_EXPORTED) # in conan local cache
+        # standard conan installation, deps will be defined in conanfile.py
+        # and not necessary to call conan again, conan is already running
+        include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+        conan_basic_setup()
     else()
-        message(FATAL_ERROR "The file conanbuildinfo.cmake doesn't exist, you have to run conan install first")
+
+        include(cmake/conan.cmake)
+        conan_cmake_autodetect(settings)
+
+        set(proxyfmu_option False)
+        if(LIBCOSIM_WITH_PROXYFMU)
+            set(proxyfmu_option True)
+        endif()
+
+        conan_cmake_run(
+                CONANFILE conanfile.py
+                OPTIONS proxyfmu=${proxyfmu_option}
+                BUILD missing
+                SETTINGS ${settings}
+                BASIC_SETUP)
+
     endif()
+
 endif()
 
 set(Boost_components date_time fiber log)
