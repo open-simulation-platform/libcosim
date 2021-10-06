@@ -100,7 +100,7 @@ if(LIBCOSIM_USING_CONAN)
     endif()
 endif()
 
-set(Boost_components date_time fiber log)
+set(Boost_components date_time log)
 if (LIBCOSIM_BUILD_TESTS)
     list(APPEND Boost_components timer unit_test_framework)
 endif()

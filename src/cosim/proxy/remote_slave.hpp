@@ -9,7 +9,7 @@
 #ifndef COSIM_PROXY_REMOTE_SLAVE_HPP
 #define COSIM_PROXY_REMOTE_SLAVE_HPP
 
-#include <cosim/async_slave.hpp>
+#include <cosim/slave.hpp>
 #include <cosim/model_description.hpp>
 #include <cosim/time.hpp>
 

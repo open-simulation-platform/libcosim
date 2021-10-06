@@ -12,8 +12,8 @@
 
 #include <cosim/fs_portability.hpp>
 
-#include <boost/fiber/condition_variable.hpp>
-#include <boost/fiber/mutex.hpp>
+#include <condition_variable>
+#include <mutex>
 #include <boost/interprocess/sync/file_lock.hpp>
 
 #include <memory>
@@ -29,72 +29,72 @@ namespace utility
 {
 
 
-/**
- *  A thread-safe, fiber-friendly, single-item container.
- *
- *  This is a general-purpose container that may contain zero or one item(s)
- *  of type `T`.
- *
- *  The `put()` and `take()` functions can be safely called from different
- *  threads.  Shared data is protected with synchronization primitives
- *  from Boost.Fiber, meaning that the functions will yield to other fibers,
- *  and not block the current thread, if they cannot immediately acquire a
- *  lock.
- */
-template<typename T>
-class shared_box
-{
-public:
-    using value_type = T;
-
-    /// Puts an item in the container, replacing any existing item.
-    void put(const value_type& value)
-    {
-        {
-            std::lock_guard<boost::fibers::mutex> lock(mutex_);
-            value_ = value;
-        }
-        condition_.notify_one();
-    }
-
-    /// Puts an item in the container, replacing any existing item.
-    void put(value_type&& value)
-    {
-        {
-            std::lock_guard<boost::fibers::mutex> lock(mutex_);
-            value_ = std::move(value);
-        }
-        condition_.notify_one();
-    }
-
-    /**
-     *  Removes an item from the container and returns it.
-     *
-     *  If there is no item in the container when the function is called,
-     *  the current fiber will yield, and it will only resume when an
-     *  item becomes available.
-     */
-    value_type take()
-    {
-        std::unique_lock<boost::fibers::mutex> lock(mutex_);
-        condition_.wait(lock, [&] { return value_.has_value(); });
-        auto value = std::move(value_.value());
-        value_.reset();
-        return value;
-    }
-
-    /// Returns `true` if there is no item in the container.
-    bool empty() const noexcept
-    {
-        std::lock_guard<boost::fibers::mutex> lock(mutex_);
-        return !value_.has_value();
-    }
-
-private:
-    std::optional<value_type> value_;
-    mutable boost::fibers::mutex mutex_;
-    boost::fibers::condition_variable condition_;
-};
+///**
+// *  A thread-safe, fiber-friendly, single-item container.
+// *
+// *  This is a general-purpose container that may contain zero or one item(s)
+// *  of type `T`.
+// *
+// *  The `put()` and `take()` functions can be safely called from different
+// *  threads.  Shared data is protected with synchronization primitives
+// *  from Boost.Fiber, meaning that the functions will yield to other fibers,
+// *  and not block the current thread, if they cannot immediately acquire a
+// *  lock.
+// */
+//template<typename T>
+//class shared_box
+//{
+//public:
+//    using value_type = T;
+//
+//    /// Puts an item in the container, replacing any existing item.
+//    void put(const value_type& value)
+//    {
+//        {
+//            std::lock_guard<std::mutex> lock(mutex_);
+//            value_ = value;
+//        }
+//        condition_.notify_one();
+//    }
+//
+//    /// Puts an item in the container, replacing any existing item.
+//    void put(value_type&& value)
+//    {
+//        {
+//            std::lock_guard<std::mutex> lock(mutex_);
+//            value_ = std::move(value);
+//        }
+//        condition_.notify_one();
+//    }
+//
+//    /**
+//     *  Removes an item from the container and returns it.
+//     *
+//     *  If there is no item in the container when the function is called,
+//     *  the current fiber will yield, and it will only resume when an
+//     *  item becomes available.
+//     */
+//    value_type take()
+//    {
+//        std::unique_lock<std::mutex> lock(mutex_);
+//        condition_.wait(lock, [&] { return value_.has_value(); });
+//        auto value = std::move(value_.value());
+//        value_.reset();
+//        return value;
+//    }
+//
+//    /// Returns `true` if there is no item in the container.
+//    bool empty() const noexcept
+//    {
+//        std::lock_guard<std::mutex> lock(mutex_);
+//        return !value_.has_value();
+//    }
+//
+//private:
+//    std::optional<value_type> value_;
+//    mutable std::mutex mutex_;
+//    boost::fibers::condition_variable condition_;
+//};
 
 
 /**
@@ -136,8 +136,8 @@ public:
     void unlock_shared();
 
 private:
-    boost::fibers::mutex mutex_;
-    boost::fibers::condition_variable condition_;
+    std::mutex mutex_;
+    std::condition_variable condition_;
     int sharedCount_ = 0;
 };
 
@@ -291,7 +291,7 @@ private:
 
     private:
         boost::interprocess::file_lock fileLock_;
-        boost::fibers::mutex shareCountMutex_;
+        std::mutex shareCountMutex_;
         int shareCount_ = 0; // -1 means exclusive lock
     };
 

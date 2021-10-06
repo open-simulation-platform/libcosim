@@ -15,6 +15,7 @@
 #include <sstream>
 #include <unordered_map>
 #include <vector>
+#include <execution>
 
 
 namespace cosim
@@ -161,17 +162,18 @@ public:
 
     void initialize()
     {
-        for_all_simulators([=](auto s) {
-            return s->setup(startTime_, stopTime_, std::nullopt);
-        });
+        for (auto &s : simulators_) {
+            return s.second.sim->setup(startTime_, stopTime_, std::nullopt);
+        }
 
         // Run N iterations of the simulators' and functions' step/calculation
         // procedures, where N is the number of simulators in the system,
         // to propagate initial values.
         for (std::size_t i = 0; i < simulators_.size() + functions_.size(); ++i) {
-            for_all_simulators([=](auto s) {
-                return s->do_iteration();
+            std::for_each(std::execution::par_unseq, simulators_.begin(), simulators_.end(), [](auto &&s){
+                s.second.sim->do_iteration();
             });
+
             for (const auto& s : simulators_) {
                 transfer_variables(s.second.outgoingSimConnections);
                 transfer_variables(s.second.outgoingFunConnections);
@@ -182,9 +184,10 @@ public:
             }
         }
 
-        for_all_simulators([](auto s) {
-            return s->start_simulation();
+        std::for_each(std::execution::par_unseq, simulators_.begin(), simulators_.end(), [](auto &&s){
+            s.second.sim->start_simulation();
         });
+
     }
 
     std::pair<duration, std::unordered_set<simulator_index>> do_step(time_point currentT)
@@ -211,7 +214,7 @@ public:
                         << info.sim->name() << ": "
                         << exception_ptr_msg(ep) << '\n';
                     failed = true;
-                } else if (info.stepResult.get() != step_result::complete) {
+                } else if (info.stepResult != step_result::complete) {
                     errMessages
                         << info.sim->name() << ": "
                         << "Step not complete" << '\n';
@@ -274,7 +277,7 @@ private:
     {
         simulator* sim;
         int decimationFactor = 1;
-        boost::fibers::future<step_result> stepResult;
+        step_result stepResult;
         std::vector<connection_ss> outgoingSimConnections;
         std::vector<connection_sf> outgoingFunConnections;
     };
@@ -319,30 +322,30 @@ private:
             });
     }
 
-    template<typename F>
-    void for_all_simulators(F f)
-    {
-        std::unordered_map<simulator_index, boost::fibers::future<void>> results;
-        for (const auto& s : simulators_) {
-            results.emplace(s.first, f(s.second.sim));
-        }
-
-        bool failed = false;
-        std::stringstream errMessages;
-        for (auto& r : results) {
-            try {
-                r.second.get();
-            } catch (const std::exception& e) {
-                errMessages
-                    << simulators_.at(r.first).sim->name() << ": "
-                    << e.what() << '\n';
-                failed = true;
-            }
-        }
-        if (failed) {
-            throw error(make_error_code(errc::simulation_error), errMessages.str());
-        }
-    }
+//    template<typename F>
+//    void for_all_simulators(F f)
+//    {
+//        std::unordered_map<simulator_index, boost::fibers::future<void>> results;
+//        for (const auto& s : simulators_) {
+//            results.emplace(s.first, f(s.second.sim));
+//        }
+//
+//        bool failed = false;
+//        std::stringstream errMessages;
+//        for (auto& r : results) {
+//            try {
+//                r.second.get();
+//            } catch (const std::exception& e) {
+//                errMessages
+//                    << simulators_.at(r.first).sim->name() << ": "
+//                    << e.what() << '\n';
+//                failed = true;
+//            }
+//        }
+//        if (failed) {
+//            throw error(make_error_code(errc::simulation_error), errMessages.str());
+//        }
+//    }
 
     void transfer_variables(const std::vector<connection_ss>& connections)
     {

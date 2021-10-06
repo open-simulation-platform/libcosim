@@ -10,14 +10,13 @@
 #ifndef COSIM_EXECUTION_HPP
 #define COSIM_EXECUTION_HPP
 
-#include <cosim/async_slave.hpp>
+#include <cosim/slave.hpp>
 #include <cosim/function/function.hpp>
 #include <cosim/model_description.hpp>
 #include <cosim/system_structure.hpp>
 #include <cosim/time.hpp>
 #include <cosim/timer.hpp>
 
-#include <boost/fiber/future.hpp>
 #include <boost/functional/hash.hpp>
 
 #include <memory>
@@ -181,7 +180,7 @@ public:
      *      If zero, the algorithm will attempt to choose a sensible default.
      */
     simulator_index add_slave(
-        std::shared_ptr<async_slave> slave,
+        std::shared_ptr<slave> slave,
         std::string_view name,
         duration stepSizeHint = duration::zero());
 
@@ -262,7 +261,7 @@ public:
      *      or `false` if it was stopped before this. In the latter case,
      *      `current_time()` may be called to determine the actual end time.
      */
-    boost::fibers::future<bool> simulate_until(std::optional<time_point> targetTime);
+    bool simulate_until(std::optional<time_point> targetTime);
 
     /**
      *  Advance the co-simulation forward one single step

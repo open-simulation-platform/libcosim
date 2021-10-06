@@ -11,7 +11,7 @@
 #define COSIM_SLAVE_SIMULATOR_HPP
 
 #include <cosim/algorithm.hpp>
-#include <cosim/async_slave.hpp>
+#include <cosim/slave.hpp>
 
 #include <memory>
 #include <string_view>
@@ -24,7 +24,7 @@ namespace cosim
 class slave_simulator : public simulator
 {
 public:
-    slave_simulator(std::shared_ptr<async_slave> slave, std::string_view name);
+    slave_simulator(std::shared_ptr<slave> slave, std::string_view name);
 
     ~slave_simulator() noexcept;
 
@@ -81,16 +81,16 @@ public:
     std::unordered_set<value_reference>& get_modified_boolean_variables() const override;
     std::unordered_set<value_reference>& get_modified_string_variables() const override;
 
-    boost::fibers::future<void> setup(
+    void setup(
         time_point startTime,
         std::optional<time_point> stopTime,
         std::optional<double> relativeTolerance) override;
 
-    boost::fibers::future<void> do_iteration() override;
+    void do_iteration() override;
 
-    boost::fibers::future<void> start_simulation() override;
+    void start_simulation() override;
 
-    boost::fibers::future<step_result> do_step(
+    step_result do_step(
         time_point currentT,
         duration deltaT) override;
 

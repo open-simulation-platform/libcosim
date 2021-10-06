@@ -22,6 +22,56 @@
 namespace cosim
 {
 
+/// Symbolic constants that represent the state of a slave.
+enum class slave_state
+{
+    /**
+     *  The slave exists but has not been configured yet.
+     *
+     *  The slave is in this state from its creation until `setup()` is called.
+     */
+    created,
+
+    /**
+     *  The slave is in initialisation mode.
+     *
+     *  The slave is in this state from the time `setup()` is called and until
+     *  `start_simulation()` is called.
+     */
+    initialisation,
+
+    /**
+     *  The slave is in simulation mode.
+     *
+     *  The slave is in this state from the time `start_simulation()` is called
+     *  and until `end_simulation()` is called.
+     */
+    simulation,
+
+    /**
+     *  The slave is terminated.
+     *
+     *  The slave is in this state from the time `end_simulation()` is called
+     *  and until its destruction.
+     */
+    terminated,
+
+    /**
+     *  An irrecoverable error occurred.
+     *
+     *  The slave is in this state from the time an exception is thrown and
+     *  until its destruction.
+     */
+    error,
+
+    /**
+     *  The slave is in an indeterminate state.
+     *
+     *  This is the case when a state-changing asynchronous function call is
+     *  currently in progress.
+     */
+    indeterminate,
+};
 
 /**
  *  An interface for classes that represent co-simulation slaves.
@@ -221,6 +271,55 @@ public:
     virtual void set_string_variables(
         gsl::span<const value_reference> variables,
         gsl::span<const std::string> values) = 0;
+
+    /// Result type for `get_variables()`.
+    struct variable_values
+    {
+        /// Real variable values.
+        gsl::span<double> real;
+
+        /// Integer variable values.
+        gsl::span<int> integer;
+
+        /// Boolean variable values.
+        gsl::span<bool> boolean;
+
+        /// String variable values.
+        gsl::span<std::string> string;
+    };
+
+    variable_values get_variables(
+        gsl::span<const value_reference> real_variables,
+        gsl::span<const value_reference> integer_variables,
+        gsl::span<const value_reference> boolean_variables,
+        gsl::span<const value_reference> string_variables
+    ) {
+
+        variable_values values;
+        get_real_variables(real_variables, values.real);
+        get_integer_variables(integer_variables, values.integer);
+        get_boolean_variables(boolean_variables, values.boolean);
+        get_string_variables(string_variables, values.string);
+
+    }
+
+    void set_variables(
+        gsl::span<const value_reference> real_variables,
+        gsl::span<const double> real_values,
+        gsl::span<const value_reference> integer_variables,
+        gsl::span<const int> integer_values,
+        gsl::span<const value_reference> boolean_variables,
+        gsl::span<const bool> boolean_values,
+        gsl::span<const value_reference> string_variables,
+        gsl::span<const std::string> string_values
+        ) {
+
+        set_real_variables(real_variables, real_values);
+        set_integer_variables(integer_variables, integer_values);
+        set_boolean_variables(boolean_variables, boolean_values);
+        set_string_variables(string_variables, string_values);
+
+    }
 };
 
 

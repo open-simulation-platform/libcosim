@@ -220,10 +220,10 @@ T get_start_value(variable_description vd)
 class slave_simulator::impl
 {
 public:
-    impl(std::shared_ptr<async_slave> slave, std::string_view name)
+    impl(std::shared_ptr<slave> slave, std::string_view name)
         : slave_(std::move(slave))
         , name_(name)
-        , modelDescription_(slave_->model_description().get())
+        , modelDescription_(slave_->model_description())
     {
         assert(slave_);
         assert(!name_.empty());
@@ -415,7 +415,7 @@ public:
         return modifiedStringVariables_;
     }
 
-    boost::fibers::future<void> setup(
+    void setup(
         time_point startTime,
         std::optional<time_point> stopTime,
         std::optional<double> relativeTolerance)
@@ -423,39 +423,32 @@ public:
         return slave_->setup(startTime, stopTime, relativeTolerance);
     }
 
-    boost::fibers::future<void> do_iteration()
+    void do_iteration()
     {
-        // clang-format off
-            return boost::fibers::async([=]() {
-                set_variables(duration::zero());
-                get_variables(duration::zero());
-            });
-        // clang-format on
+
+        set_variables(duration::zero());
+        get_variables(duration::zero());
     }
 
-    boost::fibers::future<void> start_simulation()
+    void start_simulation()
     {
-        if (slave_->state() != slave_state::initialisation) {
-            COSIM_PANIC();
-        }
-        return boost::fibers::async([=]() {
-            slave_->start_simulation().get();
-            get_variables(duration::zero());
-        });
+        //        if (slave_->state() != slave_state::initialisation) {
+        //            COSIM_PANIC();
+        //        }
+
+        slave_->start_simulation();
+        get_variables(duration::zero());
     }
 
-    boost::fibers::future<step_result> do_step(
+    step_result do_step(
         time_point currentT,
         duration deltaT)
     {
-        // clang-format off
-            return boost::fibers::async([=]() {
-                set_variables(deltaT);
-                const auto result = slave_->do_step(currentT, deltaT).get();
-                get_variables(deltaT);
-                return result;
-            });
-        // clang-format on
+
+        set_variables(deltaT);
+        const auto result = slave_->do_step(currentT, deltaT);
+        get_variables(deltaT);
+        return result;
     }
 
 private:
@@ -487,8 +480,7 @@ private:
                                       gsl::make_span(realGetCache_.references),
                                       gsl::make_span(integerGetCache_.references),
                                       gsl::make_span(booleanGetCache_.references),
-                                      gsl::make_span(stringGetCache_.references))
-                                .get();
+                                      gsl::make_span(stringGetCache_.references));
         copy_contents(values.real, realGetCache_.originalValues);
         copy_contents(values.integer, integerGetCache_.originalValues);
         copy_contents(values.boolean, booleanGetCache_.originalValues);
@@ -525,7 +517,7 @@ private:
     }
 
 private:
-    std::shared_ptr<async_slave> slave_;
+    std::shared_ptr<slave> slave_;
     std::string name_;
     cosim::model_description modelDescription_;
 
@@ -547,7 +539,7 @@ private:
 
 
 slave_simulator::slave_simulator(
-    std::shared_ptr<async_slave> slave,
+    std::shared_ptr<slave> slave,
     std::string_view name)
     : pimpl_(std::make_unique<impl>(std::move(slave), name))
 {
@@ -708,7 +700,7 @@ std::unordered_set<value_reference>& slave_simulator::get_modified_string_variab
     return pimpl_->get_modified_string_variables();
 }
 
-boost::fibers::future<void> slave_simulator::setup(
+void slave_simulator::setup(
     time_point startTime,
     std::optional<time_point> stopTime,
     std::optional<double> relativeTolerance)
@@ -717,17 +709,17 @@ boost::fibers::future<void> slave_simulator::setup(
 }
 
 
-boost::fibers::future<void> slave_simulator::do_iteration()
+void slave_simulator::do_iteration()
 {
     return pimpl_->do_iteration();
 }
 
-boost::fibers::future<void> slave_simulator::start_simulation()
+void slave_simulator::start_simulation()
 {
     return pimpl_->start_simulation();
 }
 
-boost::fibers::future<step_result> slave_simulator::do_step(
+step_result slave_simulator::do_step(
     time_point currentT,
     duration deltaT)
 {
