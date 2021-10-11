@@ -191,7 +191,7 @@ private:
  *  URI resolver).
  */
 std::shared_ptr<model_uri_resolver> default_model_uri_resolver(
-    std::shared_ptr<file_cache> cache = nullptr);
+    const std::shared_ptr<file_cache>& cache = nullptr);
 
 
 } // namespace cosim

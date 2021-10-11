@@ -13,6 +13,7 @@
 #include <cosim/model_description.hpp>
 #include <cosim/time.hpp>
 
+#include <boost/container/vector.hpp>
 #include <gsl/span>
 
 #include <optional>
@@ -102,7 +103,7 @@ enum class slave_state
 class slave
 {
 public:
-    virtual ~slave() { }
+    virtual ~slave() = default;
 
     /// Returns a model description.
     virtual cosim::model_description model_description() const = 0;
@@ -276,31 +277,37 @@ public:
     struct variable_values
     {
         /// Real variable values.
-        gsl::span<double> real;
+        std::vector<double> real;
 
         /// Integer variable values.
-        gsl::span<int> integer;
+        std::vector<int> integer;
 
         /// Boolean variable values.
-        gsl::span<bool> boolean;
+        boost::container::vector<bool> boolean;
 
         /// String variable values.
-        gsl::span<std::string> string;
+        std::vector<std::string> string;
     };
 
     variable_values get_variables(
         gsl::span<const value_reference> real_variables,
         gsl::span<const value_reference> integer_variables,
         gsl::span<const value_reference> boolean_variables,
-        gsl::span<const value_reference> string_variables
-    ) {
+        gsl::span<const value_reference> string_variables) const
+    {
 
         variable_values values;
+        values.real.resize(real_variables.size());
+        values.integer.resize(integer_variables.size());
+        values.boolean.resize(boolean_variables.size());
+        values.string.resize(string_variables.size());
+
         get_real_variables(real_variables, values.real);
         get_integer_variables(integer_variables, values.integer);
         get_boolean_variables(boolean_variables, values.boolean);
         get_string_variables(string_variables, values.string);
 
+        return values;
     }
 
     void set_variables(
@@ -311,14 +318,13 @@ public:
         gsl::span<const value_reference> boolean_variables,
         gsl::span<const bool> boolean_values,
         gsl::span<const value_reference> string_variables,
-        gsl::span<const std::string> string_values
-        ) {
+        gsl::span<const std::string> string_values)
+    {
 
         set_real_variables(real_variables, real_values);
         set_integer_variables(integer_variables, integer_values);
         set_boolean_variables(boolean_variables, boolean_values);
         set_string_variables(string_variables, string_values);
-
     }
 };
 

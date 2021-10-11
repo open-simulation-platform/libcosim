@@ -11,29 +11,17 @@
 
 #include <algorithm>
 #include <cstdlib>
+#include <execution>
 #include <numeric>
 #include <sstream>
 #include <unordered_map>
 #include <vector>
-#include <execution>
 
 
 namespace cosim
 {
 namespace
 {
-
-std::string exception_ptr_msg(std::exception_ptr ep)
-{
-    assert(ep);
-    try {
-        std::rethrow_exception(ep);
-    } catch (const std::exception& e) {
-        return std::string(e.what());
-    } catch (...) {
-        return "Unknown error";
-    }
-}
 
 int calculate_decimation_factor(
     std::string_view name,
@@ -162,15 +150,15 @@ public:
 
     void initialize()
     {
-        for (auto &s : simulators_) {
-            return s.second.sim->setup(startTime_, stopTime_, std::nullopt);
-        }
+        std::for_each(std::execution::par, simulators_.begin(), simulators_.end(), [&](auto& s) {
+            s.second.sim->setup(startTime_, stopTime_, std::nullopt);
+        });
 
         // Run N iterations of the simulators' and functions' step/calculation
         // procedures, where N is the number of simulators in the system,
         // to propagate initial values.
         for (std::size_t i = 0; i < simulators_.size() + functions_.size(); ++i) {
-            std::for_each(std::execution::par_unseq, simulators_.begin(), simulators_.end(), [](auto &&s){
+            std::for_each(std::execution::par, simulators_.begin(), simulators_.end(), [](auto&& s) {
                 s.second.sim->do_iteration();
             });
 
@@ -184,48 +172,50 @@ public:
             }
         }
 
-        std::for_each(std::execution::par_unseq, simulators_.begin(), simulators_.end(), [](auto &&s){
+        std::for_each(std::execution::par, simulators_.begin(), simulators_.end(), [](auto& s) {
             s.second.sim->start_simulation();
         });
-
     }
 
     std::pair<duration, std::unordered_set<simulator_index>> do_step(time_point currentT)
     {
-        // Initiate simulator time steps.
-        for (auto& s : simulators_) {
-            auto& info = s.second;
-            if (stepCounter_ % info.decimationFactor == 0) {
-                info.stepResult = info.sim->do_step(currentT, baseStepSize_ * info.decimationFactor);
-            }
-        }
-
-        ++stepCounter_;
-
-        // Wait for all simulators that are supposed to finish their individual
-        // time steps within this co-simulation time step.
-        std::unordered_set<simulator_index> finished;
+        std::mutex m;
         bool failed = false;
         std::stringstream errMessages;
-        for (auto& [idx, info] : simulators_) {
+        std::unordered_set<simulator_index> finished;
+        // Initiate simulator time steps.
+        std::for_each(std::execution::par, simulators_.begin(), simulators_.end(), [&](auto& s) {
+            auto& info = s.second;
             if (stepCounter_ % info.decimationFactor == 0) {
-                if (auto ep = info.stepResult.get_exception_ptr()) {
+                try {
+                    info.stepResult = info.sim->do_step(currentT, baseStepSize_ * info.decimationFactor);
+
+                    if (info.stepResult != step_result::complete) {
+                        std::lock_guard<std::mutex> lck(m);
+                        errMessages
+                            << info.sim->name() << ": "
+                            << "Step not complete" << '\n';
+                        failed = true;
+                    }
+
+                } catch (std::exception& ex) {
+                    std::lock_guard<std::mutex> lck(m);
                     errMessages
                         << info.sim->name() << ": "
-                        << exception_ptr_msg(ep) << '\n';
-                    failed = true;
-                } else if (info.stepResult != step_result::complete) {
-                    errMessages
-                        << info.sim->name() << ": "
-                        << "Step not complete" << '\n';
+                        << ex.what() << '\n';
                     failed = true;
                 }
-                finished.insert(idx);
+
+                std::lock_guard<std::mutex> lck(m);
+                finished.insert(s.first);
             }
-        }
+        });
+
         if (failed) {
             throw error(make_error_code(errc::simulation_error), errMessages.str());
         }
+
+        ++stepCounter_;
 
         // Transfer the outputs from simulators that have finished their
         // individual time steps within this co-simulation time step.
@@ -244,7 +234,7 @@ public:
             }
         }
 
-        return std::pair(baseStepSize_, std::move(finished));
+        return {baseStepSize_, std::move(finished)};
     }
 
     void set_stepsize_decimation_factor(cosim::simulator_index i, int factor)
@@ -321,31 +311,6 @@ private:
                     simulators_.at(connection.target.simulator).decimationFactor);
             });
     }
-
-//    template<typename F>
-//    void for_all_simulators(F f)
-//    {
-//        std::unordered_map<simulator_index, boost::fibers::future<void>> results;
-//        for (const auto& s : simulators_) {
-//            results.emplace(s.first, f(s.second.sim));
-//        }
-//
-//        bool failed = false;
-//        std::stringstream errMessages;
-//        for (auto& r : results) {
-//            try {
-//                r.second.get();
-//            } catch (const std::exception& e) {
-//                errMessages
-//                    << simulators_.at(r.first).sim->name() << ": "
-//                    << e.what() << '\n';
-//                failed = true;
-//            }
-//        }
-//        if (failed) {
-//            throw error(make_error_code(errc::simulation_error), errMessages.str());
-//        }
-//    }
 
     void transfer_variables(const std::vector<connection_ss>& connections)
     {
@@ -458,7 +423,7 @@ fixed_step_algorithm::fixed_step_algorithm(duration baseStepSize)
 }
 
 
-fixed_step_algorithm::~fixed_step_algorithm() noexcept { }
+fixed_step_algorithm::~fixed_step_algorithm() noexcept = default;
 
 
 fixed_step_algorithm::fixed_step_algorithm(fixed_step_algorithm&& other) noexcept

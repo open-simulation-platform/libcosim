@@ -5,6 +5,8 @@
  */
 #include "cosim/orchestration.hpp"
 
+#include <utility>
+
 #include "cosim/error.hpp"
 #include "cosim/fmi/fmu.hpp"
 #include "cosim/log/logger.hpp"
@@ -79,18 +81,18 @@ namespace
 class fmu_model : public model
 {
 public:
-    fmu_model(std::shared_ptr<fmi::fmu> fmu)
-        : fmu_(fmu)
+    explicit fmu_model(std::shared_ptr<fmi::fmu> fmu)
+        : fmu_(std::move(fmu))
     { }
 
-    std::shared_ptr<const model_description> description() const noexcept
+    std::shared_ptr<const model_description> description() const noexcept override
     {
         return fmu_->model_description();
     }
 
-    std::shared_ptr<async_slave> instantiate(std::string_view name) override
+    std::shared_ptr<slave> instantiate(std::string_view name) override
     {
-        return make_background_thread_slave(fmu_->instantiate_slave(name));
+        return fmu_->instantiate_slave(name);
     }
 
 private:
@@ -107,7 +109,7 @@ fmu_file_uri_sub_resolver::fmu_file_uri_sub_resolver()
 
 fmu_file_uri_sub_resolver::fmu_file_uri_sub_resolver(
     std::shared_ptr<file_cache> cache)
-    : importer_(fmi::importer::create(cache))
+    : importer_(fmi::importer::create(std::move(cache)))
 {
 }
 
@@ -137,7 +139,7 @@ std::shared_ptr<model> fmu_file_uri_sub_resolver::lookup_model(const uri& modelU
 // =============================================================================
 
 std::shared_ptr<model_uri_resolver> default_model_uri_resolver(
-    std::shared_ptr<file_cache> cache)
+    const std::shared_ptr<file_cache>& cache)
 {
     auto resolver = std::make_shared<model_uri_resolver>();
     if (cache) {

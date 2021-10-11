@@ -466,8 +466,7 @@ private:
                   gsl::make_span(booleanRefs),
                   gsl::make_span(booleanValues),
                   gsl::make_span(stringRefs),
-                  gsl::make_span(stringValues))
-            .get();
+                  gsl::make_span(stringValues));
         realSetCache_.reset();
         integerSetCache_.reset();
         booleanSetCache_.reset();
