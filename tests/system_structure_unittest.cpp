@@ -24,11 +24,11 @@ public:
             nextSlave_->model_description());
     }
 
-    std::shared_ptr<cosim::async_slave> instantiate(std::string_view /*name*/)
+    std::shared_ptr<cosim::slave> instantiate(std::string_view /*name*/)
         override
     {
         if (!nextSlave_) nextSlave_ = std::make_shared<mock_slave>();
-        return cosim::make_pseudo_async(std::move(nextSlave_));
+        return std::move(nextSlave_);
     }
 
 private:
@@ -110,7 +110,7 @@ BOOST_AUTO_TEST_CASE(system_structure_basic_use)
     BOOST_CHECK(entityIndexes.simulators.size() == 3);
     BOOST_CHECK(entityIndexes.functions.size() == 1);
 
-    BOOST_CHECK(execution.simulate_until(stopTime).get());
+    BOOST_CHECK(execution.simulate_until(stopTime));
 
     const auto realOutRef = mock_slave::real_out_reference;
     double realOutA = -1.0, realOutB = -1.0, realOutC = -1.0;

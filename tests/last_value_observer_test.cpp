@@ -1,7 +1,6 @@
 #include "mock_slave.hpp"
 
 #include <cosim/algorithm.hpp>
-#include <cosim/async_slave.hpp>
 #include <cosim/execution.hpp>
 #include <cosim/log/simple.hpp>
 #include <cosim/manipulator/override_manipulator.hpp>
@@ -36,11 +35,11 @@ int main()
         execution.add_observer(observer);
 
         const auto sim = execution.add_slave(
-            cosim::make_pseudo_async(std::make_unique<mock_slave>(
+            std::make_unique<mock_slave>(
                 [](double x) { return x + 1.234; },
                 [](int i) { return i + 1; },
                 [](bool b) { return !b; },
-                [](std::string_view s) { return std::string(s) + std::string("bar"); })),
+                [](std::string_view s) { return std::string(s) + std::string("bar"); }),
             "slave");
 
         execution.step();

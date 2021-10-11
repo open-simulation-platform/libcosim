@@ -63,15 +63,7 @@ enum class slave_state
      *  The slave is in this state from the time an exception is thrown and
      *  until its destruction.
      */
-    error,
-
-    /**
-     *  The slave is in an indeterminate state.
-     *
-     *  This is the case when a state-changing asynchronous function call is
-     *  currently in progress.
-     */
-    indeterminate,
+    error
 };
 
 /**

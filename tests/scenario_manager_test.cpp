@@ -1,7 +1,6 @@
 #include "mock_slave.hpp"
 
 #include <cosim/algorithm.hpp>
-#include <cosim/async_slave.hpp>
 #include <cosim/execution.hpp>
 #include <cosim/log/simple.hpp>
 #include <cosim/manipulator/scenario_manager.hpp>
@@ -33,9 +32,9 @@ int main()
         execution.add_manipulator(scenarioManager);
 
         auto simIndex = execution.add_slave(
-            cosim::make_pseudo_async(std::make_unique<mock_slave>(
+            std::make_unique<mock_slave>(
                 [](double x) { return x + 1.234; },
-                [](int y) { return y + 2; })),
+                [](int y) { return y + 2; }),
             "slave uno");
 
         observer->start_observing(
@@ -84,7 +83,7 @@ int main()
         scenarioManager->load_scenario(scenario, startTime);
 
         auto simResult = execution.simulate_until(endTime);
-        REQUIRE(simResult.get());
+        REQUIRE(simResult);
 
         const int numSamples = 11;
         double realInputValues[numSamples];

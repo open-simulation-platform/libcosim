@@ -29,7 +29,7 @@ BOOST_AUTO_TEST_CASE(test_ssp)
     BOOST_CHECK(entityMaps.simulators.size() == 2);
 
     auto result = exec.simulate_until(to_time_point(1e-3));
-    BOOST_REQUIRE(result.get());
+    BOOST_REQUIRE(result);
 }
 
 BOOST_AUTO_TEST_CASE(test_fmi1)
@@ -95,8 +95,8 @@ BOOST_AUTO_TEST_CASE(test_fmi1)
     const auto dt = to_duration(0.1);
 
     auto instance = fmu.instantiate("testSlave");
-    instance->setup(tStart, tMax, std::nullopt).get();
-    instance->start_simulation().get();
+    instance->setup(tStart, tMax, std::nullopt);
+    instance->start_simulation();
 
     double realVal = 0.0;
     int integerVal = 0;
@@ -110,7 +110,7 @@ BOOST_AUTO_TEST_CASE(test_fmi1)
                                 gsl::make_span(&integerOut, 1),
                                 gsl::make_span(&booleanOut, 1),
                                 gsl::make_span(&stringOut, 1))
-                        .get();
+                        ;
 
         BOOST_TEST(vars.real[0] == realVal);
         BOOST_TEST(vars.integer[0] == integerVal);
@@ -122,17 +122,17 @@ BOOST_AUTO_TEST_CASE(test_fmi1)
         booleanVal = !booleanVal;
         stringVal += 'a';
 
-        instance->do_step(t, dt).get();
+        instance->do_step(t, dt);
 
         instance->set_variables(
                     gsl::make_span(&realIn, 1), gsl::make_span(&realVal, 1),
                     gsl::make_span(&integerIn, 1), gsl::make_span(&integerVal, 1),
                     gsl::make_span(&booleanIn, 1), gsl::make_span(&booleanVal, 1),
                     gsl::make_span(&stringIn, 1), gsl::make_span(&stringVal, 1))
-            .get();
+            ;
     }
 
-    instance->end_simulation().get();
+    instance->end_simulation();
 }
 
 BOOST_AUTO_TEST_CASE(test_fmi2)
@@ -155,7 +155,7 @@ BOOST_AUTO_TEST_CASE(test_fmi2)
                 cosim::to_time_point(0.0),
                 cosim::to_time_point(1.0),
                 std::nullopt)
-        .get();
+        ;
 
     bool foundValve = false;
     bool foundMinlevel = false;
@@ -168,7 +168,7 @@ BOOST_AUTO_TEST_CASE(test_fmi2)
             BOOST_TEST(start == 0.0);
             const auto varID = v.reference;
             double varVal = -1.0;
-            varVal = instance->get_variables(gsl::make_span(&varID, 1), {}, {}, {}).get().real[0];
+            varVal = instance->get_variables(gsl::make_span(&varID, 1), {}, {}, {}).real[0];
             BOOST_TEST(varVal == 0.0);
         } else if (v.name == "minlevel") {
             foundMinlevel = true;
@@ -178,13 +178,13 @@ BOOST_AUTO_TEST_CASE(test_fmi2)
             BOOST_TEST(start == 1.0);
             const auto varID = v.reference;
             double varVal = -1.0;
-            varVal = instance->get_variables(gsl::make_span(&varID, 1), {}, {}, {}).get().real[0];
+            varVal = instance->get_variables(gsl::make_span(&varID, 1), {}, {}, {}).real[0];
             BOOST_TEST(varVal == 1.0);
         }
     }
     BOOST_TEST(foundValve);
     BOOST_TEST(foundMinlevel);
 
-    instance->start_simulation().get();
-    instance->end_simulation().get();
+    instance->start_simulation();
+    instance->end_simulation();
 }

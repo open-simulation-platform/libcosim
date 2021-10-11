@@ -171,7 +171,7 @@ public:
      *  Adds a slave to the execution.
      *
      *  \param slave
-     *      An object that provides asynchronous communication with the slave.
+     *      The slave object.
      *  \param name
      *      An execution-specific name for the slave.
      *  \param stepSizeHint

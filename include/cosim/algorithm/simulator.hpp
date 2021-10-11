@@ -27,14 +27,6 @@ namespace cosim
  *
  *  This is the simulator interface exposed to `algorithm` implementers,
  *  and is used to control one "sub-simulator" in a co-simulation.
- *
- *  Some of the functions in this class, specifically the ones that return a
- *  `boost::fibers::future` object, are asynchronous.  Only one asynchronous
- *  operation may be executed per `simulator` object at any given time,
- *  meaning that client code must *always* ensure that the previous operation
- *  has completed before starting a new one. This is typically done by calling
- *  `boost::fibers::future::get()` on the future returned from the previous
- *  function call.
  */
 class simulator : public manipulable
 {

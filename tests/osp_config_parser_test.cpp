@@ -29,7 +29,7 @@ void test(const cosim::filesystem::path& configPath, size_t expectedNumConnectio
     execution.add_observer(obs);
 
     auto result = execution.simulate_until(cosim::to_time_point(1e-3));
-    REQUIRE(result.get());
+    REQUIRE(result);
 
     const auto simIndex = entityMaps.simulators.at("CraneController");
     const auto varReference =
