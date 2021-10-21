@@ -3,7 +3,7 @@ All notable changes to libcosim will be documented in this file. This includes n
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
-### [v0.8.2] – 2021-10-xx
+### [v0.8.2] – 2021-10-21
 ##### Fixed
 * Update to fmilibrary 2.3 ([PR#659](https://github.com/open-simulation-platform/libcosim/pull/659))
 * Update to proxyfmu 0.2.4 ([PR#663](https://github.com/open-simulation-platform/libcosim/pull/663))
