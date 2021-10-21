@@ -3,6 +3,11 @@ All notable changes to libcosim will be documented in this file. This includes n
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
+### [v0.8.2] – 2021-10-21
+##### Fixed
+* Update to fmilibrary 2.3 ([PR#659](https://github.com/open-simulation-platform/libcosim/pull/659))
+* Update to proxyfmu 0.2.4 ([PR#663](https://github.com/open-simulation-platform/libcosim/pull/663))
+
 ### [v0.8.1] – 2021-09-15
 ##### Fixed
 * Using proxyfmu v0.2.3 that fixes an assumtion that proxyfmu executable being located in working directory ([PR#657](https://github.com/open-simulation-platform/libcosim/pull/657), [proxyfmu#40](https://github.com/open-simulation-platform/proxy-fmu/issues/40))
@@ -165,3 +170,4 @@ First OSP JIP partner release
 [v0.7.1]: https://github.com/open-simulation-platform/cse-core/compare/v0.7.0...v0.7.1
 [v0.8.0]: https://github.com/open-simulation-platform/cse-core/compare/v0.7.1...v0.8.0
 [v0.8.1]: https://github.com/open-simulation-platform/cse-core/compare/v0.8.0...v0.8.1
+[v0.8.2]: https://github.com/open-simulation-platform/cse-core/compare/v0.8.1...v0.8.2
