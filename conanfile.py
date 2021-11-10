@@ -41,6 +41,13 @@ class LibcosimConan(ConanFile):
     def set_version(self):
         self.version = tools.load(path.join(self.recipe_folder, "version.txt")).strip()
 
+    def configure(self):
+        self.options["boost"].shared = self.options.shared
+        self.options["fmilibrary"].shared = self.options.shared
+        self.options["libzip"].shared = self.options.shared
+        self.options["yaml-cpp"].shared = self.options.shared
+        self.options["xerces-c"].shared = self.options.shared
+
     def requirements(self):
         if self.options.proxyfmu:
             self.requires("proxyfmu/0.2.4@osp/stable")
