@@ -32,12 +32,7 @@ class LibcosimConan(ConanFile):
         "proxyfmu": [True, False]}
     default_options = (
         "proxyfmu=False",
-        "shared=True",
-        "boost:shared=True",
-        "fmilibrary:shared=True",
-        "libzip:shared=True",
-        "yaml-cpp:shared=True",
-        "xerces-c:shared=True"
+        "shared=True"
     )
 
     def is_tests_enabled(self):
