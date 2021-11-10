@@ -32,7 +32,7 @@ class LibcosimConan(ConanFile):
         "proxyfmu": [True, False]}
     default_options = (
         "proxyfmu=False",
-        "shared=True"
+        "shared=True",
         "boost:shared=True",
         "fmilibrary:shared=True",
         "libzip:shared=True",
