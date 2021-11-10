@@ -14,8 +14,7 @@ option(LIBCOSIM_BUILD_APIDOC "Build API documentation (requires Doxygen)" ON)
 option(LIBCOSIM_BUILD_PRIVATE_APIDOC "Build private API documentation (only used if LIBCOSIM_BUILD_APIDOC=ON)" OFF)
 option(LIBCOSIM_STANDALONE_INSTALLATION "Whether to build for a standalone installation (Linux only; sets a relative RPATH)" OFF)
 option(LIBCOSIM_USING_CONAN "Whether Conan is used for package management" OFF)
-option(LIBCOSIM_WITH_FMUPROXY "Whether or not to build with fmuproxy integration" OFF)
-option(LIBCOSIM_TEST_FMUPROXY "Whether or not to run fmuproxy tests (only if LIBCOSIM_BUILD_TESTS=ON and LIBCOSIM_WITH_FMUPROXY=ON)" ON)
+option(LIBCOSIM_WITH_PROXYFMU "Whether or not to build with proxy-fmu integration" OFF)
 
 # ==============================================================================
 # Global internal configuration
@@ -101,9 +100,7 @@ if(LIBCOSIM_USING_CONAN)
     endif()
 endif()
 
-
-
-set(Boost_components date_time fiber filesystem log)
+set(Boost_components date_time fiber log)
 if (LIBCOSIM_BUILD_TESTS)
     list(APPEND Boost_components timer unit_test_framework)
 endif()
@@ -120,8 +117,8 @@ find_package(LIBZIP REQUIRED)
 find_package(MS_GSL REQUIRED)
 find_package(YAML_CPP REQUIRED)
 find_package(XercesC REQUIRED)
-if(LIBCOSIM_WITH_FMUPROXY)
-    find_package(THRIFT 0.13.0 REQUIRED)
+if(LIBCOSIM_WITH_PROXYFMU)
+    find_package(PROXYFMU CONFIG REQUIRED)
 endif()
 
 # ==============================================================================
@@ -153,7 +150,7 @@ if(LIBCOSIM_BUILD_APIDOC)
     set(DOXYGEN_JAVADOC_AUTOBRIEF "YES")
     set(DOXYGEN_QT_AUTOBRIEF "YES")
     set(DOXYGEN_MULTILINE_CPP_IS_BRIEF "YES")
-    set(DOXYGEN_EXCLUDE_PATTERNS "*.cpp" "*.c" "*/fmuproxy/*service*")
+    set(DOXYGEN_EXCLUDE_PATTERNS "*.cpp" "*.c")
     set(doxygenInputs "${CMAKE_SOURCE_DIR}/docs" "${CMAKE_SOURCE_DIR}/include")
     if(LIBCOSIM_BUILD_PRIVATE_APIDOC)
         list(APPEND doxygenInputs
@@ -214,7 +211,6 @@ install(FILES
         "${CMAKE_SOURCE_DIR}/cmake/FindFMILibrary.cmake"
         "${CMAKE_SOURCE_DIR}/cmake/FindLIBZIP.cmake"
         "${CMAKE_SOURCE_DIR}/cmake/FindMS_GSL.cmake"
-        "${CMAKE_SOURCE_DIR}/cmake/FindTHRIFT.cmake"
         "${CMAKE_SOURCE_DIR}/cmake/FindYAML_CPP.cmake"
         DESTINATION
         "${LIBCOSIM_CMAKE_INSTALL_DIR}"

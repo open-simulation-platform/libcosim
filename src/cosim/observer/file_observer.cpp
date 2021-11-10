@@ -9,12 +9,11 @@
 #include "cosim/log/logger.hpp"
 
 #include <boost/date_time/local_time/local_time.hpp>
-#include <boost/filesystem/fstream.hpp>
-#include <boost/filesystem/operations.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 
 #include <algorithm>
 #include <codecvt>
+#include <fstream>
 #include <locale>
 #include <map>
 #include <mutex>
@@ -38,9 +37,9 @@ std::string format_time(boost::posix_time::ptime now)
     return converter.to_bytes(wss.str());
 }
 
-void clear_file_contents_if_exists(const boost::filesystem::path& filePath, boost::filesystem::ofstream& fsw)
+void clear_file_contents_if_exists(const cosim::filesystem::path& filePath, std::ofstream& fsw)
 {
-    if (boost::filesystem::exists(filePath)) {
+    if (cosim::filesystem::exists(filePath)) {
         //clear file contents
         fsw.open(filePath, std::ios_base::out | std::ios_base::trunc);
         fsw.close();
@@ -52,7 +51,7 @@ void clear_file_contents_if_exists(const boost::filesystem::path& filePath, boos
 class file_observer::slave_value_writer
 {
 public:
-    slave_value_writer(observable* observable, boost::filesystem::path& logDir, bool timeStampedFileNames = true)
+    slave_value_writer(observable* observable, cosim::filesystem::path& logDir, bool timeStampedFileNames = true)
         : observable_(observable)
         , logDir_(logDir)
         , timeStampedFileNames_(timeStampedFileNames)
@@ -60,7 +59,7 @@ public:
         initialize_default();
     }
 
-    slave_value_writer(observable* observable, boost::filesystem::path& logDir, size_t decimationFactor,
+    slave_value_writer(observable* observable, cosim::filesystem::path& logDir, size_t decimationFactor,
         const std::vector<variable_description>& variables, bool timeStampedFileNames = true)
         : observable_(observable)
         , logDir_(logDir)
@@ -131,10 +130,10 @@ public:
 
 private:
     template<typename T>
-    void write(const std::vector<T>& values)
+    void write(const std::vector<T>& values, std::stringstream& ss)
     {
         for (auto it = values.begin(); it != values.end(); ++it) {
-            ss_ << "," << *it;
+            ss << "," << *it;
         }
     }
 
@@ -191,6 +190,7 @@ private:
     void create_log_file()
     {
         std::string filename;
+        std::stringstream ss;
         if (!timeStampedFileNames_) {
             filename = observable_->name().append(".csv");
         } else {
@@ -199,53 +199,52 @@ private:
         }
 
         const auto filePath = logDir_ / filename;
-        boost::filesystem::create_directories(logDir_);
+        cosim::filesystem::create_directories(logDir_);
         fsw_.open(filePath, std::ios_base::out | std::ios_base::app);
 
         if (fsw_.fail()) {
             throw std::runtime_error("Failed to open file stream for logging");
         }
 
-        ss_ << "Time,StepCount";
+        ss << "Time,StepCount";
 
         for (const auto& vd : realVars_) {
-            ss_ << "," << vd.name << " [" << vd.reference << " " << vd.type << " " << vd.causality << "]";
+            ss << "," << vd.name << " [" << vd.reference << " " << vd.type << " " << vd.causality << "]";
         }
         for (const auto& vd : intVars_) {
-            ss_ << "," << vd.name << " [" << vd.reference << " " << vd.type << " " << vd.causality << "]";
+            ss << "," << vd.name << " [" << vd.reference << " " << vd.type << " " << vd.causality << "]";
         }
         for (const auto& vd : boolVars_) {
-            ss_ << "," << vd.name << " [" << vd.reference << " " << vd.type << " " << vd.causality << "]";
+            ss << "," << vd.name << " [" << vd.reference << " " << vd.type << " " << vd.causality << "]";
         }
         for (const auto& vd : stringVars_) {
-            ss_ << "," << vd.name << " [" << vd.reference << " " << vd.type << " " << vd.causality << "]";
+            ss << "," << vd.name << " [" << vd.reference << " " << vd.type << " " << vd.causality << "]";
         }
 
-        ss_ << std::endl;
+        ss << std::endl;
 
         if (fsw_.is_open()) {
-            fsw_ << ss_.rdbuf();
+            fsw_ << ss.rdbuf();
         }
     }
 
     void persist()
     {
-        ss_.clear();
-
+        std::stringstream ss;
         if (fsw_.is_open()) {
 
             for (const auto& [stepCount, times] : timeSamples_) {
-                ss_ << times << "," << stepCount;
+                ss << times << "," << stepCount;
 
-                if (realSamples_.count(stepCount)) write<double>(realSamples_[stepCount]);
-                if (intSamples_.count(stepCount)) write<int>(intSamples_[stepCount]);
-                if (boolSamples_.count(stepCount)) write<bool>(boolSamples_[stepCount]);
-                if (stringSamples_.count(stepCount)) write<std::string_view>(stringSamples_[stepCount]);
+                if (realSamples_.count(stepCount)) write<double>(realSamples_[stepCount], ss);
+                if (intSamples_.count(stepCount)) write<int>(intSamples_[stepCount], ss);
+                if (boolSamples_.count(stepCount)) write<bool>(boolSamples_[stepCount], ss);
+                if (stringSamples_.count(stepCount)) write<std::string_view>(stringSamples_[stepCount], ss);
 
-                ss_ << std::endl;
+                ss << std::endl;
             }
 
-            fsw_ << ss_.rdbuf();
+            fsw_ << ss.rdbuf();
         }
 
         realSamples_.clear();
@@ -265,23 +264,22 @@ private:
     std::vector<variable_description> boolVars_;
     std::vector<variable_description> stringVars_;
     observable* observable_;
-    boost::filesystem::path logDir_;
+    cosim::filesystem::path logDir_;
     size_t decimationFactor_ = 1;
-    boost::filesystem::ofstream fsw_;
-    std::stringstream ss_;
+    std::ofstream fsw_;
     std::atomic<bool> recording_ = true;
     std::mutex mutex_;
     bool timeStampedFileNames_ = true;
 };
 
-file_observer::file_observer(const boost::filesystem::path& logDir)
-    : logDir_(boost::filesystem::absolute(logDir))
+file_observer::file_observer(const cosim::filesystem::path& logDir)
+    : logDir_(cosim::filesystem::absolute(logDir))
 {
 }
 
-file_observer::file_observer(const boost::filesystem::path& logDir, const boost::filesystem::path& configPath)
+file_observer::file_observer(const cosim::filesystem::path& logDir, const cosim::filesystem::path& configPath)
     : configPath_(configPath)
-    , logDir_(boost::filesystem::absolute(logDir))
+    , logDir_(cosim::filesystem::absolute(logDir))
     , logFromConfig_(true)
 {
     boost::property_tree::read_xml(configPath_.string(), ptree_,
@@ -369,7 +367,7 @@ void file_observer::simulator_step_complete(simulator_index index, step_number l
     }
 }
 
-boost::filesystem::path file_observer::get_log_path()
+cosim::filesystem::path file_observer::get_log_path()
 {
     return logDir_;
 }

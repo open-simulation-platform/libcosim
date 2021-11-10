@@ -12,9 +12,6 @@ set -o errexit -o nounset -o pipefail
 # Regex to select files for clang-format
 readonly clangFormattableFiles='\.(h|c|hpp|cpp)$'
 
-# Regex to exclude files from clang-format
-readonly excludeFromClangFormat='(include/cse/fmuproxy|src/cpp/fmuproxy)/(fmu_service|service_types)'
-
 # Per-file corrections
 for f in $(git ls-files); do
     # Ensure that only executable files have executable permissions
@@ -34,5 +31,4 @@ done
 echo "running clang-format"
 git ls-files \
     | egrep "$clangFormattableFiles" \
-    | egrep -v "$excludeFromClangFormat" \
     | xargs -r clang-format -i -style=file

@@ -7,7 +7,7 @@ env:
   CONAN_LOGIN_USERNAME_OSP: ${{ secrets.osp_artifactory_usr }}
   CONAN_PASSWORD_OSP: ${{ secrets.osp_artifactory_pwd }}
   CONAN_REVISIONS_ENABLED: 1
-  CONAN_NON_INTERACTIVE: True
+  CONAN_NON_INTERACTIVE: 1
 
 jobs:
   cmake-on-linux:
@@ -71,7 +71,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2016]
+        os: [windows-2016, windows-2019]
         build_type: [Debug, Release]
         shared: ["True", "False"]
 
@@ -84,7 +84,7 @@ jobs:
           pip3 install --upgrade setuptools pip
           pip3 install conan
           choco install doxygen.install
-          conan remote add osp https://osp.jfrog.io/artifactory/api/conan/conan-public --force
+          conan remote add osp https://osp.jfrog.io/artifactory/api/conan/conan-local --force
           conan install . -s build_type=${{ matrix.build_type }} -o shared=${{ matrix.shared }} -g deploy
       - name: CMake - configure
         shell: bash

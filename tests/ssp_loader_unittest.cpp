@@ -1,10 +1,10 @@
 #define BOOST_TEST_MODULE ssp_loader.hpp unittests
 #include <cosim/algorithm/fixed_step_algorithm.hpp>
+#include <cosim/fs_portability.hpp>
 #include <cosim/log/simple.hpp>
 #include <cosim/observer/last_value_observer.hpp>
 #include <cosim/ssp/ssp_loader.hpp>
 
-#include <boost/filesystem.hpp>
 #include <boost/test/unit_test.hpp>
 
 #include <algorithm>
@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE(basic_test)
 
     const auto testDataDir = std::getenv("TEST_DATA_DIR");
     BOOST_REQUIRE(testDataDir != nullptr);
-    boost::filesystem::path sspFile = boost::filesystem::path(testDataDir) / "ssp" / "demo";
+    cosim::filesystem::path sspFile = cosim::filesystem::path(testDataDir) / "ssp" / "demo";
 
     cosim::ssp_loader loader;
     const auto config = loader.load(sspFile);
@@ -74,7 +74,7 @@ BOOST_AUTO_TEST_CASE(no_algorithm_test)
 
     const auto testDataDir = std::getenv("TEST_DATA_DIR");
     BOOST_REQUIRE(testDataDir != nullptr);
-    boost::filesystem::path sspFile = boost::filesystem::path(testDataDir) / "ssp" / "demo" / "no_algorithm_element";
+    cosim::filesystem::path sspFile = cosim::filesystem::path(testDataDir) / "ssp" / "demo" / "no_algorithm_element";
 
     cosim::ssp_loader loader;
     auto config = loader.load(sspFile);
@@ -93,7 +93,7 @@ BOOST_AUTO_TEST_CASE(ssp_archive)
 
     const auto testDataDir = std::getenv("TEST_DATA_DIR");
     BOOST_TEST_REQUIRE(testDataDir != nullptr);
-    const auto sspFile = boost::filesystem::path(testDataDir) / "ssp" / "demo" / "demo.ssp";
+    const auto sspFile = cosim::filesystem::path(testDataDir) / "ssp" / "demo" / "demo.ssp";
 
     cosim::ssp_loader loader;
     const auto config = loader.load(sspFile);
@@ -107,7 +107,7 @@ BOOST_AUTO_TEST_CASE(ssp_archive_multiple_ssd)
 
     const auto testDataDir = std::getenv("TEST_DATA_DIR");
     BOOST_TEST_REQUIRE(testDataDir != nullptr);
-    const auto sspFile = boost::filesystem::path(testDataDir) / "ssp" / "demo" / "demo.ssp";
+    const auto sspFile = cosim::filesystem::path(testDataDir) / "ssp" / "demo" / "demo.ssp";
 
     cosim::ssp_loader loader;
     loader.set_ssd_file_name("SystemStructure2");
@@ -120,7 +120,7 @@ BOOST_AUTO_TEST_CASE(ssp_linear_transformation_test)
 {
     const auto testDataDir = std::getenv("TEST_DATA_DIR");
     BOOST_TEST_REQUIRE(testDataDir != nullptr);
-    const auto sspDir = boost::filesystem::path(testDataDir) / "ssp" / "linear_transformation";
+    const auto sspDir = cosim::filesystem::path(testDataDir) / "ssp" / "linear_transformation";
 
     cosim::ssp_loader loader;
     const auto config = loader.load(sspDir);
@@ -161,7 +161,7 @@ BOOST_AUTO_TEST_CASE(ssp_multiple_parameter_sets_test)
 {
     const auto testDataDir = std::getenv("TEST_DATA_DIR");
     BOOST_TEST_REQUIRE(testDataDir != nullptr);
-    const auto sspDir = boost::filesystem::path(testDataDir) / "ssp" / "linear_transformation";
+    const auto sspDir = cosim::filesystem::path(testDataDir) / "ssp" / "linear_transformation";
 
     cosim::ssp_loader loader;
     const auto config = loader.load(sspDir);

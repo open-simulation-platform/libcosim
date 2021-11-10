@@ -3,9 +3,6 @@
  *  License, v. 2.0. If a copy of the MPL was not distributed with this
  *  file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
-#if defined(WIN32) && !defined(NOMINMAX)
-#    define NOMINMAX
-#endif
 #include "cosim/algorithm/fixed_step_algorithm.hpp"
 
 #include "cosim/error.hpp"

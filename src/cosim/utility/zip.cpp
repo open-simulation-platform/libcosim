@@ -72,7 +72,7 @@ archive::archive() noexcept
 }
 
 
-archive::archive(const boost::filesystem::path& path)
+archive::archive(const cosim::filesystem::path& path)
     : m_archive{nullptr}
 {
     open(path);
@@ -101,7 +101,7 @@ archive::~archive() noexcept
 }
 
 
-void archive::open(const boost::filesystem::path& path)
+void archive::open(const cosim::filesystem::path& path)
 {
     assert(!is_open());
     int errorCode;
@@ -208,7 +208,7 @@ void copy_to_stream(
 void extract_file_as(
     ::zip* archive,
     entry_index index,
-    const boost::filesystem::path& targetPath,
+    const cosim::filesystem::path& targetPath,
     std::vector<char>& buffer)
 {
     assert(archive != nullptr);
@@ -236,11 +236,11 @@ void extract_file_as(
 
 
 void archive::extract_all(
-    const boost::filesystem::path& targetDir) const
+    const cosim::filesystem::path& targetDir) const
 {
     assert(is_open());
-    if (!boost::filesystem::exists(targetDir) ||
-        !boost::filesystem::is_directory(targetDir)) {
+    if (!cosim::filesystem::exists(targetDir) ||
+        !cosim::filesystem::is_directory(targetDir)) {
         throw std::system_error(
             make_error_code(std::errc::not_a_directory),
             targetDir.string());
@@ -251,16 +251,16 @@ void archive::extract_all(
     for (entry_index index = 0; index < entryCount; ++index) {
         const auto entryName = entry_name(index);
         if (!entryName.empty()) {
-            const auto entryPath = boost::filesystem::path(entryName);
+            const auto entryPath = cosim::filesystem::path(entryName);
             if (entryPath.has_root_path()) {
                 throw error(
                     "Archive contains an entry with an absolute path: " + entryName);
             }
             const auto targetPath = targetDir / entryPath;
             if (entryName.back() == '/') {
-                boost::filesystem::create_directories(targetPath);
+                cosim::filesystem::create_directories(targetPath);
             } else {
-                boost::filesystem::create_directories(targetPath.parent_path());
+                cosim::filesystem::create_directories(targetPath.parent_path());
                 extract_file_as(m_archive, index, targetPath, buffer);
             }
         }
@@ -268,12 +268,12 @@ void archive::extract_all(
 }
 
 
-boost::filesystem::path archive::extract_file_to(
+cosim::filesystem::path archive::extract_file_to(
     entry_index index,
-    const boost::filesystem::path& targetDir) const
+    const cosim::filesystem::path& targetDir) const
 {
     assert(is_open());
-    const auto entryPath = boost::filesystem::path(entry_name(index));
+    const auto entryPath = cosim::filesystem::path(entry_name(index));
     const auto targetPath = targetDir / entryPath.filename();
     auto buffer = std::vector<char>(4096 * 16);
     extract_file_as(m_archive, index, targetPath, buffer);

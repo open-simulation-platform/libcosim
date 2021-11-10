@@ -18,6 +18,7 @@ set(publicHeaders
     "cosim/fmi/importer.hpp"
     "cosim/fmi/v1/fmu.hpp"
     "cosim/fmi/v2/fmu.hpp"
+    "cosim/fs_portability.hpp"
     "cosim/function/description.hpp"
     "cosim/function/function.hpp"
     "cosim/function/linear_transformation.hpp"
@@ -103,21 +104,16 @@ set(generatedSources
     "cosim/lib_info.cpp"
 )
 
-if(LIBCOSIM_WITH_FMUPROXY)
+if(LIBCOSIM_WITH_PROXYFMU)
     list(APPEND privateHeaders
-        "cosim/fmuproxy/fmuproxy_client.hpp"
-        "cosim/fmuproxy/fmuproxy_helper.hpp"
-        "cosim/fmuproxy/fmuproxy_uri_sub_resolver.hpp"
-        "cosim/fmuproxy/remote_fmu.hpp"
-        "cosim/fmuproxy/remote_slave.hpp"
-        "cosim/fmuproxy/thrift_state.hpp"
+        "cosim/proxy/proxy_uri_sub_resolver.hpp"
+        "cosim/proxy/remote_fmu.hpp"
+        "cosim/proxy/remote_slave.hpp"
     )
     list(APPEND sources
-        "cosim/fmuproxy/fmuproxy_client.cpp"
-        "cosim/fmuproxy/fmuproxy_uri_sub_resolver.cpp"
-        "cosim/fmuproxy/remote_slave.cpp"
-        "cosim/fmuproxy/remote_fmu.cpp"
-        "cosim/fmuproxy/thrift_state.cpp"
+        "cosim/proxy/proxy_uri_sub_resolver.cpp"
+        "cosim/proxy/remote_fmu.cpp"
+        "cosim/proxy/remote_slave.cpp"
     )
 endif()
 
@@ -150,30 +146,6 @@ add_custom_command(
 )
 list(APPEND generatedFiles "${ospSystemStructureHeader}")
 
-# Generate FMU-proxy classes from Thrift service definitions
-if(LIBCOSIM_WITH_FMUPROXY)
-    if(NOT THRIFT_EXECUTABLE)
-        message(FATAL_ERROR "The thrift compiler was not found. Cannot build with FMU-Proxy support.")
-    endif()
-    set(thriftServiceDefinition "${CMAKE_CURRENT_SOURCE_DIR}/cosim/fmuproxy/service.thrift")
-    set(thriftGenerated
-        "${generatedSourcesDir}/FmuService.h"
-        "${generatedSourcesDir}/FmuService.cpp"
-        "${generatedSourcesDir}/service_types.h"
-        "${generatedSourcesDir}/service_types.cpp"
-    )
-    add_custom_command(
-        OUTPUT ${thriftGenerated}
-        COMMAND "${THRIFT_EXECUTABLE}"
-            "--gen" "cpp:no_skeleton"
-            "-out" "${generatedSourcesDir}"
-            "${thriftServiceDefinition}"
-        DEPENDS "${thriftServiceDefinition}"
-    )
-    add_library(fmuproxy-service OBJECT ${thriftGenerated})
-    set_target_properties(fmuproxy-service PROPERTIES POSITION_INDEPENDENT_CODE ON)
-    list(APPEND generatedFiles "$<TARGET_OBJECTS:fmuproxy-service>")
-endif()
 
 # ==============================================================================
 # Target definition
@@ -204,7 +176,6 @@ target_link_libraries(cosim
         Boost::boost
         Boost::date_time
         Boost::fiber
-        Boost::filesystem
         Boost::log
         gsl
     PRIVATE
@@ -214,16 +185,13 @@ target_link_libraries(cosim
         yaml-cpp
     )
 
-if(LIBCOSIM_WITH_FMUPROXY)
-    target_compile_definitions(cosim PRIVATE "HAS_FMUPROXY")
-    target_link_libraries(cosim
-        PUBLIC
-            thrift::thrift
-        )
-endif()
+if(LIBCOSIM_WITH_PROXYFMU)
+    target_compile_definitions(cosim PRIVATE "HAS_PROXYFMU")
+    target_link_libraries(cosim PRIVATE proxyfmu::proxyfmu-client)
+endif ()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    target_link_libraries(cosim INTERFACE "atomic")
+    target_link_libraries(cosim INTERFACE "atomic" "stdc++fs")
 endif()
 if(WIN32)
     target_link_libraries(cosim PUBLIC "Bcrypt")

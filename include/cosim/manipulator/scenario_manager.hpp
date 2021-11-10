@@ -12,8 +12,6 @@
 #include <cosim/manipulator/manipulator.hpp>
 #include <cosim/scenario.hpp>
 
-#include <boost/filesystem/path.hpp>
-
 
 namespace cosim
 {
@@ -68,7 +66,7 @@ public:
      *  The time point at which the scenario will start. The scenario's events
      *  will be executed relative to this time point.
      */
-    void load_scenario(const boost::filesystem::path& scenarioFile, time_point currentTime);
+    void load_scenario(const cosim::filesystem::path& scenarioFile, time_point currentTime);
 
     /// Return if a scenario is running.
     bool is_scenario_running();

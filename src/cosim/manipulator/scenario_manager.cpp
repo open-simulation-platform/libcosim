@@ -43,7 +43,7 @@ public:
         BOOST_LOG_SEV(log::logger(), log::info) << "Successfully loaded scenario";
     }
 
-    void load_scenario(const boost::filesystem::path& scenarioFile, time_point currentTime)
+    void load_scenario(const cosim::filesystem::path& scenarioFile, time_point currentTime)
     {
         BOOST_LOG_SEV(log::logger(), log::info) << "Loading scenario from " << scenarioFile;
         auto scenario = parse_scenario(scenarioFile, simulators_);
@@ -240,7 +240,7 @@ void scenario_manager::load_scenario(
 }
 
 void scenario_manager::load_scenario(
-    const boost::filesystem::path& scenarioFile,
+    const cosim::filesystem::path& scenarioFile,
     time_point currentTime)
 {
     pimpl_->load_scenario(scenarioFile, currentTime);

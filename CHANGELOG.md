@@ -3,6 +3,41 @@ All notable changes to libcosim will be documented in this file. This includes n
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
+### [v0.8.2] – 2021-10-21
+##### Fixed
+* Update to fmilibrary 2.3 ([PR#659](https://github.com/open-simulation-platform/libcosim/pull/659))
+* Update to proxyfmu 0.2.4 ([PR#663](https://github.com/open-simulation-platform/libcosim/pull/663))
+
+### [v0.8.1] – 2021-09-15
+##### Fixed
+* Using proxyfmu v0.2.3 that fixes an assumtion that proxyfmu executable being located in working directory ([PR#657](https://github.com/open-simulation-platform/libcosim/pull/657), [proxyfmu#40](https://github.com/open-simulation-platform/proxy-fmu/issues/40))
+* Stopped-flag not reset when end-time exceeded ([PR#656](https://github.com/open-simulation-platform/libcosim/pull/656))
+
+### [v0.8.0] – 2021-09-03
+
+##### Changed
+* Replacing JVM based fmu-proxy with [proxy-fmu](https://github.com/open-simulation-platform/proxy-fmu) ([PR#633](https://github.com/open-simulation-platform/libcosim/pull/633))
+* Replacing `boost::filesystem` with `std::filesystem` ([PR#637](https://github.com/open-simulation-platform/libcosim/pull/637))
+ 
+##### Fixed
+* Memory leaks in observers ([PR#647](https://github.com/open-simulation-platform/libcosim/pull/647))
+
+### [v0.7.1] – 2021-06-03
+
+##### Added
+* improving documentation ([PR#617](https://github.com/open-simulation-platform/libcosim/pull/617))
+ 
+##### Fixed
+* Compile using VS2019([PR#638](https://github.com/open-simulation-platform/libcosim/pull/638))
+* Allow empty sequence of initial values in OspSystemStructure ([PR#613](https://github.com/open-simulation-platform/libcosim/pull/613))
+* Model description only exposed through execution ([PR#603](https://github.com/open-simulation-platform/libcosim/pull/603))
+* Validate initial variable values from OspSystemStructure ([PR#604](https://github.com/open-simulation-platform/libcosim/pull/604))
+* Real time timer improvements ([PR#605](https://github.com/open-simulation-platform/libcosim/pull/605))
+* Link dependencies dynamically ([PR#596](https://github.com/open-simulation-platform/libcosim/pull/596))
+* updating dependencies and resolving conflicts ([PR#610](https://github.com/open-simulation-platform/libcosim/pull/610), 
+[PR#632](https://github.com/open-simulation-platform/libcosim/pull/632), 
+[PR#641](https://github.com/open-simulation-platform/libcosim/pull/641))
+
 ### [v0.7.0] – 2020-05-29
 
 ##### Changed
@@ -132,3 +167,7 @@ First OSP JIP partner release
 [v0.5.1]: https://github.com/open-simulation-platform/cse-core/compare/v0.5.0...v0.5.1
 [v0.6.0]: https://github.com/open-simulation-platform/cse-core/compare/v0.5.1...v0.6.0
 [v0.7.0]: https://github.com/open-simulation-platform/cse-core/compare/v0.6.0...v0.7.0
+[v0.7.1]: https://github.com/open-simulation-platform/cse-core/compare/v0.7.0...v0.7.1
+[v0.8.0]: https://github.com/open-simulation-platform/cse-core/compare/v0.7.1...v0.8.0
+[v0.8.1]: https://github.com/open-simulation-platform/cse-core/compare/v0.8.0...v0.8.1
+[v0.8.2]: https://github.com/open-simulation-platform/cse-core/compare/v0.8.1...v0.8.2

@@ -8,6 +8,27 @@ This repository contains the OSP C++ library for co-simulations.
 See [`CONTRIBUTING.md`] for contributor guidelines and [`LICENSE`] for
 terms of use.
 
+The libcosim library is demonstrated in [cosim](https://github.com/open-simulation-platform/cosim-cli) and 
+[Cosim Demo Application](https://github.com/open-simulation-platform/cosim-demo-app).
+The applications can be downloaded from their release pages: 
+- cosim [releases](https://github.com/open-simulation-platform/cosim-cli/releases)
+- Cosim Demo Application [releases](https://github.com/open-simulation-platform/cosim-demo-app/releases)  
+ 
+How to use
+------------
+To use libcosim in your application you either build the library as described 
+in the section below or you can use conan. As libcosim is made available as a 
+conan package on https://osp.jfrog.io, you can include it in your application
+following these steps:
+
+* Install [Conan] >= 1.7
+* Add the OSP Conan repository as a remote: 
+
+       conan remote add osp https://osp.jfrog.io/artifactory/api/conan/conan-local
+* Include libcosim as a requirement in your conanfile 
+* Run `conan install` to aquire the libcosim package
+
+[cosim], [cosim4j] and [Cosim Demo Application] are examples of how to use the libcosim with conan.
 
 How to build
 ------------
@@ -27,7 +48,9 @@ of course you can always build and install dependencies manually.
 
 First, add the OSP Conan repository as a remote:
 
-    conan remote add osp https://osp.jfrog.io/artifactory/api/conan/conan-public
+    conan remote add osp https://osp.jfrog.io/artifactory/api/conan/conan-local
+
+Package revisions must be enabled. See [How to activate the revisions].
 
 As we will build the library using the *debug* configuration in this guide (as
 opposed to *release*), we must use the Conan setting `build_type=Debug`.  For
@@ -66,14 +89,10 @@ Then, acquire dependencies with Conan:
 `--settings compiler.libcxx=libstdc++11` to this command; see Step 1 for more
 information.)
 
-#### FMU-Proxy
-To include FMU-Proxy support, run conan install with the additional option:
+#### proxyfmu
+To include proxyfmu support, run conan install with the additional option:
 ```bash
--o fmuproxy=True
-```
-Note that it currently must be built in Release mode e.g.
-```bash
-conan install .. -s build_type=Release --build=missing -o fmuproxy=True
+-o proxyfmu=True
 ```
 
 Now, we can run CMake to generate the build system.  (If you have not installed
@@ -127,7 +146,8 @@ All generated files can be found in the directory `build/output`.
 [Doxygen]: http://www.doxygen.org
 [Conan]: https://conan.io
 [vcpkg]: https://github.com/Microsoft/vcpkg
-[FMI Library]: http://jmodelica.org
-[kyllingstad/conan-fmilibrary]: https://github.com/kyllingstad/conan-fmilibrary
-[Bincrafters' public-conan repository]: https://bintray.com/bincrafters/public-conan
 [Conan profile]: https://docs.conan.io/en/latest/using_packages/using_profiles.html
+[cosim]: https://github.com/open-simulation-platform/cosim-cli/blob/master/conanfile.txt
+[Cosim Demo Application]: https://github.com/open-simulation-platform/cosim-demo-app/blob/master/conanfile.txt
+[cosim4j]: https://github.com/open-simulation-platform/cosim4j/blob/master/cosim4j-native/conanfile.txt
+[How to activate the revisions]:https://docs.conan.io/en/latest/versioning/revisions.html?highlight=revisions#how-to-activate-the-revisions
