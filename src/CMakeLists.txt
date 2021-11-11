@@ -64,7 +64,7 @@ set(privateHeaders
 )
 set(sources
     "cosim/algorithm/fixed_step_algorithm.cpp"
-        "cosim/error.cpp"
+    "cosim/error.cpp"
     "cosim/exception.cpp"
     "cosim/execution.cpp"
     "cosim/file_cache.cpp"
