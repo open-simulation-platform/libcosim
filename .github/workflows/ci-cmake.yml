@@ -29,6 +29,7 @@ jobs:
         run: |
           sudo apt-get install -y --no-install-recommends \
             doxygen \
+            libtbb-dev \
             libboost-all-dev \
             libmsgsl-dev \
             libyaml-cpp-dev \
