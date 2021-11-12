@@ -27,14 +27,12 @@ class LibcosimConan(ConanFile):
         "xz_utils/5.2.5"
     )
 
-    options = {"proxyfmu": [True, False]}
+    options = {
+        "shared": [True, False],
+        "proxyfmu": [True, False]}
     default_options = (
         "proxyfmu=False",
-        "boost:shared=True",
-        "fmilibrary:shared=True",
-        "libzip:shared=True",
-        "yaml-cpp:shared=True",
-        "xerces-c:shared=True"
+        "shared=True"
     )
 
     def is_tests_enabled(self):
@@ -42,6 +40,13 @@ class LibcosimConan(ConanFile):
 
     def set_version(self):
         self.version = tools.load(path.join(self.recipe_folder, "version.txt")).strip()
+
+    def configure(self):
+        self.options["boost"].shared = self.options.shared
+        self.options["fmilibrary"].shared = self.options.shared
+        self.options["libzip"].shared = self.options.shared
+        self.options["yaml-cpp"].shared = self.options.shared
+        self.options["xerces-c"].shared = self.options.shared
 
     def requirements(self):
         if self.options.proxyfmu:
@@ -59,6 +64,7 @@ class LibcosimConan(ConanFile):
         cmake.definitions["LIBCOSIM_USING_CONAN"] = "ON"
         cmake.definitions["LIBCOSIM_BUILD_APIDOC"] = "OFF"
         cmake.definitions["LIBCOSIM_BUILD_TESTS"] = self.is_tests_enabled()
+        cmake.definitions["BUILD_SHARED_LIBS"] = self.options.shared
         if self.options.proxyfmu:
             cmake.definitions["LIBCOSIM_WITH_PROXYFMU"] = "ON"
         cmake.configure()
