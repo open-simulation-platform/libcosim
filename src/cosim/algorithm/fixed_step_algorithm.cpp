@@ -216,19 +216,26 @@ public:
                             << ex.what() << '\n';
                         failed = true;
                     }
-
-                    std::lock_guard<std::mutex> lck(m);
-                    finished.insert(s.first);
                 });
             }
         }
+
+        ++stepCounter_;
+
+        for (auto& s : simulators_) {
+            auto& info = s.second;
+            if (stepCounter_ % info.decimationFactor == 0) {
+                finished.insert(s.first);
+            }
+        }
+
         pool.wait_for_tasks_to_finish();
 
         if (failed) {
             throw error(make_error_code(errc::simulation_error), errMessages.str());
         }
 
-        ++stepCounter_;
+
 
         // Transfer the outputs from simulators that have finished their
         // individual time steps within this co-simulation time step.
