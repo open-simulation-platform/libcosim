@@ -235,8 +235,6 @@ public:
             throw error(make_error_code(errc::simulation_error), errMessages.str());
         }
 
-
-
         // Transfer the outputs from simulators that have finished their
         // individual time steps within this co-simulation time step.
         for (auto simIndex : finished) {
