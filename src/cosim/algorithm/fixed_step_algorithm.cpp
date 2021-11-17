@@ -8,10 +8,10 @@
 #include "cosim/error.hpp"
 #include "cosim/exception.hpp"
 #include "cosim/log/logger.hpp"
+#include "cosim/utility/thread_pool.hpp"
 
 #include <algorithm>
 #include <cstdlib>
-#include <execution>
 #include <numeric>
 #include <sstream>
 #include <unordered_map>
@@ -150,17 +150,23 @@ public:
 
     void initialize()
     {
-        std::for_each(std::execution::par, simulators_.begin(), simulators_.end(), [&](auto& s) {
-            s.second.sim->setup(startTime_, stopTime_, std::nullopt);
-        });
+        for (auto& s : simulators_) {
+            pool.submit([&] {
+                s.second.sim->setup(startTime_, stopTime_, std::nullopt);
+            });
+        }
+        pool.wait_for_tasks_to_finish();
 
         // Run N iterations of the simulators' and functions' step/calculation
         // procedures, where N is the number of simulators in the system,
         // to propagate initial values.
         for (std::size_t i = 0; i < simulators_.size() + functions_.size(); ++i) {
-            std::for_each(std::execution::par, simulators_.begin(), simulators_.end(), [](auto&& s) {
-                s.second.sim->do_iteration();
-            });
+            for (auto& s : simulators_) {
+                pool.submit([&] {
+                    s.second.sim->do_iteration();
+                });
+            }
+            pool.wait_for_tasks_to_finish();
 
             for (const auto& s : simulators_) {
                 transfer_variables(s.second.outgoingSimConnections);
@@ -172,9 +178,12 @@ public:
             }
         }
 
-        std::for_each(std::execution::par, simulators_.begin(), simulators_.end(), [](auto& s) {
-            s.second.sim->start_simulation();
-        });
+        for (auto& s : simulators_) {
+            pool.submit([&] {
+                s.second.sim->start_simulation();
+            });
+        }
+        pool.wait_for_tasks_to_finish();
     }
 
     std::pair<duration, std::unordered_set<simulator_index>> do_step(time_point currentT)
@@ -184,32 +193,36 @@ public:
         std::stringstream errMessages;
         std::unordered_set<simulator_index> finished;
         // Initiate simulator time steps.
-        std::for_each(std::execution::par, simulators_.begin(), simulators_.end(), [&](auto& s) {
+
+        for (auto& s : simulators_) {
             auto& info = s.second;
             if (stepCounter_ % info.decimationFactor == 0) {
-                try {
-                    info.stepResult = info.sim->do_step(currentT, baseStepSize_ * info.decimationFactor);
+                pool.submit([&] {
+                    try {
+                        info.stepResult = info.sim->do_step(currentT, baseStepSize_ * info.decimationFactor);
 
-                    if (info.stepResult != step_result::complete) {
+                        if (info.stepResult != step_result::complete) {
+                            std::lock_guard<std::mutex> lck(m);
+                            errMessages
+                                << info.sim->name() << ": "
+                                << "Step not complete" << '\n';
+                            failed = true;
+                        }
+
+                    } catch (std::exception& ex) {
                         std::lock_guard<std::mutex> lck(m);
                         errMessages
                             << info.sim->name() << ": "
-                            << "Step not complete" << '\n';
+                            << ex.what() << '\n';
                         failed = true;
                     }
 
-                } catch (std::exception& ex) {
                     std::lock_guard<std::mutex> lck(m);
-                    errMessages
-                        << info.sim->name() << ": "
-                        << ex.what() << '\n';
-                    failed = true;
-                }
-
-                std::lock_guard<std::mutex> lck(m);
-                finished.insert(s.first);
+                    finished.insert(s.first);
+                });
             }
-        });
+        }
+        pool.wait_for_tasks_to_finish();
 
         if (failed) {
             throw error(make_error_code(errc::simulation_error), errMessages.str());
@@ -414,6 +427,7 @@ private:
     std::unordered_map<simulator_index, simulator_info> simulators_;
     std::unordered_map<function_index, function_info> functions_;
     int64_t stepCounter_ = 0;
+    utility::thread_pool pool;
 };
 
 

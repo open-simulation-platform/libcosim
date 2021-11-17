@@ -58,6 +58,7 @@ set(privateHeaders
     "cosim/ssp/ssp_parser.hpp"
     "cosim/utility/concurrency.hpp"
     "cosim/utility/filesystem.hpp"
+    "cosim/utility/thread_pool.hpp"
     "cosim/utility/utility.hpp"
     "cosim/utility/uuid.hpp"
     "cosim/utility/zip.hpp"
