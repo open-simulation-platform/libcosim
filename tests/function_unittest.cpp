@@ -2,7 +2,6 @@
 #include "mock_slave.hpp"
 
 #include <cosim/algorithm/fixed_step_algorithm.hpp>
-#include <cosim/execution.hpp>
 #include <cosim/function/linear_transformation.hpp>
 #include <cosim/function/vector_sum.hpp>
 #include <cosim/manipulator/scenario_manager.hpp>
@@ -10,8 +9,8 @@
 
 #include <boost/test/unit_test.hpp>
 
+#include <iostream>
 #include <stdexcept>
-#include <string>
 #include <utility>
 
 int find_param(const cosim::function_type_description& ftd, const std::string& name)
