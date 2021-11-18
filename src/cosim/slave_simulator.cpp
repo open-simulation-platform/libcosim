@@ -7,14 +7,10 @@
 
 #include "cosim/error.hpp"
 
-#include <boost/container/vector.hpp>
-
 #include <algorithm>
 #include <cassert>
-#include <cstddef>
 #include <sstream>
 #include <stdexcept>
-#include <string>
 #include <unordered_map>
 
 
@@ -459,14 +455,14 @@ private:
         const auto [booleanRefs, booleanValues] = booleanSetCache_.modify_and_get(deltaT);
         const auto [stringRefs, stringValues] = stringSetCache_.modify_and_get(deltaT);
         slave_->set_variables(
-                  gsl::make_span(realRefs),
-                  gsl::make_span(realValues),
-                  gsl::make_span(integerRefs),
-                  gsl::make_span(integerValues),
-                  gsl::make_span(booleanRefs),
-                  gsl::make_span(booleanValues),
-                  gsl::make_span(stringRefs),
-                  gsl::make_span(stringValues));
+            gsl::make_span(realRefs),
+            gsl::make_span(realValues),
+            gsl::make_span(integerRefs),
+            gsl::make_span(integerValues),
+            gsl::make_span(booleanRefs),
+            gsl::make_span(booleanValues),
+            gsl::make_span(stringRefs),
+            gsl::make_span(stringValues));
         realSetCache_.reset();
         integerSetCache_.reset();
         booleanSetCache_.reset();
@@ -476,10 +472,10 @@ private:
     void get_variables(duration deltaT)
     {
         const auto values = slave_->get_variables(
-                                      gsl::make_span(realGetCache_.references),
-                                      gsl::make_span(integerGetCache_.references),
-                                      gsl::make_span(booleanGetCache_.references),
-                                      gsl::make_span(stringGetCache_.references));
+            gsl::make_span(realGetCache_.references),
+            gsl::make_span(integerGetCache_.references),
+            gsl::make_span(booleanGetCache_.references),
+            gsl::make_span(stringGetCache_.references));
         copy_contents(values.real, realGetCache_.originalValues);
         copy_contents(values.integer, integerGetCache_.originalValues);
         copy_contents(values.boolean, booleanGetCache_.originalValues);

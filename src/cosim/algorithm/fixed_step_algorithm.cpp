@@ -222,10 +222,9 @@ public:
 
         ++stepCounter_;
 
-        for (auto& s : simulators_) {
-            auto& info = s.second;
+        for (auto& [idx, info] : simulators_) {
             if (stepCounter_ % info.decimationFactor == 0) {
-                finished.insert(s.first);
+                finished.insert(idx);
             }
         }
 
