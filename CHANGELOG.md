@@ -5,7 +5,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### [v0.8.3] – 2021-11-26
 ##### Fixed
-* Update to proxyfmu 0.2.5 ([PR#672](https://github.com/open-simulation-platform/libcosim/pull/672))
+* Update to proxyfmu 0.2.6 ([PR#676](https://github.com/open-simulation-platform/libcosim/pull/672))
 * Adding builds for:
   * libcosim as static library ([PR#627](https://github.com/open-simulation-platform/libcosim/pull/627))
   * compiled with VS2019 ([PR#660](https://github.com/open-simulation-platform/libcosim/pull/660))
