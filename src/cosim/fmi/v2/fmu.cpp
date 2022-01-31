@@ -186,12 +186,20 @@ std::mutex g_logMutex;
 
 void log_message(
     fmi2_component_environment_t,
+#ifdef LIBCOSIM_FMI_LOGGING
     fmi2_string_t instanceName,
     fmi2_status_t status,
     fmi2_string_t category,
     fmi2_string_t message,
+#else
+    fmi2_string_t,
+    fmi2_status_t,
+    fmi2_string_t,
+    fmi2_string_t,
+#endif
     ...)
 {
+#ifdef LIBCOSIM_FMI_LOGGING
     std::va_list args;
     va_start(args, message);
     const auto msgLength = std::vsnprintf(nullptr, 0, message, args);
@@ -242,6 +250,7 @@ void log_message(
     g_logRecords[instanceName] =
         log_record{status, std::string(msgBuffer.data())};
     g_logMutex.unlock();
+#endif
 }
 
 log_record last_log_record(const std::string& instanceName)
