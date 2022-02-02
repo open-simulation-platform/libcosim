@@ -23,7 +23,7 @@ option(LIBCOSIM_FMI_LOGGING "Enabling FMI logging during simulation" ON)
 
 # Configure logging in the fmi callback function
 if(LIBCOSIM_FMI_LOGGING)
-    add_compile_definitions(LIBCOSIM_FMI_LOGGING=1)
+    add_compile_definitions(LIBCOSIM_FMI_LOGGING="${LIBCOSIM_FMI_LOGGING}")
 endif()
 
 # Our custom CMake scripts go in the cmake/ subdirectory.
