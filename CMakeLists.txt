@@ -15,15 +15,15 @@ option(LIBCOSIM_BUILD_PRIVATE_APIDOC "Build private API documentation (only used
 option(LIBCOSIM_STANDALONE_INSTALLATION "Whether to build for a standalone installation (Linux only; sets a relative RPATH)" OFF)
 option(LIBCOSIM_USING_CONAN "Whether Conan is used for package management" OFF)
 option(LIBCOSIM_WITH_PROXYFMU "Whether or not to build with proxy-fmu integration" OFF)
-option(LIBCOSIM_FMI_LOGGING "Enabling FMI logging during simulation" ON)
+option(LIBCOSIM_NO_FMI_LOGGING "Disable FMI logging during simulation" OFF)
 
 # ==============================================================================
 # Global internal configuration
 # ==============================================================================
 
 # Configure logging in the fmi callback function
-if(LIBCOSIM_FMI_LOGGING)
-    add_compile_definitions(LIBCOSIM_FMI_LOGGING=1)
+if(LIBCOSIM_NO_FMI_LOGGING)
+    add_compile_definitions(LIBCOSIM_NO_FMI_LOGGING=1)
 endif()
 
 # Our custom CMake scripts go in the cmake/ subdirectory.

@@ -186,7 +186,7 @@ std::mutex g_logMutex;
 
 void log_message(
     fmi2_component_environment_t,
-#ifdef LIBCOSIM_FMI_LOGGING
+#ifndef LIBCOSIM_NO_FMI_LOGGING
     fmi2_string_t instanceName,
     fmi2_status_t status,
     fmi2_string_t category,
@@ -199,7 +199,7 @@ void log_message(
 #endif
     ...)
 {
-#ifdef LIBCOSIM_FMI_LOGGING
+#ifndef LIBCOSIM_NO_FMI_LOGGING
     std::va_list args;
     va_start(args, message);
     const auto msgLength = std::vsnprintf(nullptr, 0, message, args);
