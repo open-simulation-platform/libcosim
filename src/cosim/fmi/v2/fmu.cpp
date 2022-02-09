@@ -40,8 +40,10 @@ namespace v2
 
 fmu::fmu(
     std::shared_ptr<fmi::importer> importer,
-    std::unique_ptr<file_cache::directory_ro> fmuDir)
-    : importer_{importer}
+    std::unique_ptr<file_cache::directory_ro> fmuDir,
+    bool disable_fmi_logging)
+    : fmi::fmu(disable_fmi_logging)
+    , importer_{importer}
     , dir_(std::move(fmuDir))
     , handle_{fmi2_import_parse_xml(importer->fmilib_handle(), dir_->path().string().c_str(), nullptr)}
 {
@@ -140,7 +142,7 @@ std::shared_ptr<v2::slave_instance> fmu::instantiate_v2_slave(
             "FMU '" + modelDescription_.name + "' can only be instantiated once");
     }
     auto instance = std::shared_ptr<slave_instance>(
-        new slave_instance(shared_from_this(), instanceName));
+        new slave_instance(shared_from_this(), instanceName, disable_fmi_logging));
     instances_.push_back(instance);
     return instance;
 }
@@ -184,22 +186,23 @@ struct log_record
 std::unordered_map<std::string, log_record> g_logRecords;
 std::mutex g_logMutex;
 
-void log_message(
+void empty_log_message(
     fmi2_component_environment_t,
-#ifndef LIBCOSIM_NO_FMI_LOGGING
-    fmi2_string_t instanceName,
-    fmi2_status_t status,
-    fmi2_string_t category,
-    fmi2_string_t message,
-#else
     fmi2_string_t,
     fmi2_status_t,
     fmi2_string_t,
     fmi2_string_t,
-#endif
+    ...)
+{ }
+
+void log_message(
+    fmi2_component_environment_t,
+    fmi2_string_t instanceName,
+    fmi2_status_t status,
+    fmi2_string_t category,
+    fmi2_string_t message,
     ...)
 {
-#ifndef LIBCOSIM_NO_FMI_LOGGING
     std::va_list args;
     va_start(args, message);
     const auto msgLength = std::vsnprintf(nullptr, 0, message, args);
@@ -250,7 +253,6 @@ void log_message(
     g_logRecords[instanceName] =
         log_record{status, std::string(msgBuffer.data())};
     g_logMutex.unlock();
-#endif
 }
 
 log_record last_log_record(const std::string& instanceName)
@@ -279,7 +281,8 @@ log_record last_log_record(const std::string& instanceName)
 // fmi2_import_parse_xml().)
 slave_instance::slave_instance(
     std::shared_ptr<v2::fmu> fmu,
-    std::string_view instanceName)
+    std::string_view instanceName,
+    bool disable_fmi_logging)
     : fmu_{fmu}
     , handle_{fmi2_import_parse_xml(fmu->importer()->fmilib_handle(), fmu->directory().string().c_str(), nullptr)}
     , instanceName_(instanceName)
@@ -294,7 +297,7 @@ slave_instance::slave_instance(
     fmi2_callback_functions_t callbacks;
     callbacks.allocateMemory = std::calloc;
     callbacks.freeMemory = std::free;
-    callbacks.logger = log_message;
+    callbacks.logger = disable_fmi_logging ? empty_log_message : log_message;
     callbacks.stepFinished = step_finished_placeholder;
     callbacks.componentEnvironment = nullptr;
 

@@ -99,15 +99,16 @@ private:
 } // namespace
 
 
-fmu_file_uri_sub_resolver::fmu_file_uri_sub_resolver()
-    : importer_(fmi::importer::create())
+fmu_file_uri_sub_resolver::fmu_file_uri_sub_resolver(bool disable_fmi_logging)
+    : importer_(fmi::importer::create(disable_fmi_logging))
 {
 }
 
 
 fmu_file_uri_sub_resolver::fmu_file_uri_sub_resolver(
-    std::shared_ptr<file_cache> cache)
-    : importer_(fmi::importer::create(cache))
+    std::shared_ptr<file_cache> cache,
+    bool disable_fmi_logging)
+    : importer_(fmi::importer::create(disable_fmi_logging, cache))
 {
 }
 
@@ -137,15 +138,16 @@ std::shared_ptr<model> fmu_file_uri_sub_resolver::lookup_model(const uri& modelU
 // =============================================================================
 
 std::shared_ptr<model_uri_resolver> default_model_uri_resolver(
+    bool disable_fmi_logging,
     std::shared_ptr<file_cache> cache)
 {
     auto resolver = std::make_shared<model_uri_resolver>();
     if (cache) {
         resolver->add_sub_resolver(
-            std::make_shared<fmu_file_uri_sub_resolver>(cache));
+            std::make_shared<fmu_file_uri_sub_resolver>(cache, disable_fmi_logging));
     } else {
         resolver->add_sub_resolver(
-            std::make_shared<fmu_file_uri_sub_resolver>());
+            std::make_shared<fmu_file_uri_sub_resolver>(disable_fmi_logging));
     }
 #ifdef HAS_PROXYFMU
     resolver->add_sub_resolver(std::make_shared<proxy::proxy_uri_sub_resolver>());

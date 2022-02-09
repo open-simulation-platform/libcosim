@@ -29,9 +29,9 @@ namespace fmi
 {
 
 
-std::shared_ptr<importer> importer::create(std::shared_ptr<file_cache> cache)
+std::shared_ptr<importer> importer::create(bool disable_fmi_logging, std::shared_ptr<file_cache> cache)
 {
-    return std::shared_ptr<importer>(new importer(cache));
+    return std::shared_ptr<importer>(new importer(cache, disable_fmi_logging));
 }
 
 
@@ -88,10 +88,11 @@ std::unique_ptr<jm_callbacks> make_callbacks()
 } // namespace
 
 
-importer::importer(std::shared_ptr<file_cache> cache)
+importer::importer(std::shared_ptr<file_cache> cache, bool disable_fmi_logging)
     : fileCache_(cache)
     , callbacks_(make_callbacks())
     , handle_(fmi_import_allocate_context(callbacks_.get()), &fmi_import_free_context)
+    , disable_fmi_logging(disable_fmi_logging)
 {
     if (handle_ == nullptr) throw std::bad_alloc();
 }
@@ -215,8 +216,8 @@ std::shared_ptr<fmu> importer::import(const cosim::filesystem::path& fmuPath)
 
     // Create and return an `fmu` object.
     auto fmuObj = minModelDesc.fmiVersion == fmi_version::v1_0
-        ? std::shared_ptr<fmu>(new v1::fmu(shared_from_this(), std::move(fmuUnpackDirRO)))
-        : std::shared_ptr<fmu>(new v2::fmu(shared_from_this(), std::move(fmuUnpackDirRO)));
+        ? std::shared_ptr<fmu>(new v1::fmu(shared_from_this(), std::move(fmuUnpackDirRO), disable_fmi_logging))
+        : std::shared_ptr<fmu>(new v2::fmu(shared_from_this(), std::move(fmuUnpackDirRO), disable_fmi_logging));
     pathCache_[fmuPath] = fmuObj;
     guidCache_[minModelDesc.guid] = fmuObj;
     return fmuObj;
@@ -255,8 +256,8 @@ std::shared_ptr<fmu> importer::import_unpacked(
 
     auto unpackedFMUDir = std::make_unique<existing_directory_ro>(unpackedFMUPath);
     auto fmuObj = minModelDesc.fmiVersion == fmi_version::v1_0
-        ? std::shared_ptr<fmu>(new v1::fmu(shared_from_this(), std::move(unpackedFMUDir)))
-        : std::shared_ptr<fmu>(new v2::fmu(shared_from_this(), std::move(unpackedFMUDir)));
+        ? std::shared_ptr<fmu>(new v1::fmu(shared_from_this(), std::move(unpackedFMUDir), disable_fmi_logging))
+        : std::shared_ptr<fmu>(new v2::fmu(shared_from_this(), std::move(unpackedFMUDir), disable_fmi_logging));
     guidCache_[minModelDesc.guid] = fmuObj;
     return fmuObj;
 }

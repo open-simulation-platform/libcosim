@@ -172,25 +172,29 @@ private:
 class fmu_file_uri_sub_resolver : public model_uri_sub_resolver
 {
 public:
-    fmu_file_uri_sub_resolver();
+    explicit fmu_file_uri_sub_resolver(bool disable_fmi_logging);
 
-    explicit fmu_file_uri_sub_resolver(std::shared_ptr<file_cache> cache);
+    explicit fmu_file_uri_sub_resolver(std::shared_ptr<file_cache> cache, bool disable_fmi_logging);
 
     std::shared_ptr<model> lookup_model(const uri& modelUri) override;
 
 private:
     std::shared_ptr<fmi::importer> importer_;
+    bool disable_fmi_logging;
 };
 
 
 /**
  *  Returns a resolver for all URI schemes supported natively by libcosim.
  *
+ *  Set `disable_fmi_logging` to true for disabling the fmi logging callback
+ *
  *  If `cache` is not null, it will be used for caching by the URI
  *  resolvers that support it (e.g. for unpacking of FMUs by the `file`
  *  URI resolver).
  */
 std::shared_ptr<model_uri_resolver> default_model_uri_resolver(
+    bool disable_fmi_logging = false,
     std::shared_ptr<file_cache> cache = nullptr);
 
 

@@ -48,17 +48,22 @@ public:
      *
      *  The cache directory will not be removed or emptied on destruction.
      *
+     *  \param [in] disable_fmi_logging
+     *      Set true for disabling the FMI logging
+     *
      *  \param [in] cache
      *      The cache to which FMUs will be unpacked.
      *      By default, a non-persistent cache is used.
      */
     static std::shared_ptr<importer> create(
+        bool disable_fmi_logging = false,
         std::shared_ptr<file_cache> cache = std::make_shared<temporary_file_cache>());
 
 private:
     // Private constructors, to force use of factory functions.
-    explicit importer(std::shared_ptr<file_cache> cache);
+    explicit importer(std::shared_ptr<file_cache> cache, bool disable_fmi_logging);
 
+    bool disable_fmi_logging;
 public:
     /**
      *  Imports and loads an FMU.
