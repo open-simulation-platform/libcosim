@@ -63,7 +63,6 @@ private:
     // Private constructors, to force use of factory functions.
     explicit importer(std::shared_ptr<file_cache> cache, bool disable_fmi_logging);
 
-    bool disable_fmi_logging;
 public:
     /**
      *  Imports and loads an FMU.
@@ -112,6 +111,7 @@ private:
 
     std::map<cosim::filesystem::path, std::weak_ptr<fmu>> pathCache_;
     std::map<std::string, std::weak_ptr<fmu>> guidCache_;
+    bool disable_fmi_logging;
 };
 
 
