@@ -57,8 +57,7 @@ private:
     friend class fmi::importer;
     fmu(
         std::shared_ptr<fmi::importer> importer,
-        std::unique_ptr<file_cache::directory_ro> fmuDir,
-        bool disable_fmi_logging);
+        std::unique_ptr<file_cache::directory_ro> fmuDir);
 
 public:
     // Disable copy and move
@@ -120,7 +119,7 @@ class slave_instance : public fmi::slave_instance
 private:
     // Only fmu is allowed to instantiate this class.
     friend std::shared_ptr<slave_instance> fmu::instantiate_v2_slave(std::string_view);
-    slave_instance(std::shared_ptr<v2::fmu> fmu, std::string_view instanceName, bool disable_fmi_logging);
+    slave_instance(std::shared_ptr<v2::fmu> fmu, std::string_view instanceName);
 
 public:
     // Disable copy and move.

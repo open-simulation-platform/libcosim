@@ -29,8 +29,7 @@ class LibcosimConan(ConanFile):
 
     options = {
         "shared": [True, False],
-        "proxyfmu": [True, False]
-    }
+        "proxyfmu": [True, False]}
     default_options = (
         "proxyfmu=False",
         "shared=True"

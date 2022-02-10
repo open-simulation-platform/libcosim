@@ -40,10 +40,8 @@ namespace v2
 
 fmu::fmu(
     std::shared_ptr<fmi::importer> importer,
-    std::unique_ptr<file_cache::directory_ro> fmuDir,
-    bool disable_fmi_logging)
-    : fmi::fmu(disable_fmi_logging)
-    , importer_{importer}
+    std::unique_ptr<file_cache::directory_ro> fmuDir)
+    : importer_{importer}
     , dir_(std::move(fmuDir))
     , handle_{fmi2_import_parse_xml(importer->fmilib_handle(), dir_->path().string().c_str(), nullptr)}
 {
@@ -142,7 +140,7 @@ std::shared_ptr<v2::slave_instance> fmu::instantiate_v2_slave(
             "FMU '" + modelDescription_.name + "' can only be instantiated once");
     }
     auto instance = std::shared_ptr<slave_instance>(
-        new slave_instance(shared_from_this(), instanceName, disable_fmi_logging));
+        new slave_instance(shared_from_this(), instanceName));
     instances_.push_back(instance);
     return instance;
 }
@@ -281,8 +279,7 @@ log_record last_log_record(const std::string& instanceName)
 // fmi2_import_parse_xml().)
 slave_instance::slave_instance(
     std::shared_ptr<v2::fmu> fmu,
-    std::string_view instanceName,
-    bool disable_fmi_logging)
+    std::string_view instanceName)
     : fmu_{fmu}
     , handle_{fmi2_import_parse_xml(fmu->importer()->fmilib_handle(), fmu->directory().string().c_str(), nullptr)}
     , instanceName_(instanceName)
@@ -294,10 +291,17 @@ slave_instance::slave_instance(
             fmu->importer()->last_error_message());
     }
 
+    auto fmi_no_logging_env = std::getenv("LIBCOSIM_NO_FMI_LOGGING");
+    long fmi_no_logging = -1;
+    if (fmi_no_logging_env) {
+        char* ptr;
+        fmi_no_logging = strtol(fmi_no_logging_env, &ptr, 10);
+    }
+
     fmi2_callback_functions_t callbacks;
     callbacks.allocateMemory = std::calloc;
     callbacks.freeMemory = std::free;
-    callbacks.logger = disable_fmi_logging ? empty_log_message : log_message;
+    callbacks.logger = (fmi_no_logging == 1) ? empty_log_message : log_message;
     callbacks.stepFinished = step_finished_placeholder;
     callbacks.componentEnvironment = nullptr;
 

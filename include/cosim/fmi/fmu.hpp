@@ -66,13 +66,6 @@ public:
     virtual std::shared_ptr<fmi::importer> importer() const = 0;
 
     virtual ~fmu() { }
-
-    explicit fmu(bool disable_fmi_logging)
-        : disable_fmi_logging(disable_fmi_logging)
-    { }
-
-protected:
-    bool disable_fmi_logging;
 };
 
 
