@@ -184,6 +184,15 @@ struct log_record
 std::unordered_map<std::string, log_record> g_logRecords;
 std::mutex g_logMutex;
 
+void empty_log_message(
+    fmi1_component_t,
+    fmi1_string_t,
+    fmi1_status_t,
+    fmi1_string_t,
+    fmi1_string_t,
+    ...)
+{ }
+
 void log_message(
     fmi1_component_t,
     fmi1_string_t instanceName,
@@ -282,10 +291,17 @@ slave_instance::slave_instance(
             fmu->importer()->last_error_message());
     }
 
+    auto fmi_no_logging_env = std::getenv("LIBCOSIM_NO_FMI_LOGGING");
+    long fmi_no_logging = -1;
+    if (fmi_no_logging_env) {
+        char* ptr;
+        fmi_no_logging = strtol(fmi_no_logging_env, &ptr, 10);
+    }
+
     fmi1_callback_functions_t callbacks;
     callbacks.allocateMemory = std::calloc;
     callbacks.freeMemory = std::free;
-    callbacks.logger = log_message;
+    callbacks.logger = (fmi_no_logging == 1) ? empty_log_message : log_message;
     callbacks.stepFinished = step_finished_placeholder;
 
     if (fmi1_import_create_dllfmu(handle_, callbacks, false) != jm_status_success) {
