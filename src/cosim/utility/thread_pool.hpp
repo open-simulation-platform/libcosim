@@ -59,15 +59,21 @@ public:
 
     void wait_for_tasks_to_finish()
     {
-        std::unique_lock<std::mutex> lck(m_);
-        while (!work_queue_.empty()) cv_.wait(lck);
+        if (!threads_.empty()) {
+            std::unique_lock<std::mutex> lck(m_);
+            while (!work_queue_.empty()) cv_.wait(lck);
+        }
     }
 
     template<typename FunctionType>
     void submit(FunctionType f)
     {
-        std::unique_lock<std::mutex> lck(m_);
-        work_queue_.push(std::function<void()>(f));
+        if (threads_.empty()) {
+            f();
+        } else {
+            std::unique_lock<std::mutex> lck(m_);
+            work_queue_.push(std::function<void()>(f));
+        }
     }
 
     ~thread_pool()
