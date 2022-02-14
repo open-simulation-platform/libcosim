@@ -151,22 +151,22 @@ public:
     void initialize()
     {
         for (auto& s : simulators_) {
-            // pool.submit([&] {
+            pool.submit([&] {
                 s.second.sim->setup(startTime_, stopTime_, std::nullopt);
-            // });
+            });
         }
-        // pool.wait_for_tasks_to_finish();
+        pool.wait_for_tasks_to_finish();
 
         // Run N iterations of the simulators' and functions' step/calculation
         // procedures, where N is the number of simulators in the system,
         // to propagate initial values.
         for (std::size_t i = 0; i < simulators_.size() + functions_.size(); ++i) {
             for (auto& s : simulators_) {
-                // pool.submit([&] {
+                pool.submit([&] {
                     s.second.sim->do_iteration();
-                // });
+                });
             }
-            // pool.wait_for_tasks_to_finish();
+            pool.wait_for_tasks_to_finish();
 
             for (const auto& s : simulators_) {
                 transfer_variables(s.second.outgoingSimConnections);
@@ -179,11 +179,11 @@ public:
         }
 
         for (auto& s : simulators_) {
-            // pool.submit([&] {
+            pool.submit([&] {
                 s.second.sim->start_simulation();
-            // });
+            });
         }
-        // pool.wait_for_tasks_to_finish();
+        pool.wait_for_tasks_to_finish();
     }
 
     std::pair<duration, std::unordered_set<simulator_index>> do_step(time_point currentT)
@@ -197,7 +197,7 @@ public:
         for (auto& s : simulators_) {
             auto& info = s.second;
             if (stepCounter_ % info.decimationFactor == 0) {
-                // pool.submit([&] {
+                pool.submit([&] {
                     try {
                         info.stepResult = info.sim->do_step(currentT, baseStepSize_ * info.decimationFactor);
 
@@ -216,7 +216,7 @@ public:
                             << ex.what() << '\n';
                         failed = true;
                     }
-                // });
+                });
             }
         }
 
@@ -228,7 +228,7 @@ public:
             }
         }
 
-        // pool.wait_for_tasks_to_finish();
+        pool.wait_for_tasks_to_finish();
 
         if (failed) {
             throw error(make_error_code(errc::simulation_error), errMessages.str());
@@ -431,7 +431,7 @@ private:
     std::unordered_map<simulator_index, simulator_info> simulators_;
     std::unordered_map<function_index, function_info> functions_;
     int64_t stepCounter_ = 0;
-    // utility::thread_pool pool;
+    utility::thread_pool pool;
 };
 
 
