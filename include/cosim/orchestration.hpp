@@ -172,15 +172,14 @@ private:
 class fmu_file_uri_sub_resolver : public model_uri_sub_resolver
 {
 public:
-    explicit fmu_file_uri_sub_resolver(bool disable_logging = false);
+    fmu_file_uri_sub_resolver();
 
-    explicit fmu_file_uri_sub_resolver(std::shared_ptr<file_cache> cache, bool disable_logging = false);
+    explicit fmu_file_uri_sub_resolver(std::shared_ptr<file_cache> cache);
 
     std::shared_ptr<model> lookup_model(const uri& modelUri) override;
 
 private:
     std::shared_ptr<fmi::importer> importer_;
-    bool disable_logging;
 };
 
 
