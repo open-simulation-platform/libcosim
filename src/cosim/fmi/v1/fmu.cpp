@@ -291,17 +291,10 @@ slave_instance::slave_instance(
             fmu->importer()->last_error_message());
     }
 
-    auto fmi_no_logging_env = std::getenv("LIBCOSIM_NO_FMI_LOGGING");
-    long fmi_no_logging = -1;
-    if (fmi_no_logging_env) {
-        char* ptr;
-        fmi_no_logging = strtol(fmi_no_logging_env, &ptr, 10);
-    }
-
     fmi1_callback_functions_t callbacks;
     callbacks.allocateMemory = std::calloc;
     callbacks.freeMemory = std::free;
-    callbacks.logger = (fmi_no_logging == 1) ? empty_log_message : log_message;
+    callbacks.logger = fmu->is_logging_disabled() ? empty_log_message : log_message;
     callbacks.stepFinished = step_finished_placeholder;
 
     if (fmi1_import_create_dllfmu(handle_, callbacks, false) != jm_status_success) {

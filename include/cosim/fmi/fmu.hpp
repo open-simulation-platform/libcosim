@@ -66,6 +66,13 @@ public:
     virtual std::shared_ptr<fmi::importer> importer() const = 0;
 
     virtual ~fmu() { }
+
+    void disable_logging(bool disabled) { logging_disabled = disabled; }
+
+    bool is_logging_disabled() const { return logging_disabled; }
+
+protected:
+    bool logging_disabled;
 };
 
 

@@ -99,15 +99,18 @@ private:
 } // namespace
 
 
-fmu_file_uri_sub_resolver::fmu_file_uri_sub_resolver()
+fmu_file_uri_sub_resolver::fmu_file_uri_sub_resolver(bool disable_logging)
     : importer_(fmi::importer::create())
+    , disable_logging(disable_logging)
 {
 }
 
 
 fmu_file_uri_sub_resolver::fmu_file_uri_sub_resolver(
-    std::shared_ptr<file_cache> cache)
+    std::shared_ptr<file_cache> cache,
+    bool disable_logging)
     : importer_(fmi::importer::create(cache))
+    , disable_logging(disable_logging)
 {
 }
 
@@ -128,6 +131,7 @@ std::shared_ptr<model> fmu_file_uri_sub_resolver::lookup_model(const uri& modelU
     const auto path = file_uri_to_path(modelUri);
     if (path.extension() != ".fmu") return nullptr;
     auto fmu = importer_->import(path);
+    fmu->disable_logging(disable_logging);
     return std::make_shared<fmu_model>(fmu);
 }
 
