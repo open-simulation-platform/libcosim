@@ -9,7 +9,7 @@
 #include <exception>
 #include <memory>
 #include <stdexcept>
-
+#include <thread>
 
 // A helper macro to test various assertions
 #define REQUIRE(test) \
