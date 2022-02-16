@@ -108,6 +108,7 @@ if(LIBCOSIM_USING_CONAN)
             set(proxyfmu_option True)
         endif()
 
+        conan_add_remote(NAME osp URL https://osp.jfrog.io/artifactory/api/conan/conan-local)
         conan_cmake_run(
                 CONANFILE conanfile.py
                 OPTIONS proxyfmu=${proxyfmu_option}
