@@ -31,7 +31,7 @@ public:
      *  \param baseStepSize
      *      The base communication interval length.
      */
-    explicit fixed_step_algorithm(duration baseStepSize);
+    explicit fixed_step_algorithm(duration baseStepSize, bool parallel = true);
 
     ~fixed_step_algorithm() noexcept;
 

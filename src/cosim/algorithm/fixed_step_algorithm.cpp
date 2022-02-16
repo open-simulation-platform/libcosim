@@ -49,8 +49,9 @@ int calculate_decimation_factor(
 class fixed_step_algorithm::impl
 {
 public:
-    explicit impl(duration baseStepSize)
+    explicit impl(duration baseStepSize, bool parallel)
         : baseStepSize_(baseStepSize)
+        , parallel_(parallel)
     {
         COSIM_INPUT_CHECK(baseStepSize.count() > 0);
     }
@@ -148,9 +149,18 @@ public:
         stopTime_ = stopTime;
     }
 
+    template<class IteratorBegin, class IteratorEnd, class Function>
+    inline void for_each(IteratorBegin begin, IteratorEnd end, Function f) {
+        if (parallel_) {
+            std::for_each(std::execution::par, begin, end, f);
+        } else {
+            std::for_each(std::execution::seq, begin, end, f);
+        }
+    }
+
     void initialize()
     {
-        std::for_each(std::execution::par, simulators_.begin(), simulators_.end(), [&](auto& s) {
+        for_each(simulators_.begin(), simulators_.end(), [&](auto& s) {
             s.second.sim->setup(startTime_, stopTime_, std::nullopt);
         });
 
@@ -158,7 +168,7 @@ public:
         // procedures, where N is the number of simulators in the system,
         // to propagate initial values.
         for (std::size_t i = 0; i < simulators_.size() + functions_.size(); ++i) {
-            std::for_each(std::execution::par, simulators_.begin(), simulators_.end(), [](auto&& s) {
+            for_each(simulators_.begin(), simulators_.end(), [](auto& s) {
                 s.second.sim->do_iteration();
             });
 
@@ -172,7 +182,7 @@ public:
             }
         }
 
-        std::for_each(std::execution::par, simulators_.begin(), simulators_.end(), [](auto& s) {
+        for_each(simulators_.begin(), simulators_.end(), [](auto& s) {
             s.second.sim->start_simulation();
         });
     }
@@ -184,7 +194,7 @@ public:
         std::stringstream errMessages;
         std::unordered_set<simulator_index> finished;
         // Initiate simulator time steps.
-        std::for_each(std::execution::par, simulators_.begin(), simulators_.end(), [&](auto& s) {
+        for_each(simulators_.begin(), simulators_.end(), [&](auto& s) {
             auto& info = s.second;
             if (stepCounter_ % info.decimationFactor == 0) {
                 try {
@@ -206,8 +216,6 @@ public:
                     failed = true;
                 }
 
-                std::lock_guard<std::mutex> lck(m);
-                finished.insert(s.first);
             }
         });
 
@@ -216,6 +224,12 @@ public:
         }
 
         ++stepCounter_;
+
+        for (auto& [idx, info] : simulators_) {
+            if (stepCounter_ % info.decimationFactor == 0) {
+                finished.insert(idx);
+            }
+        }
 
         // Transfer the outputs from simulators that have finished their
         // individual time steps within this co-simulation time step.
@@ -414,11 +428,12 @@ private:
     std::unordered_map<simulator_index, simulator_info> simulators_;
     std::unordered_map<function_index, function_info> functions_;
     int64_t stepCounter_ = 0;
+    bool parallel_;
 };
 
 
-fixed_step_algorithm::fixed_step_algorithm(duration baseStepSize)
-    : pimpl_(std::make_unique<impl>(baseStepSize))
+fixed_step_algorithm::fixed_step_algorithm(duration baseStepSize, bool parallel)
+    : pimpl_(std::make_unique<impl>(baseStepSize, parallel))
 {
 }
 
