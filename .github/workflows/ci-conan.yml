@@ -11,7 +11,7 @@ jobs:
       fail-fast: false
       matrix:
         build_type: [Debug, Release]
-        compiler_version: [7, 8, 9]
+        compiler_version: [9]
         compiler_libcxx: [libstdc++11]
         option_proxyfmu: ['proxyfmu=True', 'proxyfmu=False']
         option_shared: ['shared=True', 'shared=False']
@@ -58,6 +58,7 @@ jobs:
         run: |
           docker run --rm --env GITHUB_REF="$GITHUB_REF" -v $(pwd):/mnt/source:ro osp-builder
 
+
   conan-on-windows:
     name: Conan
     runs-on: ${{ matrix.os }}
@@ -72,7 +73,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2016, windows-2019]
+        os: [windows-2019]
         build_type: [Debug, Release]
         option_proxyfmu: ['proxyfmu=True', 'proxyfmu=False']
         option_shared: ['shared=True', 'shared=False']
