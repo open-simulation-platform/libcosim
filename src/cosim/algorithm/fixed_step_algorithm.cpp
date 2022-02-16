@@ -49,8 +49,9 @@ int calculate_decimation_factor(
 class fixed_step_algorithm::impl
 {
 public:
-    explicit impl(duration baseStepSize)
+    explicit impl(duration baseStepSize, unsigned int workerThreadCount)
         : baseStepSize_(baseStepSize)
+        , pool(workerThreadCount)
     {
         COSIM_INPUT_CHECK(baseStepSize.count() > 0);
     }
@@ -435,8 +436,8 @@ private:
 };
 
 
-fixed_step_algorithm::fixed_step_algorithm(duration baseStepSize)
-    : pimpl_(std::make_unique<impl>(baseStepSize))
+fixed_step_algorithm::fixed_step_algorithm(duration baseStepSize, unsigned int workerThreadCount)
+    : pimpl_(std::make_unique<impl>(baseStepSize, workerThreadCount))
 {
 }
 
