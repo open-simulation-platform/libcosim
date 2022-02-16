@@ -97,7 +97,7 @@ if(LIBCOSIM_USING_CONAN)
         # standard conan installation, deps will be defined in conanfile.py
         # and not necessary to call conan again, conan is already running
         include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-        conan_basic_setup()
+        conan_basic_setup(NO_OUTPUT_DIRS)
     else()
 
         include(cmake/conan.cmake)
@@ -113,7 +113,7 @@ if(LIBCOSIM_USING_CONAN)
                 OPTIONS proxyfmu=${proxyfmu_option}
                 BUILD missing
                 SETTINGS ${settings}
-                BASIC_SETUP)
+                BASIC_SETUP NO_OUTPUT_DIRS)
 
     endif()
 
