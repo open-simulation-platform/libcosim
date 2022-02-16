@@ -156,7 +156,11 @@ endforeach()
 
 add_library(cosim ${publicHeadersFull} ${privateHeaders} ${sources} ${generatedFiles})
 
-target_compile_definitions(cosim PUBLIC "BOOST_ALL_DYN_LINK=1" "BOOST_ALL_NO_LIB=1" "BOOST_CONFIG_SUPPRESS_OUTDATED_MESSAGE=1")
+target_compile_definitions(cosim PUBLIC "BOOST_ALL_NO_LIB=0" "BOOST_CONFIG_SUPPRESS_OUTDATED_MESSAGE=1")
+if(NOT Boost_USE_STATIC_LIBS)
+    target_compile_definitions(cosim PUBLIC "BOOST_ALL_DYN_LINK=1")
+endif()
+
 target_compile_features(cosim PUBLIC "cxx_std_17")
 target_include_directories(cosim
     PUBLIC
@@ -187,8 +191,9 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_link_libraries(cosim INTERFACE "atomic" "stdc++fs")
 endif()
 if(WIN32)
+    target_link_libraries(cosim PUBLIC "Bcrypt")
     if(BUILD_SHARED_LIBS)
-        target_link_libraries(cosim PUBLIC "Bcrypt" "Shlwapi") # Windows API DLLs
+        target_link_libraries(cosim PUBLIC "Shlwapi") # Windows API DLLs
     else()
         set_target_properties(cosim PROPERTIES OUTPUT_NAME "libcosim")
     endif()
