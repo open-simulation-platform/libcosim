@@ -47,14 +47,6 @@ enum class slave_state
     simulation,
 
     /**
-     *  The slave is terminated.
-     *
-     *  The slave is in this state from the time `end_simulation()` is called
-     *  and until its destruction.
-     */
-    terminated,
-
-    /**
      *  An irrecoverable error occurred.
      *
      *  The slave is in this state from the time an exception is thrown and
@@ -138,8 +130,6 @@ public:
     step_result do_step(
         time_point currentT,
         duration deltaT) override;
-
-    void end_simulation() override;
 
 private:
     class impl;
