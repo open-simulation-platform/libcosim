@@ -49,9 +49,9 @@ int calculate_decimation_factor(
 class fixed_step_algorithm::impl
 {
 public:
-    explicit impl(duration baseStepSize, unsigned int workerThreadCount)
+    explicit impl(duration baseStepSize, std::optional<unsigned int> workerThreadCount)
         : baseStepSize_(baseStepSize)
-        , pool(workerThreadCount)
+        , pool_(std::min(workerThreadCount.value_or(std::thread::hardware_concurrency()), std::thread::hardware_concurrency()))
     {
         COSIM_INPUT_CHECK(baseStepSize.count() > 0);
     }
@@ -152,22 +152,22 @@ public:
     void initialize()
     {
         for (auto& s : simulators_) {
-            pool.submit([&] {
+            pool_.submit([&] {
                 s.second.sim->setup(startTime_, stopTime_, std::nullopt);
             });
         }
-        pool.wait_for_tasks_to_finish();
+        pool_.wait_for_tasks_to_finish();
 
         // Run N iterations of the simulators' and functions' step/calculation
         // procedures, where N is the number of simulators in the system,
         // to propagate initial values.
         for (std::size_t i = 0; i < simulators_.size() + functions_.size(); ++i) {
             for (auto& s : simulators_) {
-                pool.submit([&] {
+                pool_.submit([&] {
                     s.second.sim->do_iteration();
                 });
             }
-            pool.wait_for_tasks_to_finish();
+            pool_.wait_for_tasks_to_finish();
 
             for (const auto& s : simulators_) {
                 transfer_variables(s.second.outgoingSimConnections);
@@ -180,11 +180,11 @@ public:
         }
 
         for (auto& s : simulators_) {
-            pool.submit([&] {
+            pool_.submit([&] {
                 s.second.sim->start_simulation();
             });
         }
-        pool.wait_for_tasks_to_finish();
+        pool_.wait_for_tasks_to_finish();
     }
 
     std::pair<duration, std::unordered_set<simulator_index>> do_step(time_point currentT)
@@ -198,7 +198,7 @@ public:
         for (auto& s : simulators_) {
             auto& info = s.second;
             if (stepCounter_ % info.decimationFactor == 0) {
-                pool.submit([&] {
+                pool_.submit([&] {
                     try {
                         info.stepResult = info.sim->do_step(currentT, baseStepSize_ * info.decimationFactor);
 
@@ -229,7 +229,7 @@ public:
             }
         }
 
-        pool.wait_for_tasks_to_finish();
+        pool_.wait_for_tasks_to_finish();
 
         if (failed) {
             throw error(make_error_code(errc::simulation_error), errMessages.str());
@@ -432,11 +432,11 @@ private:
     std::unordered_map<simulator_index, simulator_info> simulators_;
     std::unordered_map<function_index, function_info> functions_;
     int64_t stepCounter_ = 0;
-    utility::thread_pool pool;
+    utility::thread_pool pool_;
 };
 
 
-fixed_step_algorithm::fixed_step_algorithm(duration baseStepSize, unsigned int workerThreadCount)
+fixed_step_algorithm::fixed_step_algorithm(duration baseStepSize, std::optional<unsigned int> workerThreadCount)
     : pimpl_(std::make_unique<impl>(baseStepSize, workerThreadCount))
 {
 }

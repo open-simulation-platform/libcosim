@@ -57,6 +57,10 @@ public:
         }
     }
 
+    size_t numWorkerThreads() const {
+        return threads_.size();
+    }
+
     void wait_for_tasks_to_finish()
     {
         if (!threads_.empty()) {

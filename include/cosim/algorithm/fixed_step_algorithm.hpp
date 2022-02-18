@@ -11,7 +11,6 @@
 #define LIBCOSIM_ALGORITHM_FIXED_STEP_ALGORITHM_HPP
 
 #include <cosim/algorithm/algorithm.hpp>
-#include <thread>
 
 namespace cosim
 {
@@ -35,7 +34,7 @@ public:
      *  \param workerThreadCount
      *      A number of worker threads to spawn for running FMUs
      */
-    explicit fixed_step_algorithm(duration baseStepSize, unsigned int workerThreadCount = std::thread::hardware_concurrency());
+    explicit fixed_step_algorithm(duration baseStepSize, std::optional<unsigned int> workerThreadCount = std::nullopt);
 
     ~fixed_step_algorithm() noexcept;
 
