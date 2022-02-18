@@ -65,17 +65,16 @@ jobs:
           name: libcosim-${{ runner.os }}-${{ matrix.build_type }}-gcc${{ matrix.compiler_version }}
           path: install
 
+
   cmake-on-windows:
     name: CMake
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2016, windows-2019]
+        os: [windows-2019]
         build_type: [Debug, Release]
         shared: ["True", "False"]
-
-
 
     steps:
       - uses: actions/checkout@v2
