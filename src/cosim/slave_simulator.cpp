@@ -52,6 +52,7 @@ public:
         : stateVariable_(&stateVariable)
         , finalState_(finalState)
     {
+        stateVariable = slave_state::indeterminate;
     }
 
     /**
