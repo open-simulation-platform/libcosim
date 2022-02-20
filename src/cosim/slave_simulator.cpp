@@ -33,7 +33,7 @@ struct var_view_type<std::string>
 
 /**
  *  Helper class which checks, sets and resets the state variable for
- *  an `async_slave`.
+ *  an `slave_simulator`.
  *
  *  The constructors of this class take a reference to the `slave_state`
  *  variable to be managed, and immediately set it to `indeterminate`.
