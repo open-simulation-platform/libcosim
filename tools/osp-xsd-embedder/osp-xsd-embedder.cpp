@@ -13,6 +13,7 @@ std::string encode(std::string& data)
             case '\'': buffer.append("&apos;"); break;
             case '<': buffer.append("&lt;"); break;
             case '>': buffer.append("&gt;"); break;
+            case '\r': break;
             default: buffer.append(&data[pos], 1); break;
         }
     }
