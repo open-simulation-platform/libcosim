@@ -529,8 +529,9 @@ uri path_to_file_uri(const cosim::filesystem::path& path)
 cosim::filesystem::path file_uri_to_path(const uri& fileUri)
 {
     COSIM_INPUT_CHECK(fileUri.scheme() && (*fileUri.scheme() == "file" || *fileUri.scheme() == "proxyfmu"));
-    COSIM_INPUT_CHECK(fileUri.authority() &&
-        (fileUri.authority()->empty() || *fileUri.authority() == "localhost"));
+    COSIM_INPUT_CHECK(fileUri.authority()
+        // && (fileUri.authority()->empty() || *fileUri.authority() == "localhost")
+        );
 
 #ifdef _WIN32
     // Windows has some special rules for file URIs; better use the built-in

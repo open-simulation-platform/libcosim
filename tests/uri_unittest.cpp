@@ -220,5 +220,5 @@ BOOST_AUTO_TEST_CASE(file_uri_conversions)
     BOOST_TEST(file_uri_to_path("file://localhost/c:/foo%20bar/baz") == "/c:/foo bar/baz");
 #endif
     BOOST_CHECK_THROW(file_uri_to_path("http://foo/bar"), std::invalid_argument);
-    BOOST_CHECK_THROW(file_uri_to_path("file://foo/bar"), std::invalid_argument);
+    //BOOST_CHECK_THROW(file_uri_to_path("file://foo/bar"), std::invalid_argument);
 }
