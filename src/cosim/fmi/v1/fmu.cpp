@@ -166,9 +166,11 @@ namespace
 {
 void step_finished_placeholder(fmi1_component_t, fmi1_status_t)
 {
+#ifndef LIBCOSIM_NO_FMI_LOGGING
     BOOST_LOG_SEV(log::logger(), log::debug)
         << "FMU instance completed asynchronous step, "
            "but this feature is currently not supported";
+#endif
 }
 
 struct log_record
