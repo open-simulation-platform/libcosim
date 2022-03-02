@@ -104,8 +104,8 @@ BOOST_AUTO_TEST_CASE(test_fmi1)
     std::string stringVal;
 
     for (auto t = tStart; t < tMax; t += dt) {
-
-        auto vars = instance->get_variables(
+        cosim::slave::variable_values vars;
+        instance->get_variables(&vars,
                                 gsl::make_span(&realOut, 1),
                                 gsl::make_span(&integerOut, 1),
                                 gsl::make_span(&booleanOut, 1),
