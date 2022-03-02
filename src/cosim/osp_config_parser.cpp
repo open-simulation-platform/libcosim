@@ -960,7 +960,7 @@ osp_config load_osp_config(
             // even when there are FMUs with other URI than file (fmu-proxy).
             // msmiFilePath = file_uri_to_path(modelUri.view().substr(modelUri.view().find("file=") + 5)).remove_filename() /msmiFileName;
 
-            msmiFilePath = cosim::filesystem::path(modelUri.view().substr(modelUri.view().find("file=") + 5)).remove_filename() / msmiFileName;
+            msmiFilePath = configFile.parent_path().remove_filename() / cosim::filesystem::path(modelUri.view().substr(modelUri.view().find("file=") + 5)).remove_filename() / msmiFileName;
             //BOOST_LOG_SEV(log::logger(), log::error) << "msmiFilePath: " << msmiFilePath;
 
             // msmiFilePath = file_uri_to_path(modelUri).remove_filename() / msmiFileName;
