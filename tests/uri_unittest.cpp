@@ -242,15 +242,29 @@ BOOST_AUTO_TEST_CASE(file_uri_conversions)
 
     //std::size_t pos = str.find("file=");
 
-    const cosim::filesystem::path configPath = cosim::filesystem::path("C://asdfasdf/asdfasasdf/OspSystemStructure.xml");
+    // const cosim::filesystem::path configPath = cosim::filesystem::path("C://asdfasdf/asdfasasdf/OspSystemStructure.xml");
+
+
+    const auto testDataDir = std::getenv("TEST_DATA_DIR");
+    //BOOST_TEST_REQUIRE(!!testDataDir);
+    const auto configPath = cosim::filesystem::path(testDataDir) / "asdfasdfasdfasdfsdaf" / "asdf" / "OspSystemStructure.xml";
+
+
 
     const auto absolutePath = cosim::filesystem::absolute(configPath);
     const auto configFile = cosim::filesystem::is_regular_file(absolutePath)
         ? absolutePath
-        : absolutePath / "OspSystemStructure.xml";
+        : absolutePath;
+        //: absolutePath / "OspSystemStructure.xml";
     const auto baseURI = path_to_file_uri(configFile);
+    //const auto baseURI = path_to_file_uri(absolutePath);
 
     //configFile.parent_path()
+
+
+    const auto modelPathLocal = cosim::filesystem::path(testDataDir) / "asdfasdfasdfasdfsdaf" / "asdf" / "88EAF9B4-BAAB-449C-97A1-FEE85CDFE38C" / "Damper_OspModelDescription.xml";
+
+    // const auto modelUriLocal = resolve_reference(baseURI, modelPathLocal);
 
     const auto modelUri = resolve_reference(baseURI, "proxyfmu://10.1.13.178:9090?file=88EAF9B4-BAAB-449C-97A1-FEE85CDFE38C/Damper.fmu");
 
@@ -260,8 +274,6 @@ BOOST_AUTO_TEST_CASE(file_uri_conversions)
         << "model uri view : " << modelUri.view();
 
 
-    BOOST_LOG_SEV(log::logger(), log::warning)
-        << "model uri view local : " << resolve_reference("C://asdfasdf/asdfasasdf/OspSystemStructure.xml", "C://asdfasfasdfasdf/afsdfasdf/88EAF9B4-BAAB-449C-97A1-FEE85CDFE38C/Damper.fmu");
 
     // cosim::filesystem::path filePath = cosim::filesystem::path(modelUri.view().substr(modelUri.view().find("file=") + 5));
 
@@ -277,11 +289,31 @@ BOOST_AUTO_TEST_CASE(file_uri_conversions)
     // str.substr(str.find("file=") + 5)
 
     std::string msmiFileName = "Damper_OspModelDescription.xml";
+    //const auto testDataDir = std::getenv("TEST_DATA_DIR");
+    // cosim::filesystem::path(testDataDir)
 
-    cosim::filesystem::path file = cosim::filesystem::path(modelUri.view().substr(modelUri.view().find("file=") + 5)).remove_filename();
+//    BOOST_LOG_SEV(log::logger(), log::warning)
+//        << "model uri view local : " << file_uri_to_path(modelUri).remove_filename() / msmiFileName;
+
+    // cosim::filesystem::path file = cosim::filesystem::path(modelUri.view().substr(modelUri.view().find("file=") + 5)).remove_filename();
 
         BOOST_LOG_SEV(log::logger(), log::warning)
-            << "model uri file : " << configFile.parent_path().remove_filename() / cosim::filesystem::path(modelUri.view().substr(modelUri.view().find("file=") + 5)).remove_filename() / msmiFileName;
+            << "model uri file : " << configFile.parent_path() / cosim::filesystem::path(modelUri.view().substr(modelUri.view().find("file=") + 5)).remove_filename() / msmiFileName;
+
+        BOOST_LOG_SEV(log::logger(), log::warning)
+            << "model uri file config : " << configFile;
+
+        BOOST_LOG_SEV(log::logger(), log::warning)
+            << "model uri file parent : " << configFile.parent_path();
+
+        BOOST_LOG_SEV(log::logger(), log::warning)
+            << "model uri file parent substring : " << modelUri.view().substr(modelUri.view().find("file=") + 5);
+
+        BOOST_LOG_SEV(log::logger(), log::warning)
+            << "model uri file file : " << cosim::filesystem::path(modelUri.view().substr(modelUri.view().find("file=") + 5)).remove_filename();
+
+        BOOST_LOG_SEV(log::logger(), log::warning)
+            << "model uri file msmi : " << msmiFileName;
 
 
 
