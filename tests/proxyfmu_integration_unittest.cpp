@@ -168,7 +168,9 @@ BOOST_AUTO_TEST_CASE(test_fmi2)
             BOOST_TEST(start == 0.0);
             const auto varID = v.reference;
             double varVal = -1.0;
-            varVal = instance->get_variables(gsl::make_span(&varID, 1), {}, {}, {}).real[0];
+            cosim::slave::variable_values vars;
+            instance->get_variables(&vars, gsl::make_span(&varID, 1), {}, {}, {});
+            varVal = vars.real[0];
             BOOST_TEST(varVal == 0.0);
         } else if (v.name == "minlevel") {
             foundMinlevel = true;
@@ -178,7 +180,9 @@ BOOST_AUTO_TEST_CASE(test_fmi2)
             BOOST_TEST(start == 1.0);
             const auto varID = v.reference;
             double varVal = -1.0;
-            varVal = instance->get_variables(gsl::make_span(&varID, 1), {}, {}, {}).real[0];
+            cosim::slave::variable_values vars;
+            instance->get_variables(&vars, gsl::make_span(&varID, 1), {}, {}, {});
+            varVal = vars.real[0];
             BOOST_TEST(varVal == 1.0);
         }
     }
