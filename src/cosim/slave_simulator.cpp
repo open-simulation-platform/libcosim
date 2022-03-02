@@ -183,6 +183,7 @@ public:
         it->second.lastValue = v;
         if (it->second.arrayIndex < 0) {
             it->second.arrayIndex = references_.size();
+            back_refs_[r] = references_.size();
             assert(references_.size() == values_.size());
             references_.emplace_back(r);
             values_.emplace_back(v);
@@ -205,6 +206,7 @@ public:
         if (it->second.arrayIndex < 0) {
             // Ensure that the simulator receives an updated value.
             it->second.arrayIndex = references_.size();
+            back_refs_[r] = references_.size();
             assert(references_.size() == values_.size());
             references_.emplace_back(r);
             values_.emplace_back(it->second.lastValue);
@@ -223,18 +225,17 @@ public:
                 const auto ref = entry.first;
                 if (exposedVariables_.at(ref).arrayIndex < 0) {
                     exposedVariables_.at(ref).arrayIndex = references_.size();
+                    back_refs_[ref] = references_.size();
                     assert(references_.size() == values_.size());
                     references_.emplace_back(ref);
                     values_.emplace_back(exposedVariables_.at(ref).lastValue);
                 }
-            }
-            assert(references_.size() == values_.size());
-            for (std::size_t i = 0; i < references_.size(); ++i) {
-                const auto iterator = modifiers_.find(references_[i]);
-                if (iterator != modifiers_.end()) {
-                    values_[i] = iterator->second(values_[i], deltaT);
+                const auto it = back_refs_.find(ref);
+                if (it != back_refs_.end()) {
+                    values_[it->second] = entry.second(values_[it->second], deltaT);
                 }
             }
+            assert(references_.size() == values_.size());
             hasRunModifiers_ = true;
         }
         return std::pair(gsl::make_span(references_), gsl::make_span(values_));
@@ -271,6 +272,7 @@ private:
 
     // The references and values of the variables that will be set next.
     std::vector<value_reference> references_;
+    std::unordered_map<value_reference, size_t> back_refs_;
     boost::container::vector<T> values_;
 };
 
@@ -544,15 +546,16 @@ private:
 
     void get_variables(duration deltaT)
     {
-        const auto values = slave_->get_variables(
+        slave_->get_variables(
+            &variable_values_,
             gsl::make_span(realGetCache_.references),
             gsl::make_span(integerGetCache_.references),
             gsl::make_span(booleanGetCache_.references),
             gsl::make_span(stringGetCache_.references));
-        copy_contents(values.real, realGetCache_.originalValues);
-        copy_contents(values.integer, integerGetCache_.originalValues);
-        copy_contents(values.boolean, booleanGetCache_.originalValues);
-        copy_contents(values.string, stringGetCache_.originalValues);
+        copy_contents(variable_values_.real, realGetCache_.originalValues);
+        copy_contents(variable_values_.integer, integerGetCache_.originalValues);
+        copy_contents(variable_values_.boolean, booleanGetCache_.originalValues);
+        copy_contents(variable_values_.string, stringGetCache_.originalValues);
         realGetCache_.run_modifiers(deltaT);
         integerGetCache_.run_modifiers(deltaT);
         booleanGetCache_.run_modifiers(deltaT);
@@ -603,6 +606,8 @@ private:
     std::unordered_set<value_reference> modifiedIntegerVariables_;
     std::unordered_set<value_reference> modifiedBooleanVariables_;
     std::unordered_set<value_reference> modifiedStringVariables_;
+
+    cosim::slave::variable_values variable_values_;
 };
 
 
