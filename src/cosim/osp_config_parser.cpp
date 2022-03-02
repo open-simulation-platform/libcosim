@@ -938,27 +938,41 @@ osp_config load_osp_config(
         const auto modelUri = resolve_reference(baseURI, simulator.source);
         cosim::filesystem::path msmiFilePath;
 
-        msmiFilePath = file_uri_to_path(modelUri).remove_filename() / msmiFileName;
-        if (cosim::filesystem::exists(msmiFilePath)) {
-            emds.emplace(simulator.name, msmiFilePath);
-        } else {
-            msmiFilePath = configFile.parent_path() / msmiFileName;
+//        msmiFilePath = modelUri.view().substr(modelUri.view().find("file=") + 5);
+//        BOOST_LOG_SEV(log::logger(), log::error) << "msmiFilePath: " << msmiFilePath;
+
+        if (modelUri.scheme() == "file") {
+            msmiFilePath = file_uri_to_path(modelUri).remove_filename() / msmiFileName;
+//            BOOST_LOG_SEV(log::logger(), log::error) << "msmiFilePath: " << msmiFilePath;
+//            BOOST_LOG_SEV(log::logger(), log::error) <<
+//                "msmiFilePath proxy: " << file_uri_to_path("proxyfmu://10.1.13.178:9090?file=88EAF9B4-BAAB-449C-97A1-FEE85CDFE38C/Damper.fmu").remove_filename() / msmiFileName;
+
             if (cosim::filesystem::exists(msmiFilePath)) {
                 emds.emplace(simulator.name, msmiFilePath);
+            } else {
+                msmiFilePath = configFile.parent_path() / msmiFileName;
+                if (cosim::filesystem::exists(msmiFilePath)) {
+                    emds.emplace(simulator.name, msmiFilePath);
+                }
+            }
+        } else {
+            // Makes it possible to keep OspModelDescription at configuration path
+            // even when there are FMUs with other URI than file (fmu-proxy).
+            // msmiFilePath = file_uri_to_path(modelUri.view().substr(modelUri.view().find("file=") + 5)).remove_filename() /msmiFileName;
+
+            msmiFilePath = cosim::filesystem::path(modelUri.view().substr(modelUri.view().find("file=") + 5)).remove_filename() / msmiFileName;
+            //BOOST_LOG_SEV(log::logger(), log::error) << "msmiFilePath: " << msmiFilePath;
+
+            // msmiFilePath = file_uri_to_path(modelUri).remove_filename() / msmiFileName;
+            if (cosim::filesystem::exists(msmiFilePath)) {
+                emds.emplace(simulator.name, msmiFilePath);
+            } else {
+                msmiFilePath = configFile.parent_path() / msmiFileName;
+                if (cosim::filesystem::exists(msmiFilePath)) {
+                    emds.emplace(simulator.name, msmiFilePath);
+                }
             }
         }
-
-//        if (modelUri.scheme() == "file") {
-//
-//        } else {
-//            // Makes it possible to keep OspModelDescription at configuration path
-//            // even when there are FMUs with other URI than file (fmu-proxy).
-//
-//            msmiFilePath = configFile.parent_path() / msmiFileName;
-//            if (cosim::filesystem::exists(msmiFilePath)) {
-//                emds.emplace(simulator.name, msmiFilePath);
-//            }
-//        }
     }
 
     connect_variables(parser.get_variable_connections(), config.system_structure);

@@ -533,6 +533,7 @@ cosim::filesystem::path file_uri_to_path(const uri& fileUri)
         // && (fileUri.authority()->empty() || *fileUri.authority() == "localhost")
         );
 
+
 #ifdef _WIN32
     // Windows has some special rules for file URIs; better use the built-in
     // functions.

@@ -1,7 +1,9 @@
 #define BOOST_TEST_MODULE uri.hpp unittests
+
 #include <cosim/uri.hpp>
 
 #include <boost/test/unit_test.hpp>
+#include "cosim/log/logger.hpp"
 
 #include <stdexcept>
 
@@ -198,6 +200,7 @@ BOOST_AUTO_TEST_CASE(percent_encoding)
 
 BOOST_AUTO_TEST_CASE(file_uri_conversions)
 {
+    //BOOST_TEST_LOG_LEVEL=message file_uri_conversions
     // From path to URI
     BOOST_TEST(path_to_file_uri("/foo bar/baz") == "file:///foo%20bar/baz");
     BOOST_TEST(path_to_file_uri(cosim::filesystem::path()) == "file:");
@@ -213,12 +216,60 @@ BOOST_AUTO_TEST_CASE(file_uri_conversions)
     BOOST_TEST(file_uri_to_path("file:///c:/foo%20bar/baz") == "c:\\foo bar\\baz");
     BOOST_TEST(file_uri_to_path("file://localhost/foo%20bar/baz") == "\\foo bar\\baz");
     BOOST_TEST(file_uri_to_path("file://localhost/c:/foo%20bar/baz") == "c:\\foo bar\\baz");
+    //BOOST_WARN("test message");
+    BOOST_LOG_SEV(log::logger(), log::warning)
+        << "testing log ";
+
+
+    //const auto modelUri = resolve_reference("proxyfmu://10.1.13.178:9090?file=88EAF9B4-BAAB-449C-97A1-FEE85CDFE38C/Damper.fmu", "Damper");
+    // cosim::filesystem::path msmiFilePath;
+
+//    BOOST_LOG_SEV(log::logger(), log::warning)
+//        << "model uri scheme: " << (modelUri.scheme() == "proxyfmu");
+//
+//    BOOST_LOG_SEV(log::logger(), log::warning)
+//        << "model uri authority: " << (modelUri.authority() == "10.1.13.178:9090?file=88EAF9B4-BAAB-449C-97A1-FEE85CDFE38C/Damper.fmu");
+//
+//    BOOST_LOG_SEV(log::logger(), log::warning)
+//        << "model uri query: " << modelUri.query().has_value();
+
+
+//    BOOST_LOG_SEV(log::logger(), log::warning)
+//        << "file uri to path: " << file_uri_to_path("proxyfmu://10.1.13.178:9090?file=88EAF9B4-BAAB-449C-97A1-FEE85CDFE38C/Damper.fmu");
+    // "msmiFilePath proxy: " <<
+
+    std::string str = "proxyfmu://10.1.13.178:9090?file=88EAF9B4-BAAB-449C-97A1-FEE85CDFE38C/Damper.fmu";
+
+    //std::size_t pos = str.find("file=");
+
+    const auto modelUri = resolve_reference("C://asdfasdf/asdfasasdf/OspSystemStructure.xml", "proxyfmu://10.1.13.178:9090?file=88EAF9B4-BAAB-449C-97A1-FEE85CDFE38C/Damper.fmu");
+
+    BOOST_LOG_SEV(log::logger(), log::warning)
+        << "model uri view : " << modelUri.view();
+
+    cosim::filesystem::path filePath = cosim::filesystem::path(modelUri.view().substr(modelUri.view().find("file=") + 5));
+
+    // str.substr(str.find("file=") + 5)
+
+    cosim::filesystem::path file = filePath.remove_filename();
+
+        BOOST_LOG_SEV(log::logger(), log::warning)
+            << "model uri file : " << file;
+
+
+
+
+    // BOOST_TEST(file_uri_to_path("proxyfmu://10.1.13.178:9090?file=88EAF9B4-BAAB-449C-97A1-FEE85CDFE38C/Damper.fmu") == "c:\\foo bar\\baz");
+    //BOOST_TEST(file_uri_to_path("proxyfmu://localhost/88EAF9B4-BAAB-449C-97A1-FEE85CDFE38C/Damper.fmu") == "c:\\foo bar\\baz");
+
 #else
     BOOST_TEST(file_uri_to_path("file:///foo%20bar/baz") == "/foo bar/baz");
     BOOST_TEST(file_uri_to_path("file:///c:/foo%20bar/baz") == "/c:/foo bar/baz");
     BOOST_TEST(file_uri_to_path("file://localhost/foo%20bar/baz") == "/foo bar/baz");
     BOOST_TEST(file_uri_to_path("file://localhost/c:/foo%20bar/baz") == "/c:/foo bar/baz");
 #endif
+    // proxyfmu://10.1.13.178:9090?file=88EAF9B4-BAAB-449C-97A1-FEE85CDFE38C/Damper.fmu
     BOOST_CHECK_THROW(file_uri_to_path("http://foo/bar"), std::invalid_argument);
-    //BOOST_CHECK_THROW(file_uri_to_path("file://foo/bar"), std::invalid_argument);
+    //BOOST_CHECK_THROW(file_uri_to_path("proxyfmu://10.1.13.178:9090?file=88EAF9B4-BAAB-449C-97A1-FEE85CDFE38C/Damper.fmu"), std::invalid_argument);
+    // BOOST_CHECK_THROW(file_uri_to_path("file://foo/bar"), std::invalid_argument);
 }
