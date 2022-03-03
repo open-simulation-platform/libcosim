@@ -969,10 +969,14 @@ osp_config load_osp_config(
 
             // msmiFilePath = file_uri_to_path(modelUri).remove_filename() / msmiFileName;
             if (cosim::filesystem::exists(msmiFilePath)) {
+                BOOST_LOG_SEV(log::logger(), log::error) << "fmuproxy relative path: " << msmiFilePath;
+                BOOST_LOG_SEV(log::logger(), log::error) << "fmuproxy relative path: simulator name: " << simulator.name;
                 emds.emplace(simulator.name, msmiFilePath);
             } else {
                 msmiFilePath = configFile.parent_path() / msmiFileName;
                 if (cosim::filesystem::exists(msmiFilePath)) {
+                    BOOST_LOG_SEV(log::logger(), log::error) << "fmuproxy path: " << msmiFilePath;
+                    BOOST_LOG_SEV(log::logger(), log::error) << "fmuproxy path: simulator name: " << simulator.name;
                     emds.emplace(simulator.name, msmiFilePath);
                 }
             }

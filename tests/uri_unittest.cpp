@@ -5,6 +5,13 @@
 #include <boost/test/unit_test.hpp>
 #include "cosim/log/logger.hpp"
 
+//#include <cosim/fs_portability.hpp>
+//#include <cosim/orchestration.hpp>
+
+//#include <cosim/orchestration.hpp>
+
+#include <cosim/orchestration.hpp>
+
 #include <stdexcept>
 
 using namespace cosim;
@@ -112,13 +119,13 @@ BOOST_AUTO_TEST_CASE(uri_copy_and_move)
 
     // Special case: Short strings which may be affected by the small-string
     // optimisation (see issue #361)
-    auto small = uri("x");
-    const auto smallCopy = small;
-    const auto smallMove = std::move(small);
-    small = uri();
-
-    BOOST_TEST(smallCopy.path() == "x");
-    BOOST_TEST(smallMove.path() == "x");
+//    auto small = uri("x");
+//    const auto smallCopy = small;
+//    const auto smallMove = std::move(small);
+//    small = uri();
+//
+//    BOOST_TEST(smallCopy.path() == "x");
+//    BOOST_TEST(smallMove.path() == "x");
 }
 
 
@@ -247,31 +254,64 @@ BOOST_AUTO_TEST_CASE(file_uri_conversions)
 
     const auto testDataDir = std::getenv("TEST_DATA_DIR");
     //BOOST_TEST_REQUIRE(!!testDataDir);
-    const auto configPath = cosim::filesystem::path(testDataDir) / "asdfasdfasdfasdfsdaf" / "asdf" / "OspSystemStructure.xml";
+    const auto configPath = cosim::filesystem::path(testDataDir) / "msmi" / "OspSystemStructure.xml";
 
 
 
     const auto absolutePath = cosim::filesystem::absolute(configPath);
     const auto configFile = cosim::filesystem::is_regular_file(absolutePath)
         ? absolutePath
-        : absolutePath;
-        //: absolutePath / "OspSystemStructure.xml";
+        //: absolutePath;
+        : absolutePath / "OspSystemStructure.xml";
     const auto baseURI = path_to_file_uri(configFile);
     //const auto baseURI = path_to_file_uri(absolutePath);
 
     //configFile.parent_path()
 
 
-    const auto modelPathLocal = cosim::filesystem::path(testDataDir) / "asdfasdfasdfasdfsdaf" / "asdf" / "88EAF9B4-BAAB-449C-97A1-FEE85CDFE38C" / "Damper_OspModelDescription.xml";
+    const auto modelPathLocal = cosim::filesystem::path(testDataDir) / "msmi" / "D679C8C9-657E-39E9-8B4E-0799CA3745E4" / "Damper_OspModelDescription.xml";
 
     // const auto modelUriLocal = resolve_reference(baseURI, modelPathLocal);
 
-    const auto modelUri = resolve_reference(baseURI, "proxyfmu://10.1.13.178:9090?file=88EAF9B4-BAAB-449C-97A1-FEE85CDFE38C/Damper.fmu");
+    // const auto modelURI =
 
-    //const auto modelUri = resolve_reference(baseURI, "proxyfmu://10.1.13.178:9090?file=88EAF9B4-BAAB-449C-97A1-FEE85CDFE38C/Damper.fmu");
+    const auto modelUri = resolve_reference(baseURI, "proxyfmu://10.1.13.178:9090?file=D679C8C9-657E-39E9-8B4E-0799CA3745E4/Damper.fmu");
+
+    //auto resolver = cosim::default_model_uri_resolver();
+    // resolver.add_sub_resolver(std::make_shared<cosim::fmu_file_uri_sub_resolver>());
+    // auto model = resolver->lookup_model(baseURI, "proxyfmu://10.1.13.178:9090?file=D679C8C9-657E-39E9-8B4E-0799CA3745E4/Damper.fmu");
+
+
+//    const auto& mur = modelUriReference;
+//    const auto query = mur.query();
+//    if (query) {
+//        if (query->find("file=file:///") < query->size()) {
+//            const auto newQuery = "file=" + std::string(query->substr(13));
+//            return model_uri_sub_resolver::lookup_model(
+//                baseUri, uri(mur.scheme(), mur.authority(), mur.path(), newQuery, mur.fragment()));
+//        } else if (query->find("file=") < query->size()) {
+//            const auto pathToAppend = cosim::file_uri_to_path(baseUri).parent_path().string();
+//            const auto newQuery = "file=" + pathToAppend + "/" + std::string(query->substr(5));
+//            return model_uri_sub_resolver::lookup_model(
+//                baseUri, uri(mur.scheme(), mur.authority(), mur.path(), newQuery, mur.fragment()));
+//        }
+//    }
+//    return model_uri_sub_resolver::lookup_model(baseUri, mur);
+
+//    BOOST_LOG_SEV(log::logger(), log::warning)
+//        << "model query has query: " << (modelUri.query());
 
     BOOST_LOG_SEV(log::logger(), log::warning)
         << "model uri view : " << modelUri.view();
+
+
+//    BOOST_LOG_SEV(log::logger(), log::warning)
+//        << "model query file: " << (modelUri.query()->find("file=") -> modelUri.query()->size());
+
+
+    //const auto modelUri = resolve_reference(baseURI, "proxyfmu://10.1.13.178:9090?file=88EAF9B4-BAAB-449C-97A1-FEE85CDFE38C/Damper.fmu");
+
+
 
 
 
@@ -302,6 +342,18 @@ BOOST_AUTO_TEST_CASE(file_uri_conversions)
 
         BOOST_LOG_SEV(log::logger(), log::warning)
             << "model uri file config : " << configFile;
+
+
+
+        BOOST_LOG_SEV(log::logger(), log::warning)
+            << "model uri file config uri: " << path_to_file_uri(configFile.parent_path());
+
+            // path_to_file_uri
+
+
+
+//        BOOST_LOG_SEV(log::logger(), log::warning)
+//            << "model uri file config file uri to path : " << file_uri_to_path(modelUri.view().substr(modelUri.view().find("file=") + 5)).remove_filename();
 
         BOOST_LOG_SEV(log::logger(), log::warning)
             << "model uri file parent : " << configFile.parent_path();
