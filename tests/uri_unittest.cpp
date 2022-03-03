@@ -329,6 +329,38 @@ BOOST_AUTO_TEST_CASE(file_uri_conversions)
     // str.substr(str.find("file=") + 5)
 
     std::string msmiFileName = "Damper_OspModelDescription.xml";
+
+
+    cosim::filesystem::path msmiFilePath;
+
+
+    const auto query = *modelUri.query();
+    if (query.substr(0, 5) == "file=") {
+        auto queryPath = cosim::filesystem::path(std::string(query.substr(5)));
+        msmiFilePath = configFile.parent_path() / queryPath.remove_filename() / msmiFileName;
+
+        BOOST_LOG_SEV(log::logger(), log::warning)
+            << "msmi file path query: " << msmiFilePath;
+
+//        if (!cosim::filesystem::exists(file)) {
+//            BOOST_LOG_SEV(log::logger(), log::warning)
+//                << "no query file : " << file.string();
+//        } else {
+//            BOOST_LOG_SEV(log::logger(), log::warning)
+//                << "query file found: " << file.string();
+//        }
+    } else {
+        BOOST_LOG_SEV(log::logger(), log::warning)
+            << "no file in query: ";
+    }
+
+    // msmiFilePath = configFile.parent_path() / cosim::filesystem::path(modelUri.view().substr(modelUri.view().find("file=") + 5)).remove_filename() / msmiFileName;
+
+
+
+
+
+
     //const auto testDataDir = std::getenv("TEST_DATA_DIR");
     // cosim::filesystem::path(testDataDir)
 
