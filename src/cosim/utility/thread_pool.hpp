@@ -1,4 +1,12 @@
-
+/**
+*  \file
+*  Slave interface.
+*
+*  \copyright
+*      This Source Code Form is subject to the terms of the Mozilla Public
+*      License, v. 2.0. If a copy of the MPL was not distributed with this
+*      file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
 #ifndef COSIM_UTILITY_THREAD_POOL_HPP
 #define COSIM_UTILITY_THREAD_POOL_HPP
 
@@ -55,6 +63,10 @@ public:
             done_ = true;
             throw;
         }
+    }
+
+    size_t numWorkerThreads() const {
+        return threads_.size();
     }
 
     void wait_for_tasks_to_finish()

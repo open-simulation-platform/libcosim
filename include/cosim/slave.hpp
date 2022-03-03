@@ -23,49 +23,6 @@
 namespace cosim
 {
 
-/// Symbolic constants that represent the state of a slave.
-enum class slave_state
-{
-    /**
-     *  The slave exists but has not been configured yet.
-     *
-     *  The slave is in this state from its creation until `setup()` is called.
-     */
-    created,
-
-    /**
-     *  The slave is in initialisation mode.
-     *
-     *  The slave is in this state from the time `setup()` is called and until
-     *  `start_simulation()` is called.
-     */
-    initialisation,
-
-    /**
-     *  The slave is in simulation mode.
-     *
-     *  The slave is in this state from the time `start_simulation()` is called
-     *  and until `end_simulation()` is called.
-     */
-    simulation,
-
-    /**
-     *  The slave is terminated.
-     *
-     *  The slave is in this state from the time `end_simulation()` is called
-     *  and until its destruction.
-     */
-    terminated,
-
-    /**
-     *  An irrecoverable error occurred.
-     *
-     *  The slave is in this state from the time an exception is thrown and
-     *  until its destruction.
-     */
-    error
-};
-
 /**
  *  An interface for classes that represent co-simulation slaves.
  *

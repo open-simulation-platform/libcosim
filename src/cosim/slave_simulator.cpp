@@ -31,6 +31,85 @@ struct var_view_type<std::string>
     using type = std::string_view;
 };
 
+/**
+ *  Helper class which checks, sets and resets the state variable for
+ *  an `slave_simulator`.
+ *
+ *  The constructors of this class take a reference to the `slave_state`
+ *  variable to be managed, and immediately set it to `indeterminate`.
+ *  On destruction, the managed variable will be automatically set to
+ *  a specified value, or, if an exception is currently "in flight", to
+ *  the special `error` value.
+ */
+class state_guard
+{
+public:
+    /**
+     *  Constructs a `state_guard` that sets `stateVariable` to `finalState`
+     *  on destruction.
+     */
+    state_guard(slave_state& stateVariable, slave_state finalState)
+        : stateVariable_(&stateVariable)
+        , finalState_(finalState)
+    {
+        stateVariable = slave_state::indeterminate;
+    }
+
+    /**
+     *  Constructs a `state_guard` that resets `stateVariable` to its original
+     *  value on destruction.
+     */
+    state_guard(slave_state& stateVariable)
+        : state_guard(stateVariable, stateVariable)
+    { }
+
+    /**
+     *  Manually sets the managed variable to its final value and relinquishes
+     *  control of it.  Does not check for exceptions.
+     */
+    void reset() noexcept
+    {
+        if (stateVariable_ != nullptr) {
+            *stateVariable_ = finalState_;
+            stateVariable_ = nullptr;
+        }
+    }
+
+    ~state_guard() noexcept
+    {
+        if (stateVariable_ != nullptr) {
+            if (std::uncaught_exceptions()) {
+                *stateVariable_ = slave_state::error;
+            } else {
+                *stateVariable_ = finalState_;
+            }
+        }
+    }
+
+    // Disallow copying, so that we don't inadvertently end up in a situation
+    // where multiple `state_guard` objects try to manage the same state.
+    state_guard(const state_guard&) = delete;
+    state_guard& operator=(const state_guard&) = delete;
+
+    state_guard(state_guard&& other) noexcept
+        : stateVariable_(other.stateVariable_)
+        , finalState_(other.finalState_)
+    {
+        other.stateVariable_ = nullptr;
+    }
+    state_guard& operator=(state_guard&& other) noexcept
+    {
+        stateVariable_ = other.stateVariable_;
+        finalState_ = other.finalState_;
+        other.stateVariable_ = nullptr;
+        return *this;
+    }
+
+private:
+    slave_state* stateVariable_;
+    slave_state finalState_;
+};
+
 
 template<typename T>
 struct get_variable_cache
@@ -246,7 +325,6 @@ public:
         return modelDescription_;
     }
 
-
     void expose_for_getting(variable_type type, value_reference ref)
     {
         switch (type) {
@@ -422,17 +500,12 @@ public:
 
     void do_iteration()
     {
-
         set_variables(duration::zero());
         get_variables(duration::zero());
     }
 
     void start_simulation()
     {
-        //        if (slave_->state() != slave_state::initialisation) {
-        //            COSIM_PANIC();
-        //        }
-
         slave_->start_simulation();
         get_variables(duration::zero());
     }
@@ -541,6 +614,7 @@ slave_simulator::slave_simulator(
     std::shared_ptr<slave> slave,
     std::string_view name)
     : pimpl_(std::make_unique<impl>(std::move(slave), name))
+    , state_(slave_state::created)
 {
 }
 
@@ -560,6 +634,7 @@ std::string slave_simulator::name() const
 
 cosim::model_description slave_simulator::model_description() const
 {
+    COSIM_PRECONDITION(state_ != slave_state::error);
     return pimpl_->model_description();
 }
 
@@ -704,9 +779,10 @@ void slave_simulator::setup(
     std::optional<time_point> stopTime,
     std::optional<double> relativeTolerance)
 {
+    COSIM_PRECONDITION(state_ == slave_state::created);
+    state_guard guard(state_, slave_state::initialisation);
     return pimpl_->setup(startTime, stopTime, relativeTolerance);
 }
-
 
 void slave_simulator::do_iteration()
 {
@@ -715,6 +791,8 @@ void slave_simulator::do_iteration()
 
 void slave_simulator::start_simulation()
 {
+    COSIM_PRECONDITION(state_ == slave_state::initialisation);
+    state_guard guard(state_, slave_state::simulation);
     return pimpl_->start_simulation();
 }
 
@@ -722,6 +800,8 @@ step_result slave_simulator::do_step(
     time_point currentT,
     duration deltaT)
 {
+    COSIM_PRECONDITION(state_ == slave_state::simulation);
+    state_guard guard(state_);
     return pimpl_->do_step(currentT, deltaT);
 }
 
