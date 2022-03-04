@@ -183,7 +183,6 @@ public:
         it->second.lastValue = v;
         if (it->second.arrayIndex < 0) {
             it->second.arrayIndex = references_.size();
-            back_refs_[r] = references_.size();
             assert(references_.size() == values_.size());
             references_.emplace_back(r);
             values_.emplace_back(v);
@@ -206,7 +205,6 @@ public:
         if (it->second.arrayIndex < 0) {
             // Ensure that the simulator receives an updated value.
             it->second.arrayIndex = references_.size();
-            back_refs_[r] = references_.size();
             assert(references_.size() == values_.size());
             references_.emplace_back(r);
             values_.emplace_back(it->second.lastValue);
@@ -225,16 +223,14 @@ public:
                 const auto ref = entry.first;
                 if (exposedVariables_.at(ref).arrayIndex < 0) {
                     exposedVariables_.at(ref).arrayIndex = references_.size();
-                    back_refs_[ref] = references_.size();
                     assert(references_.size() == values_.size());
                     references_.emplace_back(ref);
                     values_.emplace_back(exposedVariables_.at(ref).lastValue);
                 }
-                const auto it = back_refs_.find(ref);
-                if (it != back_refs_.end()) {
-                    values_[it->second] = entry.second(values_[it->second], deltaT);
-                }
+                const auto index = exposedVariables_.at(ref).arrayIndex;
+                values_[index] = entry.second(values_[index], deltaT);
             }
+            assert(references_.size() == values_.size());
             hasRunModifiers_ = true;
         }
         return std::pair(gsl::make_span(references_), gsl::make_span(values_));
@@ -271,7 +267,6 @@ private:
 
     // The references and values of the variables that will be set next.
     std::vector<value_reference> references_;
-    std::unordered_map<value_reference, size_t> back_refs_;
     boost::container::vector<T> values_;
 };
 
