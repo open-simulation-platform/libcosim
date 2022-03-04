@@ -528,9 +528,9 @@ uri path_to_file_uri(const cosim::filesystem::path& path)
 
 cosim::filesystem::path file_uri_to_path(const uri& fileUri)
 {
-    COSIM_INPUT_CHECK(fileUri.scheme() && (*fileUri.scheme() == "file" || *fileUri.scheme() == "proxyfmu"));
+    COSIM_INPUT_CHECK(fileUri.scheme() && (*fileUri.scheme() == "file"));
     COSIM_INPUT_CHECK(fileUri.authority()
-        // && (fileUri.authority()->empty() || *fileUri.authority() == "localhost")
+        && (fileUri.authority()->empty() || *fileUri.authority() == "localhost")
         );
 
 
@@ -558,6 +558,23 @@ cosim::filesystem::path file_uri_to_path(const uri& fileUri)
 #else
     return cosim::filesystem::path(percent_decode(fileUri.path()));
 #endif
+}
+
+cosim::filesystem::path file_query_uri_to_path(
+    const uri& baseUri,
+    const uri& queryUri)
+{
+    COSIM_INPUT_CHECK(queryUri.scheme());
+    COSIM_INPUT_CHECK(queryUri.authority());
+    const auto query = queryUri.query();
+    if (query && query->find("file=") < query->size()) {
+        if (query->find("file=file:///") < query->size()) {
+            return cosim::filesystem::path(std::string(query->substr(13)));
+        }
+        const auto pathToAppend = cosim::file_uri_to_path(baseUri).parent_path().string();
+        return cosim::filesystem::path(pathToAppend + "/" + std::string(query->substr(5)));
+    }
+    return file_uri_to_path(baseUri).parent_path();
 }
 
 

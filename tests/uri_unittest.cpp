@@ -334,29 +334,40 @@ BOOST_AUTO_TEST_CASE(file_uri_conversions)
     cosim::filesystem::path msmiFilePath;
 
 
-    const auto query = *modelUri.query();
-    if (query.substr(0, 5) == "file=") {
-        auto queryPath = cosim::filesystem::path(std::string(query.substr(5)));
-        msmiFilePath = configFile.parent_path() / queryPath.remove_filename() / msmiFileName;
+//    const auto query = *modelUri.query();
+//    if (query.substr(0, 5) == "file=") {
+//        auto queryPath = cosim::filesystem::path(std::string(query.substr(5)));
+//        msmiFilePath = configFile.parent_path() / queryPath.remove_filename() / msmiFileName;
+//
+//
+//
+//        BOOST_LOG_SEV(log::logger(), log::warning)
+//            << "msmi file path query: " << msmiFilePath;
+//
+////        if (!cosim::filesystem::exists(file)) {
+////            BOOST_LOG_SEV(log::logger(), log::warning)
+////                << "no query file : " << file.string();
+////        } else {
+////            BOOST_LOG_SEV(log::logger(), log::warning)
+////                << "query file found: " << file.string();
+////        }
+//    } else {
+//        BOOST_LOG_SEV(log::logger(), log::warning)
+//            << "no file in query: ";
+//    }
 
-        BOOST_LOG_SEV(log::logger(), log::warning)
-            << "msmi file path query: " << msmiFilePath;
 
-//        if (!cosim::filesystem::exists(file)) {
-//            BOOST_LOG_SEV(log::logger(), log::warning)
-//                << "no query file : " << file.string();
-//        } else {
-//            BOOST_LOG_SEV(log::logger(), log::warning)
-//                << "query file found: " << file.string();
-//        }
-    } else {
-        BOOST_LOG_SEV(log::logger(), log::warning)
-            << "no file in query: ";
-    }
+
+    msmiFilePath = file_query_uri_to_path(baseURI, modelUri).remove_filename() / msmiFileName;
 
     // msmiFilePath = configFile.parent_path() / cosim::filesystem::path(modelUri.view().substr(modelUri.view().find("file=") + 5)).remove_filename() / msmiFileName;
 
 
+    BOOST_LOG_SEV(log::logger(), log::warning)
+        << "proxyfmu uri relative : " << file_query_uri_to_path(baseURI, modelUri);
+
+    BOOST_LOG_SEV(log::logger(), log::warning)
+        << "msmi file path: " << msmiFilePath;
 
 
 
@@ -414,5 +425,7 @@ BOOST_AUTO_TEST_CASE(file_uri_conversions)
     // proxyfmu://10.1.13.178:9090?file=88EAF9B4-BAAB-449C-97A1-FEE85CDFE38C/Damper.fmu
     BOOST_CHECK_THROW(file_uri_to_path("http://foo/bar"), std::invalid_argument);
     //BOOST_CHECK_THROW(file_uri_to_path("proxyfmu://10.1.13.178:9090?file=88EAF9B4-BAAB-449C-97A1-FEE85CDFE38C/Damper.fmu"), std::invalid_argument);
-    // BOOST_CHECK_THROW(file_uri_to_path("file://foo/bar"), std::invalid_argument);
+    // BOOST_CHECK_THROW(file_uri_to_path("file://foo/bar"), std::invalid_argument);'
+
+    //BOOST_TEST(file_query_uri_to_path("", "proxyfmu:///foo/bar?file=baz") == "\\foo bar\\baz");
 }

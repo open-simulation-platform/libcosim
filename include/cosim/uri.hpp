@@ -266,12 +266,27 @@ uri path_to_file_uri(const cosim::filesystem::path& path);
  *
  *  \param [in] fileUri
  *      An URI where the scheme component is equal to `file` and the `authority`
- *      component is either empty or equel to `localhost` (but not undefined).
+ *      component is either empty or equal to `localhost` (but not undefined).
  *
  *  \returns
  *      The path that corresponds to `fileUri`.
  */
 cosim::filesystem::path file_uri_to_path(const uri& fileUri);
+
+
+/**
+ *  Converts a query parameter URI to a local filesystem path.
+ *
+ *  \param [in] baseUri
+ *      An (absolute) base URI.
+ *  \param [in] queryUri
+ *      An URI with arbitrary scheme component. Query file parameter path (if any)
+ *      is specified after `file=`. A prefix of `file:///` specifies absolute path.
+ *
+ *  \returns
+ *      The path that corresponds to `queryUri` parameter or the `baseUri` parent path.
+ */
+cosim::filesystem::path file_query_uri_to_path(const uri& baseUri, const uri& queryUri);
 
 
 } // namespace cosim

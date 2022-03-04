@@ -42,6 +42,17 @@ std::shared_ptr<cosim::model> cosim::proxy::proxy_uri_sub_resolver::lookup_model
     return model_uri_sub_resolver::lookup_model(baseUri, mur);
 }
 
+//cosim::filesystem::path cosim::proxy::file_query_relative_path(const cosim::uri& modelUri)
+//{
+//    assert(modelUri.scheme().has_value());
+//    if (*modelUri.scheme() != "proxyfmu") return nullptr;
+//    COSIM_INPUT_CHECK(modelUri.authority());
+//    COSIM_INPUT_CHECK(modelUri.query());
+//
+//
+//
+//}
+
 std::shared_ptr<cosim::model> cosim::proxy::proxy_uri_sub_resolver::lookup_model(const cosim::uri& modelUri)
 {
     assert(modelUri.scheme().has_value());
