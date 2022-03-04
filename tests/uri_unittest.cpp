@@ -1,16 +1,10 @@
 #define BOOST_TEST_MODULE uri.hpp unittests
-
 #include <cosim/uri.hpp>
 
 #include <boost/test/unit_test.hpp>
-#include "cosim/log/logger.hpp"
-
-//#include <cosim/fs_portability.hpp>
-//#include <cosim/orchestration.hpp>
-
-//#include <cosim/orchestration.hpp>
-
-#include <cosim/orchestration.hpp>
+#include <cosim/log/logger.hpp>
+//#include "cosim/log/logger.hpp"
+////#include <cosim/orchestration.hpp>
 
 #include <stdexcept>
 
@@ -119,13 +113,13 @@ BOOST_AUTO_TEST_CASE(uri_copy_and_move)
 
     // Special case: Short strings which may be affected by the small-string
     // optimisation (see issue #361)
-//    auto small = uri("x");
-//    const auto smallCopy = small;
-//    const auto smallMove = std::move(small);
-//    small = uri();
-//
-//    BOOST_TEST(smallCopy.path() == "x");
-//    BOOST_TEST(smallMove.path() == "x");
+    auto small = uri("x");
+    const auto smallCopy = small;
+    const auto smallMove = std::move(small);
+    small = uri();
+
+    BOOST_TEST(smallCopy.path() == "x");
+    BOOST_TEST(smallMove.path() == "x");
 }
 
 
@@ -252,30 +246,30 @@ BOOST_AUTO_TEST_CASE(file_uri_conversions)
     // const cosim::filesystem::path configPath = cosim::filesystem::path("C://asdfasdf/asdfasasdf/OspSystemStructure.xml");
 
 
-    const auto testDataDir = std::getenv("TEST_DATA_DIR");
-    //BOOST_TEST_REQUIRE(!!testDataDir);
-    const auto configPath = cosim::filesystem::path(testDataDir) / "msmi" / "OspSystemStructure.xml";
+//    const auto testDataDir = std::getenv("TEST_DATA_DIR");
+//    //BOOST_TEST_REQUIRE(!!testDataDir);
+//    const auto configPath = cosim::filesystem::path(testDataDir) / "msmi" / "OspSystemStructure.xml";
 
 
 
-    const auto absolutePath = cosim::filesystem::absolute(configPath);
-    const auto configFile = cosim::filesystem::is_regular_file(absolutePath)
-        ? absolutePath
-        //: absolutePath;
-        : absolutePath / "OspSystemStructure.xml";
-    const auto baseURI = path_to_file_uri(configFile);
+//    const auto absolutePath = cosim::filesystem::absolute(configPath);
+//    const auto configFile = cosim::filesystem::is_regular_file(absolutePath)
+//        ? absolutePath
+//        //: absolutePath;
+//        : absolutePath / "OspSystemStructure.xml";
+    //const auto baseURI = path_to_file_uri(configFile);
     //const auto baseURI = path_to_file_uri(absolutePath);
 
     //configFile.parent_path()
 
 
-    const auto modelPathLocal = cosim::filesystem::path(testDataDir) / "msmi" / "D679C8C9-657E-39E9-8B4E-0799CA3745E4" / "Damper_OspModelDescription.xml";
+    //const auto modelPathLocal = cosim::filesystem::path(testDataDir) / "msmi" / "D679C8C9-657E-39E9-8B4E-0799CA3745E4" / "Damper_OspModelDescription.xml";
 
     // const auto modelUriLocal = resolve_reference(baseURI, modelPathLocal);
 
     // const auto modelURI =
 
-    const auto modelUri = resolve_reference(baseURI, "proxyfmu://10.1.13.178:9090?file=D679C8C9-657E-39E9-8B4E-0799CA3745E4/Damper.fmu");
+    // const auto modelUri = resolve_reference(baseURI, "proxyfmu://10.1.13.178:9090?file=D679C8C9-657E-39E9-8B4E-0799CA3745E4/Damper.fmu");
 
     //auto resolver = cosim::default_model_uri_resolver();
     // resolver.add_sub_resolver(std::make_shared<cosim::fmu_file_uri_sub_resolver>());
@@ -301,8 +295,8 @@ BOOST_AUTO_TEST_CASE(file_uri_conversions)
 //    BOOST_LOG_SEV(log::logger(), log::warning)
 //        << "model query has query: " << (modelUri.query());
 
-    BOOST_LOG_SEV(log::logger(), log::warning)
-        << "model uri view : " << modelUri.view();
+//    BOOST_LOG_SEV(log::logger(), log::warning)
+//        << "model uri view : " << modelUri.view();
 
 
 //    BOOST_LOG_SEV(log::logger(), log::warning)
@@ -328,10 +322,37 @@ BOOST_AUTO_TEST_CASE(file_uri_conversions)
 
     // str.substr(str.find("file=") + 5)
 
-    std::string msmiFileName = "Damper_OspModelDescription.xml";
+    const auto baseURI = uri("file:///c:/foo/bar");
+
+    // const auto fileName
+
+    BOOST_LOG_SEV(log::logger(), log::warning)
+        << "file uri query: " << file_query_uri_to_path(baseURI, "proxyfmu://foo/bar?file=baz.txt");
+    BOOST_TEST(file_query_uri_to_path(baseURI, "proxyfmu://foo%20bar/bar/?file=baz.txt") == "c:\\foo\\baz.txt");
+    BOOST_LOG_SEV(log::logger(), log::warning)
+        << "file uri query: " << file_query_uri_to_path(baseURI, "proxyfmu://foo%20bar/foo/bar?file=foo/baz.txt");
+    BOOST_TEST(file_query_uri_to_path(baseURI, "proxyfmu://foo%20bar/foo/bar?file=foo/baz.txt") == "c:\\foo\\foo/baz.txt");
+    BOOST_LOG_SEV(log::logger(), log::warning)
+        << "file uri query: " << file_query_uri_to_path(baseURI, "http://foo/bar?file=baz.txt");
+    BOOST_TEST(file_query_uri_to_path(baseURI, "http://foo%20bar/bar/?file=baz.txt") == "c:\\foo\\baz.txt");
+    BOOST_LOG_SEV(log::logger(), log::warning)
+        << "file uri query: " << file_query_uri_to_path(baseURI, "http://foo%20bar/foo/bar?file=foo/baz.txt");
+    BOOST_TEST(file_query_uri_to_path(baseURI, "http://foo%20bar/foo/bar?file=foo/baz.txt") == "c:\\foo\\foo/baz.txt");
 
 
-    cosim::filesystem::path msmiFilePath;
+    BOOST_LOG_SEV(log::logger(), log::warning)
+        << "file uri query: " << file_query_uri_to_path(baseURI, "proxyfmu://foo/bar?file=file:///c:/baz.txt");
+    BOOST_TEST(file_query_uri_to_path(baseURI, "proxyfmu://foo/bar?file=file:///c:/baz.txt") == "c:/baz.txt");
+//    BOOST_LOG_SEV(log::logger(), log::warning)
+//        << "file uri query: " << file_query_uri_to_path(baseURI, "proxyfmu://foo%20bar/foo/bar?file=foo/baz.txt");
+
+
+
+
+//    std::string msmiFileName = "Damper_OspModelDescription.xml";
+//
+//
+//    cosim::filesystem::path msmiFilePath;
 
 
 //    const auto query = *modelUri.query();
@@ -358,16 +379,16 @@ BOOST_AUTO_TEST_CASE(file_uri_conversions)
 
 
 
-    msmiFilePath = file_query_uri_to_path(baseURI, modelUri).remove_filename() / msmiFileName;
+    // msmiFilePath = file_query_uri_to_path(baseURI, modelUri).remove_filename() / msmiFileName;
 
     // msmiFilePath = configFile.parent_path() / cosim::filesystem::path(modelUri.view().substr(modelUri.view().find("file=") + 5)).remove_filename() / msmiFileName;
 
 
-    BOOST_LOG_SEV(log::logger(), log::warning)
-        << "proxyfmu uri relative : " << file_query_uri_to_path(baseURI, modelUri);
+//    BOOST_LOG_SEV(log::logger(), log::warning)
+//        << "proxyfmu uri relative : " << file_query_uri_to_path(baseURI, modelUri);
 
-    BOOST_LOG_SEV(log::logger(), log::warning)
-        << "msmi file path: " << msmiFilePath;
+//    BOOST_LOG_SEV(log::logger(), log::warning)
+//        << "msmi file path: " << msmiFilePath;
 
 
 
@@ -380,16 +401,16 @@ BOOST_AUTO_TEST_CASE(file_uri_conversions)
 
     // cosim::filesystem::path file = cosim::filesystem::path(modelUri.view().substr(modelUri.view().find("file=") + 5)).remove_filename();
 
-        BOOST_LOG_SEV(log::logger(), log::warning)
-            << "model uri file : " << configFile.parent_path() / cosim::filesystem::path(modelUri.view().substr(modelUri.view().find("file=") + 5)).remove_filename() / msmiFileName;
+//        BOOST_LOG_SEV(log::logger(), log::warning)
+//            << "model uri file : " << configFile.parent_path() / cosim::filesystem::path(modelUri.view().substr(modelUri.view().find("file=") + 5)).remove_filename() / msmiFileName;
 
-        BOOST_LOG_SEV(log::logger(), log::warning)
-            << "model uri file config : " << configFile;
+//        BOOST_LOG_SEV(log::logger(), log::warning)
+//            << "model uri file config : " << configFile;
 
 
 
-        BOOST_LOG_SEV(log::logger(), log::warning)
-            << "model uri file config uri: " << path_to_file_uri(configFile.parent_path());
+//        BOOST_LOG_SEV(log::logger(), log::warning)
+//            << "model uri file config uri: " << path_to_file_uri(configFile.parent_path());
 
             // path_to_file_uri
 
@@ -398,17 +419,17 @@ BOOST_AUTO_TEST_CASE(file_uri_conversions)
 //        BOOST_LOG_SEV(log::logger(), log::warning)
 //            << "model uri file config file uri to path : " << file_uri_to_path(modelUri.view().substr(modelUri.view().find("file=") + 5)).remove_filename();
 
-        BOOST_LOG_SEV(log::logger(), log::warning)
-            << "model uri file parent : " << configFile.parent_path();
+//        BOOST_LOG_SEV(log::logger(), log::warning)
+//            << "model uri file parent : " << configFile.parent_path();
 
-        BOOST_LOG_SEV(log::logger(), log::warning)
-            << "model uri file parent substring : " << modelUri.view().substr(modelUri.view().find("file=") + 5);
+//        BOOST_LOG_SEV(log::logger(), log::warning)
+//            << "model uri file parent substring : " << modelUri.view().substr(modelUri.view().find("file=") + 5);
 
-        BOOST_LOG_SEV(log::logger(), log::warning)
-            << "model uri file file : " << cosim::filesystem::path(modelUri.view().substr(modelUri.view().find("file=") + 5)).remove_filename();
+//        BOOST_LOG_SEV(log::logger(), log::warning)
+//            << "model uri file file : " << cosim::filesystem::path(modelUri.view().substr(modelUri.view().find("file=") + 5)).remove_filename();
 
-        BOOST_LOG_SEV(log::logger(), log::warning)
-            << "model uri file msmi : " << msmiFileName;
+//        BOOST_LOG_SEV(log::logger(), log::warning)
+//            << "model uri file msmi : " << msmiFileName;
 
 
 
@@ -422,10 +443,6 @@ BOOST_AUTO_TEST_CASE(file_uri_conversions)
     BOOST_TEST(file_uri_to_path("file://localhost/foo%20bar/baz") == "/foo bar/baz");
     BOOST_TEST(file_uri_to_path("file://localhost/c:/foo%20bar/baz") == "/c:/foo bar/baz");
 #endif
-    // proxyfmu://10.1.13.178:9090?file=88EAF9B4-BAAB-449C-97A1-FEE85CDFE38C/Damper.fmu
     BOOST_CHECK_THROW(file_uri_to_path("http://foo/bar"), std::invalid_argument);
-    //BOOST_CHECK_THROW(file_uri_to_path("proxyfmu://10.1.13.178:9090?file=88EAF9B4-BAAB-449C-97A1-FEE85CDFE38C/Damper.fmu"), std::invalid_argument);
-    // BOOST_CHECK_THROW(file_uri_to_path("file://foo/bar"), std::invalid_argument);'
-
-    //BOOST_TEST(file_query_uri_to_path("", "proxyfmu:///foo/bar?file=baz") == "\\foo bar\\baz");
+    BOOST_CHECK_THROW(file_uri_to_path("file://foo/bar"), std::invalid_argument);
 }

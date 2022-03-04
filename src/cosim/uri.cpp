@@ -528,11 +528,9 @@ uri path_to_file_uri(const cosim::filesystem::path& path)
 
 cosim::filesystem::path file_uri_to_path(const uri& fileUri)
 {
-    COSIM_INPUT_CHECK(fileUri.scheme() && (*fileUri.scheme() == "file"));
-    COSIM_INPUT_CHECK(fileUri.authority()
-        && (fileUri.authority()->empty() || *fileUri.authority() == "localhost")
-        );
-
+    COSIM_INPUT_CHECK(fileUri.scheme() && *fileUri.scheme() == "file");
+    COSIM_INPUT_CHECK(fileUri.authority() &&
+        (fileUri.authority()->empty() || *fileUri.authority() == "localhost"));
 
 #ifdef _WIN32
     // Windows has some special rules for file URIs; better use the built-in
@@ -571,8 +569,8 @@ cosim::filesystem::path file_query_uri_to_path(
         if (query->find("file=file:///") < query->size()) {
             return cosim::filesystem::path(std::string(query->substr(13)));
         }
-        const auto pathToAppend = cosim::file_uri_to_path(baseUri).parent_path().string();
-        return cosim::filesystem::path(pathToAppend + "/" + std::string(query->substr(5)));
+        const auto pathToAppend = cosim::file_uri_to_path(baseUri).parent_path();
+        return pathToAppend / cosim::filesystem::path(std::string(query->substr(5)));
     }
     return file_uri_to_path(baseUri).parent_path();
 }
