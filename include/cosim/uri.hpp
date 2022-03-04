@@ -275,13 +275,13 @@ cosim::filesystem::path file_uri_to_path(const uri& fileUri);
 
 
 /**
- *  Converts a query parameter URI to a local filesystem path.
+ *  Converts a URI with query parameter to a local filesystem path.
  *
  *  \param [in] baseUri
  *      An (absolute) base URI.
  *  \param [in] queryUri
  *      An URI with arbitrary scheme component. Query file parameter path (if any)
- *      is specified after `file=`. A prefix of `file:///` specifies absolute path.
+ *      is specified after `file=`. Prefix `file:///` can be used for absolute path.
  *
  *  \returns
  *      The path that corresponds to `queryUri` parameter or the `baseUri` parent path.

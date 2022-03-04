@@ -938,13 +938,9 @@ osp_config load_osp_config(
         const auto modelUri = resolve_reference(baseURI, simulator.source);
         cosim::filesystem::path msmiFilePath;
 
-//        msmiFilePath = modelUri.view().substr(modelUri.view().find("file=") + 5);
-//        BOOST_LOG_SEV(log::logger(), log::error) << "msmiFilePath: " << msmiFilePath;
-
         msmiFilePath = (modelUri.scheme() == "file")
             ? file_uri_to_path(modelUri).remove_filename() / msmiFileName
             : file_query_uri_to_path(baseURI, modelUri).remove_filename() / msmiFileName;
-
         if (cosim::filesystem::exists(msmiFilePath)) {
             BOOST_LOG_SEV(log::logger(), log::error) << "msmiFilePath function exists: " << msmiFilePath;
             emds.emplace(simulator.name, msmiFilePath);
@@ -955,155 +951,6 @@ osp_config load_osp_config(
                 emds.emplace(simulator.name, msmiFilePath);
             }
         }
-
-//        if (modelUri.scheme() == "file") {
-//            msmiFilePath = file_uri_to_path(modelUri).remove_filename() / msmiFileName;
-////            BOOST_LOG_SEV(log::logger(), log::error) << "msmiFilePath: " << msmiFilePath;
-////            BOOST_LOG_SEV(log::logger(), log::error) <<
-////                "msmiFilePath proxy: " << file_uri_to_path("proxyfmu://10.1.13.178:9090?file=88EAF9B4-BAAB-449C-97A1-FEE85CDFE38C/Damper.fmu").remove_filename() / msmiFileName;
-//            if (cosim::filesystem::exists(msmiFilePath)) {
-//                emds.emplace(simulator.name, msmiFilePath);
-//            } else {
-//                msmiFilePath = configFile.parent_path() / msmiFileName;
-//                if (cosim::filesystem::exists(msmiFilePath)) {
-//                    emds.emplace(simulator.name, msmiFilePath);
-//                }
-//            }
-//        }
-
-
-//        else if (modelUri.scheme() == "proxyfmu") {
-//            // msmiFilePath = configFile.parent_path() / proxyfmu_uri_to_relative_path(modelUri).remove_filename() / msmiFileName;
-//            msmiFilePath = proxyfmu_uri_to_path(baseURI, modelUri).remove_filename() / msmiFileName;
-//
-//            if (cosim::filesystem::exists(msmiFilePath)) {
-//                emds.emplace(simulator.name, msmiFilePath);
-//            } else {
-//                msmiFilePath = configFile.parent_path() / msmiFileName;
-//                if (cosim::filesystem::exists(msmiFilePath)) {
-//                    emds.emplace(simulator.name, msmiFilePath);
-//                }
-//            }
-//        }
-
-
-//        else if (modelUri.scheme() == "proxyfmu") {
-//            const auto query = *modelUri.query();
-//            if (query.substr(0, 5) == "file=") {
-//                auto queryPath = cosim::filesystem::path(std::string(query.substr(5)));
-//
-//                msmiFilePath = configFile.parent_path() / queryPath.remove_filename() / msmiFileName;
-//
-//                BOOST_LOG_SEV(log::logger(), log::warning)
-//                    << "msmi file path query: " << msmiFilePath;
-//            }
-//        }
-//        else {
-//            msmiFilePath = file_query_uri_to_path(baseURI, modelUri).remove_filename() / msmiFileName;
-//            if (cosim::filesystem::exists(msmiFilePath)) {
-//                emds.emplace(simulator.name, msmiFilePath);
-//            } else {
-//                msmiFilePath = configFile.parent_path() / msmiFileName;
-//                if (cosim::filesystem::exists(msmiFilePath)) {
-//                    emds.emplace(simulator.name, msmiFilePath);
-//                }
-//            }
-//
-//            // msmiFilePath = configFile.parent_path() / proxyfmu_uri_to_relative_path(modelUri).remove_filename() / msmiFileName;
-//
-//
-////            msmiFilePath = configFile.parent_path() / msmiFileName;
-////            if (cosim::filesystem::exists(msmiFilePath)) {
-////                BOOST_LOG_SEV(log::logger(), log::error) << "fmuproxy path default: " << msmiFilePath;
-////                BOOST_LOG_SEV(log::logger(), log::error) << "fmuproxy path default: simulator name: " << simulator.name;
-////                emds.emplace(simulator.name, msmiFilePath);
-////            }
-////            msmiFilePath = configFile.parent_path() / msmiFileName;
-////            if (cosim::filesystem::exists(msmiFilePath)) {
-////                BOOST_LOG_SEV(log::logger(), log::error) << "fmuproxy path default: " << msmiFilePath;
-////                BOOST_LOG_SEV(log::logger(), log::error) << "fmuproxy path default: simulator name: " << simulator.name;
-////                emds.emplace(simulator.name, msmiFilePath);
-////            }
-//            // Makes it possible to keep OspModelDescription at configuration path
-//            // even when there are FMUs with other URI than file.
-//            // Relative path to the OspModelDescription file can be specified as a file query parameter
-//
-//
-//
-////            if (modelUri.scheme().has_value() && modelUri.authority() && modelUri.query()) {
-////                const auto query = *modelUri.query();
-////                if (query.substr(0, 5) == "file=") {
-////                    auto queryFile = cosim::filesystem::path(std::string(query.substr(5)));
-////                    if (!cosim::filesystem::exists(queryFile)) {
-////                        msmiFilePath = configFile.parent_path() / queryFile.remove_filename() / msmiFileName;
-////
-////                        BOOST_LOG_SEV(log::logger(), log::warning)
-////                            << "msmi file path query: " << msmiFilePath;
-////
-////                        if (cosim::filesystem::exists(msmiFilePath)) {
-////                            BOOST_LOG_SEV(log::logger(), log::error) << "fmuproxy relative path query: " << msmiFilePath;
-////                            BOOST_LOG_SEV(log::logger(), log::error) << "fmuproxy relative path query: simulator name: " << simulator.name;
-////                            emds.emplace(simulator.name, msmiFilePath);
-////                        } else {
-////                            msmiFilePath = configFile.parent_path() / msmiFileName;
-////                            if (cosim::filesystem::exists(msmiFilePath)) {
-////                                BOOST_LOG_SEV(log::logger(), log::error) << "fmuproxy path no query: " << msmiFilePath;
-////                                BOOST_LOG_SEV(log::logger(), log::error) << "fmuproxy path no query: simulator name: " << simulator.name;
-////                                emds.emplace(simulator.name, msmiFilePath);
-////                            }
-////                        }
-////                    } else {
-////                        msmiFilePath = configFile.parent_path() / msmiFileName;
-////                        if (cosim::filesystem::exists(msmiFilePath)) {
-////                            BOOST_LOG_SEV(log::logger(), log::error) << "fmuproxy path default: " << msmiFilePath;
-////                            BOOST_LOG_SEV(log::logger(), log::error) << "fmuproxy path default: simulator name: " << simulator.name;
-////                            emds.emplace(simulator.name, msmiFilePath);
-////                        }
-////                    }
-////                } else {
-////                    msmiFilePath = configFile.parent_path() / msmiFileName;
-////                    if (cosim::filesystem::exists(msmiFilePath)) {
-////                        BOOST_LOG_SEV(log::logger(), log::error) << "fmuproxy path default: " << msmiFilePath;
-////                        BOOST_LOG_SEV(log::logger(), log::error) << "fmuproxy path default: simulator name: " << simulator.name;
-////                        emds.emplace(simulator.name, msmiFilePath);
-////                    }
-////                }
-////            }
-//
-//
-//
-////            assert(modelUri.scheme().has_value());
-////            if (*modelUri.scheme() != "proxyfmu") return nullptr;
-////            COSIM_INPUT_CHECK(modelUri.authority());
-////            COSIM_INPUT_CHECK(modelUri.query());
-//
-//
-//
-//            // Makes it possible to keep OspModelDescription at configuration path
-//            // even when there are FMUs with other URI than file (fmu-proxy).
-//            // msmiFilePath = file_uri_to_path(modelUri.view().substr(modelUri.view().find("file=") + 5)).remove_filename() /msmiFileName;
-//
-//            // msmiFilePath = configFile.parent_path().remove_filename() / cosim::filesystem::path(modelUri.view().substr(modelUri.view().find("file=") + 5)).remove_filename() / msmiFileName;
-//            //BOOST_LOG_SEV(log::logger(), log::error) << "msmiFilePath: " << msmiFilePath;
-//
-////            msmiFilePath = configFile.parent_path() / cosim::filesystem::path(modelUri.view().substr(modelUri.view().find("file=") + 5)).remove_filename() / msmiFileName;
-////
-////            // proxyfmu://10.1.13.203:9090?file=88EAF9B4-BAAB-449C-97A1-FEE85CDFE38C/Damper.fmu
-////
-////            // msmiFilePath = file_uri_to_path(modelUri).remove_filename() / msmiFileName;
-////            if (cosim::filesystem::exists(msmiFilePath)) {
-////                BOOST_LOG_SEV(log::logger(), log::error) << "fmuproxy relative path: " << msmiFilePath;
-////                BOOST_LOG_SEV(log::logger(), log::error) << "fmuproxy relative path: simulator name: " << simulator.name;
-////                emds.emplace(simulator.name, msmiFilePath);
-////            } else {
-////                msmiFilePath = configFile.parent_path() / msmiFileName;
-////                if (cosim::filesystem::exists(msmiFilePath)) {
-////                    BOOST_LOG_SEV(log::logger(), log::error) << "fmuproxy path default: " << msmiFilePath;
-////                    BOOST_LOG_SEV(log::logger(), log::error) << "fmuproxy path default: simulator name: " << simulator.name;
-////                    emds.emplace(simulator.name, msmiFilePath);
-////                }
-////            }
-//        }
     }
 
     connect_variables(parser.get_variable_connections(), config.system_structure);
