@@ -221,14 +221,14 @@ public:
         if (!hasRunModifiers_) {
             for (const auto& entry : modifiers_) {
                 const auto ref = entry.first;
-                if (exposedVariables_.at(ref).arrayIndex < 0) {
-                    exposedVariables_.at(ref).arrayIndex = references_.size();
+                auto& arrayIndex = exposedVariables_.at(ref).arrayIndex;
+                if (arrayIndex < 0) {
+                    arrayIndex = references_.size();
                     assert(references_.size() == values_.size());
                     references_.emplace_back(ref);
                     values_.emplace_back(exposedVariables_.at(ref).lastValue);
                 }
-                const auto index = exposedVariables_.at(ref).arrayIndex;
-                values_[index] = entry.second(values_[index], deltaT);
+                values_[arrayIndex] = entry.second(values_[arrayIndex], deltaT);
             }
             assert(references_.size() == values_.size());
             hasRunModifiers_ = true;
