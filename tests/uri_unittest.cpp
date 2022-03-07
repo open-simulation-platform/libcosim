@@ -235,24 +235,14 @@ BOOST_AUTO_TEST_CASE(file_query_uri_conversions)
     BOOST_TEST(file_query_uri_to_path(baseURI, "proxyfmu://foo/bar?file=file:///c:/baz.txt") == "c:\\baz.txt");
     BOOST_TEST(file_query_uri_to_path(baseURI, "http://foo%20baz/bar?file=file:///c:/foo/bar/baz.txt") == "c:\\foo\\bar\\baz.txt");
     BOOST_TEST(file_query_uri_to_path(baseURI, "http://foo%20baz/bar?foo=baz.txt") == "c:\\foo");
-
-
-//    BOOST_TEST(file_query_uri_to_path(baseURI, "proxyfmu://foo%20bar/bar?file=baz.txt") == "/c:/foo/baz.txt");
-//    BOOST_TEST(file_query_uri_to_path(baseURI, "proxyfmu://foo%20bar/bar/foo?file=bar/baz.txt") == "/c:/foo/bar/baz.txt");
-//    BOOST_TEST(file_query_uri_to_path(baseURI, "http://foo%20bar/bar?file=baz.txt") == "/c:/foo/baz.txt");
-//    BOOST_TEST(file_query_uri_to_path(baseURI, "http://foo%20bar/foo/bar?file=bar%20foo/baz.txt") == "/c:/foo/bar foo/baz.txt");
-//    BOOST_TEST(file_query_uri_to_path(baseURI, "proxyfmu://foo/bar?file=file:///c:/baz.txt") == "/c:/baz.txt");
-//    BOOST_TEST(file_query_uri_to_path(baseURI, "http://foo%20baz/bar?file=file:///c:/foo/bar/baz.txt") == "/c:/foo/bar/baz.txt");
-//    BOOST_TEST(file_query_uri_to_path(baseURI, "http://foo%20baz/bar?foo=baz.txt") == "/c:/foo");
-
-//#else
-//    BOOST_TEST(file_query_uri_to_path(baseURI, "proxyfmu://foo%20bar/bar?file=baz.txt") == "/c:/foo/baz.txt");
-//    BOOST_TEST(file_query_uri_to_path(baseURI, "proxyfmu://foo%20bar/bar/foo?file=bar/baz.txt") == "/c:/foo/bar/baz.txt");
-//    BOOST_TEST(file_query_uri_to_path(baseURI, "http://foo%20bar/bar?file=baz.txt") == "/c:/foo/baz.txt");
-//    BOOST_TEST(file_query_uri_to_path(baseURI, "http://foo%20bar/foo/bar?file=bar%20foo/baz.txt") == "/c:/foo/bar foo/baz.txt");
-//    BOOST_TEST(file_query_uri_to_path(baseURI, "proxyfmu://foo/bar?file=file:///c:/baz.txt") == "/c:/baz.txt");
-//    BOOST_TEST(file_query_uri_to_path(baseURI, "http://foo%20baz/bar?file=file:///c:/foo/bar/baz.txt") == "/c:/foo/bar/baz.txt");
-//    BOOST_TEST(file_query_uri_to_path(baseURI, "http://foo%20baz/bar?foo=baz.txt") == "/c:/foo");
+#else
+    BOOST_TEST(file_query_uri_to_path(baseURI, "proxyfmu://foo%20bar/bar?file=baz.txt") == "/c:/foo/baz.txt");
+    BOOST_TEST(file_query_uri_to_path(baseURI, "proxyfmu://foo%20bar/bar/foo?file=bar/baz.txt") == "/c:/foo/bar/baz.txt");
+    BOOST_TEST(file_query_uri_to_path(baseURI, "http://foo%20bar/bar?file=baz.txt") == "/c:/foo/baz.txt");
+    BOOST_TEST(file_query_uri_to_path(baseURI, "http://foo%20bar/foo/bar?file=bar%20foo/baz.txt") == "/c:/foo/bar foo/baz.txt");
+    BOOST_TEST(file_query_uri_to_path(baseURI, "proxyfmu://foo/bar?file=file:///c:/baz.txt") == "/c:/baz.txt");
+    BOOST_TEST(file_query_uri_to_path(baseURI, "http://foo%20baz/bar?file=file:///c:/foo/bar/baz.txt") == "/c:/foo/bar/baz.txt");
+    BOOST_TEST(file_query_uri_to_path(baseURI, "http://foo%20baz/bar?foo=baz.txt") == "/c:/foo");
 #endif
     BOOST_CHECK_THROW(file_query_uri_to_path(baseURI, "foo/bar/baz.txt"), std::invalid_argument);
 }
