@@ -2,6 +2,7 @@
 #include <cosim/uri.hpp>
 
 #include <boost/test/unit_test.hpp>
+#include "cosim/log/logger.hpp"
 
 #include <stdexcept>
 
@@ -228,6 +229,48 @@ BOOST_AUTO_TEST_CASE(file_query_uri_conversions)
     // From URI file query to path
     const auto baseURI = uri("file:///c:/foo/bar");
 #ifdef _WIN32
+
+//    const auto queryUri = uri("proxyfmu://foo%20bar/bar?file=baz.txt");
+//    const auto query = queryUri.query();
+
+//    BOOST_LOG_SEV(log::logger(), log::warning)
+//        << "model uri scheme: " << baseURI.scheme().value();
+//
+//    BOOST_LOG_SEV(log::logger(), log::warning)
+//        << "model uri authority: " << baseURI.authority().value();
+
+//    BOOST_LOG_SEV(log::logger(), log::warning)
+//        << "model uri view: " << uri(
+//                                      //baseUri.scheme(),
+//                                      //std::nullopt,
+//                                      //baseUri.authority(),
+//                                      //baseUri.path(),
+//                                      "file",
+//                                      std::nullopt,
+//                                      cosim::file_uri_to_path(baseURI).parent_path().string() + "/" + std::string(query->substr(5)));
+
+
+//    BOOST_LOG_SEV(log::logger(), log::warning)
+//        << "sub path: " << cosim::file_uri_to_path(uri("file", "", std::string(query->substr(5))));
+//
+//    BOOST_LOG_SEV(log::logger(), log::warning)
+//            << "new path: " << cosim::file_uri_to_path(baseURI).parent_path() / cosim::file_uri_to_path("file:///" + std::string(query->substr(5)));
+    BOOST_LOG_SEV(log::logger(), log::warning)
+        << "file uri";
+
+    BOOST_LOG_SEV(log::logger(), log::warning)
+        << "file uri view: " << baseURI.view();
+
+    const std::string emptyStr;
+
+//    BOOST_LOG_SEV(log::logger(), log::warning)
+//        << "file uri path: " << file_uri_to_path(uri(baseURI.scheme(), std::nullopt, "c:/foo/bar"));
+
+    BOOST_LOG_SEV(log::logger(), log::warning)
+        << "file uri path path: " << cosim::path_to_file_uri(cosim::file_uri_to_path(baseURI).parent_path());
+
+    // file_uri_to_path(uri(std::nullopt, std::nullopt, "c:/foo/bar"))
+
     BOOST_TEST(file_query_uri_to_path(baseURI, "proxyfmu://foo%20bar/bar?file=baz.txt") == "c:\\foo\\baz.txt");
     BOOST_TEST(file_query_uri_to_path(baseURI, "proxyfmu://foo%20bar/bar/foo?file=bar/baz.txt") == "c:\\foo\\bar\\baz.txt");
     BOOST_TEST(file_query_uri_to_path(baseURI, "http://foo%20bar/bar?file=baz.txt") == "c:\\foo\\baz.txt");
@@ -236,13 +279,14 @@ BOOST_AUTO_TEST_CASE(file_query_uri_conversions)
     BOOST_TEST(file_query_uri_to_path(baseURI, "http://foo%20baz/bar?file=file:///c:/foo/bar/baz.txt") == "c:\\foo\\bar\\baz.txt");
     BOOST_TEST(file_query_uri_to_path(baseURI, "http://foo%20baz/bar?foo=baz.txt") == "c:\\foo");
 #else
-    BOOST_TEST(file_query_uri_to_path(baseURI, "proxyfmu://foo%20bar/bar?file=baz.txt") == "//c:/foo/baz.txt");
-    BOOST_TEST(file_query_uri_to_path(baseURI, "proxyfmu://foo%20bar/bar/foo?file=bar/baz.txt") == "//c:/foo/bar/baz.txt");
-    BOOST_TEST(file_query_uri_to_path(baseURI, "http://foo%20bar/bar?file=baz.txt") == "//c:/foo/baz.txt");
-    BOOST_TEST(file_query_uri_to_path(baseURI, "http://foo%20bar/foo/bar?file=bar%20foo/baz.txt") == "//c:/foo/bar foo/baz.txt");
-    BOOST_TEST(file_query_uri_to_path(baseURI, "proxyfmu://foo/bar?file=file:///c:/baz.txt") == "//c:/baz.txt");
-    BOOST_TEST(file_query_uri_to_path(baseURI, "http://foo%20baz/bar?file=file:///c:/foo/bar/baz.txt") == "//c:/foo/bar/baz.txt");
-    BOOST_TEST(file_query_uri_to_path(baseURI, "http://foo%20baz/bar?foo=baz.txt") == "//c:/foo");
+    BOOST_TEST(file_query_uri_to_path(baseURI, "proxyfmu://foo%20bar/bar?file=baz.txt") == "/c:/foo/baz.txt");
+    BOOST_TEST(file_query_uri_to_path(baseURI, "proxyfmu://foo%20bar/bar/foo?file=bar/baz.txt") == "/c:/foo/bar/baz.txt");
+    BOOST_TEST(file_query_uri_to_path(baseURI, "http://foo%20bar/bar?file=baz.txt") == "/c:/foo/baz.txt");
+    BOOST_TEST(file_query_uri_to_path(baseURI, "http://foo%20bar/foo/bar?file=bar%20foo/baz.txt") == "/c:/foo/bar foo/baz.txt");
+    BOOST_TEST(file_query_uri_to_path(baseURI, "proxyfmu://foo/bar?file=file:///c:/baz.txt") == "/c:/baz.txt");
+    BOOST_TEST(file_query_uri_to_path(baseURI, "http://foo%20baz/bar?file=file:///c:/foo/bar/baz.txt") == "/c:/foo/bar/baz.txt");
+    BOOST_TEST(file_query_uri_to_path(baseURI, "http://foo%20baz/bar?foo=baz.txt") == "/c:/foo");
 #endif
     BOOST_CHECK_THROW(file_query_uri_to_path(baseURI, "foo/bar/baz.txt"), std::invalid_argument);
+    //BOOST_CHECK_THROW(file_query_uri_to_path(baseURI, "proxyfmu://foo%20bar/bar?file="), std::invalid_argument);
 }
