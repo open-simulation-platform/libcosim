@@ -559,73 +559,17 @@ cosim::filesystem::path file_uri_to_path(const uri& fileUri)
 }
 
 
-//cosim::filesystem::path file_query_uri_to_path(
-//    const uri& baseUri,
-//    const uri& queryUri)
-//{
-//    COSIM_INPUT_CHECK(queryUri.scheme());
-//    const auto query = queryUri.query();
-//    if (query && query->find("file=") < query->size()) {
-//        if (query->find("file=file:///") < query->size()) {
-//            return file_uri_to_path("file:///" + std::string(query->substr(13)));
-//        }
-//        const auto pathToAppend = cosim::file_uri_to_path(baseUri).parent_path().string();
-//        return file_uri_to_path("file:///" + pathToAppend + "/" + std::string(query->substr(5)));
-//    }
-//    return file_uri_to_path(baseUri).parent_path();
-//}
-
 cosim::filesystem::path file_query_uri_to_path(
     const cosim::uri& baseUri,
     const cosim::uri& queryUri)
 {
-    COSIM_INPUT_CHECK(queryUri.scheme());
     const auto query = queryUri.query();
     if (query && query->find("file=") < query->size()) {
         if (query->find("file=file:///") < query->size()) {
-            //return file_uri_to_path("file:///" + std::string(query->substr(13)));
             return file_uri_to_path(std::string(query->substr(5)));
         }
-        // const auto pathToAppend = cosim::file_uri_to_path(baseUri).parent_path().string();
-        const auto pathToAppend = cosim::path_to_file_uri(cosim::file_uri_to_path(baseUri).parent_path());
-
-        // const auto parentPath = cosim::file_uri_to_path(baseUri).parent_path();
-        //BOOST_LOG_SEV(log::logger(), log::error) << "pathToAppend: " << pathToAppend;
-        // uri(baseUri.scheme(), baseUri.authority(), cosim::file_uri_to_path(baseUri).parent_path(), "", baseUri.fragment());
-        // BOOST_LOG_SEV(log::logger(), log::error) << "query file uri: " << uri(baseUri.scheme(), baseUri.authority(), cosim::file_uri_to_path(baseUri).parent_path() / cosim::filesystem::path(std::string(query->substr(5))), "", baseUri.fragment());
-
-        // const auto parentUri = file_uri_to_path(pathToAppend);
-
-        // return file_uri_to_path();
-
-        // const auto uriToAppend = path_to_file_uri(cosim::file_uri_to_path(baseUri).parent_path());
-
-
-
-        // return file_uri_to_path(uriToAppend);
-
-        //return cosim::file_uri_to_path(baseUri).parent_path() / cosim::filesystem::path(std::string(query->substr(5)))
-        //    ;
-
-        //return file_uri_to_path("file:///" + pathToAppend + "/" + std::string(query->substr(5)));
-        return file_uri_to_path(std::string(pathToAppend.view()) + "/" + std::string(query->substr(5)));
-
-        //return file_uri_to_path(cosim::uri("file", std::nullopt, cosim::file_uri_to_path(baseUri).parent_path().string() + "/" + std::string(query->substr(5))));
-
-        //return cosim::file_uri_to_path(baseUri).parent_path() / cosim::file_uri_to_path("file:///" + std::string(query->substr(5)));
-
-//        return file_uri_to_path(uri(
-//            //baseUri.scheme(),
-//            //std::nullopt,
-//            //baseUri.authority(),
-//            //baseUri.path(),
-//            "file",
-//            std::nullopt,
-//            cosim::file_uri_to_path(baseUri).parent_path().string() + "/" + std::string(query->substr(5))
-//                //,
-//            //std::string_view(cosim::file_uri_to_path(baseUri).parent_path()) / std::filesystem::path(std::string(query->substr(5))),
-//            //std::nullopt, std::nullopt
-//            ));
+        const auto uriToAppend = cosim::path_to_file_uri(cosim::file_uri_to_path(baseUri).parent_path());
+        return file_uri_to_path(std::string(uriToAppend.view()) + "/" + std::string(query->substr(5)));
     }
     return file_uri_to_path(baseUri).parent_path();
 }

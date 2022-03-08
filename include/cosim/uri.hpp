@@ -284,7 +284,8 @@ cosim::filesystem::path file_uri_to_path(const uri& fileUri);
  *      is specified after `file=`. Prefix `file:///` can be used for absolute path.
  *
  *  \returns
- *      The path that corresponds to `queryUri` parameter or the `baseUri` parent path.
+ *      The local absolute path that corresponds to the `queryUri`, or the `baseUri`
+ *      parent path if no file query is available.
  */
 cosim::filesystem::path file_query_uri_to_path(const uri& baseUri, const uri& queryUri);
 

@@ -942,12 +942,10 @@ osp_config load_osp_config(
             ? file_uri_to_path(modelUri).remove_filename() / msmiFileName
             : file_query_uri_to_path(baseURI, modelUri).remove_filename() / msmiFileName;
         if (cosim::filesystem::exists(msmiFilePath)) {
-            BOOST_LOG_SEV(log::logger(), log::error) << "msmiFilePath function exists: " << msmiFilePath;
             emds.emplace(simulator.name, msmiFilePath);
         } else {
             msmiFilePath = configFile.parent_path() / msmiFileName;
             if (cosim::filesystem::exists(msmiFilePath)) {
-                BOOST_LOG_SEV(log::logger(), log::error) << "msmiFilePath conf exists: " << msmiFilePath;
                 emds.emplace(simulator.name, msmiFilePath);
             }
         }
