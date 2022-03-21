@@ -940,7 +940,7 @@ osp_config load_osp_config(
 
         msmiFilePath = (modelUri.scheme() == "file")
             ? file_uri_to_path(modelUri).remove_filename() / msmiFileName
-            : file_query_uri_to_path(baseURI, modelUri).remove_filename() / msmiFileName;
+            : file_query_uri_to_path(cosim::path_to_file_uri(cosim::file_uri_to_path(baseURI).parent_path()), modelUri).remove_filename() / msmiFileName;
         if (cosim::filesystem::exists(msmiFilePath)) {
             emds.emplace(simulator.name, msmiFilePath);
         } else {
