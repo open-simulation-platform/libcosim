@@ -1,11 +1,11 @@
 /**
-*  \file
-*  Slave interface.
-*
-*  \copyright
-*      This Source Code Form is subject to the terms of the Mozilla Public
-*      License, v. 2.0. If a copy of the MPL was not distributed with this
-*      file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *  \file
+ *  Slave interface.
+ *
+ *  \copyright
+ *      This Source Code Form is subject to the terms of the Mozilla Public
+ *      License, v. 2.0. If a copy of the MPL was not distributed with this
+ *      file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 #ifndef COSIM_UTILITY_THREAD_POOL_HPP
 #define COSIM_UTILITY_THREAD_POOL_HPP
@@ -30,6 +30,7 @@ private:
     std::vector<std::thread> threads_;
     std::mutex m_;
     std::condition_variable cv_;
+    unsigned int pending_tasks_;
 
     void worker_thread()
     {
@@ -40,9 +41,14 @@ private:
 
                 auto task = std::move(work_queue_.front());
                 work_queue_.pop();
+                lck.unlock();
+
                 task();
 
+                lck.lock();
+                pending_tasks_--;
                 lck.unlock();
+
                 cv_.notify_one();
 
             } else {
@@ -54,6 +60,7 @@ private:
 public:
     explicit thread_pool(unsigned int thread_count = std::thread::hardware_concurrency())
         : done_(false)
+        , pending_tasks_(0)
     {
         thread_count = std::min(thread_count, std::thread::hardware_concurrency());
         try {
@@ -69,7 +76,8 @@ public:
     thread_pool(const thread_pool&) = delete;
     thread_pool(const thread_pool&&) = delete;
 
-    size_t numWorkerThreads() const {
+    size_t numWorkerThreads() const
+    {
         return threads_.size();
     }
 
@@ -77,7 +85,7 @@ public:
     {
         if (!threads_.empty()) {
             std::unique_lock<std::mutex> lck(m_);
-            while (!work_queue_.empty()) cv_.wait(lck);
+            while (pending_tasks_ > 0) cv_.wait(lck);
         }
     }
 
@@ -88,6 +96,7 @@ public:
         } else {
             std::unique_lock<std::mutex> lck(m_);
             work_queue_.emplace(std::move(f));
+            pending_tasks_++;
         }
     }
 
