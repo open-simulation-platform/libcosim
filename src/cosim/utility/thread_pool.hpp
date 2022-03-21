@@ -66,6 +66,9 @@ public:
         }
     }
 
+    thread_pool(const thread_pool&) = delete;
+    thread_pool(const thread_pool&&) = delete;
+
     size_t numWorkerThreads() const {
         return threads_.size();
     }
