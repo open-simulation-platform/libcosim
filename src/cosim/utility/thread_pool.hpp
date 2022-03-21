@@ -88,7 +88,7 @@ public:
         }
     }
 
-    ~thread_pool()
+    ~thread_pool() noexcept
     {
         done_ = true;
 
