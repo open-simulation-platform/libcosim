@@ -81,14 +81,13 @@ public:
         }
     }
 
-    template<typename FunctionType>
-    void submit(FunctionType f)
+    void submit(std::function<void()> f)
     {
         if (threads_.empty()) {
             f();
         } else {
             std::unique_lock<std::mutex> lck(m_);
-            work_queue_.push(std::function<void()>(f));
+            work_queue_.emplace(std::move(f));
         }
     }
 
