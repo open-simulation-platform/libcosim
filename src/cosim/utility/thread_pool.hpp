@@ -55,6 +55,7 @@ public:
     explicit thread_pool(unsigned int thread_count = std::thread::hardware_concurrency())
         : done_(false)
     {
+        thread_count = std::min(thread_count, std::thread::hardware_concurrency());
         try {
             for (unsigned i = 0; i < thread_count; ++i) {
                 threads_.emplace_back(&thread_pool::worker_thread, this);
