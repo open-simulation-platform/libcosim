@@ -38,7 +38,7 @@ private:
             std::unique_lock<std::mutex> lck(m_);
             if (!work_queue_.empty()) {
 
-                auto task = work_queue_.front();
+                auto task = std::move(work_queue_.front());
                 work_queue_.pop();
                 task();
 
