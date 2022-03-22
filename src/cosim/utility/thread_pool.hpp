@@ -25,7 +25,8 @@ namespace utility
 class thread_pool
 {
 private:
-    std::atomic_bool done_;
+    bool done_;
+    // std::atomic_bool done_;
     std::queue<std::function<void()>> work_queue_;
     std::vector<std::thread> threads_;
     std::mutex m_;
@@ -35,7 +36,31 @@ private:
 
     void worker_thread()
     {
-        std::chrono::seconds wait_duration(1);
+        while (true) {
+            std::unique_lock<std::mutex> lck(m_);
+
+            // If no work is available, block the thread here
+            cv_worker_.wait(lck, [this]() { return done_ || !work_queue_.empty(); });
+            if (!work_queue_.empty()) {
+                pending_tasks_++;
+
+                auto task = std::move(work_queue_.front());
+                work_queue_.pop();
+
+                lck.unlock();
+
+                // Run work function outside mutex lock context
+                task();
+
+                lck.lock();
+                pending_tasks_--;
+                cv_finished_.notify_one();
+
+                // Mutex lock goes out of scope and unlocks here, no need to call unlock() manually
+            } else if (done_)
+                break;
+        }
+        /*std::chrono::seconds wait_duration(1);
         while (!done_) {
             std::unique_lock<std::mutex> lck(m_);
             if (!work_queue_.empty()) {
@@ -52,7 +77,7 @@ private:
             } else {
                 cv_worker_.wait_for(lck, wait_duration);
             }
-        }
+        }*/
     }
 
 public:
@@ -74,17 +99,19 @@ public:
     thread_pool(const thread_pool&) = delete;
     thread_pool(const thread_pool&&) = delete;
 
-    size_t numWorkerThreads() const
+    [[nodiscard]] size_t numWorkerThreads() const
     {
         return threads_.size();
     }
 
     void wait_for_tasks_to_finish()
     {
-        if (!threads_.empty()) {
+        std::unique_lock<std::mutex> lck(m_);
+        cv_finished_.wait(lck, [this]() { return work_queue_.empty() && (pending_tasks_ == 0); });
+        /*if (!threads_.empty()) {
             std::unique_lock<std::mutex> lck(m_);
             while (pending_tasks_ > 0) cv_finished_.wait(lck);
-        }
+        }*/
     }
 
     void submit(std::function<void()> f)
@@ -94,20 +121,27 @@ public:
         } else {
             std::unique_lock<std::mutex> lck(m_);
             work_queue_.emplace(std::move(f));
-            pending_tasks_++;
+            // pending_tasks_++;
             cv_worker_.notify_one();
         }
     }
 
     ~thread_pool() noexcept
     {
+        std::unique_lock<std::mutex> lck(m_);
         done_ = true;
         cv_worker_.notify_all();
+        lck.unlock();
+
         for (auto& thread : threads_) {
+            thread.join();
+        }
+
+        /*for (auto& thread : threads_) {
             if (thread.joinable()) {
                 thread.join();
             }
-        }
+        }*/
     }
 };
 
