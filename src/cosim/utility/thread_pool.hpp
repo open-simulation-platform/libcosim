@@ -60,24 +60,6 @@ private:
             } else if (done_)
                 break;
         }
-        /*std::chrono::seconds wait_duration(1);
-        while (!done_) {
-            std::unique_lock<std::mutex> lck(m_);
-            if (!work_queue_.empty()) {
-                auto task = std::move(work_queue_.front());
-                work_queue_.pop();
-
-                lck.unlock();
-                task();
-
-                lck.lock();
-                pending_tasks_--;
-                lck.unlock();
-                cv_finished_.notify_one();
-            } else {
-                cv_worker_.wait_for(lck, wait_duration);
-            }
-        }*/
     }
 
 public:
@@ -108,10 +90,6 @@ public:
     {
         std::unique_lock<std::mutex> lck(m_);
         cv_finished_.wait(lck, [this]() { return work_queue_.empty() && (pending_tasks_ == 0); });
-        /*if (!threads_.empty()) {
-            std::unique_lock<std::mutex> lck(m_);
-            while (pending_tasks_ > 0) cv_finished_.wait(lck);
-        }*/
     }
 
     void submit(std::function<void()> f)
@@ -121,7 +99,6 @@ public:
         } else {
             std::unique_lock<std::mutex> lck(m_);
             work_queue_.emplace(std::move(f));
-            // pending_tasks_++;
             cv_worker_.notify_one();
         }
     }
@@ -136,12 +113,6 @@ public:
         for (auto& thread : threads_) {
             thread.join();
         }
-
-        /*for (auto& thread : threads_) {
-            if (thread.joinable()) {
-                thread.join();
-            }
-        }*/
     }
 };
 
