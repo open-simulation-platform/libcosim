@@ -97,6 +97,7 @@ public:
         } else {
             std::unique_lock<std::mutex> lck(m_);
             work_queue_.emplace(std::move(f));
+            lck.unlock();
             cv_worker_.notify_one();
         }
     }
