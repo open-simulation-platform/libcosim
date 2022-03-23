@@ -559,19 +559,4 @@ cosim::filesystem::path file_uri_to_path(const uri& fileUri)
 }
 
 
-cosim::filesystem::path file_query_uri_to_path(
-    const cosim::uri& baseParentUri,
-    const cosim::uri& queryUri)
-{
-    const auto query = queryUri.query();
-    if (query && query->find("file=") < query->size()) {
-        if (query->find("file=file:///") < query->size()) {
-            return file_uri_to_path(std::string(query->substr(5)));
-        }
-        return file_uri_to_path(std::string(baseParentUri.view()) + "/" + std::string(query->substr(5)));
-    }
-    return file_uri_to_path(baseParentUri);
-}
-
-
 } // namespace cosim
