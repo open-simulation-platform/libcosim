@@ -38,8 +38,12 @@ private:
         while (true) {
             std::unique_lock<std::mutex> lck(m_);
 
+            // Break out if we're done.
+            if (done_ && work_queue_.empty()) break;
+
             // If no work is available, block the thread here
             cv_worker_.wait(lck, [this]() { return done_ || !work_queue_.empty(); });
+
             if (!work_queue_.empty()) {
                 pending_tasks_++;
 
@@ -55,8 +59,7 @@ private:
                 pending_tasks_--;
                 lck.unlock();
                 cv_finished_.notify_one();
-            } else if (done_)
-                break;
+            }
         }
     }
 
