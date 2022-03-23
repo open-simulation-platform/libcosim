@@ -44,9 +44,6 @@ endif()
 
 include("AddTestExecutable")
 foreach(test IN LISTS tests)
-    if (LIBCOSIM_WITH_PROXYFMU)
-        list(APPEND dependencies "proxyfmu::proxyfmu-client")
-    endif()
     add_test_executable(
         "cpp_${test}"
         FOLDER "C++ tests"
