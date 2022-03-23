@@ -26,7 +26,6 @@ class thread_pool
 {
 private:
     bool done_;
-    // std::atomic_bool done_;
     std::queue<std::function<void()>> work_queue_;
     std::vector<std::thread> threads_;
     std::mutex m_;
@@ -54,9 +53,8 @@ private:
 
                 lck.lock();
                 pending_tasks_--;
+                lck.unlock();
                 cv_finished_.notify_one();
-
-                // Mutex lock goes out of scope and unlocks here, no need to call unlock() manually
             } else if (done_)
                 break;
         }
@@ -107,8 +105,8 @@ public:
     {
         std::unique_lock<std::mutex> lck(m_);
         done_ = true;
-        cv_worker_.notify_all();
         lck.unlock();
+        cv_worker_.notify_all();
 
         for (auto& thread : threads_) {
             thread.join();
