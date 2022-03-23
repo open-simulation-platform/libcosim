@@ -61,7 +61,7 @@ private:
     }
 
 public:
-    explicit thread_pool(unsigned int thread_count = std::thread::hardware_concurrency())
+    explicit thread_pool(unsigned int thread_count)
         : done_(false)
         , pending_tasks_(0)
     {
