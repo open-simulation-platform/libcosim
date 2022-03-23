@@ -71,9 +71,7 @@ public:
                 threads_.emplace_back(&thread_pool::worker_thread, this);
             }
         } catch (...) {
-            std::unique_lock<std::mutex> lck(m_);
             done_ = true;
-            lck.unlock();
             throw;
         }
     }
