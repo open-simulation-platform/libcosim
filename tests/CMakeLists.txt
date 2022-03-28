@@ -24,7 +24,7 @@ set(unittests
     "system_structure_unittest"
     "time_unittest"
     "uri_unittest"
-    #"utility_concurrency_unittest"
+    "utility_concurrency_unittest"
     "utility_filesystem_unittest"
     "utility_uuid_unittest"
     "utility_zip_unittest"

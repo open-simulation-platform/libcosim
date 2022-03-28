@@ -44,6 +44,7 @@ void test_locking(F1&& getMutex1, F2&& getMutex2, F3&& getMutex3)
         mutex1.unlock();
         mutex2.unlock_shared();
     });
+    std::this_thread::sleep_for(std::chrono::milliseconds (5));
 
     // Wait for step 2 to complete
     mutex3.lock();
