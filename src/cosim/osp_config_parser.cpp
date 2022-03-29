@@ -890,6 +890,20 @@ void connect_vector_sum_functions(
     }
 }
 
+cosim::filesystem::path file_query_uri_to_path(
+    const cosim::uri& baseParentUri,
+    const cosim::uri& queryUri)
+{
+    const auto query = queryUri.query();
+    if (query && query->find("file=") < query->size()) {
+        if (query->find("file=file:///") < query->size()) {
+            return file_uri_to_path(std::string(query->substr(5)));
+        }
+        return file_uri_to_path(std::string(baseParentUri.view()) + "/" + std::string(query->substr(5)));
+    }
+    return file_uri_to_path(baseParentUri);
+}
+
 } // namespace
 
 osp_config load_osp_config(
@@ -938,19 +952,12 @@ osp_config load_osp_config(
         const auto modelUri = resolve_reference(baseURI, simulator.source);
         cosim::filesystem::path msmiFilePath;
 
-        if (modelUri.scheme() == "file") {
-            msmiFilePath = file_uri_to_path(modelUri).remove_filename() / msmiFileName;
-            if (cosim::filesystem::exists(msmiFilePath)) {
-                emds.emplace(simulator.name, msmiFilePath);
-            } else {
-                msmiFilePath = configFile.parent_path() / msmiFileName;
-                if (cosim::filesystem::exists(msmiFilePath)) {
-                    emds.emplace(simulator.name, msmiFilePath);
-                }
-            }
+        msmiFilePath = (modelUri.scheme() == "file")
+            ? file_uri_to_path(modelUri).remove_filename() / msmiFileName
+            : file_query_uri_to_path(cosim::path_to_file_uri(cosim::file_uri_to_path(baseURI).parent_path()), modelUri).remove_filename() / msmiFileName;
+        if (cosim::filesystem::exists(msmiFilePath)) {
+            emds.emplace(simulator.name, msmiFilePath);
         } else {
-            // Makes it possible to keep OspModelDescription at configuration path
-            // even when there are FMUs with other URI than file (fmu-proxy).
             msmiFilePath = configFile.parent_path() / msmiFileName;
             if (cosim::filesystem::exists(msmiFilePath)) {
                 emds.emplace(simulator.name, msmiFilePath);

@@ -37,6 +37,9 @@ if(LIBCOSIM_WITH_PROXYFMU)
             "proxyfmu_integration_unittest"
             "proxyfmu_library_unittest"
             )
+    list(APPEND tests
+            "proxyfmu_osp_config_parser_test"
+            )
 endif()
 
 include("AddTestExecutable")
