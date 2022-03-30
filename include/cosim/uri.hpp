@@ -266,7 +266,7 @@ uri path_to_file_uri(const cosim::filesystem::path& path);
  *
  *  \param [in] fileUri
  *      An URI where the scheme component is equal to `file` and the `authority`
- *      component is either empty or equel to `localhost` (but not undefined).
+ *      component is either empty or equal to `localhost` (but not undefined).
  *
  *  \returns
  *      The path that corresponds to `fileUri`.
