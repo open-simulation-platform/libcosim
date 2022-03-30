@@ -139,7 +139,7 @@ std::shared_ptr<model> fmu_file_uri_sub_resolver::lookup_model(const uri& modelU
 // =============================================================================
 
 std::shared_ptr<model_uri_resolver> default_model_uri_resolver(
-    const std::shared_ptr<file_cache>& cache)
+    std::shared_ptr<file_cache> cache)
 {
     auto resolver = std::make_shared<model_uri_resolver>();
     if (cache) {
