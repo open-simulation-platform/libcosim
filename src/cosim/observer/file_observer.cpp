@@ -40,7 +40,7 @@ std::string format_time(boost::posix_time::ptime now)
 void clear_file_contents_if_exists(const cosim::filesystem::path& filePath, std::ofstream& fsw)
 {
     if (cosim::filesystem::exists(filePath)) {
-        //clear file contents
+        // clear file contents
         fsw.open(filePath, std::ios_base::out | std::ios_base::trunc);
         fsw.close();
     }

@@ -1,8 +1,8 @@
 #define BOOST_TEST_MODULE cosim::utility::zip unittest
+#include <cosim/fs_portability.hpp>
 #include <cosim/utility/filesystem.hpp>
 #include <cosim/utility/zip.hpp>
 
-#include <cosim/fs_portability.hpp>
 #include <boost/test/unit_test.hpp>
 
 #include <cstdlib>

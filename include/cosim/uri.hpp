@@ -51,7 +51,7 @@ public:
      *  Passing an empty string is equivalent to calling the default
      *  constructor.
      *
-     *  Complies with [RFC 3986](https://tools.ietf.org/html/rfc3986). 
+     *  Complies with [RFC 3986](https://tools.ietf.org/html/rfc3986).
      *  The "authority" component is not validated or decomposed.
      *
      *  \throws std::invalid_argument
@@ -173,7 +173,7 @@ inline std::ostream& operator<<(std::ostream& stream, const uri& u)
 /**
  *  Resolves a URI reference relative to a base URI.
  *
- *  Strictly complies with [RFC 3986](https://tools.ietf.org/html/rfc3986). 
+ *  Strictly complies with [RFC 3986](https://tools.ietf.org/html/rfc3986).
  *
  *  \param [in] base
  *      An absolute URI.

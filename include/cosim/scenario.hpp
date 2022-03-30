@@ -97,4 +97,4 @@ struct scenario
 
 } // namespace cosim
 
-#endif //LIBCOSIM_SCENARIO_HPP
+#endif // LIBCOSIM_SCENARIO_HPP

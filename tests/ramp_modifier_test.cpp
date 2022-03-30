@@ -82,7 +82,7 @@ int main()
         execution.add_observer(observer);
 
 
-        auto simIndex = execution.add_slave(std::make_unique<mock_slave>(),"mock");
+        auto simIndex = execution.add_slave(std::make_unique<mock_slave>(), "mock");
 
         const auto input = cosim::variable_id{simIndex, cosim::variable_type::real, 1};
         const auto output = cosim::variable_id{simIndex, cosim::variable_type::real, 0};

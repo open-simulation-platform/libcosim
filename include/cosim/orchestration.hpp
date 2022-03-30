@@ -10,10 +10,10 @@
 #ifndef COSIM_ORCHESTRATION_HPP
 #define COSIM_ORCHESTRATION_HPP
 
-#include <cosim/slave.hpp>
 #include <cosim/file_cache.hpp>
 #include <cosim/fmi/importer.hpp>
 #include <cosim/model_description.hpp>
+#include <cosim/slave.hpp>
 #include <cosim/uri.hpp>
 
 #include <memory>

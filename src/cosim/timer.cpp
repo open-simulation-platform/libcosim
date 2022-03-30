@@ -21,7 +21,7 @@ public:
         : config_(std::make_shared<real_time_config>())
         , configHashValue_(std::hash<real_time_config>()(*config_))
         , metrics_(std::make_shared<real_time_metrics>())
-    {}
+    { }
 
     void start(time_point currentTime)
     {

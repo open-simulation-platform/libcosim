@@ -106,11 +106,10 @@ BOOST_AUTO_TEST_CASE(test_fmi1)
     for (auto t = tStart; t < tMax; t += dt) {
 
         auto vars = instance->get_variables(
-                                gsl::make_span(&realOut, 1),
-                                gsl::make_span(&integerOut, 1),
-                                gsl::make_span(&booleanOut, 1),
-                                gsl::make_span(&stringOut, 1))
-                        ;
+            gsl::make_span(&realOut, 1),
+            gsl::make_span(&integerOut, 1),
+            gsl::make_span(&booleanOut, 1),
+            gsl::make_span(&stringOut, 1));
 
         BOOST_TEST(vars.real[0] == realVal);
         BOOST_TEST(vars.integer[0] == integerVal);
@@ -125,11 +124,10 @@ BOOST_AUTO_TEST_CASE(test_fmi1)
         instance->do_step(t, dt);
 
         instance->set_variables(
-                    gsl::make_span(&realIn, 1), gsl::make_span(&realVal, 1),
-                    gsl::make_span(&integerIn, 1), gsl::make_span(&integerVal, 1),
-                    gsl::make_span(&booleanIn, 1), gsl::make_span(&booleanVal, 1),
-                    gsl::make_span(&stringIn, 1), gsl::make_span(&stringVal, 1))
-            ;
+            gsl::make_span(&realIn, 1), gsl::make_span(&realVal, 1),
+            gsl::make_span(&integerIn, 1), gsl::make_span(&integerVal, 1),
+            gsl::make_span(&booleanIn, 1), gsl::make_span(&booleanVal, 1),
+            gsl::make_span(&stringIn, 1), gsl::make_span(&stringVal, 1));
     }
 
     instance->end_simulation();
@@ -152,10 +150,9 @@ BOOST_AUTO_TEST_CASE(test_fmi2)
 
     auto instance = fmu.instantiate("testSlave");
     instance->setup(
-                cosim::to_time_point(0.0),
-                cosim::to_time_point(1.0),
-                std::nullopt)
-        ;
+        cosim::to_time_point(0.0),
+        cosim::to_time_point(1.0),
+        std::nullopt);
 
     bool foundValve = false;
     bool foundMinlevel = false;
