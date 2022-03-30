@@ -5,11 +5,11 @@
  */
 #include "cosim/orchestration.hpp"
 
-#include <utility>
-
 #include "cosim/error.hpp"
 #include "cosim/fmi/fmu.hpp"
 #include "cosim/log/logger.hpp"
+
+#include <utility>
 
 #ifdef HAS_PROXYFMU
 #    include "cosim/proxy/proxy_uri_sub_resolver.hpp"

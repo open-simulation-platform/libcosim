@@ -49,7 +49,7 @@ class slave_instance;
  *
  *  This class is an implementation of cosim::fmi::fmu specialised for FMUs that
  *  implement FMI v1.0.
-*/
+ */
 class fmu : public fmi::fmu, public std::enable_shared_from_this<fmu>
 {
 private:

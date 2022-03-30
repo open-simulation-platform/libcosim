@@ -51,7 +51,7 @@ class fixed_step_algorithm::impl
 public:
     explicit impl(duration baseStepSize, std::optional<unsigned int> workerThreadCount)
         : baseStepSize_(baseStepSize)
-        , pool_(std::min(workerThreadCount.value_or(std::thread::hardware_concurrency()), std::thread::hardware_concurrency()))
+        , pool_(std::min(workerThreadCount.value_or(max_threads_), max_threads_))
     {
         COSIM_INPUT_CHECK(baseStepSize.count() > 0);
     }
@@ -432,6 +432,7 @@ private:
     std::unordered_map<simulator_index, simulator_info> simulators_;
     std::unordered_map<function_index, function_info> functions_;
     int64_t stepCounter_ = 0;
+    unsigned int max_threads_ = std::thread::hardware_concurrency() - 1;
     utility::thread_pool pool_;
 };
 

@@ -9,9 +9,9 @@
 #ifndef COSIM_PROXY_REMOTE_FMU_HPP
 #define COSIM_PROXY_REMOTE_FMU_HPP
 
-#include <cosim/slave.hpp>
 #include <cosim/model_description.hpp>
 #include <cosim/orchestration.hpp>
+#include <cosim/slave.hpp>
 
 #include <proxyfmu/fmi/fmu.hpp>
 #include <proxyfmu/fs_portability.hpp>

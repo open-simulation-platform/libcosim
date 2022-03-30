@@ -10,10 +10,10 @@
 #ifndef COSIM_ORCHESTRATION_HPP
 #define COSIM_ORCHESTRATION_HPP
 
-#include <cosim/slave.hpp>
 #include <cosim/file_cache.hpp>
 #include <cosim/fmi/importer.hpp>
 #include <cosim/model_description.hpp>
+#include <cosim/slave.hpp>
 #include <cosim/uri.hpp>
 
 #include <memory>
@@ -191,7 +191,7 @@ private:
  *  URI resolver).
  */
 std::shared_ptr<model_uri_resolver> default_model_uri_resolver(
-    const std::shared_ptr<file_cache>& cache = nullptr);
+    std::shared_ptr<file_cache> cache = nullptr);
 
 
 } // namespace cosim

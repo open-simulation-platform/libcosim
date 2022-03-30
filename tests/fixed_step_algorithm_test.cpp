@@ -46,16 +46,16 @@ int main()
         std::vector<cosim::simulator_index> slaves;
         slaves.push_back(
             execution.add_slave(
-                    std::make_unique<mock_slave>([](cosim::time_point t, double) {
-                        return cosim::to_double_time_point(t);
-                    }),
+                std::make_unique<mock_slave>([](cosim::time_point t, double) {
+                    return cosim::to_double_time_point(t);
+                }),
                 "clock_slave"));
         for (int i = 1; i < numSlaves; ++i) {
             slaves.push_back(
                 execution.add_slave(
-                        std::make_unique<mock_slave>([](double x) {
-                            return x + 1.234;
-                        }),
+                    std::make_unique<mock_slave>([](double x) {
+                        return x + 1.234;
+                    }),
                     "adder_slave" + std::to_string(i)));
             execution.connect_variables(
                 cosim::variable_id{slaves[i - 1], cosim::variable_type::real, realOutRef},

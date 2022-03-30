@@ -210,7 +210,7 @@ time_series_observer::time_series_observer()
 
 time_series_observer::time_series_observer(size_t bufferSize)
 {
-    if (bufferSize > 0)  {
+    if (bufferSize > 0) {
         bufSize_ = bufferSize;
     } else {
         std::ostringstream oss;

@@ -24,7 +24,7 @@ set(unittests
     "system_structure_unittest"
     "time_unittest"
     "uri_unittest"
-    #"utility_concurrency_unittest"
+    "utility_concurrency_unittest"
     "utility_filesystem_unittest"
     "utility_uuid_unittest"
     "utility_zip_unittest"
@@ -34,6 +34,9 @@ if(LIBCOSIM_WITH_PROXYFMU)
     list(APPEND unittests
             "proxyfmu_integration_unittest"
             "proxyfmu_library_unittest"
+            )
+    list(APPEND tests
+            "proxyfmu_osp_config_parser_test"
             )
 endif()
 

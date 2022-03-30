@@ -2,10 +2,9 @@
 
 #include <cosim/algorithm.hpp>
 #include <cosim/execution.hpp>
+#include <cosim/fs_portability.hpp>
 #include <cosim/log/simple.hpp>
 #include <cosim/observer/file_observer.hpp>
-
-#include <cosim/fs_portability.hpp>
 
 #include <exception>
 #include <memory>

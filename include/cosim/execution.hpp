@@ -10,9 +10,9 @@
 #ifndef COSIM_EXECUTION_HPP
 #define COSIM_EXECUTION_HPP
 
-#include <cosim/slave.hpp>
 #include <cosim/function/function.hpp>
 #include <cosim/model_description.hpp>
+#include <cosim/slave.hpp>
 #include <cosim/system_structure.hpp>
 #include <cosim/time.hpp>
 #include <cosim/timer.hpp>
