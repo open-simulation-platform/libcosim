@@ -243,7 +243,7 @@ public:
         gsl::span<const value_reference> real_variables,
         gsl::span<const value_reference> integer_variables,
         gsl::span<const value_reference> boolean_variables,
-        gsl::span<const value_reference> string_variables)
+        gsl::span<const value_reference> string_variables) const
     {
         if (static_cast<size_t>(values->real.size()) != static_cast<size_t>(real_variables.size()))
             values->real.resize(real_variables.size());
