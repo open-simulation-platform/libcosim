@@ -65,7 +65,6 @@ public:
         : done_(false)
         , pending_tasks_(0)
     {
-        thread_count = std::min(thread_count, std::thread::hardware_concurrency());
         try {
             for (unsigned i = 0; i < thread_count; ++i) {
                 threads_.emplace_back(&thread_pool::worker_thread, this);
