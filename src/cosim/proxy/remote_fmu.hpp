@@ -9,9 +9,9 @@
 #ifndef COSIM_PROXY_REMOTE_FMU_HPP
 #define COSIM_PROXY_REMOTE_FMU_HPP
 
-#include <cosim/async_slave.hpp>
 #include <cosim/model_description.hpp>
 #include <cosim/orchestration.hpp>
+#include <cosim/slave.hpp>
 
 #include <proxyfmu/fmi/fmu.hpp>
 #include <proxyfmu/fs_portability.hpp>
@@ -33,7 +33,7 @@ public:
 
     std::shared_ptr<const cosim::model_description> description() const noexcept override;
 
-    std::shared_ptr<cosim::async_slave> instantiate(std::string_view name) override;
+    std::shared_ptr<cosim::slave> instantiate(std::string_view name) override;
 
 private:
     std::unique_ptr<proxyfmu::fmi::fmu> fmu_;

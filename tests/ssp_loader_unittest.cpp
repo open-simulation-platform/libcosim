@@ -32,7 +32,7 @@ void common_demo_case_tests(const cosim::ssp_configuration& config)
     auto obs = std::make_shared<cosim::last_value_observer>();
     execution.add_observer(obs);
     auto result = execution.simulate_until(cosim::to_time_point(1e-3));
-    BOOST_REQUIRE(result.get());
+    BOOST_REQUIRE(result);
 
     double realValue = -1.0;
     const auto reference =

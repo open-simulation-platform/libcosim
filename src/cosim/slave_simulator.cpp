@@ -7,14 +7,10 @@
 
 #include "cosim/error.hpp"
 
-#include <boost/container/vector.hpp>
-
 #include <algorithm>
 #include <cassert>
-#include <cstddef>
 #include <sstream>
 #include <stdexcept>
-#include <string>
 #include <unordered_map>
 
 
@@ -33,6 +29,85 @@ template<>
 struct var_view_type<std::string>
 {
     using type = std::string_view;
+};
+
+/**
+ *  Helper class which checks, sets and resets the state variable for
+ *  an `slave_simulator`.
+ *
+ *  The constructors of this class take a reference to the `slave_state`
+ *  variable to be managed, and immediately set it to `indeterminate`.
+ *  On destruction, the managed variable will be automatically set to
+ *  a specified value, or, if an exception is currently "in flight", to
+ *  the special `error` value.
+ */
+class state_guard
+{
+public:
+    /**
+     *  Constructs a `state_guard` that sets `stateVariable` to `finalState`
+     *  on destruction.
+     */
+    state_guard(slave_state& stateVariable, slave_state finalState)
+        : stateVariable_(&stateVariable)
+        , finalState_(finalState)
+    {
+        stateVariable = slave_state::indeterminate;
+    }
+
+    /**
+     *  Constructs a `state_guard` that resets `stateVariable` to its original
+     *  value on destruction.
+     */
+    state_guard(slave_state& stateVariable)
+        : state_guard(stateVariable, stateVariable)
+    { }
+
+    /**
+     *  Manually sets the managed variable to its final value and relinquishes
+     *  control of it.  Does not check for exceptions.
+     */
+    void reset() noexcept
+    {
+        if (stateVariable_ != nullptr) {
+            *stateVariable_ = finalState_;
+            stateVariable_ = nullptr;
+        }
+    }
+
+    ~state_guard() noexcept
+    {
+        if (stateVariable_ != nullptr) {
+            if (std::uncaught_exceptions()) {
+                *stateVariable_ = slave_state::error;
+            } else {
+                *stateVariable_ = finalState_;
+            }
+        }
+    }
+
+    // Disallow copying, so that we don't inadvertently end up in a situation
+    // where multiple `state_guard` objects try to manage the same state.
+    state_guard(const state_guard&) = delete;
+    state_guard& operator=(const state_guard&) = delete;
+
+    state_guard(state_guard&& other) noexcept
+        : stateVariable_(other.stateVariable_)
+        , finalState_(other.finalState_)
+    {
+        other.stateVariable_ = nullptr;
+    }
+    state_guard& operator=(state_guard&& other) noexcept
+    {
+        stateVariable_ = other.stateVariable_;
+        finalState_ = other.finalState_;
+        other.stateVariable_ = nullptr;
+        return *this;
+    }
+
+private:
+    slave_state* stateVariable_;
+    slave_state finalState_;
 };
 
 
@@ -220,10 +295,10 @@ T get_start_value(variable_description vd)
 class slave_simulator::impl
 {
 public:
-    impl(std::shared_ptr<async_slave> slave, std::string_view name)
+    impl(std::shared_ptr<slave> slave, std::string_view name)
         : slave_(std::move(slave))
         , name_(name)
-        , modelDescription_(slave_->model_description().get())
+        , modelDescription_(slave_->model_description())
     {
         assert(slave_);
         assert(!name_.empty());
@@ -248,7 +323,6 @@ public:
     {
         return modelDescription_;
     }
-
 
     void expose_for_getting(variable_type type, value_reference ref)
     {
@@ -415,7 +489,7 @@ public:
         return modifiedStringVariables_;
     }
 
-    boost::fibers::future<void> setup(
+    void setup(
         time_point startTime,
         std::optional<time_point> stopTime,
         std::optional<double> relativeTolerance)
@@ -423,39 +497,27 @@ public:
         return slave_->setup(startTime, stopTime, relativeTolerance);
     }
 
-    boost::fibers::future<void> do_iteration()
+    void do_iteration()
     {
-        // clang-format off
-            return boost::fibers::async([=]() {
-                set_variables(duration::zero());
-                get_variables(duration::zero());
-            });
-        // clang-format on
+        set_variables(duration::zero());
+        get_variables(duration::zero());
     }
 
-    boost::fibers::future<void> start_simulation()
+    void start_simulation()
     {
-        if (slave_->state() != slave_state::initialisation) {
-            COSIM_PANIC();
-        }
-        return boost::fibers::async([=]() {
-            slave_->start_simulation().get();
-            get_variables(duration::zero());
-        });
+        slave_->start_simulation();
+        get_variables(duration::zero());
     }
 
-    boost::fibers::future<step_result> do_step(
+    step_result do_step(
         time_point currentT,
         duration deltaT)
     {
-        // clang-format off
-            return boost::fibers::async([=]() {
-                set_variables(deltaT);
-                const auto result = slave_->do_step(currentT, deltaT).get();
-                get_variables(deltaT);
-                return result;
-            });
-        // clang-format on
+
+        set_variables(deltaT);
+        const auto result = slave_->do_step(currentT, deltaT);
+        get_variables(deltaT);
+        return result;
     }
 
 private:
@@ -466,15 +528,14 @@ private:
         const auto [booleanRefs, booleanValues] = booleanSetCache_.modify_and_get(deltaT);
         const auto [stringRefs, stringValues] = stringSetCache_.modify_and_get(deltaT);
         slave_->set_variables(
-                  gsl::make_span(realRefs),
-                  gsl::make_span(realValues),
-                  gsl::make_span(integerRefs),
-                  gsl::make_span(integerValues),
-                  gsl::make_span(booleanRefs),
-                  gsl::make_span(booleanValues),
-                  gsl::make_span(stringRefs),
-                  gsl::make_span(stringValues))
-            .get();
+            gsl::make_span(realRefs),
+            gsl::make_span(realValues),
+            gsl::make_span(integerRefs),
+            gsl::make_span(integerValues),
+            gsl::make_span(booleanRefs),
+            gsl::make_span(booleanValues),
+            gsl::make_span(stringRefs),
+            gsl::make_span(stringValues));
         realSetCache_.reset();
         integerSetCache_.reset();
         booleanSetCache_.reset();
@@ -484,11 +545,10 @@ private:
     void get_variables(duration deltaT)
     {
         const auto values = slave_->get_variables(
-                                      gsl::make_span(realGetCache_.references),
-                                      gsl::make_span(integerGetCache_.references),
-                                      gsl::make_span(booleanGetCache_.references),
-                                      gsl::make_span(stringGetCache_.references))
-                                .get();
+            gsl::make_span(realGetCache_.references),
+            gsl::make_span(integerGetCache_.references),
+            gsl::make_span(booleanGetCache_.references),
+            gsl::make_span(stringGetCache_.references));
         copy_contents(values.real, realGetCache_.originalValues);
         copy_contents(values.integer, integerGetCache_.originalValues);
         copy_contents(values.boolean, booleanGetCache_.originalValues);
@@ -525,7 +585,7 @@ private:
     }
 
 private:
-    std::shared_ptr<async_slave> slave_;
+    std::shared_ptr<slave> slave_;
     std::string name_;
     cosim::model_description modelDescription_;
 
@@ -547,9 +607,10 @@ private:
 
 
 slave_simulator::slave_simulator(
-    std::shared_ptr<async_slave> slave,
+    std::shared_ptr<slave> slave,
     std::string_view name)
     : pimpl_(std::make_unique<impl>(std::move(slave), name))
+    , state_(slave_state::created)
 {
 }
 
@@ -569,6 +630,7 @@ std::string slave_simulator::name() const
 
 cosim::model_description slave_simulator::model_description() const
 {
+    COSIM_PRECONDITION(state_ != slave_state::error);
     return pimpl_->model_description();
 }
 
@@ -708,29 +770,34 @@ std::unordered_set<value_reference>& slave_simulator::get_modified_string_variab
     return pimpl_->get_modified_string_variables();
 }
 
-boost::fibers::future<void> slave_simulator::setup(
+void slave_simulator::setup(
     time_point startTime,
     std::optional<time_point> stopTime,
     std::optional<double> relativeTolerance)
 {
+    COSIM_PRECONDITION(state_ == slave_state::created);
+    state_guard guard(state_, slave_state::initialisation);
     return pimpl_->setup(startTime, stopTime, relativeTolerance);
 }
 
-
-boost::fibers::future<void> slave_simulator::do_iteration()
+void slave_simulator::do_iteration()
 {
     return pimpl_->do_iteration();
 }
 
-boost::fibers::future<void> slave_simulator::start_simulation()
+void slave_simulator::start_simulation()
 {
+    COSIM_PRECONDITION(state_ == slave_state::initialisation);
+    state_guard guard(state_, slave_state::simulation);
     return pimpl_->start_simulation();
 }
 
-boost::fibers::future<step_result> slave_simulator::do_step(
+step_result slave_simulator::do_step(
     time_point currentT,
     duration deltaT)
 {
+    COSIM_PRECONDITION(state_ == slave_state::simulation);
+    state_guard guard(state_);
     return pimpl_->do_step(currentT, deltaT);
 }
 

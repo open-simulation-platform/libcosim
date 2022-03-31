@@ -67,7 +67,7 @@
  *
  *  \param[in] test An expression which can be implicitly converted to `bool`.
  */
-#define COSIM_INPUT_CHECK(test)                                                             \
+#define COSIM_INPUT_CHECK(test)                                                           \
     do {                                                                                  \
         if (!(test)) {                                                                    \
             throw std::invalid_argument(                                                  \
@@ -85,7 +85,7 @@
  *  precondition was violated.  The program is terminated by calling
  *  `std::terminate()`.
  */
-#define COSIM_PRECONDITION(condition)                                           \
+#define COSIM_PRECONDITION(condition)                                         \
     do {                                                                      \
         if (!(condition)) {                                                   \
             ::cosim::detail::precondition_violated(__FUNCTION__, #condition); \
@@ -102,7 +102,7 @@
  *  the macro is invoked.  The program is terminated by calling
  *  `std::terminate()`.
  */
-#define COSIM_PANIC()                                          \
+#define COSIM_PANIC()                                        \
     do {                                                     \
         ::cosim::detail::panic(__FILE__, __LINE__, nullptr); \
     } while (false)
@@ -116,7 +116,7 @@
  *  the macro is invoked, in addition to the text provided in `message`.
  *  The program is terminated by calling `std::terminate()`.
  */
-#define COSIM_PANIC_M(message)                                 \
+#define COSIM_PANIC_M(message)                               \
     do {                                                     \
         ::cosim::detail::panic(__FILE__, __LINE__, message); \
     } while (false)

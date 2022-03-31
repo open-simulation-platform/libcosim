@@ -56,7 +56,7 @@ By far, the easiest way to set up an execution is to first create a
 `cosim::system_structure`, as described above, and inject this structure
 into an empty `cosim::execution` using `cosim::inject_system_structure()`.
 However, it is also possible to build the execution "by hand" by adding
-simulators and functions to it in the form of `cosim::async_slave` and
+simulators and functions to it in the form of `cosim::slave` and
 `cosim::function` objects, respectively.
 
 When would you choose which method? Starting with `cosim::system_structure`
@@ -156,7 +156,7 @@ completeness and ease of reference:
   * `cosim::algorithm` – to implement alternative co-simulation algorithms
   * `cosim::observer` – to implement your own observers
   * `cosim::manipulator` – to implement your own manipulators
-  * `cosim::model`, `cosim::async_slave` and `cosim::slave` – to implement
+  * `cosim::model` and `cosim::slave` – to implement
     simulators that don't necessarily come in the form of FMUs
   * `cosim::function_type` and `cosim::function` – to implement additional
     function types

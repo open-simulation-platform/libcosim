@@ -1,7 +1,6 @@
 #include "mock_slave.hpp"
 
 #include <cosim/algorithm.hpp>
-#include <cosim/async_slave.hpp>
 #include <cosim/execution.hpp>
 #include <cosim/log/simple.hpp>
 #include <cosim/observer/last_value_observer.hpp>
@@ -81,15 +80,15 @@ int main()
 
         double v = 0.0;
         auto slave0 = std::make_shared<mock_slave>([&v](double /*x*/) { return v; }, nullptr, nullptr, nullptr, [&v] { ++v; });
-        auto idx0 = execution.add_slave(cosim::make_pseudo_async(slave0), "slave 0");
+        auto idx0 = execution.add_slave(slave0, "slave 0");
 
         auto slave1 = std::make_shared<set_logging_mock_slave>();
-        auto idx1 = execution.add_slave(cosim::make_pseudo_async(slave1), "slave 1");
+        auto idx1 = execution.add_slave(slave1, "slave 1");
 
         int i = 0;
         auto slave2 = std::make_shared<set_logging_mock_slave>(
             nullptr, [&i](int /*x*/) { return i + 1; }, nullptr, nullptr, [&i] { ++i; });
-        auto idx2 = execution.add_slave(cosim::make_pseudo_async(slave2), "slave 2");
+        auto idx2 = execution.add_slave(slave2, "slave 2");
 
         execution.connect_variables(
             cosim::variable_id{idx0, cosim::variable_type::real, mock_slave::real_out_reference},
@@ -115,7 +114,7 @@ int main()
 
         // Run simulation
         auto simResult = execution.simulate_until(endTime);
-        REQUIRE(simResult.get());
+        REQUIRE(simResult);
 
         const int numSamples = 10;
         double realValues0[numSamples];

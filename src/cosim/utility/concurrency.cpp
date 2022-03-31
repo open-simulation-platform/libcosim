@@ -30,7 +30,7 @@ namespace utility
 
 void shared_mutex::lock()
 {
-    std::unique_lock<boost::fibers::mutex> lock(mutex_);
+    std::unique_lock<std::mutex> lock(mutex_);
     condition_.wait(lock, [&] { return sharedCount_ == 0; });
 
     // Release the mutex from the unique_lock, so it doesn't get automatically
@@ -41,7 +41,7 @@ void shared_mutex::lock()
 
 bool shared_mutex::try_lock()
 {
-    std::unique_lock<boost::fibers::mutex> lock(mutex_, std::try_to_lock);
+    std::unique_lock<std::mutex> lock(mutex_, std::try_to_lock);
     if (!lock.owns_lock()) return false;
     if (sharedCount_ > 0) return false;
 
@@ -61,14 +61,14 @@ void shared_mutex::unlock()
 
 void shared_mutex::lock_shared()
 {
-    std::lock_guard<boost::fibers::mutex> lock(mutex_);
+    std::lock_guard<std::mutex> lock(mutex_);
     ++sharedCount_;
 }
 
 
 bool shared_mutex::try_lock_shared()
 {
-    std::unique_lock<boost::fibers::mutex> lock(mutex_, std::try_to_lock);
+    std::unique_lock<std::mutex> lock(mutex_, std::try_to_lock);
     if (!lock.owns_lock()) return false;
     ++sharedCount_;
     return true;
@@ -77,7 +77,7 @@ bool shared_mutex::try_lock_shared()
 
 void shared_mutex::unlock_shared()
 {
-    std::unique_lock<boost::fibers::mutex> lock(mutex_);
+    std::unique_lock<std::mutex> lock(mutex_);
     --sharedCount_;
     if (sharedCount_ == 0) {
         lock.unlock();
@@ -231,7 +231,7 @@ file_lock::boost_wrapper::boost_wrapper(const cosim::filesystem::path& path)
 
 void file_lock::boost_wrapper::lock()
 {
-    std::lock_guard<boost::fibers::mutex> countLock(shareCountMutex_);
+    std::lock_guard<std::mutex> countLock(shareCountMutex_);
     assert(shareCount_ == 0);
     fileLock_.lock();
     shareCount_ = -1;
@@ -240,7 +240,7 @@ void file_lock::boost_wrapper::lock()
 
 bool file_lock::boost_wrapper::try_lock()
 {
-    std::lock_guard<boost::fibers::mutex> countLock(shareCountMutex_);
+    std::lock_guard<std::mutex> countLock(shareCountMutex_);
     assert(shareCount_ == 0);
     if (!fileLock_.try_lock()) return false;
     shareCount_ = -1;
@@ -250,7 +250,7 @@ bool file_lock::boost_wrapper::try_lock()
 
 void file_lock::boost_wrapper::unlock()
 {
-    std::lock_guard<boost::fibers::mutex> countLock(shareCountMutex_);
+    std::lock_guard<std::mutex> countLock(shareCountMutex_);
     assert(shareCount_ == -1);
     fileLock_.unlock();
     shareCount_ = 0;
@@ -259,7 +259,7 @@ void file_lock::boost_wrapper::unlock()
 
 void file_lock::boost_wrapper::lock_shared()
 {
-    std::lock_guard<boost::fibers::mutex> countLock(shareCountMutex_);
+    std::lock_guard<std::mutex> countLock(shareCountMutex_);
     assert(shareCount_ >= 0);
     if (shareCount_ == 0) {
         fileLock_.lock_sharable();
@@ -270,7 +270,7 @@ void file_lock::boost_wrapper::lock_shared()
 
 bool file_lock::boost_wrapper::try_lock_shared()
 {
-    std::lock_guard<boost::fibers::mutex> countLock(shareCountMutex_);
+    std::lock_guard<std::mutex> countLock(shareCountMutex_);
     assert(shareCount_ >= 0);
     if (shareCount_ == 0) {
         if (!fileLock_.try_lock_sharable()) return false;
@@ -282,7 +282,7 @@ bool file_lock::boost_wrapper::try_lock_shared()
 
 void file_lock::boost_wrapper::unlock_shared()
 {
-    std::lock_guard<boost::fibers::mutex> countLock(shareCountMutex_);
+    std::lock_guard<std::mutex> countLock(shareCountMutex_);
     assert(shareCount_ > 0);
     if (shareCount_ == 1) fileLock_.unlock_sharable();
     --shareCount_;
@@ -303,7 +303,7 @@ std::shared_ptr<file_lock::file_mutex> file_lock::get_file_mutex(
         std::weak_ptr<file_mutex> fileMutex;
     };
     static std::vector<file_mutex_cache_entry> fileMutexCache;
-    static boost::fibers::mutex cacheMutex;
+    static std::mutex cacheMutex;
     std::shared_ptr<file_mutex> fileMutex;
 
     // If the file already exists, we need to check whether it is already

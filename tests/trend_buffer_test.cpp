@@ -1,7 +1,6 @@
 #include "mock_slave.hpp"
 
 #include <cosim/algorithm.hpp>
-#include <cosim/async_slave.hpp>
 #include <cosim/execution.hpp>
 #include <cosim/log/simple.hpp>
 #include <cosim/observer/time_series_observer.hpp>
@@ -42,7 +41,7 @@ int main()
         // Add slaves to it
         for (int i = 0; i < numSlaves; ++i) {
             execution.add_slave(
-                cosim::make_pseudo_async(std::make_unique<mock_slave>([](double x) { return x + 1.234; })),
+                std::make_unique<mock_slave>([](double x) { return x + 1.234; }),
                 "slave" + std::to_string(i));
             if (i > 0) {
                 execution.connect_variables(
@@ -53,7 +52,7 @@ int main()
 
         // Run simulation
         auto simResult = execution.simulate_until(midTime);
-        REQUIRE(simResult.get());
+        REQUIRE(simResult);
 
         cosim::step_number stepNumbers1[2];
         observer->get_step_numbers(0, cosim::to_duration(0.5), gsl::make_span(stepNumbers1, 2));

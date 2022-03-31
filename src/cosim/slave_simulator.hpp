@@ -11,7 +11,7 @@
 #define COSIM_SLAVE_SIMULATOR_HPP
 
 #include <cosim/algorithm.hpp>
-#include <cosim/async_slave.hpp>
+#include <cosim/slave.hpp>
 
 #include <memory>
 #include <string_view>
@@ -20,11 +20,54 @@
 namespace cosim
 {
 
+/// Symbolic constants that represent the state of a slave.
+enum class slave_state
+{
+    /**
+     *  The slave exists but has not been configured yet.
+     *
+     *  The slave is in this state from its creation until `setup()` is called.
+     */
+    created,
+
+    /**
+     *  The slave is in initialisation mode.
+     *
+     *  The slave is in this state from the time `setup()` is called and until
+     *  `start_simulation()` is called.
+     */
+    initialisation,
+
+    /**
+     *  The slave is in simulation mode.
+     *
+     *  The slave is in this state from the time `start_simulation()` is called
+     *  and until `end_simulation()` is called.
+     */
+    simulation,
+
+    /**
+     *  An irrecoverable error occurred.
+     *
+     *  The slave is in this state from the time an exception is thrown and
+     *  until its destruction.
+     */
+    error,
+
+    /**
+     *  The slave is in an indeterminate state.
+     *
+     *  This is the case when a state-changing asynchronous function call is
+     *  currently in progress.
+     */
+    indeterminate
+};
+
 
 class slave_simulator : public simulator
 {
 public:
-    slave_simulator(std::shared_ptr<async_slave> slave, std::string_view name);
+    slave_simulator(std::shared_ptr<slave> slave, std::string_view name);
 
     ~slave_simulator() noexcept;
 
@@ -37,6 +80,8 @@ public:
     // `observable` methods
     std::string name() const override;
     cosim::model_description model_description() const override;
+
+    slave_state state() const noexcept;
 
     void expose_for_getting(variable_type type, value_reference ref) override;
     double get_real(value_reference reference) const override;
@@ -81,24 +126,26 @@ public:
     std::unordered_set<value_reference>& get_modified_boolean_variables() const override;
     std::unordered_set<value_reference>& get_modified_string_variables() const override;
 
-    boost::fibers::future<void> setup(
+    void setup(
         time_point startTime,
         std::optional<time_point> stopTime,
         std::optional<double> relativeTolerance) override;
 
-    boost::fibers::future<void> do_iteration() override;
+    void do_iteration() override;
 
-    boost::fibers::future<void> start_simulation() override;
+    void start_simulation() override;
 
-    boost::fibers::future<step_result> do_step(
+    step_result do_step(
         time_point currentT,
         duration deltaT) override;
 
 private:
     class impl;
     std::unique_ptr<impl> pimpl_;
+
+    slave_state state_;
 };
 
 
 } // namespace cosim
-#endif // header guard
+#endif // COSIM_SLAVE_SIMULATOR_HPP

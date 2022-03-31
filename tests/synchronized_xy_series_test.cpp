@@ -1,7 +1,6 @@
 #include "mock_slave.hpp"
 
 #include <cosim/algorithm.hpp>
-#include <cosim/async_slave.hpp>
 #include <cosim/execution.hpp>
 #include <cosim/log/simple.hpp>
 #include <cosim/observer/time_series_observer.hpp>
@@ -32,11 +31,11 @@ int main()
 
         double x1 = 0;
         auto simIndex1 = execution.add_slave(
-            cosim::make_pseudo_async(std::make_unique<mock_slave>([&x1](double x) { return x + x1++; })), "slave uno");
+            std::make_unique<mock_slave>([&x1](double x) { return x + x1++; }), "slave uno");
 
         double x2 = 0;
         auto simIndex2 = execution.add_slave(
-            cosim::make_pseudo_async(std::make_unique<mock_slave>([&x2](double x) { return x + x2++; })), "slave dos");
+            std::make_unique<mock_slave>([&x2](double x) { return x + x2++; }), "slave dos");
 
         algorithm->set_stepsize_decimation_factor(simIndex2, 2);
 
@@ -47,12 +46,12 @@ int main()
 
         // Run the simulation
         auto simResult = execution.simulate_until(midTime);
-        REQUIRE(simResult.get());
+        REQUIRE(simResult);
 
         observer->start_observing(variableId2);
 
         simResult = execution.simulate_until(endTime);
-        REQUIRE(simResult.get());
+        REQUIRE(simResult);
 
         const int numSamples = 20;
         const cosim::value_reference varIndex = 0;
