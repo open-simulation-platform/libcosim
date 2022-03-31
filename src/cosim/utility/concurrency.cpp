@@ -22,69 +22,6 @@ namespace cosim
 namespace utility
 {
 
-
-// =============================================================================
-// shared_mutex
-// =============================================================================
-
-
-void shared_mutex::lock()
-{
-    std::unique_lock<std::mutex> lock(mutex_);
-    condition_.wait(lock, [&] { return sharedCount_ == 0; });
-
-    // Release the mutex from the unique_lock, so it doesn't get automatically
-    // unlocked when the function exits.
-    lock.release();
-}
-
-
-bool shared_mutex::try_lock()
-{
-    std::unique_lock<std::mutex> lock(mutex_, std::try_to_lock);
-    if (!lock.owns_lock()) return false;
-    if (sharedCount_ > 0) return false;
-
-    // Release the mutex from the unique_lock, so it doesn't get automatically
-    // unlocked when the function exits.
-    lock.release();
-    return true;
-}
-
-
-void shared_mutex::unlock()
-{
-    mutex_.unlock();
-    condition_.notify_one();
-}
-
-
-void shared_mutex::lock_shared()
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-    ++sharedCount_;
-}
-
-
-bool shared_mutex::try_lock_shared()
-{
-    std::unique_lock<std::mutex> lock(mutex_, std::try_to_lock);
-    if (!lock.owns_lock()) return false;
-    ++sharedCount_;
-    return true;
-}
-
-
-void shared_mutex::unlock_shared()
-{
-    std::unique_lock<std::mutex> lock(mutex_);
-    --sharedCount_;
-    if (sharedCount_ == 0) {
-        lock.unlock();
-        condition_.notify_one();
-    }
-}
-
 // =============================================================================
 // file_lock
 // =============================================================================
@@ -112,7 +49,7 @@ void file_lock::lock()
     // gives us a chance to yield to the other fiber if the operation would
     // otherwise block.  An additional reason is that it is unspecified
     // to which extent boost::interprocess::file_lock is thread safe.
-    std::unique_lock<shared_mutex> mutexLock(fileMutex_->mutex);
+    std::unique_lock<std::shared_mutex> mutexLock(fileMutex_->mutex);
     std::unique_lock<boost_wrapper> fileLock(fileMutex_->file);
     mutexLock_ = std::move(mutexLock);
     fileLock_ = std::move(fileLock);
@@ -122,7 +59,7 @@ void file_lock::lock()
 bool file_lock::try_lock()
 {
     // See note on locking order in lock() above.
-    std::unique_lock<shared_mutex> mutexLock(fileMutex_->mutex, std::try_to_lock);
+    std::unique_lock<std::shared_mutex> mutexLock(fileMutex_->mutex, std::try_to_lock);
     if (!mutexLock.owns_lock()) return false;
     std::unique_lock<boost_wrapper> fileLock(fileMutex_->file, std::try_to_lock);
     if (!fileLock.owns_lock()) return false;
@@ -135,14 +72,14 @@ bool file_lock::try_lock()
 void file_lock::unlock()
 {
     std::get<std::unique_lock<boost_wrapper>>(fileLock_).unlock();
-    std::get<std::unique_lock<shared_mutex>>(mutexLock_).unlock();
+    std::get<std::unique_lock<std::shared_mutex>>(mutexLock_).unlock();
 }
 
 
 void file_lock::lock_shared()
 {
     // See note on locking order in lock() above.
-    std::shared_lock<shared_mutex> mutexLock(fileMutex_->mutex);
+    std::shared_lock<std::shared_mutex> mutexLock(fileMutex_->mutex);
     std::shared_lock<boost_wrapper> fileLock(fileMutex_->file);
     mutexLock_ = std::move(mutexLock);
     fileLock_ = std::move(fileLock);
@@ -152,7 +89,7 @@ void file_lock::lock_shared()
 bool file_lock::try_lock_shared()
 {
     // See note on locking order in lock() above.
-    std::shared_lock<shared_mutex> mutexLock(fileMutex_->mutex, std::try_to_lock);
+    std::shared_lock<std::shared_mutex> mutexLock(fileMutex_->mutex, std::try_to_lock);
     if (!mutexLock.owns_lock()) return false;
     std::shared_lock<boost_wrapper> fileLock(fileMutex_->file, std::try_to_lock);
     if (!fileLock.owns_lock()) return false;
@@ -165,7 +102,7 @@ bool file_lock::try_lock_shared()
 void file_lock::unlock_shared()
 {
     std::get<std::shared_lock<boost_wrapper>>(fileLock_).unlock();
-    std::get<std::shared_lock<shared_mutex>>(mutexLock_).unlock();
+    std::get<std::shared_lock<std::shared_mutex>>(mutexLock_).unlock();
 }
 
 

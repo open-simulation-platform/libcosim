@@ -62,19 +62,6 @@ void test_locking(F1&& getMutex1, F2&& getMutex2, F3&& getMutex3)
     mutex3.unlock();
 }
 
-
-BOOST_AUTO_TEST_CASE(shared_mutex)
-{
-    cosim::utility::shared_mutex mutex1;
-    cosim::utility::shared_mutex mutex2;
-    cosim::utility::shared_mutex mutex3;
-    test_locking(
-        [&]() -> cosim::utility::shared_mutex& { return mutex1; },
-        [&]() -> cosim::utility::shared_mutex& { return mutex2; },
-        [&]() -> cosim::utility::shared_mutex& { return mutex3; });
-}
-
-
 BOOST_AUTO_TEST_CASE(file_lock)
 {
     const auto workDir = cosim::utility::temp_dir();

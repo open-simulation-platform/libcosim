@@ -27,51 +27,6 @@ namespace cosim
 namespace utility
 {
 
-/**
- *  A shared mutex à la `std::shared_mutex`, but with support for fibers.
- *
- *  This class works in the same way as `std::shared_mutex`, but as it is
- *  implemented in terms of Boost.Fiber primitives, "blocking" operations
- *  are really "yielding" operations.
- *
- *  The class meets the
- *  [SharedMutex](https://en.cppreference.com/w/cpp/named_req/SharedMutex)
- *  requirements.
- */
-class shared_mutex
-{
-public:
-    /// Locks the mutex, blocks if the mutex is not available.
-    void lock();
-
-    /// Tries to lock the mutex and returns immediately whether it succeeded.
-    bool try_lock();
-
-    /// Unlocks the mutex.
-    void unlock();
-
-    /**
-     *  Locks the mutex for shared ownership, blocks if the mutex is not
-     *  available.
-     */
-    void lock_shared();
-
-    /**
-     *  Tries to lock the mutex for shared ownership, returns immediately
-     *  whether it succeeded.
-     */
-    bool try_lock_shared();
-
-    /// Unlocks the mutex from shared ownership.
-    void unlock_shared();
-
-private:
-    std::mutex mutex_;
-    std::condition_variable condition_;
-    int sharedCount_ = 0;
-};
-
-
 /// Whether and how a `file_lock` should acquire a lock on construction.
 enum class file_lock_initial_state
 {
@@ -229,7 +184,7 @@ private:
     struct file_mutex
     {
         file_mutex(const cosim::filesystem::path& path);
-        shared_mutex mutex;
+        std::shared_mutex mutex;
         boost_wrapper file;
     };
 
@@ -241,7 +196,7 @@ private:
     std::shared_ptr<file_mutex> fileMutex_;
 
     // The locks we hold on the mutex and the file lock.
-    std::variant<std::unique_lock<shared_mutex>, std::shared_lock<shared_mutex>> mutexLock_;
+    std::variant<std::unique_lock<std::shared_mutex>, std::shared_lock<std::shared_mutex>> mutexLock_;
     std::variant<std::unique_lock<boost_wrapper>, std::shared_lock<boost_wrapper>> fileLock_;
 };
 
