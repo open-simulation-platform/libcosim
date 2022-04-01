@@ -164,13 +164,6 @@ fmi2_import_t* fmu::fmilib_handle() const
 
 namespace
 {
-void step_finished_placeholder(fmi2_component_environment_t, fmi2_status_t)
-{
-    BOOST_LOG_SEV(log::logger(), log::debug)
-        << "FMU instance completed asynchronous step, "
-           "but this feature is currently not supported";
-}
-
 struct log_record
 {
     log_record() { }
@@ -295,7 +288,7 @@ slave_instance::slave_instance(
     callbacks.allocateMemory = std::calloc;
     callbacks.freeMemory = std::free;
     callbacks.logger = log_message;
-    callbacks.stepFinished = step_finished_placeholder;
+    callbacks.stepFinished = nullptr;
     callbacks.componentEnvironment = nullptr;
 
     if (fmi2_import_create_dllfmu(handle_, fmi2_fmu_kind_cs, &callbacks) != jm_status_success) {

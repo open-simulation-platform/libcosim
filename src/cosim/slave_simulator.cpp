@@ -221,20 +221,16 @@ public:
         if (!hasRunModifiers_) {
             for (const auto& entry : modifiers_) {
                 const auto ref = entry.first;
-                if (exposedVariables_.at(ref).arrayIndex < 0) {
-                    exposedVariables_.at(ref).arrayIndex = references_.size();
+                auto& arrayIndex = exposedVariables_.at(ref).arrayIndex;
+                if (arrayIndex < 0) {
+                    arrayIndex = references_.size();
                     assert(references_.size() == values_.size());
                     references_.emplace_back(ref);
                     values_.emplace_back(exposedVariables_.at(ref).lastValue);
                 }
+                values_[arrayIndex] = entry.second(values_[arrayIndex], deltaT);
             }
             assert(references_.size() == values_.size());
-            for (std::size_t i = 0; i < references_.size(); ++i) {
-                const auto iterator = modifiers_.find(references_[i]);
-                if (iterator != modifiers_.end()) {
-                    values_[i] = iterator->second(values_[i], deltaT);
-                }
-            }
             hasRunModifiers_ = true;
         }
         return std::pair(gsl::make_span(references_), gsl::make_span(values_));
@@ -544,15 +540,16 @@ private:
 
     void get_variables(duration deltaT)
     {
-        const auto values = slave_->get_variables(
+        slave_->get_variables(
+            &variable_values_,
             gsl::make_span(realGetCache_.references),
             gsl::make_span(integerGetCache_.references),
             gsl::make_span(booleanGetCache_.references),
             gsl::make_span(stringGetCache_.references));
-        copy_contents(values.real, realGetCache_.originalValues);
-        copy_contents(values.integer, integerGetCache_.originalValues);
-        copy_contents(values.boolean, booleanGetCache_.originalValues);
-        copy_contents(values.string, stringGetCache_.originalValues);
+        copy_contents(variable_values_.real, realGetCache_.originalValues);
+        copy_contents(variable_values_.integer, integerGetCache_.originalValues);
+        copy_contents(variable_values_.boolean, booleanGetCache_.originalValues);
+        copy_contents(variable_values_.string, stringGetCache_.originalValues);
         realGetCache_.run_modifiers(deltaT);
         integerGetCache_.run_modifiers(deltaT);
         booleanGetCache_.run_modifiers(deltaT);
@@ -603,6 +600,8 @@ private:
     std::unordered_set<value_reference> modifiedIntegerVariables_;
     std::unordered_set<value_reference> modifiedBooleanVariables_;
     std::unordered_set<value_reference> modifiedStringVariables_;
+
+    cosim::slave::variable_values variable_values_;
 };
 
 

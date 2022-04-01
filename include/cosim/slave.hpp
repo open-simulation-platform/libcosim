@@ -238,25 +238,26 @@ public:
         std::vector<std::string> string;
     };
 
-    variable_values get_variables(
+    void get_variables(
+        variable_values* values,
         gsl::span<const value_reference> real_variables,
         gsl::span<const value_reference> integer_variables,
         gsl::span<const value_reference> boolean_variables,
         gsl::span<const value_reference> string_variables) const
     {
+        if (static_cast<size_t>(values->real.size()) != static_cast<size_t>(real_variables.size()))
+            values->real.resize(real_variables.size());
+        if (static_cast<size_t>(values->integer.size()) != static_cast<size_t>(integer_variables.size()))
+            values->integer.resize(integer_variables.size());
+        if (static_cast<size_t>(values->boolean.size()) != static_cast<size_t>(boolean_variables.size()))
+            values->boolean.resize(boolean_variables.size());
+        if (static_cast<size_t>(values->string.size()) != static_cast<size_t>(string_variables.size()))
+            values->string.resize(string_variables.size());
 
-        variable_values values;
-        values.real.resize(real_variables.size());
-        values.integer.resize(integer_variables.size());
-        values.boolean.resize(boolean_variables.size());
-        values.string.resize(string_variables.size());
-
-        get_real_variables(real_variables, values.real);
-        get_integer_variables(integer_variables, values.integer);
-        get_boolean_variables(boolean_variables, values.boolean);
-        get_string_variables(string_variables, values.string);
-
-        return values;
+        get_real_variables(real_variables, values->real);
+        get_integer_variables(integer_variables, values->integer);
+        get_boolean_variables(boolean_variables, values->boolean);
+        get_string_variables(string_variables, values->string);
     }
 
     void set_variables(
