@@ -244,12 +244,6 @@ public:
     /**
      *  Advance the co-simulation forward to the given logical time.
      *
-     *  This function returns immediately, and its actions will be performed
-     *  asynchronously.  As it is not possible to perform more than one
-     *  asynchronous operation at a time per `execution` object, client code
-     *  must verify that the operation completed before calling the function
-     *  again (e.g. by calling `boost::fibers::future::get()` on the result).
-     *
      *  \param targetTime
      *      The logical time at which the co-simulation should pause (optional).
      *      If specified, this must always be greater than the value of
