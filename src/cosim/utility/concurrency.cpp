@@ -43,12 +43,8 @@ file_lock::file_lock(
 void file_lock::lock()
 {
     // NOTE: The reason we can't use std::lock() here is that we must make
-    // sure that the mutex gets locked before the file.  Otherwise, the
-    // code might block on the file lock, when the lock is in fact held by
-    // a different fiber in the same process.  Trying to lock the mutex first
-    // gives us a chance to yield to the other fiber if the operation would
-    // otherwise block.  An additional reason is that it is unspecified
-    // to which extent boost::interprocess::file_lock is thread safe.
+    // sure that the mutex gets locked before the file, since
+    // boost::interprocess::file_lock isn't thread safe.
     std::unique_lock<std::shared_mutex> mutexLock(fileMutex_->mutex);
     std::unique_lock<boost_wrapper> fileLock(fileMutex_->file);
     mutexLock_ = std::move(mutexLock);

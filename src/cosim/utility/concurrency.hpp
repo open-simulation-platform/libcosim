@@ -46,24 +46,18 @@ enum class file_lock_initial_state
  *
  *  This class provides interprocess synchronisation based on
  *  `boost::interprocess::file_lock`, augmenting it with support for
- *  inter-fiber and inter-thread synchronisation.  This is achieved by
- *  combining the file lock with a lock on a global `shared_mutex` object
- *  associated with the file.
+ *  inter-thread synchronisation.  This is achieved by combining the file lock
+ *  with a lock on a global `std::shared_mutex` object associated with the
+ *  file.
  *
- *  Note that a single `file_lock` object may only be used by one fiber at a
- *  time.  That is, if it is locked by one fiber, it must be unlocked by the
- *  same fiber.  Other fibers may not attempt to call its locking or unlocking
- *  functions in the meantime.
+ *  Note that `file_lock` objects should not be shared among threads. The
+ *  inter-thread synchronisation is handled internally via the global
+ *  per-file mutex.
  *
- *  Furthermore, once a fiber has locked a file, the same fiber may not attempt
- *  to use a different `file_lock` object to lock the same file, as this would
- *  cause a deadlock.
- *
- *  Therefore, to synchronise between fibers (including those running in
- *  separate threads), it is recommended to create one and only one `file_lock`
- *  object associated with the same file in each fiber.  If, for some reason,
- *  a `file_lock` *must* be transferred between fibers, do so only when it is
- *  in the unlocked state.
+ *  Furthermore, once a thread has locked a file, the same thread may not
+ *  attempt to use a different `file_lock` object to lock the same file, as
+ *  this would cause a deadlock.  (This is also because they would share the
+ *  same global mutex.)
  *
  *  The lock automatically gets unlocked on destruction.
  *
@@ -103,7 +97,7 @@ public:
      *  \pre
      *      This `file_lock` object is not already locked.
      *      The file is not locked by a different `file_lock` object in the
-     *      same fiber.
+     *      same thread.
      */
     void lock();
 
@@ -114,7 +108,7 @@ public:
      *  \pre
      *      This `file_lock` object is not already locked.
      *      The file is not locked by a different `file_lock` object in the
-     *      same fiber.
+     *      same thread.
      */
     bool try_lock();
 
@@ -122,7 +116,7 @@ public:
      *  Unlocks the file.
      *
      *  \pre
-     *      This `file_lock` object has been locked in the current fiber.
+     *      This `file_lock` object has been locked in the current thread.
      */
     void unlock();
 
@@ -132,7 +126,7 @@ public:
      *  \pre
      *      This `file_lock` object is not already locked.
      *      The file is not locked by a different `file_lock` object in the
-     *      same fiber.
+     *      same thread.
      */
     void lock_shared();
 
@@ -143,7 +137,7 @@ public:
      *  \pre
      *      This `file_lock` object is not already locked.
      *      The file is not locked by a different `file_lock` object in the
-     *      same fiber.
+     *      same thread.
      */
     bool try_lock_shared();
 
@@ -152,7 +146,7 @@ public:
      *
      *  \pre
      *      This `file_lock` object has been locked for shared ownership in
-     *      the current fiber.
+     *      the current thread.
      */
     void unlock_shared();
 

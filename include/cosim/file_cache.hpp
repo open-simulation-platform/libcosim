@@ -118,7 +118,7 @@ private:
 
 /**
  *  A persistent file cache which can be safely accessed by multiple
- *  processes, threads and fibers concurrently.
+ *  processes and threads concurrently.
  */
 class persistent_file_cache : public file_cache
 {
