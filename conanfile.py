@@ -52,7 +52,7 @@ class LibcosimConan(ConanFile):
 
     def requirements(self):
         if self.options.proxyfmu:
-            self.requires("proxyfmu/0.2.7@osp/testing")
+            self.requires("proxyfmu/0.2.7@osp/stable")
 
     def imports(self):
         binDir = os.path.join("output", str(self.settings.build_type).lower(), "bin")
