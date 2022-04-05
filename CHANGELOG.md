@@ -3,9 +3,10 @@ All notable changes to libcosim will be documented in this file. This includes n
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
-### [v0.9.0] – 2022-04-??
+### [v0.9.0] – 2022-04-05
 ##### Changed
-* Replaced fibers with threadpool for simplicity and increased performance ([PR#674](https://github.com/open-simulation-platform/libcosim/pull/674), [PR#692](https://github.com/open-simulation-platform/libcosim/pull/692))
+* Removed fibers to simplify code and increase simulation performance. Concurrency must now be implemented in the master 
+algorithm, and `fixed_step_algorithm` has been modified to use a thread pool. ([PR#674](https://github.com/open-simulation-platform/libcosim/pull/674), [PR#692](https://github.com/open-simulation-platform/libcosim/pull/692))
 * Performance improvements ([PR#687](https://github.com/open-simulation-platform/libcosim/pull/687))
 
 ##### Added
