@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<OspSystemStructure
+        xmlns="http://opensimulationplatform.com/MSMI/OSPSystemStructure"
+        version="0.1">
+    <StartTime>0.0</StartTime>
+    <BaseStepSize>1e-4</BaseStepSize>
+    <Algorithm>fixedStep</Algorithm>
+    <Simulators>
+        <Simulator name="CraneController" source="proxyfmu://localhost?file=../ssp/demo/CraneController.fmu" stepSize="2e-4">
+            <InitialValues>
+                <InitialValue variable="cl1_min">
+                    <Real value="2.2"/>
+                </InitialValue>
+                <InitialValue variable="cl1_max">
+                    <Real value="3.8"/>
+                </InitialValue>
+            </InitialValues>
+        </Simulator>
+        <Simulator name="KnuckleBoomCrane" source="proxyfmu://localhost?file=../ssp/demo/KnuckleBoomCrane.fmu" stepSize="2e-4"/>
+        <Simulator name="TrueIdentity" source="proxyfmu://localhost?file=../fmi1/identity.fmu" stepSize="2.03e-4">
+            <InitialValues>
+                <InitialValue variable="booleanIn">
+                    <Boolean value="true"/>
+                </InitialValue>
+            </InitialValues>
+        </Simulator>
+        <Simulator name="OneIdentity" source="proxyfmu://localhost?file=../fmi1/identity.fmu" stepSize="2.03e-4">
+            <InitialValues>
+                <InitialValue variable="booleanIn">
+                    <Boolean value="1"/>
+                </InitialValue>
+            </InitialValues>
+        </Simulator>
+    </Simulators>
+    <Connections>
+        <VariableGroupConnection>
+            <VariableGroup simulator="KnuckleBoomCrane" name="actuatorLimits"/>
+            <VariableGroup simulator="CraneController" name="actuatorLimits"/>
+        </VariableGroupConnection>
+        <VariableGroupConnection>
+            <VariableGroup simulator="KnuckleBoomCrane" name="linear mechanical port"/>
+            <VariableGroup simulator="CraneController" name="linear mechanical port"/>
+        </VariableGroupConnection>
+    </Connections>
+</OspSystemStructure>

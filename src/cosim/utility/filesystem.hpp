@@ -22,7 +22,7 @@ namespace utility
 /**
  *  An RAII object that creates a unique directory on construction and
  *  recursively deletes it again on destruction.
-*/
+ */
 class temp_dir
 {
 public:
@@ -39,7 +39,7 @@ public:
      *    - If `parent` is empty: `temp/name`
      *    - If `parent` is relative: `temp/parent/name`
      *    - If `parent` is absolute: `parent/name`
-    */
+     */
     explicit temp_dir(
         const cosim::filesystem::path& parent = cosim::filesystem::path());
 
@@ -53,7 +53,7 @@ public:
      *  Afterwards, `other` no longer refers to any directory, meaning that
      *  `other.Path()` will return an empty path, and its destructor will not
      *  perform any filesystem operations.
-    */
+     */
     temp_dir(temp_dir&& other) noexcept;
 
     /// Move assignment operator. See temp_dir(temp_dir&&) for semantics.

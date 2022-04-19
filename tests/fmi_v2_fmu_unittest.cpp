@@ -1,8 +1,8 @@
 #define BOOST_TEST_MODULE cosim::fmi::v2::fmu unittest
 #include <cosim/fmi/importer.hpp>
 #include <cosim/fmi/v2/fmu.hpp>
-
 #include <cosim/fs_portability.hpp>
+
 #include <boost/test/unit_test.hpp>
 
 

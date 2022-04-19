@@ -2,7 +2,6 @@
 #include "mock_slave.hpp"
 
 #include <cosim/algorithm/fixed_step_algorithm.hpp>
-#include <cosim/execution.hpp>
 #include <cosim/function/linear_transformation.hpp>
 #include <cosim/function/vector_sum.hpp>
 #include <cosim/manipulator/scenario_manager.hpp>
@@ -10,8 +9,8 @@
 
 #include <boost/test/unit_test.hpp>
 
+#include <iostream>
 #include <stdexcept>
-#include <string>
 #include <utility>
 
 int find_param(const cosim::function_type_description& ftd, const std::string& name)
@@ -153,11 +152,11 @@ BOOST_AUTO_TEST_CASE(function_in_execution)
 
     // Set up slaves and function
     const auto s1 = std::make_shared<mock_slave>();
-    const auto idS1 = exe.add_slave(cosim::make_pseudo_async(s1), "S1");
+    const auto idS1 = exe.add_slave(s1, "S1");
     const auto f = std::make_shared<cosim::linear_transformation_function>(offset, factor);
     const auto idF = exe.add_function(f);
     const auto s2 = std::make_shared<mock_slave>();
-    const auto idS2 = exe.add_slave(cosim::make_pseudo_async(s2), "S2");
+    const auto idS2 = exe.add_slave(s2, "S2");
     exe.connect_variables(
         cosim::variable_id{idS1, cosim::variable_type::real, mockRealOut},
         cosim::function_io_id{idF, cosim::variable_type::real, cosim::linear_transformation_function::in_io_reference});
@@ -193,7 +192,7 @@ BOOST_AUTO_TEST_CASE(function_in_execution)
 
     // Run simulation and verify results
     auto success = exe.simulate_until(stopTime);
-    BOOST_TEST_REQUIRE(success.get());
+    BOOST_TEST_REQUIRE(success);
 
     auto outputs = std::vector<double>(bufferSize);
     auto steps = std::vector<cosim::step_number>(bufferSize);

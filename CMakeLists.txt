@@ -15,10 +15,16 @@ option(LIBCOSIM_BUILD_PRIVATE_APIDOC "Build private API documentation (only used
 option(LIBCOSIM_STANDALONE_INSTALLATION "Whether to build for a standalone installation (Linux only; sets a relative RPATH)" OFF)
 option(LIBCOSIM_USING_CONAN "Whether Conan is used for package management" OFF)
 option(LIBCOSIM_WITH_PROXYFMU "Whether or not to build with proxy-fmu integration" OFF)
+option(LIBCOSIM_NO_FMI_LOGGING "Disable FMI logging during simulation" OFF)
 
 # ==============================================================================
 # Global internal configuration
 # ==============================================================================
+
+# Configure logging in the fmi callback function
+if(LIBCOSIM_NO_FMI_LOGGING)
+    add_compile_definitions(LIBCOSIM_NO_FMI_LOGGING=1)
+endif()
 
 # Our custom CMake scripts go in the cmake/ subdirectory.
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_SOURCE_DIR}/cmake")
@@ -120,7 +126,7 @@ if(LIBCOSIM_USING_CONAN)
 
 endif()
 
-set(Boost_components date_time fiber log)
+set(Boost_components date_time log)
 if (LIBCOSIM_BUILD_TESTS)
     list(APPEND Boost_components timer unit_test_framework)
 endif()

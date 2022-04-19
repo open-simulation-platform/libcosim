@@ -49,8 +49,7 @@ int main()
 
         const auto testDataDir = std::getenv("TEST_DATA_DIR");
         REQUIRE(testDataDir);
-        test(cosim::filesystem::path(testDataDir) / "msmi", 7);
-        test(cosim::filesystem::path(testDataDir) / "msmi" / "OspSystemStructure_Bond.xml", 9);
+        test(cosim::filesystem::path(testDataDir) / "msmi" / "OspSystemStructure_proxyfmu.xml", 9);
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what();
         return 1;

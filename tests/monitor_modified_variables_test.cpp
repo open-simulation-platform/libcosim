@@ -1,7 +1,6 @@
 #include "mock_slave.hpp"
 
 #include "cosim/algorithm.hpp"
-#include "cosim/async_slave.hpp"
 #include "cosim/execution.hpp"
 #include "cosim/log/simple.hpp"
 #include "cosim/manipulator/override_manipulator.hpp"
@@ -32,9 +31,9 @@ int main()
         execution.add_manipulator(manipulator);
 
         auto simIndex = execution.add_slave(
-            cosim::make_pseudo_async(std::make_unique<mock_slave>(
+            std::make_unique<mock_slave>(
                 [](double x) { return x + 1.234; },
-                [](int y) { return y + 2; })),
+                [](int y) { return y + 2; }),
             "Slave");
 
         observer->start_observing(cosim::variable_id{simIndex, cosim::variable_type::integer, mock_slave::integer_out_reference});
@@ -42,7 +41,7 @@ int main()
         manipulator->override_integer_variable(simIndex, mock_slave::integer_out_reference, 1);
 
         auto simResult = execution.simulate_until(endTime);
-        REQUIRE(simResult.get());
+        REQUIRE(simResult);
 
         const int numSamples = 10;
         int intOutputValues[numSamples];

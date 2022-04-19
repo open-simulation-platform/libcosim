@@ -61,7 +61,7 @@ inline auto simple_formatter()
  *
  *  1. Calls `boost::log::add_common_attributes()`.
  *  2. Calls `boost::log::add_console_log()`.
- *  3. Sets the formatter of the console sink to `simple_formatter()`. 
+ *  3. Sets the formatter of the console sink to `simple_formatter()`.
  */
 inline void setup_simple_console_logging()
 {

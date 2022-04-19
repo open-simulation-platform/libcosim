@@ -1,12 +1,10 @@
 #include "mock_slave.hpp"
 
 #include <cosim/algorithm.hpp>
-#include <cosim/async_slave.hpp>
 #include <cosim/execution.hpp>
+#include <cosim/fs_portability.hpp>
 #include <cosim/log/simple.hpp>
 #include <cosim/observer/file_observer.hpp>
-
-#include <cosim/fs_portability.hpp>
 
 #include <exception>
 #include <memory>
@@ -42,28 +40,28 @@ int main()
 
         // Add two slaves to the execution and connect variables
         execution.add_slave(
-            cosim::make_pseudo_async(std::make_unique<mock_slave>(
+            std::make_unique<mock_slave>(
                 [](double x) { return x + 1.234; },
                 [](int x) { return x + 1; },
                 [](bool x) { return x; },
-                [](std::string_view) { return std::string("hello log"); })),
+                [](std::string_view) { return std::string("hello log"); }),
             "slave");
 
         execution.add_slave(
-            cosim::make_pseudo_async(std::make_unique<mock_slave>(
+            std::make_unique<mock_slave>(
                 [](double x) { return x + 123.456; },
-                [](int x) { return x - 1; })),
+                [](int x) { return x - 1; }),
             "slave1");
 
         execution.add_slave(
-            cosim::make_pseudo_async(std::make_unique<mock_slave>(
+            std::make_unique<mock_slave>(
                 [](double x) { return x + 1.234; },
-                [](int x) { return x + 1; })),
+                [](int x) { return x + 1; }),
             "slave2");
 
         // Run the simulation
         auto simResult = execution.simulate_until(endTime);
-        REQUIRE(simResult.get());
+        REQUIRE(simResult);
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;

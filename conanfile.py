@@ -29,10 +29,12 @@ class LibcosimConan(ConanFile):
 
     options = {
         "shared": [True, False],
-        "proxyfmu": [True, False]}
+        "proxyfmu": [True, False],
+        "no_fmi_logging": [True, False]}
     default_options = (
         "proxyfmu=False",
-        "shared=True"
+        "shared=True",
+        "no_fmi_logging=False"
     )
 
     def is_tests_enabled(self):
@@ -50,7 +52,7 @@ class LibcosimConan(ConanFile):
 
     def requirements(self):
         if self.options.proxyfmu:
-            self.requires("proxyfmu/0.2.6@osp/stable")
+            self.requires("proxyfmu/0.2.7@osp/stable")
 
     def imports(self):
         binDir = os.path.join("output", str(self.settings.build_type).lower(), "bin")
@@ -65,6 +67,7 @@ class LibcosimConan(ConanFile):
         cmake.definitions["LIBCOSIM_BUILD_APIDOC"] = "OFF"
         cmake.definitions["LIBCOSIM_BUILD_TESTS"] = self.is_tests_enabled()
         cmake.definitions["BUILD_SHARED_LIBS"] = self.options.shared
+        cmake.definitions["LIBCOSIM_NO_FMI_LOGGING"] = self.options.no_fmi_logging
         if self.options.proxyfmu:
             cmake.definitions["LIBCOSIM_WITH_PROXYFMU"] = "ON"
         cmake.configure()

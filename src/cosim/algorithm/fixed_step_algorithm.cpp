@@ -8,6 +8,7 @@
 #include "cosim/error.hpp"
 #include "cosim/exception.hpp"
 #include "cosim/log/logger.hpp"
+#include "cosim/utility/thread_pool.hpp"
 
 #include <algorithm>
 #include <cstdlib>
@@ -21,18 +22,6 @@ namespace cosim
 {
 namespace
 {
-
-std::string exception_ptr_msg(std::exception_ptr ep)
-{
-    assert(ep);
-    try {
-        std::rethrow_exception(ep);
-    } catch (const std::exception& e) {
-        return std::string(e.what());
-    } catch (...) {
-        return "Unknown error";
-    }
-}
 
 int calculate_decimation_factor(
     std::string_view name,
@@ -60,8 +49,9 @@ int calculate_decimation_factor(
 class fixed_step_algorithm::impl
 {
 public:
-    explicit impl(duration baseStepSize)
+    explicit impl(duration baseStepSize, std::optional<unsigned int> workerThreadCount)
         : baseStepSize_(baseStepSize)
+        , pool_(std::min(workerThreadCount.value_or(max_threads_), max_threads_))
     {
         COSIM_INPUT_CHECK(baseStepSize.count() > 0);
     }
@@ -161,17 +151,24 @@ public:
 
     void initialize()
     {
-        for_all_simulators([=](auto s) {
-            return s->setup(startTime_, stopTime_, std::nullopt);
-        });
+        for (auto& s : simulators_) {
+            pool_.submit([&] {
+                s.second.sim->setup(startTime_, stopTime_, std::nullopt);
+            });
+        }
+        pool_.wait_for_tasks_to_finish();
 
         // Run N iterations of the simulators' and functions' step/calculation
         // procedures, where N is the number of simulators in the system,
         // to propagate initial values.
         for (std::size_t i = 0; i < simulators_.size() + functions_.size(); ++i) {
-            for_all_simulators([=](auto s) {
-                return s->do_iteration();
-            });
+            for (auto& s : simulators_) {
+                pool_.submit([&] {
+                    s.second.sim->do_iteration();
+                });
+            }
+            pool_.wait_for_tasks_to_finish();
+
             for (const auto& s : simulators_) {
                 transfer_variables(s.second.outgoingSimConnections);
                 transfer_variables(s.second.outgoingFunConnections);
@@ -182,44 +179,58 @@ public:
             }
         }
 
-        for_all_simulators([](auto s) {
-            return s->start_simulation();
-        });
+        for (auto& s : simulators_) {
+            pool_.submit([&] {
+                s.second.sim->start_simulation();
+            });
+        }
+        pool_.wait_for_tasks_to_finish();
     }
 
     std::pair<duration, std::unordered_set<simulator_index>> do_step(time_point currentT)
     {
+        std::mutex m;
+        bool failed = false;
+        std::stringstream errMessages;
+        std::unordered_set<simulator_index> finished;
         // Initiate simulator time steps.
+
         for (auto& s : simulators_) {
             auto& info = s.second;
             if (stepCounter_ % info.decimationFactor == 0) {
-                info.stepResult = info.sim->do_step(currentT, baseStepSize_ * info.decimationFactor);
+                pool_.submit([&] {
+                    try {
+                        info.stepResult = info.sim->do_step(currentT, baseStepSize_ * info.decimationFactor);
+
+                        if (info.stepResult != step_result::complete) {
+                            std::lock_guard<std::mutex> lck(m);
+                            errMessages
+                                << info.sim->name() << ": "
+                                << "Step not complete" << '\n';
+                            failed = true;
+                        }
+
+                    } catch (std::exception& ex) {
+                        std::lock_guard<std::mutex> lck(m);
+                        errMessages
+                            << info.sim->name() << ": "
+                            << ex.what() << '\n';
+                        failed = true;
+                    }
+                });
             }
         }
 
         ++stepCounter_;
 
-        // Wait for all simulators that are supposed to finish their individual
-        // time steps within this co-simulation time step.
-        std::unordered_set<simulator_index> finished;
-        bool failed = false;
-        std::stringstream errMessages;
         for (auto& [idx, info] : simulators_) {
             if (stepCounter_ % info.decimationFactor == 0) {
-                if (auto ep = info.stepResult.get_exception_ptr()) {
-                    errMessages
-                        << info.sim->name() << ": "
-                        << exception_ptr_msg(ep) << '\n';
-                    failed = true;
-                } else if (info.stepResult.get() != step_result::complete) {
-                    errMessages
-                        << info.sim->name() << ": "
-                        << "Step not complete" << '\n';
-                    failed = true;
-                }
                 finished.insert(idx);
             }
         }
+
+        pool_.wait_for_tasks_to_finish();
+
         if (failed) {
             throw error(make_error_code(errc::simulation_error), errMessages.str());
         }
@@ -241,7 +252,7 @@ public:
             }
         }
 
-        return std::pair(baseStepSize_, std::move(finished));
+        return {baseStepSize_, std::move(finished)};
     }
 
     void set_stepsize_decimation_factor(cosim::simulator_index i, int factor)
@@ -274,7 +285,7 @@ private:
     {
         simulator* sim;
         int decimationFactor = 1;
-        boost::fibers::future<step_result> stepResult;
+        step_result stepResult;
         std::vector<connection_ss> outgoingSimConnections;
         std::vector<connection_sf> outgoingFunConnections;
     };
@@ -317,31 +328,6 @@ private:
                     current,
                     simulators_.at(connection.target.simulator).decimationFactor);
             });
-    }
-
-    template<typename F>
-    void for_all_simulators(F f)
-    {
-        std::unordered_map<simulator_index, boost::fibers::future<void>> results;
-        for (const auto& s : simulators_) {
-            results.emplace(s.first, f(s.second.sim));
-        }
-
-        bool failed = false;
-        std::stringstream errMessages;
-        for (auto& r : results) {
-            try {
-                r.second.get();
-            } catch (const std::exception& e) {
-                errMessages
-                    << simulators_.at(r.first).sim->name() << ": "
-                    << e.what() << '\n';
-                failed = true;
-            }
-        }
-        if (failed) {
-            throw error(make_error_code(errc::simulation_error), errMessages.str());
-        }
     }
 
     void transfer_variables(const std::vector<connection_ss>& connections)
@@ -446,16 +432,18 @@ private:
     std::unordered_map<simulator_index, simulator_info> simulators_;
     std::unordered_map<function_index, function_info> functions_;
     int64_t stepCounter_ = 0;
+    unsigned int max_threads_ = std::thread::hardware_concurrency() - 1;
+    utility::thread_pool pool_;
 };
 
 
-fixed_step_algorithm::fixed_step_algorithm(duration baseStepSize)
-    : pimpl_(std::make_unique<impl>(baseStepSize))
+fixed_step_algorithm::fixed_step_algorithm(duration baseStepSize, std::optional<unsigned int> workerThreadCount)
+    : pimpl_(std::make_unique<impl>(baseStepSize, workerThreadCount))
 {
 }
 
 
-fixed_step_algorithm::~fixed_step_algorithm() noexcept { }
+fixed_step_algorithm::~fixed_step_algorithm() noexcept = default;
 
 
 fixed_step_algorithm::fixed_step_algorithm(fixed_step_algorithm&& other) noexcept

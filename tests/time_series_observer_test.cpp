@@ -1,8 +1,6 @@
 #include "mock_slave.hpp"
 
 #include <cosim/algorithm.hpp>
-#include <cosim/async_slave.hpp>
-#include <cosim/execution.hpp>
 #include <cosim/log/simple.hpp>
 #include <cosim/observer/time_series_observer.hpp>
 
@@ -34,7 +32,7 @@ int main()
         execution.add_observer(bufferedObserver);
 
         auto simIndex = execution.add_slave(
-            cosim::make_pseudo_async(std::make_unique<mock_slave>([](double x) { return x + 1.234; })), "slave uno");
+            std::make_unique<mock_slave>([](double x) { return x + 1.234; }), "slave uno");
 
         auto variableId = cosim::variable_id{simIndex, cosim::variable_type::real, 0};
 
@@ -52,7 +50,7 @@ int main()
 
         // Run the simulation
         auto simResult = execution.simulate_until(time1);
-        REQUIRE(simResult.get());
+        REQUIRE(simResult);
 
         const int numSamples = 15;
         const cosim::value_reference varIndex = 0;
@@ -74,7 +72,7 @@ int main()
         observer->start_observing(variableId);
 
         simResult = execution.simulate_until(time2);
-        REQUIRE(simResult.get());
+        REQUIRE(simResult);
 
         samplesRead = observer->get_real_samples(simIndex, varIndex, 1, gsl::make_span(realValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
 
@@ -97,7 +95,7 @@ int main()
         bufferedObserver->start_observing(variableId);
 
         simResult = execution.simulate_until(endTime);
-        REQUIRE(simResult.get());
+        REQUIRE(simResult);
 
         samplesRead = observer->get_real_samples(simIndex, varIndex, 0, gsl::make_span(realValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
         REQUIRE(samplesRead == 0);

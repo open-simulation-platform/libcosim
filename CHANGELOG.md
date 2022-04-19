@@ -3,6 +3,19 @@ All notable changes to libcosim will be documented in this file. This includes n
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
+### [v0.9.0] – 2022-04-05
+##### Changed
+* Removed fibers to simplify code and increase simulation performance. Concurrency must now be implemented in the master 
+algorithm, and `fixed_step_algorithm` has been modified to use a thread pool. ([PR#674](https://github.com/open-simulation-platform/libcosim/pull/674), [PR#692](https://github.com/open-simulation-platform/libcosim/pull/692))
+* Performance improvements ([PR#687](https://github.com/open-simulation-platform/libcosim/pull/687))
+
+##### Added
+* OspModelDescription.xml can be located in same folder as FMU when using proxyfmu ([PR#688](https://github.com/open-simulation-platform/libcosim/pull/688))
+* Option to build with FMI logging removed ([PR#679](https://github.com/open-simulation-platform/libcosim/pull/679))
+
+##### Fixed
+* Update to proxyfmu 0.2.7
+
 ### [v0.8.3] – 2021-11-26
 ##### Fixed
 * Update to proxyfmu 0.2.6 ([PR#676](https://github.com/open-simulation-platform/libcosim/pull/672))
@@ -179,3 +192,4 @@ First OSP JIP partner release
 [v0.8.1]: https://github.com/open-simulation-platform/cse-core/compare/v0.8.0...v0.8.1
 [v0.8.2]: https://github.com/open-simulation-platform/cse-core/compare/v0.8.1...v0.8.2
 [v0.8.3]: https://github.com/open-simulation-platform/cse-core/compare/v0.8.2...v0.8.3
+[v0.9.0]: https://github.com/open-simulation-platform/cse-core/compare/v0.8.3...v0.9.0
