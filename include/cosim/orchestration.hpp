@@ -10,10 +10,10 @@
 #ifndef COSIM_ORCHESTRATION_HPP
 #define COSIM_ORCHESTRATION_HPP
 
-#include <cosim/async_slave.hpp>
 #include <cosim/file_cache.hpp>
 #include <cosim/fmi/importer.hpp>
 #include <cosim/model_description.hpp>
+#include <cosim/slave.hpp>
 #include <cosim/uri.hpp>
 
 #include <memory>
@@ -35,7 +35,7 @@ public:
     virtual std::shared_ptr<const model_description> description() const noexcept = 0;
 
     /// Instantiates a slave.
-    virtual std::shared_ptr<async_slave> instantiate(std::string_view name) = 0;
+    virtual std::shared_ptr<slave> instantiate(std::string_view name) = 0;
 };
 
 

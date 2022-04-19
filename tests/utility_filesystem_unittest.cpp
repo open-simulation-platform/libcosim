@@ -1,7 +1,7 @@
 #define BOOST_TEST_MODULE cosim::utility filesystem unittests
+#include <cosim/fs_portability.hpp>
 #include <cosim/utility/filesystem.hpp>
 
-#include <cosim/fs_portability.hpp>
 #include <boost/test/unit_test.hpp>
 
 #include <utility>

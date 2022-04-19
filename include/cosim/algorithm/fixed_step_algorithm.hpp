@@ -30,8 +30,11 @@ public:
      *
      *  \param baseStepSize
      *      The base communication interval length.
+     *
+     *  \param workerThreadCount
+     *      The number of worker threads to spawn for running FMUs
      */
-    explicit fixed_step_algorithm(duration baseStepSize);
+    explicit fixed_step_algorithm(duration baseStepSize, std::optional<unsigned int> workerThreadCount = std::nullopt);
 
     ~fixed_step_algorithm() noexcept;
 

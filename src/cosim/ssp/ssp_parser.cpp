@@ -117,7 +117,8 @@ ssp_parser::ssp_parser(const cosim::filesystem::path& ssdPath)
                     for (const auto& algorithm : annotation.second.get_child("osp:Algorithm")) {
                         if (algorithm.first == "osp:FixedStepAlgorithm") {
                             auto baseStepSize = get_attribute<double>(algorithm.second, "baseStepSize");
-                            defaultExperiment_.algorithm = std::make_unique<cosim::fixed_step_algorithm>(cosim::to_duration(baseStepSize));
+                            auto numWorkerThreads = get_optional_attribute<unsigned int>(algorithm.second, "numWorkerThreads");
+                            defaultExperiment_.algorithm = std::make_unique<cosim::fixed_step_algorithm>(cosim::to_duration(baseStepSize), numWorkerThreads);
                         } else {
                             throw std::runtime_error("Unknown algorithm: " + algorithm.first);
                         }

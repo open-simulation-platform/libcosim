@@ -43,7 +43,7 @@ public:
     impl& operator=(impl&&) = delete;
 
     simulator_index add_slave(
-        std::shared_ptr<async_slave> slave,
+        std::shared_ptr<slave> slave,
         std::string_view name,
         duration stepSizeHint)
     {
@@ -142,20 +142,18 @@ public:
         return stepSize;
     }
 
-    boost::fibers::future<bool> simulate_until(std::optional<time_point> endTime)
+    bool simulate_until(std::optional<time_point> endTime)
     {
-        return boost::fibers::async([=]() {
-            stopped_ = false;
-            timer_.start(currentTime_);
-            duration stepSize;
-            do {
-                stepSize = step();
-                timer_.sleep(currentTime_);
-            } while (!stopped_ && !timed_out(endTime, currentTime_, stepSize));
-            bool isStopped = stopped_;
-            stopped_ = true;
-            return !isStopped;
-        });
+        stopped_ = false;
+        timer_.start(currentTime_);
+        duration stepSize;
+        do {
+            stepSize = step();
+            timer_.sleep(currentTime_);
+        } while (!stopped_ && !timed_out(endTime, currentTime_, stepSize));
+        bool isStopped = stopped_;
+        stopped_ = true;
+        return !isStopped;
     }
 
     void stop_simulation()
@@ -333,7 +331,7 @@ execution::execution(execution&& other) noexcept = default;
 execution& execution::operator=(execution&& other) noexcept = default;
 
 simulator_index execution::add_slave(
-    std::shared_ptr<async_slave> slave,
+    std::shared_ptr<slave> slave,
     std::string_view name,
     duration stepSizeHint)
 {
@@ -375,7 +373,7 @@ time_point execution::current_time() const noexcept
     return pimpl_->current_time();
 }
 
-boost::fibers::future<bool> execution::simulate_until(std::optional<time_point> endTime)
+bool execution::simulate_until(std::optional<time_point> endTime)
 {
     return pimpl_->simulate_until(endTime);
 }

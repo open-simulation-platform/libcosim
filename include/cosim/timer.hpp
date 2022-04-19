@@ -82,7 +82,7 @@ public:
      * Reset the timer. To be called when the execution is started/resumed.
      *
      * \param [in] currentTime The current simulation time.
-    */
+     */
     void start(time_point currentTime);
 
     /**
@@ -113,4 +113,4 @@ private:
 };
 
 } // namespace cosim
-#endif //LIBCOSIM_TIMER_H
+#endif // LIBCOSIM_TIMER_H

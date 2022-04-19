@@ -79,4 +79,4 @@ public:
 
 } // namespace cosim
 
-#endif //LIBCOSIM_LAST_VALUE_PROVIDER_HPP
+#endif // LIBCOSIM_LAST_VALUE_PROVIDER_HPP

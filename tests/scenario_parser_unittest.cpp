@@ -37,9 +37,9 @@ void test(const cosim::filesystem::path& scenarioFile)
     execution.add_manipulator(scenarioManager);
 
     auto simIndex = execution.add_slave(
-        cosim::make_pseudo_async(std::make_unique<mock_slave>(
+        std::make_unique<mock_slave>(
             [](double x) { return x + 1.234; },
-            [](int y) { return y + 2; })),
+            [](int y) { return y + 2; }),
         "slave uno");
 
     observer->start_observing(
@@ -54,7 +54,7 @@ void test(const cosim::filesystem::path& scenarioFile)
     scenarioManager->load_scenario(scenarioFile, startTime);
 
     auto simResult = execution.simulate_until(endTime);
-    BOOST_REQUIRE(simResult.get());
+    BOOST_REQUIRE(simResult);
 
     const int numSamples = 11;
     double realInputValues[numSamples];

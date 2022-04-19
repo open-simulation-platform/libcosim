@@ -9,7 +9,6 @@ set(publicHeaders
     "cosim/algorithm/algorithm.hpp"
     "cosim/algorithm/fixed_step_algorithm.hpp"
     "cosim/algorithm/simulator.hpp"
-    "cosim/async_slave.hpp"
     "cosim/config.hpp"
     "cosim/exception.hpp"
     "cosim/execution.hpp"
@@ -59,13 +58,13 @@ set(privateHeaders
     "cosim/ssp/ssp_parser.hpp"
     "cosim/utility/concurrency.hpp"
     "cosim/utility/filesystem.hpp"
+    "cosim/utility/thread_pool.hpp"
     "cosim/utility/utility.hpp"
     "cosim/utility/uuid.hpp"
     "cosim/utility/zip.hpp"
 )
 set(sources
     "cosim/algorithm/fixed_step_algorithm.cpp"
-    "cosim/async_slave.cpp"
     "cosim/error.cpp"
     "cosim/exception.cpp"
     "cosim/execution.cpp"
@@ -175,7 +174,6 @@ target_link_libraries(cosim
     PUBLIC
         Boost::boost
         Boost::date_time
-        Boost::fiber
         Boost::log
         gsl
     PRIVATE

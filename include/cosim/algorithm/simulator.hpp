@@ -14,8 +14,6 @@
 #include <cosim/model_description.hpp>
 #include <cosim/time.hpp>
 
-#include <boost/fiber/future.hpp>
-
 #include <functional>
 #include <optional>
 #include <string_view>
@@ -29,14 +27,6 @@ namespace cosim
  *
  *  This is the simulator interface exposed to `algorithm` implementers,
  *  and is used to control one "sub-simulator" in a co-simulation.
- *
- *  Some of the functions in this class, specifically the ones that return a
- *  `boost::fibers::future` object, are asynchronous.  Only one asynchronous
- *  operation may be executed per `simulator` object at any given time,
- *  meaning that client code must *always* ensure that the previous operation
- *  has completed before starting a new one. This is typically done by calling
- *  `boost::fibers::future::get()` on the future returned from the previous
- *  function call.
  */
 class simulator : public manipulable
 {
@@ -91,7 +81,7 @@ public:
      *      solver doesn't use error estimation, it will just ignore this
      *      parameter.
      */
-    virtual boost::fibers::future<void> setup(
+    virtual void setup(
         time_point startTime,
         std::optional<time_point> stopTime,
         std::optional<double> relativeTolerance) = 0;
@@ -118,7 +108,7 @@ public:
      *  propagate initial values between simulators and/or bring the system
      *  to a steady state.
      */
-    virtual boost::fibers::future<void> do_iteration() = 0;
+    virtual void do_iteration() = 0;
 
     /**
      *  Signals to the simulator that the initialization phase is complete
@@ -127,7 +117,7 @@ public:
      *  This function must be called at the end of the initialisation phase,
      *  after any call to `do_iteration()` and before the first `do_step()` call.
      */
-    virtual boost::fibers::future<void> start_simulation() = 0;
+    virtual void start_simulation() = 0;
 
     /**
      *  Performs a single time step.
@@ -140,7 +130,7 @@ public:
      *  \param deltaT
      *      The length of the time step. Must be positive.
      */
-    virtual boost::fibers::future<step_result> do_step(
+    virtual step_result do_step(
         time_point currentT,
         duration deltaT) = 0;
 };

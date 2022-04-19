@@ -23,4 +23,4 @@ namespace filesystem = std::experimental::filesystem;
 }
 #endif
 
-#endif //LIBCOSIM_FS_PORTABILITY_HPP
+#endif // LIBCOSIM_FS_PORTABILITY_HPP

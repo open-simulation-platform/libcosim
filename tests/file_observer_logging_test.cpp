@@ -1,12 +1,10 @@
 #include "mock_slave.hpp"
 
 #include <cosim/algorithm.hpp>
-#include <cosim/async_slave.hpp>
 #include <cosim/execution.hpp>
+#include <cosim/fs_portability.hpp>
 #include <cosim/log/simple.hpp>
 #include <cosim/observer/file_observer.hpp>
-
-#include <cosim/fs_portability.hpp>
 
 #include <exception>
 #include <memory>
@@ -39,16 +37,16 @@ int main()
 
         // Add a slave to the execution and connect variables
         execution.add_slave(
-            cosim::make_pseudo_async(std::make_unique<mock_slave>([](double x) { return x + 1.234; })), "slave uno");
+            std::make_unique<mock_slave>([](double x) { return x + 1.234; }), "slave uno");
         execution.add_slave(
-            cosim::make_pseudo_async(std::make_unique<mock_slave>([](double x) { return x + 1.234; },
+            std::make_unique<mock_slave>([](double x) { return x + 1.234; },
                 [](int y) { return y - 4; },
-                [](bool z) { return !z; })),
+                [](bool z) { return !z; }),
             "slave dos");
 
         // Run the simulation
         auto simResult = execution.simulate_until(endTime);
-        REQUIRE(simResult.get());
+        REQUIRE(simResult);
 
         // Print the log paths
         std::cout << "Log directory: " << csv_observer->get_log_path() << std::endl;
