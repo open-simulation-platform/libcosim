@@ -14,6 +14,7 @@ option(LIBCOSIM_BUILD_APIDOC "Build API documentation (requires Doxygen)" ON)
 option(LIBCOSIM_BUILD_PRIVATE_APIDOC "Build private API documentation (only used if LIBCOSIM_BUILD_APIDOC=ON)" OFF)
 option(LIBCOSIM_STANDALONE_INSTALLATION "Whether to build for a standalone installation (Linux only; sets a relative RPATH)" OFF)
 option(LIBCOSIM_USING_CONAN "Whether Conan is used for package management" OFF)
+option(LIBCOSIM_USING_CONAN_AUTO_CONFIG "Whether Conan should be configured automatically by CMake" OFF)
 option(LIBCOSIM_WITH_PROXYFMU "Whether or not to build with proxy-fmu integration" OFF)
 option(LIBCOSIM_NO_FMI_LOGGING "Disable FMI logging during simulation" OFF)
 
@@ -99,13 +100,12 @@ set(LIBCOSIM_EXPORT_TARGET "${PROJECT_NAME}-targets")
 
 if(LIBCOSIM_USING_CONAN)
 
-    if(CONAN_EXPORTED) # in conan local cache
+    if(NOT LIBCOSIM_USING_CONAN_AUTO_CONFIG OR CONAN_EXPORTED) # in conan local cache
         # standard conan installation, deps will be defined in conanfile.py
         # and not necessary to call conan again, conan is already running
         include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
         conan_basic_setup(NO_OUTPUT_DIRS)
     else()
-
         include(cmake/conan.cmake)
         conan_cmake_autodetect(settings)
 
@@ -121,9 +121,7 @@ if(LIBCOSIM_USING_CONAN)
                 BUILD missing
                 SETTINGS ${settings}
                 BASIC_SETUP NO_OUTPUT_DIRS)
-
     endif()
-
 endif()
 
 set(Boost_components date_time log)
