@@ -103,8 +103,12 @@ if(LIBCOSIM_USING_CONAN)
     if(NOT LIBCOSIM_USING_CONAN_AUTO_CONFIG OR CONAN_EXPORTED) # in conan local cache
         # standard conan installation, deps will be defined in conanfile.py
         # and not necessary to call conan again, conan is already running
-        include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-        conan_basic_setup(NO_OUTPUT_DIRS)
+        if(EXISTS ${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+            include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+            conan_basic_setup(NO_OUTPUT_DIRS)
+        else()
+            message(FATAL_ERROR "The file conanbuildinfo.cmake doesn't exist, you have to run conan install first")
+        endif()
     else()
         include(cmake/conan.cmake)
         conan_cmake_autodetect(settings)
