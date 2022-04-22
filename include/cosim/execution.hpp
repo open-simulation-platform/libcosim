@@ -254,7 +254,7 @@ public:
     /**
      *  Advance the co-simulation forward to the given logical time.
      *
-     *  \param targetTime
+     *  \param endTime
      *      The logical time at which the co-simulation should pause.
      */
     void simulate_until(time_point endTime);
