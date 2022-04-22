@@ -1,8 +1,8 @@
 /*
-*  This Source Code Form is subject to the terms of the Mozilla Public
-*  License, v. 2.0. If a copy of the MPL was not distributed with this
-*  file, You can obtain one at https://mozilla.org/MPL/2.0/.
-*/
+ *  This Source Code Form is subject to the terms of the Mozilla Public
+ *  License, v. 2.0. If a copy of the MPL was not distributed with this
+ *  file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
 #ifndef LIBCOSIM_EXECUTION_RUNNER_HPP
 #define LIBCOSIM_EXECUTION_RUNNER_HPP
 
@@ -13,7 +13,8 @@
 namespace cosim
 {
 
-class execution_runner {
+class execution_runner
+{
 
 public:
     explicit execution_runner(execution& exec);
@@ -57,7 +58,6 @@ public:
 private:
     class impl;
     std::unique_ptr<impl> pimpl_;
-
 };
 
 } // namespace cosim

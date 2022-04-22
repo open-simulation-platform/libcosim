@@ -1,12 +1,12 @@
 /*
-*  This Source Code Form is subject to the terms of the Mozilla Public
-*  License, v. 2.0. If a copy of the MPL was not distributed with this
-*  file, You can obtain one at https://mozilla.org/MPL/2.0/.
-*/
+ *  This Source Code Form is subject to the terms of the Mozilla Public
+ *  License, v. 2.0. If a copy of the MPL was not distributed with this
+ *  file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
 #include "cosim/execution_runner.hpp"
 
-#include <future>
 #include <atomic>
+#include <future>
 
 namespace cosim
 {
@@ -46,7 +46,7 @@ public:
         promise_ = std::promise<bool>{};
         stopped_ = false;
         if (t_.joinable()) t_.join();
-        t_ = std::thread([this, endTime]{
+        t_ = std::thread([this, endTime] {
             timer_.start(exec_.current_time());
             duration stepSize;
             do {
@@ -70,7 +70,8 @@ public:
         return timer_.get_real_time_metrics();
     }
 
-    ~impl() {
+    ~impl()
+    {
         if (t_.joinable()) {
             stopped_ = true;
             t_.join();
