@@ -100,9 +100,9 @@ set(LIBCOSIM_EXPORT_TARGET "${PROJECT_NAME}-targets")
 
 if(LIBCOSIM_USING_CONAN)
 
-    if(NOT LIBCOSIM_USING_CONAN_AUTO_CONFIG OR CONAN_EXPORTED) # in conan local cache
-        # standard conan installation, deps will be defined in conanfile.py
-        # and not necessary to call conan again, conan is already running
+    if(NOT LIBCOSIM_USING_CONAN_AUTO_CONFIG OR CONAN_EXPORTED)
+        # Opting for manual invocation of conan install prior to loading CMake
+        # or conan create has been invoked, setting CONAN_EXPORTED.
         if(EXISTS ${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
             include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
             conan_basic_setup(NO_OUTPUT_DIRS)
@@ -110,6 +110,11 @@ if(LIBCOSIM_USING_CONAN)
             message(FATAL_ERROR "The file conanbuildinfo.cmake doesn't exist, you have to run conan install first")
         endif()
     else()
+        # Auto config specified and conan create is not running.
+        # We'll let CMake run the conan commands for us.
+
+        # This is where the magic happens.
+        # The file has been modified to search for the conan executable on linux systems.
         include(cmake/conan.cmake)
         conan_cmake_autodetect(settings)
 
@@ -118,7 +123,11 @@ if(LIBCOSIM_USING_CONAN)
             set(proxyfmu_option True)
         endif()
 
+        # Force add osp remote
         conan_add_remote(NAME osp URL https://osp.jfrog.io/artifactory/api/conan/conan-local)
+
+        # Run conan install with auto-detected settings and -b missing flag
+        # and -o proxyfmu=True if LIBCOSIM_WITH_PROXYFMU=ON
         conan_cmake_run(
                 CONANFILE conanfile.py
                 OPTIONS proxyfmu=${proxyfmu_option}
