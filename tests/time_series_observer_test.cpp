@@ -49,8 +49,7 @@ int main()
         }
 
         // Run the simulation
-        auto simResult = execution.simulate_until(time1);
-        REQUIRE(simResult);
+        execution.simulate_until(time1);
 
         const int numSamples = 15;
         const cosim::value_reference varIndex = 0;
@@ -71,8 +70,7 @@ int main()
 
         observer->start_observing(variableId);
 
-        simResult = execution.simulate_until(time2);
-        REQUIRE(simResult);
+        execution.simulate_until(time2);
 
         samplesRead = observer->get_real_samples(simIndex, varIndex, 1, gsl::make_span(realValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
 
@@ -94,8 +92,7 @@ int main()
 
         bufferedObserver->start_observing(variableId);
 
-        simResult = execution.simulate_until(endTime);
-        REQUIRE(simResult);
+        execution.simulate_until(endTime);
 
         samplesRead = observer->get_real_samples(simIndex, varIndex, 0, gsl::make_span(realValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
         REQUIRE(samplesRead == 0);

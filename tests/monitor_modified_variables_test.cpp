@@ -40,8 +40,7 @@ int main()
 
         manipulator->override_integer_variable(simIndex, mock_slave::integer_out_reference, 1);
 
-        auto simResult = execution.simulate_until(endTime);
-        REQUIRE(simResult);
+        execution.simulate_until(endTime);
 
         const int numSamples = 10;
         int intOutputValues[numSamples];

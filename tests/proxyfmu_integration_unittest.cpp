@@ -28,8 +28,7 @@ BOOST_AUTO_TEST_CASE(test_ssp)
         config.parameter_sets.at(""));
     BOOST_CHECK(entityMaps.simulators.size() == 2);
 
-    auto result = exec.simulate_until(to_time_point(1e-3));
-    BOOST_REQUIRE(result);
+    exec.simulate_until(to_time_point(1e-3));
 }
 
 BOOST_AUTO_TEST_CASE(test_fmi1)

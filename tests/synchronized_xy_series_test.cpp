@@ -45,13 +45,11 @@ int main()
         observer->start_observing(variableId1);
 
         // Run the simulation
-        auto simResult = execution.simulate_until(midTime);
-        REQUIRE(simResult);
+        execution.simulate_until(midTime);
 
         observer->start_observing(variableId2);
 
-        simResult = execution.simulate_until(endTime);
-        REQUIRE(simResult);
+        execution.simulate_until(endTime);
 
         const int numSamples = 20;
         const cosim::value_reference varIndex = 0;

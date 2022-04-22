@@ -1,6 +1,5 @@
 set(tests
     "fixed_step_algorithm_test"
-    "file_observer_dynamic_logging_test"
     "file_observer_logging_test"
     "file_observer_logging_from_config_test"
     "last_value_observer_test"
@@ -15,6 +14,7 @@ set(tests
 )
 
 set(unittests
+    "file_observer_dynamic_logging_unittest"
     "function_unittest"
     "fmi_v1_fmu_unittest"
     "fmi_v2_fmu_unittest"

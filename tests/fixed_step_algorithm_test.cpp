@@ -2,6 +2,7 @@
 
 #include <cosim/algorithm.hpp>
 #include <cosim/log/simple.hpp>
+#include <cosim/execution_runner.hpp>
 #include <cosim/observer/last_value_observer.hpp>
 #include <cosim/observer/time_series_observer.hpp>
 
@@ -31,8 +32,10 @@ int main()
             startTime,
             std::make_unique<cosim::fixed_step_algorithm>(stepSize));
 
+        cosim::execution_runner runner{execution};
+
         // Default should not be real time
-        const auto realTimeConfig = execution.get_real_time_config();
+        const auto realTimeConfig = runner.get_real_time_config();
         REQUIRE(!realTimeConfig->real_time_simulation);
 
         auto observer = std::make_shared<cosim::last_value_observer>();
@@ -69,16 +72,17 @@ int main()
             cosim::variable_id{slaves.back(), cosim::variable_type::real, realOutRef});
 
         // Run simulation
-        auto simResult = execution.simulate_until(midTime);
-        REQUIRE(simResult);
+        auto simResult = runner.simulate_until(midTime);
+        REQUIRE(simResult.get());
+
         REQUIRE(std::chrono::abs(execution.current_time() - midTime) < std::chrono::microseconds(1));
         // Actual performance should not be tested here - just check that we get a positive value
-        const auto realTimeMetrics = execution.get_real_time_metrics();
+        const auto realTimeMetrics = runner.get_real_time_metrics();
         REQUIRE(realTimeMetrics->rolling_average_real_time_factor > 0.0);
         REQUIRE(realTimeMetrics->total_average_real_time_factor > 0.0);
 
-        simResult = execution.simulate_until(endTime);
-        REQUIRE(simResult);
+        simResult = runner.simulate_until(endTime);
+        REQUIRE(simResult.get());
 
         // Check that time, step number and output values increase monotonically
         const int numSamples = 10;
@@ -105,8 +109,8 @@ int main()
         realTimeConfig->real_time_simulation = true;
         realTimeConfig->real_time_factor_target = rtfTarget;
         realTimeConfig->steps_to_monitor = 3;
-        simResult = execution.simulate_until(finalTime);
-        REQUIRE(simResult);
+        simResult = runner.simulate_until(finalTime);
+        REQUIRE(simResult.get());
 
         std::cout << "Rolling average RTF: " << realTimeMetrics->rolling_average_real_time_factor << std::endl;
         std::cout << "  Total average RTF: " << realTimeMetrics->total_average_real_time_factor << std::endl;

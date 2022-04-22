@@ -113,8 +113,7 @@ int main()
         observer2->start_observing(cosim::variable_id{idx2, cosim::variable_type::integer, mock_slave::integer_out_reference});
 
         // Run simulation
-        auto simResult = execution.simulate_until(endTime);
-        REQUIRE(simResult);
+        execution.simulate_until(endTime);
 
         const int numSamples = 10;
         double realValues0[numSamples];

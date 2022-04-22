@@ -53,8 +53,7 @@ void test(const cosim::filesystem::path& scenarioFile)
 
     scenarioManager->load_scenario(scenarioFile, startTime);
 
-    auto simResult = execution.simulate_until(endTime);
-    BOOST_REQUIRE(simResult);
+    execution.simulate_until(endTime);
 
     const int numSamples = 11;
     double realInputValues[numSamples];

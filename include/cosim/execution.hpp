@@ -242,22 +242,6 @@ public:
     time_point current_time() const noexcept;
 
     /**
-     *  Advance the co-simulation forward to the given logical time.
-     *
-     *  \param targetTime
-     *      The logical time at which the co-simulation should pause (optional).
-     *      If specified, this must always be greater than the value of
-     *      `current_time()` at the moment the function is called. If not specified,
-     *      the co-simulation will continue until `stop_simulation()` is called.
-     *
-     *  \returns
-     *      `true` if the co-simulation was advanced to the given time,
-     *      or `false` if it was stopped before this. In the latter case,
-     *      `current_time()` may be called to determine the actual end time.
-     */
-    bool simulate_until(std::optional<time_point> targetTime);
-
-    /**
      *  Advance the co-simulation forward one single step
      *
      *  \returns
@@ -267,17 +251,13 @@ public:
      */
     duration step();
 
-    /// Stops the co-simulation temporarily.
-    void stop_simulation();
-
-    /// Is the simulation loop currently running
-    bool is_running() const noexcept;
-
-    /// Returns a pointer to an object containing real time configuration
-    const std::shared_ptr<real_time_config> get_real_time_config() const;
-
-    /// Returns a pointer to an object containing real time metrics
-    std::shared_ptr<const real_time_metrics> get_real_time_metrics() const;
+    /**
+     *  Advance the co-simulation forward to the given logical time.
+     *
+     *  \param targetTime
+     *      The logical time at which the co-simulation should pause.
+     */
+    void simulate_until(time_point endTime);
 
     /// Returns the model description for a simulator with the given index
     model_description get_model_description(simulator_index index) const;

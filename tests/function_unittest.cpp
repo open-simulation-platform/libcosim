@@ -191,8 +191,7 @@ BOOST_AUTO_TEST_CASE(function_in_execution)
         cosim::variable_id{idS2, cosim::variable_type::real, mockRealOut});
 
     // Run simulation and verify results
-    auto success = exe.simulate_until(stopTime);
-    BOOST_TEST_REQUIRE(success);
+    exe.simulate_until(stopTime);
 
     auto outputs = std::vector<double>(bufferSize);
     auto steps = std::vector<cosim::step_number>(bufferSize);

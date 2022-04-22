@@ -82,8 +82,7 @@ int main()
 
         scenarioManager->load_scenario(scenario, startTime);
 
-        auto simResult = execution.simulate_until(endTime);
-        REQUIRE(simResult);
+        execution.simulate_until(endTime);
 
         const int numSamples = 11;
         double realInputValues[numSamples];

@@ -60,8 +60,7 @@ int main()
             "slave2");
 
         // Run the simulation
-        auto simResult = execution.simulate_until(endTime);
-        REQUIRE(simResult);
+        execution.simulate_until(endTime);
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;

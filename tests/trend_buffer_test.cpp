@@ -51,8 +51,7 @@ int main()
         }
 
         // Run simulation
-        auto simResult = execution.simulate_until(midTime);
-        REQUIRE(simResult);
+        execution.simulate_until(midTime);
 
         cosim::step_number stepNumbers1[2];
         observer->get_step_numbers(0, cosim::to_duration(0.5), gsl::make_span(stepNumbers1, 2));

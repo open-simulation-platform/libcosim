@@ -28,8 +28,7 @@ void test(const cosim::filesystem::path& configPath, size_t expectedNumConnectio
     auto obs = std::make_shared<cosim::last_value_observer>();
     execution.add_observer(obs);
 
-    auto result = execution.simulate_until(cosim::to_time_point(1e-3));
-    REQUIRE(result);
+    execution.simulate_until(cosim::to_time_point(1e-3));
 
     const auto simIndex = entityMaps.simulators.at("CraneController");
     const auto varReference =

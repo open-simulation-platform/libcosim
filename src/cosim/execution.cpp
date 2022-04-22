@@ -27,9 +27,7 @@ public:
         : lastStep_(0)
         , currentTime_(startTime)
         , initialized_(false)
-        , stopped_(true)
-        , algorithm_(algo)
-        , timer_()
+        , algorithm_(std::move(algo))
     {
         algorithm_->setup(currentTime_, std::nullopt);
     }
@@ -113,11 +111,6 @@ public:
         return currentTime_;
     }
 
-    bool is_running() const noexcept
-    {
-        return !stopped_;
-    }
-
     duration step()
     {
         if (!initialized_) {
@@ -142,33 +135,12 @@ public:
         return stepSize;
     }
 
-    bool simulate_until(std::optional<time_point> endTime)
+    void simulate_until(time_point endTime)
     {
-        stopped_ = false;
-        timer_.start(currentTime_);
         duration stepSize;
         do {
             stepSize = step();
-            timer_.sleep(currentTime_);
-        } while (!stopped_ && !timed_out(endTime, currentTime_, stepSize));
-        bool isStopped = stopped_;
-        stopped_ = true;
-        return !isStopped;
-    }
-
-    void stop_simulation()
-    {
-        stopped_ = true;
-    }
-
-    std::shared_ptr<real_time_config> get_real_time_config() const
-    {
-        return timer_.get_real_time_config();
-    }
-
-    std::shared_ptr<const real_time_metrics> get_real_time_metrics() const
-    {
-        return timer_.get_real_time_metrics();
+        } while (!timed_out(endTime, currentTime_, stepSize));
     }
 
     model_description get_model_description(simulator_index index) const
@@ -307,7 +279,6 @@ private:
     step_number lastStep_;
     time_point currentTime_;
     bool initialized_;
-    bool stopped_;
 
     std::shared_ptr<algorithm> algorithm_;
     std::vector<std::shared_ptr<simulator>> simulators_;
@@ -317,12 +288,11 @@ private:
     std::unordered_map<variable_id, variable_id> ssConnections_;
     std::unordered_map<function_io_id, variable_id> sfConnections_;
     std::unordered_map<variable_id, function_io_id> fsConnections_;
-    real_time_timer timer_;
 };
 
 
 execution::execution(time_point startTime, std::shared_ptr<algorithm> algo)
-    : pimpl_(std::make_unique<impl>(startTime, algo))
+    : pimpl_(std::make_unique<impl>(startTime, std::move(algo)))
 {
 }
 
@@ -340,17 +310,17 @@ simulator_index execution::add_slave(
 
 function_index execution::add_function(std::shared_ptr<function> fun)
 {
-    return pimpl_->add_function(fun);
+    return pimpl_->add_function(std::move(fun));
 }
 
 void execution::add_observer(std::shared_ptr<observer> obs)
 {
-    return pimpl_->add_observer(obs);
+    return pimpl_->add_observer(std::move(obs));
 }
 
 void execution::add_manipulator(std::shared_ptr<manipulator> man)
 {
-    return pimpl_->add_manipulator(man);
+    return pimpl_->add_manipulator(std::move(man));
 }
 
 void execution::connect_variables(variable_id output, variable_id input)
@@ -373,34 +343,15 @@ time_point execution::current_time() const noexcept
     return pimpl_->current_time();
 }
 
-bool execution::simulate_until(std::optional<time_point> endTime)
-{
-    return pimpl_->simulate_until(endTime);
-}
 
 duration execution::step()
 {
     return pimpl_->step();
 }
 
-bool execution::is_running() const noexcept
+void execution::simulate_until(time_point endTime)
 {
-    return pimpl_->is_running();
-}
-
-void execution::stop_simulation()
-{
-    pimpl_->stop_simulation();
-}
-
-const std::shared_ptr<real_time_config> execution::get_real_time_config() const
-{
-    return pimpl_->get_real_time_config();
-}
-
-std::shared_ptr<const real_time_metrics> execution::get_real_time_metrics() const
-{
-    return pimpl_->get_real_time_metrics();
+    return pimpl_->simulate_until(endTime);
 }
 
 model_description execution::get_model_description(simulator_index index) const

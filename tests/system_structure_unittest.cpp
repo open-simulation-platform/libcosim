@@ -110,7 +110,7 @@ BOOST_AUTO_TEST_CASE(system_structure_basic_use)
     BOOST_CHECK(entityIndexes.simulators.size() == 3);
     BOOST_CHECK(entityIndexes.functions.size() == 1);
 
-    BOOST_CHECK(execution.simulate_until(stopTime));
+    execution.simulate_until(stopTime);
 
     const auto realOutRef = mock_slave::real_out_reference;
     double realOutA = -1.0, realOutB = -1.0, realOutC = -1.0;

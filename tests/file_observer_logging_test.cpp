@@ -45,8 +45,7 @@ int main()
             "slave dos");
 
         // Run the simulation
-        auto simResult = execution.simulate_until(endTime);
-        REQUIRE(simResult);
+        execution.simulate_until(endTime);
 
         // Print the log paths
         std::cout << "Log directory: " << csv_observer->get_log_path() << std::endl;
