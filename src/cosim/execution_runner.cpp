@@ -21,6 +21,8 @@ public:
         , timer_()
     { }
 
+    ~impl() = default;
+
     impl(const impl&) = delete;
     impl& operator=(const impl&) = delete;
 
@@ -43,10 +45,8 @@ public:
             throw std::logic_error("Simulation is already running!");
         }
 
-        promise_ = std::promise<bool>{};
         stopped_ = false;
-        if (t_.joinable()) t_.join();
-        t_ = std::thread([this, endTime] {
+        return std::async(std::launch::async, [this, endTime]{
             timer_.start(exec_.current_time());
             duration stepSize;
             do {
@@ -55,9 +55,8 @@ public:
             } while (!stopped_ && !timed_out(endTime, exec_.current_time(), stepSize));
             bool isStopped = stopped_;
             stopped_ = true;
-            promise_.set_value(!isStopped);
+            return !isStopped;
         });
-        return promise_.get_future();
     }
 
     [[nodiscard]] std::shared_ptr<real_time_config> get_real_time_config() const
@@ -70,20 +69,11 @@ public:
         return timer_.get_real_time_metrics();
     }
 
-    ~impl()
-    {
-        if (t_.joinable()) {
-            stopped_ = true;
-            t_.join();
-        }
-    };
 
 private:
     execution& exec_;
 
-    std::thread t_;
     std::atomic<bool> stopped_;
-    std::promise<bool> promise_;
     real_time_timer timer_;
 
     static bool timed_out(std::optional<time_point> endTime, time_point currentTime, duration stepSize)
@@ -108,7 +98,6 @@ std::future<bool> execution_runner::simulate_until(std::optional<time_point> end
 {
     return pimpl_->simulate_until(endTime);
 }
-
 
 bool execution_runner::is_running() const noexcept
 {

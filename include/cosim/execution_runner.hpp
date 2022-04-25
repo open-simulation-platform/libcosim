@@ -19,7 +19,7 @@ class execution_runner
 public:
     explicit execution_runner(execution& exec);
 
-    ~execution_runner();
+    ~execution_runner() noexcept;
 
     execution_runner(const execution_runner&) = delete;
     execution_runner& operator=(const execution_runner&) = delete;
