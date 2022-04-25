@@ -64,7 +64,7 @@ int main()
             "slave_two");
 
         // Run the simulation
-        auto t = std::thread([&]() { execution.simulate_until(std::nullopt); });
+        auto t = execution.simulate_until_async(std::nullopt);
 
         constexpr std::chrono::duration sleepTime = std::chrono::milliseconds(500);
 
@@ -90,7 +90,7 @@ int main()
         observer->stop_recording();
 
         execution.stop_simulation();
-        t.join();
+        t.get();
         REQUIRE(filecount(logPath) == 4);
 
         // Test that files are released.

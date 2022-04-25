@@ -19,6 +19,7 @@
 
 #include <boost/functional/hash.hpp>
 
+#include <future>
 #include <memory>
 #include <optional>
 #include <sstream>
@@ -248,7 +249,7 @@ public:
      *      The logical time at which the co-simulation should pause (optional).
      *      If specified, this must always be greater than the value of
      *      `current_time()` at the moment the function is called. If not specified,
-     *      the co-simulation will continue until `stop_simulation()` is called.
+     *      the co-simulation will continue until `stop_simulation()` on another thread is called.
      *
      *  \returns
      *      `true` if the co-simulation was advanced to the given time,
@@ -256,6 +257,22 @@ public:
      *      `current_time()` may be called to determine the actual end time.
      */
     bool simulate_until(std::optional<time_point> targetTime);
+
+    /**
+     *  Asynchronously advance the co-simulation forward to the given logical time.
+     *
+     *  \param targetTime
+     *      The logical time at which the co-simulation should pause (optional).
+     *      If specified, this must always be greater than the value of
+     *      `current_time()` at the moment the function is called. If not specified,
+     *      the co-simulation will continue until `stop_simulation()` is called.
+     *
+     *  \returns
+     *      `true` if the co-simulation was advanced to the given time,
+     *      or `false` if it was stopped before this. In the latter case,
+     *      `current_time()` may be called to determine the actual end time.
+     */
+    std::future<bool> simulate_until_async(std::optional<time_point> targetTime);
 
     /**
      *  Advance the co-simulation forward one single step
