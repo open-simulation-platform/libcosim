@@ -24,7 +24,8 @@ class LibcosimConan(ConanFile):
         "xerces-c/3.2.2",
         # conflict resolution
         "openssl/1.1.1k",
-        "xz_utils/5.2.5"
+        "xz_utils/5.2.5",
+        "zlib/1.2.12"
     )
 
     options = {
