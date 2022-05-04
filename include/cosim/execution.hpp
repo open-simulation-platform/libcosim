@@ -243,7 +243,7 @@ public:
     time_point current_time() const noexcept;
 
     /**
-     *  Advance the co-simulation forward to the given logical time.
+     *  Advance the co-simulation forward to the given logical time (blocks the current thread).
      *
      *  \param targetTime
      *      The logical time at which the co-simulation should pause (optional).
@@ -284,7 +284,7 @@ public:
      */
     duration step();
 
-    /// Stops the co-simulation temporarily.
+    /// Stops the co-simulation temporarily (thread-safe operation).
     void stop_simulation();
 
     /// Is the simulation loop currently running
