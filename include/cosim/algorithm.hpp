@@ -12,6 +12,7 @@
 
 #include <cosim/algorithm/algorithm.hpp>
 #include <cosim/algorithm/fixed_step_algorithm.hpp>
+#include <cosim/algorithm/ecco_algorithm.hpp>
 #include <cosim/algorithm/simulator.hpp>
 
 #endif

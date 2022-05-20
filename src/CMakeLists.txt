@@ -8,6 +8,7 @@ set(publicHeaders
     "cosim/algorithm.hpp"
     "cosim/algorithm/algorithm.hpp"
     "cosim/algorithm/fixed_step_algorithm.hpp"
+    "cosim/algorithm/ecco_algorithm.hpp"
     "cosim/algorithm/simulator.hpp"
     "cosim/config.hpp"
     "cosim/exception.hpp"
@@ -65,6 +66,7 @@ set(privateHeaders
 )
 set(sources
     "cosim/algorithm/fixed_step_algorithm.cpp"
+    "cosim/algorithm/ecco_algorithm.cpp"
     "cosim/error.cpp"
     "cosim/exception.cpp"
     "cosim/execution.cpp"

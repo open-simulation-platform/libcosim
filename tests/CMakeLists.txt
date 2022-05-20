@@ -1,5 +1,6 @@
 set(tests
     "fixed_step_algorithm_test"
+    "ecco_algorithm_test"
     "file_observer_dynamic_logging_test"
     "file_observer_logging_test"
     "file_observer_logging_from_config_test"
