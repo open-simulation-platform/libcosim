@@ -19,12 +19,14 @@ struct ecco_parameters
 {
     double safety_factor;
     duration step_size;
-    duration max_step_size;
     duration min_step_size;
-    double max_change_rate;
+    duration max_step_size;
     double min_change_rate;
+    double max_change_rate;
     double abs_tolerance;
     double rel_tolerance;
+    double p_gain;
+    double i_gain;
 };
 
 /**

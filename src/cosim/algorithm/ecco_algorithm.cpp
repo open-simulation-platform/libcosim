@@ -239,7 +239,8 @@ public:
             throw error(make_error_code(errc::simulation_error), errMessages.str());
         }
 
-        calculate_powers(currentT, stepSize_);
+
+        stepSize_ = adjust_step_size(currentT, stepSize_, params_);
 
         // Transfer the outputs from simulators that have finished their
         // individual time steps within this co-simulation time step.
@@ -268,7 +269,7 @@ public:
         simulators_.at(i).decimationFactor = factor;
     }
 
-    void calculate_powers(time_point currentTime, duration stepSize)
+    duration adjust_step_size(time_point currentTime, duration stepSize, const ecco_parameters& params)
     {
 
         variable_id y_a = simulators_[0].outgoingSimConnections[0].source;
@@ -284,17 +285,28 @@ public:
         double power_a = y_a_value * u_a_value;
         double power_b = y_b_value * u_b_value;
 
-        double power_residual = power_a - power_b;
+        const auto power_residual = power_a - power_b;
         const auto dt = to_double_duration(stepSize, currentTime);
-        double energy_level = std::max(power_a, power_b) * dt;
+        const auto energy_level = std::max(power_a, power_b) * dt;
         const auto energy_residual = power_residual * dt;
         const auto num_bonds = 1;
-        const auto abs_tol = 0;
-        const auto rel_tol = 1;
-        const auto mean_square = std::pow(std::abs(energy_residual) / (abs_tol + rel_tol * std::abs(energy_level)), 2) / num_bonds; // TODO: Loop over all bonds
-        const auto error_estimator = std::sqrt(mean_square);
+        const auto mean_square = std::pow(std::abs(energy_residual) / (params.abs_tolerance + params.rel_tolerance * std::abs(energy_level)), 2) / num_bonds; // TODO: Loop over all bonds
+        const auto error_estimate = std::sqrt(mean_square);
 
-        std::cout << power_a << " " << power_b << " " << energy_level << " " << energy_residual << " " << power_residual << " " << error_estimator << std::endl;
+        // std::cout << power_a << " " << power_b << " " << energy_level << " " << energy_residual << " " << power_residual << " " << error_estimate << std::endl;
+        if (prev_error_estimate_ == 0 || error_estimate == 0) {
+            prev_error_estimate_ = error_estimate;
+            return stepSize;
+        }
+        // Compute a new step size
+        const auto new_step_size_gain_value = params.safety_factor * std::pow(error_estimate, -params.i_gain - params.p_gain) * std::pow(prev_error_estimate_, params.p_gain);
+        auto new_step_size_gain = std::clamp(new_step_size_gain_value, params.min_change_rate, params.max_change_rate);
+
+        prev_error_estimate_ = error_estimate;
+        const auto new_step_size = to_duration(new_step_size_gain * to_double_duration(stepSize, currentTime));
+        const auto actual_new_step_size = std::clamp (new_step_size, params.min_step_size, params.max_step_size);
+        std::cout << "new step size: " << to_double_duration(actual_new_step_size, {}) << std::endl;
+        return actual_new_step_size;
     }
 
 private:
@@ -470,6 +482,7 @@ private:
     int64_t stepCounter_ = 0;
     unsigned int max_threads_ = std::thread::hardware_concurrency() - 1;
     utility::thread_pool pool_;
+    double prev_error_estimate_;
 };
 
 

@@ -20,15 +20,27 @@ int main()
         cosim::log::setup_simple_console_logging();
         cosim::log::set_global_output_level(cosim::log::debug);
 
-        constexpr int numSlaves = 2;
         constexpr cosim::time_point startTime;
         constexpr cosim::time_point midTime = cosim::to_time_point(1.0);
         constexpr cosim::duration stepSize = cosim::to_duration(0.1);
 
+        auto ecco_params = cosim::ecco_parameters{
+            0.8,
+            cosim::to_duration(0.001),
+            cosim::to_duration(0.0001),
+            cosim::to_duration(0.01),
+            0.2,
+            1.5,
+            1e-5,
+            1e-5,
+            0.2,
+            0.15};
+
         // Set up execution
         auto execution = cosim::execution(
             startTime,
-            std::make_unique<cosim::ecco_algorithm>(stepSize));
+            std::make_unique<cosim::ecco_algorithm>(ecco_params));
+
 
         // Default should not be real time
         const auto realTimeConfig = execution.get_real_time_config();
