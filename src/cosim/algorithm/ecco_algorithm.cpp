@@ -269,9 +269,8 @@ public:
         simulators_.at(i).decimationFactor = factor;
     }
 
-    duration adjust_step_size(time_point currentTime, duration stepSize, const ecco_parameters& params)
+    duration adjust_step_size(time_point currentTime, const duration& stepSize, const ecco_parameters& params)
     {
-
         variable_id y_a = simulators_[0].outgoingSimConnections[0].source;
         variable_id u_a = simulators_[1].outgoingSimConnections[0].target;
         variable_id y_b = simulators_[1].outgoingSimConnections[0].source;
@@ -300,11 +299,13 @@ public:
         }
         // Compute a new step size
         const auto new_step_size_gain_value = params.safety_factor * std::pow(error_estimate, -params.i_gain - params.p_gain) * std::pow(prev_error_estimate_, params.p_gain);
+        std::cout << "step size gain unclamped=" << new_step_size_gain_value << " ";
         auto new_step_size_gain = std::clamp(new_step_size_gain_value, params.min_change_rate, params.max_change_rate);
 
         prev_error_estimate_ = error_estimate;
         const auto new_step_size = to_duration(new_step_size_gain * to_double_duration(stepSize, currentTime));
         const auto actual_new_step_size = std::clamp (new_step_size, params.min_step_size, params.max_step_size);
+        std::cout << "dP=" << power_residual << "  dE=" << energy_residual << "  eps=" << error_estimate << " ";
         std::cout << "new step size: " << to_double_duration(actual_new_step_size, {}) << std::endl;
         return actual_new_step_size;
     }

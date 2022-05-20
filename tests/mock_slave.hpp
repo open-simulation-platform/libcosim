@@ -35,11 +35,11 @@ public:
 
     // Constructor that takes time-dependent functions
     explicit mock_slave(
-        std::function<double(cosim::time_point, double)> realOp = nullptr,
-        std::function<int(cosim::time_point, int)> intOp = nullptr,
-        std::function<bool(cosim::time_point, bool)> boolOp = nullptr,
-        std::function<std::string(cosim::time_point, std::string_view)> stringOp = nullptr,
-        std::function<void(cosim::time_point)> stepAction = nullptr)
+        std::function<double(cosim::time_point, cosim::duration, double)> realOp = nullptr,
+        std::function<int(cosim::time_point, cosim::duration, int)> intOp = nullptr,
+        std::function<bool(cosim::time_point, cosim::duration, bool)> boolOp = nullptr,
+        std::function<std::string(cosim::time_point,  cosim::duration, std::string_view)> stringOp = nullptr,
+        std::function<void(cosim::time_point, cosim::duration)> stepAction = nullptr)
         : realOp_(std::move(realOp))
         , intOp_(std::move(intOp))
         , boolOp_(std::move(boolOp))
@@ -65,10 +65,10 @@ public:
     }
 
     template<typename R, typename... T>
-    static std::function<R(cosim::time_point, T...)> wrap_op(std::function<R(T...)> timeIndependentOp)
+    static std::function<R(cosim::time_point, cosim::duration, T...)> wrap_op(std::function<R(T...)> timeIndependentOp)
     {
         if (!timeIndependentOp) return nullptr;
-        return [op = std::move(timeIndependentOp)](cosim::time_point, T... value) { return op(value...); };
+        return [op = std::move(timeIndependentOp)](cosim::time_point, cosim::duration, T... value) { return op(value...); };
     }
 
 
@@ -106,7 +106,8 @@ public:
 
     cosim::step_result do_step(cosim::time_point currentT, cosim::duration deltaT) override
     {
-        if (stepAction_) stepAction_(currentT);
+        currentStepSize_ = deltaT;
+        if (stepAction_) stepAction_(currentT, currentStepSize_);
         currentTime_ = currentT + deltaT;
         return cosim::step_result::complete;
     }
@@ -117,7 +118,7 @@ public:
     {
         for (int i = 0; i < variables.size(); ++i) {
             if (variables[i] == real_out_reference) {
-                values[i] = realOp_ ? realOp_(currentTime_, realIn_) : realIn_;
+                values[i] = realOp_ ? realOp_(currentTime_, currentStepSize_, realIn_) : realIn_;
             } else if (variables[i] == real_in_reference) {
                 values[i] = realIn_;
             } else {
@@ -132,7 +133,7 @@ public:
     {
         for (int i = 0; i < variables.size(); ++i) {
             if (variables[i] == integer_out_reference) {
-                values[i] = intOp_ ? intOp_(currentTime_, intIn_) : intIn_;
+                values[i] = intOp_ ? intOp_(currentTime_, currentStepSize_, intIn_) : intIn_;
             } else if (variables[i] == integer_in_reference) {
                 values[i] = intIn_;
             } else {
@@ -147,7 +148,7 @@ public:
     {
         for (int i = 0; i < variables.size(); ++i) {
             if (variables[i] == boolean_out_reference) {
-                values[i] = boolOp_ ? boolOp_(currentTime_, boolIn_) : boolIn_;
+                values[i] = boolOp_ ? boolOp_(currentTime_, currentStepSize_, boolIn_) : boolIn_;
             } else if (variables[i] == boolean_in_reference) {
                 values[i] = boolIn_;
             } else {
@@ -162,7 +163,7 @@ public:
     {
         for (int i = 0; i < variables.size(); ++i) {
             if (variables[i] == string_out_reference) {
-                values[i] = stringOp_ ? stringOp_(currentTime_, stringIn_) : stringIn_;
+                values[i] = stringOp_ ? stringOp_(currentTime_,currentStepSize_, stringIn_) : stringIn_;
             } else if (variables[i] == string_in_reference) {
                 values[i] = stringIn_;
             } else {
@@ -224,13 +225,14 @@ public:
     }
 
 private:
-    std::function<double(cosim::time_point, double)> realOp_;
-    std::function<int(cosim::time_point, int)> intOp_;
-    std::function<bool(cosim::time_point, bool)> boolOp_;
-    std::function<std::string(cosim::time_point, std::string_view)> stringOp_;
-    std::function<void(cosim::time_point)> stepAction_;
+    std::function<double(cosim::time_point, cosim::duration, double)> realOp_;
+    std::function<int(cosim::time_point, cosim::duration, int)> intOp_;
+    std::function<bool(cosim::time_point, cosim::duration, bool)> boolOp_;
+    std::function<std::string(cosim::time_point, cosim::duration, std::string_view)> stringOp_;
+    std::function<void(cosim::time_point, cosim::duration)> stepAction_;
 
     cosim::time_point currentTime_;
+    cosim::duration currentStepSize_{1000};
 
     double realIn_ = 0.0;
     int intIn_ = 0;

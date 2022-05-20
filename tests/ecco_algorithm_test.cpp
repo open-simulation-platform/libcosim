@@ -21,18 +21,17 @@ int main()
         cosim::log::set_global_output_level(cosim::log::debug);
 
         constexpr cosim::time_point startTime;
-        constexpr cosim::time_point midTime = cosim::to_time_point(1.0);
-        constexpr cosim::duration stepSize = cosim::to_duration(0.1);
+        constexpr cosim::time_point midTime = cosim::to_time_point(50.0);
 
         auto ecco_params = cosim::ecco_parameters{
-            0.8,
-            cosim::to_duration(0.001),
+            0.99,
             cosim::to_duration(0.0001),
+            cosim::to_duration(0.00001),
             cosim::to_duration(0.01),
             0.2,
             1.5,
-            1e-5,
-            1e-5,
+            1e-6,
+            1e-6,
             0.2,
             0.15};
 
@@ -58,9 +57,12 @@ int main()
         double x1 = 1;
         slaves.push_back(
             execution.add_slave(
-                std::make_unique<mock_slave>([&x1, stepSize](double x) {
-                    auto dx = -2 * x1 + x;
-                    x1 += dx * cosim::to_double_duration(stepSize, {});
+                std::make_unique<mock_slave>([&x1](cosim::time_point, cosim::duration currentStepSize, double x) {
+                    for (int i = 0; i < 20; ++i) {
+                        auto dx = -0.5 * x1 + x;
+                        x1 += dx * cosim::to_double_duration(currentStepSize, {}) / 20;
+                        // std::cout << "stepsize " << cosim::to_double_duration(currentStepSize, {}) / 20 << " x1=" << x1 << std::endl;
+                    }
                     return x1;
                 }),
                 "A"));
@@ -68,9 +70,12 @@ int main()
         double x2 = 5;
         slaves.push_back(
             execution.add_slave(
-                std::make_unique<mock_slave>([&x2, stepSize](double x) {
-                    auto dx = -5 * x2 + x;
-                    x2 += dx * cosim::to_double_duration(stepSize, {});
+                std::make_unique<mock_slave>([&x2](cosim::time_point, cosim::duration currentStepSize, double x) {
+                    for (int i = 0; i < 20; ++i) {
+                        auto dx = -1 * x2 + x;
+                        x2 += dx * cosim::to_double_duration(currentStepSize, {}) / 20;
+                        std::cout << "x2 "  << x2 << std::endl;
+                    }
                     return x2;
                 }),
                 "B"));
@@ -96,45 +101,48 @@ int main()
         auto simResult = execution.simulate_until(midTime);
         REQUIRE(simResult);
 
-        const int numSamples = 11;
-        double real_a_input[numSamples];
-        double real_b_input[numSamples];
-        double real_a_output[numSamples];
-        double real_b_output[numSamples];
-        cosim::step_number steps[numSamples];
-        cosim::time_point timeValues[numSamples];
+        cosim::step_number stepNums[2];
+        t_observer->get_step_numbers(slaves[0], {}, midTime, gsl::make_span(stepNums, 2));
+        const auto numSamples = stepNums[1] - stepNums[0];
+        // const int numSamples = 11;
+        std::vector<double> real_a_input(numSamples);
+        std::vector<double> real_b_input(numSamples);
+        std::vector<double> real_a_output(numSamples);
+        std::vector<double> real_b_output(numSamples);
+        std::vector<cosim::step_number> steps(numSamples);
+        std::vector<cosim::time_point> timeValues(numSamples);
 
         t_observer->get_real_samples(
             slaves[0],
             realInRef,
             0,
-            gsl::make_span(real_a_input, numSamples),
-            gsl::make_span(steps, numSamples),
-            gsl::make_span(timeValues, numSamples));
+            gsl::make_span(real_a_input),
+            gsl::make_span(steps),
+            gsl::make_span(timeValues));
 
         t_observer->get_real_samples(
             slaves[0],
             realOutRef,
             0,
-            gsl::make_span(real_a_output, numSamples),
-            gsl::make_span(steps, numSamples),
-            gsl::make_span(timeValues, numSamples));
+            gsl::make_span(real_a_output),
+            gsl::make_span(steps),
+            gsl::make_span(timeValues));
 
         t_observer->get_real_samples(
             slaves[1],
             realInRef,
             0,
-            gsl::make_span(real_b_input, numSamples),
-            gsl::make_span(steps, numSamples),
-            gsl::make_span(timeValues, numSamples));
+            gsl::make_span(real_b_input),
+            gsl::make_span(steps),
+            gsl::make_span(timeValues));
 
         t_observer->get_real_samples(
             slaves[1],
             realOutRef,
             0,
-            gsl::make_span(real_b_output, numSamples),
-            gsl::make_span(steps, numSamples),
-            gsl::make_span(timeValues, numSamples));
+            gsl::make_span(real_b_output),
+            gsl::make_span(steps),
+            gsl::make_span(timeValues));
 
         for (int i = 0; i < numSamples; ++i) {
             std::cout << i << " | "
@@ -144,7 +152,6 @@ int main()
                       << real_b_output[i] << " | "
                       << std::endl;
         }
-
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
         return 1;
