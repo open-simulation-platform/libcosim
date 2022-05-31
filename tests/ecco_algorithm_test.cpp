@@ -4,6 +4,7 @@
 #include <cosim/log/simple.hpp>
 #include <cosim/observer/last_value_observer.hpp>
 #include <cosim/observer/time_series_observer.hpp>
+#include <cosim/time.hpp>
 
 #include <exception>
 #include <memory>
@@ -21,7 +22,7 @@ int main()
         cosim::log::set_global_output_level(cosim::log::debug);
 
         constexpr cosim::time_point startTime;
-        constexpr cosim::time_point midTime = cosim::to_time_point(50.0);
+        constexpr cosim::time_point midTime = cosim::to_time_point(15.0);
 
         auto ecco_params = cosim::ecco_parameters{
             0.99,
@@ -57,11 +58,15 @@ int main()
         double x1 = 1;
         slaves.push_back(
             execution.add_slave(
-                std::make_unique<mock_slave>([&x1](cosim::time_point, cosim::duration currentStepSize, double x) {
-                    for (int i = 0; i < 20; ++i) {
-                        auto dx = -0.5 * x1 + x;
-                        x1 += dx * cosim::to_double_duration(currentStepSize, {}) / 20;
-                        // std::cout << "stepsize " << cosim::to_double_duration(currentStepSize, {}) / 20 << " x1=" << x1 << std::endl;
+                std::make_unique<mock_slave>([&x1](cosim::time_point currentTime, cosim::duration currentStepSize, double x) {
+                    auto dt = 1e-4;
+                    const auto tEnd = cosim::to_double_duration(currentStepSize, currentTime);
+                    for (double t = 0.0; t < tEnd; t += dt) {
+                        if (t+dt > tEnd) {
+                            dt = tEnd - t;
+                        }
+                        auto dx = -2.0 * x1 + x;
+                        x1 += dx * dt;
                     }
                     return x1;
                 }),
@@ -70,11 +75,15 @@ int main()
         double x2 = 5;
         slaves.push_back(
             execution.add_slave(
-                std::make_unique<mock_slave>([&x2](cosim::time_point, cosim::duration currentStepSize, double x) {
-                    for (int i = 0; i < 20; ++i) {
-                        auto dx = -1 * x2 + x;
-                        x2 += dx * cosim::to_double_duration(currentStepSize, {}) / 20;
-                        std::cout << "x2 "  << x2 << std::endl;
+                std::make_unique<mock_slave>([&x2](cosim::time_point currentTime, cosim::duration currentStepSize, double x) {
+                    auto dt = 1e-4;
+                    const auto tEnd = cosim::to_double_duration(currentStepSize, currentTime);
+                    for (double t = 0.0; t < tEnd; t += dt) {
+                        if (t+dt > tEnd) {
+                            dt = tEnd - t;
+                        }
+                        auto dx = -x2 + x;
+                        x2 += dx * dt;
                     }
                     return x2;
                 }),
@@ -144,13 +153,15 @@ int main()
             gsl::make_span(steps),
             gsl::make_span(timeValues));
 
-        for (int i = 0; i < numSamples; ++i) {
-            std::cout << i << " | "
-                      << real_a_input[i] << " | "
-                      << real_a_output[i] << " | "
-                      << real_b_input[i] << " | "
-                      << real_b_output[i] << " | "
-                      << std::endl;
+        std::cout << "time,stepsize,a_in,a_out,b_in,b_out" << std::endl;
+        for (int i = 1; i < numSamples; ++i) {
+            std::cout << cosim::to_double_time_point(timeValues[i])
+                << "," << cosim::to_double_duration(timeValues[i]-timeValues[i-1], timeValues[i-1])
+                << "," << real_a_input[i]
+                << "," << real_a_output[i]
+                << "," << real_b_input[i]
+                << "," << real_b_output[i]
+                << std::endl;
         }
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
