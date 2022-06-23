@@ -17,7 +17,7 @@
 
 #ifdef _MSC_VER
 #    pragma warning(push)
-#    pragma warning(disable : 4127)
+#    pragma warning(disable : 4127 4275)
 #endif
 #include <yaml-cpp/yaml.h>
 #ifdef _MSC_VER
