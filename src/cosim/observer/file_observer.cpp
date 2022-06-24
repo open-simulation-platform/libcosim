@@ -449,7 +449,7 @@ file_observer::simulator_logging_config file_observer::parse_config(const std::s
                                 find_variable(simulator->model_description(), name);
 
                             if (!variableDescription) {
-                                throw std::invalid_argument("Can't find variable descriptor with name " + name + " for model with name " + simulator->model_description().name);
+                                throw std::runtime_error("Can't find variable descriptor with name " + name + " for model with name " + simulator->model_description().name);
                             }
 
                             switch (variableDescription->type) {
