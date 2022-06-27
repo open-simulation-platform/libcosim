@@ -15,6 +15,7 @@ jobs:
         compiler_libcxx: [libstdc++11]
         option_proxyfmu: ['proxyfmu=True', 'proxyfmu=False']
         option_shared: ['shared=True', 'shared=False']
+    timeout-minutes: 35
 
     steps:
       - uses: actions/checkout@v2
@@ -77,6 +78,7 @@ jobs:
         build_type: [Debug, Release]
         option_proxyfmu: ['proxyfmu=True', 'proxyfmu=False']
         option_shared: ['shared=True', 'shared=False']
+    timeout-minutes: 35
 
     steps:
       - uses: actions/checkout@v2
