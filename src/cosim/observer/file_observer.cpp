@@ -465,7 +465,6 @@ file_observer_config file_observer_config::parse(const filesystem::path& configP
         boost::property_tree::xml_parser::no_comments | boost::property_tree::xml_parser::trim_whitespace);
 
     file_observer_config config;
-    std::vector<std::string> modelNames;
     for (const auto& simulator : ptree.get_child("simulators")) {
         if (simulator.first == "simulator") {
             const auto modelName = get_attribute<std::string>(simulator.second, "name");
@@ -476,7 +475,8 @@ file_observer_config file_observer_config::parse(const filesystem::path& configP
                     config.log_simulator_variable(modelName, variableName, decimationFactor);
                 }
             }
-            if (config.variablesToLog_[modelName].second.empty()) {
+            if (!config.should_log_simulator(modelName)) {
+                // simulator element present in XML, but with no explicit variable declarations -> log all variables
                 config.log_all_simulator_variables(modelName, decimationFactor);
             }
         }
