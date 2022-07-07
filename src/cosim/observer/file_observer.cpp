@@ -304,13 +304,6 @@ void file_observer::simulator_added(
     simulators_[index] = simulator;
 
     if (config_) {
-        //        // Read all configured model names from the XML. If simulator name is not in the list, do nothing.
-        //        std::vector<std::string> modelNames;
-        //        for (const auto& simulatorChild : ptree_.get_child("simulators")) {
-        //            if (simulatorChild.first == "simulator") {
-        //                modelNames.push_back(get_attribute<std::string>(simulatorChild.second, "name"));
-        //            }
-        //        }
         if (config_->should_log_simulator(simulator->name())) {
             auto config = parse_config(simulator->name());
 
