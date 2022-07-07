@@ -32,10 +32,10 @@ public:
     file_observer_config() = default;
 
     /**
-     * Specify whether or not .csv files should be timestamped
+     * Specify whether or not generated .csv files should be timestamped
      *
-     * @param flag timestamped if true (default)
-     * @return self
+     * \param flag timestamped if true (default)
+     * \return self
      */
     file_observer_config& set_timestamped_filenames(bool flag)
     {
