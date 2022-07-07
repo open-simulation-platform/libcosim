@@ -482,7 +482,7 @@ file_observer_config file_observer_config::parse(const filesystem::path& configP
                     variableNames.emplace_back(variableName);
                 }
             }
-            config.log_simulator_variable(modelName, variableNames, decimationFactor);
+            config.log_simulator_variables(modelName, variableNames, decimationFactor);
         }
     }
 

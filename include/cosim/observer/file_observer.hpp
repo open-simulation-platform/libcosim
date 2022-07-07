@@ -37,13 +37,10 @@ public:
         return *this;
     }
 
-    file_observer_config& log_all_simulator_variables(const std::string& simulatorName, std::optional<size_t> decimationFactor = std::nullopt)
-    {
-        variablesToLog_[simulatorName].first = decimationFactor.value_or(defaultDecimationFactor_);
-        return *this;
-    }
-
-    file_observer_config& log_simulator_variable(const std::string& simulatorName, const std::vector<std::string>& variableNames, std::optional<size_t> decimationFactor = std::nullopt)
+    file_observer_config& log_simulator_variables(
+        const std::string& simulatorName,
+        const std::vector<std::string>& variableNames,
+        std::optional<size_t> decimationFactor = std::nullopt)
     {
         variablesToLog_[simulatorName].first = decimationFactor.value_or(defaultDecimationFactor_);
         for (const auto& variableName : variableNames) {
@@ -51,6 +48,15 @@ public:
         }
         return *this;
     }
+
+    file_observer_config& log_all_simulator_variables(
+        const std::string& simulatorName,
+        std::optional<size_t> decimationFactor = std::nullopt)
+    {
+        variablesToLog_[simulatorName].first = decimationFactor.value_or(defaultDecimationFactor_);
+        return *this;
+    }
+
 
     /**
      * Creates a file_observer_config from an xml configaration
