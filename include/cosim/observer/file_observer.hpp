@@ -31,12 +31,26 @@ class file_observer_config
 public:
     file_observer_config() = default;
 
+    /**
+     * Specify whether or not .csv files should be timestamped
+     *
+     * @param flag timestamped if true (default)
+     * @return self
+     */
     file_observer_config& set_timestamped_filenames(bool flag)
     {
         timeStampedFileNames_ = flag;
         return *this;
     }
 
+    /**
+     * Specify variables for a simulator to log
+     *
+     * \param simulatorName name of simulator to log
+     * \param variableNames a list of variable names to log (empty list means log all variables)
+     * \param decimationFactor optional decimation factor, where 1 (default) means log every step
+     * \return self
+     */
     file_observer_config& log_simulator_variables(
         const std::string& simulatorName,
         const std::vector<std::string>& variableNames,
@@ -49,20 +63,28 @@ public:
         return *this;
     }
 
+    /**
+     * Specify that we want to log all variables for a given simulator
+     *
+     * \param simulatorName name of simulator to log
+     * \param variableNames a list of variable names to log (empty list means log all variables)
+     * \param decimationFactor optional decimation factor, where 1 (default) means log every step
+     * \return self
+     */
     file_observer_config& log_all_simulator_variables(
         const std::string& simulatorName,
         std::optional<size_t> decimationFactor = std::nullopt)
     {
         variablesToLog_[simulatorName].first = decimationFactor.value_or(defaultDecimationFactor_);
+        variablesToLog_[simulatorName].second = {}; // empty variable means log all
         return *this;
     }
 
-
     /**
-     * Creates a file_observer_config from an xml configaration
+     * Creates a file_observer_config from an xml configuration
      *
-     * @param configPath the path to an xml file containing the logging configuration.
-     * @return a file_observer_config
+     * \param configPath the path to an xml file containing the logging configuration.
+     * \return a file_observer_config
      */
     static file_observer_config parse(const filesystem::path& configPath);
 
