@@ -475,16 +475,14 @@ file_observer_config file_observer_config::parse(const filesystem::path& configP
         if (simulator.first == "simulator") {
             const auto modelName = get_attribute<std::string>(simulator.second, "name");
             const auto decimationFactor = get_optional_attribute<size_t>(simulator.second, "decimationFactor");
+            std::vector<std::string> variableNames;
             for (const auto& variable : simulator.second) {
                 if (variable.first == "variable") {
                     const auto variableName = get_attribute<std::string>(variable.second, "name");
-                    config.log_simulator_variable(modelName, variableName, decimationFactor);
+                    variableNames.emplace_back(variableName);
                 }
             }
-            if (!config.should_log_simulator(modelName)) {
-                // simulator element present in XML, but with no explicit variable declarations -> log all variables
-                config.log_all_simulator_variables(modelName, decimationFactor);
-            }
+            config.log_simulator_variable(modelName, variableNames, decimationFactor);
         }
     }
 

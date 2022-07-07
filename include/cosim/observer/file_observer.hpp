@@ -23,6 +23,9 @@ namespace cosim
 
 class file_observer;
 
+/**
+ * Configuration options for file_observer.
+ */
 class file_observer_config
 {
 public:
@@ -40,14 +43,17 @@ public:
         return *this;
     }
 
-    file_observer_config& log_simulator_variable(const std::string& simulatorName, const std::string& variableName, std::optional<size_t> decimationFactor = std::nullopt)
+    file_observer_config& log_simulator_variable(const std::string& simulatorName, const std::vector<std::string>& variableNames, std::optional<size_t> decimationFactor = std::nullopt)
     {
         variablesToLog_[simulatorName].first = decimationFactor.value_or(defaultDecimationFactor_);
-        variablesToLog_[simulatorName].second.emplace_back(variableName);
+        for (const auto& variableName : variableNames) {
+            variablesToLog_[simulatorName].second.emplace_back(variableName);
+        }
         return *this;
     }
 
     /**
+     * Creates a file_observer_config from an xml configaration
      *
      * @param configPath the path to an xml file containing the logging configuration.
      * @return a file_observer_config
@@ -55,8 +61,8 @@ public:
     static file_observer_config parse(const filesystem::path& configPath);
 
 private:
-    size_t defaultDecimationFactor_{1};
     bool timeStampedFileNames_{true};
+    size_t defaultDecimationFactor_{1};
     std::unordered_map<std::string, std::pair<size_t, std::vector<std::string>>> variablesToLog_;
 
     [[nodiscard]] bool should_log_simulator(const std::string& name) const
