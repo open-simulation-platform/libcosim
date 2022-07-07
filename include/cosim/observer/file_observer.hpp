@@ -82,7 +82,15 @@ public:
      * \param logDir the directory where log files will be created.
      * \param config an optional logging configuration.
      */
-    explicit file_observer(const cosim::filesystem::path& logDir, const std::optional<file_observer_config>& config = std::nullopt);
+    explicit file_observer(const cosim::filesystem::path& logDir, std::optional<file_observer_config> config = std::nullopt);
+
+    /**
+     * Creates an observer which logs selected variable values to file in csv format.
+     *
+     * \param logDir the directory where log files will be created.
+     * \param configPath the path to an xml file containing the logging configuration.
+     */
+    file_observer(const cosim::filesystem::path& logDir, const cosim::filesystem::path& configPath);
 
     /**
      * Returns whether the observer is currently recording values.

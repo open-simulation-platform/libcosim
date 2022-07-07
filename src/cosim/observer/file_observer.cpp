@@ -18,6 +18,7 @@
 #include <map>
 #include <mutex>
 #include <sstream>
+#include <utility>
 #include <vector>
 
 namespace cosim
@@ -272,9 +273,14 @@ private:
     bool timeStampedFileNames_ = true;
 };
 
-file_observer::file_observer(const cosim::filesystem::path& logDir, const std::optional<file_observer_config>& config)
-    : config_(config)
+file_observer::file_observer(const cosim::filesystem::path& logDir, std::optional<file_observer_config> config)
+    : config_(std::move(config))
     , logDir_(cosim::filesystem::absolute(logDir))
+{
+}
+
+file_observer::file_observer(const filesystem::path& logDir, const filesystem::path& configPath)
+    : file_observer(logDir, file_observer_config::parse(configPath))
 {
 }
 
