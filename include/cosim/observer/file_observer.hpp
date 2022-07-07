@@ -13,8 +13,6 @@
 #include <cosim/fs_portability.hpp>
 #include <cosim/observer/observer.hpp>
 
-#include <boost/property_tree/ptree.hpp>
-
 #include <atomic>
 #include <memory>
 #include <unordered_map>
@@ -22,6 +20,52 @@
 
 namespace cosim
 {
+
+class file_observer;
+
+class file_observer_config
+{
+public:
+    file_observer_config() = default;
+
+    file_observer_config& set_timestamped_filenames(bool flag)
+    {
+        timeStampedFileNames_ = flag;
+        return *this;
+    }
+
+    file_observer_config& log_all_simulator_variables(const std::string& simulatorName, std::optional<size_t> decimationFactor = std::nullopt)
+    {
+        variablesToLog_[simulatorName].first = decimationFactor.value_or(defaultDecimationFactor_);
+        return *this;
+    }
+
+    file_observer_config& log_simulator_variable(const std::string& simulatorName, const std::string& variableName, std::optional<size_t> decimationFactor = std::nullopt)
+    {
+        variablesToLog_[simulatorName].first = decimationFactor.value_or(defaultDecimationFactor_);
+        variablesToLog_[simulatorName].second.emplace_back(variableName);
+        return *this;
+    }
+
+    /**
+     *
+     * @param configPath the path to an xml file containing the logging configuration.
+     * @return a file_observer_config
+     */
+    static file_observer_config parse(const filesystem::path& configPath);
+
+private:
+    size_t defaultDecimationFactor_{1};
+    bool timeStampedFileNames_{true};
+    std::unordered_map<std::string, std::pair<size_t, std::vector<std::string>>> variablesToLog_;
+
+    [[nodiscard]] bool should_log_simulator(const std::string& name) const
+    {
+        return variablesToLog_.count(name);
+    }
+
+    friend class file_observer;
+};
 
 
 /**
@@ -36,16 +80,9 @@ public:
      * Creates an observer which logs all variable values to file in csv format.
      *
      * \param logDir the directory where log files will be created.
+     * \param config an optional logging configuration.
      */
-    file_observer(const cosim::filesystem::path& logDir);
-
-    /**
-     * Creates an observer which logs selected variable values to file in csv format.
-     *
-     * \param logDir the directory where log files will be created.
-     * \param configPath the path to an xml file containing the logging configuration.
-     */
-    file_observer(const cosim::filesystem::path& logDir, const cosim::filesystem::path& configPath);
+    explicit file_observer(const cosim::filesystem::path& logDir, const std::optional<file_observer_config>& config = std::nullopt);
 
     /**
      * Returns whether the observer is currently recording values.
@@ -108,14 +145,12 @@ private:
     class slave_value_writer;
     std::unordered_map<simulator_index, std::unique_ptr<slave_value_writer>> valueWriters_;
     std::unordered_map<simulator_index, observable*> simulators_;
-    boost::property_tree::ptree ptree_;
-    cosim::filesystem::path configPath_;
+    std::optional<file_observer_config> config_;
     cosim::filesystem::path logDir_;
-    bool logFromConfig_ = false;
-    size_t defaultDecimationFactor_ = 1;
     std::atomic<bool> recording_ = true;
 };
 
 
 } // namespace cosim
-#endif // header guard
+
+#endif // COSIM_OBSERVER_FILE_OBSERVER_HPP

@@ -35,7 +35,8 @@ int main()
 
         // Set up the execution and add observer
         auto execution = cosim::execution(startTime, std::make_unique<cosim::fixed_step_algorithm>(stepSize));
-        auto csv_observer = std::make_shared<cosim::file_observer>(csvPath, configPath);
+        auto csv_config = cosim::file_observer_config::parse(configPath);
+        auto csv_observer = std::make_shared<cosim::file_observer>(csvPath, csv_config);
         execution.add_observer(csv_observer);
 
         // Add two slaves to the execution and connect variables
