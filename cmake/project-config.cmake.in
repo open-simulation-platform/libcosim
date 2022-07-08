@@ -6,7 +6,7 @@ include(CMakeFindDependencyMacro)
 list(APPEND CMAKE_MODULE_PATH "${PACKAGE_PREFIX_DIR}/@LIBCOSIM_CMAKE_INSTALL_DIR@")
 
 find_dependency(MS_GSL REQUIRED)
-find_dependency(Boost REQUIRED COMPONENTS date_time fiber log)
+find_dependency(Boost REQUIRED COMPONENTS date_time log)
 set(FMILibrary_USE_SHARED_LIB @FMILibrary_USE_SHARED_LIB@)
 find_dependency(FMILibrary REQUIRED)
 find_dependency(LIBZIP REQUIRED)

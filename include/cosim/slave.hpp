@@ -13,6 +13,7 @@
 #include <cosim/model_description.hpp>
 #include <cosim/time.hpp>
 
+#include <boost/container/vector.hpp>
 #include <gsl/span>
 
 #include <optional>
@@ -21,7 +22,6 @@
 
 namespace cosim
 {
-
 
 /**
  *  An interface for classes that represent co-simulation slaves.
@@ -52,7 +52,7 @@ namespace cosim
 class slave
 {
 public:
-    virtual ~slave() { }
+    virtual ~slave() = default;
 
     /// Returns a model description.
     virtual cosim::model_description model_description() const = 0;
@@ -221,6 +221,61 @@ public:
     virtual void set_string_variables(
         gsl::span<const value_reference> variables,
         gsl::span<const std::string> values) = 0;
+
+    /// Result type for `get_variables()`.
+    struct variable_values
+    {
+        /// Real variable values.
+        std::vector<double> real;
+
+        /// Integer variable values.
+        std::vector<int> integer;
+
+        /// Boolean variable values.
+        boost::container::vector<bool> boolean;
+
+        /// String variable values.
+        std::vector<std::string> string;
+    };
+
+    void get_variables(
+        variable_values* values,
+        gsl::span<const value_reference> real_variables,
+        gsl::span<const value_reference> integer_variables,
+        gsl::span<const value_reference> boolean_variables,
+        gsl::span<const value_reference> string_variables) const
+    {
+        if (static_cast<size_t>(values->real.size()) != static_cast<size_t>(real_variables.size()))
+            values->real.resize(real_variables.size());
+        if (static_cast<size_t>(values->integer.size()) != static_cast<size_t>(integer_variables.size()))
+            values->integer.resize(integer_variables.size());
+        if (static_cast<size_t>(values->boolean.size()) != static_cast<size_t>(boolean_variables.size()))
+            values->boolean.resize(boolean_variables.size());
+        if (static_cast<size_t>(values->string.size()) != static_cast<size_t>(string_variables.size()))
+            values->string.resize(string_variables.size());
+
+        get_real_variables(real_variables, values->real);
+        get_integer_variables(integer_variables, values->integer);
+        get_boolean_variables(boolean_variables, values->boolean);
+        get_string_variables(string_variables, values->string);
+    }
+
+    void set_variables(
+        gsl::span<const value_reference> real_variables,
+        gsl::span<const double> real_values,
+        gsl::span<const value_reference> integer_variables,
+        gsl::span<const int> integer_values,
+        gsl::span<const value_reference> boolean_variables,
+        gsl::span<const bool> boolean_values,
+        gsl::span<const value_reference> string_variables,
+        gsl::span<const std::string> string_values)
+    {
+
+        set_real_variables(real_variables, real_values);
+        set_integer_variables(integer_variables, integer_values);
+        set_boolean_variables(boolean_variables, boolean_values);
+        set_string_variables(string_variables, string_values);
+    }
 };
 
 

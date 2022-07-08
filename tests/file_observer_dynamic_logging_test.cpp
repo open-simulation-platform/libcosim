@@ -1,16 +1,15 @@
 #include "mock_slave.hpp"
 
 #include <cosim/algorithm.hpp>
-#include <cosim/async_slave.hpp>
 #include <cosim/execution.hpp>
+#include <cosim/fs_portability.hpp>
 #include <cosim/log/simple.hpp>
 #include <cosim/observer/file_observer.hpp>
-
-#include <cosim/fs_portability.hpp>
 
 #include <exception>
 #include <memory>
 #include <stdexcept>
+#include <thread>
 
 
 // A helper macro to test various assertions
@@ -54,18 +53,18 @@ int main()
 
         // Add slaves to the execution
         execution.add_slave(
-            cosim::make_pseudo_async(std::make_unique<mock_slave>(
-                [](double x) { return x - 1.1; })),
+            std::make_unique<mock_slave>(
+                [](double x) { return x - 1.1; }),
             "slave_one");
         execution.add_slave(
-            cosim::make_pseudo_async(std::make_unique<mock_slave>(
+            std::make_unique<mock_slave>(
                 [](double x) { return x + 1.1; },
                 [](int y) { return y - 4; },
-                [](bool z) { return !z; })),
+                [](bool z) { return !z; }),
             "slave_two");
 
         // Run the simulation
-        auto t = std::thread([&]() { execution.simulate_until(std::nullopt).get(); });
+        auto t = std::thread([&]() { execution.simulate_until(std::nullopt); });
 
         constexpr std::chrono::duration sleepTime = std::chrono::milliseconds(500);
 

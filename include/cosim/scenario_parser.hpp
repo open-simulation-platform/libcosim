@@ -28,4 +28,4 @@ scenario::scenario parse_scenario(
     const std::unordered_map<simulator_index, manipulable*>& simulators);
 } // namespace cosim
 
-#endif //LIBCOSIM_SCENARIO_PARSER_H
+#endif // LIBCOSIM_SCENARIO_PARSER_H

@@ -10,14 +10,13 @@
 #ifndef COSIM_EXECUTION_HPP
 #define COSIM_EXECUTION_HPP
 
-#include <cosim/async_slave.hpp>
 #include <cosim/function/function.hpp>
 #include <cosim/model_description.hpp>
+#include <cosim/slave.hpp>
 #include <cosim/system_structure.hpp>
 #include <cosim/time.hpp>
 #include <cosim/timer.hpp>
 
-#include <boost/fiber/future.hpp>
 #include <boost/functional/hash.hpp>
 
 #include <memory>
@@ -172,7 +171,7 @@ public:
      *  Adds a slave to the execution.
      *
      *  \param slave
-     *      An object that provides asynchronous communication with the slave.
+     *      The slave object.
      *  \param name
      *      An execution-specific name for the slave.
      *  \param stepSizeHint
@@ -181,7 +180,7 @@ public:
      *      If zero, the algorithm will attempt to choose a sensible default.
      */
     simulator_index add_slave(
-        std::shared_ptr<async_slave> slave,
+        std::shared_ptr<slave> slave,
         std::string_view name,
         duration stepSizeHint = duration::zero());
 
@@ -245,12 +244,6 @@ public:
     /**
      *  Advance the co-simulation forward to the given logical time.
      *
-     *  This function returns immediately, and its actions will be performed
-     *  asynchronously.  As it is not possible to perform more than one
-     *  asynchronous operation at a time per `execution` object, client code
-     *  must verify that the operation completed before calling the function
-     *  again (e.g. by calling `boost::fibers::future::get()` on the result).
-     *
      *  \param targetTime
      *      The logical time at which the co-simulation should pause (optional).
      *      If specified, this must always be greater than the value of
@@ -262,7 +255,7 @@ public:
      *      or `false` if it was stopped before this. In the latter case,
      *      `current_time()` may be called to determine the actual end time.
      */
-    boost::fibers::future<bool> simulate_until(std::optional<time_point> targetTime);
+    bool simulate_until(std::optional<time_point> targetTime);
 
     /**
      *  Advance the co-simulation forward one single step

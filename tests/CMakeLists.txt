@@ -1,5 +1,4 @@
 set(tests
-    "async_slave_mockup_test"
     "fixed_step_algorithm_test"
     "file_observer_dynamic_logging_test"
     "file_observer_logging_test"
@@ -16,7 +15,6 @@ set(tests
 )
 
 set(unittests
-    "async_slave_unittest"
     "function_unittest"
     "fmi_v1_fmu_unittest"
     "fmi_v2_fmu_unittest"
@@ -36,6 +34,9 @@ if(LIBCOSIM_WITH_PROXYFMU)
     list(APPEND unittests
             "proxyfmu_integration_unittest"
             "proxyfmu_library_unittest"
+            )
+    list(APPEND tests
+            "proxyfmu_osp_config_parser_test"
             )
 endif()
 

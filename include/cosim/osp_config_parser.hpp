@@ -44,4 +44,4 @@ osp_config load_osp_config(
 
 
 } // namespace cosim
-#endif //LIBCOSIM_OSP_CONFIG_PARSER_HPP
+#endif // LIBCOSIM_OSP_CONFIG_PARSER_HPP
