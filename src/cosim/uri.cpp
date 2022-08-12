@@ -357,41 +357,40 @@ uri resolve_reference(const uri& base, const uri& reference)
     std::optional<std::string_view> fragment;
 
     // Canonical algorithm from RFC 3986 Sec. 5.2.2.
-    if (reference.scheme().has_value()) {
-        scheme = *reference.scheme();
-        authority = reference.authority();
-        path = remove_dot_segments(reference.path(), pathBuffer);
-        query = reference.query();
-    } else {
-        if (reference.authority().has_value()) {
-            authority = reference.authority();
-            path = remove_dot_segments(reference.path(), pathBuffer);
-            query = reference.query();
-        } else {
-            if (reference.path().empty()) {
-                path = base.path();
-                if (reference.query().has_value()) {
-                    query = reference.query();
-                } else {
-                    query = base.query();
-                }
-            } else {
-                if (reference.path().front() == '/') {
-                    path = remove_dot_segments(reference.path(), pathBuffer);
-                } else {
-                    pathBuffer = merge(
-                        base.authority().has_value(),
-                        base.path(),
-                        reference.path());
-                    path = remove_dot_segments(pathBuffer, pathBuffer);
-                }
-                query = reference.query();
-            }
-            authority = base.authority();
-        }
-        scheme = *base.scheme();
-    }
+    scheme = *reference.scheme();
+    authority = reference.authority();
+    path = remove_dot_segments(reference.path(), pathBuffer);
+    query = reference.query();
     fragment = reference.fragment();
+
+    if (reference.scheme().has_value()) {
+        return uri(scheme, authority, path, query, fragment);
+    }
+
+    scheme = *base.scheme();
+
+    if (authority.has_value()) {
+        return uri(scheme, authority, path, query, fragment);
+    }
+
+    authority = base.authority();
+
+    if (reference.path().empty()) {
+        if (query.has_value()) {
+            return uri(scheme, authority, base.path(), query, fragment);
+        }
+
+        return uri(scheme, authority, base.path(), base.query(), fragment);
+    }
+
+    if (reference.path().front() == '/') {
+        return uri(scheme, authority, path, query, fragment);
+    }
+
+    pathBuffer = merge(base.authority().has_value(),
+                       base.path(),
+                       reference.path());
+    path = remove_dot_segments(pathBuffer, pathBuffer);
 
     return uri(scheme, authority, path, query, fragment);
 }
