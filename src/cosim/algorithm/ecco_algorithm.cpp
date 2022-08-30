@@ -272,19 +272,25 @@ public:
 
     duration adjust_step_size(time_point currentTime, const duration& stepSize, const ecco_parameters& params)
     {
-        double power_a = 0;
-        double power_b = 0;
-        for (int i = 0; i < this->inputVariables_.size(); i += 2) {
-            variable_id u_a = this->inputVariables_.at(i);
-            variable_id u_b = this->inputVariables_.at(i + 1);
-            variable_id y_a = this->outputVariables_.at(i);
-            variable_id y_b = this->outputVariables_.at(i + 1);
+        double sum_power_residual{};
+        double max_power_residual{};
+
+        for (int i = 0; i < uVariables_.size(); ++i) {
+            auto& uPair = uVariables_.at(i);
+            auto& yPair = yVariables_.at(i);
+            auto u_a = uPair.first;
+            auto u_b = uPair.second;
+            auto y_a = uPair.first;
+            auto y_b = uPair.second;
+
             double u_a_value = simulators_.at(u_a.simulator).sim->get_real(u_a.reference);
             double u_b_value = simulators_.at(u_b.simulator).sim->get_real(u_b.reference);
             double y_a_value = simulators_.at(y_a.simulator).sim->get_real(y_a.reference);
             double y_b_value = simulators_.at(y_b.simulator).sim->get_real(y_b.reference);
-            power_a += y_a_value * u_a_value;
-            power_b += y_b_value * u_b_value;
+
+            power_residual = -u_a_value * y_a_value - u_b_value * y_b_value;
+            sum_power_residual += power_residual;
+            max_power_residual = power_residual > max_power_residual ? power_residual : max_power_residual;
         }
 
         // variable_id y_a = simulators_[0].outgoingSimConnections[0].source;
@@ -300,46 +306,41 @@ public:
         // double power_a = y_a_value * u_a_value;
         // double power_b = y_b_value * u_b_value;
 
-        const auto power_residual = power_a - power_b;
         const auto dt = to_double_duration(stepSize, currentTime);
-        const auto energy_level = std::max(power_a, power_b) * dt;
-        const auto energy_residual = power_residual * dt;
+        //const auto energy_level = std::max(power_a, power_b) * dt;
+        const auto energy_level = max_power_residual * dt;
+        const auto energy_residual = sum_power_residual * dt;
         const auto num_bonds = 1;
         const auto mean_square = std::pow(std::abs(energy_residual) / (params.abs_tolerance + params.rel_tolerance * std::abs(energy_level)), 2) / num_bonds; // TODO: Loop over all bonds
         const auto error_estimate = std::sqrt(mean_square);
 
-        // std::cout << power_a << " " << power_b << " " << energy_level << " " << energy_residual << " " << power_residual << " " << error_estimate << std::endl;
+        // std::cout << power_a << " " << power_b << " " << energy_level << " " << energy_residual << " " << sum_power_residual << " " << error_estimate << std::endl;
         if (prev_error_estimate_ == 0 || error_estimate == 0) {
             prev_error_estimate_ = error_estimate;
             return stepSize;
         }
         // Compute a new step size
         const auto new_step_size_gain_value = params.safety_factor * std::pow(error_estimate, -params.i_gain - params.p_gain) * std::pow(prev_error_estimate_, params.p_gain);
-        //std::cout << "step size gain unclamped=" << new_step_size_gain_value << " ";
+        // std::cout << "step size gain unclamped=" << new_step_size_gain_value << " ";
         auto new_step_size_gain = std::clamp(new_step_size_gain_value, params.min_change_rate, params.max_change_rate);
 
         prev_error_estimate_ = error_estimate;
         const auto new_step_size = to_duration(new_step_size_gain * to_double_duration(stepSize, currentTime));
-        const auto actual_new_step_size = std::clamp (new_step_size, params.min_step_size, params.max_step_size);
-        //std::cout << "dP=" << power_residual << "  dE=" << energy_residual << "  eps=" << error_estimate << " ";
-        //std::cout << "new step size: " << to_double_duration(actual_new_step_size, {}) << std::endl;
+        const auto actual_new_step_size = std::clamp(new_step_size, params.min_step_size, params.max_step_size);
+        // std::cout << "dP=" << sum_power_residual << "  dE=" << energy_residual << "  eps=" << error_estimate << " ";
+        // std::cout << "new step size: " << to_double_duration(actual_new_step_size, {}) << std::endl;
         return actual_new_step_size;
     }
 
-    void add_input_variable(cosim::variable_id variable)
+    void add_variable_pairs(std::pair<cosim::variable_id, cosim::variable_id> uVec, std::pair<cosim::variable_id, cosim::variable_id> yVec)
     {
-        inputVariables_.push_back(variable);
-    }
-
-    void add_output_variable(cosim::variable_id variable)
-    {
-        outputVariables_.push_back(variable);
+        uVariables_.push_back(uVec);
+        yVariables_.push_back(yVec);
     }
 
 private:
-    /// Vectors of input and output variables needed for the step size adjustment calculation.
-    std::vector<cosim::variable_id> inputVariables_{};
-    std::vector<cosim::variable_id> outputVariables_{};
+    std::vector<std::pair<cosim::variable_id, cosim::variable_id>> uVariables_{};
+    std::vector<std::pair<cosim::variable_id, cosim::variable_id>> yVariables_{};
 
     struct connection_ss
     {

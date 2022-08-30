@@ -87,18 +87,11 @@ public:
     void set_stepsize_decimation_factor(simulator_index simulator, int factor);
 
     /**
-     * Adds an input variable to the list of input variables for the stepsize calculation (y vector)
-     * \param input
+     * Adds a variable pair for the power residual calculation.
+     * \param uVec
      *     The index of the variable.
      */
-    void add_input_variable(variable_id input);
-
-    /**
-     * Adds an output variable to the list of input variables for the stepsize calculation (u vector)
-     * \param output
-     *     The index of the variable.
-     */
-    void add_output_variable(variable_id output);
+    void add_variable_pairs(std::pair<cosim::variable_id, cosim::variable_id> uVec, std::pair<cosim::variable_id, cosim::variable_id> yVec);
 
 private:
     class impl;
