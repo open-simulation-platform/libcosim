@@ -272,6 +272,11 @@ public:
 
     duration adjust_step_size(time_point currentTime, const duration& stepSize, const ecco_parameters& params)
     {
+        for (const auto& variable_id : this->inputVariables_)
+        {
+
+        }
+
         variable_id y_a = simulators_[0].outgoingSimConnections[0].source;
         variable_id u_a = simulators_[1].outgoingSimConnections[0].target;
         variable_id y_b = simulators_[1].outgoingSimConnections[0].source;
@@ -311,7 +316,21 @@ public:
         return actual_new_step_size;
     }
 
+    void add_input_variable(cosim::variable_id variable)
+    {
+        inputVariables_.push_back(variable);
+    }
+
+    void add_output_variable(cosim::variable_id variable)
+    {
+        outputVariables_.push_back(variable);
+    }
+
 private:
+    /// Vectors of input and output variables needed for the step size adjustment calculation.
+    std::vector<cosim::variable_id> inputVariables_{};
+    std::vector<cosim::variable_id> outputVariables_{};
+
     struct connection_ss
     {
         variable_id source;

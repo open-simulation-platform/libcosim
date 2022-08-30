@@ -11,6 +11,7 @@
 #include "cosim/function/vector_sum.hpp"
 #include "cosim/log/logger.hpp"
 #include "cosim/uri.hpp"
+#include "cosim/algorithm.hpp"
 
 #include <boost/lexical_cast.hpp>
 #include <xercesc/dom/DOM.hpp>
@@ -117,6 +118,7 @@ public:
     struct SimulationInformation
     {
         std::string description;
+        std::string algorithm;
         double stepSize = 0.1;
         double startTime = 0.0;
     };
@@ -189,9 +191,9 @@ public:
         SignalGroup outGroup;
     };
 
-    const std::unordered_map<std::string, LinearTransformationFunction>& get_linear_transformation_functions() const;
-    const std::unordered_map<std::string, SumFunction>& get_sum_functions() const;
-    const std::unordered_map<std::string, VectorSumFunction>& get_vector_sum_functions() const;
+    [[nodiscard]] const std::unordered_map<std::string, LinearTransformationFunction>& get_linear_transformation_functions() const;
+    [[nodiscard]] const std::unordered_map<std::string, SumFunction>& get_sum_functions() const;
+    [[nodiscard]] const std::unordered_map<std::string, VectorSumFunction>& get_vector_sum_functions() const;
 
     struct VariableEndpoint
     {
@@ -218,10 +220,10 @@ public:
     };
 
 
-    const std::vector<VariableConnection>& get_variable_connections() const;
-    const std::vector<SignalConnection>& get_signal_connections() const;
-    const std::vector<VariableConnection>& get_variable_group_connections() const;
-    const std::vector<SignalConnection>& get_signal_group_connections() const;
+    [[nodiscard]] const std::vector<VariableConnection>& get_variable_connections() const;
+    [[nodiscard]] const std::vector<SignalConnection>& get_signal_connections() const;
+    [[nodiscard]] const std::vector<VariableConnection>& get_variable_group_connections() const;
+    [[nodiscard]] const std::vector<SignalConnection>& get_signal_group_connections() const;
 
 private:
     SystemDescription systemDescription_;
@@ -429,6 +431,11 @@ osp_config_parser::osp_config_parser(
     auto stNodes = rootElement->getElementsByTagName(tc("StartTime").get());
     if (stNodes->getLength() > 0) {
         simulationInformation_.startTime = boost::lexical_cast<double>(tc(stNodes->item(0)->getTextContent()).get());
+    }
+
+    auto saNodes = rootElement->getElementsByTagName(tc("Algorithm").get());
+    if (stNodes->getLength() > 0) {
+        simulationInformation_.algorithm = std::string(tc(stNodes->item(0)->getTextContent()).get());
     }
 
     auto connectionsElement = static_cast<xercesc::DOMElement*>(rootElement->getElementsByTagName(tc("Connections").get())->item(0));

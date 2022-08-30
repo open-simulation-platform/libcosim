@@ -86,6 +86,20 @@ public:
      */
     void set_stepsize_decimation_factor(simulator_index simulator, int factor);
 
+    /**
+     * Adds an input variable to the list of input variables for the stepsize calculation (y vector)
+     * \param input
+     *     The index of the variable.
+     */
+    void add_input_variable(variable_id input);
+
+    /**
+     * Adds an output variable to the list of input variables for the stepsize calculation (u vector)
+     * \param output
+     *     The index of the variable.
+     */
+    void add_output_variable(variable_id output);
+
 private:
     class impl;
     std::unique_ptr<impl> pimpl_;
