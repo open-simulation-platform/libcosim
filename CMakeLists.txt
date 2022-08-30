@@ -163,7 +163,6 @@ endif()
 # ==============================================================================
 
 add_subdirectory("src")
-add_subdirectory("tools/osp-xsd-embedder")
 if(LIBCOSIM_BUILD_TESTS)
     enable_testing()
     add_subdirectory("tests")
