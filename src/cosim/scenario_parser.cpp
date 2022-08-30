@@ -216,7 +216,7 @@ scenario::scenario parse_scenario(
         auto varName =
             specified_or_default(event, "variable", defaultOpts.variable);
         const auto var =
-            find_variable(simulator->model_description(), varName);
+            *find_variable(simulator->model_description(), varName);
 
         auto mode = specified_or_default(event, "action", defaultOpts.action);
         bool isInput = is_input(var.causality);

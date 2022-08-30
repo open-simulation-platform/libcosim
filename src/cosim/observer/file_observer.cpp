@@ -448,12 +448,16 @@ file_observer::simulator_logging_config file_observer::parse_config(const std::s
                             const auto variableDescription =
                                 find_variable(simulator->model_description(), name);
 
-                            switch (variableDescription.type) {
+                            if (!variableDescription) {
+                                throw std::runtime_error("Can't find variable descriptor with name " + name + " for model with name " + simulator->model_description().name);
+                            }
+
+                            switch (variableDescription->type) {
                                 case variable_type::real:
                                 case variable_type::integer:
                                 case variable_type::boolean:
                                 case variable_type::string:
-                                    config.variables.push_back(variableDescription);
+                                    config.variables.push_back(*variableDescription);
                                     BOOST_LOG_SEV(log::logger(), log::info) << "Logging variable: " << modelName << ":" << name;
                                     break;
                                 default:
