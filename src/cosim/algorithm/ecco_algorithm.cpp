@@ -272,23 +272,33 @@ public:
 
     duration adjust_step_size(time_point currentTime, const duration& stepSize, const ecco_parameters& params)
     {
-        for (const auto& variable_id : this->inputVariables_)
-        {
-
+        double power_a = 0;
+        double power_b = 0;
+        for (int i = 0; i < this->inputVariables_.size(); i += 2) {
+            variable_id u_a = this->inputVariables_.at(i);
+            variable_id u_b = this->inputVariables_.at(i + 1);
+            variable_id y_a = this->outputVariables_.at(i);
+            variable_id y_b = this->outputVariables_.at(i + 1);
+            double u_a_value = simulators_.at(u_a.simulator).sim->get_real(u_a.reference);
+            double u_b_value = simulators_.at(u_b.simulator).sim->get_real(u_b.reference);
+            double y_a_value = simulators_.at(y_a.simulator).sim->get_real(y_a.reference);
+            double y_b_value = simulators_.at(y_b.simulator).sim->get_real(y_b.reference);
+            power_a += y_a_value * u_a_value;
+            power_b += y_b_value * u_b_value;
         }
 
-        variable_id y_a = simulators_[0].outgoingSimConnections[0].source;
-        variable_id u_a = simulators_[1].outgoingSimConnections[0].target;
-        variable_id y_b = simulators_[1].outgoingSimConnections[0].source;
-        variable_id u_b = simulators_[0].outgoingSimConnections[0].target;
-
-        double y_a_value = simulators_.at(y_a.simulator).sim->get_real(y_a.reference);
-        double u_a_value = simulators_.at(u_a.simulator).sim->get_real(u_a.reference);
-        double y_b_value = simulators_.at(y_b.simulator).sim->get_real(y_b.reference);
-        double u_b_value = simulators_.at(u_b.simulator).sim->get_real(u_b.reference);
-
-        double power_a = y_a_value * u_a_value;
-        double power_b = y_b_value * u_b_value;
+        // variable_id y_a = simulators_[0].outgoingSimConnections[0].source;
+        // variable_id u_a = simulators_[1].outgoingSimConnections[0].target;
+        // variable_id y_b = simulators_[1].outgoingSimConnections[0].source;
+        // variable_id u_b = simulators_[0].outgoingSimConnections[0].target;
+        //
+        // double y_a_value = simulators_.at(y_a.simulator).sim->get_real(y_a.reference);
+        // double u_a_value = simulators_.at(u_a.simulator).sim->get_real(u_a.reference);
+        // double y_b_value = simulators_.at(y_b.simulator).sim->get_real(y_b.reference);
+        // double u_b_value = simulators_.at(u_b.simulator).sim->get_real(u_b.reference);
+        //
+        // double power_a = y_a_value * u_a_value;
+        // double power_b = y_b_value * u_b_value;
 
         const auto power_residual = power_a - power_b;
         const auto dt = to_double_duration(stepSize, currentTime);
