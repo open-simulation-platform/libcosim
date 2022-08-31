@@ -43,7 +43,6 @@ int main()
         auto execution = cosim::execution(
             startTime, ecco_algo);
 
-
         // Default should not be real time
         const auto realTimeConfig = execution.get_real_time_config();
         REQUIRE(!realTimeConfig->real_time_simulation);
@@ -90,13 +89,13 @@ int main()
                 }),
                 "B"));
 
-        auto u1 = cosim::variable_id{slaves[0], cosim::variable_type::real, realOutRef};
-        auto y1 = cosim::variable_id{slaves[1], cosim::variable_type::real, realInRef};
-        auto u2 = cosim::variable_id{slaves[1], cosim::variable_type::real, realOutRef};
-        auto y2 = cosim::variable_id{slaves[0], cosim::variable_type::real, realInRef};
+        auto y1 = cosim::variable_id{slaves[0], cosim::variable_type::real, realOutRef};
+        auto u1 = cosim::variable_id{slaves[0], cosim::variable_type::real, realInRef};
+        auto y2 = cosim::variable_id{slaves[1], cosim::variable_type::real, realOutRef};
+        auto u2 = cosim::variable_id{slaves[1], cosim::variable_type::real, realInRef};
 
-        execution.connect_variables(u1, y1);
-        execution.connect_variables(u2, y2);
+        execution.connect_variables(y1, u2);
+        execution.connect_variables(y2, u1);
 
         ecco_algo->add_variable_pairs(std::make_pair(u1, u2), std::make_pair(y1, y2));
 

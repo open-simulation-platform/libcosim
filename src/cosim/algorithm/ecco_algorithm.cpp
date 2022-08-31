@@ -240,7 +240,7 @@ public:
             throw error(make_error_code(errc::simulation_error), errMessages.str());
         }
 
-        stepSize_ = adjust_step_size_original(currentT, stepSize_, params_);
+        stepSize_ = adjust_step_size(currentT, stepSize_, params_);
 
         // Transfer the outputs from simulators that have finished their
         // individual time steps within this co-simulation time step.
@@ -329,9 +329,9 @@ public:
             double y_b_value = simulators_.at(y_b.simulator).sim->get_real(y_b.reference);
 
             // Doing the safe thing with absolute values
-            double power_a = std::abs(u_a_value * y_a_value);
-            double power_b = std::abs(u_b_value * y_b_value);
-            double power_residual = std::abs(power_b - power_a);
+            double power_a = u_a_value * y_a_value;
+            double power_b = u_b_value * y_b_value;
+            double power_residual = power_a - power_b;
 
             sum_power_residual += power_residual;
             max_power_residual = power_residual > max_power_residual ? power_residual : max_power_residual;
