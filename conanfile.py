@@ -16,7 +16,7 @@ class LibcosimConan(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
     generators = "cmake", "virtualrunenv"
     requires = (
-        "boost/1.79.0",
+        "boost/1.71.0",
         "fmilibrary/2.3",
         "ms-gsl/2.1.0",
         "libzip/1.7.3",
@@ -53,7 +53,7 @@ class LibcosimConan(ConanFile):
 
     def requirements(self):
         if self.options.proxyfmu:
-            self.requires("proxyfmu/0.2.7@osp/testing-socket-open-timeout")
+            self.requires("proxyfmu/0.2.8@osp/testing-socket-open-timeout")
 
     def imports(self):
         binDir = os.path.join("output", str(self.settings.build_type).lower(), "bin")
