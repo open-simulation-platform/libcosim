@@ -240,8 +240,7 @@ public:
             throw error(make_error_code(errc::simulation_error), errMessages.str());
         }
 
-
-        stepSize_ = adjust_step_size(currentT, stepSize_, params_);
+        stepSize_ = adjust_step_size_original(currentT, stepSize_, params_);
 
         // Transfer the outputs from simulators that have finished their
         // individual time steps within this co-simulation time step.
@@ -270,6 +269,47 @@ public:
         simulators_.at(i).decimationFactor = factor;
     }
 
+    duration adjust_step_size_original(time_point currentTime, const duration& stepSize, const ecco_parameters& params)
+    {
+        variable_id y_a = simulators_[0].outgoingSimConnections[0].source;
+        variable_id u_a = simulators_[1].outgoingSimConnections[0].target;
+        variable_id y_b = simulators_[1].outgoingSimConnections[0].source;
+        variable_id u_b = simulators_[0].outgoingSimConnections[0].target;
+
+        double y_a_value = simulators_.at(y_a.simulator).sim->get_real(y_a.reference);
+        double u_a_value = simulators_.at(u_a.simulator).sim->get_real(u_a.reference);
+        double y_b_value = simulators_.at(y_b.simulator).sim->get_real(y_b.reference);
+        double u_b_value = simulators_.at(u_b.simulator).sim->get_real(u_b.reference);
+
+        double power_a = y_a_value * u_a_value;
+        double power_b = y_b_value * u_b_value;
+
+        const auto power_residual = power_a - power_b;
+        const auto dt = to_double_duration(stepSize, currentTime);
+        const auto energy_level = std::max(power_a, power_b) * dt;
+        const auto energy_residual = power_residual * dt;
+        const auto num_bonds = 1;
+        const auto mean_square = std::pow(std::abs(energy_residual) / (params.abs_tolerance + params.rel_tolerance * std::abs(energy_level)), 2) / num_bonds; // TODO: Loop over all bonds
+        const auto error_estimate = std::sqrt(mean_square);
+
+        // std::cout << power_a << " " << power_b << " " << energy_level << " " << energy_residual << " " << power_residual << " " << error_estimate << std::endl;
+        if (prev_error_estimate_ == 0 || error_estimate == 0) {
+            prev_error_estimate_ = error_estimate;
+            return stepSize;
+        }
+        // Compute a new step size
+        const auto new_step_size_gain_value = params.safety_factor * std::pow(error_estimate, -params.i_gain - params.p_gain) * std::pow(prev_error_estimate_, params.p_gain);
+        //std::cout << "step size gain unclamped=" << new_step_size_gain_value << " ";
+        auto new_step_size_gain = std::clamp(new_step_size_gain_value, params.min_change_rate, params.max_change_rate);
+
+        prev_error_estimate_ = error_estimate;
+        const auto new_step_size = to_duration(new_step_size_gain * to_double_duration(stepSize, currentTime));
+        const auto actual_new_step_size = std::clamp (new_step_size, params.min_step_size, params.max_step_size);
+        //std::cout << "dP=" << power_residual << "  dE=" << energy_residual << "  eps=" << error_estimate << " ";
+        //std::cout << "new step size: " << to_double_duration(actual_new_step_size, {}) << std::endl;
+        return actual_new_step_size;
+    }
+
     duration adjust_step_size(time_point currentTime, const duration& stepSize, const ecco_parameters& params)
     {
         double sum_power_residual{};
@@ -280,15 +320,19 @@ public:
             auto& yPair = yVariables_.at(i);
             auto u_a = uPair.first;
             auto u_b = uPair.second;
-            auto y_a = uPair.first;
-            auto y_b = uPair.second;
+            auto y_a = yPair.first;
+            auto y_b = yPair.second;
 
             double u_a_value = simulators_.at(u_a.simulator).sim->get_real(u_a.reference);
             double u_b_value = simulators_.at(u_b.simulator).sim->get_real(u_b.reference);
             double y_a_value = simulators_.at(y_a.simulator).sim->get_real(y_a.reference);
             double y_b_value = simulators_.at(y_b.simulator).sim->get_real(y_b.reference);
 
-            power_residual = -u_a_value * y_a_value - u_b_value * y_b_value;
+            // Doing the safe thing with absolute values
+            double power_a = std::abs(u_a_value * y_a_value);
+            double power_b = std::abs(u_b_value * y_b_value);
+            double power_residual = std::abs(power_b - power_a);
+
             sum_power_residual += power_residual;
             max_power_residual = power_residual > max_power_residual ? power_residual : max_power_residual;
         }
@@ -305,13 +349,14 @@ public:
         //
         // double power_a = y_a_value * u_a_value;
         // double power_b = y_b_value * u_b_value;
+        // double power_residual = power_b - power_a;
 
         const auto dt = to_double_duration(stepSize, currentTime);
-        //const auto energy_level = std::max(power_a, power_b) * dt;
+        // const auto energy_level = std::max(power_a, power_b) * dt;
         const auto energy_level = max_power_residual * dt;
         const auto energy_residual = sum_power_residual * dt;
         const auto num_bonds = 1;
-        const auto mean_square = std::pow(std::abs(energy_residual) / (params.abs_tolerance + params.rel_tolerance * std::abs(energy_level)), 2) / num_bonds; // TODO: Loop over all bonds
+        const auto mean_square = std::pow(energy_residual / (params.abs_tolerance + params.rel_tolerance * energy_level), 2) / num_bonds; // TODO: Loop over all bonds
         const auto error_estimate = std::sqrt(mean_square);
 
         // std::cout << power_a << " " << power_b << " " << energy_level << " " << energy_residual << " " << sum_power_residual << " " << error_estimate << std::endl;
@@ -334,6 +379,7 @@ public:
 
     void add_variable_pairs(std::pair<cosim::variable_id, cosim::variable_id> uVec, std::pair<cosim::variable_id, cosim::variable_id> yVec)
     {
+        std::cout << "Adding variable pairs!" << std::endl;
         uVariables_.push_back(uVec);
         yVariables_.push_back(yVec);
     }
@@ -514,7 +560,7 @@ private:
     int64_t stepCounter_ = 0;
     unsigned int max_threads_ = std::thread::hardware_concurrency() - 1;
     utility::thread_pool pool_;
-    double prev_error_estimate_;
+    double prev_error_estimate_{1.0};
 };
 
 
@@ -610,6 +656,11 @@ std::pair<duration, std::unordered_set<simulator_index>> ecco_algorithm::do_step
 void ecco_algorithm::set_stepsize_decimation_factor(cosim::simulator_index simulator, int factor)
 {
     pimpl_->set_stepsize_decimation_factor(simulator, factor);
+}
+
+void ecco_algorithm::add_variable_pairs(std::pair<cosim::variable_id, cosim::variable_id> uVec, std::pair<cosim::variable_id, cosim::variable_id> yVec)
+{
+    pimpl_->add_variable_pairs(uVec, yVec);
 }
 
 } // namespace cosim

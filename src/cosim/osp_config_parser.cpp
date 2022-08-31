@@ -434,8 +434,8 @@ osp_config_parser::osp_config_parser(
     }
 
     auto saNodes = rootElement->getElementsByTagName(tc("Algorithm").get());
-    if (stNodes->getLength() > 0) {
-        simulationInformation_.algorithm = std::string(tc(stNodes->item(0)->getTextContent()).get());
+    if (saNodes->getLength() > 0) {
+        simulationInformation_.algorithm = std::string(tc(saNodes->item(0)->getTextContent()).get());
     }
 
     auto connectionsElement = static_cast<xercesc::DOMElement*>(rootElement->getElementsByTagName(tc("Connections").get())->item(0));

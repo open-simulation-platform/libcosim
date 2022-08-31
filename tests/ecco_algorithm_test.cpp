@@ -36,10 +36,12 @@ int main()
             0.2,
             0.15};
 
+        // Set up an ecco algo
+        auto ecco_algo = std::make_shared<cosim::ecco_algorithm>(ecco_params);
+
         // Set up execution
         auto execution = cosim::execution(
-            startTime,
-            std::make_unique<cosim::ecco_algorithm>(ecco_params));
+            startTime, ecco_algo);
 
 
         // Default should not be real time
@@ -52,7 +54,6 @@ int main()
         const cosim::value_reference realOutRef = mock_slave::real_out_reference;
         const cosim::value_reference realInRef = mock_slave::real_in_reference;
 
-
         // Add slaves to it
         std::vector<cosim::simulator_index> slaves;
         double x1 = 1;
@@ -62,7 +63,7 @@ int main()
                     auto dt = 1e-4;
                     const auto tEnd = cosim::to_double_duration(currentStepSize, currentTime);
                     for (double t = 0.0; t < tEnd; t += dt) {
-                        if (t+dt > tEnd) {
+                        if (t + dt > tEnd) {
                             dt = tEnd - t;
                         }
                         auto dx = -2.0 * x1 + x;
@@ -79,7 +80,7 @@ int main()
                     auto dt = 1e-4;
                     const auto tEnd = cosim::to_double_duration(currentStepSize, currentTime);
                     for (double t = 0.0; t < tEnd; t += dt) {
-                        if (t+dt > tEnd) {
+                        if (t + dt > tEnd) {
                             dt = tEnd - t;
                         }
                         auto dx = -x2 + x;
@@ -89,12 +90,15 @@ int main()
                 }),
                 "B"));
 
-        execution.connect_variables(
-            cosim::variable_id{slaves[0], cosim::variable_type::real, realOutRef},
-            cosim::variable_id{slaves[1], cosim::variable_type::real, realInRef});
-        execution.connect_variables(
-            cosim::variable_id{slaves[1], cosim::variable_type::real, realOutRef},
-            cosim::variable_id{slaves[0], cosim::variable_type::real, realInRef});
+        auto u1 = cosim::variable_id{slaves[0], cosim::variable_type::real, realOutRef};
+        auto y1 = cosim::variable_id{slaves[1], cosim::variable_type::real, realInRef};
+        auto u2 = cosim::variable_id{slaves[1], cosim::variable_type::real, realOutRef};
+        auto y2 = cosim::variable_id{slaves[0], cosim::variable_type::real, realInRef};
+
+        execution.connect_variables(u1, y1);
+        execution.connect_variables(u2, y2);
+
+        ecco_algo->add_variable_pairs(std::make_pair(u1, u2), std::make_pair(y1, y2));
 
         execution.set_real_initial_value(slaves[0], realInRef, 0.5);
 
@@ -156,12 +160,12 @@ int main()
         std::cout << "time,stepsize,a_in,a_out,b_in,b_out" << std::endl;
         for (int i = 1; i < numSamples; ++i) {
             std::cout << cosim::to_double_time_point(timeValues[i])
-                << "," << cosim::to_double_duration(timeValues[i]-timeValues[i-1], timeValues[i-1])
-                << "," << real_a_input[i]
-                << "," << real_a_output[i]
-                << "," << real_b_input[i]
-                << "," << real_b_output[i]
-                << std::endl;
+                      << "," << cosim::to_double_duration(timeValues[i] - timeValues[i - 1], timeValues[i - 1])
+                      << "," << real_a_input[i]
+                      << "," << real_a_output[i]
+                      << "," << real_b_input[i]
+                      << "," << real_b_output[i]
+                      << std::endl;
         }
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
