@@ -20,7 +20,7 @@ class LibcosimConan(ConanFile):
         "fmilibrary/2.3",
         "ms-gsl/2.1.0",
         "libzip/1.7.3",
-        "yaml-cpp/0.6.3",
+        "yaml-cpp/0.7.0",
         "xerces-c/3.2.2",
         # conflict resolution
         "openssl/1.1.1k",
