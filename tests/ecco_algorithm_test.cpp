@@ -97,7 +97,7 @@ int main()
         execution.connect_variables(y1, u2);
         execution.connect_variables(y2, u1);
 
-        ecco_algo->add_variable_pairs(std::make_pair(u1, u2), std::make_pair(y1, y2));
+        ecco_algo->add_power_bond(u1, y1, u2, y2);
 
         execution.set_real_initial_value(slaves[0], realInRef, 0.5);
 

@@ -315,13 +315,11 @@ public:
         double sum_power_residual{};
         double max_power_residual{};
 
-        for (int i = 0; i < uVariables_.size(); ++i) {
-            auto& uPair = uVariables_.at(i);
-            auto& yPair = yVariables_.at(i);
-            auto u_a = uPair.first;
-            auto u_b = uPair.second;
-            auto y_a = yPair.first;
-            auto y_b = yPair.second;
+        for (int i = 0; i < uVariables_.size(); i+=2) {
+            auto u_a = uVariables_.at(i);
+            auto u_b = uVariables_.at(i+1);
+            auto y_a = yVariables_.at(i);
+            auto y_b = yVariables_.at(i+1);
 
             double u_a_value = simulators_.at(u_a.simulator).sim->get_real(u_a.reference);
             double u_b_value = simulators_.at(u_b.simulator).sim->get_real(u_b.reference);
@@ -331,31 +329,16 @@ public:
             // Doing the safe thing with absolute values
             double power_a = u_a_value * y_a_value;
             double power_b = u_b_value * y_b_value;
-            double power_residual = power_a - power_b;
+            double power_residual = std::abs(power_a - power_b);
 
             sum_power_residual += power_residual;
             max_power_residual = power_residual > max_power_residual ? power_residual : max_power_residual;
         }
 
-        // variable_id y_a = simulators_[0].outgoingSimConnections[0].source;
-        // variable_id u_a = simulators_[1].outgoingSimConnections[0].target;
-        // variable_id y_b = simulators_[1].outgoingSimConnections[0].source;
-        // variable_id u_b = simulators_[0].outgoingSimConnections[0].target;
-        //
-        // double y_a_value = simulators_.at(y_a.simulator).sim->get_real(y_a.reference);
-        // double u_a_value = simulators_.at(u_a.simulator).sim->get_real(u_a.reference);
-        // double y_b_value = simulators_.at(y_b.simulator).sim->get_real(y_b.reference);
-        // double u_b_value = simulators_.at(u_b.simulator).sim->get_real(u_b.reference);
-        //
-        // double power_a = y_a_value * u_a_value;
-        // double power_b = y_b_value * u_b_value;
-        // double power_residual = power_b - power_a;
-
         const auto dt = to_double_duration(stepSize, currentTime);
-        // const auto energy_level = std::max(power_a, power_b) * dt;
         const auto energy_level = max_power_residual * dt;
         const auto energy_residual = sum_power_residual * dt;
-        const auto num_bonds = 1;
+        const auto num_bonds = uVariables_.size()/2;
         const auto mean_square = std::pow(energy_residual / (params.abs_tolerance + params.rel_tolerance * energy_level), 2) / num_bonds; // TODO: Loop over all bonds
         const auto error_estimate = std::sqrt(mean_square);
 
@@ -377,16 +360,17 @@ public:
         return actual_new_step_size;
     }
 
-    void add_variable_pairs(std::pair<cosim::variable_id, cosim::variable_id> uVec, std::pair<cosim::variable_id, cosim::variable_id> yVec)
+    void add_power_bond(cosim::variable_id u_a, cosim::variable_id y_a, cosim::variable_id u_b, cosim::variable_id y_b)
     {
-        std::cout << "Adding variable pairs!" << std::endl;
-        uVariables_.push_back(uVec);
-        yVariables_.push_back(yVec);
+        uVariables_.push_back(u_a);
+        uVariables_.push_back(u_b);
+        yVariables_.push_back(y_a);
+        yVariables_.push_back(y_b);
     }
 
 private:
-    std::vector<std::pair<cosim::variable_id, cosim::variable_id>> uVariables_{};
-    std::vector<std::pair<cosim::variable_id, cosim::variable_id>> yVariables_{};
+    std::vector<cosim::variable_id> uVariables_{};
+    std::vector<cosim::variable_id> yVariables_{};
 
     struct connection_ss
     {
@@ -658,9 +642,9 @@ void ecco_algorithm::set_stepsize_decimation_factor(cosim::simulator_index simul
     pimpl_->set_stepsize_decimation_factor(simulator, factor);
 }
 
-void ecco_algorithm::add_variable_pairs(std::pair<cosim::variable_id, cosim::variable_id> uVec, std::pair<cosim::variable_id, cosim::variable_id> yVec)
+void ecco_algorithm::add_power_bond(cosim::variable_id u_a, cosim::variable_id y_a, cosim::variable_id u_b, cosim::variable_id y_b)
 {
-    pimpl_->add_variable_pairs(uVec, yVec);
+    pimpl_->add_power_bond(u_a, y_a, u_b, y_b);
 }
 
 } // namespace cosim
