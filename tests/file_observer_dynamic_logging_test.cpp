@@ -64,7 +64,7 @@ int main()
             "slave_two");
 
         // Run the simulation
-        auto t = execution.simulate_until_async(std::nullopt);
+        auto t = std::thread([&]() { execution.simulate_until(std::nullopt); });
 
         constexpr std::chrono::duration sleepTime = std::chrono::milliseconds(500);
 
