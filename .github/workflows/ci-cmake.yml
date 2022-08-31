@@ -23,7 +23,6 @@ jobs:
         build_type: [Debug, Release]
         compiler_version: [7]
         shared_libs: [ON, OFF]
-    timeout-minutes: 35
 
     steps:
       - uses: actions/checkout@v2
@@ -76,7 +75,6 @@ jobs:
         os: [windows-2019]
         build_type: [Debug, Release]
         shared: ["True", "False"]
-    timeout-minutes: 35
 
     steps:
       - uses: actions/checkout@v2

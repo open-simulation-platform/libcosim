@@ -90,7 +90,7 @@ int main()
         observer->stop_recording();
 
         execution.stop_simulation();
-        t.get();
+        t.join();
         REQUIRE(filecount(logPath) == 4);
 
         // Test that files are released.

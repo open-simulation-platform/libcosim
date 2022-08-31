@@ -11,7 +11,6 @@
 #include "cosim/utility/utility.hpp"
 
 #include <algorithm>
-#include <atomic>
 #include <sstream>
 #include <unordered_map>
 #include <utility>
@@ -29,7 +28,7 @@ public:
         , currentTime_(startTime)
         , initialized_(false)
         , stopped_(true)
-        , algorithm_(std::move(algo))
+        , algorithm_(algo)
         , timer_()
     {
         algorithm_->setup(currentTime_, std::nullopt);
@@ -155,13 +154,6 @@ public:
         bool isStopped = stopped_;
         stopped_ = true;
         return !isStopped;
-    }
-
-    std::future<bool> simulate_until_async(std::optional<time_point> endTime)
-    {
-        return std::async(std::launch::async, [this, endTime]{
-            return simulate_until(endTime);
-        });
     }
 
     void stop_simulation()
@@ -315,7 +307,7 @@ private:
     step_number lastStep_;
     time_point currentTime_;
     bool initialized_;
-    std::atomic<bool> stopped_;
+    bool stopped_;
 
     std::shared_ptr<algorithm> algorithm_;
     std::vector<std::shared_ptr<simulator>> simulators_;
@@ -384,11 +376,6 @@ time_point execution::current_time() const noexcept
 bool execution::simulate_until(std::optional<time_point> endTime)
 {
     return pimpl_->simulate_until(endTime);
-}
-
-std::future<bool> execution::simulate_until_async(std::optional<time_point> endTime)
-{
-    return pimpl_->simulate_until_async(endTime);
 }
 
 duration execution::step()

@@ -10,7 +10,7 @@
 find_path(YAML_CPP_INCLUDE_DIR NAMES yaml-cpp/yaml.h)
 mark_as_advanced(YAML_CPP_INCLUDE_DIR)
 
-find_library(YAML_CPP_LIBRARY NAMES yaml-cpp libyaml-cpp  yaml-cppd yaml-cppmd libyaml-cppmd libyaml-cppmdd)
+find_library(YAML_CPP_LIBRARY NAMES yaml-cpp libyaml-cpp yaml-cppmd libyaml-cppmd libyaml-cppmdd)
 mark_as_advanced(YAML_CPP_LIBRARY)
 
 include(FindPackageHandleStandardArgs)

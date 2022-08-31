@@ -198,7 +198,7 @@ struct model_description
 };
 
 /// Getter for returning a variable description.
-std::optional<variable_description> find_variable(const model_description& description, const std::string& variable_name);
+variable_description find_variable(const model_description& description, const std::string& variable_name);
 
 /// Possible outcomes of a subsimulator time step
 enum class step_result
@@ -215,4 +215,4 @@ enum class step_result
 
 
 } // namespace cosim
-#endif // COSIM_MODEL_HPP
+#endif // header guard
