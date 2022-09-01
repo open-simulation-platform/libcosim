@@ -1,0 +1,13 @@
+         <simulators>
+           <simulator name="chassis">
+             <variable name="position"/>
+             <variable name="force"/>
+             <variable name="velocity"/>
+           </simulator>
+           <simulator name="wheel">
+             <variable name="position"/>            
+             <variable name="in_vel"/>
+             <variable name="out_spring_damper_f"/>
+             <variable name="velocity"/>
+           </simulator>
+         </simulators>

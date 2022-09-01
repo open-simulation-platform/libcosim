@@ -269,51 +269,19 @@ public:
         simulators_.at(i).decimationFactor = factor;
     }
 
-    duration adjust_step_size_original(time_point currentTime, const duration& stepSize, const ecco_parameters& params)
+    void print_average_energies()
     {
-        variable_id y_a = simulators_[0].outgoingSimConnections[0].source;
-        variable_id u_a = simulators_[1].outgoingSimConnections[0].target;
-        variable_id y_b = simulators_[1].outgoingSimConnections[0].source;
-        variable_id u_b = simulators_[0].outgoingSimConnections[0].target;
-
-        double y_a_value = simulators_.at(y_a.simulator).sim->get_real(y_a.reference);
-        double u_a_value = simulators_.at(u_a.simulator).sim->get_real(u_a.reference);
-        double y_b_value = simulators_.at(y_b.simulator).sim->get_real(y_b.reference);
-        double u_b_value = simulators_.at(u_b.simulator).sim->get_real(u_b.reference);
-
-        double power_a = y_a_value * u_a_value;
-        double power_b = y_b_value * u_b_value;
-
-        const auto power_residual = power_a - power_b;
-        const auto dt = to_double_duration(stepSize, currentTime);
-        const auto energy_level = std::max(power_a, power_b) * dt;
-        const auto energy_residual = power_residual * dt;
-        const auto num_bonds = 1;
-        const auto mean_square = std::pow(std::abs(energy_residual) / (params.abs_tolerance + params.rel_tolerance * std::abs(energy_level)), 2) / num_bonds; // TODO: Loop over all bonds
-        const auto error_estimate = std::sqrt(mean_square);
-
-        // std::cout << power_a << " " << power_b << " " << energy_level << " " << energy_residual << " " << power_residual << " " << error_estimate << std::endl;
-        if (prev_error_estimate_ == 0 || error_estimate == 0) {
-            prev_error_estimate_ = error_estimate;
-            return stepSize;
+        for (int i = 0; i < energies_.size(); ++i) {
+            std::cout << "Avg energy for sim idx " << i << ": " << get_mean(energies_.at(i)) << std::endl;
         }
-        // Compute a new step size
-        const auto new_step_size_gain_value = params.safety_factor * std::pow(error_estimate, -params.i_gain - params.p_gain) * std::pow(prev_error_estimate_, params.p_gain);
-        //std::cout << "step size gain unclamped=" << new_step_size_gain_value << " ";
-        auto new_step_size_gain = std::clamp(new_step_size_gain_value, params.min_change_rate, params.max_change_rate);
-
-        prev_error_estimate_ = error_estimate;
-        const auto new_step_size = to_duration(new_step_size_gain * to_double_duration(stepSize, currentTime));
-        const auto actual_new_step_size = std::clamp (new_step_size, params.min_step_size, params.max_step_size);
-        //std::cout << "dP=" << power_residual << "  dE=" << energy_residual << "  eps=" << error_estimate << " ";
-        //std::cout << "new step size: " << to_double_duration(actual_new_step_size, {}) << std::endl;
-        return actual_new_step_size;
     }
 
     duration adjust_step_size(time_point currentTime, const duration& stepSize, const ecco_parameters& params)
     {
-        double sum_power_residual{};
-        double max_power_residual{};
+        std::vector<double> power_residuals{};
+        std::vector<double> power{};
+
+        const auto dt = to_double_duration(stepSize, currentTime);
 
         for (int i = 0; i < uVariables_.size(); i+=2) {
             auto u_a = uVariables_.at(i);
@@ -326,21 +294,30 @@ public:
             double y_a_value = simulators_.at(y_a.simulator).sim->get_real(y_a.reference);
             double y_b_value = simulators_.at(y_b.simulator).sim->get_real(y_b.reference);
 
-            // Doing the safe thing with absolute values
             double power_a = u_a_value * y_a_value;
+            energies_.at(i).push_back(power_a*dt);
+
             double power_b = u_b_value * y_b_value;
+            energies_.at(i+1).push_back(power_b*dt);
+
             double power_residual = std::abs(power_a - power_b);
 
-            sum_power_residual += power_residual;
-            max_power_residual = power_residual > max_power_residual ? power_residual : max_power_residual;
+            power_residuals.push_back(power_residual);
         }
 
-        const auto dt = to_double_duration(stepSize, currentTime);
+        if (power_residuals.empty()) {
+            return stepSize;
+        }
+
+        double max_power_residual = *std::max_element(power_residuals.begin(), power_residuals.end());
         const auto energy_level = max_power_residual * dt;
-        const auto energy_residual = sum_power_residual * dt;
-        const auto num_bonds = uVariables_.size()/2;
-        const auto mean_square = std::pow(energy_residual / (params.abs_tolerance + params.rel_tolerance * energy_level), 2) / num_bonds; // TODO: Loop over all bonds
-        const auto error_estimate = std::sqrt(mean_square);
+        double mean_square{};
+        for (auto power_residual : power_residuals) {
+            const auto energy_residual = power_residual * dt;
+            mean_square += std::pow(energy_residual / (params.abs_tolerance + params.rel_tolerance * energy_level), 2);
+        }
+        const auto num_bonds = power_residuals.size(); // TODO: Still valid for multidimensial bonds?
+        const auto error_estimate = std::sqrt(mean_square / (double) num_bonds);
 
         // std::cout << power_a << " " << power_b << " " << energy_level << " " << energy_residual << " " << sum_power_residual << " " << error_estimate << std::endl;
         if (prev_error_estimate_ == 0 || error_estimate == 0) {
@@ -362,6 +339,8 @@ public:
 
     void add_power_bond(cosim::variable_id u_a, cosim::variable_id y_a, cosim::variable_id u_b, cosim::variable_id y_b)
     {
+        energies_.emplace_back();
+        energies_.emplace_back();
         uVariables_.push_back(u_a);
         uVariables_.push_back(u_b);
         yVariables_.push_back(y_a);
@@ -371,6 +350,16 @@ public:
 private:
     std::vector<cosim::variable_id> uVariables_{};
     std::vector<cosim::variable_id> yVariables_{};
+    std::vector<std::vector<double>> energies_{};
+
+    double get_mean(const std::vector<double>& elems) {
+        if (elems.empty()) return 0.0;
+        double sum{};
+        for (auto elem : elems) {
+            sum += elem;
+        }
+        return sum / (double) elems.size();
+    }
 
     struct connection_ss
     {
@@ -554,7 +543,9 @@ ecco_algorithm::ecco_algorithm(ecco_parameters params, std::optional<unsigned in
 }
 
 
-ecco_algorithm::~ecco_algorithm() noexcept = default;
+ecco_algorithm::~ecco_algorithm() noexcept {
+    pimpl_->print_average_energies();
+}
 
 
 ecco_algorithm::ecco_algorithm(ecco_algorithm&& other) noexcept
