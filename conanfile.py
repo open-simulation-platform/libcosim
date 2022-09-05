@@ -8,6 +8,9 @@ class LibcosimConan(ConanFile):
     name = "libcosim"
     author = "osp"
     exports = "version.txt"
+    url = "https://github.com/open-simulation-platform/libcosim"
+    license = "MPL-2.0"
+    description = "Co Simulation C++ library supporting FMI"
     scm = {
         "type": "git",
         "url": "auto",
