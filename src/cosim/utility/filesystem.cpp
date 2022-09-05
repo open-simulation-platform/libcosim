@@ -6,7 +6,6 @@
 #include "cosim/utility/filesystem.hpp"
 
 #include "cosim/utility/uuid.hpp"
-#include "cosim/log/logger.hpp"
 
 #include <system_error>
 #include <utility>
@@ -59,11 +58,6 @@ void temp_dir::delete_noexcept() noexcept
     if (!path_.empty()) {
         std::error_code errorCode;
         cosim::filesystem::remove_all(path_, errorCode);
-        if (errorCode) {
-            BOOST_LOG_SEV(log::logger(), log::warning)
-                << "Could not delete temporary directory: "
-                << errorCode.message();
-        }
         path_.clear();
     }
 }
