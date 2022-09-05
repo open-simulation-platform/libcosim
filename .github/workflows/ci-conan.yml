@@ -48,7 +48,6 @@ jobs:
             SHORT_REFNAME="${REFNAME:0:40}"
             CHANNEL="testing-${SHORT_REFNAME//\//_}"
           fi
-          git version
           conan create -s build_type=${{ matrix.build_type }} -s compiler.version=${{ matrix.compiler_version }} -s compiler.libcxx=${{ matrix.compiler_libcxx }} -o ${{ matrix.option_proxyfmu }} -o ${{ matrix.option_shared }} -b missing . osp/${CHANNEL}
           conan upload --all -c -r osp '*'
           EOF
