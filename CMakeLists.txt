@@ -29,8 +29,6 @@ endif()
 
 # Our custom CMake scripts go in the cmake/ subdirectory.
 list(INSERT CMAKE_MODULE_PATH 0 "${CMAKE_SOURCE_DIR}/cmake")
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_BINARY_DIR}")
-list(APPEND CMAKE_PREFIX_PATH "${CMAKE_BINARY_DIR}")
 
 # Use a common output directory for all targets.
 # The main purpose of this is to ensure that the DLLs and test executables
@@ -101,6 +99,9 @@ set(LIBCOSIM_EXPORT_TARGET "${PROJECT_NAME}-targets")
 # ==============================================================================
 
 if(LIBCOSIM_USING_CONAN)
+
+    list(APPEND CMAKE_MODULE_PATH "${CMAKE_BINARY_DIR}")
+    list(APPEND CMAKE_PREFIX_PATH "${CMAKE_BINARY_DIR}")
 
     if(NOT LIBCOSIM_USING_CONAN_AUTO_CONFIG OR CONAN_EXPORTED)
         # Opting for manual invocation of conan install prior to loading CMake
