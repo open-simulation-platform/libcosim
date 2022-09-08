@@ -53,7 +53,11 @@ jobs:
           EOF
           chmod 0755 /tmp/osp-builder-docker/entrypoint.sh
       - name: Print stuff
-        run: echo "CHANNEL $CHANNEL"
+        run: | 
+          echo "Printing variable CHANNEL:"
+          echo "$CHANNEL"        
+          echo "Printin variable GITHUB_REF:"
+          echo "$GITHUB_REF"
       - name: Build Docker image
         run: |
           docker build -t osp-builder /tmp/osp-builder-docker/
