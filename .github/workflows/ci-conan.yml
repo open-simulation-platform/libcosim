@@ -56,8 +56,14 @@ jobs:
         run: | 
           echo "Printing variable CHANNEL:"
           echo "$CHANNEL"        
-          echo "Printin variable GITHUB_REF:"
+          echo "Printing variable GITHUB_REF:"
           echo "$GITHUB_REF"
+          echo "Priting variable REFNAME:"
+          echo "$REFNAME"
+          echo "Printing variable VERSION:"
+          echo "$VERSION"
+          echo "Priting variable SHORT_REFNAME:"
+          echo "$SHORT_REFNAME"
       - name: Build Docker image
         run: |
           docker build -t osp-builder /tmp/osp-builder-docker/
