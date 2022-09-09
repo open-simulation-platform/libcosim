@@ -56,6 +56,16 @@ jobs:
           chmod 0755 /tmp/osp-builder-docker/entrypoint.sh
       - name: Print stuff
         run: | 
+          REFNAME="${GITHUB_REF#refs/*/}"
+          VERSION="v$(<version.txt)"
+          if [ $GITHUB_REF = refs/tags/* ] && [ $REFNAME = $VERSION ] 
+          then CHANNEL="stable"
+          elif [ $REFNAME = master ] 
+          then CHANNEL="testing"
+          else
+            SHORT_REFNAME="${REFNAME:0:40}"
+            CHANNEL="testing-${SHORT_REFNAME//\//_}"
+          fi
           echo "Printing variable CHANNEL:"
           echo "$CHANNEL"        
           echo "Printing variable GITHUB_REF:"
