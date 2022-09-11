@@ -1,4 +1,3 @@
-#define BOOST_TEST_MODULE scenario_parser.hpp unittests
 
 #include "mock_slave.hpp"
 
@@ -7,7 +6,8 @@
 #include <cosim/manipulator.hpp>
 #include <cosim/observer/time_series_observer.hpp>
 
-#include <boost/test/unit_test.hpp>
+#define CATCH_CONFIG_MAIN
+#include <catch2/catch.hpp>
 
 #include <exception>
 #include <memory>
@@ -16,7 +16,7 @@ namespace
 {
 
 // Defines the tolerance for the comparison in percentage units.
-// See https://www.boost.org/doc/libs/1_65_0/libs/test/doc/html/boost_test/utf_reference/testing_tool_ref/assertion_boost_level_close.html
+// See https://www.boost.org/doc/libs/1_65_0/libs/test/doc/html/CHECK/utf_reference/testing_tool_ref/assertion_boost_level_close.html
 constexpr double tolerance = 0.0001;
 
 constexpr cosim::time_point startTime = cosim::to_time_point(0.0);
@@ -54,7 +54,7 @@ void test(const cosim::filesystem::path& scenarioFile)
     scenarioManager->load_scenario(scenarioFile, startTime);
 
     auto simResult = execution.simulate_until(endTime);
-    BOOST_REQUIRE(simResult);
+    REQUIRE(simResult);
 
     const int numSamples = 11;
     double realInputValues[numSamples];
@@ -71,7 +71,7 @@ void test(const cosim::filesystem::path& scenarioFile)
         gsl::make_span(realInputValues, numSamples),
         gsl::make_span(steps, numSamples),
         gsl::make_span(times, numSamples));
-    BOOST_CHECK(samplesRead == 11);
+    CHECK(samplesRead == 11);
     samplesRead = observer->get_real_samples(
         simIndex,
         mock_slave::real_out_reference,
@@ -79,7 +79,7 @@ void test(const cosim::filesystem::path& scenarioFile)
         gsl::make_span(realOutputValues, numSamples),
         gsl::make_span(steps, numSamples),
         gsl::make_span(times, numSamples));
-    BOOST_CHECK(samplesRead == 11);
+    CHECK(samplesRead == 11);
     samplesRead = observer->get_integer_samples(
         simIndex,
         mock_slave::integer_in_reference,
@@ -87,7 +87,7 @@ void test(const cosim::filesystem::path& scenarioFile)
         gsl::make_span(intInputValues, numSamples),
         gsl::make_span(steps, numSamples),
         gsl::make_span(times, numSamples));
-    BOOST_CHECK(samplesRead == 11);
+    CHECK(samplesRead == 11);
     samplesRead = observer->get_integer_samples(
         simIndex,
         mock_slave::integer_out_reference,
@@ -95,7 +95,7 @@ void test(const cosim::filesystem::path& scenarioFile)
         gsl::make_span(intOutputValues, numSamples),
         gsl::make_span(steps, numSamples),
         gsl::make_span(times, numSamples));
-    BOOST_CHECK(samplesRead == 11);
+    CHECK(samplesRead == 11);
 
     double expectedRealInputs[] = {0.0, 0.0, 0.0, 0.0, 0.0, 1.001, 1.001, 1.001, 1.001, 1.001, 0.0};
     double expectedRealOutputs[] = {1.234, 1.234, -1.0, 1.234, 1.234, 2.235, 2.235, 2.235, 2.235, 2.235, 1.234};
@@ -103,27 +103,27 @@ void test(const cosim::filesystem::path& scenarioFile)
     int expectedIntOutputs[] = {2, 2, 2, 2, 2, 2, 2, 4, 5, 5, 2};
 
     for (size_t i = 0; i < samplesRead; i++) {
-        BOOST_CHECK_CLOSE(realInputValues[i], expectedRealInputs[i], tolerance);
-        BOOST_CHECK_CLOSE(realOutputValues[i], expectedRealOutputs[i], tolerance);
-        BOOST_CHECK(intInputValues[i] == expectedIntInputs[i]);
-        BOOST_CHECK(intOutputValues[i] == expectedIntOutputs[i]);
+        CHECK(realInputValues[i] == Approx(expectedRealInputs[i]));
+        CHECK(realOutputValues[i] == Approx(expectedRealOutputs[i]));
+        CHECK(intInputValues[i] == expectedIntInputs[i]);
+        CHECK(intOutputValues[i] == expectedIntOutputs[i]);
     }
 }
 
 } // namespace
 
-BOOST_AUTO_TEST_CASE(json_test)
+TEST_CASE("json_test")
 {
     const auto testDataDir = std::getenv("TEST_DATA_DIR");
-    BOOST_REQUIRE(testDataDir != nullptr);
+    REQUIRE(testDataDir != nullptr);
 
     test(cosim::filesystem::path(testDataDir) / "scenarios" / "scenario1.json");
 }
 
-BOOST_AUTO_TEST_CASE(yaml_test)
+TEST_CASE("yaml_test")
 {
     const auto testDataDir = std::getenv("TEST_DATA_DIR");
-    BOOST_REQUIRE(testDataDir != nullptr);
+    REQUIRE(testDataDir != nullptr);
 
     test(cosim::filesystem::path(testDataDir) / "scenarios" / "scenario1.yml");
 }

@@ -53,7 +53,7 @@ endforeach()
 
 foreach(test IN LISTS unittests)
 
-    set(dependencies cosim "Boost::unit_test_framework" "Boost::timer")
+    set(dependencies cosim "Catch2::Catch2")
     if (LIBCOSIM_WITH_PROXYFMU)
         list(APPEND dependencies "proxyfmu::proxyfmu-client")
     endif()

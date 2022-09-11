@@ -1,33 +1,32 @@
-#define BOOST_TEST_MODULE cosim::fmi::v2::fmu unittest
+
 #include <cosim/fmi/importer.hpp>
 #include <cosim/fmi/v2/fmu.hpp>
 #include <cosim/fs_portability.hpp>
 
-#include <boost/test/unit_test.hpp>
+#define CATCH_CONFIG_MAIN
+#include <catch2/catch.hpp>
 
 
 using namespace cosim;
 
-BOOST_TEST_DONT_PRINT_LOG_VALUE(fmi::fmi_version)
-
-BOOST_AUTO_TEST_CASE(v2_fmu)
+TEST_CASE("v2_fmu")
 {
     const auto testDataDir = std::getenv("TEST_DATA_DIR");
-    BOOST_TEST_REQUIRE(!!testDataDir);
+    REQUIRE(!!testDataDir);
     auto importer = fmi::importer::create();
     const std::string modelName = "WaterTank_Control";
     auto fmu = importer->import(
         cosim::filesystem::path(testDataDir) / "fmi2" / (modelName + ".fmu"));
 
-    BOOST_TEST(fmu->fmi_version() == fmi::fmi_version::v2_0);
+    CHECK(fmu->fmi_version() == fmi::fmi_version::v2_0);
     const auto d = fmu->model_description();
-    BOOST_TEST(d->name == "WaterTank.Control");
-    BOOST_TEST(d->uuid == "{ad6d7bad-97d1-4fb9-ab3e-00a0d051e42c}");
-    BOOST_TEST(d->description.empty());
-    BOOST_TEST(d->author.empty());
-    BOOST_TEST(d->version.empty());
-    BOOST_TEST(std::static_pointer_cast<fmi::v2::fmu>(fmu)->fmilib_handle() != nullptr);
-    BOOST_TEST(cosim::filesystem::exists(
+    CHECK(d->name == "WaterTank.Control");
+    CHECK(d->uuid == "{ad6d7bad-97d1-4fb9-ab3e-00a0d051e42c}");
+    CHECK(d->description.empty());
+    CHECK(d->author.empty());
+    CHECK(d->version.empty());
+    CHECK(std::static_pointer_cast<fmi::v2::fmu>(fmu)->fmilib_handle() != nullptr);
+    CHECK(cosim::filesystem::exists(
         std::static_pointer_cast<fmi::v2::fmu>(fmu)->directory() / "modelDescription.xml"));
 
     auto instance = fmu->instantiate_slave("testSlave");
@@ -41,26 +40,26 @@ BOOST_AUTO_TEST_CASE(v2_fmu)
     for (const auto& v : d->variables) {
         if (v.name == "valve") {
             foundValve = true;
-            BOOST_TEST(v.variability == variable_variability::continuous);
-            BOOST_TEST(v.causality == variable_causality::output);
+            CHECK(v.variability == variable_variability::continuous);
+            CHECK(v.causality == variable_causality::output);
             double start = std::get<double>(*v.start);
-            BOOST_TEST(start == 0.0);
+            CHECK(start == 0.0);
             const auto varID = v.reference;
             double varVal = -1.0;
             instance->get_real_variables(gsl::make_span(&varID, 1), gsl::make_span(&varVal, 1));
-            BOOST_TEST(varVal == 0.0);
+            CHECK(varVal == 0.0);
         } else if (v.name == "minlevel") {
             foundMinlevel = true;
-            BOOST_TEST(v.variability == variable_variability::fixed);
-            BOOST_TEST(v.causality == variable_causality::parameter);
+            CHECK(v.variability == variable_variability::fixed);
+            CHECK(v.causality == variable_causality::parameter);
             double start = std::get<double>(*v.start);
-            BOOST_TEST(start == 1.0);
+            CHECK(start == 1.0);
             const auto varID = v.reference;
             double varVal = -1.0;
             instance->get_real_variables(gsl::make_span(&varID, 1), gsl::make_span(&varVal, 1));
-            BOOST_TEST(varVal == 1.0);
+            CHECK(varVal == 1.0);
         }
     }
-    BOOST_TEST(foundValve);
-    BOOST_TEST(foundMinlevel);
+    CHECK(foundValve);
+    CHECK(foundMinlevel);
 }

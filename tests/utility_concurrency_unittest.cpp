@@ -1,8 +1,9 @@
-#define BOOST_TEST_MODULE cosim::utility unittests
+
 #include <cosim/utility/concurrency.hpp>
 #include <cosim/utility/filesystem.hpp>
 
-#include <boost/test/unit_test.hpp>
+#define CATCH_CONFIG_MAIN
+#include <catch2/catch.hpp>
 
 #include <thread>
 
@@ -30,11 +31,11 @@ void test_locking(F1&& getMutex1, F2&& getMutex2, F3&& getMutex3)
         auto&& mutex3 = getMutex3();
 
         // Step 2
-        BOOST_TEST_REQUIRE(mutex3.try_lock());
-        BOOST_TEST_REQUIRE(!mutex1.try_lock());
-        BOOST_TEST_REQUIRE(!mutex1.try_lock_shared());
-        BOOST_TEST_REQUIRE(!mutex2.try_lock());
-        BOOST_TEST_REQUIRE(mutex2.try_lock_shared());
+        REQUIRE(mutex3.try_lock());
+        REQUIRE(!mutex1.try_lock());
+        REQUIRE(!mutex1.try_lock_shared());
+        REQUIRE(!mutex2.try_lock());
+        REQUIRE(mutex2.try_lock_shared());
         mutex3.unlock();
 
         // Wait for step 3 to complete
@@ -62,7 +63,7 @@ void test_locking(F1&& getMutex1, F2&& getMutex2, F3&& getMutex3)
     mutex3.unlock();
 }
 
-BOOST_AUTO_TEST_CASE(file_lock)
+TEST_CASE("file_lock")
 {
     const auto workDir = cosim::utility::temp_dir();
     test_locking(

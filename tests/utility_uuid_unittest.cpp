@@ -1,12 +1,13 @@
-#define BOOST_TEST_MODULE cosim::utility uuid unittests
+
 #include <cosim/utility/uuid.hpp>
 
-#include <boost/test/unit_test.hpp>
+#define CATCH_CONFIG_MAIN
+#include <catch2/catch.hpp>
 
 
-BOOST_AUTO_TEST_CASE(random_uuid)
+TEST_CASE("random_uuid")
 {
     const auto u = cosim::utility::random_uuid();
-    BOOST_TEST(u.size() == 36);
-    BOOST_TEST(cosim::utility::random_uuid() != u);
+    CHECK(u.size() == 36);
+    CHECK(cosim::utility::random_uuid() != u);
 }

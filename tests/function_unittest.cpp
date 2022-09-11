@@ -1,4 +1,4 @@
-#define BOOST_TEST_MODULE function unittests
+
 #include "mock_slave.hpp"
 
 #include <cosim/algorithm/fixed_step_algorithm.hpp>
@@ -7,7 +7,8 @@
 #include <cosim/manipulator/scenario_manager.hpp>
 #include <cosim/observer/time_series_observer.hpp>
 
-#include <boost/test/unit_test.hpp>
+#define CATCH_CONFIG_MAIN
+#include <catch2/catch.hpp>
 
 #include <iostream>
 #include <stdexcept>
@@ -38,7 +39,7 @@ std::pair<int, int> find_io(
 }
 
 
-BOOST_AUTO_TEST_CASE(linear_transformation_standalone)
+TEST_CASE("linear_transformation_standalone")
 {
     constexpr double offset = 3.0;
     constexpr double factor = 5.0;
@@ -52,24 +53,24 @@ BOOST_AUTO_TEST_CASE(linear_transformation_standalone)
 
     const auto fun = type.instantiate(params);
     const auto funDesc = fun->description();
-    BOOST_TEST_REQUIRE(funDesc.io_groups.size() == 2);
-    BOOST_TEST_REQUIRE(funDesc.io_groups[0].ios.size() == 1);
-    BOOST_TEST_REQUIRE(funDesc.io_groups[1].ios.size() == 1);
+    REQUIRE(funDesc.io_groups.size() == 2);
+    REQUIRE(funDesc.io_groups[0].ios.size() == 1);
+    REQUIRE(funDesc.io_groups[1].ios.size() == 1);
 
     const auto [inGID, inVID] = find_io(funDesc, "in");
     const auto [outGID, outVID] = find_io(funDesc, "out");
 
     fun->set_real({inGID, 0, inVID, 0}, 10.0);
     fun->calculate();
-    BOOST_TEST(fun->get_real({outGID, 0, outVID, 0}) == 53.0);
+    CHECK(fun->get_real({outGID, 0, outVID, 0}) == 53.0);
 
     fun->set_real({inGID, 0, inVID, 0}, -1.0);
     fun->calculate();
-    BOOST_TEST(fun->get_real({outGID, 0, outVID, 0}) == -2.0);
+    CHECK(fun->get_real({outGID, 0, outVID, 0}) == -2.0);
 }
 
 
-BOOST_AUTO_TEST_CASE(vector_sum_standalone)
+TEST_CASE("vector_sum_standalone")
 {
     constexpr int inputCount = 3;
     constexpr auto numericType = cosim::variable_type::integer;
@@ -85,15 +86,15 @@ BOOST_AUTO_TEST_CASE(vector_sum_standalone)
 
     const auto fun = type.instantiate(params);
     const auto funDesc = fun->description();
-    BOOST_TEST_REQUIRE(funDesc.io_groups.size() == 2);
-    BOOST_TEST_REQUIRE(funDesc.io_groups[0].ios.size() == 1);
-    BOOST_TEST_REQUIRE(funDesc.io_groups[1].ios.size() == 1);
-    BOOST_TEST(std::get<int>(funDesc.io_groups[0].count) == inputCount);
-    BOOST_TEST(std::get<int>(funDesc.io_groups[1].count) == 1);
-    BOOST_TEST(std::get<cosim::variable_type>(funDesc.io_groups[0].ios[0].type) == numericType);
-    BOOST_TEST(std::get<cosim::variable_type>(funDesc.io_groups[1].ios[0].type) == numericType);
-    BOOST_TEST(std::get<int>(funDesc.io_groups[0].ios[0].count) == dimension);
-    BOOST_TEST(std::get<int>(funDesc.io_groups[1].ios[0].count) == dimension);
+    REQUIRE(funDesc.io_groups.size() == 2);
+    REQUIRE(funDesc.io_groups[0].ios.size() == 1);
+    REQUIRE(funDesc.io_groups[1].ios.size() == 1);
+    CHECK(std::get<int>(funDesc.io_groups[0].count) == inputCount);
+    CHECK(std::get<int>(funDesc.io_groups[1].count) == 1);
+    CHECK(std::get<cosim::variable_type>(funDesc.io_groups[0].ios[0].type) == numericType);
+    CHECK(std::get<cosim::variable_type>(funDesc.io_groups[1].ios[0].type) == numericType);
+    CHECK(std::get<int>(funDesc.io_groups[0].ios[0].count) == dimension);
+    CHECK(std::get<int>(funDesc.io_groups[1].ios[0].count) == dimension);
 
     const auto [inGID, inVID] = find_io(funDesc, "in");
     const auto [outGID, outVID] = find_io(funDesc, "out");
@@ -104,12 +105,12 @@ BOOST_AUTO_TEST_CASE(vector_sum_standalone)
     fun->set_integer({inGID, 2, inVID, 0}, 7);
     fun->set_integer({inGID, 2, inVID, 1}, 11);
     fun->calculate();
-    BOOST_TEST(fun->get_integer({outGID, 0, outVID, 0}) == 11);
-    BOOST_TEST(fun->get_integer({outGID, 0, outVID, 1}) == 18);
+    CHECK(fun->get_integer({outGID, 0, outVID, 0}) == 11);
+    CHECK(fun->get_integer({outGID, 0, outVID, 1}) == 18);
 }
 
 
-BOOST_AUTO_TEST_CASE(function_in_execution)
+TEST_CASE("function_in_execution")
 {
     // The system simulated here looks like this:
     //
@@ -192,7 +193,7 @@ BOOST_AUTO_TEST_CASE(function_in_execution)
 
     // Run simulation and verify results
     auto success = exe.simulate_until(stopTime);
-    BOOST_TEST_REQUIRE(success);
+    REQUIRE(success);
 
     auto outputs = std::vector<double>(bufferSize);
     auto steps = std::vector<cosim::step_number>(bufferSize);
@@ -209,15 +210,15 @@ BOOST_AUTO_TEST_CASE(function_in_execution)
     constexpr auto midpoint1 =
         (startTime.time_since_epoch() + event1Time.time_since_epoch()) /
         (2 * stepSize);
-    BOOST_TEST(outputs.at(midpoint1) == 1.0); // Result when input is 0.0
+    CHECK(outputs.at(midpoint1) == 1.0); // Result when input is 0.0
 
     constexpr auto midpoint2 =
         (event1Time.time_since_epoch() + event2Time.time_since_epoch()) /
         (2 * stepSize);
-    BOOST_TEST(outputs.at(midpoint2) == 21.0); // Result when input is 10.0
+    CHECK(outputs.at(midpoint2) == 21.0); // Result when input is 10.0
 
     constexpr auto midpoint3 =
         (event2Time.time_since_epoch() + stopTime.time_since_epoch()) /
         (2 * stepSize);
-    BOOST_TEST(outputs.at(midpoint3) == -19.0); // Result when input is -10.0
+    CHECK(outputs.at(midpoint3) == -19.0); // Result when input is -10.0
 }

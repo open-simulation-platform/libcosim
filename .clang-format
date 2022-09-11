@@ -28,7 +28,7 @@ IncludeBlocks: Regroup
 IncludeCategories:
   - Regex:      '^[<"]cosim[/.]'
     Priority:   20
-  - Regex:      '^[<"](boost|event2|fmilib|gsl|nlohmann|proxyfmu|xercesc|zip)[/.]'
+  - Regex:      '^[<"](boost|catch|fmilib|gsl|nlohmann|proxyfmu|xercesc|zip)[/.]'
     Priority:   30
   - Regex:      '^"'
     Priority:   10

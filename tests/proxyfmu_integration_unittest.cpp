@@ -1,22 +1,22 @@
-#define BOOST_TEST_MODULE proxyfmu_integration unittests
 
 #include <cosim/log/simple.hpp>
 #include <cosim/proxy/remote_fmu.hpp>
 #include <cosim/ssp/ssp_loader.hpp>
 
-#include <boost/test/unit_test.hpp>
+#define CATCH_CONFIG_MAIN
+#include <catch2/catch.hpp>
 
 #include <cstdlib>
 
 using namespace cosim;
 
-BOOST_AUTO_TEST_CASE(test_ssp)
+TEST_CASE("test_ssp")
 {
     log::setup_simple_console_logging();
     log::set_global_output_level(log::info);
 
     const auto testDataDir = std::getenv("TEST_DATA_DIR");
-    BOOST_REQUIRE(testDataDir != nullptr);
+    REQUIRE(testDataDir != nullptr);
     cosim::filesystem::path sspFile = cosim::filesystem::path(testDataDir) / "ssp" / "demo" / "proxy";
 
     ssp_loader loader;
@@ -26,26 +26,26 @@ BOOST_AUTO_TEST_CASE(test_ssp)
         exec,
         config.system_structure,
         config.parameter_sets.at(""));
-    BOOST_CHECK(entityMaps.simulators.size() == 2);
+    CHECK(entityMaps.simulators.size() == 2);
 
     auto result = exec.simulate_until(to_time_point(1e-3));
-    BOOST_REQUIRE(result);
+    REQUIRE(result);
 }
 
-BOOST_AUTO_TEST_CASE(test_fmi1)
+TEST_CASE("test_fmi1")
 {
     const auto testDataDir = std::getenv("TEST_DATA_DIR");
-    BOOST_TEST_REQUIRE(!!testDataDir);
+    REQUIRE(!!testDataDir);
 
     auto path = proxyfmu::filesystem::path(testDataDir) / "fmi1" / "identity.fmu";
     auto fmu = proxy::remote_fmu(path);
 
     const auto d = fmu.description();
-    BOOST_TEST(d->name == "no.viproma.demo.identity");
-    BOOST_TEST(d->uuid.size() == 36U);
-    BOOST_TEST(d->description ==
+    CHECK(d->name == "no.viproma.demo.identity");
+    CHECK(d->uuid.size() == 36U);
+    CHECK(d->description ==
         "Has one input and one output of each type, and outputs are always set equal to inputs");
-    BOOST_TEST(d->author == "Lars Tandle Kyllingstad");
+    CHECK(d->author == "Lars Tandle Kyllingstad");
 
     value_reference
         realIn = 0,
@@ -71,22 +71,22 @@ BOOST_AUTO_TEST_CASE(test_fmi1)
         }
 
         if (v.name == "realIn") {
-            BOOST_TEST(v.type == variable_type::real);
-            BOOST_TEST(v.variability == variable_variability::discrete);
-            BOOST_TEST(v.causality == variable_causality::input);
+            CHECK(v.type == variable_type::real);
+            CHECK(v.variability == variable_variability::discrete);
+            CHECK(v.causality == variable_causality::input);
             double start = std::get<double>(*v.start);
-            BOOST_TEST(start == 0.0);
+            CHECK(start == 0.0);
         } else if (v.name == "stringOut") {
-            BOOST_TEST(v.type == variable_type::string);
-            BOOST_TEST(v.variability == variable_variability::discrete);
-            BOOST_TEST(v.causality == variable_causality::output);
-            BOOST_TEST(!v.start.has_value());
+            CHECK(v.type == variable_type::string);
+            CHECK(v.variability == variable_variability::discrete);
+            CHECK(v.causality == variable_causality::output);
+            CHECK(!v.start.has_value());
         } else if (v.name == "booleanIn") {
-            BOOST_TEST(v.type == variable_type::boolean);
-            BOOST_TEST(v.variability == variable_variability::discrete);
-            BOOST_TEST(v.causality == variable_causality::input);
+            CHECK(v.type == variable_type::boolean);
+            CHECK(v.variability == variable_variability::discrete);
+            CHECK(v.causality == variable_causality::input);
             bool start = std::get<bool>(*v.start);
-            BOOST_TEST(start == false);
+            CHECK(start == false);
         }
     }
 
@@ -111,10 +111,10 @@ BOOST_AUTO_TEST_CASE(test_fmi1)
             gsl::make_span(&booleanOut, 1),
             gsl::make_span(&stringOut, 1));
 
-        BOOST_TEST(vars.real[0] == realVal);
-        BOOST_TEST(vars.integer[0] == integerVal);
-        BOOST_TEST(vars.boolean[0] == booleanVal);
-        BOOST_TEST(vars.string[0] == stringVal);
+        CHECK(vars.real[0] == realVal);
+        CHECK(vars.integer[0] == integerVal);
+        CHECK(vars.boolean[0] == booleanVal);
+        CHECK(vars.string[0] == stringVal);
 
         realVal += 1.0;
         integerVal += 1;
@@ -133,20 +133,20 @@ BOOST_AUTO_TEST_CASE(test_fmi1)
     instance->end_simulation();
 }
 
-BOOST_AUTO_TEST_CASE(test_fmi2)
+TEST_CASE("test_fmi2")
 {
     const auto testDataDir = std::getenv("TEST_DATA_DIR");
-    BOOST_TEST_REQUIRE(!!testDataDir);
+    REQUIRE(!!testDataDir);
 
     auto path = proxyfmu::filesystem::path(testDataDir) / "fmi2" / "WaterTank_Control.fmu";
     auto fmu = proxy::remote_fmu(path);
 
     const auto d = fmu.description();
-    BOOST_TEST(d->name == "WaterTank.Control");
-    BOOST_TEST(d->uuid == "{ad6d7bad-97d1-4fb9-ab3e-00a0d051e42c}");
-    BOOST_TEST(d->description.empty());
-    BOOST_TEST(d->author.empty());
-    BOOST_TEST(d->version.empty());
+    CHECK(d->name == "WaterTank.Control");
+    CHECK(d->uuid == "{ad6d7bad-97d1-4fb9-ab3e-00a0d051e42c}");
+    CHECK(d->description.empty());
+    CHECK(d->author.empty());
+    CHECK(d->version.empty());
 
     auto instance = fmu.instantiate("testSlave");
     instance->setup(
@@ -159,32 +159,32 @@ BOOST_AUTO_TEST_CASE(test_fmi2)
     for (const auto& v : d->variables) {
         if (v.name == "valve") {
             foundValve = true;
-            BOOST_TEST(v.variability == variable_variability::continuous);
-            BOOST_TEST(v.causality == variable_causality::output);
+            CHECK(v.variability == variable_variability::continuous);
+            CHECK(v.causality == variable_causality::output);
             double start = std::get<double>(*v.start);
-            BOOST_TEST(start == 0.0);
+            CHECK(start == 0.0);
             const auto varID = v.reference;
             double varVal = -1.0;
             cosim::slave::variable_values vars;
             instance->get_variables(&vars, gsl::make_span(&varID, 1), {}, {}, {});
             varVal = vars.real[0];
-            BOOST_TEST(varVal == 0.0);
+            CHECK(varVal == 0.0);
         } else if (v.name == "minlevel") {
             foundMinlevel = true;
-            BOOST_TEST(v.variability == variable_variability::fixed);
-            BOOST_TEST(v.causality == variable_causality::parameter);
+            CHECK(v.variability == variable_variability::fixed);
+            CHECK(v.causality == variable_causality::parameter);
             double start = std::get<double>(*v.start);
-            BOOST_TEST(start == 1.0);
+            CHECK(start == 1.0);
             const auto varID = v.reference;
             double varVal = -1.0;
             cosim::slave::variable_values vars;
             instance->get_variables(&vars, gsl::make_span(&varID, 1), {}, {}, {});
             varVal = vars.real[0];
-            BOOST_TEST(varVal == 1.0);
+            CHECK(varVal == 1.0);
         }
     }
-    BOOST_TEST(foundValve);
-    BOOST_TEST(foundMinlevel);
+    CHECK(foundValve);
+    CHECK(foundMinlevel);
 
     instance->start_simulation();
     instance->end_simulation();

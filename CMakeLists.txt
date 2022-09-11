@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.15)
 file(STRINGS "${CMAKE_SOURCE_DIR}/version.txt" projectVersion)
 project("libcosim" VERSION ${projectVersion})
 message("Current libcosim version: ${CMAKE_PROJECT_VERSION}\n")
@@ -139,7 +139,13 @@ endif()
 
 set(Boost_components date_time log)
 if (LIBCOSIM_BUILD_TESTS)
-    list(APPEND Boost_components timer unit_test_framework)
+    Include(FetchContent)
+    FetchContent_Declare(
+            Catch2
+            GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+            GIT_TAG v2.13.8
+    )
+    FetchContent_MakeAvailable(Catch2)
 endif()
 if(NOT BUILD_SHARED_LIBS AND NOT DEFINED Boost_USE_STATIC_LIBS)
     set(Boost_USE_STATIC_LIBS ON)

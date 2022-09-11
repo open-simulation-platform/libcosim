@@ -1,4 +1,4 @@
-#define BOOST_TEST_MODULE system_structure unittests
+
 #include "mock_slave.hpp"
 
 #include <cosim/algorithm/fixed_step_algorithm.hpp>
@@ -8,7 +8,8 @@
 #include <cosim/observer/last_value_observer.hpp>
 #include <cosim/system_structure.hpp>
 
-#include <boost/test/unit_test.hpp>
+#define CATCH_CONFIG_MAIN
+#include <catch2/catch.hpp>
 
 #include <algorithm>
 
@@ -36,7 +37,7 @@ private:
 };
 
 
-BOOST_AUTO_TEST_CASE(system_structure_basic_use)
+TEST_CASE("system_structure_basic_use")
 {
     // Some test parameters
     constexpr auto startTime = cosim::time_point();
@@ -59,44 +60,44 @@ BOOST_AUTO_TEST_CASE(system_structure_basic_use)
     ss.add_entity("simB", model, timeStep * 2);
     ss.add_entity("func", func, funcParams);
     ss.add_entity("simC", model);
-    BOOST_CHECK_THROW(ss.add_entity("simB", model), cosim::error); // simB exists
-    BOOST_CHECK_THROW(ss.add_entity("func", func, funcParams), cosim::error); // func exists
-    BOOST_CHECK_THROW(ss.add_entity("", model), cosim::error); // invalid name
-    BOOST_CHECK_THROW(ss.add_entity("simB", model, -timeStep), cosim::error); // negative step size
+    CHECK_THROWS_AS(ss.add_entity("simB", model), cosim::error); // simB exists
+    CHECK_THROWS_AS(ss.add_entity("func", func, funcParams), cosim::error); // func exists
+    CHECK_THROWS_AS(ss.add_entity("", model), cosim::error); // invalid name
+    CHECK_THROWS_AS(ss.add_entity("simB", model, -timeStep), cosim::error); // negative step size
 
     ss.connect_variables({"simA", "realOut"}, {"simB", "realIn"}); // sim-sim connection
     ss.connect_variables({"simA", "realOut"}, {"simA", "realIn"}); // sim self connection
     ss.connect_variables({"simB", "realOut"}, {"func", "in", 0, "", 0}); // sim-func connection
     ss.connect_variables({"func", "out", 0, "", 0}, {"simC", "realIn"}); // func-sim connection
-    BOOST_CHECK_THROW(
+    CHECK_THROWS_AS(
         ss.connect_variables({"simB", "realOut"}, {"simB", "realIn"}),
         cosim::error); // simB.realIn already connected
-    BOOST_CHECK_THROW(
+    CHECK_THROWS_AS(
         ss.connect_variables({"simC", "realOut"}, {"func", "in", 0, "", 0}),
         cosim::error); // func.in already connected
-    BOOST_CHECK_THROW(
+    CHECK_THROWS_AS(
         ss.connect_variables({"simA", "realOut"}, {"simB", "intIn"}),
         cosim::error); // incompatible variables
 
     const auto entities = ss.entities();
-    BOOST_TEST_REQUIRE(std::distance(entities.begin(), entities.end()) == 4);
+    REQUIRE(std::distance(entities.begin(), entities.end()) == 4);
     const auto conns = ss.connections();
-    BOOST_TEST_REQUIRE(std::distance(conns.begin(), conns.end()) == 4);
+    REQUIRE(std::distance(conns.begin(), conns.end()) == 4);
 
     // Initial values
     constexpr auto initialInput = 11.0;
     cosim::variable_value_map initialValues;
     cosim::add_variable_value(initialValues, ss, {"simA", "realIn"}, initialInput);
-    BOOST_CHECK_THROW(
+    CHECK_THROWS_AS(
         cosim::add_variable_value(initialValues, ss, {"noneSuch", "realIn"}, 1.0),
         cosim::error);
-    BOOST_CHECK_THROW(
+    CHECK_THROWS_AS(
         cosim::add_variable_value(initialValues, ss, {"simA", "noneSuch"}, 1.0),
         cosim::error);
-    BOOST_CHECK_THROW(
+    CHECK_THROWS_AS(
         cosim::add_variable_value(initialValues, ss, {"simA", "realIn"}, "a string"),
         cosim::error);
-    BOOST_CHECK(initialValues.size() == 1);
+    CHECK(initialValues.size() == 1);
 
     // Set up and run an execution to verify that the system structure
     // turns out as intended.
@@ -107,10 +108,10 @@ BOOST_AUTO_TEST_CASE(system_structure_basic_use)
 
     const auto entityIndexes =
         cosim::inject_system_structure(execution, ss, initialValues);
-    BOOST_CHECK(entityIndexes.simulators.size() == 3);
-    BOOST_CHECK(entityIndexes.functions.size() == 1);
+    CHECK(entityIndexes.simulators.size() == 3);
+    CHECK(entityIndexes.functions.size() == 1);
 
-    BOOST_CHECK(execution.simulate_until(stopTime));
+    CHECK(execution.simulate_until(stopTime));
 
     const auto realOutRef = mock_slave::real_out_reference;
     double realOutA = -1.0, realOutB = -1.0, realOutC = -1.0;
@@ -126,7 +127,7 @@ BOOST_AUTO_TEST_CASE(system_structure_basic_use)
         entityIndexes.simulators.at("simC"),
         gsl::make_span(&realOutRef, 1),
         gsl::make_span(&realOutC, 1));
-    BOOST_CHECK(realOutA == initialInput);
-    BOOST_CHECK(realOutB == initialInput);
-    BOOST_CHECK(realOutC == offset + factor * initialInput);
+    CHECK(realOutA == initialInput);
+    CHECK(realOutB == initialInput);
+    CHECK(realOutC == offset + factor * initialInput);
 }

@@ -1,32 +1,30 @@
-#define BOOST_TEST_MODULE cosim::fmi::v1::fmu unittest
+
 #include <cosim/fmi/importer.hpp>
 #include <cosim/fmi/v1/fmu.hpp>
 #include <cosim/utility/filesystem.hpp>
 #include <cosim/utility/zip.hpp>
 
-#include <boost/test/unit_test.hpp>
+#define CATCH_CONFIG_MAIN
+#include <catch2/catch.hpp>
 
 #include <cstdlib>
 
 
 using namespace cosim;
 
-BOOST_TEST_DONT_PRINT_LOG_VALUE(fmi::fmi_version)
-BOOST_TEST_DONT_PRINT_LOG_VALUE(step_result)
-
 namespace
 {
 void run_tests(std::shared_ptr<fmi::fmu> fmu)
 {
-    BOOST_TEST(fmu->fmi_version() == fmi::fmi_version::v1_0);
+    CHECK(fmu->fmi_version() == fmi::fmi_version::v1_0);
     const auto d = fmu->model_description();
-    BOOST_TEST(d->name == "no.viproma.demo.identity");
-    BOOST_TEST(d->uuid.size() == 36U);
-    BOOST_TEST(d->description ==
+    CHECK(d->name == "no.viproma.demo.identity");
+    CHECK(d->uuid.size() == 36U);
+    CHECK(d->description ==
         "Has one input and one output of each type, and outputs are always set equal to inputs");
-    BOOST_TEST(d->author == "Lars Tandle Kyllingstad");
-    BOOST_TEST(d->version == "0.3");
-    BOOST_TEST(std::static_pointer_cast<fmi::v1::fmu>(fmu)->fmilib_handle() != nullptr);
+    CHECK(d->author == "Lars Tandle Kyllingstad");
+    CHECK(d->version == "0.3");
+    CHECK(std::static_pointer_cast<fmi::v1::fmu>(fmu)->fmilib_handle() != nullptr);
 
     cosim::value_reference
         realIn = 0,
@@ -52,22 +50,22 @@ void run_tests(std::shared_ptr<fmi::fmu> fmu)
         }
 
         if (v.name == "realIn") {
-            BOOST_TEST(v.type == variable_type::real);
-            BOOST_TEST(v.variability == variable_variability::discrete);
-            BOOST_TEST(v.causality == variable_causality::input);
+            CHECK(v.type == variable_type::real);
+            CHECK(v.variability == variable_variability::discrete);
+            CHECK(v.causality == variable_causality::input);
             double start = std::get<double>(*v.start);
-            BOOST_TEST(start == 0.0);
+            CHECK(start == 0.0);
         } else if (v.name == "stringOut") {
-            BOOST_TEST(v.type == variable_type::string);
-            BOOST_TEST(v.variability == variable_variability::discrete);
-            BOOST_TEST(v.causality == variable_causality::output);
-            BOOST_TEST(!v.start.has_value());
+            CHECK(v.type == variable_type::string);
+            CHECK(v.variability == variable_variability::discrete);
+            CHECK(v.causality == variable_causality::output);
+            CHECK(!v.start.has_value());
         } else if (v.name == "booleanIn") {
-            BOOST_TEST(v.type == variable_type::boolean);
-            BOOST_TEST(v.variability == variable_variability::discrete);
-            BOOST_TEST(v.causality == variable_causality::input);
+            CHECK(v.type == variable_type::boolean);
+            CHECK(v.variability == variable_variability::discrete);
+            CHECK(v.causality == variable_causality::input);
             bool start = std::get<bool>(*v.start);
-            BOOST_TEST(start == false);
+            CHECK(start == false);
         }
     }
 
@@ -94,10 +92,10 @@ void run_tests(std::shared_ptr<fmi::fmu> fmu)
         instance->get_boolean_variables(gsl::make_span(&booleanOut, 1), gsl::make_span(&getBooleanVal, 1));
         instance->get_string_variables(gsl::make_span(&stringOut, 1), gsl::make_span(&getStringVal, 1));
 
-        BOOST_TEST(getRealVal == realVal);
-        BOOST_TEST(getIntegerVal == integerVal);
-        BOOST_TEST(getBooleanVal == booleanVal);
-        BOOST_TEST(getStringVal == stringVal);
+        CHECK(getRealVal == realVal);
+        CHECK(getIntegerVal == integerVal);
+        CHECK(getBooleanVal == booleanVal);
+        CHECK(getStringVal == stringVal);
 
         realVal += 1.0;
         integerVal += 1;
@@ -109,7 +107,7 @@ void run_tests(std::shared_ptr<fmi::fmu> fmu)
         instance->set_boolean_variables(gsl::make_span(&booleanIn, 1), gsl::make_span(&booleanVal, 1));
         instance->set_string_variables(gsl::make_span(&stringIn, 1), gsl::make_span(&stringVal, 1));
 
-        BOOST_TEST(instance->do_step(t, dt) == step_result::complete);
+        CHECK(instance->do_step(t, dt) == step_result::complete);
     }
 
     instance->end_simulation();
@@ -117,10 +115,10 @@ void run_tests(std::shared_ptr<fmi::fmu> fmu)
 } // namespace
 
 
-BOOST_AUTO_TEST_CASE(v1_fmu)
+TEST_CASE("v1_fmu")
 {
     const auto testDataDir = std::getenv("TEST_DATA_DIR");
-    BOOST_TEST_REQUIRE(!!testDataDir);
+    REQUIRE(!!testDataDir);
     auto importer = fmi::importer::create();
     auto fmu = importer->import(
         cosim::filesystem::path(testDataDir) / "fmi1" / "identity.fmu");
@@ -128,10 +126,10 @@ BOOST_AUTO_TEST_CASE(v1_fmu)
 }
 
 
-BOOST_AUTO_TEST_CASE(v1_fmu_unpacked)
+TEST_CASE("v1_fmu_unpacked")
 {
     const auto testDataDir = std::getenv("TEST_DATA_DIR");
-    BOOST_TEST_REQUIRE(!!testDataDir);
+    REQUIRE(!!testDataDir);
     utility::temp_dir unpackDir;
     utility::zip::archive(
         cosim::filesystem::path(testDataDir) / "fmi1" / "identity.fmu")
