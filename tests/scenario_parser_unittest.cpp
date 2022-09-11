@@ -15,10 +15,6 @@
 namespace
 {
 
-// Defines the tolerance for the comparison in percentage units.
-// See https://www.boost.org/doc/libs/1_65_0/libs/test/doc/html/CHECK/utf_reference/testing_tool_ref/assertion_boost_level_close.html
-constexpr double tolerance = 0.0001;
-
 constexpr cosim::time_point startTime = cosim::to_time_point(0.0);
 constexpr cosim::time_point endTime = cosim::to_time_point(1.1);
 constexpr cosim::duration stepSize = cosim::to_duration(0.1);
