@@ -247,6 +247,8 @@ install(FILES "${versionFile}" DESTINATION "${LIBCOSIM_CMAKE_INSTALL_DIR}")
 
 # Install custom find modules
 install(FILES
+        "${CMAKE_SOURCE_DIR}/cmake/FindFMT.cmake"
+        "${CMAKE_SOURCE_DIR}/cmake/FindSPDLOG.cmake"
         "${CMAKE_SOURCE_DIR}/cmake/FindFMILibrary.cmake"
         "${CMAKE_SOURCE_DIR}/cmake/FindLIBZIP.cmake"
         "${CMAKE_SOURCE_DIR}/cmake/FindMS_GSL.cmake"

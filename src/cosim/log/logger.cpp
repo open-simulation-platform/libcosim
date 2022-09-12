@@ -35,19 +35,13 @@ spdlog::level::level_enum convert(cosim_logger::level lvl)
     }
 }
 
-std::shared_ptr<spdlog::logger> logger() {
-    auto get = spdlog::get("cosim");
-    if (get) return get;
-    return spdlog::stdout_color_mt("cosim");
-}
-
 } // namespace
 
 struct cosim_logger::impl
 {
 
     impl()
-        : logger_(logger())
+        : logger_(spdlog::stdout_color_mt("cosim"))
     { }
 
     ~impl() = default;
@@ -91,8 +85,14 @@ void cosim_logger::log(cosim_logger::level lvl, const std::string& msg)
     pimpl_->log(lvl, msg);
 }
 
-cosim_logger::cosim_logger(): pimpl_(std::make_unique<impl>()) {}
+cosim_logger::cosim_logger()
+    : pimpl_(std::make_unique<impl>())
+{ }
 cosim_logger::~cosim_logger() = default;
 
+void set_logging_level(cosim_logger::level lvl)
+{
+    cosim_logger::get_instance().set_level(lvl);
+}
 } // namespace log
 } // namespace cosim

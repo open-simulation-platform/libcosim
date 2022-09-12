@@ -58,10 +58,7 @@ private:
     std::unique_ptr<impl> pimpl_;
 };
 
-inline void set_logging_level(cosim_logger::level lvl)
-{
-    cosim_logger::get_instance().set_level(lvl);
-}
+void set_logging_level(cosim_logger::level lvl);
 
 template<typename... Args>
 inline void log(cosim_logger::level lvl, fmt::format_string<Args...> fmt, Args&&... args)
