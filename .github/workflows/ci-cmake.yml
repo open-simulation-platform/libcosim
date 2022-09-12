@@ -21,7 +21,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         build_type: [Debug, Release]
-        compiler_version: [7]
+        compiler_version: [8]
         shared_libs: [ON, OFF]
     timeout-minutes: 35
 
