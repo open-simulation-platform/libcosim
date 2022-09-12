@@ -35,7 +35,9 @@ jobs:
             libmsgsl-dev \
             libyaml-cpp-dev \
             libxerces-c-dev \
-            libzip-dev
+            libzip-dev \
+            libspdlog-dev \
+            libfmt-dev
           wget \
               "https://github.com/viproma/debian-fmilib/releases/download/debian%2F2.0.3-1/libfmilib2_2.0.3-1_amd64.deb" \
               "https://github.com/viproma/debian-fmilib/releases/download/debian%2F2.0.3-1/libfmilib2-dev_2.0.3-1_amd64.deb"
@@ -92,7 +94,7 @@ jobs:
         run: |
           cmake . \
             -A x64 \
-            -DCMAKE_PREFIX_PATH="ms-gsl;boost;fmilibrary;libzip;xerces-c;yaml-cpp;bzip2;zlib;xz_utils" \
+            -DCMAKE_PREFIX_PATH="ms-gsl;boost;fmilibrary;libzip;xerces-c;yaml-cpp;fmt;spdlog;bzip2;zlib;xz_utils" \
             -DCMAKE_INSTALL_PREFIX=install \
             -DBUILD_SHARED_LIBS=${{ matrix.shared }} \
             -B build

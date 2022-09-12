@@ -16,19 +16,19 @@ namespace log
 namespace
 {
 
-spdlog::level::level_enum convert(cosim_logger::level lvl)
+spdlog::level::level_enum convert(level lvl)
 {
-    if (lvl == cosim_logger::level::trace) {
+    if (lvl == level::trace) {
         return spdlog::level::trace;
-    } else if (lvl == cosim_logger::level::debug) {
+    } else if (lvl == level::debug) {
         return spdlog::level::debug;
-    } else if (lvl == cosim_logger::level::info) {
+    } else if (lvl == level::info) {
         return spdlog::level::info;
-    } else if (lvl == cosim_logger::level::warn) {
+    } else if (lvl == level::warn) {
         return spdlog::level::warn;
-    } else if (lvl == cosim_logger::level::err) {
+    } else if (lvl == level::err) {
         return spdlog::level::err;
-    } else if (lvl == cosim_logger::level::off) {
+    } else if (lvl == level::off) {
         return spdlog::level::off;
     } else {
         throw std::runtime_error("Invalid log level");
@@ -37,62 +37,57 @@ spdlog::level::level_enum convert(cosim_logger::level lvl)
 
 } // namespace
 
-struct cosim_logger::impl
+struct logger
 {
-
-    impl()
-        : logger_(spdlog::stdout_color_mt("cosim"))
-    { }
-
-    ~impl() = default;
 
     void set_level(level lvl)
     {
-        if (lvl == cosim_logger::level::trace) {
+        if (lvl == level::trace) {
             logger_->set_level(spdlog::level::trace);
-        } else if (lvl == cosim_logger::level::debug) {
+        } else if (lvl == level::debug) {
             logger_->set_level(spdlog::level::debug);
-        } else if (lvl == cosim_logger::level::info) {
+        } else if (lvl == level::info) {
             logger_->set_level(spdlog::level::info);
-        } else if (lvl == cosim_logger::level::warn) {
+        } else if (lvl == level::warn) {
             logger_->set_level(spdlog::level::warn);
-        } else if (lvl == cosim_logger::level::err) {
+        } else if (lvl == level::err) {
             logger_->set_level(spdlog::level::err);
-        } else if (lvl == cosim_logger::level::off) {
+        } else if (lvl == level::off) {
             logger_->set_level(spdlog::level::off);
         } else {
             throw std::runtime_error("Invalid log level");
         }
     }
 
-    void log(cosim_logger::level lvl, fmt::basic_string_view<char> fmt)
+    void log(level lvl, fmt::basic_string_view<char> fmt)
     {
         logger_->log(convert(lvl), fmt);
     }
 
+    static logger& get_instance()
+    {
+        static logger l;
+        return l;
+    }
 
 private:
     std::shared_ptr<spdlog::logger> logger_;
+
+    logger()
+        : logger_(spdlog::stdout_color_mt("cosim"))
+    { }
+
 };
 
-void cosim_logger::set_level(level lvl)
+void set_logging_level(level lvl)
 {
-    pimpl_->set_level(lvl);
+    logger::get_instance().set_level(lvl);
 }
 
-void cosim_logger::log(cosim_logger::level lvl, const std::string& msg)
+void log(level lvl, const std::string& msg)
 {
-    pimpl_->log(lvl, msg);
+    logger::get_instance().log(lvl, msg);
 }
 
-cosim_logger::cosim_logger()
-    : pimpl_(std::make_unique<impl>())
-{ }
-cosim_logger::~cosim_logger() = default;
-
-void set_logging_level(cosim_logger::level lvl)
-{
-    cosim_logger::get_instance().set_level(lvl);
-}
 } // namespace log
 } // namespace cosim

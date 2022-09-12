@@ -45,7 +45,7 @@ void test(const cosim::filesystem::path& configPath, size_t expectedNumConnectio
 int main()
 {
     try {
-        cosim::log::set_logging_level(cosim::log::cosim_logger::level::info);
+        cosim::log::set_logging_level(cosim::log::level::info);
 
         const auto testDataDir = std::getenv("TEST_DATA_DIR");
         REQUIRE(testDataDir);

@@ -37,16 +37,16 @@ std::shared_ptr<importer> importer::create(std::shared_ptr<file_cache> cache)
 
 namespace
 {
-log::cosim_logger::level convert_log_level(jm_log_level_enu_t jmLogLevel)
+log::level convert_log_level(jm_log_level_enu_t jmLogLevel)
 {
     switch (jmLogLevel) {
         case jm_log_level_fatal:
         case jm_log_level_error:
-            return log::cosim_logger::level::err;
+            return log::level::err;
         case jm_log_level_warning:
-            return log::cosim_logger::level::warn;
+            return log::level::warn;
         case jm_log_level_info:
-            return log::cosim_logger::level::info;
+            return log::level::info;
         case jm_log_level_verbose:
         case jm_log_level_debug:
         case jm_log_level_nothing:
@@ -55,7 +55,7 @@ log::cosim_logger::level convert_log_level(jm_log_level_enu_t jmLogLevel)
             // The last two cases + default should never match, and if
             // they do, we at least make sure a message is printed in
             // debug mode.
-            return log::cosim_logger::level::debug;
+            return log::level::debug;
     }
 }
 

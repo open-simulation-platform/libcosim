@@ -63,7 +63,7 @@ private:
 int main()
 {
     try {
-        cosim::log::set_logging_level(cosim::log::cosim_logger::level::debug);
+        cosim::log::set_logging_level(cosim::log::level::debug);
 
         constexpr cosim::time_point startTime;
         constexpr cosim::time_point endTime = cosim::to_time_point(1.0);

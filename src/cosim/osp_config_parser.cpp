@@ -65,7 +65,7 @@ public:
 
         xercesc::DOMLocator* loc(e.getLocation());
 
-        log::log(warn ? log::cosim_logger::level::warn : log::cosim_logger::level::err, "{}:{}: {}",
+        log::log(warn ? log::level::warn : log::level::err, "{}:{}: {}",
             tc(loc->getURI()).get(), loc->getLineNumber(), loc->getColumnNumber(), tc(e.getMessage()).get());
 
         return true;

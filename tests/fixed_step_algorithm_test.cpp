@@ -18,7 +18,7 @@
 int main()
 {
     try {
-        cosim::log::set_logging_level(cosim::log::cosim_logger::level::debug);
+        cosim::log::set_logging_level(cosim::log::level::debug);
 
         constexpr int numSlaves = 10;
         constexpr cosim::time_point startTime;

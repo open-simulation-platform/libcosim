@@ -202,35 +202,35 @@ void log_message(
     assert(msgBuffer.back() == '\0');
 
     std::string statusName = "unknown";
-    log::cosim_logger::level logLevel = log::cosim_logger::level::err;
+    log::level logLevel = log::level::err;
     switch (status) {
         case fmi1_status_ok:
             statusName = "ok";
-            logLevel = log::cosim_logger::level::trace;
+            logLevel = log::level::trace;
             break;
         case fmi1_status_warning:
             statusName = "warning";
-            logLevel = log::cosim_logger::level::warn;
+            logLevel = log::level::warn;
             break;
         case fmi1_status_discard:
             // Don't know if this ever happens, but we should at least
             // print a debug message if it does.
             statusName = "discard";
-            logLevel = log::cosim_logger::level::debug;
+            logLevel = log::level::debug;
             break;
         case fmi1_status_error:
             statusName = "error";
-            logLevel = log::cosim_logger::level::err;
+            logLevel = log::level::err;
             break;
         case fmi1_status_fatal:
             statusName = "fatal";
-            logLevel = log::cosim_logger::level::err;
+            logLevel = log::level::err;
             break;
         case fmi1_status_pending:
             // Don't know if this ever happens, but we should at least
             // print a debug message if it does.
             statusName = "pending";
-            logLevel = log::cosim_logger::level::debug;
+            logLevel = log::level::debug;
             break;
     }
     log::log(logLevel, "[FMI status={}, category={}] {}", statusName, category, msgBuffer.data());

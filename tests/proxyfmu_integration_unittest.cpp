@@ -12,7 +12,7 @@ using namespace cosim;
 
 BOOST_AUTO_TEST_CASE(test_ssp)
 {
-    cosim::log::set_logging_level(cosim::log::cosim_logger::level::debug);
+    cosim::log::set_logging_level(cosim::log::level::debug);
 
     const auto testDataDir = std::getenv("TEST_DATA_DIR");
     BOOST_REQUIRE(testDataDir != nullptr);

@@ -18,7 +18,7 @@
 int main()
 {
     try {
-        cosim::log::set_logging_level(cosim::log::cosim_logger::level::trace);
+        cosim::log::set_logging_level(cosim::log::level::trace);
 
         constexpr cosim::time_point startTime = cosim::to_time_point(0.0);
         constexpr cosim::time_point endTime = cosim::to_time_point(1.1);

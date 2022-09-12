@@ -55,7 +55,7 @@ void common_demo_case_tests(const cosim::ssp_configuration& config)
 
 BOOST_AUTO_TEST_CASE(basic_test)
 {
-    cosim::log::set_logging_level(cosim::log::cosim_logger::level::info);
+    cosim::log::set_logging_level(cosim::log::level::info);
 
     const auto testDataDir = std::getenv("TEST_DATA_DIR");
     BOOST_REQUIRE(testDataDir != nullptr);
@@ -69,7 +69,7 @@ BOOST_AUTO_TEST_CASE(basic_test)
 
 BOOST_AUTO_TEST_CASE(no_algorithm_test)
 {
-    cosim::log::set_logging_level(cosim::log::cosim_logger::level::info);
+    cosim::log::set_logging_level(cosim::log::level::info);
 
     const auto testDataDir = std::getenv("TEST_DATA_DIR");
     BOOST_REQUIRE(testDataDir != nullptr);
@@ -87,7 +87,7 @@ BOOST_AUTO_TEST_CASE(no_algorithm_test)
 
 BOOST_AUTO_TEST_CASE(ssp_archive)
 {
-    cosim::log::set_logging_level(cosim::log::cosim_logger::level::info);
+    cosim::log::set_logging_level(cosim::log::level::info);
 
     const auto testDataDir = std::getenv("TEST_DATA_DIR");
     BOOST_TEST_REQUIRE(testDataDir != nullptr);
@@ -100,7 +100,7 @@ BOOST_AUTO_TEST_CASE(ssp_archive)
 
 BOOST_AUTO_TEST_CASE(ssp_archive_multiple_ssd)
 {
-    cosim::log::set_logging_level(cosim::log::cosim_logger::level::info);
+    cosim::log::set_logging_level(cosim::log::level::info);
 
     const auto testDataDir = std::getenv("TEST_DATA_DIR");
     BOOST_TEST_REQUIRE(testDataDir != nullptr);
