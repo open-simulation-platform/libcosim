@@ -25,7 +25,6 @@ set(publicHeaders
     "cosim/function/vector_sum.hpp"
     "cosim/lib_info.hpp"
     "cosim/log/logger.hpp"
-    "cosim/log/simple.hpp"
     "cosim/manipulator.hpp"
     "cosim/manipulator/manipulator.hpp"
     "cosim/manipulator/scenario_manager.hpp"
@@ -174,13 +173,14 @@ target_link_libraries(cosim
     PUBLIC
         Boost::boost
         Boost::date_time
-        Boost::log
         gsl
+        fmt
     PRIVATE
         ${FMILibrary_LIBRARIES}
         libzip::libzip
         XercesC::XercesC
         yaml-cpp
+        spdlog
     )
 
 if(LIBCOSIM_WITH_PROXYFMU)

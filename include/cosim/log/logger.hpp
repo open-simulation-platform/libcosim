@@ -13,11 +13,10 @@
 #ifndef COSIM_LOG_LOGGER_HPP
 #define COSIM_LOG_LOGGER_HPP
 
-#include <boost/log/expressions/keyword.hpp>
-#include <boost/log/sources/record_ostream.hpp> // for convenience
-#include <boost/log/sources/severity_feature.hpp> // for convenience
-#include <boost/log/sources/severity_logger.hpp>
-#include <boost/log/trivial.hpp>
+#include <fmt/core.h>
+
+#include <memory>
+#include <mutex>
 
 
 namespace cosim
@@ -25,43 +24,82 @@ namespace cosim
 namespace log
 {
 
+class cosim_logger
+{
 
-/**
- *  Severity levels for logged messages.
- *
- *  This is currently an alias of `boost::log::trivial::severity_level`,
- *  mainly to take advantage of the built-in support that this type has in
- *  Boost.Log.  However, this may change in the future, so it should be
- *  treated and used as if it were a separate `enum` whose enumerators are
- *  `trace`, `debug`, `info`, `warning`, `error`, and `fatal`.
- */
-using severity_level = boost::log::trivial::severity_level;
+public:
+    ~cosim_logger();
 
-constexpr severity_level trace = boost::log::trivial::trace;
-constexpr severity_level debug = boost::log::trivial::debug;
-constexpr severity_level info = boost::log::trivial::info;
-constexpr severity_level warning = boost::log::trivial::warning;
-constexpr severity_level error = boost::log::trivial::error;
-constexpr severity_level fatal = boost::log::trivial::fatal;
+    enum class level : int
+    {
+        trace,
+        debug,
+        info,
+        warn,
+        err,
+        off
+    };
 
+    void set_level(level lvl);
 
-/**
- *  Severity level keyword.
- *
- *  This keyword should be used when referring to the "Severity" attribute
- *  in filters and formatters.
- */
-const auto severity = boost::log::trivial::severity;
+    void log(level lvl, const std::string& msg);
 
+    static cosim_logger& get_instance()
+    {
+        static cosim_logger logger;
+        return logger;
+    }
 
-/// The logger type used by this library, a thread-safe severity logger.
-using logger_type = boost::log::sources::severity_logger_mt<severity_level>;
+private:
 
+    cosim_logger();
 
-/// The logger used by this library.
-logger_type& logger();
+    struct impl;
+    std::unique_ptr<impl> pimpl_;
+};
+
+inline void set_logging_level(cosim_logger::level lvl)
+{
+    cosim_logger::get_instance().set_level(lvl);
+}
+
+template<typename... Args>
+inline void log(cosim_logger::level lvl, fmt::format_string<Args...> fmt, Args&&... args)
+{
+    cosim_logger::get_instance().log(lvl, fmt::format(fmt, std::forward<Args>(args)...));
+}
+
+template<typename... Args>
+inline void trace(fmt::format_string<Args...> fmt, Args&&... args)
+{
+    cosim_logger::get_instance().log(cosim_logger::level::trace, fmt::format(fmt, std::forward<Args>(args)...));
+}
+
+template<typename... Args>
+inline void debug(fmt::format_string<Args...> fmt, Args&&... args)
+{
+    cosim_logger::get_instance().log(cosim_logger::level::debug, fmt::format(fmt, std::forward<Args>(args)...));
+}
+
+template<typename... Args>
+inline void info(fmt::format_string<Args...> fmt, Args&&... args)
+{
+    cosim_logger::get_instance().log(cosim_logger::level::info, fmt::format(fmt, std::forward<Args>(args)...));
+}
+
+template<typename... Args>
+inline void warn(fmt::format_string<Args...> fmt, Args&&... args)
+{
+    cosim_logger::get_instance().log(cosim_logger::level::warn, fmt::format(fmt, std::forward<Args>(args)...));
+}
+
+template<typename... Args>
+inline void err(fmt::format_string<Args...> fmt, Args&&... args)
+{
+    cosim_logger::get_instance().log(cosim_logger::level::err, fmt::format(fmt, std::forward<Args>(args)...));
+}
 
 
 } // namespace log
 } // namespace cosim
-#endif // header guard
+#endif // COSIM_LOG_LOGGER_HPP

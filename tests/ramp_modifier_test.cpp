@@ -2,7 +2,7 @@
 
 #include <cosim/algorithm.hpp>
 #include <cosim/execution.hpp>
-#include <cosim/log/simple.hpp>
+#include <cosim/log/logger.hpp>
 #include <cosim/manipulator/manipulator.hpp>
 #include <cosim/observer/last_value_observer.hpp>
 #include <cosim/observer/time_series_observer.hpp>
@@ -11,6 +11,7 @@
 #include <functional>
 #include <memory>
 #include <stdexcept>
+#include <iostream>
 
 #define REQUIRE(test) \
     if (!(test)) throw std::runtime_error("Requirement not satisfied: " #test)
@@ -70,8 +71,8 @@ private:
 int main()
 {
     try {
-        cosim::log::setup_simple_console_logging();
-        cosim::log::set_global_output_level(cosim::log::debug);
+
+        cosim::log::set_logging_level(cosim::log::cosim_logger::level::debug);
 
         constexpr cosim::time_point startTime = cosim::to_time_point(0.0);
         constexpr cosim::duration stepSize = cosim::to_duration(0.1);

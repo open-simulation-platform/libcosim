@@ -40,12 +40,12 @@ public:
         }
         state.running = true;
 
-        BOOST_LOG_SEV(log::logger(), log::info) << "Successfully loaded scenario";
+        log::info("Successfully loaded scenario");
     }
 
     void load_scenario(const cosim::filesystem::path& scenarioFile, time_point currentTime)
     {
-        BOOST_LOG_SEV(log::logger(), log::info) << "Loading scenario from " << scenarioFile;
+        log::info("Loading scenario from {}", scenarioFile.string());
         auto scenario = parse_scenario(scenarioFile, simulators_);
         load_scenario(scenario, currentTime);
     }
@@ -61,10 +61,7 @@ public:
 
         bool timedOut = state.endTime ? relativeTime >= *state.endTime : true;
         if (state.remainingEvents.empty() && timedOut) {
-            BOOST_LOG_SEV(log::logger(), log::info)
-                << "Scenario finished at relative time "
-                << to_double_time_point(relativeTime)
-                << ", performing cleanup";
+            log::info("Scenario finished at relative time {}, performing cleanup", to_double_time_point(relativeTime));
             state.running = false;
             cleanup(state.executedEvents);
             return;
@@ -99,8 +96,7 @@ public:
 
     void abort_scenario()
     {
-        BOOST_LOG_SEV(log::logger(), log::info)
-            << "Scenario aborted, performing cleanup";
+        log::info("Scenario aborted, performing cleanup");
         state.running = false;
         cleanup(state.executedEvents);
         state.remainingEvents.clear();
@@ -163,10 +159,8 @@ private:
     bool maybe_run_event(time_point relativeTime, const scenario::event& e)
     {
         if (relativeTime >= e.time) {
-            BOOST_LOG_SEV(log::logger(), log::info)
-                << "Executing action for simulator " << e.action.simulator
-                << ", variable " << e.action.variable
-                << ", at relative time " << to_double_time_point(relativeTime);
+            log::info("Executing action for simulator {}, variable {}, at relative time {}",
+                e.action.simulator, e.action.variable, to_double_time_point(relativeTime));
             execute_action(simulators_[e.action.simulator], e.action);
             return true;
         }
@@ -175,9 +169,7 @@ private:
 
     void cleanup_action(manipulable* sim, const scenario::variable_action& a)
     {
-        BOOST_LOG_SEV(log::logger(), log::info)
-            << "Resetting variable for simulator " << a.simulator
-            << ", variable " << a.variable;
+        log::info("Resetting variable for simulator {}, variable {}", a.simulator, a.variable);
         std::visit(
             visitor(
                 [=](scenario::real_modifier /*m*/) {

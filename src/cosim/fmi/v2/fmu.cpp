@@ -73,9 +73,7 @@ fmu::fmu(
         if (variable_type::enumeration != vd.type) {
             modelDescription_.variables.push_back(vd);
         } else {
-            BOOST_LOG_SEV(log::logger(), log::warning)
-                << "FMI 2.0 Enumeration variable type not supported, variable with name "
-                << vd.name << " will be ignored";
+            log::warn("FMI 2.0 Enumeration variable type not supported, variable with name {} will be ignored", vd.name);
         }
     }
 }
@@ -204,40 +202,38 @@ void log_message(
     assert(msgBuffer.back() == '\0');
 
     std::string statusName = "unknown";
-    log::severity_level logLevel = log::error;
+    log::cosim_logger::level logLevel = log::cosim_logger::level::err;
     switch (status) {
         case fmi2_status_ok:
             statusName = "ok";
-            logLevel = log::trace;
+            logLevel = log::cosim_logger::level::trace;
             break;
         case fmi2_status_warning:
             statusName = "warning";
-            logLevel = log::warning;
+            logLevel = log::cosim_logger::level::warn;
             break;
         case fmi2_status_discard:
             // Don't know if this ever happens, but we should at least
             // print a debug message if it does.
             statusName = "discard";
-            logLevel = log::debug;
+            logLevel =log::cosim_logger::level::debug;
             break;
         case fmi2_status_error:
             statusName = "error";
-            logLevel = log::error;
+            logLevel = log::cosim_logger::level::err;
             break;
         case fmi2_status_fatal:
             statusName = "fatal";
-            logLevel = log::error;
+            logLevel = log::cosim_logger::level::err;
             break;
         case fmi2_status_pending:
             // Don't know if this ever happens, but we should at least
             // print a debug message if it does.
             statusName = "pending";
-            logLevel = log::debug;
+            logLevel = log::cosim_logger::level::debug;
             break;
     }
-    BOOST_LOG_SEV(log::logger(), logLevel)
-        << "[FMI status=" << statusName << ", category=" << category << "] "
-        << msgBuffer.data();
+    log::log(logLevel, "[FMI status={}, category={}] {}", statusName, category, msgBuffer.data());
 
     g_logMutex.lock();
     g_logRecords[instanceName] =

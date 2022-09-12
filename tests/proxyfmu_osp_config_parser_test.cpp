@@ -1,12 +1,13 @@
 #include <cosim/algorithm/fixed_step_algorithm.hpp>
 #include <cosim/fs_portability.hpp>
-#include <cosim/log/simple.hpp>
+#include <cosim/log/logger.hpp>
 #include <cosim/observer/last_value_observer.hpp>
 #include <cosim/orchestration.hpp>
 #include <cosim/osp_config_parser.hpp>
 
 #include <cstdlib>
 #include <exception>
+#include <iostream>
 
 
 #define REQUIRE(test) \
@@ -44,8 +45,7 @@ void test(const cosim::filesystem::path& configPath, size_t expectedNumConnectio
 int main()
 {
     try {
-        cosim::log::setup_simple_console_logging();
-        cosim::log::set_global_output_level(cosim::log::info);
+        cosim::log::set_logging_level(cosim::log::cosim_logger::level::info);
 
         const auto testDataDir = std::getenv("TEST_DATA_DIR");
         REQUIRE(testDataDir);

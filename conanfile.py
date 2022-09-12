@@ -22,6 +22,7 @@ class LibcosimConan(ConanFile):
         "libzip/1.7.3",
         "yaml-cpp/0.7.0",
         "xerces-c/3.2.2",
+        "spdlog/1.10.0",
         # conflict resolution
         "openssl/1.1.1k",
         "xz_utils/5.2.5",

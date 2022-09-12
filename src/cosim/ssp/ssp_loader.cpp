@@ -60,9 +60,7 @@ void add_parameter_set(
             // SSP allows ignoring failures when applying parameter sets to
             // components.  We may want to restrict to only specific failures
             // in the future, though.
-            BOOST_LOG_SEV(log::logger(), log::warning)
-                << "SSP parameter set " << parameterSet.name << ": "
-                << e.what();
+            log::warn("SSP parameter set {}: {}", parameterSet.name, e.what());
         }
     }
 }

@@ -123,9 +123,7 @@ std::shared_ptr<model> fmu_file_uri_sub_resolver::lookup_model(const uri& modelU
         return nullptr;
     }
     if (modelUri.query().has_value() || modelUri.fragment().has_value()) {
-        BOOST_LOG_SEV(log::logger(), log::warning)
-            << "Query and/or fragment component(s) in a file:// URI were ignored: "
-            << modelUri;
+        log::warn("Query and/or fragment component(s) in a file:// URI were ignored: {}", modelUri.view());
     }
     const auto path = file_uri_to_path(modelUri);
     if (path.extension() != ".fmu") return nullptr;

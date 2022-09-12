@@ -2,12 +2,13 @@
 
 #include <cosim/algorithm.hpp>
 #include <cosim/execution.hpp>
-#include <cosim/log/simple.hpp>
+#include <cosim/log/logger.hpp>
 #include <cosim/manipulator/override_manipulator.hpp>
 #include <cosim/observer/last_value_observer.hpp>
 
 #include <cmath>
 #include <exception>
+#include <iostream>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -20,8 +21,7 @@
 int main()
 {
     try {
-        cosim::log::setup_simple_console_logging();
-        cosim::log::set_global_output_level(cosim::log::debug);
+        cosim::log::set_logging_level(cosim::log::cosim_logger::level::debug);
 
         constexpr cosim::time_point startTime;
         constexpr cosim::duration stepSize = cosim::to_duration(0.5);

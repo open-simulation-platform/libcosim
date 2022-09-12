@@ -2,11 +2,12 @@
 
 #include <cosim/algorithm.hpp>
 #include <cosim/execution.hpp>
-#include <cosim/log/simple.hpp>
+#include <cosim/log/logger.hpp>
 #include <cosim/observer/time_series_observer.hpp>
 
 #include <cmath>
 #include <exception>
+#include <iostream>
 #include <memory>
 #include <stdexcept>
 
@@ -19,8 +20,7 @@
 int main()
 {
     try {
-        cosim::log::setup_simple_console_logging();
-        cosim::log::set_global_output_level(cosim::log::debug);
+        cosim::log::set_logging_level(cosim::log::cosim_logger::level::debug);
 
         constexpr int numSlaves = 2;
         constexpr cosim::time_point startTime;

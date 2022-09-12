@@ -34,11 +34,8 @@ int calculate_decimation_factor(
     if (result.rem > 0 || result.quot < 1) {
         duration actualStepSize = baseStepSize * factor;
         const auto startTime = time_point();
-        BOOST_LOG_SEV(log::logger(), log::warning)
-            << "Effective step size for " << name
-            << " will be " << to_double_duration(actualStepSize, startTime) << " s"
-            << " instead of configured value "
-            << to_double_duration(simulatorStepSize, startTime) << " s";
+        log::warn("Effective step size for {} will be {} instead of configured value {}s",
+            name, to_double_duration(actualStepSize, startTime), to_double_duration(simulatorStepSize, startTime));
     }
     return factor;
 }

@@ -1,7 +1,8 @@
 #define BOOST_TEST_MODULE ssp_loader.hpp unittests
+
 #include <cosim/algorithm/fixed_step_algorithm.hpp>
 #include <cosim/fs_portability.hpp>
-#include <cosim/log/simple.hpp>
+#include <cosim/log/logger.hpp>
 #include <cosim/observer/last_value_observer.hpp>
 #include <cosim/ssp/ssp_loader.hpp>
 
@@ -54,8 +55,7 @@ void common_demo_case_tests(const cosim::ssp_configuration& config)
 
 BOOST_AUTO_TEST_CASE(basic_test)
 {
-    cosim::log::setup_simple_console_logging();
-    cosim::log::set_global_output_level(cosim::log::info);
+    cosim::log::set_logging_level(cosim::log::cosim_logger::level::info);
 
     const auto testDataDir = std::getenv("TEST_DATA_DIR");
     BOOST_REQUIRE(testDataDir != nullptr);
@@ -69,8 +69,7 @@ BOOST_AUTO_TEST_CASE(basic_test)
 
 BOOST_AUTO_TEST_CASE(no_algorithm_test)
 {
-    cosim::log::setup_simple_console_logging();
-    cosim::log::set_global_output_level(cosim::log::info);
+    cosim::log::set_logging_level(cosim::log::cosim_logger::level::info);
 
     const auto testDataDir = std::getenv("TEST_DATA_DIR");
     BOOST_REQUIRE(testDataDir != nullptr);
@@ -88,8 +87,7 @@ BOOST_AUTO_TEST_CASE(no_algorithm_test)
 
 BOOST_AUTO_TEST_CASE(ssp_archive)
 {
-    cosim::log::setup_simple_console_logging();
-    cosim::log::set_global_output_level(cosim::log::info);
+    cosim::log::set_logging_level(cosim::log::cosim_logger::level::info);
 
     const auto testDataDir = std::getenv("TEST_DATA_DIR");
     BOOST_TEST_REQUIRE(testDataDir != nullptr);
@@ -102,8 +100,7 @@ BOOST_AUTO_TEST_CASE(ssp_archive)
 
 BOOST_AUTO_TEST_CASE(ssp_archive_multiple_ssd)
 {
-    cosim::log::setup_simple_console_logging();
-    cosim::log::set_global_output_level(cosim::log::info);
+    cosim::log::set_logging_level(cosim::log::cosim_logger::level::info);
 
     const auto testDataDir = std::getenv("TEST_DATA_DIR");
     BOOST_TEST_REQUIRE(testDataDir != nullptr);

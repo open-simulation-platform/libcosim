@@ -3,7 +3,7 @@
 #include "mock_slave.hpp"
 
 #include <cosim/algorithm.hpp>
-#include <cosim/log/simple.hpp>
+#include <cosim/log/logger.hpp>
 #include <cosim/manipulator.hpp>
 #include <cosim/observer/time_series_observer.hpp>
 
@@ -26,8 +26,7 @@ constexpr cosim::duration stepSize = cosim::to_duration(0.1);
 void test(const cosim::filesystem::path& scenarioFile)
 {
 
-    cosim::log::setup_simple_console_logging();
-    cosim::log::set_global_output_level(cosim::log::trace);
+    cosim::log::set_logging_level(cosim::log::cosim_logger::level::trace);
 
     auto execution = cosim::execution(startTime, std::make_unique<cosim::fixed_step_algorithm>(stepSize));
 

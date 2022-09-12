@@ -458,7 +458,7 @@ file_observer::simulator_logging_config file_observer::parse_config(const std::s
                                 case variable_type::boolean:
                                 case variable_type::string:
                                     config.variables.push_back(*variableDescription);
-                                    BOOST_LOG_SEV(log::logger(), log::info) << "Logging variable: " << modelName << ":" << name;
+                                    log::info("Logging variable: {}:{}", modelName, name);
                                     break;
                                 default:
                                     COSIM_PANIC_M("Variable type not supported.");

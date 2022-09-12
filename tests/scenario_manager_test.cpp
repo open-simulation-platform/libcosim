@@ -2,11 +2,12 @@
 
 #include <cosim/algorithm.hpp>
 #include <cosim/execution.hpp>
-#include <cosim/log/simple.hpp>
+#include <cosim/log/logger.hpp>
 #include <cosim/manipulator/scenario_manager.hpp>
 #include <cosim/observer/time_series_observer.hpp>
 
 #include <exception>
+#include <iostream>
 #include <memory>
 #include <stdexcept>
 #include <vector>
@@ -17,8 +18,7 @@
 int main()
 {
     try {
-        cosim::log::setup_simple_console_logging();
-        cosim::log::set_global_output_level(cosim::log::trace);
+        cosim::log::set_logging_level(cosim::log::cosim_logger::level::trace);
 
         constexpr cosim::time_point startTime = cosim::to_time_point(0.0);
         constexpr cosim::time_point endTime = cosim::to_time_point(1.1);

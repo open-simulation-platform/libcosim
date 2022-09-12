@@ -1,6 +1,6 @@
 #define BOOST_TEST_MODULE proxyfmu_integration unittests
 
-#include <cosim/log/simple.hpp>
+#include <cosim/log/logger.hpp>
 #include <cosim/proxy/remote_fmu.hpp>
 #include <cosim/ssp/ssp_loader.hpp>
 
@@ -12,8 +12,7 @@ using namespace cosim;
 
 BOOST_AUTO_TEST_CASE(test_ssp)
 {
-    log::setup_simple_console_logging();
-    log::set_global_output_level(log::info);
+    cosim::log::set_logging_level(cosim::log::cosim_logger::level::debug);
 
     const auto testDataDir = std::getenv("TEST_DATA_DIR");
     BOOST_REQUIRE(testDataDir != nullptr);

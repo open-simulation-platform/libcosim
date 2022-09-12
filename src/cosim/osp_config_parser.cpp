@@ -65,9 +65,8 @@ public:
 
         xercesc::DOMLocator* loc(e.getLocation());
 
-        BOOST_LOG_SEV(log::logger(), warn ? log::warning : log::error)
-            << tc(loc->getURI()).get() << ":"
-            << loc->getLineNumber() << ":" << loc->getColumnNumber() << " " << tc(e.getMessage()).get();
+        log::log(warn ? log::cosim_logger::level::warn : log::cosim_logger::level::err, "{}:{}: {}",
+            tc(loc->getURI()).get(), loc->getLineNumber(), loc->getColumnNumber(), tc(e.getMessage()).get());
 
         return true;
     }
@@ -297,7 +296,7 @@ osp_config_parser::osp_config_parser(
     if (errorHandler.failed()) {
         std::ostringstream oss;
         oss << "Validation of " << configPath.string() << " failed.";
-        BOOST_LOG_SEV(log::logger(), log::error) << oss.str();
+        log::err(oss.str());
         throw std::runtime_error(oss.str());
     }
 
@@ -922,7 +921,7 @@ osp_config load_osp_config(
     if (simInfo.stepSize <= 0.0) {
         std::ostringstream oss;
         oss << "Configured base step size [" << simInfo.stepSize << "] must be nonzero and positive";
-        BOOST_LOG_SEV(log::logger(), log::error) << oss.str();
+        log::err(oss.str());
         throw std::invalid_argument(oss.str());
     }
 
