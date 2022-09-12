@@ -6,7 +6,7 @@ on: [push, workflow_dispatch]
 jobs:
   conan-on-linux:
     name: Conan
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     strategy:
       fail-fast: false
       matrix:
@@ -138,10 +138,10 @@ jobs:
           conan create -s build_type=${{ matrix.build_type }} -o ${{ matrix.option_proxyfmu }} -o ${{ matrix.option_shared }} -b missing . osp/${CHANNEL}
       - name: Conan upload
         run: conan upload --all -c -r osp '*'
-        
+
   print-stuff: 
     name: printstuff
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     needs: conan-on-linux
     steps:
       - uses: actions/checkout@v2
