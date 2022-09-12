@@ -5,8 +5,10 @@ include(CMakeFindDependencyMacro)
 
 list(APPEND CMAKE_MODULE_PATH "${PACKAGE_PREFIX_DIR}/@LIBCOSIM_CMAKE_INSTALL_DIR@")
 
+find_dependency(FMT REQUIRED)
+find_dependency(SPDLOG REQUIRED)
 find_dependency(MS_GSL REQUIRED)
-find_dependency(Boost REQUIRED COMPONENTS date_time log)
+find_dependency(Boost REQUIRED COMPONENTS date_time)
 set(FMILibrary_USE_SHARED_LIB @FMILibrary_USE_SHARED_LIB@)
 find_dependency(FMILibrary REQUIRED)
 find_dependency(LIBZIP REQUIRED)
