@@ -15,9 +15,6 @@
 
 #include <fmt/core.h>
 
-#include <memory>
-#include <mutex>
-
 
 namespace cosim
 {

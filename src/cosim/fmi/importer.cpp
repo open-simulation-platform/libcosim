@@ -67,7 +67,7 @@ void logger_callback(
 {
     const auto myLevel = convert_log_level(logLevel);
     // Errors are dealt with using exceptions
-    log::log(myLevel, "[FMI Library: {} ] ", module, message);
+    log::log(myLevel, "[FMI Library: {} ] {}", module, message);
 }
 
 std::unique_ptr<jm_callbacks> make_callbacks()

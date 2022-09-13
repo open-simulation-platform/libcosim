@@ -35,8 +35,6 @@ spdlog::level::level_enum convert(level lvl)
     }
 }
 
-} // namespace
-
 struct logger
 {
 
@@ -76,8 +74,9 @@ private:
     logger()
         : logger_(spdlog::stdout_color_mt("cosim"))
     { }
-
 };
+
+} // namespace
 
 void set_logging_level(level lvl)
 {
