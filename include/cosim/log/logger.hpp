@@ -1,9 +1,6 @@
 /**
  *  \file
- *  Defines the logger for this library, based on Boost.Log.
- *
- *  For convenience, this header also includes some Boost.Log headers that
- *  provide useful short-hand logging macros (like `BOOST_LOG_SEV`).
+ *  Defines the logger for this library.
  *
  *  \copyright
  *      This Source Code Form is subject to the terms of the Mozilla Public
