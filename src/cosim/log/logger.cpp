@@ -44,21 +44,7 @@ struct logger
 
     void set_level(level lvl)
     {
-        if (lvl == level::trace) {
-            logger_->set_level(spdlog::level::trace);
-        } else if (lvl == level::debug) {
-            logger_->set_level(spdlog::level::debug);
-        } else if (lvl == level::info) {
-            logger_->set_level(spdlog::level::info);
-        } else if (lvl == level::warn) {
-            logger_->set_level(spdlog::level::warn);
-        } else if (lvl == level::err) {
-            logger_->set_level(spdlog::level::err);
-        } else if (lvl == level::off) {
-            logger_->set_level(spdlog::level::off);
-        } else {
-            throw std::runtime_error("Invalid log level");
-        }
+        logger_->set_level(convert(lvl));
     }
 
     void log(level lvl, fmt::basic_string_view<char> fmt)
