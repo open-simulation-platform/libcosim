@@ -47,9 +47,9 @@ struct logger
         logger_->set_level(convert(lvl));
     }
 
-    void log(level lvl, fmt::basic_string_view<char> fmt)
+    void log(level lvl, std::string_view msg)
     {
-        logger_->log(convert(lvl), fmt);
+        logger_->log(convert(lvl), msg);
     }
 
     static logger& get_instance()
@@ -73,7 +73,7 @@ void set_logging_level(level lvl)
     logger::get_instance().set_level(lvl);
 }
 
-void log(level lvl, const std::string& msg)
+void log(level lvl, std::string_view msg)
 {
     logger::get_instance().log(lvl, msg);
 }

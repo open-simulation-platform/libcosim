@@ -30,7 +30,7 @@ enum class level : int
 
 void set_logging_level(level lvl);
 
-void log(level lvl, const std::string& msg);
+void log(level lvl, std::string_view msg);
 
 template<typename... Args>
 inline void log(level lvl, fmt::format_string<Args...> fmt, Args&&... args)
