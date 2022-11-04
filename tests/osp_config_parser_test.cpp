@@ -25,11 +25,12 @@ void test(const cosim::filesystem::path& configPath, size_t expectedNumConnectio
         execution, config.system_structure, config.initial_values);
     REQUIRE(entityMaps.simulators.size() == 4);
     REQUIRE(boost::size(config.system_structure.connections()) == expectedNumConnections);
+    REQUIRE(config.end_time.time_since_epoch().count() == 0.01);
 
     auto obs = std::make_shared<cosim::last_value_observer>();
     execution.add_observer(obs);
 
-    auto result = execution.simulate_until(cosim::to_time_point(1e-3));
+    auto result = execution.simulate_until(config.end_time);
     REQUIRE(result);
 
     const auto simIndex = entityMaps.simulators.at("CraneController");
