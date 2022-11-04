@@ -28,8 +28,6 @@
 #include <utility>
 #include <vector>
 
-#include <iostream>
-
 
 namespace cosim
 {

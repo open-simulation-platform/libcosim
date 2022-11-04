@@ -7,7 +7,6 @@
 
 #include <cstdlib>
 #include <exception>
-#include <iostream>
 
 
 #define REQUIRE(test) \
