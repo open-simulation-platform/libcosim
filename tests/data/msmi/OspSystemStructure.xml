@@ -5,6 +5,7 @@
         xmlns="http://opensimulationplatform.com/MSMI/OSPSystemStructure"
         version="0.1">
     <StartTime>0.0</StartTime>
+    <EndTime>0.001</EndTime>
     <BaseStepSize>1e-4</BaseStepSize>
     <Algorithm>fixedStep</Algorithm>
     <Simulators>
