@@ -18,6 +18,7 @@
 #include <map>
 #include <mutex>
 #include <sstream>
+#include <utility>
 #include <vector>
 
 namespace cosim
@@ -272,18 +273,15 @@ private:
     bool timeStampedFileNames_ = true;
 };
 
-file_observer::file_observer(const cosim::filesystem::path& logDir)
-    : logDir_(cosim::filesystem::absolute(logDir))
+file_observer::file_observer(const cosim::filesystem::path& logDir, std::optional<file_observer_config> config)
+    : config_(std::move(config))
+    , logDir_(cosim::filesystem::absolute(logDir))
 {
 }
 
-file_observer::file_observer(const cosim::filesystem::path& logDir, const cosim::filesystem::path& configPath)
-    : configPath_(configPath)
-    , logDir_(cosim::filesystem::absolute(logDir))
-    , logFromConfig_(true)
+file_observer::file_observer(const filesystem::path& logDir, const filesystem::path& configPath)
+    : file_observer(logDir, file_observer_config::parse(configPath))
 {
-    boost::property_tree::read_xml(configPath_.string(), ptree_,
-        boost::property_tree::xml_parser::no_comments | boost::property_tree::xml_parser::trim_whitespace);
 }
 
 namespace
@@ -296,10 +294,12 @@ T get_attribute(const boost::property_tree::ptree& tree, const std::string& key)
 }
 
 template<typename T>
-T get_attribute(const boost::property_tree::ptree& tree, const std::string& key, T& defaultValue)
+std::optional<T> get_optional_attribute(const boost::property_tree::ptree& tree, const std::string& key)
 {
-    return tree.get<T>("<xmlattr>." + key, defaultValue);
+    const auto result = tree.get_optional<T>("<xmlattr>." + key);
+    return result ? *result : std::optional<T>();
 }
+
 } // namespace
 
 void file_observer::simulator_added(
@@ -309,15 +309,8 @@ void file_observer::simulator_added(
 {
     simulators_[index] = simulator;
 
-    if (logFromConfig_) {
-        // Read all configured model names from the XML. If simulator name is not in the list, do nothing.
-        std::vector<std::string> modelNames;
-        for (const auto& simulatorChild : ptree_.get_child("simulators")) {
-            if (simulatorChild.first == "simulator") {
-                modelNames.push_back(get_attribute<std::string>(simulatorChild.second, "name"));
-            }
-        }
-        if (std::find(modelNames.begin(), modelNames.end(), simulator->name()) != modelNames.end()) {
+    if (config_) {
+        if (config_->should_log_simulator(simulator->name())) {
             auto config = parse_config(simulator->name());
 
             valueWriters_[index] = std::make_unique<slave_value_writer>(
@@ -415,65 +408,85 @@ cosim::observable* find_simulator(
 
 file_observer::simulator_logging_config file_observer::parse_config(const std::string& simulatorName)
 {
-    auto simulators = ptree_.get_child("simulators");
-    bool timeStampedFileNames = simulators.get<bool>("<xmlattr>.timeStampedFileNames", true);
-    for (const auto& childElement : simulators) {
-        if (childElement.first == "simulator") {
-            auto simulatorElement = childElement.second;
-            auto modelName = get_attribute<std::string>(simulatorElement, "name");
-            if (modelName == simulatorName) {
-                simulator_logging_config config;
-                config.timeStampedFileNames = timeStampedFileNames;
-                config.decimationFactor = get_attribute<size_t>(simulatorElement, "decimationFactor", defaultDecimationFactor_);
+    const bool timeStampedFileNames = config_->timeStampedFileNames_;
+    for (const auto& [modelName, variables] : config_->variablesToLog_) {
 
-                const auto& simulator = find_simulator(simulators_, modelName);
-                if (simulatorElement.count("variable") == 0) {
+        if (modelName == simulatorName) {
+            simulator_logging_config config;
+            config.timeStampedFileNames = timeStampedFileNames;
+            config.decimationFactor = variables.first;
 
-                    for (const auto& vd : simulator->model_description().variables) {
-                        switch (vd.type) {
-                            case variable_type::real:
-                            case variable_type::integer:
-                            case variable_type::boolean:
-                            case variable_type::string:
-                                config.variables.push_back(vd);
-                                break;
-                            default:
-                                break;
-                        }
-                    }
-                } else {
-                    for (const auto& [variableElementName, variableElement] : simulatorElement) {
-                        if (variableElementName == "variable") {
-                            const auto name = get_attribute<std::string>(variableElement, "name");
-                            const auto variableDescription =
-                                find_variable(simulator->model_description(), name);
+            const auto& simulator = find_simulator(simulators_, modelName);
+            if (variables.second.empty()) {
 
-                            if (!variableDescription) {
-                                throw std::runtime_error("Can't find variable descriptor with name " + name + " for model with name " + simulator->model_description().name);
-                            }
-
-                            switch (variableDescription->type) {
-                                case variable_type::real:
-                                case variable_type::integer:
-                                case variable_type::boolean:
-                                case variable_type::string:
-                                    config.variables.push_back(*variableDescription);
-                                    BOOST_LOG_SEV(log::logger(), log::info) << "Logging variable: " << modelName << ":" << name;
-                                    break;
-                                default:
-                                    COSIM_PANIC_M("Variable type not supported.");
-                            }
-                        }
+                for (const auto& vd : simulator->model_description().variables) {
+                    switch (vd.type) {
+                        case variable_type::real:
+                        case variable_type::integer:
+                        case variable_type::boolean:
+                        case variable_type::string:
+                            config.variables.push_back(vd);
+                            break;
+                        default:
+                            break;
                     }
                 }
-                return config;
+            } else {
+                for (const auto& name : variables.second) {
+
+                    const auto variableDescription =
+                        find_variable(simulator->model_description(), name);
+
+                    if (!variableDescription) {
+                        throw std::runtime_error("Can't find variable descriptor with name " + name + " for model with name " + simulator->model_description().name);
+                    }
+
+                    switch (variableDescription->type) {
+                        case variable_type::real:
+                        case variable_type::integer:
+                        case variable_type::boolean:
+                        case variable_type::string:
+                            config.variables.push_back(*variableDescription);
+                            BOOST_LOG_SEV(log::logger(), log::info) << "Logging variable: " << modelName << ":" << name;
+                            break;
+                        default:
+                            COSIM_PANIC_M("Variable type not supported.");
+                    }
+                }
             }
+            return config;
         }
     }
+
     return simulator_logging_config();
 }
 
 file_observer::~file_observer() = default;
 
+
+file_observer_config file_observer_config::parse(const filesystem::path& configPath)
+{
+    boost::property_tree::ptree ptree;
+    boost::property_tree::read_xml(configPath.string(), ptree,
+        boost::property_tree::xml_parser::no_comments | boost::property_tree::xml_parser::trim_whitespace);
+
+    file_observer_config config;
+    for (const auto& simulator : ptree.get_child("simulators")) {
+        if (simulator.first == "simulator") {
+            const auto modelName = get_attribute<std::string>(simulator.second, "name");
+            const auto decimationFactor = get_optional_attribute<size_t>(simulator.second, "decimationFactor");
+            std::vector<std::string> variableNames;
+            for (const auto& variable : simulator.second) {
+                if (variable.first == "variable") {
+                    const auto variableName = get_attribute<std::string>(variable.second, "name");
+                    variableNames.emplace_back(variableName);
+                }
+            }
+            config.log_simulator_variables(modelName, variableNames, decimationFactor);
+        }
+    }
+
+    return config;
+}
 
 } // namespace cosim
