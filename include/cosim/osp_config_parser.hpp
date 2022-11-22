@@ -27,8 +27,8 @@ struct osp_config
     /// The default start time for a simulation
     time_point start_time;
 
-    /// The (optional) end time for a simulation
-    time_point end_time;
+    /// The optional end time for a simulation
+    std::optional<time_point> end_time = std::nullopt;
 
     /// The default/recommended step size for a simulation
     duration step_size;

@@ -22,24 +22,35 @@ void test(const cosim::filesystem::path& configPath, size_t expectedNumConnectio
 
     const auto entityMaps = cosim::inject_system_structure(
         execution, config.system_structure, config.initial_values);
+
     REQUIRE(entityMaps.simulators.size() == 4);
     REQUIRE(boost::size(config.system_structure.connections()) == expectedNumConnections);
-    REQUIRE(config.end_time.time_since_epoch().count() == 0.01);
+    REQUIRE(config.end_time.has_value());
+    REQUIRE(config.end_time.value().time_since_epoch().count() / 1e9 == 0.001);
 
     auto obs = std::make_shared<cosim::last_value_observer>();
     execution.add_observer(obs);
 
-    auto result = execution.simulate_until(config.end_time);
-    REQUIRE(result);
+    auto result1 = execution.simulate_until(config.end_time);
+    REQUIRE(result1);
+
+    auto result2 = execution.simulate_until(cosim::to_time_point(0.01));
+    REQUIRE(result2);
 
     const auto simIndex = entityMaps.simulators.at("CraneController");
-    const auto varReference =
-        config.system_structure.get_variable_description({"CraneController", "cl1_min"}).reference;
-    double realValue = -1.0;
-    obs->get_real(simIndex, gsl::make_span(&varReference, 1), gsl::make_span(&realValue, 1));
+    const auto varReference1 = config.system_structure.get_variable_description({"CraneController", "cl1_min"}).reference;
+    double realValue1 = -1.0;
+
+    const auto varReference2 = config.system_structure.get_variable_description({"CraneController", "cl1_min"}).reference;
+    double realValue2 = -1.0;
+
+    obs->get_real(simIndex, gsl::make_span(&varReference1, 1), gsl::make_span(&realValue1, 1));
+    obs->get_real(simIndex, gsl::make_span(&varReference2, 1), gsl::make_span(&realValue2, 1));
 
     double magicNumberFromConf = 2.2;
-    REQUIRE(std::fabs(realValue - magicNumberFromConf) < 1e-9);
+    REQUIRE(std::fabs(realValue1 - magicNumberFromConf) < 1e-9);
+    REQUIRE(std::fabs(realValue2 - magicNumberFromConf) < 1e-9);
+    REQUIRE(realValue1 == realValue2);
 }
 
 int main()
@@ -51,7 +62,7 @@ int main()
         const auto testDataDir = std::getenv("TEST_DATA_DIR");
         REQUIRE(testDataDir);
         test(cosim::filesystem::path(testDataDir) / "msmi", 7);
-        test(cosim::filesystem::path(testDataDir) / "msmi" / "OspSystemStructure_Bond.xml", 9);
+        // test(cosim::filesystem::path(testDataDir) / "msmi" / "OspSystemStructure_Bond.xml", 9);
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what();
         return 1;
