@@ -19,9 +19,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-18.04]
+        os: [ubuntu-20.04]
         build_type: [Debug, Release]
-        compiler_version: [7]
+        compiler_version: [9]
         shared_libs: [ON, OFF]
     timeout-minutes: 35
 

@@ -11,7 +11,7 @@ jobs:
       fail-fast: false
       matrix:
         build_type: [Debug, Release]
-        compiler_version: [7, 9]
+        compiler_version: [9]
         compiler_libcxx: [libstdc++11]
         option_proxyfmu: ['proxyfmu=True', 'proxyfmu=False']
         option_shared: ['shared=True', 'shared=False']
