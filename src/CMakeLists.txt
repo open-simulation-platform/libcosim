@@ -154,7 +154,7 @@ endforeach()
 
 add_library(cosim ${publicHeadersFull} ${privateHeaders} ${sources} ${generatedFiles})
 
-target_compile_definitions(cosim PUBLIC "BOOST_ALL_NO_LIB=0" "BOOST_CONFIG_SUPPRESS_OUTDATED_MESSAGE=1")
+target_compile_definitions(cosim PUBLIC "BOOST_ALL_NO_LIB" "BOOST_CONFIG_SUPPRESS_OUTDATED_MESSAGE=1")
 if(NOT Boost_USE_STATIC_LIBS)
     target_compile_definitions(cosim PUBLIC "BOOST_ALL_DYN_LINK=1")
 endif()
