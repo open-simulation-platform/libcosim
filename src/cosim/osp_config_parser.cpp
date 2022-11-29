@@ -28,6 +28,7 @@
 #include <utility>
 #include <vector>
 #include <iostream>
+#include <optional>
 
 
 namespace cosim
@@ -120,7 +121,7 @@ public:
         std::string description;
         double stepSize = 0.1;
         double startTime = 0.0;
-        double endTime = 0.0;
+        std::optional<double> endTime;
     };
 
     const SimulationInformation& get_simulation_information() const;
@@ -933,17 +934,19 @@ osp_config load_osp_config(
         throw std::invalid_argument(oss.str());
     }
 
-    if (simInfo.startTime > simInfo.endTime) {
+    if (simInfo.endTime.has_value() && simInfo.startTime > simInfo.endTime) {
         std::ostringstream oss;
-        oss << "Configured start time [" << simInfo.startTime << "] is larger than configured end time [" << simInfo.endTime << "]";
+        oss << "Configured start time [" << simInfo.startTime << "] is larger than configured end time [" << simInfo.endTime.value() << "]";
         BOOST_LOG_SEV(log::logger(), log::error) << oss.str();
         throw std::invalid_argument(oss.str());
     }
 
     osp_config config;
     config.start_time = to_time_point(simInfo.startTime);
-    config.end_time = to_time_point(simInfo.endTime);
     config.step_size = to_duration(simInfo.stepSize);
+    if (simInfo.endTime.has_value()) {
+        config.end_time = to_time_point(simInfo.endTime.value());
+    }
 
     auto simulators = parser.get_elements();
 

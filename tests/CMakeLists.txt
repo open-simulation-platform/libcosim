@@ -12,6 +12,7 @@ set(tests
     "trend_buffer_test"
     "scenario_manager_test"
     "synchronized_xy_series_test"
+    "config_end_time_test"
 )
 
 set(unittests
