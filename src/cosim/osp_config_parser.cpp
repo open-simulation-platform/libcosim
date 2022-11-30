@@ -922,11 +922,11 @@ osp_config load_osp_config(
     const auto configFile = cosim::filesystem::is_regular_file(absolutePath)
         ? absolutePath
         : absolutePath / "OspSystemStructure.xml";
+
     const auto baseURI = path_to_file_uri(configFile);
-
     const auto parser = osp_config_parser(configFile);
-
     const auto& simInfo = parser.get_simulation_information();
+
     if (simInfo.stepSize <= 0.0) {
         std::ostringstream oss;
         oss << "Configured base step size [" << simInfo.stepSize << "] must be nonzero and positive";
@@ -934,7 +934,7 @@ osp_config load_osp_config(
         throw std::invalid_argument(oss.str());
     }
 
-    if (simInfo.endTime.has_value() && simInfo.startTime > simInfo.endTime) {
+    if (simInfo.endTime.has_value() && simInfo.startTime > simInfo.endTime.value()) {
         std::ostringstream oss;
         oss << "Configured start time [" << simInfo.startTime << "] is larger than configured end time [" << simInfo.endTime.value() << "]";
         BOOST_LOG_SEV(log::logger(), log::error) << oss.str();
