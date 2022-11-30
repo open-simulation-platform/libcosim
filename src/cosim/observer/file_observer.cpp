@@ -223,54 +223,6 @@ private:
             ss << "," << vd.name;
         }
 
-        ss << std::endl << "#,#";
-
-        // Add variable references
-        for (const auto& vd : realVars_) {
-            ss << "," << vd.reference;
-        }
-        for (const auto& vd : intVars_) {
-            ss << "," << vd.reference;
-        }
-        for (const auto& vd : boolVars_) {
-            ss << "," << vd.reference;
-        }
-        for (const auto& vd : stringVars_) {
-            ss << "," << vd.reference;
-        }
-
-        ss << std::endl << "#,#";
-
-        // Add variables types
-        for (const auto& vd : realVars_) {
-            ss << "," << vd.type;
-        }
-        for (const auto& vd : intVars_) {
-            ss << "," << vd.type;
-        }
-        for (const auto& vd : boolVars_) {
-            ss << "," << vd.type;
-        }
-        for (const auto& vd : stringVars_) {
-            ss << "," << vd.type;
-        }
-
-        ss << std::endl << "#,#";
-
-        // Add variable causalities
-        for (const auto& vd : realVars_) {
-            ss << "," << vd.causality;
-        }
-        for (const auto& vd : intVars_) {
-            ss << "," << vd.causality;
-        }
-        for (const auto& vd : boolVars_) {
-            ss << "," << vd.causality;
-        }
-        for (const auto& vd : stringVars_) {
-            ss << "," << vd.causality;
-        }
-
         ss << std::endl;
 
         if (fsw_.is_open()) {
