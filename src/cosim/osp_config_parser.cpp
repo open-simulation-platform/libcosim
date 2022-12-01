@@ -27,6 +27,8 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <iostream>
+#include <optional>
 
 
 namespace cosim
@@ -119,6 +121,7 @@ public:
         std::string description;
         double stepSize = 0.1;
         double startTime = 0.0;
+        std::optional<double> endTime;
     };
 
     const SimulationInformation& get_simulation_information() const;
@@ -429,6 +432,11 @@ osp_config_parser::osp_config_parser(
     auto stNodes = rootElement->getElementsByTagName(tc("StartTime").get());
     if (stNodes->getLength() > 0) {
         simulationInformation_.startTime = boost::lexical_cast<double>(tc(stNodes->item(0)->getTextContent()).get());
+    }
+
+    auto etNodes = rootElement->getElementsByTagName(tc("EndTime").get());
+    if (etNodes->getLength() > 0) {
+        simulationInformation_.endTime = boost::lexical_cast<double>(tc(etNodes->item(0)->getTextContent()).get());
     }
 
     auto connectionsElement = static_cast<xercesc::DOMElement*>(rootElement->getElementsByTagName(tc("Connections").get())->item(0));
@@ -914,11 +922,11 @@ osp_config load_osp_config(
     const auto configFile = cosim::filesystem::is_regular_file(absolutePath)
         ? absolutePath
         : absolutePath / "OspSystemStructure.xml";
+
     const auto baseURI = path_to_file_uri(configFile);
-
     const auto parser = osp_config_parser(configFile);
-
     const auto& simInfo = parser.get_simulation_information();
+
     if (simInfo.stepSize <= 0.0) {
         std::ostringstream oss;
         oss << "Configured base step size [" << simInfo.stepSize << "] must be nonzero and positive";
@@ -926,9 +934,19 @@ osp_config load_osp_config(
         throw std::invalid_argument(oss.str());
     }
 
+    if (simInfo.endTime.has_value() && simInfo.startTime > simInfo.endTime.value()) {
+        std::ostringstream oss;
+        oss << "Configured start time [" << simInfo.startTime << "] is larger than configured end time [" << simInfo.endTime.value() << "]";
+        BOOST_LOG_SEV(log::logger(), log::error) << oss.str();
+        throw std::invalid_argument(oss.str());
+    }
+
     osp_config config;
     config.start_time = to_time_point(simInfo.startTime);
     config.step_size = to_duration(simInfo.stepSize);
+    if (simInfo.endTime.has_value()) {
+        config.end_time = to_time_point(simInfo.endTime.value());
+    }
 
     auto simulators = parser.get_elements();
 
