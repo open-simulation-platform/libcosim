@@ -75,8 +75,8 @@ public:
         std::lock_guard<std::mutex> lock(mutex_);
         if (recording_) {
             if (!fsw_.is_open()) {
-                create_log_file();
-                create_metadata_file();
+                auto dataFileName = create_log_file();
+                create_metadata_file(dataFileName);
             }
             if (timeStep % decimationFactor_ == 0) {
 
@@ -191,14 +191,16 @@ private:
         }
     }
 
-    void create_log_file()
+    std::string create_log_file()
     {
         std::string filename;
         std::stringstream ss;
+        std::string time_str;
+
         if (!timeStampedFileNames_) {
             filename = observable_->name().append(".csv");
         } else {
-            auto time_str = format_time(boost::posix_time::microsec_clock::local_time());
+            time_str = format_time(boost::posix_time::microsec_clock::local_time());
             filename = observable_->name().append("_").append(time_str).append(".csv");
         }
 
@@ -233,9 +235,11 @@ private:
         if (fsw_.is_open()) {
             fsw_ << ss.rdbuf();
         }
+
+        return time_str;
     }
 
-    void write_variable_metadata(std::stringstream& ss, std::vector<variable_description>& variables)
+    void write_variable_metadata(std::stringstream& ss, std::vector<variable_description>& variables) const
     {
         for (const auto& v : variables) {
             ss << "  - " << std::setw(keyWidth_) << "name:" << v.name << std::endl
@@ -251,7 +255,7 @@ private:
         }
     }
 
-    void create_metadata_file()
+    void create_metadata_file(std::string time_str)
     {
         std::ofstream metadata_fw;
         std::string filename;
@@ -260,7 +264,6 @@ private:
         if (!timeStampedFileNames_) {
             filename = observable_->name().append("_metadata.yaml");
         } else {
-            auto time_str = format_time(boost::posix_time::microsec_clock::local_time());
             filename = observable_->name().append("_").append(time_str).append("_metadata.yaml");
         }
 
