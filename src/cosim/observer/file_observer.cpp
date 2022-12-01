@@ -255,7 +255,7 @@ private:
         }
     }
 
-    void create_metadata_file(std::string time_str)
+    void create_metadata_file(const std::string& time_str)
     {
         std::ofstream metadata_fw;
         std::string filename;
