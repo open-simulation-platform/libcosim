@@ -5,7 +5,7 @@
     <simulator name="slave" decimationFactor="20">
         <variable name="realOut"/>
         <variable name="intOut"/>
-        <variable name="booleanOut"/>
+        <!--variable name="booleanOut"/-->
         <variable name="stringOut"/>
     </simulator>
     <simulator name="slave2">

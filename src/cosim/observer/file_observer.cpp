@@ -131,6 +131,8 @@ public:
     }
 
 private:
+    int keyWidth_ = 14;
+
     template<typename T>
     void write(const std::vector<T>& values, std::stringstream& ss)
     {
@@ -233,12 +235,27 @@ private:
         }
     }
 
+    void write_variable_metadata(std::stringstream& ss, std::vector<variable_description>& variables)
+    {
+        for (const auto& v : variables) {
+            ss << "  - " << std::setw(keyWidth_) << "name:" << v.name << std::endl
+               << "    " << std::setw(keyWidth_) << "reference:" << v.reference << std::endl
+               << "    " << std::setw(keyWidth_) << "type:" << v.type << std::endl
+               << "    " << std::setw(keyWidth_) << "causality:" << v.causality << std::endl
+               << "    " << std::setw(keyWidth_) << "variability:" << v.variability << std::endl;
+
+            if (v.start.has_value()) {
+                ss << "    " << std::setw(keyWidth_) << "start value:";
+                std::visit([&](const auto& val) { ss << val << std::endl; }, v.start.value());
+            }
+        }
+    }
+
     void create_metadata_file()
     {
         std::ofstream metadata_fw;
         std::string filename;
         std::stringstream ss;
-        constexpr int keyWidth = 14;
 
         if (!timeStampedFileNames_) {
             filename = observable_->name().append("_metadata.yaml");
@@ -259,26 +276,18 @@ private:
         auto md = observable_->model_description();
 
         ss << std::left
-           << std::setw(keyWidth) << "name:" << md.name << std::endl
-           << std::setw(keyWidth) << "uuid:" << md.uuid << std::endl
-           << std::setw(keyWidth) << "description:" << md.description << std::endl
-           << std::setw(keyWidth) << "author:" << md.description << std::endl
-           << std::setw(keyWidth) << "version:" << md.version << std::endl;
+           << std::setw(keyWidth_) << "name:" << md.name << std::endl
+           << std::setw(keyWidth_) << "uuid:" << md.uuid << std::endl
+           << std::setw(keyWidth_) << "description:" << md.description << std::endl
+           << std::setw(keyWidth_) << "author:" << md.description << std::endl
+           << std::setw(keyWidth_) << "version:" << md.version << std::endl;
 
         ss << "variables:" << std::endl;
 
-        for (const auto& v : md.variables) {
-            ss << "  - " << std::setw(keyWidth) << "name:" << v.name << std::endl
-               << "    " << std::setw(keyWidth) << "reference:" << v.reference << std::endl
-               << "    " << std::setw(keyWidth) << "type:" << v.type << std::endl
-               << "    " << std::setw(keyWidth) << "causality:" << v.causality << std::endl
-               << "    " << std::setw(keyWidth) << "variability:" << v.variability << std::endl;
-
-            if (v.start.has_value()) {
-                ss << "    " << std::setw(keyWidth) << "start value:";
-                std::visit([&](const auto& val) { ss << val << std::endl; }, v.start.value());
-            }
-        }
+        write_variable_metadata(ss, realVars_);
+        write_variable_metadata(ss, intVars_);
+        write_variable_metadata(ss, boolVars_);
+        write_variable_metadata(ss, stringVars_);
 
         if (metadata_fw.is_open()) {
             metadata_fw << ss.rdbuf();
