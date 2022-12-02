@@ -75,7 +75,8 @@ public:
         std::lock_guard<std::mutex> lock(mutex_);
         if (recording_) {
             if (!fsw_.is_open()) {
-                create_log_file();
+                auto dataFileName = create_log_file();
+                create_metadata_file(dataFileName);
             }
             if (timeStep % decimationFactor_ == 0) {
 
@@ -130,6 +131,8 @@ public:
     }
 
 private:
+    int keyWidth_ = 14;
+
     template<typename T>
     void write(const std::vector<T>& values, std::stringstream& ss)
     {
@@ -160,7 +163,7 @@ private:
         }
     }
 
-    /** Default constructor initialization, all variables are logged. */
+    /** Default constructor initialization, all variables - except those with causality local - are logged. */
     void initialize_default()
     {
         if (!timeStampedFileNames_) {
@@ -188,14 +191,16 @@ private:
         }
     }
 
-    void create_log_file()
+    std::string create_log_file()
     {
         std::string filename;
         std::stringstream ss;
+        std::string time_str;
+
         if (!timeStampedFileNames_) {
             filename = observable_->name().append(".csv");
         } else {
-            auto time_str = format_time(boost::posix_time::microsec_clock::local_time());
+            time_str = format_time(boost::posix_time::microsec_clock::local_time());
             filename = observable_->name().append("_").append(time_str).append(".csv");
         }
 
@@ -204,22 +209,25 @@ private:
         fsw_.open(filePath, std::ios_base::out | std::ios_base::app);
 
         if (fsw_.fail()) {
-            throw std::runtime_error("Failed to open file stream for logging");
+            std::stringstream error;
+            error << "Failed to open log file stream: " << filePath.c_str();
+            throw std::runtime_error(error.str());
         }
 
         ss << "Time,StepCount";
 
+        // Add variable names
         for (const auto& vd : realVars_) {
-            ss << "," << vd.name << " [" << vd.reference << " " << vd.type << " " << vd.causality << "]";
+            ss << "," << vd.name;
         }
         for (const auto& vd : intVars_) {
-            ss << "," << vd.name << " [" << vd.reference << " " << vd.type << " " << vd.causality << "]";
+            ss << "," << vd.name;
         }
         for (const auto& vd : boolVars_) {
-            ss << "," << vd.name << " [" << vd.reference << " " << vd.type << " " << vd.causality << "]";
+            ss << "," << vd.name;
         }
         for (const auto& vd : stringVars_) {
-            ss << "," << vd.name << " [" << vd.reference << " " << vd.type << " " << vd.causality << "]";
+            ss << "," << vd.name;
         }
 
         ss << std::endl;
@@ -227,6 +235,67 @@ private:
         if (fsw_.is_open()) {
             fsw_ << ss.rdbuf();
         }
+
+        return time_str;
+    }
+
+    void write_variable_metadata(std::stringstream& ss, std::vector<variable_description>& variables) const
+    {
+        for (const auto& v : variables) {
+            ss << "  - " << std::setw(keyWidth_) << "name:" << v.name << std::endl
+               << "    " << std::setw(keyWidth_) << "reference:" << v.reference << std::endl
+               << "    " << std::setw(keyWidth_) << "type:" << v.type << std::endl
+               << "    " << std::setw(keyWidth_) << "causality:" << v.causality << std::endl
+               << "    " << std::setw(keyWidth_) << "variability:" << v.variability << std::endl;
+
+            if (v.start.has_value()) {
+                ss << "    " << std::setw(keyWidth_) << "start value:";
+                std::visit([&](const auto& val) { ss << val << std::endl; }, v.start.value());
+            }
+        }
+    }
+
+    void create_metadata_file(const std::string& time_str)
+    {
+        std::ofstream metadata_fw;
+        std::string filename;
+        std::stringstream ss;
+
+        if (!timeStampedFileNames_) {
+            filename = observable_->name().append("_metadata.yaml");
+        } else {
+            filename = observable_->name().append("_").append(time_str).append("_metadata.yaml");
+        }
+
+        const auto filePath = logDir_ / filename;
+        metadata_fw.open(filePath, std::ios_base::out | std::ios_base::app);
+
+        if (fsw_.fail()) {
+            std::stringstream error;
+            error << "Failed to open log metadata file stream: " << filePath.c_str();
+            throw std::runtime_error(error.str());
+        }
+
+        auto md = observable_->model_description();
+
+        ss << std::left
+           << std::setw(keyWidth_) << "name:" << md.name << std::endl
+           << std::setw(keyWidth_) << "uuid:" << md.uuid << std::endl
+           << std::setw(keyWidth_) << "description:" << md.description << std::endl
+           << std::setw(keyWidth_) << "author:" << md.description << std::endl
+           << std::setw(keyWidth_) << "version:" << md.version << std::endl;
+
+        ss << "variables:" << std::endl;
+
+        write_variable_metadata(ss, realVars_);
+        write_variable_metadata(ss, intVars_);
+        write_variable_metadata(ss, boolVars_);
+        write_variable_metadata(ss, stringVars_);
+
+        if (metadata_fw.is_open()) {
+            metadata_fw << ss.rdbuf();
+        }
+        metadata_fw.close();
     }
 
     void persist()

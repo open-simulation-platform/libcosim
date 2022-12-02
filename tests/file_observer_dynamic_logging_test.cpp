@@ -7,6 +7,7 @@
 #include <cosim/observer/file_observer.hpp>
 
 #include <exception>
+#include <iostream>
 #include <memory>
 #include <stdexcept>
 #include <thread>
@@ -74,7 +75,7 @@ int main()
         observer->stop_recording();
         REQUIRE(!observer->is_recording());
 
-        REQUIRE(filecount(logPath) == 2);
+        REQUIRE(filecount(logPath) == 4);
 
         remove_directory_contents(logPath);
         REQUIRE(filecount(logPath) == 0);
@@ -91,10 +92,12 @@ int main()
 
         execution.stop_simulation();
         t.get();
-        REQUIRE(filecount(logPath) == 4);
+
+        REQUIRE(filecount(logPath) == 8);
 
         // Test that files are released.
         remove_directory_contents(logPath);
+
         REQUIRE(filecount(logPath) == 0);
 
     } catch (const std::exception& e) {
