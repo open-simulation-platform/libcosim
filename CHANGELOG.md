@@ -5,16 +5,16 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### [v0.10.0] - 2022-12-02
 ##### Changed
-* GCC8 artifact builds have been removed, and GCC9 artifact builds added. GCC7 is still supported.
+* GCC7 and GCC8 artifact builds have been removed, and GCC9 artifact builds added. This is currently the only supported GCC version.
 * The file observer is now programmatically configurable, and there is no longer a need for clients to create a separate `LogConfig.xml` file upfront to specify it's configuration.
 * The file observer no longer outputs headers as `variable name [reference, type, causality].` Instead only the variable name is output, and the extra data about each variable and the model itself is output in a separate metadata file, in YAML format. This will have the same filename as the CSV file with the simulation data, including the timestamp, with `_metadata` at the end.
-* Using `find_variable` is now exceptional, returning an optional null value, if the desired variable description can't be found.
+* Using `find_variable` no longer throws an exception, but rather returns an optional value, which may be empty if the variable could not be found.
+* Update to proxyfmu 0.2.9.
 ##### Added 
 * An asynchronous version of `simulate_until` is now available through the `execution` interface. This accepts
   an optional end time parameter and launches the execution in a new thread.
 * Support has been added for optionally specifying simulation end time (where only start time was supported) in `OspSystemStructure.xml`. If specified, end time will also be parsed and made available in the simulation configuration.
-##### Fixed 
-* Update to proxyfmu 0.2.9
+##### Fixed
 
 ### [v0.9.0] – 2022-04-05
 ##### Changed
