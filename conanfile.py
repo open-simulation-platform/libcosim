@@ -53,7 +53,7 @@ class LibcosimConan(ConanFile):
 
     def requirements(self):
         if self.options.proxyfmu:
-            self.requires("proxyfmu/0.3.0@osp/testing-undo_cmake_find_package")
+            self.requires("proxyfmu/0.3.0@osp/stable")
 
     def imports(self):
         binDir = os.path.join("output", str(self.settings.build_type).lower(), "bin")
