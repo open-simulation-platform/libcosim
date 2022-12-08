@@ -3,6 +3,10 @@ All notable changes to libcosim will be documented in this file. This includes n
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
+### [v0.10.1] - 2022-12-08
+##### Changed
+* Update to proxyfmu 0.3.0 due to downstream build issues related to Thrift. 
+
 ### [v0.10.0] - 2022-12-02
 ##### Changed
 * GCC7 and GCC8 artifact builds have been removed, and GCC9 artifact builds added. This is currently the only supported GCC version.
@@ -207,3 +211,4 @@ First OSP JIP partner release
 [v0.8.3]: https://github.com/open-simulation-platform/cse-core/compare/v0.8.2...v0.8.3
 [v0.9.0]: https://github.com/open-simulation-platform/cse-core/compare/v0.8.3...v0.9.0
 [v0.10.0]: https://github.com/open-simulation-platform/cse-core/compare/v0.9.0...v0.10.0
+[v0.10.1]: https://github.com/open-simulation-platform/cse-core/compare/v0.10.0...v0.10.1
