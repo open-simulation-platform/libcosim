@@ -14,7 +14,7 @@ class LibcosimConan(ConanFile):
         "revision": "auto"
     }
     settings = "os", "compiler", "build_type", "arch"
-    generators = "cmake", "cmake_find_package", "virtualrunenv"
+    generators = "cmake", "virtualrunenv"
     requires = (
         "boost/1.71.0",
         "fmilibrary/2.3",
@@ -53,7 +53,7 @@ class LibcosimConan(ConanFile):
 
     def requirements(self):
         if self.options.proxyfmu:
-            self.requires("proxyfmu/0.2.9@osp/stable")
+            self.requires("proxyfmu/0.3.0@osp/stable")
 
     def imports(self):
         binDir = os.path.join("output", str(self.settings.build_type).lower(), "bin")
