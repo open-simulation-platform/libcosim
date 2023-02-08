@@ -75,9 +75,6 @@ endif()
 # Automatically export all symbols in Windows DLLs.
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
-# Suppress warnings for using boost/1.81.0 (will be removed with the future release of cmake)
-set(Boost_NO_WARN_NEW_VERSIONS ON)
-
 # Organise projects in folders in IDEs that support it
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
