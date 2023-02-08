@@ -3,6 +3,10 @@ All notable changes to libcosim will be documented in this file. This includes n
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
+### [v0.10.2] - 2023-02-08
+##### Fixed
+* Update to proxyfmu 0.3.1 due to a disconnection issue related to Thrift.
+
 ### [v0.10.1] - 2022-12-08
 ##### Changed
 * Update to proxyfmu 0.3.0 due to downstream build issues related to Thrift. 
