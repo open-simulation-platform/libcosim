@@ -610,13 +610,9 @@ struct extended_model_description
         const auto domImpl = xercesc::DOMImplementationRegistry::getDOMImplementation(tc("LS").get());
         const auto parser = static_cast<xercesc::DOMImplementationLS*>(domImpl)->createLSParser(xercesc::DOMImplementationLS::MODE_SYNCHRONOUS, tc("http://www.w3.org/2001/XMLSchema").get());
 
-        error_handler errorHandler;
-
-        parser->getDomConfig()->setParameter(xercesc::XMLUni::fgDOMErrorHandler, &errorHandler);
-
         const auto doc = parser->parseURI(ospModelDescription.string().c_str());
 
-        if (doc == nullptr || errorHandler.failed()) {
+        if (doc == nullptr) {
             std::ostringstream oss;
             oss << "Validation of " << ospModelDescription.string() << " failed.";
             BOOST_LOG_SEV(log::logger(), log::error) << oss.str();
