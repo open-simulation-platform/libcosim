@@ -8,12 +8,24 @@
                 <InitialValue variable="mass">
                     <Real value="400"/>
                 </InitialValue>
+                <InitialValue variable="solverType">
+                    <String value="Euler"/>
+                </InitialValue>
+                <InitialValue variable="timeStep">
+                    <Real value="1e-5"/>
+                </InitialValue>
             </InitialValues>
         </Simulator>
         <Simulator name="wheel" source="Wheel.fmu">
             <InitialValues>
                 <InitialValue variable="mass">
                     <Real value="40"/>
+                </InitialValue>
+                <InitialValue variable="solverType">
+                    <String value="Euler"/>
+                </InitialValue>
+                <InitialValue variable="timeStep">
+                    <Real value="1e-5"/>
                 </InitialValue>
             </InitialValues>
         </Simulator>

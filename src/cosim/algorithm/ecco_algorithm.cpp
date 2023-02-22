@@ -332,7 +332,7 @@ public:
         prev_error_estimate_ = error_estimate;
         const auto new_step_size = to_duration(new_step_size_gain * to_double_duration(stepSize, currentTime));
         const auto actual_new_step_size = std::clamp(new_step_size, params.min_step_size, params.max_step_size);
-        // std::cout << "dP=" << sum_power_residual << "  dE=" << energy_residual << "  eps=" << error_estimate << " ";
+        // std::cout << to_double_time_point(currentTime) << " "<<  max_power_residual << " " << error_estimate << " " << std::endl;
         // std::cout << "new step size: " << to_double_duration(actual_new_step_size, {}) << std::endl;
         return actual_new_step_size;
     }

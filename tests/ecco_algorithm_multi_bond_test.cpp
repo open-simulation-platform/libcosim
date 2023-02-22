@@ -24,7 +24,7 @@ int main()
         cosim::log::set_global_output_level(cosim::log::info);
 
         constexpr cosim::time_point startTime = cosim::to_time_point(0.0);;
-        constexpr cosim::time_point midTime = cosim::to_time_point(15.0);
+        constexpr cosim::time_point midTime = cosim::to_time_point(4.0);
 
         auto ecco_params = cosim::ecco_parameters{
             0.8,
@@ -91,21 +91,24 @@ int main()
          auto file_obs = std::make_unique<cosim::file_observer>("./logDir", logXmlPath);
          execution.add_observer(std::move(file_obs));
 
-         auto simResult = execution.simulate_until(midTime);
-         REQUIRE(simResult);
+         // auto simResult = execution.simulate_until(midTime);
+         // REQUIRE(simResult);
 
-        /**
+
          // Add an observer that watches the last slave
         auto t_observer = std::make_shared<cosim::time_series_observer>(50000);
         execution.add_observer(t_observer);
         t_observer->start_observing(chassisVel);
         t_observer->start_observing(wheelCVel);
-        t_observer->start_observing(wheelGVel);
-        t_observer->start_observing(groundVel);
+        // t_observer->start_observing(wheelGVel);
+        // t_observer->start_observing(groundVel);
         t_observer->start_observing(chassisForce);
         t_observer->start_observing(wheelCForce);
-        t_observer->start_observing(wheelGForce);
-        t_observer->start_observing(groundForce);
+        // t_observer->start_observing(wheelGForce);
+        // t_observer->start_observing(groundForce);
+
+        auto csv_observer = std::make_shared<cosim::file_observer>(".");
+        execution.add_observer(csv_observer);
 
         // Run simulation
         auto simResult = execution.simulate_until(midTime);
@@ -136,20 +139,20 @@ int main()
             gsl::make_span(wheelCVels),
             gsl::make_span(steps),
             gsl::make_span(timeValues));
-        t_observer->get_real_samples(
-            wheelGVel.simulator,
-            wheelGVel.reference,
-            0,
-            gsl::make_span(wheelGVels),
-            gsl::make_span(steps),
-            gsl::make_span(timeValues));
-        t_observer->get_real_samples(
-            groundVel.simulator,
-            groundVel.reference,
-            0,
-            gsl::make_span(groundVels),
-            gsl::make_span(steps),
-            gsl::make_span(timeValues));
+        // t_observer->get_real_samples(
+        //     wheelGVel.simulator,
+        //     wheelGVel.reference,
+        //     0,
+        //     gsl::make_span(wheelGVels),
+        //     gsl::make_span(steps),
+        //     gsl::make_span(timeValues));
+        // t_observer->get_real_samples(
+        //     groundVel.simulator,
+        //     groundVel.reference,
+        //     0,
+        //     gsl::make_span(groundVels),
+        //     gsl::make_span(steps),
+        //     gsl::make_span(timeValues));
 
 
         std::cout << "time,step #,stepsize,chassisVel,wheelCVel,wheelGVel,groundVel" << std::endl;
@@ -163,7 +166,6 @@ int main()
                       << "," << groundVels[i]
                       << std::endl;
         }
-         **/
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
         return 1;
