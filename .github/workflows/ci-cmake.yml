@@ -83,7 +83,7 @@ jobs:
       - name: Install prerequisites
         run: |
           pip3 install --upgrade setuptools pip
-          pip3 install conan
+          pip3 install conan==1.59
           choco install doxygen.install
           conan remote add osp https://osp.jfrog.io/artifactory/api/conan/conan-local --force
           conan install . -s build_type=${{ matrix.build_type }} -o shared=${{ matrix.shared }} -g deploy

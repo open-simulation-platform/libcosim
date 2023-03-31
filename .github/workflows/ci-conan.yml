@@ -85,7 +85,7 @@ jobs:
       - name: Install prerequisites
         run: |
           pip3 install --upgrade setuptools pip
-          pip3 install conan
+          pip3 install conan==1.59
       - name: Configure Conan
         run: conan remote add osp https://osp.jfrog.io/artifactory/api/conan/conan-local --force
       - name: Conan create
