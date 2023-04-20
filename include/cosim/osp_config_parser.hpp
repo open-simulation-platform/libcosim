@@ -35,6 +35,9 @@ struct osp_config
 
     /// A set of default initial values
     variable_value_map initial_values;
+
+    /// The optional algorithm for a simulation (default = "fixedStep", else: "waterfallFixedStep")
+    std::optional<std::string> algorithm = std::nullopt;
 };
 
 

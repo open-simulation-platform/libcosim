@@ -23,6 +23,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <unordered_set>
 #include <variant>
 
 
@@ -201,6 +202,9 @@ public:
 
         /// Parameter values (for functions; ignored for simulators).
         function_parameter_value_map parameter_values;
+
+        /// The entity added order index
+        uint index;
     };
 
     /// Information about a connection.
@@ -239,7 +243,7 @@ public:
         std::shared_ptr<cosim::model> type,
         duration stepSizeHint = duration::zero())
     {
-        add_entity({std::string(name), type, stepSizeHint, {}});
+        add_entity({std::string(name), type, stepSizeHint, {}, {}});
     }
 
     /// \overload
@@ -248,7 +252,7 @@ public:
         std::shared_ptr<function_type> type,
         function_parameter_value_map parameters)
     {
-        add_entity({std::string(name), type, {}, std::move(parameters)});
+        add_entity({std::string(name), type, {}, std::move(parameters), {}});
     }
 
     /**
@@ -324,6 +328,9 @@ public:
 private:
     // Entities, indexed by name.
     entity_map entities_;
+
+    /// The entity added order maximum index until now
+    uint entity_max_index_ = 0;
 
     // Connections. Target is key, source is value.
     connection_map connections_;

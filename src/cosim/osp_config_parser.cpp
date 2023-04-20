@@ -20,15 +20,15 @@
 #include <xercesc/util/XMLString.hpp>
 
 #include <ios>
+#include <iostream>
 #include <memory>
+#include <optional>
 #include <sstream>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <iostream>
-#include <optional>
 
 
 namespace cosim
@@ -122,6 +122,7 @@ public:
         double stepSize = 0.1;
         double startTime = 0.0;
         std::optional<double> endTime;
+        std::string algorithm;
     };
 
     const SimulationInformation& get_simulation_information() const;
@@ -427,6 +428,11 @@ osp_config_parser::osp_config_parser(
     auto ssNodes = rootElement->getElementsByTagName(tc("BaseStepSize").get());
     if (ssNodes->getLength() > 0) {
         simulationInformation_.stepSize = boost::lexical_cast<double>(tc(ssNodes->item(0)->getTextContent()));
+    }
+
+    auto algoNodes = rootElement->getElementsByTagName(tc("Algorithm").get());
+    if (algoNodes->getLength() > 0) {
+        simulationInformation_.algorithm = tc(algoNodes->item(0)->getTextContent()).get();
     }
 
     auto stNodes = rootElement->getElementsByTagName(tc("StartTime").get());
@@ -946,6 +952,9 @@ osp_config load_osp_config(
     config.step_size = to_duration(simInfo.stepSize);
     if (simInfo.endTime.has_value()) {
         config.end_time = to_time_point(simInfo.endTime.value());
+    }
+    if (!simInfo.algorithm.empty()) {
+        config.algorithm = simInfo.algorithm;
     }
 
     auto simulators = parser.get_elements();

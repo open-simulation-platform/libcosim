@@ -42,7 +42,7 @@ size_t get_samples(
             }
         }
         for (samplesRead = 0; samplesRead < static_cast<std::size_t>(values.size()); samplesRead++) {
-            if ((sampleIt != samples.end()) && (sampleIt->first < fromStep + values.size())) {
+            if ((sampleIt != samples.end()) && (sampleIt->first < (const long long int)(fromStep + values.size()))) {
                 steps[samplesRead] = sampleIt->first;
                 values[samplesRead] = sampleIt->second;
                 times[samplesRead] = timeSamples[sampleIt->first];
