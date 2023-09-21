@@ -240,7 +240,10 @@ public:
             throw error(make_error_code(errc::simulation_error), errMessages.str());
         }
 
-        stepSize_ = adjust_step_size(currentT, stepSize_, params_);
+        const auto stepSizeTaken = stepSize_;
+        if (stepCounter_ >= 2) {
+            stepSize_ = adjust_step_size(currentT, stepSize_, params_);
+        }
 
         // Transfer the outputs from simulators that have finished their
         // individual time steps within this co-simulation time step.
@@ -260,7 +263,7 @@ public:
         }
 
 
-        return {stepSize_, std::move(finished)};
+        return {stepSizeTaken, std::move(finished)};
     }
 
     void set_stepsize_decimation_factor(cosim::simulator_index i, int factor)
@@ -271,7 +274,7 @@ public:
 
     void print_average_energies()
     {
-        for (int i = 0; i < energies_.size(); ++i) {
+        for (std::size_t i = 0; i < energies_.size(); ++i) {
             std::cout << "Avg energy for sim idx " << i << ": " << get_mean(energies_.at(i)) << std::endl;
         }
     }
@@ -283,7 +286,7 @@ public:
 
         const auto dt = to_double_duration(stepSize, currentTime);
 
-        for (int i = 0; i < uVariables_.size(); i+=2) {
+        for (std::size_t i = 0; i < uVariables_.size(); i+=2) {
             auto u_a = uVariables_.at(i);
             auto u_b = uVariables_.at(i+1);
             auto y_a = yVariables_.at(i);
