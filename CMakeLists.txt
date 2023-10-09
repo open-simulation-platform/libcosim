@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.9)
 file(STRINGS "${CMAKE_SOURCE_DIR}/version.txt" projectVersion)
 project("libcosim" VERSION ${projectVersion})
 message("Current libcosim version: ${CMAKE_PROJECT_VERSION}\n")
+message (STATUS "CMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}")
 
 # ==============================================================================
 # Build settings
@@ -209,6 +210,11 @@ endif()
 # ==============================================================================
 # Exports and remaining installation
 # ==============================================================================
+
+message (STATUS "CMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}")
+message (STATUS "LIBCOSIM_HEADER_INSTALL_DIR=${LIBCOSIM_HEADER_INSTALL_DIR}")
+message (STATUS "LIBCOSIM_DOC_INSTALL_DIR=${LIBCOSIM_DOC_INSTALL_DIR}")
+message (STATUS "LIBCOSIM_CMAKE_INSTALL_DIR=${LIBCOSIM_CMAKE_INSTALL_DIR}")
 
 install(
     FILES "README.md" "LICENSE"

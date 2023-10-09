@@ -34,7 +34,7 @@ public:
      *  \param workerThreadCount
      *      The number of worker threads to spawn for running FMUs
      */
-    explicit fixed_step_algorithm(duration baseStepSize, std::optional<unsigned int> workerThreadCount = std::nullopt);
+    explicit fixed_step_algorithm(duration baseStepSize, std::optional<unsigned int> workerThreadCount = std::nullopt, std::optional<bool> waterfall_effect = false);
 
     ~fixed_step_algorithm() noexcept;
 
@@ -75,6 +75,9 @@ public:
 private:
     class impl;
     std::unique_ptr<impl> pimpl_;
+
+    class pool_impl;
+    class waterfall_impl;
 };
 
 } // namespace cosim

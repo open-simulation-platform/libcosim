@@ -159,7 +159,7 @@ public:
 
     std::future<bool> simulate_until_async(std::optional<time_point> endTime)
     {
-        return std::async(std::launch::async, [this, endTime]{
+        return std::async(std::launch::async, [this, endTime] {
             return simulate_until(endTime);
         });
     }
@@ -486,9 +486,16 @@ entity_index_maps inject_system_structure(
     const system_structure& sys,
     const variable_value_map& initialValues)
 {
+    // Sort entities in the configuration file sequence order
+    const auto& range = sys.entities();
+    std::vector<system_structure::entity> sorted_entities(range.begin(), range.end());
+    std::sort(sorted_entities.begin(), sorted_entities.end(), [](system_structure::entity& x, system_structure::entity& y) {
+        return x.index <= y.index;
+    });
+
     // Add simulators and functions
     entity_index_maps indexMaps;
-    for (const auto& entity : sys.entities()) {
+    for (const auto& entity : sorted_entities) {
         if (const auto model = entity_type_to<cosim::model>(entity.type)) {
             // Entity is a simulator
             const auto index = exe.add_slave(

@@ -14,9 +14,9 @@
 #include <cstdlib>
 #include <numeric>
 #include <sstream>
+#include <taskflow/taskflow.hpp>
 #include <unordered_map>
 #include <vector>
-
 
 namespace cosim
 {
@@ -46,17 +46,22 @@ int calculate_decimation_factor(
 } // namespace
 
 
+//***************************************************************************************************************************
+//  Abstract implementation class
+//***************************************************************************************************************************
+
 class fixed_step_algorithm::impl
 {
-public:
-    explicit impl(duration baseStepSize, std::optional<unsigned int> workerThreadCount)
+protected:
+    explicit impl(duration baseStepSize /*, std::optional<unsigned int> workerThreadCount*/)
         : baseStepSize_(baseStepSize)
-        , pool_(std::min(workerThreadCount.value_or(max_threads_), max_threads_))
+    //, pool_(std::min(workerThreadCount.value_or(max_threads_), max_threads_))
     {
         COSIM_INPUT_CHECK(baseStepSize.count() > 0);
     }
 
-    ~impl() noexcept = default;
+public:
+    virtual ~impl() noexcept = default;
 
     impl(const impl&) = delete;
     impl& operator=(const impl&) = delete;
@@ -91,6 +96,17 @@ public:
         sourceSimInfo.sim->expose_for_getting(output.type, output.reference);
         targetSimInfo.sim->expose_for_setting(input.type, input.reference);
         sourceSimInfo.outgoingSimConnections.push_back({output, input});
+
+        /// We define the following simulator doStep partial order relation:
+        /// A < B if :
+        /// - A precedes B in the ordered simulator sequence
+        ///         AND
+        /// - an input variable of B (target) is target of a source output variable of A (source)
+
+        // Keep only the case of output succeeds to input in the configuration file ordered simulator sequence
+        if (output.simulator < input.simulator) {
+            targetSimInfo.ingoingSimDependencies.insert(output.simulator);
+        }
     }
 
     void connect_variables(variable_id output, function_io_id input)
@@ -111,6 +127,8 @@ public:
 
     void disconnect_variable(variable_id input)
     {
+        // TODO: update ingoingSimDependencies
+
         for (auto& s : simulators_) {
             auto& conns = s.second.outgoingSimConnections;
             const auto it = std::find_if(
@@ -149,110 +167,11 @@ public:
         stopTime_ = stopTime;
     }
 
-    void initialize()
+    virtual void initialize() { }
+
+    virtual std::pair<duration, std::unordered_set<simulator_index>> do_step(time_point /* currentT */)
     {
-        for (auto& s : simulators_) {
-            pool_.submit([&] {
-                s.second.sim->setup(startTime_, stopTime_, std::nullopt);
-            });
-        }
-        pool_.wait_for_tasks_to_finish();
-
-        // Run N iterations of the simulators' and functions' step/calculation
-        // procedures, where N is the number of simulators in the system,
-        // to propagate initial values.
-        for (std::size_t i = 0; i < simulators_.size() + functions_.size(); ++i) {
-            for (auto& s : simulators_) {
-                pool_.submit([&] {
-                    s.second.sim->do_iteration();
-                });
-            }
-            pool_.wait_for_tasks_to_finish();
-
-            for (const auto& s : simulators_) {
-                transfer_variables(s.second.outgoingSimConnections);
-                transfer_variables(s.second.outgoingFunConnections);
-            }
-            for (const auto& f : functions_) {
-                f.second.fun->calculate();
-                transfer_variables(f.second.outgoingSimConnections);
-            }
-        }
-
-        for (auto& s : simulators_) {
-            pool_.submit([&] {
-                s.second.sim->start_simulation();
-            });
-        }
-        pool_.wait_for_tasks_to_finish();
-    }
-
-    std::pair<duration, std::unordered_set<simulator_index>> do_step(time_point currentT)
-    {
-        std::mutex m;
-        bool failed = false;
-        std::stringstream errMessages;
-        std::unordered_set<simulator_index> finished;
-        // Initiate simulator time steps.
-
-        for (auto& s : simulators_) {
-            auto& info = s.second;
-            if (stepCounter_ % info.decimationFactor == 0) {
-                pool_.submit([&] {
-                    try {
-                        info.stepResult = info.sim->do_step(currentT, baseStepSize_ * info.decimationFactor);
-
-                        if (info.stepResult != step_result::complete) {
-                            std::lock_guard<std::mutex> lck(m);
-                            errMessages
-                                << info.sim->name() << ": "
-                                << "Step not complete" << '\n';
-                            failed = true;
-                        }
-
-                    } catch (std::exception& ex) {
-                        std::lock_guard<std::mutex> lck(m);
-                        errMessages
-                            << info.sim->name() << ": "
-                            << ex.what() << '\n';
-                        failed = true;
-                    }
-                });
-            }
-        }
-
-        ++stepCounter_;
-
-        for (auto& [idx, info] : simulators_) {
-            if (stepCounter_ % info.decimationFactor == 0) {
-                finished.insert(idx);
-            }
-        }
-
-        pool_.wait_for_tasks_to_finish();
-
-        if (failed) {
-            throw error(make_error_code(errc::simulation_error), errMessages.str());
-        }
-
-        // Transfer the outputs from simulators that have finished their
-        // individual time steps within this co-simulation time step.
-        for (auto simIndex : finished) {
-            auto& simInfo = simulators_.at(simIndex);
-            transfer_variables(simInfo.outgoingSimConnections);
-            transfer_variables(simInfo.outgoingFunConnections);
-        }
-
-        // Calculate functions and transfer their outputs to simulators.
-        for (const auto& f : functions_) {
-            const auto& info = f.second;
-            if (stepCounter_ % info.decimationFactor == 0) {
-                info.fun->calculate();
-                transfer_variables(info.outgoingSimConnections);
-            }
-        }
-
-        return {baseStepSize_, std::move(finished)};
+        return std::pair<duration, std::unordered_set<simulator_index>>();
     }
 
     void set_stepsize_decimation_factor(cosim::simulator_index i, int factor)
@@ -262,7 +181,7 @@ public:
     }
 
 
-private:
+protected:
     struct connection_ss
     {
         variable_id source;
@@ -281,6 +200,12 @@ private:
         variable_id target;
     };
 
+    struct do_step_args
+    {
+        time_point currentT;
+        duration deltaT;
+    };
+
     struct simulator_info
     {
         simulator* sim;
@@ -288,6 +213,9 @@ private:
         step_result stepResult;
         std::vector<connection_ss> outgoingSimConnections;
         std::vector<connection_sf> outgoingFunConnections;
+
+        do_step_args doStepArgs;
+        std::unordered_set<simulator_index> ingoingSimDependencies;
     };
 
     struct function_info
@@ -433,13 +361,336 @@ private:
     std::unordered_map<function_index, function_info> functions_;
     int64_t stepCounter_ = 0;
     unsigned int max_threads_ = std::thread::hardware_concurrency() - 1;
-    utility::thread_pool pool_;
+    // utility::thread_pool pool_;
 };
 
 
-fixed_step_algorithm::fixed_step_algorithm(duration baseStepSize, std::optional<unsigned int> workerThreadCount)
-    : pimpl_(std::make_unique<impl>(baseStepSize, workerThreadCount))
+//***************************************************************************************************************************
+//  pool fixed step algorithm implementation class
+//***************************************************************************************************************************
+
+class fixed_step_algorithm::pool_impl : public fixed_step_algorithm::impl
 {
+public:
+    explicit pool_impl(duration baseStepSize, std::optional<unsigned int> workerThreadCount)
+        : fixed_step_algorithm::impl(baseStepSize)
+        , pool_(std::min(workerThreadCount.value_or(max_threads_), max_threads_))
+    { }
+    //~pool_impl() noexcept = default;
+
+    pool_impl(const pool_impl&) = delete;
+    pool_impl& operator=(const pool_impl&) = delete;
+
+    pool_impl(pool_impl&&) = delete;
+    pool_impl& operator=(pool_impl&&) = delete;
+
+
+    void initialize() override
+    {
+        for (auto& s : simulators_) {
+            pool_.submit([&] {
+                s.second.sim->setup(startTime_, stopTime_, std::nullopt);
+            });
+        }
+        pool_.wait_for_tasks_to_finish();
+
+        // Run N iterations of the simulators' and functions' step/calculation
+        // procedures, where N is the number of simulators in the system,
+        // to propagate initial values.
+        for (std::size_t i = 0; i < simulators_.size() + functions_.size(); ++i) {
+            for (auto& s : simulators_) {
+                pool_.submit([&] {
+                    s.second.sim->do_iteration();
+                });
+            }
+            pool_.wait_for_tasks_to_finish();
+
+            for (const auto& s : simulators_) {
+                transfer_variables(s.second.outgoingSimConnections);
+                transfer_variables(s.second.outgoingFunConnections);
+            }
+            for (const auto& f : functions_) {
+                f.second.fun->calculate();
+                transfer_variables(f.second.outgoingSimConnections);
+            }
+        }
+
+        for (auto& s : simulators_) {
+            pool_.submit([&] {
+                s.second.sim->start_simulation();
+            });
+        }
+        pool_.wait_for_tasks_to_finish();
+    }
+
+    std::pair<duration, std::unordered_set<simulator_index>> do_step(time_point currentT) override
+    {
+        std::mutex m;
+        bool failed = false;
+        std::stringstream errMessages;
+        std::unordered_set<simulator_index> finished;
+        // Initiate simulator time steps.
+
+        for (auto& s : simulators_) {
+            auto& info = s.second;
+            if (stepCounter_ % info.decimationFactor == 0) {
+                pool_.submit([&] {
+                    try {
+                        info.stepResult = info.sim->do_step(currentT, baseStepSize_ * info.decimationFactor);
+
+                        if (info.stepResult != step_result::complete) {
+                            std::lock_guard<std::mutex> lck(m);
+                            errMessages
+                                << info.sim->name() << ": "
+                                << "Step not complete" << '\n';
+                            failed = true;
+                        }
+
+                    } catch (std::exception& ex) {
+                        std::lock_guard<std::mutex> lck(m);
+                        errMessages
+                            << info.sim->name() << ": "
+                            << ex.what() << '\n';
+                        failed = true;
+                    }
+                });
+            }
+        }
+
+        ++stepCounter_;
+
+        for (auto& [idx, info] : simulators_) {
+            if (stepCounter_ % info.decimationFactor == 0) {
+                finished.insert(idx);
+            }
+        }
+
+        pool_.wait_for_tasks_to_finish();
+
+        if (failed) {
+            throw error(make_error_code(errc::simulation_error), errMessages.str());
+        }
+
+        // Transfer the outputs from simulators that have finished their
+        // individual time steps within this co-simulation time step.
+        for (auto simIndex : finished) {
+            auto& simInfo = simulators_.at(simIndex);
+            transfer_variables(simInfo.outgoingSimConnections);
+            transfer_variables(simInfo.outgoingFunConnections);
+        }
+
+        // Calculate functions and transfer their outputs to simulators.
+        for (const auto& f : functions_) {
+            const auto& info = f.second;
+            if (stepCounter_ % info.decimationFactor == 0) {
+                info.fun->calculate();
+                transfer_variables(info.outgoingSimConnections);
+            }
+        }
+
+        return {baseStepSize_, std::move(finished)};
+    }
+
+private:
+    utility::thread_pool pool_;
+};
+
+//***************************************************************************************************************************
+//  pool fixed step algorithm implementation class
+//***************************************************************************************************************************
+
+class fixed_step_algorithm::waterfall_impl : public fixed_step_algorithm::impl
+{
+public:
+    explicit waterfall_impl(duration baseStepSize, std::optional<unsigned int> workerThreadCount)
+        : fixed_step_algorithm::impl(baseStepSize)
+        , pool_(std::min(workerThreadCount.value_or(max_threads_), max_threads_))
+        , taskflow_("TaskFlow")
+        , executor_()
+    { }
+    //~waterfall_impl() noexcept = default;
+
+    waterfall_impl(const waterfall_impl&) = delete;
+    waterfall_impl& operator=(const waterfall_impl&) = delete;
+
+    waterfall_impl(waterfall_impl&&) = delete;
+    waterfall_impl& operator=(waterfall_impl&&) = delete;
+
+
+    void initialize() override
+    {
+        for (auto& s : simulators_) {
+            pool_.submit([&] {
+                s.second.sim->setup(startTime_, stopTime_, std::nullopt);
+            });
+        }
+        pool_.wait_for_tasks_to_finish();
+
+        // Run N iterations of the simulators' and functions' step/calculation
+        // procedures, where N is the number of simulators in the system,
+        // to propagate initial values.
+        for (std::size_t i = 0; i < simulators_.size() + functions_.size(); ++i) {
+            for (auto& s : simulators_) {
+                pool_.submit([&] {
+                    s.second.sim->do_iteration();
+                });
+            }
+            pool_.wait_for_tasks_to_finish();
+
+            for (const auto& s : simulators_) {
+                transfer_variables(s.second.outgoingSimConnections);
+                transfer_variables(s.second.outgoingFunConnections);
+            }
+            for (const auto& f : functions_) {
+                f.second.fun->calculate();
+                transfer_variables(f.second.outgoingSimConnections);
+            }
+        }
+
+        for (auto& s : simulators_) {
+            pool_.submit([&] {
+                s.second.sim->start_simulation();
+            });
+        }
+        pool_.wait_for_tasks_to_finish();
+    }
+
+    std::pair<duration, std::unordered_set<simulator_index>> do_step(time_point currentT) override
+    {
+        std::mutex m;
+        bool failed = false;
+        std::stringstream errMessages;
+        std::unordered_set<simulator_index> finished;
+
+        // Initiate simulator time steps.
+        std::unordered_map<std::string, tf::Task> tasks;
+        bool initTasks = false;
+        for (auto& s : simulators_) {
+            auto& info = s.second;
+            if (stepCounter_ % info.decimationFactor == 0) {
+
+                info.doStepArgs.currentT = currentT;
+                info.doStepArgs.deltaT = baseStepSize_ * info.decimationFactor;
+
+                // pool_.submit([&] {
+                if (!task_initialised_) {
+                    auto taskFunction = [&]() {
+                        try {
+                            info.stepResult = info.sim->do_step(info.doStepArgs.currentT, info.doStepArgs.deltaT);
+
+                            if (info.stepResult != step_result::complete) {
+                                std::lock_guard<std::mutex> lck(m);
+                                errMessages
+                                    << info.sim->name() << ": "
+                                    << "Step not complete" << '\n';
+                                failed = true;
+                            } else {
+                                // Transfer the outputs from the simulator that has finished its
+                                // individual time step within this co-simulation time step.
+                                transfer_variables(info.outgoingSimConnections);
+                                transfer_variables(info.outgoingFunConnections);
+
+                                BOOST_LOG_SEV(log::logger(), log::debug)
+                                    << "Task completed: " << info.sim->name()
+                                    << ", (t=" << info.doStepArgs.currentT.time_since_epoch().count()
+                                    << ", dt=" << info.doStepArgs.deltaT.count() << ")";
+                            }
+
+                        } catch (std::exception& ex) {
+                            std::lock_guard<std::mutex> lck(m);
+                            errMessages
+                                << info.sim->name() << ": "
+                                << ex.what() << '\n';
+                            failed = true;
+                        }
+                    };
+                    //});
+
+                    auto task = taskflow_.emplace(taskFunction);
+
+                    // Name the task with the simulator name
+                    task.name(info.sim->name());
+
+                    task_names_.emplace(task.name());
+                    tasks.emplace(task.name(), task);
+
+                    BOOST_LOG_SEV(log::logger(), log::info) << "Task creation: " << task.name();
+                    initTasks = true;
+                }
+            }
+        }
+
+        if (initTasks) {
+            // create the task waterfall
+            for (auto& target : simulators_) {
+                auto& target_task = tasks.at(target.second.sim->name());
+                for (auto& source_idx : target.second.ingoingSimDependencies) {
+                    const auto& source_task = tasks.at(simulators_.at(source_idx).sim->name());
+                    target_task.succeed(source_task);
+
+                    BOOST_LOG_SEV(log::logger(), log::info) << "Task partial order: " << source_task.name() << " < " << target_task.name();
+                }
+            }
+
+            task_initialised_ = true;
+        }
+
+        ++stepCounter_;
+
+        for (auto& [idx, info] : simulators_) {
+            if (stepCounter_ % info.decimationFactor == 0) {
+                finished.insert(idx);
+            }
+        }
+
+        // pool_.wait_for_tasks_to_finish();
+        executor_.run(taskflow_).get();
+
+        if (failed) {
+            throw error(make_error_code(errc::simulation_error), errMessages.str());
+        }
+
+        ////// Transfer the outputs from simulators that have finished their
+        ////// individual time steps within this co-simulation time step.
+        ////for (auto simIndex : finished) {
+        ////   auto& simInfo = simulators_.at(simIndex);
+        ////   transfer_variables(simInfo.outgoingSimConnections);
+        ////   transfer_variables(simInfo.outgoingFunConnections);
+        ////}
+
+        // TODO: move it in each matching simulator task
+        // Calculate functions and transfer their outputs to simulators.
+        for (const auto& f : functions_) {
+            const auto& info = f.second;
+            if (stepCounter_ % info.decimationFactor == 0) {
+                info.fun->calculate();
+                transfer_variables(info.outgoingSimConnections);
+            }
+        }
+
+        return {baseStepSize_, std::move(finished)};
+    }
+
+private:
+    utility::thread_pool pool_;
+
+    tf::Taskflow taskflow_;
+    tf::Executor executor_;
+    std::unordered_set<std::string> task_names_;
+    bool task_initialised_ = false;
+};
+
+//***************************************************************************************************************************
+//  Facade class
+//***************************************************************************************************************************
+
+fixed_step_algorithm::fixed_step_algorithm(duration baseStepSize, std::optional<unsigned int> workerThreadCount, std::optional<bool> waterfall_effect)
+{
+    if (waterfall_effect.value_or(false)) {
+        pimpl_ = std::move(std::make_unique<waterfall_impl>(baseStepSize, workerThreadCount));
+    } else {
+        pimpl_ = std::move(std::make_unique<pool_impl>(baseStepSize, workerThreadCount));
+    }
 }
 
 

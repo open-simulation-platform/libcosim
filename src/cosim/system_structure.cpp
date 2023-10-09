@@ -127,7 +127,14 @@ void system_structure::add_entity(const entity& e)
         info.ios = make_variable_lookup_table(info.description);
         functionCache_.emplace(e.name, std::move(info));
     }
-    entities_.emplace(e.name, e);
+
+    // add/update entity
+    auto result = entities_.emplace(e.name, e);
+
+    // update entity index
+    entity_max_index_++;
+    auto newEntity = result.first->second;
+    newEntity.index = entity_max_index_;
 }
 
 
