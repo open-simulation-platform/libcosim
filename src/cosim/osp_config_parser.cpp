@@ -28,6 +28,8 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <iostream>
+#include <optional>
 
 
 namespace cosim
@@ -121,6 +123,7 @@ public:
         std::string algorithm;
         double stepSize = 0.1;
         double startTime = 0.0;
+        std::optional<double> endTime;
     };
 
     const SimulationInformation& get_simulation_information() const;
@@ -272,7 +275,7 @@ osp_config_parser::osp_config_parser(
 
     error_handler errorHandler;
 
-    std::string xsd_str = get_embedded_osp_config_xsd();
+    std::string xsd_str = osp_xsd;
 
     xercesc::MemBufInputSource mis(
         reinterpret_cast<const XMLByte*>(xsd_str.c_str()),
@@ -431,6 +434,11 @@ osp_config_parser::osp_config_parser(
     auto stNodes = rootElement->getElementsByTagName(tc("StartTime").get());
     if (stNodes->getLength() > 0) {
         simulationInformation_.startTime = boost::lexical_cast<double>(tc(stNodes->item(0)->getTextContent()).get());
+    }
+
+    auto etNodes = rootElement->getElementsByTagName(tc("EndTime").get());
+    if (etNodes->getLength() > 0) {
+        simulationInformation_.endTime = boost::lexical_cast<double>(tc(etNodes->item(0)->getTextContent()).get());
     }
 
     auto saNodes = rootElement->getElementsByTagName(tc("Algorithm").get());
@@ -613,10 +621,18 @@ struct extended_model_description
         const auto xerces_cleanup = final_action([]() {
             xercesc::XMLPlatformUtils::Terminate();
         });
+
         const auto domImpl = xercesc::DOMImplementationRegistry::getDOMImplementation(tc("LS").get());
         const auto parser = static_cast<xercesc::DOMImplementationLS*>(domImpl)->createLSParser(xercesc::DOMImplementationLS::MODE_SYNCHRONOUS, tc("http://www.w3.org/2001/XMLSchema").get());
+
         const auto doc = parser->parseURI(ospModelDescription.string().c_str());
-        // TODO: Check return value for null
+
+        if (doc == nullptr) {
+            std::ostringstream oss;
+            oss << "Validation of " << ospModelDescription.string() << " failed.";
+            BOOST_LOG_SEV(log::logger(), log::error) << oss.str();
+            throw std::runtime_error(oss.str());
+        }
 
         const auto rootElement = doc->getDocumentElement();
 
@@ -921,11 +937,11 @@ osp_config load_osp_config(
     const auto configFile = cosim::filesystem::is_regular_file(absolutePath)
         ? absolutePath
         : absolutePath / "OspSystemStructure.xml";
+
     const auto baseURI = path_to_file_uri(configFile);
-
     const auto parser = osp_config_parser(configFile);
-
     const auto& simInfo = parser.get_simulation_information();
+
     if (simInfo.stepSize <= 0.0) {
         std::ostringstream oss;
         oss << "Configured base step size [" << simInfo.stepSize << "] must be nonzero and positive";
@@ -933,9 +949,19 @@ osp_config load_osp_config(
         throw std::invalid_argument(oss.str());
     }
 
+    if (simInfo.endTime.has_value() && simInfo.startTime > simInfo.endTime.value()) {
+        std::ostringstream oss;
+        oss << "Configured start time [" << simInfo.startTime << "] is larger than configured end time [" << simInfo.endTime.value() << "]";
+        BOOST_LOG_SEV(log::logger(), log::error) << oss.str();
+        throw std::invalid_argument(oss.str());
+    }
+
     osp_config config;
     config.start_time = to_time_point(simInfo.startTime);
     config.step_size = to_duration(simInfo.stepSize);
+    if (simInfo.endTime.has_value()) {
+        config.end_time = to_time_point(simInfo.endTime.value());
+    }
 
     auto simulators = parser.get_elements();
 

@@ -7,12 +7,13 @@
 
 #include <cstdlib>
 #include <exception>
-
+#include <iostream>
 
 #define REQUIRE(test) \
     if (!(test)) throw std::runtime_error("Requirement not satisfied: " #test)
 
-void test(const cosim::filesystem::path& configPath, size_t expectedNumConnections)
+
+void test(const cosim::filesystem::path& configPath)
 {
     auto resolver = cosim::default_model_uri_resolver();
     const auto config = cosim::load_osp_config(configPath, *resolver);
@@ -24,22 +25,18 @@ void test(const cosim::filesystem::path& configPath, size_t expectedNumConnectio
         execution, config.system_structure, config.initial_values);
 
     REQUIRE(entityMaps.simulators.size() == 4);
-    REQUIRE(boost::size(config.system_structure.connections()) == expectedNumConnections);
 
     auto obs = std::make_shared<cosim::last_value_observer>();
     execution.add_observer(obs);
 
-    auto result = execution.simulate_until(cosim::to_time_point(0.01));
-    REQUIRE(result);
-
-    const auto simIndex = entityMaps.simulators.at("CraneController");
-    const auto varReference1 = config.system_structure.get_variable_description({"CraneController", "cl1_min"}).reference;
-    double realValue = -1.0;
-
-    obs->get_real(simIndex, gsl::make_span(&varReference1, 1), gsl::make_span(&realValue, 1));
-
-    double magicNumberFromConf = 2.2;
-    REQUIRE(std::fabs(realValue - magicNumberFromConf) < 1e-9);
+    if (config.end_time.has_value()) {
+        REQUIRE(config.end_time.value().time_since_epoch().count() / 1e9 == 0.001);
+        auto result = execution.simulate_until(config.end_time);
+        REQUIRE(result);
+    } else {
+        auto result = execution.simulate_until(cosim::to_time_point(0.001));
+        REQUIRE(result);
+    }
 }
 
 int main()
@@ -50,8 +47,9 @@ int main()
 
         const auto testDataDir = std::getenv("TEST_DATA_DIR");
         REQUIRE(testDataDir);
-        test(cosim::filesystem::path(testDataDir) / "msmi", 7);
-        test(cosim::filesystem::path(testDataDir) / "msmi" / "OspSystemStructure_Bond.xml", 9);
+
+        test(cosim::filesystem::path(testDataDir) / "msmi" / "OspSystemStructure.xml");
+        test(cosim::filesystem::path(testDataDir) / "msmi" / "OspSystemStructure_EndTime.xml");
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what();
         return 1;

@@ -137,16 +137,13 @@ foreach(src IN LISTS generatedSources)
     list(APPEND generatedFiles "${tgt}")
 endforeach()
 
-# Generate header file from OSP XSD
-set(ospSystemStructureXSD "${CMAKE_SOURCE_DIR}/data/xsd/OspSystemStructure.xsd")
-set(ospSystemStructureHeader "${generatedSourcesDir}/osp_system_structure_schema.hpp")
-add_custom_command(
-    OUTPUT "${ospSystemStructureHeader}"
-    COMMAND osp-xsd-embedder "${ospSystemStructureXSD}" "${ospSystemStructureHeader}"
-    DEPENDS osp-xsd-embedder "${ospSystemStructureXSD}"
-)
-list(APPEND generatedFiles "${ospSystemStructureHeader}")
+function(make_includable input_file output_file)
+    file(READ ${input_file} content)
+    set(content "const char* osp_xsd=R\"(${content})\";")
+    file(WRITE ${output_file} "${content}")
+endfunction(make_includable)
 
+make_includable("${CMAKE_SOURCE_DIR}/data/xsd/OspSystemStructure.xsd" "${generatedSourcesDir}/osp_system_structure_schema.hpp")
 
 # ==============================================================================
 # Target definition
@@ -159,7 +156,7 @@ endforeach()
 
 add_library(cosim ${publicHeadersFull} ${privateHeaders} ${sources} ${generatedFiles})
 
-target_compile_definitions(cosim PUBLIC "BOOST_ALL_NO_LIB=0" "BOOST_CONFIG_SUPPRESS_OUTDATED_MESSAGE=1")
+target_compile_definitions(cosim PUBLIC "BOOST_ALL_NO_LIB" "BOOST_CONFIG_SUPPRESS_OUTDATED_MESSAGE=1")
 if(NOT Boost_USE_STATIC_LIBS)
     target_compile_definitions(cosim PUBLIC "BOOST_ALL_DYN_LINK=1")
 endif()

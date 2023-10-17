@@ -21,7 +21,7 @@ in the section below or you can use conan. As libcosim is made available as a
 conan package on https://osp.jfrog.io, you can include it in your application
 following these steps:
 
-* Install [Conan]
+* Install [Conan] version 1.x
 * Add the OSP Conan repository as a remote: 
 
        conan remote add osp https://osp.jfrog.io/artifactory/api/conan/conan-local
@@ -38,7 +38,7 @@ How to build
   * Compilers: [Visual Studio] >= 16.0/2019 (Windows), GCC >= 7 (Linux)
   * Build tool: [CMake]
   * API documentation generator (optional): [Doxygen]
-  * Package manager (optional): [Conan]
+  * Package manager (optional): [Conan] 1.x
 
 Throughout this guide, we will use Conan to manage dependencies.  However, it
 should be possible to use other package managers as well, such as [vcpkg], and

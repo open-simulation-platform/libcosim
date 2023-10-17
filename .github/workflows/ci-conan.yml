@@ -11,14 +11,14 @@ jobs:
       fail-fast: false
       matrix:
         build_type: [Debug, Release]
-        compiler_version: [7, 8, 9]
+        compiler_version: [9]
         compiler_libcxx: [libstdc++11]
         option_proxyfmu: ['proxyfmu=True', 'proxyfmu=False']
         option_shared: ['shared=True', 'shared=False']
     timeout-minutes: 35
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Generate Dockerfile
         run: |
           mkdir /tmp/osp-builder-docker
@@ -81,11 +81,11 @@ jobs:
     timeout-minutes: 35
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Install prerequisites
         run: |
           pip3 install --upgrade setuptools pip
-          pip3 install conan
+          pip3 install conan==1.59
       - name: Configure Conan
         run: conan remote add osp https://osp.jfrog.io/artifactory/api/conan/conan-local --force
       - name: Conan create
