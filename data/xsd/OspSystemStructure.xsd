@@ -16,6 +16,7 @@
                 <xs:element name="Simulators" type="osp:simulators"/>
                 <xs:element name="Functions" type="osp:functions" minOccurs="0"/>
                 <xs:element name="Connections" type="osp:connections" minOccurs="0"/>
+                <xs:element name="EccoConfiguration" type="osp:eccoconfiguration" minOccurs="0"/>
             </xs:sequence>
             <xs:attribute name="version" type="xs:normalizedString" use="required" fixed="0.1">
                 <xs:annotation>
@@ -24,6 +25,20 @@
             </xs:attribute>
         </xs:complexType>
     </xs:element>
+    <xs:complexType name="eccoconfiguration">
+        <xs:all>
+            <xs:element name="SafetyFactor" type="xs:double"/>
+            <xs:element name="StepSize" type="xs:double"/>
+            <xs:element name="MinimumStepSize" type="xs:double"/>
+            <xs:element name="MaximumStepSize" type="xs:double"/>
+            <xs:element name="MinimumChangeRate" type="xs:double"/>
+            <xs:element name="MaximumChangeRate" type="xs:double"/>
+            <xs:element name="ProportionalGain" type="xs:double"/>
+            <xs:element name="IntegralGain" type="xs:double"/>
+            <xs:element name="RelativeTolerance" type="xs:double"/>
+            <xs:element name="AbsoluteTolerance" type="xs:double"/>
+        </xs:all>
+    </xs:complexType>
     <xs:complexType name="connections">
         <xs:choice maxOccurs="unbounded">
             <xs:element name="VariableConnection" minOccurs="0" maxOccurs="unbounded">

@@ -222,7 +222,6 @@ public:
         VariableEndpoint variable;
     };
 
-
     [[nodiscard]] const std::vector<VariableConnection>& get_variable_connections() const;
     [[nodiscard]] const std::vector<SignalConnection>& get_signal_connections() const;
     [[nodiscard]] const std::vector<VariableConnection>& get_variable_group_connections() const;

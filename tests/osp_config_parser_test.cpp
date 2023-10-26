@@ -16,6 +16,7 @@ void test(const cosim::filesystem::path& configPath, size_t expectedNumConnectio
 {
     auto resolver = cosim::default_model_uri_resolver();
     const auto config = cosim::load_osp_config(configPath, *resolver);
+
     auto execution = cosim::execution(
         config.start_time,
         std::make_shared<cosim::fixed_step_algorithm>(config.step_size));

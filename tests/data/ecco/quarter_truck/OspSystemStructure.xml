@@ -2,6 +2,11 @@
 <OspSystemStructure xmlns="http://opensimulationplatform.com/MSMI/OSPSystemStructure"
                     version="0.1">
     <BaseStepSize>0.0001</BaseStepSize>
+    <!--Algorithm>
+        <EccoAlgorithm stepSize="" safetyFactor="" minimumStepSize="" maximumStepSize="" minimumChangeRate="" maximumChangeRate="" proportionalGain="" integralGain="" relativeTolerance="" absoluteTolerance=""/>
+        <FixedStepAlgorithm stepSize=""/>
+    </Algorithm-->
+    <Algorithm>ecco</Algorithm>
     <Simulators>
         <Simulator name="chassis" source="Chassis.fmu">
             <InitialValues>
@@ -40,4 +45,16 @@
             <Variable simulator="chassis" name="force"/>
         </VariableConnection> 
     </Connections>
+    <EccoConfiguration>
+        <SafetyFactor>0.99</SafetyFactor>
+        <StepSize>0.0001</StepSize>
+        <MinimumStepSize>0.00001</MinimumStepSize>
+        <MaximumStepSize>0.01</MaximumStepSize>
+        <MinimumChangeRate>0.2</MinimumChangeRate>
+        <MaximumChangeRate>1.5</MaximumChangeRate>
+        <ProportionalGain>0.2</ProportionalGain>
+        <IntegralGain>0.15</IntegralGain>
+        <RelativeTolerance>1e-6</RelativeTolerance>
+        <AbsoluteTolerance>1e-6</AbsoluteTolerance>
+    </EccoConfiguration>
 </OspSystemStructure>

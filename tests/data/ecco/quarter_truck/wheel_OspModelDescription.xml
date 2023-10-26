@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<OspModelDescription xmlns="https://open-simulation-platform.com/OspModelDescription/1.0.0" version="1.0">
+    <UnitDefinitions>
+        <Unit name="m/s">
+            <BaseUnit kg="0" m="1" s="-1" A="0" K="0" mol="0" cd="0" rad="0" factor="1.0" offset="0.0"/>
+        </Unit>
+        <Unit name="N">
+            <BaseUnit kg="1" m="1" s="-2" A="0" K="0" mol="0" cd="0" rad="0" factor="1.0" offset="0.0"/>
+        </Unit>
+    </UnitDefinitions>
+
+    <VariableGroups>
+        <LinearMechanicalPort name="chassis port">
+            <Force name="chassis force">
+                <Variable ref="p1.f" unit="N"/>
+            </Force>
+            <LinearVelocity name="chassisVelocity">
+                <Variable ref="p1.e" unit="m/s"/>
+            </LinearVelocity>
+        </LinearMechanicalPort>
+        <LinearMechanicalPort name="ground port">
+            <Force name="ground force">
+                <Variable ref="p.f" unit="N"/>
+            </Force>
+            <LinearVelocity name="ground velocity">
+                <Variable ref="p.e" unit="m/s"/>
+            </LinearVelocity>
+        </LinearMechanicalPort>
+    </VariableGroups>
+</OspModelDescription>

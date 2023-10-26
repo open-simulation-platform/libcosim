@@ -12,6 +12,7 @@
 #include <cosim/model_description.hpp>
 #include <cosim/orchestration.hpp>
 #include <cosim/system_structure.hpp>
+#include <cosim/algorithm.hpp>
 #include <cosim/time.hpp>
 
 namespace cosim
@@ -23,6 +24,9 @@ struct osp_config
 {
     /// The system structure
     cosim::system_structure system_structure;
+
+    // The algorithm
+    std::variant<cosim::fixed_step_configuration, cosim::ecco_parameters> algorithm_configuration;
 
     /// The default start time for a simulation
     time_point start_time;
