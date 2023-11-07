@@ -16,7 +16,7 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
-#include <gsl/gsl_util>
+#include <gsl/util>
 
 #include <cstdlib>
 #include <cstring>

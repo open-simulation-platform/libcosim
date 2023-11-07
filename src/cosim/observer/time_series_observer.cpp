@@ -27,7 +27,7 @@ size_t get_samples(
     gsl::span<step_number> steps,
     gsl::span<time_point> times)
 {
-    size_t samplesRead = 0;
+    std::size_t samplesRead = 0;
     const auto& samplesIt = variables.find(valueReference);
     if (samplesIt != variables.end()) {
         const auto& samples = samplesIt->second;
@@ -41,8 +41,8 @@ size_t get_samples(
                 sampleIt = samples.upper_bound(fromStep);
             }
         }
-        for (samplesRead = 0; samplesRead < static_cast<std::size_t>(values.size()); samplesRead++) {
-            if ((sampleIt != samples.end()) && (sampleIt->first < fromStep + values.size())) {
+        for (samplesRead = 0; samplesRead < values.size(); samplesRead++) {
+            if ((sampleIt != samples.end()) && (sampleIt->first < fromStep + static_cast<step_number>(values.size()))) {
                 steps[samplesRead] = sampleIt->first;
                 values[samplesRead] = sampleIt->second;
                 times[samplesRead] = timeSamples[sampleIt->first];

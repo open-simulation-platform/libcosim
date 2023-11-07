@@ -1,91 +1,118 @@
 import os
 
-from conans import ConanFile, CMake, RunEnvironment, tools
-from os import path
+from conan import ConanFile
+from conan.errors import ConanInvalidConfiguration
+from conan.tools.cmake import CMakeToolchain, CMake, CMakeDeps, cmake_layout
+from conan.tools.env import VirtualRunEnv
+from conan.tools.files import copy, load
 
 
 class LibcosimConan(ConanFile):
+    # Basic package info
     name = "libcosim"
-    author = "osp"
-    exports = "version.txt"
-    scm = {
-        "type": "git",
-        "url": "auto",
-        "revision": "auto"
-    }
-    settings = "os", "compiler", "build_type", "arch"
-    generators = "cmake", "virtualrunenv"
-    requires = (
-        "boost/1.71.0",
-        "fmilibrary/2.3",
-        "ms-gsl/2.1.0",
-        "libzip/1.7.3",
-        "yaml-cpp/0.7.0",
-        "xerces-c/3.2.2",
-        # conflict resolution
-        "openssl/1.1.1k",
-        "xz_utils/5.2.5",
-        "zlib/1.2.12"
-    )
+    def set_version(self):
+        self.version = load(self, os.path.join(self.recipe_folder, "version.txt")).strip()
 
+    # Metadata
+    license = "MPL-2.0"
+    author = "osp"
+    url = "https://github.com/open-simulation-platform/libcosim.git"
+    description = "A co-simulation library for C++"
+
+    # Binary configuration
+    package_type = "library"
+    settings = "os", "compiler", "build_type", "arch"
     options = {
         "shared": [True, False],
+        "fPIC": [True, False],
         "proxyfmu": [True, False],
-        "no_fmi_logging": [True, False]}
-    default_options = (
-        "proxyfmu=False",
-        "shared=True",
-        "no_fmi_logging=False"
-    )
+        "no_fmi_logging": [True, False],
+    }
+    default_options = {
+        "shared": True,
+        "fPIC": True,
+        "proxyfmu": False,
+        "no_fmi_logging": False,
+    }
 
-    def is_tests_enabled(self):
-        return os.getenv("LIBCOSIM_RUN_TESTS_ON_CONAN_BUILD", "False").lower() in ("true", "1")
+    # Dependencies/requirements
+    def requirements(self):
+        self.tool_requires("cmake/[>=3.19]")
+        self.requires("fmilibrary/[~2.3]")
+        self.requires("libzip/[>=1.7 <1.10]") # 1.10 deprecates some functions we use
+        self.requires("ms-gsl/[>=3 <5]", transitive_headers=True)
+        if self.options.proxyfmu:
+            self.requires("proxyfmu/0.3.2@osp/testing-feature_conan-2")
+            self.requires("boost/[~1.81]", transitive_headers=True) # Required by Thrift
+        else:
+            self.requires("boost/[>=1.71]", transitive_headers=True)
+        self.requires("yaml-cpp/[~0.8]")
+        self.requires("xerces-c/[~3.2]")
 
-    def set_version(self):
-        self.version = tools.load(path.join(self.recipe_folder, "version.txt")).strip()
+    # Exports
+    exports = "version.txt"
+    exports_sources = "*"
+
+    # Build steps
+
+    def layout(self):
+        cmake_layout(self)
+
+    def config_options(self):
+        if self.settings.os == "Windows":
+            del self.options.fPIC
 
     def configure(self):
-        self.options["boost"].shared = self.options.shared
-        self.options["fmilibrary"].shared = self.options.shared
-        self.options["libzip"].shared = self.options.shared
-        self.options["yaml-cpp"].shared = self.options.shared
-        self.options["xerces-c"].shared = self.options.shared
+        if self.options.shared:
+            self.options.rm_safe("fPIC")
+        self.options["*"].shared = self.options.shared
 
-    def requirements(self):
-        if self.options.proxyfmu:
-            self.requires("proxyfmu/0.3.1@osp/stable")
-
-    def imports(self):
-        binDir = os.path.join("output", str(self.settings.build_type).lower(), "bin")
-        self.copy("proxyfmu*", dst=binDir, src="bin", keep_path=False)
-        self.copy("proxyfmu*", dst="tests", src="bin", keep_path=False)
-        self.copy("*.dll", dst=binDir, keep_path=False)
-        self.copy("*.pdb", dst=binDir, keep_path=False)
-
-    def configure_cmake(self):
-        cmake = CMake(self)
-        cmake.definitions["LIBCOSIM_USING_CONAN"] = "ON"
-        cmake.definitions["LIBCOSIM_BUILD_APIDOC"] = "OFF"
-        cmake.definitions["LIBCOSIM_BUILD_TESTS"] = self.is_tests_enabled()
-        cmake.definitions["BUILD_SHARED_LIBS"] = self.options.shared
-        cmake.definitions["LIBCOSIM_NO_FMI_LOGGING"] = self.options.no_fmi_logging
-        if self.options.proxyfmu:
-            cmake.definitions["LIBCOSIM_WITH_PROXYFMU"] = "ON"
-        cmake.configure()
-        return cmake
+    def generate(self):
+        # Copy dependency DLLs to the folder where executables (tests, mainly)
+        # will be placed, so it's easier to run them.
+        bindir = os.path.join(
+            self.build_folder,
+            "output",
+            str(self.settings.build_type).lower(),
+            "bin")
+        for dep in self.dependencies.values():
+            for depdir in dep.cpp_info.bindirs:
+                copy(self, "*.dll", depdir, bindir, keep_path=False)
+                copy(self, "*.pdb", depdir, bindir, keep_path=False)
+        # Generate CMake toolchain file
+        tc = CMakeToolchain(self)
+        tc.cache_variables["LIBCOSIM_BUILD_APIDOC"] = False
+        tc.cache_variables["LIBCOSIM_BUILD_TESTS"] = self._is_tests_enabled()
+        tc.cache_variables["LIBCOSIM_NO_FMI_LOGGING"] = self.options.no_fmi_logging
+        tc.cache_variables["LIBCOSIM_WITH_PROXYFMU"] = self.options.proxyfmu
+        tc.generate()
+        CMakeDeps(self).generate()
 
     def build(self):
-        cmake = self.configure_cmake()
+        cmake = CMake(self)
+        cmake.configure()
         cmake.build()
-        if self.is_tests_enabled():
-            env_run = RunEnvironment(self)
-            with tools.environment_append(env_run.vars):
-                cmake.test(output_on_failure=True)
-
+        if self._is_tests_enabled():
+            env = VirtualRunEnv(self).environment()
+            env.define("CTEST_OUTPUT_ON_FAILURE", "ON")
+            with env.vars(self).apply():
+                cmake.test()
 
     def package(self):
-        cmake = self.configure_cmake()
+        cmake = CMake(self)
         cmake.install()
 
     def package_info(self):
         self.cpp_info.libs = ["cosim"]
+        # Tell consumers to use "our" CMake package config file.
+        self.cpp_info.builddirs.append(".")
+        self.cpp_info.set_property("cmake_find_mode", "none")
+
+    def validate(self):
+        if self.options.shared and not self.dependencies["boost"].options.shared:
+            raise ConanInvalidConfiguration("Option libcosim:shared=True also requires option boost:shared=True")
+
+    # Helper functions
+
+    def _is_tests_enabled(self):
+        return os.getenv("LIBCOSIM_RUN_TESTS_ON_CONAN_BUILD", "False").lower() in ("true", "1")

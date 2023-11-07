@@ -1,20 +1,17 @@
 @PACKAGE_INIT@
+
 include ("@PACKAGE_targetsFile@")
 
 include(CMakeFindDependencyMacro)
-
 list(APPEND CMAKE_MODULE_PATH "${PACKAGE_PREFIX_DIR}/@LIBCOSIM_CMAKE_INSTALL_DIR@")
-
-find_dependency(MS_GSL REQUIRED)
 find_dependency(Boost REQUIRED COMPONENTS date_time log)
 set(FMILibrary_USE_SHARED_LIB @FMILibrary_USE_SHARED_LIB@)
-find_dependency(FMILibrary REQUIRED)
-find_dependency(LIBZIP REQUIRED)
-find_dependency(YAML_CPP REQUIRED)
+find_dependency(FMILibrary MODULE REQUIRED)
+find_dependency(libzip REQUIRED)
+find_dependency(Microsoft.GSL REQUIRED)
+find_dependency(yaml-cpp REQUIRED)
 find_dependency(XercesC REQUIRED)
-
 if(@LIBCOSIM_WITH_PROXYFMU@)
   find_dependency(PROXYFMU CONFIG REQUIRED)
 endif()
-
 list(REMOVE_AT CMAKE_MODULE_PATH -1)

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.9)
+cmake_minimum_required(VERSION 3.19)
 file(STRINGS "${CMAKE_SOURCE_DIR}/version.txt" projectVersion)
 project("libcosim" VERSION ${projectVersion})
 message("Current libcosim version: ${CMAKE_PROJECT_VERSION}\n")
@@ -13,8 +13,6 @@ option(LIBCOSIM_BUILD_TESTS "Build test suite" ON)
 option(LIBCOSIM_BUILD_APIDOC "Build API documentation (requires Doxygen)" ON)
 option(LIBCOSIM_BUILD_PRIVATE_APIDOC "Build private API documentation (only used if LIBCOSIM_BUILD_APIDOC=ON)" OFF)
 option(LIBCOSIM_STANDALONE_INSTALLATION "Whether to build for a standalone installation (Linux only; sets a relative RPATH)" OFF)
-option(LIBCOSIM_USING_CONAN "Whether Conan is used for package management" OFF)
-option(LIBCOSIM_USING_CONAN_AUTO_CONFIG "Whether Conan should be configured automatically by CMake" OFF)
 option(LIBCOSIM_WITH_PROXYFMU "Whether or not to build with proxy-fmu integration" OFF)
 option(LIBCOSIM_NO_FMI_LOGGING "Disable FMI logging during simulation" OFF)
 
@@ -98,44 +96,6 @@ set(LIBCOSIM_EXPORT_TARGET "${PROJECT_NAME}-targets")
 # Dependencies
 # ==============================================================================
 
-if(LIBCOSIM_USING_CONAN)
-    if(NOT LIBCOSIM_USING_CONAN_AUTO_CONFIG OR CONAN_EXPORTED)
-        # Opting for manual invocation of conan install prior to loading CMake
-        # or conan create has been invoked, setting CONAN_EXPORTED.
-        if(EXISTS ${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-            include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-            conan_basic_setup(NO_OUTPUT_DIRS)
-        else()
-            message(FATAL_ERROR "The file conanbuildinfo.cmake doesn't exist, you have to run conan install first")
-        endif()
-    else()
-        # Auto config specified and conan create is not running.
-        # We'll let CMake run the conan commands for us.
-
-        # This is where the magic happens.
-        # The file has been modified to search for the conan executable on linux systems.
-        include(cmake/conan.cmake)
-        conan_cmake_autodetect(settings)
-
-        set(proxyfmu_option False)
-        if(LIBCOSIM_WITH_PROXYFMU)
-            set(proxyfmu_option True)
-        endif()
-
-        # Force add osp remote
-        conan_add_remote(NAME osp URL https://osp.jfrog.io/artifactory/api/conan/conan-local)
-
-        # Run conan install with auto-detected settings and -b missing flag
-        # and -o proxyfmu=True if LIBCOSIM_WITH_PROXYFMU=ON
-        conan_cmake_run(
-                CONANFILE conanfile.py
-                OPTIONS proxyfmu=${proxyfmu_option}
-                BUILD missing
-                SETTINGS ${settings}
-                BASIC_SETUP NO_OUTPUT_DIRS)
-    endif()
-endif()
-
 set(Boost_components date_time log)
 if (LIBCOSIM_BUILD_TESTS)
     list(APPEND Boost_components timer unit_test_framework)
@@ -148,11 +108,11 @@ find_package(Boost REQUIRED COMPONENTS ${Boost_components})
 if(BUILD_SHARED_LIBS AND NOT DEFINED FMILibrary_USE_SHARED_LIB)
     set(FMILibrary_USE_SHARED_LIB TRUE)
 endif()
-find_package(FMILibrary REQUIRED)
-find_package(LIBZIP REQUIRED)
-find_package(MS_GSL REQUIRED)
-find_package(YAML_CPP REQUIRED)
-find_package(XercesC REQUIRED)
+find_package(FMILibrary MODULE REQUIRED)
+find_package(libzip REQUIRED)
+find_package(Microsoft.GSL REQUIRED)
+find_package(yaml-cpp REQUIRED)
+find_package(XercesC MODULE REQUIRED)
 if(LIBCOSIM_WITH_PROXYFMU)
     find_package(PROXYFMU CONFIG REQUIRED)
 endif()
@@ -244,9 +204,6 @@ install(FILES "${versionFile}" DESTINATION "${LIBCOSIM_CMAKE_INSTALL_DIR}")
 # Install custom find modules
 install(FILES
         "${CMAKE_SOURCE_DIR}/cmake/FindFMILibrary.cmake"
-        "${CMAKE_SOURCE_DIR}/cmake/FindLIBZIP.cmake"
-        "${CMAKE_SOURCE_DIR}/cmake/FindMS_GSL.cmake"
-        "${CMAKE_SOURCE_DIR}/cmake/FindYAML_CPP.cmake"
         DESTINATION
         "${LIBCOSIM_CMAKE_INSTALL_DIR}"
 )

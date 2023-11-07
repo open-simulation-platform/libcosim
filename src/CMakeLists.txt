@@ -172,17 +172,19 @@ target_link_libraries(cosim
         Boost::boost
         Boost::date_time
         Boost::log
-        gsl
-    PRIVATE
+        Microsoft.GSL::GSL
+    # PRIVATE # Temporarily disabled due to https://github.com/conan-io/conan/issues/13302
         ${FMILibrary_LIBRARIES}
-        libzip::libzip
+        libzip::zip
         XercesC::XercesC
         yaml-cpp
     )
 
 if(LIBCOSIM_WITH_PROXYFMU)
     target_compile_definitions(cosim PRIVATE "HAS_PROXYFMU")
-    target_link_libraries(cosim PRIVATE proxyfmu::proxyfmu-client)
+    # The following dependency should be PRIVATE, but this has temporarily been
+    # disabled due to https://github.com/conan-io/conan/issues/13302
+    target_link_libraries(cosim PUBLIC proxyfmu::proxyfmu-client)
 endif ()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
