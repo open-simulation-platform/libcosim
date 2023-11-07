@@ -19,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04]
+        os: [ubuntu-latest]
         build_type: [Debug, Release]
         compiler_version: [9]
         shared_libs: [ON, OFF]
@@ -83,7 +83,7 @@ jobs:
       - name: Install prerequisites
         run: |
           pip3 install --upgrade setuptools pip
-          pip3 install conan==1.59
+          pip3 install conan
           choco install doxygen.install
           conan remote add osp https://osp.jfrog.io/artifactory/api/conan/conan-local --force
           conan install . -s build_type=${{ matrix.build_type }} -o shared=${{ matrix.shared }} -g deploy
