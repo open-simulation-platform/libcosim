@@ -19,7 +19,7 @@ jobs:
       - name: Generate Dockerfile
         run: |
           mkdir /tmp/osp-builder-docker
-          cat <<EOF >/tmp/osp-builder-docker
+          cat <<EOF >/tmp/osp-builder-docker/Dockerfile
           FROM debian:bookworm
           RUN apt-get update && apt-get install -y --no-install-recommends \
               cmake \
