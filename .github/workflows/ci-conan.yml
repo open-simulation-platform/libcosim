@@ -23,7 +23,7 @@ jobs:
         run: |
           mkdir /tmp/osp-builder-docker
           cat <<'EOF' >/tmp/osp-builder-docker/Dockerfile
-          FROM conanio/gcc${{ matrix.compiler_version }}-ubuntu18.04
+          FROM conanio/gcc${{ matrix.compiler_version }}-ubuntu16.04
           ENV CONAN_LOGIN_USERNAME_OSP=${{ secrets.osp_artifactory_usr }}
           ENV CONAN_PASSWORD_OSP=${{ secrets.osp_artifactory_pwd }}
           ENV CONAN_REVISIONS_ENABLED=1
