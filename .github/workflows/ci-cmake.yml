@@ -49,6 +49,7 @@ jobs:
           cmake --build .
           ctest --output-on-failure
           EOF
+          chmod 0755 /tmp/osp-builder-docker/entrypoint.sh
       - name: Build Docker image
         run: docker build -t osp-builder /tmp/osp-builder-docker/
       - name: Build cosim
