@@ -68,7 +68,7 @@ class LibcosimConan(ConanFile):
         self.options["*"].shared = self.options.shared
 
     def generate(self):
-        # Copy dependency DLLs to the folder where executables (tests, mainly)
+        # Copy dependencies to the folder where executables (tests, mainly)
         # will be placed, so it's easier to run them.
         bindir = os.path.join(
             self.build_folder,
@@ -79,6 +79,8 @@ class LibcosimConan(ConanFile):
             for depdir in dep.cpp_info.bindirs:
                 copy(self, "*.dll", depdir, bindir, keep_path=False)
                 copy(self, "*.pdb", depdir, bindir, keep_path=False)
+                copy(self, "proxyfmu*", depdir, bindir, keep_path=False)
+
         # Generate CMake toolchain file
         tc = CMakeToolchain(self)
         tc.cache_variables["LIBCOSIM_BUILD_APIDOC"] = False
