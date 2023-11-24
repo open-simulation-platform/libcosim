@@ -1,25 +1,21 @@
-name: libcosim CI without Conan
+name: CI without Conan
 
 # This workflow is triggered on pushes to the repository.
 on: [push]
 
 jobs:
-  cmake-on-linux:
-    name: CMake
+  linux:
+    name: Linux
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        # Note: The all-caps prefixes are part of CMake variable names, and
-        # therefore must be written exactly as they are. They're included here
-        # to make the build matrix easier to understand when viewed in the
-        # GitHub web interface.
-        build_type: [BUILD_TYPE=Debug, BUILD_TYPE=Release]
+        build_type: [Debug, Release]
         shared_libs: [SHARED_LIBS=ON, SHARED_LIBS=OFF]
     timeout-minutes: 35
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Generate Dockerfile
         run: |
           mkdir /tmp/osp-builder-docker
@@ -49,7 +45,7 @@ jobs:
           #!/bin/bash
           mkdir build
           cd build
-          cmake -DCMAKE_${{ matrix.build_type }} -DBUILD_${{ matrix.shared_libs }} /mnt/source
+          cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DBUILD_${{ matrix.shared_libs }} /mnt/source
           cmake --build .
           ctest --output-on-failure
           EOF
