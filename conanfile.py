@@ -106,6 +106,7 @@ class LibcosimConan(ConanFile):
 
     def package_info(self):
         self.cpp_info.libs = ["cosim"]
+        self.cpp_info.set_property("cmake_target_name", "libcosim::cosim")
         # Tell consumers to use "our" CMake package config file.
         self.cpp_info.builddirs.append(".")
         self.cpp_info.set_property("cmake_find_mode", "none")
