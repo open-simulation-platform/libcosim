@@ -18,6 +18,20 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - name: Create a conan dir
+        run: mkdir -p ~/.conan2
+      - name: Cache conan packages
+        id: cache-conan
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-conan-packages
+        with:
+          path: ~/.conan2
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/conan.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
       - name: Generate Dockerfile
         run: |
           mkdir /tmp/osp-builder-docker
@@ -36,6 +50,8 @@ jobs:
           set -eu
           cd /mnt/source
           conan remote add osp https://osp.jfrog.io/artifactory/api/conan/conan-local --force
+          echo "#########################"
+          ls ~
           REFNAME="${GITHUB_REF#refs/*/}"
           VERSION="v$(<version.txt)"
           if [[ $GITHUB_REF == refs/tags/* ]] && [[ $REFNAME == $VERSION ]]; then CHANNEL="stable"
