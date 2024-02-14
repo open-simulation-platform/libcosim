@@ -18,20 +18,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - name: Create a conan dir
-        run: mkdir -p ~/.conan2
-      - name: Cache conan packages
-        id: cache-conan
-        uses: actions/cache@v3
-        env:
-          cache-name: cache-conan-packages
-        with:
-          path: ~/.conan2
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/conan.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
       - name: Generate Dockerfile
         run: |
           mkdir /tmp/osp-builder-docker
@@ -50,8 +36,6 @@ jobs:
           set -eu
           cd /mnt/source
           conan remote add osp https://osp.jfrog.io/artifactory/api/conan/conan-local --force
-          echo "#########################"
-          ls ~
           REFNAME="${GITHUB_REF#refs/*/}"
           VERSION="v$(<version.txt)"
           if [[ $GITHUB_REF == refs/tags/* ]] && [[ $REFNAME == $VERSION ]]; then CHANNEL="stable"
@@ -62,13 +46,13 @@ jobs:
           fi
           conan create \
             --settings="build_type=${{ matrix.build_type }}" \
-            --options="libcosim/*:${{ matrix.option_proxyfmu }}" \
-            --options="libcosim/*:${{ matrix.option_shared }}" \
+            --options="${{ matrix.option_proxyfmu }}" \
+            --options="${{ matrix.option_shared }}" \
             --build=missing \
             --user=osp \
             --channel="${CHANNEL}" \
             .
-          conan upload --confirm --remote=osp 'libcosim/*'
+          conan upload --confirm --remote=osp '*'
           EOF
           chmod 0755 /tmp/osp-builder-docker/entrypoint.sh
       - name: Build Docker image
@@ -92,7 +76,7 @@ jobs:
         build_type: [Debug, Release]
         option_proxyfmu: ['proxyfmu=True', 'proxyfmu=False']
         option_shared: ['shared=True', 'shared=False']
-    timeout-minutes: 35
+    timeout-minutes: 120
 
     steps:
       - uses: actions/checkout@v4
@@ -117,11 +101,11 @@ jobs:
           fi
           conan create \
             --settings="build_type=${{ matrix.build_type }}" \
-            --options="libcosim/*:${{ matrix.option_proxyfmu }}" \
-            --options="libcosim/*:${{ matrix.option_shared }}" \
+            --options="${{ matrix.option_proxyfmu }}" \
+            --options="${{ matrix.option_shared }}" \
             --build=missing \
             --user=osp \
             --channel="${CHANNEL}" \
             .
       - name: Conan upload
-        run: conan upload --confirm --remote=osp 'libcosim/*'
+        run: conan upload --confirm --remote=osp '*'
