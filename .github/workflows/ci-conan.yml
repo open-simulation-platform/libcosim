@@ -46,13 +46,13 @@ jobs:
           fi
           conan create \
             --settings="build_type=${{ matrix.build_type }}" \
-            --options="libcosim/*:${{ matrix.option_proxyfmu }}" \
-            --options="libcosim/*:${{ matrix.option_shared }}" \
+            --options="${{ matrix.option_proxyfmu }}" \
+            --options="${{ matrix.option_shared }}" \
             --build=missing \
             --user=osp \
             --channel="${CHANNEL}" \
             .
-          conan upload --confirm --remote=osp 'libcosim/*'
+          conan upload --confirm --remote=osp '*'
           EOF
           chmod 0755 /tmp/osp-builder-docker/entrypoint.sh
       - name: Build Docker image
@@ -76,7 +76,7 @@ jobs:
         build_type: [Debug, Release]
         option_proxyfmu: ['proxyfmu=True', 'proxyfmu=False']
         option_shared: ['shared=True', 'shared=False']
-    timeout-minutes: 35
+    timeout-minutes: 120
 
     steps:
       - uses: actions/checkout@v4
@@ -101,11 +101,11 @@ jobs:
           fi
           conan create \
             --settings="build_type=${{ matrix.build_type }}" \
-            --options="libcosim/*:${{ matrix.option_proxyfmu }}" \
-            --options="libcosim/*:${{ matrix.option_shared }}" \
+            --options="${{ matrix.option_proxyfmu }}" \
+            --options="${{ matrix.option_shared }}" \
             --build=missing \
             --user=osp \
             --channel="${CHANNEL}" \
             .
       - name: Conan upload
-        run: conan upload --confirm --remote=osp 'libcosim/*'
+        run: conan upload --confirm --remote=osp '*'
