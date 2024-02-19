@@ -3,6 +3,12 @@ All notable changes to libcosim will be documented in this file. This includes n
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
+### [v0.10.3] - 2024-02-19
+##### Fixed
+* parseURI null check and error handling implemented.
+##### Changed
+* Upgraded Conan to v2
+
 ### [v0.10.2] - 2023-02-08
 ##### Fixed
 * Update to proxyfmu 0.3.1 due to a disconnection issue related to Thrift.
@@ -217,3 +223,4 @@ First OSP JIP partner release
 [v0.10.0]: https://github.com/open-simulation-platform/cse-core/compare/v0.9.0...v0.10.0
 [v0.10.1]: https://github.com/open-simulation-platform/cse-core/compare/v0.10.0...v0.10.1
 [v0.10.2]: https://github.com/open-simulation-platform/cse-core/compare/v0.10.1...v0.10.2
+[v0.10.3]: https://github.com/open-simulation-platform/cse-core/compare/v0.10.2...v0.10.3

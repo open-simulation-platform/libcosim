@@ -42,7 +42,7 @@ class LibcosimConan(ConanFile):
         self.requires("libzip/[>=1.7 <1.10]") # 1.10 deprecates some functions we use
         self.requires("ms-gsl/[>=3 <5]", transitive_headers=True)
         if self.options.proxyfmu:
-            self.requires("proxyfmu/0.3.2@osp/testing-feature_conan-2")
+            self.requires("proxyfmu/0.3.2@osp/stable")
             self.requires("boost/[~1.81]", transitive_headers=True) # Required by Thrift
         else:
             self.requires("boost/[>=1.71]", transitive_headers=True)
