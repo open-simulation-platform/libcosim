@@ -1,116 +1,56 @@
-name: libcosim CI CMake
+name: CI without Conan
 
 # This workflow is triggered on pushes to the repository.
 on: [push]
 
-env:
-  CONAN_LOGIN_USERNAME_OSP: ${{ secrets.osp_artifactory_usr }}
-  CONAN_PASSWORD_OSP: ${{ secrets.osp_artifactory_pwd }}
-  CONAN_REVISIONS_ENABLED: 1
-  CONAN_NON_INTERACTIVE: 1
-
 jobs:
-  cmake-on-linux:
-    name: CMake
-    runs-on: ${{ matrix.os }}
-    env:
-      CC: gcc-${{ matrix.compiler_version }}  
-      CXX: g++-${{ matrix.compiler_version }}
+  linux:
+    name: Linux
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04]
         build_type: [Debug, Release]
-        compiler_version: [9]
-        shared_libs: [ON, OFF]
+        shared_libs: [SHARED_LIBS=ON, SHARED_LIBS=OFF]
     timeout-minutes: 35
 
     steps:
-      - uses: actions/checkout@v3
-      - name: Install prerequisites
+      - uses: actions/checkout@v4
+      - name: Generate Dockerfile
         run: |
-          sudo apt-get install -y --no-install-recommends \
-            doxygen \
-            libboost-all-dev \
-            libmsgsl-dev \
-            libyaml-cpp-dev \
-            libxerces-c-dev \
-            libzip-dev
-          wget \
+          mkdir /tmp/osp-builder-docker
+          cat <<EOF >/tmp/osp-builder-docker/Dockerfile
+          FROM debian:bookworm
+          RUN apt-get update && apt-get install -y --no-install-recommends \
+              cmake \
+              build-essential \
+              doxygen \
+              wget \
+              libboost-all-dev \
+              libmsgsl-dev \
+              libyaml-cpp-dev \
+              libxerces-c-dev \
+              libzip-dev zipcmp zipmerge ziptool
+          RUN wget \
+              --no-check-certificate \
               "https://github.com/viproma/debian-fmilib/releases/download/debian%2F2.0.3-1/libfmilib2_2.0.3-1_amd64.deb" \
               "https://github.com/viproma/debian-fmilib/releases/download/debian%2F2.0.3-1/libfmilib2-dev_2.0.3-1_amd64.deb"
-          sudo dpkg -i libfmilib2_2.0.3-1_amd64.deb libfmilib2-dev_2.0.3-1_amd64.deb
-      - name: CMake - configure
+          RUN dpkg -i libfmilib2_2.0.3-1_amd64.deb libfmilib2-dev_2.0.3-1_amd64.deb
+          COPY entrypoint.sh /
+          ENTRYPOINT /entrypoint.sh
+          EOF
+      - name: Generate entrypoint.sh
         run: |
-          cmake \
-            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
-            -DCMAKE_PREFIX_PATH=fmilibrary \
-            -DCMAKE_INSTALL_PREFIX=install \
-            -DBUILD_SHARED_LIBS=${{ matrix.shared_libs }} \
-            -B build
-      - name: CMake - build
-        run: cmake --build build
-      - name: CMake - build doc
-        run: cmake --build build --target doc
-      - name: CMake - test
-        run: |
+          cat <<'EOF' >/tmp/osp-builder-docker/entrypoint.sh
+          #!/bin/bash
+          mkdir build
           cd build
-          ctest
-      - name: CMake - install
-        run: |
-            cmake --build build --target install
-            cmake --build build --target install-doc
-      - name: Upload artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: libcosim-${{ runner.os }}-${{ matrix.build_type }}-gcc${{ matrix.compiler_version }}
-          path: install
-
-
-  cmake-on-windows:
-    name: CMake
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [windows-2019]
-        build_type: [Debug, Release]
-        shared: ["True", "False"]
-    timeout-minutes: 35
-
-    steps:
-      - uses: actions/checkout@v3
-      - name: Install prerequisites
-        run: |
-          pip3 install --upgrade setuptools pip
-          pip3 install conan==1.59
-          choco install doxygen.install
-          conan remote add osp https://osp.jfrog.io/artifactory/api/conan/conan-local --force
-          conan install . -s build_type=${{ matrix.build_type }} -o shared=${{ matrix.shared }} -g deploy
-      - name: CMake - configure
-        shell: bash
-        run: |
-          cmake . \
-            -A x64 \
-            -DCMAKE_PREFIX_PATH="ms-gsl;boost;fmilibrary;libzip;xerces-c;yaml-cpp;bzip2;zlib;xz_utils" \
-            -DCMAKE_INSTALL_PREFIX=install \
-            -DBUILD_SHARED_LIBS=${{ matrix.shared }} \
-            -B build
-      - name: CMake - build
-        run: cmake --build build --config ${{ matrix.build_type }}
-      - name: CMake - build doc
-        run: cmake --build build --config ${{ matrix.build_type }} --target doc
-      - name: CMake - test
-        run: |
-          .\activate_run.ps1
-          cd build
-          ctest -C ${{ matrix.build_type }}
-      - name: CMake - install
-        run: |
-            cmake --build build --config ${{ matrix.build_type }} --target install
-            cmake --build build --config ${{ matrix.build_type }} --target install-doc
-      - name: Upload artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: libcosim-${{ runner.os }}-${{ matrix.build_type }}
-          path: install
+          cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DBUILD_${{ matrix.shared_libs }} /mnt/source
+          cmake --build .
+          ctest --output-on-failure
+          EOF
+          chmod 0755 /tmp/osp-builder-docker/entrypoint.sh
+      - name: Build Docker image
+        run: docker build -t osp-builder /tmp/osp-builder-docker/
+      - name: Build cosim
+        run: docker run --rm -v $(pwd):/mnt/source:ro osp-builder

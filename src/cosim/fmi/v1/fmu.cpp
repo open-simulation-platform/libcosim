@@ -13,7 +13,7 @@
 #include "cosim/fmi/windows.hpp"
 #include "cosim/log/logger.hpp"
 
-#include <gsl/gsl_util>
+#include <gsl/util>
 
 #include <algorithm>
 #include <cassert>
@@ -433,7 +433,7 @@ void slave_instance::get_boolean_variables(
             make_error_code(errc::model_error),
             last_log_record(instanceName_).message);
     }
-    for (int i = 0; i < values.size(); ++i) {
+    for (std::size_t i = 0; i < values.size(); ++i) {
         values[i] = (fmiValues[i] != fmi1_false);
     }
 }
@@ -453,7 +453,7 @@ void slave_instance::get_string_variables(
             make_error_code(errc::model_error),
             last_log_record(instanceName_).message);
     }
-    for (int i = 0; i < values.size(); ++i) {
+    for (std::size_t i = 0; i < values.size(); ++i) {
         values[i] = (fmiValues[i] == nullptr) ? std::string()
                                               : std::string(fmiValues[i]);
     }
@@ -507,7 +507,7 @@ void slave_instance::set_boolean_variables(
     COSIM_INPUT_CHECK(variables.size() == values.size());
     if (variables.empty()) return;
     std::vector<fmi1_boolean_t> fmiValues(values.size());
-    for (int i = 0; i < values.size(); ++i) {
+    for (std::size_t i = 0; i < values.size(); ++i) {
         fmiValues[i] =
             static_cast<fmi1_boolean_t>(values[i] ? fmi1_true : fmi1_false);
     }
@@ -532,7 +532,7 @@ void slave_instance::set_string_variables(
     COSIM_INPUT_CHECK(variables.size() == values.size());
     if (variables.empty()) return;
     std::vector<fmi1_string_t> fmiValues(values.size());
-    for (int i = 0; i < values.size(); ++i) {
+    for (std::size_t i = 0; i < values.size(); ++i) {
         fmiValues[i] = values[i].c_str();
     }
     const auto status = fmi1_import_set_string(

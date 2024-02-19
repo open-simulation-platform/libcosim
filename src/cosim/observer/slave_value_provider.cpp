@@ -24,7 +24,7 @@ void get(
     if (samples.empty()) {
         throw std::out_of_range("no samples available");
     }
-    for (int i = 0; i < values.size(); i++) {
+    for (std::size_t i = 0; i < values.size(); i++) {
         value_reference valueRef = variables[i];
         values[i] = samples.at(valueRef);
     }
