@@ -282,7 +282,7 @@ private:
            << std::setw(keyWidth_) << "name:" << md.name << std::endl
            << std::setw(keyWidth_) << "uuid:" << md.uuid << std::endl
            << std::setw(keyWidth_) << "description:" << md.description << std::endl
-           << std::setw(keyWidth_) << "author:" << md.description << std::endl
+           << std::setw(keyWidth_) << "author:" << md.author << std::endl
            << std::setw(keyWidth_) << "version:" << md.version << std::endl;
 
         ss << "variables:" << std::endl;
