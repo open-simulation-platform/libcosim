@@ -118,10 +118,12 @@ std::shared_ptr<model> fmu_file_uri_sub_resolver::lookup_model(const uri& modelU
 {
     assert(modelUri.scheme().has_value());
     if (*modelUri.scheme() != "file") return nullptr;
+#ifndef _WIN32
     if (modelUri.authority().has_value() &&
         !(modelUri.authority()->empty() || *modelUri.authority() == "localhost")) {
         return nullptr;
     }
+#endif
     if (modelUri.query().has_value() || modelUri.fragment().has_value()) {
         BOOST_LOG_SEV(log::logger(), log::warning)
             << "Query and/or fragment component(s) in a file:// URI were ignored: "
