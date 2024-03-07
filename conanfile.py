@@ -43,9 +43,9 @@ class LibcosimConan(ConanFile):
         self.requires("ms-gsl/[>=3 <5]", transitive_headers=True)
         if self.options.proxyfmu:
             self.requires("proxyfmu/0.3.2@osp/stable")
-            self.requires("boost/[~1.81]", transitive_headers=True) # Required by Thrift
+            self.requires("boost/[~1.81]", transitive_headers=True, transitive_libs=True) # Required by Thrift
         else:
-            self.requires("boost/[>=1.71]", transitive_headers=True)
+            self.requires("boost/[>=1.71]", transitive_headers=True, transitive_libs=True)
         self.requires("yaml-cpp/[~0.8]")
         self.requires("xerces-c/[~3.2]")
 
