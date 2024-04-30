@@ -7,7 +7,6 @@
 
 #include <chrono>
 #include <thread>
-
 typedef std::chrono::steady_clock Time;
 constexpr std::chrono::microseconds MIN_SLEEP(100);
 
@@ -37,6 +36,12 @@ public:
         const auto newHash = std::hash<real_time_config>()(*config_);
         if (newHash != configHashValue_) {
             start(currentTime);
+            auto step_duration_ = config_->sampling_period_to_monitor.load();
+            if (step_duration_ > 0) {
+                sampling_period_to_monitor_ = to_duration(config_->sampling_period_to_monitor.load());
+            } else {
+                sampling_period_to_monitor_ = std::nullopt;
+            }
             configHashValue_ = newHash;
         }
         double rtfTarget = config_->real_time_factor_target.load();
@@ -72,6 +77,19 @@ private:
     std::shared_ptr<real_time_config> config_;
     size_t configHashValue_;
     std::shared_ptr<real_time_metrics> metrics_;
+    std::optional<duration> sampling_period_to_monitor_ = std::nullopt;
+
+    void update_rolling_average_real_time_factor(
+        Time::time_point& currentTime,
+        time_point& currentSimulationTime,
+        const duration& elapsedRealTime)
+    {
+        const auto elapsedSimTime = currentSimulationTime - rtSimulationStartTime_;
+        metrics_->rolling_average_real_time_factor = elapsedSimTime.count() / (1.0 * elapsedRealTime.count());
+        rtStartTime_ = currentTime;
+        rtSimulationStartTime_ = currentSimulationTime;
+        rtCounter_ = 0L;
+    }
 
     void update_real_time_factor(Time::time_point currentTime, time_point currentSimulationTime)
     {
@@ -79,14 +97,16 @@ private:
         const auto relativeRealTime = currentTime - startTime_;
         metrics_->total_average_real_time_factor = relativeSimTime.count() / (1.0 * relativeRealTime.count());
 
-        if (rtCounter_ >= config_->steps_to_monitor.load()) {
-            const auto elapsedSimTime = currentSimulationTime - rtSimulationStartTime_;
+        if (sampling_period_to_monitor_.has_value()) {
             const auto elapsedRealTime = currentTime - rtStartTime_;
 
-            metrics_->rolling_average_real_time_factor = elapsedSimTime.count() / (1.0 * elapsedRealTime.count());
-            rtStartTime_ = currentTime;
-            rtSimulationStartTime_ = currentSimulationTime;
-            rtCounter_ = 0L;
+            if (elapsedRealTime > sampling_period_to_monitor_.value()) {
+                update_rolling_average_real_time_factor(currentTime, currentSimulationTime, elapsedRealTime);
+            }
+        } else if (rtCounter_ >= config_->steps_to_monitor.load()) {
+            const auto elapsedRealTime = currentTime - rtStartTime_;
+
+            update_rolling_average_real_time_factor(currentTime, currentSimulationTime, elapsedRealTime);
         }
         rtCounter_++;
     }
