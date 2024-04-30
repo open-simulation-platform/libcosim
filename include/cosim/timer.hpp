@@ -15,7 +15,6 @@
 
 #include <atomic>
 #include <memory>
-#include <mutex>
 
 namespace cosim
 {
