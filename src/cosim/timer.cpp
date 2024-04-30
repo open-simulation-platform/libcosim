@@ -36,9 +36,9 @@ public:
         const auto newHash = std::hash<real_time_config>()(*config_);
         if (newHash != configHashValue_) {
             start(currentTime);
-            auto step_duration_ = config_->sampling_period_to_monitor.load();
-            if (step_duration_ > 0) {
-                sampling_period_to_monitor_ = to_duration(config_->sampling_period_to_monitor.load());
+            auto samping_period = config_->sampling_period_to_monitor.load();
+            if (samping_period > 0) {
+                sampling_period_to_monitor_ = to_duration(samping_period);
             } else {
                 sampling_period_to_monitor_ = std::nullopt;
             }
