@@ -36,9 +36,9 @@ public:
         const auto newHash = std::hash<real_time_config>()(*config_);
         if (newHash != configHashValue_) {
             start(currentTime);
-            auto samping_period = config_->sampling_period_to_monitor.load();
-            if (samping_period > 0) {
-                sampling_period_to_monitor_ = to_duration(samping_period);
+            const auto sampling_period = config_->sampling_period_to_monitor.load();
+            if (sampling_period.count() > 0) {
+                sampling_period_to_monitor_ = sampling_period;
             } else {
                 sampling_period_to_monitor_ = std::nullopt;
             }
@@ -77,14 +77,14 @@ private:
     std::shared_ptr<real_time_config> config_;
     size_t configHashValue_;
     std::shared_ptr<real_time_metrics> metrics_;
-    std::optional<duration> sampling_period_to_monitor_ = std::nullopt;
+    std::optional<std::chrono::milliseconds> sampling_period_to_monitor_ = std::nullopt;
 
     void update_rolling_average_real_time_factor(
         Time::time_point& currentTime,
         time_point& currentSimulationTime,
         const duration& elapsedRealTime)
     {
-        const auto elapsedSimTime = currentSimulationTime - rtSimulationStartTime_;
+        const auto elapsedSimTime = std::chrono::duration_cast<duration>(currentSimulationTime - rtSimulationStartTime_);
         metrics_->rolling_average_real_time_factor = elapsedSimTime.count() / (1.0 * elapsedRealTime.count());
         rtStartTime_ = currentTime;
         rtSimulationStartTime_ = currentSimulationTime;
@@ -93,8 +93,8 @@ private:
 
     void update_real_time_factor(Time::time_point currentTime, time_point currentSimulationTime)
     {
-        const auto relativeSimTime = currentSimulationTime - simulationStartTime_;
-        const auto relativeRealTime = currentTime - startTime_;
+        const auto relativeSimTime = std::chrono::duration_cast<duration>(currentSimulationTime - simulationStartTime_);
+        const auto relativeRealTime = std::chrono::duration_cast<duration>(currentTime - startTime_);
         metrics_->total_average_real_time_factor = relativeSimTime.count() / (1.0 * relativeRealTime.count());
 
         if (sampling_period_to_monitor_.has_value()) {

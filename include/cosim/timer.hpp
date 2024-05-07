@@ -38,13 +38,13 @@ struct real_time_config
     std::atomic<int> steps_to_monitor = 5;
 
     /**
-     *  A sampling period in second(s) used in the rolling average real time factor calculation.
+     *  A sampling period in real time (wall clock) in milliseconds used in the rolling average real time factor calculation.
      *  This can be useful when simulation step size is small and a fixed value for `steps_to_monitor`
      *  would not compute an accurate rolling average real time factor.
      *  When the value is greater than zero, the real time factor is computed periodically using the
      *  specified time instead of the `steps_to_monitor` value.
      */
-    std::atomic<double> sampling_period_to_monitor = -1;
+    std::atomic<std::chrono::milliseconds> sampling_period_to_monitor = std::chrono::milliseconds(-1);
 };
 
 } // namespace cosim
@@ -63,7 +63,7 @@ public:
         boost::hash_combine(seed, v.real_time_simulation.load());
         boost::hash_combine(seed, v.real_time_factor_target.load());
         boost::hash_combine(seed, v.steps_to_monitor.load());
-        boost::hash_combine(seed, v.sampling_period_to_monitor.load());
+        boost::hash_combine(seed, v.sampling_period_to_monitor.load().count());
         return seed;
     }
 };
