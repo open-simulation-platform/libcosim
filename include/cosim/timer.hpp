@@ -44,7 +44,7 @@ struct real_time_config
      *  When the value is greater than zero, the real time factor is computed periodically using the
      *  specified time instead of the `steps_to_monitor` value.
      */
-    std::atomic<std::chrono::milliseconds> sampling_period_to_monitor = std::chrono::milliseconds(-1);
+    std::atomic<int> sampling_period_to_monitor = -1;
 };
 
 } // namespace cosim
@@ -63,7 +63,7 @@ public:
         boost::hash_combine(seed, v.real_time_simulation.load());
         boost::hash_combine(seed, v.real_time_factor_target.load());
         boost::hash_combine(seed, v.steps_to_monitor.load());
-        boost::hash_combine(seed, v.sampling_period_to_monitor.load().count());
+        boost::hash_combine(seed, v.sampling_period_to_monitor.load());
         return seed;
     }
 };
