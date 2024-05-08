@@ -7,7 +7,6 @@
 
 #include <chrono>
 #include <thread>
-
 typedef std::chrono::steady_clock Time;
 constexpr std::chrono::microseconds MIN_SLEEP(100);
 
@@ -37,6 +36,12 @@ public:
         const auto newHash = std::hash<real_time_config>()(*config_);
         if (newHash != configHashValue_) {
             start(currentTime);
+            const auto sampling_period = config_->sampling_period_to_monitor.load();
+            if (sampling_period.count() > 0) {
+                sampling_period_to_monitor_ = sampling_period;
+            } else {
+                sampling_period_to_monitor_ = std::nullopt;
+            }
             configHashValue_ = newHash;
         }
         double rtfTarget = config_->real_time_factor_target.load();
@@ -72,21 +77,39 @@ private:
     std::shared_ptr<real_time_config> config_;
     size_t configHashValue_;
     std::shared_ptr<real_time_metrics> metrics_;
+    std::optional<std::chrono::milliseconds> sampling_period_to_monitor_ = std::nullopt;
+
+    template<typename Rep, typename Period>
+    void update_rolling_average_real_time_factor(
+        const Time::time_point& currentTime,
+        const time_point& currentSimulationTime,
+        const std::chrono::duration<Rep, Period>& elapsedRealTime)
+    {
+        const auto elapsedSimTime = currentSimulationTime - rtSimulationStartTime_;
+
+        metrics_->rolling_average_real_time_factor =
+            std::chrono::duration_cast<cosim::duration>(elapsedSimTime).count() / (1.0 * std::chrono::duration_cast<cosim::duration>(elapsedRealTime).count());
+        rtStartTime_ = currentTime;
+        rtSimulationStartTime_ = currentSimulationTime;
+        rtCounter_ = 0L;
+    }
 
     void update_real_time_factor(Time::time_point currentTime, time_point currentSimulationTime)
     {
-        const auto relativeSimTime = currentSimulationTime - simulationStartTime_;
-        const auto relativeRealTime = currentTime - startTime_;
+        const auto relativeSimTime =  std::chrono::duration_cast<cosim::duration>(currentSimulationTime - simulationStartTime_);
+        const auto relativeRealTime =  std::chrono::duration_cast<cosim::duration>(currentTime - startTime_);
         metrics_->total_average_real_time_factor = relativeSimTime.count() / (1.0 * relativeRealTime.count());
 
-        if (rtCounter_ >= config_->steps_to_monitor.load()) {
-            const auto elapsedSimTime = currentSimulationTime - rtSimulationStartTime_;
+        if (sampling_period_to_monitor_.has_value()) {
             const auto elapsedRealTime = currentTime - rtStartTime_;
 
-            metrics_->rolling_average_real_time_factor = elapsedSimTime.count() / (1.0 * elapsedRealTime.count());
-            rtStartTime_ = currentTime;
-            rtSimulationStartTime_ = currentSimulationTime;
-            rtCounter_ = 0L;
+            if (elapsedRealTime > sampling_period_to_monitor_.value()) {
+                const auto elapsedSimTime = currentSimulationTime - rtSimulationStartTime_;
+                update_rolling_average_real_time_factor(currentTime, currentSimulationTime, elapsedRealTime);
+            }
+        } else if (rtCounter_ >= config_->steps_to_monitor.load()) {
+            const auto elapsedRealTime = currentTime - rtStartTime_;
+            update_rolling_average_real_time_factor(currentTime, currentSimulationTime, elapsedRealTime);
         }
         rtCounter_++;
     }
