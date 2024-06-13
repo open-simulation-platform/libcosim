@@ -211,7 +211,7 @@ scenario::scenario parse_scenario(
         auto triggerTime = trigger.as<double>();
         auto time = to_time_point(triggerTime);
 
-        const auto& [index, simulator] =
+        const auto [index, simulator] =
             find_simulator(simulators, specified_or_default(event, "model", defaultOpts.model));
         auto varName =
             specified_or_default(event, "variable", defaultOpts.variable);
