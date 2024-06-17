@@ -9,7 +9,7 @@
 
         <ssd:Elements>
 
-            <ssd:Component name="CraneController" source="proxyfmu://localhost?file=../CraneController.fmu">
+            <ssd:Component name="CraneController" source="proxyfmu://localhost?file=../../../fmi2/CraneController.fmu">
                 <ssd:Connectors>
                     <ssd:Connector name="p_Crane.e[1]" kind="output">
                         <ssc:Real/>
@@ -41,7 +41,7 @@
                 </ssd:Connectors>
             </ssd:Component>
 
-            <ssd:Component name="KnuckleBoomCrane" source="proxyfmu://localhost?file=../KnuckleBoomCrane.fmu">
+            <ssd:Component name="KnuckleBoomCrane" source="proxyfmu://localhost?file=../../../fmi2/KnuckleBoomCrane.fmu">
                 <ssd:Connectors>
                     <ssd:Connector name="p_Crane.e[1]" kind="input">
                         <ssc:Real/>

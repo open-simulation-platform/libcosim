@@ -6,7 +6,7 @@
     <BaseStepSize>1e-4</BaseStepSize>
     <Algorithm>fixedStep</Algorithm>
     <Simulators>
-        <Simulator name="CraneController" source="proxyfmu://localhost?file=../ssp/demo/CraneController.fmu" stepSize="2e-4">
+        <Simulator name="CraneController" source="proxyfmu://localhost?file=../fmi2/CraneController.fmu" stepSize="2e-4">
             <InitialValues>
                 <InitialValue variable="cl1_min">
                     <Real value="2.2"/>
@@ -16,7 +16,7 @@
                 </InitialValue>
             </InitialValues>
         </Simulator>
-        <Simulator name="KnuckleBoomCrane" source="proxyfmu://localhost?file=../ssp/demo/KnuckleBoomCrane.fmu" stepSize="2e-4"/>
+        <Simulator name="KnuckleBoomCrane" source="proxyfmu://localhost?file=../fmi2/KnuckleBoomCrane.fmu" stepSize="2e-4"/>
         <Simulator name="TrueIdentity" source="proxyfmu://localhost?file=../fmi1/identity.fmu" stepSize="2.03e-4">
             <InitialValues>
                 <InitialValue variable="booleanIn">
