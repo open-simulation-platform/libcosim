@@ -133,6 +133,59 @@ public:
     virtual step_result do_step(
         time_point currentT,
         duration deltaT) = 0;
+
+    /// A type used for references to saved states (see `save_state()`).
+    using state_index = int;
+
+    /**
+     *  Saves the current state.
+     *
+     *  This will create and store a copy of the simulator's current internal
+     *  state, so that it can be restored at a later time.  The copy is stored
+     *  internally in the simulator, and must be referred to by the returned
+     *  `state_index`. The index is only valid for this particular simulator.
+     *
+     *  The function may be called at any point after `setup()` has been called.
+     *
+     *  \pre `this->model_description().can_save_state`
+     */
+    virtual state_index save_state() = 0;
+
+    /**
+     *  Saves the current state, overwriting a previously-saved state.
+     *
+     *  This function does the same as `save_state()`, except that it
+     *  overwrites a state which has previously been stored by that function.
+     *  The old index thereafter refers to the newly-saved state.
+     *
+     *  \pre `this->model_description().can_save_state`
+     */
+    virtual void save_state(state_index stateIndex) = 0;
+
+    /**
+     *  Restores a previously-saved state.
+     *
+     *  This restores the simulator to a state which has previously been saved
+     *  using `save_state()`.
+     *
+     *  Note that the saved state is supposed to be the *complete and exact*
+     *  state of the simulator at the moment `save_state()` was called. For example,
+     *  if the state was saved while the simulator was in initialisation mode
+     *  (between `setup()` and `start_simulation()`), then it will be restored
+     *  in that mode, and `start_simulation()` must be called before the
+     *  simulation can start.  Similarly, if it is saved at logical time `t`,
+     *  then the first `do_step()` call after restoration must start at `t`.
+     */
+    virtual void restore_state(state_index stateIndex) = 0;
+
+    /**
+     *  Frees all resources (e.g. memory) associated with a saved state.
+     *
+     *  After this, the state may no longer be restored with `restore_state()`,
+     *  nor may it be overwritten with `save_state(state_index)`.  The
+     *  implementation is free to reuse the same `state_index` at a later point.
+     */
+    virtual void release_state(state_index stateIndex) = 0;
 };
 
 } // namespace cosim

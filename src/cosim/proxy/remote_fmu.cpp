@@ -71,6 +71,7 @@ std::unique_ptr<cosim::model_description> parse_model_description(const proxyfmu
     _md->author = md.author;
     _md->name = md.modelName;
     _md->description = md.description;
+    _md->can_save_state = false; // Not supported by proxyfmu
 
     for (auto& var : md.modelVariables) {
         cosim::variable_description vd;

@@ -78,6 +78,8 @@ fmu::fmu(
                 << vd.name << " will be ignored";
         }
     }
+    modelDescription_.can_save_state =
+        fmi2_import_get_capability(handle_, fmi2_cs_canGetAndSetFMUstate) != 0;
 }
 
 
@@ -569,6 +571,55 @@ void slave_instance::set_string_variables(
 }
 
 
+slave::state_index slave_instance::save_state()
+{
+    saved_state currentState;
+    copy_current_state(currentState);
+    if (savedStatesFreelist_.empty()) {
+        savedStates_.push_back(currentState);
+        return static_cast<state_index>(savedStates_.size()-1);
+    } else {
+        const auto stateIndex = savedStatesFreelist_.front();
+        savedStatesFreelist_.pop();
+        savedStates_.at(stateIndex) = currentState;
+        return stateIndex;
+    }
+}
+
+
+void slave_instance::save_state(state_index stateIndex)
+{
+    copy_current_state(savedStates_.at(stateIndex));
+}
+
+
+void slave_instance::restore_state(state_index stateIndex)
+{
+    const auto& state  = savedStates_.at(stateIndex);
+    const auto status = fmi2_import_set_fmu_state(handle_, state.fmuState);
+    if (status != fmi2_status_ok && status != fmi2_status_warning) {
+        throw error(
+            make_error_code(errc::model_error),
+            last_log_record(instanceName_).message);
+    }
+    setupComplete_ = state.setupComplete;
+    simStarted_ = state.simStarted;
+}
+
+
+void slave_instance::release_state(state_index state)
+{
+    auto fmuState = savedStates_.at(state).fmuState;
+    savedStatesFreelist_.push(state);
+    const auto status = fmi2_import_free_fmu_state(handle_, &fmuState);
+    if (status != fmi2_status_ok && status != fmi2_status_warning) {
+        throw error(
+            make_error_code(errc::model_error),
+            last_log_record(instanceName_).message);
+    }
+}
+
+
 std::shared_ptr<v2::fmu> slave_instance::v2_fmu() const
 {
     return fmu_;
@@ -578,6 +629,19 @@ std::shared_ptr<v2::fmu> slave_instance::v2_fmu() const
 fmi2_import_t* slave_instance::fmilib_handle() const
 {
     return handle_;
+}
+
+
+void slave_instance::copy_current_state(saved_state& state)
+{
+    const auto status = fmi2_import_get_fmu_state(handle_, &state.fmuState);
+    if (status != fmi2_status_ok && status != fmi2_status_warning) {
+        throw error(
+            make_error_code(errc::model_error),
+            last_log_record(instanceName_).message);
+    }
+    state.setupComplete = setupComplete_;
+    state.simStarted = simStarted_;
 }
 
 

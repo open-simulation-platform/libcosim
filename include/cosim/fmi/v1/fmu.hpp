@@ -165,6 +165,11 @@ public:
         gsl::span<const value_reference> variables,
         gsl::span<const std::string> values) override;
 
+    state_index save_state() override;
+    void save_state(state_index overwriteState) override;
+    void restore_state(state_index state) override;
+    void release_state(state_index state) override;
+
     // fmi::slave_instance methods
     std::shared_ptr<fmi::fmu> fmu() const override
     {
