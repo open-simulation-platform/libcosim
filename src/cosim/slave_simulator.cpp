@@ -490,7 +490,8 @@ public:
         std::optional<time_point> stopTime,
         std::optional<double> relativeTolerance)
     {
-        return slave_->setup(startTime, stopTime, relativeTolerance);
+        slave_->setup(startTime, stopTime, relativeTolerance);
+        get_variables(duration::zero());
     }
 
     void do_iteration()
@@ -501,6 +502,7 @@ public:
 
     void start_simulation()
     {
+        set_variables(duration::zero());
         slave_->start_simulation();
         get_variables(duration::zero());
     }
