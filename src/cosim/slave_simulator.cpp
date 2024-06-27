@@ -487,15 +487,15 @@ private:
     void get_variables(duration deltaT)
     {
         slave_->get_variables(
-            &state_.variableValues,
+            &variableValues,
             gsl::make_span(state_.realGetCache.references),
             gsl::make_span(state_.integerGetCache.references),
             gsl::make_span(state_.booleanGetCache.references),
             gsl::make_span(state_.stringGetCache.references));
-        copy_contents(state_.variableValues.real, state_.realGetCache.originalValues);
-        copy_contents(state_.variableValues.integer, state_.integerGetCache.originalValues);
-        copy_contents(state_.variableValues.boolean, state_.booleanGetCache.originalValues);
-        copy_contents(state_.variableValues.string, state_.stringGetCache.originalValues);
+        copy_contents(variableValues.real, state_.realGetCache.originalValues);
+        copy_contents(variableValues.integer, state_.integerGetCache.originalValues);
+        copy_contents(variableValues.boolean, state_.booleanGetCache.originalValues);
+        copy_contents(variableValues.string, state_.stringGetCache.originalValues);
         state_.realGetCache.run_modifiers(deltaT);
         state_.integerGetCache.run_modifiers(deltaT);
         state_.booleanGetCache.run_modifiers(deltaT);
@@ -548,11 +548,13 @@ private:
         std::unordered_set<value_reference> modifiedIntegerVariables;
         std::unordered_set<value_reference> modifiedBooleanVariables;
         std::unordered_set<value_reference> modifiedStringVariables;
-
-        cosim::slave::variable_values variableValues;
     };
     state state_;
     std::unordered_map<cosim::slave::state_index, state> savedStates_;
+
+    // A buffer for get_variables() which we keep across function calls to
+    // avoid frequent allocations.
+    cosim::slave::variable_values variableValues;
 };
 
 
