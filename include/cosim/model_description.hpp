@@ -195,9 +195,6 @@ struct model_description
 
     /// Variable descriptions.
     std::vector<variable_description> variables;
-
-    /// Whether saving of state is supported.
-    bool can_save_state = false;
 };
 
 /// Getter for returning a variable description.

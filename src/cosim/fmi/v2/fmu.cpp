@@ -78,8 +78,6 @@ fmu::fmu(
                 << vd.name << " will be ignored";
         }
     }
-    modelDescription_.can_save_state =
-        fmi2_import_get_capability(handle_, fmi2_cs_canGetAndSetFMUstate) != 0;
 }
 
 
@@ -634,6 +632,11 @@ fmi2_import_t* slave_instance::fmilib_handle() const
 
 void slave_instance::copy_current_state(saved_state& state)
 {
+    if (!fmi2_import_get_capability(handle_, fmi2_cs_canGetAndSetFMUstate)) {
+        throw error(
+            make_error_code(errc::unsupported_feature),
+            instanceName_ + ": FMU does not support state saving");
+    }
     const auto status = fmi2_import_get_fmu_state(handle_, &state.fmuState);
     if (status != fmi2_status_ok && status != fmi2_status_warning) {
         throw error(

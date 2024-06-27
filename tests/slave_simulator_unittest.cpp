@@ -17,7 +17,6 @@ BOOST_AUTO_TEST_CASE(slave_simulator_save_state)
         cosim::filesystem::path(testDataDir) / "fmi2" / (modelName + ".fmu"));
     const auto modelDescription = fmu->model_description();
     BOOST_TEST(modelDescription->uuid == "{221063D2-EF4A-45FE-B954-B5BFEEA9A59B}");
-    BOOST_TEST_REQUIRE(modelDescription->can_save_state);
 
     const auto xVar = cosim::find_variable(*modelDescription, "x")->reference;
 

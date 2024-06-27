@@ -146,8 +146,6 @@ public:
      *  `state_index`. The index is only valid for this particular simulator.
      *
      *  The function may be called at any point after `setup()` has been called.
-     *
-     *  \pre `this->model_description().can_save_state`
      */
     virtual state_index save_state() = 0;
 
@@ -157,8 +155,6 @@ public:
      *  This function does the same as `save_state()`, except that it
      *  overwrites a state which has previously been stored by that function.
      *  The old index thereafter refers to the newly-saved state.
-     *
-     *  \pre `this->model_description().can_save_state`
      */
     virtual void save_state(state_index stateIndex) = 0;
 
