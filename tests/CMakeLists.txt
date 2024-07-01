@@ -21,6 +21,7 @@ set(unittests
     "fmi_v2_fmu_unittest"
     "orchestration_unittest"
     "scenario_parser_unittest"
+    "slave_simulator_unittest"
     "ssp_loader_unittest"
     "system_structure_unittest"
     "time_unittest"

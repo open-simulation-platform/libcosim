@@ -59,6 +59,14 @@ public:
     void set_string_variables(gsl::span<const value_reference> variables,
         gsl::span<const std::string> values) override;
 
+    state_index save_state() override;
+
+    void save_state(state_index stateIndex) override;
+
+    void restore_state(state_index stateIndex) override;
+
+    void release_state(state_index stateIndex) override;
+
     ~remote_slave() override;
 
 private:

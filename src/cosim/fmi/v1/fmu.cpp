@@ -549,6 +549,38 @@ void slave_instance::set_string_variables(
 }
 
 
+slave::state_index slave_instance::save_state()
+{
+    throw error(
+        make_error_code(errc::unsupported_feature),
+        "Getting and setting state not supported in FMI 1.0");
+}
+
+
+void slave_instance::save_state(state_index)
+{
+    throw error(
+        make_error_code(errc::unsupported_feature),
+        "Getting and setting state not supported in FMI 1.0");
+}
+
+
+void slave_instance::restore_state(state_index)
+{
+    throw error(
+        make_error_code(errc::unsupported_feature),
+        "Getting and setting state not supported in FMI 1.0");
+}
+
+
+void slave_instance::release_state(state_index)
+{
+    throw error(
+        make_error_code(errc::unsupported_feature),
+        "Getting and setting state not supported in FMI 1.0");
+}
+
+
 std::shared_ptr<v1::fmu> slave_instance::v1_fmu() const
 {
     return fmu_;
