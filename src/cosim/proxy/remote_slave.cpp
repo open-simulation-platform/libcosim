@@ -202,6 +202,34 @@ void cosim::proxy::remote_slave::set_string_variables(gsl::span<const cosim::val
     }
 }
 
+cosim::slave::state_index cosim::proxy::remote_slave::save_state()
+{
+    throw error(
+        make_error_code(errc::unsupported_feature),
+        "Proxyfmu does not support state saving");
+}
+
+void cosim::proxy::remote_slave::save_state(state_index)
+{
+    throw error(
+        make_error_code(errc::unsupported_feature),
+        "Proxyfmu does not support state saving");
+}
+
+void cosim::proxy::remote_slave::restore_state(state_index)
+{
+    throw error(
+        make_error_code(errc::unsupported_feature),
+        "Proxyfmu does not support state saving");
+}
+
+void cosim::proxy::remote_slave::release_state(state_index)
+{
+    throw error(
+        make_error_code(errc::unsupported_feature),
+        "Proxyfmu does not support state saving");
+}
+
 cosim::proxy::remote_slave::~remote_slave()
 {
     remote_slave::end_simulation();
