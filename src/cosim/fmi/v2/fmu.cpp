@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cstdarg>
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <mutex>
@@ -573,15 +574,7 @@ slave::state_index slave_instance::save_state()
 {
     saved_state currentState;
     copy_current_state(currentState);
-    if (savedStatesFreelist_.empty()) {
-        savedStates_.push_back(currentState);
-        return static_cast<state_index>(savedStates_.size()-1);
-    } else {
-        const auto stateIndex = savedStatesFreelist_.front();
-        savedStatesFreelist_.pop();
-        savedStates_.at(stateIndex) = currentState;
-        return stateIndex;
-    }
+    return store_new_state(std::move(currentState));
 }
 
 
@@ -618,6 +611,121 @@ void slave_instance::release_state(state_index state)
 }
 
 
+// IMPORTANT:
+// Since the cosim::fmi::v2::slave_instance class may evolve over time, and the
+// state that needs to be serialized may change, we need some versioning.
+// Increment this number whenever the "exported state" changes form, and
+// always consider whether backwards compatibility measures are warranted.
+constexpr std::int32_t export_scheme_version = 0;
+
+
+serialization::node slave_instance::export_state(state_index stateIndex) const
+{
+    const auto& savedState = savedStates_.at(stateIndex);
+
+    // Check that the FMU supports state serialization
+    if (!fmi2_import_get_capability(handle_, fmi2_cs_canSerializeFMUstate))
+    {
+        throw error(
+            make_error_code(errc::unsupported_feature),
+            instanceName_ + ": FMU does not support state serialization");
+    }
+
+    // Get size of serialized FMU state
+    std::size_t fmuStateSize = 0;
+    const auto sizeStatus = fmi2_import_serialized_fmu_state_size(
+        handle_, savedState.fmuState, &fmuStateSize);
+    if (sizeStatus != fmi2_status_ok && sizeStatus != fmi2_status_warning) {
+        throw error(
+            make_error_code(errc::model_error),
+            last_log_record(instanceName_).message);
+    }
+
+    // Serialize FMU state
+    auto serializedFMUState = serialization::binary_blob(fmuStateSize);
+    const auto status = fmi2_import_serialize_fmu_state(
+        handle_, savedState.fmuState,
+        reinterpret_cast<fmi2_byte_t*>(serializedFMUState.data()), fmuStateSize);
+    if (status != fmi2_status_ok && status != fmi2_status_warning) {
+        throw error(
+            make_error_code(errc::model_error),
+            last_log_record(instanceName_).message);
+    }
+
+    // Store everything in a map and return it.
+    serialization::associative_array myState;
+    myState["scheme_version"] = export_scheme_version;
+    myState["fmu_uuid"] = fmu_->model_description()->uuid;
+    myState["serialized_fmu_state"] = serializedFMUState;
+    myState["setup_complete"] = savedState.setupComplete;
+    myState["simulation_started"] = savedState.simStarted;
+    return myState;
+}
+
+
+slave::state_index slave_instance::import_state(
+    const serialization::node& exportedState)
+{
+    saved_state savedState;
+    try {
+        const auto& myState = std::get<serialization::associative_array>(exportedState);
+
+        // First some sanity checks
+        if (std::get<std::int32_t>(myState.at("scheme_version")) != export_scheme_version) {
+            throw error(
+                make_error_code(errc::bad_file),
+                "The serialized state of subsimulator '" + instanceName_
+                    + "' uses an incompatible scheme");
+        }
+        if (std::get<std::string>(myState.at("fmu_uuid")) != fmu_->model_description()->uuid) {
+            throw error(
+                make_error_code(errc::bad_file),
+                "The serialized state of subsimulator '" + instanceName_
+                    + "' was created with a different FMU");
+        }
+        if (!fmi2_import_get_capability(handle_, fmi2_cs_canSerializeFMUstate))
+        {
+            throw error(
+                make_error_code(errc::unsupported_feature),
+                instanceName_ + ": FMU does not support state deserialization");
+        }
+
+        // Deserialize FMU state
+        const auto& serializedFMUState =
+            std::get<serialization::binary_blob>(myState.at("serialized_fmu_state"));
+        const auto status = fmi2_import_de_serialize_fmu_state(
+            handle_,
+            reinterpret_cast<const fmi2_byte_t*>(serializedFMUState.data()),
+            serializedFMUState.size(),
+            &savedState.fmuState);
+        if (status != fmi2_status_ok && status != fmi2_status_warning) {
+            throw error(
+                make_error_code(errc::model_error),
+                last_log_record(instanceName_).message);
+        }
+
+        // Get other data
+        savedState.setupComplete = std::get<bool>(myState.at("setup_complete"));
+        savedState.simStarted = std::get<bool>(myState.at("simulation_started"));
+    } catch (const std::out_of_range&) {
+        // Typically thrown by serialization::associative_array::at() when a
+        // key is not found.
+        throw error(
+            make_error_code(errc::bad_file),
+            "The serialized state of subsimulator '" + instanceName_
+                + "' is invalid or corrupt");
+    } catch (const std::bad_variant_access&) {
+        // Typically thrown by serialization::node::get() when a value has the
+        // wrong type
+        throw error(
+            make_error_code(errc::bad_file),
+            "The serialized state of subsimulator '" + instanceName_
+                + "' is invalid or corrupt");
+    }
+    return store_new_state(std::move(savedState));
+}
+
+
 std::shared_ptr<v2::fmu> slave_instance::v2_fmu() const
 {
     return fmu_;
@@ -645,6 +753,20 @@ void slave_instance::copy_current_state(saved_state& state)
     }
     state.setupComplete = setupComplete_;
     state.simStarted = simStarted_;
+}
+
+
+slave::state_index slave_instance::store_new_state(saved_state state)
+{
+    if (savedStatesFreelist_.empty()) {
+        savedStates_.push_back(std::move(state));
+        return static_cast<state_index>(savedStates_.size()-1);
+    } else {
+        const auto stateIndex = savedStatesFreelist_.front();
+        savedStatesFreelist_.pop();
+        savedStates_.at(stateIndex) = std::move(state);
+        return stateIndex;
+    }
 }
 
 

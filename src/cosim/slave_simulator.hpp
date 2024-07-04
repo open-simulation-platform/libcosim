@@ -97,6 +97,8 @@ public:
     void save_state(state_index stateIndex) override;
     void restore_state(state_index stateIndex) override;
     void release_state(state_index stateIndex) override;
+    serialization::node export_state(state_index stateIndex) const override;
+    state_index import_state(const serialization::node& exportedState) override;
 
 private:
     class impl;

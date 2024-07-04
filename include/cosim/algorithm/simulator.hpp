@@ -12,6 +12,7 @@
 
 #include <cosim/manipulator/manipulator.hpp>
 #include <cosim/model_description.hpp>
+#include <cosim/serialization.hpp>
 #include <cosim/time.hpp>
 
 #include <functional>
@@ -182,6 +183,23 @@ public:
      *  implementation is free to reuse the same `state_index` at a later point.
      */
     virtual void release_state(state_index stateIndex) = 0;
+
+    /**
+     *  Exports a saved state.
+     *
+     *  This returns a previously-saved state in a generic format so it can be
+     *  serialized, e.g. to write it to disk and use it in a later simulation.
+     */
+    virtual serialization::node export_state(state_index stateIndex) const = 0;
+
+    /**
+     *  Imports an exported state.
+     *
+     *  The imported state is added to the simulator's internal list of saved
+     *  states. Use `restore_state()` to restore it again. The state must have
+     *  been saved by a simulator of the same or a compatible type.
+     */
+    virtual state_index import_state(const serialization::node& exportedState) = 0;
 };
 
 } // namespace cosim

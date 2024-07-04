@@ -581,6 +581,22 @@ void slave_instance::release_state(state_index)
 }
 
 
+serialization::node slave_instance::export_state(state_index) const
+{
+    throw error(
+        make_error_code(errc::unsupported_feature),
+        "Serializing and deserializing state not supported in FMI 1.0");
+}
+
+
+slave::state_index slave_instance::import_state(const serialization::node&)
+{
+    throw error(
+        make_error_code(errc::unsupported_feature),
+        "Serializing and deserializing state not supported in FMI 1.0");
+}
+
+
 std::shared_ptr<v1::fmu> slave_instance::v1_fmu() const
 {
     return fmu_;

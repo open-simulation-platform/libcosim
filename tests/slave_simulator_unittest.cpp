@@ -39,6 +39,8 @@ BOOST_AUTO_TEST_CASE(slave_simulator_save_state)
     const auto value1 = sim.get_real(xVar);
     BOOST_TEST((0.0 < value1 && value1 < value0));
     const auto state1 = sim.save_state();
+    const auto exportedState1 = sim.export_state(state1);
+    sim.release_state(state1);
 
     sim.do_step(t, dt);
     t += dt;
@@ -53,7 +55,8 @@ BOOST_AUTO_TEST_CASE(slave_simulator_save_state)
     const auto state3 = state2;
     sim.save_state(state3); // Overwrite the previously-saved state
 
-    sim.restore_state(state1);
+    const auto state1New = sim.import_state(exportedState1);
+    sim.restore_state(state1New);
     const auto value1Test = sim.get_real(xVar);
     BOOST_TEST(value1Test == value1);
 
@@ -72,6 +75,6 @@ BOOST_AUTO_TEST_CASE(slave_simulator_save_state)
     BOOST_TEST(value0To2Test == value2);
 
     sim.release_state(state0);
-    sim.release_state(state1);
+    sim.release_state(state1New);
     sim.release_state(state3);
 }

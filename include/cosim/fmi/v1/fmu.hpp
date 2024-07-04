@@ -169,6 +169,8 @@ public:
     void save_state(state_index overwriteState) override;
     void restore_state(state_index state) override;
     void release_state(state_index state) override;
+    serialization::node export_state(state_index stateIndex) const override;
+    state_index import_state(const serialization::node& exportedState) override;
 
     // fmi::slave_instance methods
     std::shared_ptr<fmi::fmu> fmu() const override
