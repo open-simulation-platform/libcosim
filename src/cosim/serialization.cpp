@@ -1,92 +1,99 @@
 #include "cosim/serialization.hpp"
 
 #include <algorithm>
+#include <ios>
 #include <iterator>
+#include <utility>
 
 
-namespace cosim
-{
-namespace serialization
-{
 namespace
 {
-    // Visitor class which prints the value(s) contained in a serialization node
-    // to an output stream.
-    struct node_output_visitor
+    // Visitor class which prints the value(s) contained in a leaf node to an
+    // output stream and returns whether anything was written.
+    struct leaf_output_visitor
     {
-        node_output_visitor(std::ostream& out, int firstIndent = 0, int indent = 0)
-            : out_(out), firstIndent_(firstIndent), indent_(indent)
-        { }
+        leaf_output_visitor(std::ostream& out) : out_(out) { }
 
         template<typename T>
-        void operator()(T value)
-        {
-            print_n_spaces(firstIndent_);
-            out_ << value;
-        }
+        bool operator()(T value) { out_ << value; return true; }
 
-        void operator()(bool value)
+        bool operator()(std::nullptr_t) { return false; }
+
+        bool operator()(bool value)
         {
-            print_n_spaces(firstIndent_);
+            const auto flags = out_.flags();
             out_ << std::boolalpha << value;
+            out_.flags(flags);
+            return true;
         }
 
-        void operator()(const std::string& str)
+        bool operator()(char value)
         {
-            print_n_spaces(firstIndent_);
+            out_ << '\'' << value << '\'';
+            return true;
+        }
+
+        bool operator()(const std::string& str)
+        {
             out_ << '"' << str << '"';
+            return true;
         }
 
-        void operator()(const array& arr)
+        bool operator()(std::byte value)
         {
-            print_n_spaces(firstIndent_);
-            out_ << "[\n";
-            for (const auto& value : arr) {
-                std::visit(node_output_visitor(out_, indent_+2, indent_+2), value);
-                out_ << ",\n";
-            }
-            print_n_spaces(indent_);
-            out_ << ']';
+            const auto flags = out_.flags();
+            out_ << "0x" << std::hex << int(value);
+            out_.flags(flags);
+            return true;
         }
 
-        void operator()(const associative_array& aa)
+        bool operator()(const std::vector<std::byte>& blob)
         {
-            print_n_spaces(firstIndent_);
-            out_ << "{\n";
-            for (const auto& [key, value] : aa) {
-                print_n_spaces(indent_+2);
-                out_ << key << " = ";
-                std::visit(node_output_visitor(out_, 0, indent_+2), value);
-                out_ << ",\n";
-            }
-            print_n_spaces(indent_);
-            out_ << '}';
-        }
-
-        void operator()(const binary_blob& blob)
-        {
-            print_n_spaces(firstIndent_);
             out_ << "<binary data, " << blob.size() << " bytes>";
+            return true;
         }
 
     private:
-        void print_n_spaces(int n)
-        {
-            std::fill_n(std::ostream_iterator<char>(out_), n, ' ');
-        }
-
         std::ostream& out_;
-        int firstIndent_ = 0;
-        int indent_ = 0;
     };
+
+    void print_n_spaces(std::ostream& out, int n)
+    {
+        std::fill_n(std::ostream_iterator<char>(out), n, ' ');
+    }
+
+    void print_tree(
+        std::ostream& out,
+        const cosim::serialization::node& tree,
+        int indent,
+        int indentStep)
+    {
+        const auto wroteData = std::visit(leaf_output_visitor(out), tree.data());
+        auto child = tree.begin();
+        if (child != tree.end()) {
+            if (wroteData) out << ' ';
+            out << "{\n";
+            print_n_spaces(out, indent + indentStep);
+            out << child->first << " = ";
+            print_tree(out, child->second, indent + indentStep, indentStep);
+            ++child;
+            for (; child != tree.end(); ++child) {
+                out << ",\n";
+                print_n_spaces(out, indent + indentStep);
+                out << child->first << " = ";
+                print_tree(out, child->second, indent + indentStep, indentStep);
+            }
+            out << '\n';
+            print_n_spaces(out, indent);
+            out << '}';
+        }
+    }
 }
 
 
-std::ostream& operator<<(std::ostream& out, const node& data)
+std::ostream& operator<<(std::ostream& out, const cosim::serialization::node& data)
 {
-    std::visit(node_output_visitor(out), data);
+    constexpr int indentStep = 2;
+    print_tree(out, data, 0, indentStep);
     return out;
 }
-
-
-}} // namespace cosim::serialization

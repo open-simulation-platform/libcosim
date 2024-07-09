@@ -247,25 +247,24 @@ public:
     cosim::serialization::node export_state(state_index state) const override
     {
         const auto& ss = savedStates_.at(state);
-        cosim::serialization::associative_array aa;
-        aa["currentTime"] = ss.currentTime.time_since_epoch().count();
-        aa["realIn"] = ss.realIn;
-        aa["intIn"] = ss.intIn;
-        aa["boolIn"] = ss.boolIn;
-        aa["strginIn"] = ss.stringIn;
-        return aa;
+        cosim::serialization::node es;
+        es.put("currentTime", ss.currentTime.time_since_epoch().count());
+        es.put("realIn", ss.realIn);
+        es.put("intIn", ss.intIn);
+        es.put("boolIn", ss.boolIn);
+        es.put("strginIn", ss.stringIn);
+        return es;
     }
 
     state_index import_state(const cosim::serialization::node& exportedState) override
     {
-        const auto& aa = std::get<cosim::serialization::associative_array>(exportedState);
         state ss;
         ss.currentTime = cosim::time_point(cosim::time_point::duration(
-            std::get<cosim::time_point::rep>(aa.at("currentTime"))));
-        ss.realIn = std::get<decltype(ss.realIn)>(aa.at("realIn"));
-        ss.intIn = std::get<decltype(ss.intIn)>(aa.at("intIn"));
-        ss.boolIn = std::get<decltype(ss.boolIn)>(aa.at("boolIn"));
-        ss.stringIn = std::get<decltype(ss.stringIn)>(aa.at("stringIn"));
+            exportedState.get<cosim::time_point::rep>("currentTime")));
+        ss.realIn = exportedState.get<decltype(ss.realIn)>("realIn");
+        ss.intIn = exportedState.get<decltype(ss.intIn)>("intIn");
+        ss.boolIn = exportedState.get<decltype(ss.boolIn)>("boolIn");
+        ss.stringIn = exportedState.get<decltype(ss.stringIn)>("stringIn");
         savedStates_.push_back(ss);
         return static_cast<state_index>(savedStates_.size() - 1);
     }

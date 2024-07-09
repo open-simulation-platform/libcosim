@@ -473,35 +473,29 @@ public:
 
     serialization::node export_state(state_index stateIndex) const
     {
-        serialization::associative_array exportState;
-        exportState["scheme_version"] = export_scheme_version;
-        exportState["state"] = slave_->export_state(stateIndex);
-        return exportState;
+        serialization::node exportedState;
+        exportedState.put("scheme_version", export_scheme_version);
+        exportedState.put_child("state", slave_->export_state(stateIndex));
+        return exportedState;
     }
 
     state_index import_state(const serialization::node& exportedState)
     {
         try {
-            const auto& importState =
-                std::get<serialization::associative_array>(exportedState);
-            if (std::get<std::int32_t>(importState.at("scheme_version"))
+            if (exportedState.get<std::int32_t>("scheme_version")
                     != export_scheme_version) {
                 throw error(
                     make_error_code(errc::bad_file),
                     "The serialized state of subsimulator '" + name_
                         + "' uses an incompatible scheme");
             }
-            return slave_->import_state(importState.at("state"));
-        } catch (const std::out_of_range&) {
-            // Typically thrown by serialization::associative_array::at() when a
-            // key is not found.
+            return slave_->import_state(exportedState.get_child("state"));
+        } catch (const boost::property_tree::ptree_bad_path&) {
             throw error(
                 make_error_code(errc::bad_file),
                 "The serialized state of subsimulator '" + name_
                     + "' is invalid or corrupt");
         } catch (const std::bad_variant_access&) {
-            // Typically thrown by serialization::node::get() when a value has the
-            // wrong type
             throw error(
                 make_error_code(errc::bad_file),
                 "The serialized state of subsimulator '" + name_

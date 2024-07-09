@@ -642,7 +642,7 @@ serialization::node slave_instance::export_state(state_index stateIndex) const
     }
 
     // Serialize FMU state
-    auto serializedFMUState = serialization::binary_blob(fmuStateSize);
+    auto serializedFMUState = std::vector<std::byte>(fmuStateSize);
     const auto status = fmi2_import_serialize_fmu_state(
         handle_, savedState.fmuState,
         reinterpret_cast<fmi2_byte_t*>(serializedFMUState.data()), fmuStateSize);
@@ -652,14 +652,14 @@ serialization::node slave_instance::export_state(state_index stateIndex) const
             last_log_record(instanceName_).message);
     }
 
-    // Store everything in a map and return it.
-    serialization::associative_array myState;
-    myState["scheme_version"] = export_scheme_version;
-    myState["fmu_uuid"] = fmu_->model_description()->uuid;
-    myState["serialized_fmu_state"] = serializedFMUState;
-    myState["setup_complete"] = savedState.setupComplete;
-    myState["simulation_started"] = savedState.simStarted;
-    return myState;
+    // Create the exported state
+    serialization::node exportedState;
+    exportedState.put("scheme_version", export_scheme_version);
+    exportedState.put("fmu_uuid", fmu_->model_description()->uuid);
+    exportedState.put("serialized_fmu_state", serializedFMUState);
+    exportedState.put("setup_complete", savedState.setupComplete);
+    exportedState.put("simulation_started", savedState.simStarted);
+    return exportedState;
 }
 
 
@@ -668,16 +668,17 @@ slave::state_index slave_instance::import_state(
 {
     saved_state savedState;
     try {
-        const auto& myState = std::get<serialization::associative_array>(exportedState);
-
         // First some sanity checks
-        if (std::get<std::int32_t>(myState.at("scheme_version")) != export_scheme_version) {
+        const auto schemeVersion = exportedState.get<std::int32_t>("scheme_version");
+        if (schemeVersion != export_scheme_version) {
             throw error(
                 make_error_code(errc::bad_file),
                 "The serialized state of subsimulator '" + instanceName_
                     + "' uses an incompatible scheme");
         }
-        if (std::get<std::string>(myState.at("fmu_uuid")) != fmu_->model_description()->uuid) {
+        const auto fmuUUID = std::get<std::string>(
+            exportedState.get_child("fmu_uuid").data());
+        if (fmuUUID != fmu_->model_description()->uuid) {
             throw error(
                 make_error_code(errc::bad_file),
                 "The serialized state of subsimulator '" + instanceName_
@@ -691,8 +692,8 @@ slave::state_index slave_instance::import_state(
         }
 
         // Deserialize FMU state
-        const auto& serializedFMUState =
-            std::get<serialization::binary_blob>(myState.at("serialized_fmu_state"));
+        const auto& serializedFMUState = std::get<std::vector<std::byte>>(
+            exportedState.get_child("serialized_fmu_state").data());
         const auto status = fmi2_import_de_serialize_fmu_state(
             handle_,
             reinterpret_cast<const fmi2_byte_t*>(serializedFMUState.data()),
@@ -705,18 +706,14 @@ slave::state_index slave_instance::import_state(
         }
 
         // Get other data
-        savedState.setupComplete = std::get<bool>(myState.at("setup_complete"));
-        savedState.simStarted = std::get<bool>(myState.at("simulation_started"));
-    } catch (const std::out_of_range&) {
-        // Typically thrown by serialization::associative_array::at() when a
-        // key is not found.
+        savedState.setupComplete = exportedState.get<bool>("setup_complete");
+        savedState.simStarted = exportedState.get<bool>("simulation_started");
+    } catch (const boost::property_tree::ptree_bad_path&) {
         throw error(
             make_error_code(errc::bad_file),
             "The serialized state of subsimulator '" + instanceName_
                 + "' is invalid or corrupt");
     } catch (const std::bad_variant_access&) {
-        // Typically thrown by serialization::node::get() when a value has the
-        // wrong type
         throw error(
             make_error_code(errc::bad_file),
             "The serialized state of subsimulator '" + instanceName_
