@@ -46,6 +46,7 @@ void clear_file_contents_if_exists(const cosim::filesystem::path& filePath, std:
         fsw.close();
     }
 }
+
 } // namespace
 
 
@@ -60,12 +61,18 @@ public:
         initialize_default();
     }
 
-    slave_value_writer(observable* observable, cosim::filesystem::path& logDir, size_t decimationFactor,
-        const std::vector<variable_description>& variables, bool timeStampedFileNames = true)
+    slave_value_writer(
+        observable* observable, 
+        cosim::filesystem::path& logDir, 
+        size_t decimationFactor,
+        const std::vector<variable_description>& variables, 
+        bool timeStampedFileNames = true,
+        const int precision = -1)
         : observable_(observable)
         , logDir_(logDir)
         , decimationFactor_(decimationFactor)
         , timeStampedFileNames_(timeStampedFileNames)
+        , precision_(precision)
     {
         initialize_config(variables);
     }
@@ -132,6 +139,7 @@ public:
 
 private:
     int keyWidth_ = 14;
+    int precision_ = -1;
 
     template<typename T>
     void write(const std::vector<T>& values, std::stringstream& ss)
@@ -301,10 +309,19 @@ private:
     void persist()
     {
         std::stringstream ss;
+        const auto defaultPrecision = ss.precision();
+
         if (fsw_.is_open()) {
 
             for (const auto& [stepCount, times] : timeSamples_) {
-                ss << times << "," << stepCount;
+                if (precision_ > -1) {
+                    ss.precision(defaultPrecision);
+                    ss << times << "," << stepCount;
+                    ss.precision(precision_);
+                    ss << std::fixed;
+                } else {
+                    ss << times << "," << stepCount;
+                }
 
                 if (realSamples_.count(stepCount)) write<double>(realSamples_[stepCount], ss);
                 if (intSamples_.count(stepCount)) write<int>(intSamples_[stepCount], ss);
@@ -387,7 +404,8 @@ void file_observer::simulator_added(
                 logDir_,
                 config.decimationFactor,
                 config.variables,
-                config.timeStampedFileNames);
+                config.timeStampedFileNames,
+                config_->precision_);
         } else {
             return;
         }
