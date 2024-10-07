@@ -139,7 +139,6 @@ public:
 
 private:
     int keyWidth_ = 14;
-    int precision_ = -1;
 
     template<typename T>
     void write(const std::vector<T>& values, std::stringstream& ss)
@@ -357,6 +356,7 @@ private:
     std::atomic<bool> recording_ = true;
     std::mutex mutex_;
     bool timeStampedFileNames_ = true;
+    int precision_ = -1;
 };
 
 file_observer::file_observer(const cosim::filesystem::path& logDir, std::optional<file_observer_config> config)
