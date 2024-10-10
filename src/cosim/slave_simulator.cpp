@@ -464,6 +464,45 @@ public:
         slave_->release_state(stateIndex);
     }
 
+    // IMPORTANT:
+    // Since the cosim::slave_simulator class may evolve over time, and the
+    // state that needs to be serialized may change, we need some versioning.
+    // Increment this number whenever the "exported state" changes form, and
+    // always consider whether backwards compatibility measures are warranted.
+    static constexpr std::int32_t export_scheme_version = 0;
+
+    serialization::node export_state(state_index stateIndex) const
+    {
+        serialization::node exportedState;
+        exportedState.put("scheme_version", export_scheme_version);
+        exportedState.put_child("state", slave_->export_state(stateIndex));
+        return exportedState;
+    }
+
+    state_index import_state(const serialization::node& exportedState)
+    {
+        try {
+            if (exportedState.get<std::int32_t>("scheme_version")
+                    != export_scheme_version) {
+                throw error(
+                    make_error_code(errc::bad_file),
+                    "The serialized state of subsimulator '" + name_
+                        + "' uses an incompatible scheme");
+            }
+            return slave_->import_state(exportedState.get_child("state"));
+        } catch (const boost::property_tree::ptree_bad_path&) {
+            throw error(
+                make_error_code(errc::bad_file),
+                "The serialized state of subsimulator '" + name_
+                    + "' is invalid or corrupt");
+        } catch (const std::bad_variant_access&) {
+            throw error(
+                make_error_code(errc::bad_file),
+                "The serialized state of subsimulator '" + name_
+                    + "' is invalid or corrupt");
+        }
+    }
+
 private:
     void set_variables(duration deltaT)
     {
@@ -769,6 +808,17 @@ void slave_simulator::restore_state(state_index stateIndex)
 void slave_simulator::release_state(state_index stateIndex)
 {
     pimpl_->release_state(stateIndex);
+}
+
+serialization::node slave_simulator::export_state(state_index stateIndex) const
+{
+    return pimpl_->export_state(stateIndex);
+}
+
+simulator::state_index slave_simulator::import_state(
+    const serialization::node& exportedState)
+{
+    return pimpl_->import_state(exportedState);
 }
 
 

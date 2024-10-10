@@ -230,6 +230,21 @@ void cosim::proxy::remote_slave::release_state(state_index)
         "Proxyfmu does not support state saving");
 }
 
+cosim::serialization::node cosim::proxy::remote_slave::export_state(state_index) const
+{
+    throw error(
+        make_error_code(errc::unsupported_feature),
+        "Proxyfmu does not support state serialization");
+}
+
+cosim::slave::state_index cosim::proxy::remote_slave::import_state(
+    const cosim::serialization::node&)
+{
+    throw error(
+        make_error_code(errc::unsupported_feature),
+        "Proxyfmu does not support state serialization");
+}
+
 cosim::proxy::remote_slave::~remote_slave()
 {
     remote_slave::end_simulation();

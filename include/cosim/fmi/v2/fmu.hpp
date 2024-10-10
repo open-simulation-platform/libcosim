@@ -171,6 +171,8 @@ public:
     void save_state(state_index stateIndex) override;
     void restore_state(state_index stateIndex) override;
     void release_state(state_index stateIndex) override;
+    serialization::node export_state(state_index stateIndex) const override;
+    state_index import_state(const serialization::node& exportedState) override;
 
     // fmi::slave_instance methods
     std::shared_ptr<fmi::fmu> fmu() const override
@@ -192,6 +194,7 @@ private:
         bool simStarted = false;
     };
     void copy_current_state(saved_state& state);
+    state_index store_new_state(saved_state state);
 
     std::shared_ptr<v2::fmu> fmu_;
     fmi2_import_t* handle_;

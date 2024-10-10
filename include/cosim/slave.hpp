@@ -11,6 +11,7 @@
 #define COSIM_SLAVE_HPP
 
 #include <cosim/model_description.hpp>
+#include <cosim/serialization.hpp>
 #include <cosim/time.hpp>
 
 #include <boost/container/vector.hpp>
@@ -290,8 +291,6 @@ public:
      *  `state_index`. The index is only valid for this particular slave.
      *
      *  The function may be called at any point after `setup()` has been called.
-     *
-     *  \pre `this->model_description().can_save_state`
      */
     virtual state_index save_state() = 0;
 
@@ -301,8 +300,6 @@ public:
      *  This function does the same as `save_state()`, except that it
      *  overwrites a state which has previously been stored by that function.
      *  The old index thereafter refers to the newly-saved state.
-     *
-     *  \pre `this->model_description().can_save_state`
      */
     virtual void save_state(state_index stateIndex) = 0;
 
@@ -330,6 +327,23 @@ public:
      *  implementation is free to reuse the same `state_index` at a later point.
      */
     virtual void release_state(state_index stateIndex) = 0;
+
+    /**
+     *  Exports a saved state.
+     *
+     *  This returns a previously-saved state in a generic format so it can be
+     *  serialized, e.g. to write it to disk and use it in a later simulation.
+     */
+    virtual serialization::node export_state(state_index stateIndex) const = 0;
+
+    /**
+     *  Imports an exported state.
+     *
+     *  The imported state is added to the slave's internal list of saved
+     *  states. Use `restore_state()` to restore it again. The state must have
+     *  been saved by a slave of the same or a compatible type.
+     */
+    virtual state_index import_state(const serialization::node& exportedState) = 0;
 };
 
 

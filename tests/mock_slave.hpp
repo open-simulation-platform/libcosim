@@ -244,6 +244,31 @@ public:
         // Let's not worry about this.
     }
 
+    cosim::serialization::node export_state(state_index state) const override
+    {
+        const auto& ss = savedStates_.at(state);
+        cosim::serialization::node es;
+        es.put("currentTime", ss.currentTime.time_since_epoch().count());
+        es.put("realIn", ss.realIn);
+        es.put("intIn", ss.intIn);
+        es.put("boolIn", ss.boolIn);
+        es.put("strginIn", ss.stringIn);
+        return es;
+    }
+
+    state_index import_state(const cosim::serialization::node& exportedState) override
+    {
+        state ss;
+        ss.currentTime = cosim::time_point(cosim::time_point::duration(
+            exportedState.get<cosim::time_point::rep>("currentTime")));
+        ss.realIn = exportedState.get<decltype(ss.realIn)>("realIn");
+        ss.intIn = exportedState.get<decltype(ss.intIn)>("intIn");
+        ss.boolIn = exportedState.get<decltype(ss.boolIn)>("boolIn");
+        ss.stringIn = exportedState.get<decltype(ss.stringIn)>("stringIn");
+        savedStates_.push_back(ss);
+        return static_cast<state_index>(savedStates_.size() - 1);
+    }
+
 private:
     std::function<double(cosim::time_point, double)> realOp_;
     std::function<int(cosim::time_point, int)> intOp_;
