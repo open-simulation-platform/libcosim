@@ -252,7 +252,7 @@ public:
         es.put("realIn", ss.realIn);
         es.put("intIn", ss.intIn);
         es.put("boolIn", ss.boolIn);
-        es.put("strginIn", ss.stringIn);
+        es.put("stringIn", ss.stringIn);
         return es;
     }
 

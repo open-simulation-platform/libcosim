@@ -1,0 +1,120 @@
+#include "mock_slave.hpp"
+
+#include <cosim/algorithm.hpp>
+#include <cosim/log/simple.hpp>
+#include <cosim/observer/last_value_observer.hpp>
+#include <cosim/observer/time_series_observer.hpp>
+
+#include <exception>
+#include <limits>
+#include <memory>
+#include <stdexcept>
+#include <iostream>
+
+
+// A helper macro to test various assertions
+#define REQUIRE(test) \
+    if (!(test)) throw std::runtime_error("Requirement not satisfied: " #test)
+
+// Helper function to get observed values from multiple simulators.
+std::vector<double> get_reals(
+    cosim::last_value_observer& observer,
+    const std::vector<cosim::simulator_index>& simulators,
+    cosim::value_reference valueRef)
+{
+    auto values = std::vector<double>(
+        simulators.size(), std::numeric_limits<double>::quiet_NaN());
+    for (std::size_t i = 0; i < simulators.size(); ++i) {
+        observer.get_real(
+            simulators[i],
+            gsl::make_span(&valueRef, 1),
+            gsl::make_span(values.data() + i, 1));
+    }
+    return values;
+}
+
+
+int main()
+{
+    try {
+        cosim::log::setup_simple_console_logging();
+        cosim::log::set_global_output_level(cosim::log::debug);
+
+        constexpr int simulatorCount = 10;
+        constexpr cosim::time_point time0;
+        constexpr cosim::time_point time1 = cosim::to_time_point(0.6);
+        constexpr cosim::time_point time2 = cosim::to_time_point(1.0);
+        constexpr cosim::duration stepSize = cosim::to_duration(0.05);
+
+        // Set up execution
+        auto execution = cosim::execution(
+            time0,
+            std::make_unique<cosim::fixed_step_algorithm>(stepSize, 1));
+
+        auto observer = std::make_shared<cosim::last_value_observer>();
+        execution.add_observer(observer);
+
+        const cosim::value_reference realOutRef = mock_slave::real_out_reference;
+        const cosim::value_reference realInRef = mock_slave::real_in_reference;
+
+
+        // Add and connect subsimulators
+        std::vector<cosim::simulator_index> simulators;
+        simulators.push_back(
+            execution.add_slave(
+                std::make_unique<mock_slave>([](cosim::time_point t, double) {
+                    return cosim::to_double_time_point(t);
+                }),
+                "clock"));
+        for (int i = 1; i < simulatorCount; ++i) {
+            simulators.push_back(
+                execution.add_slave(
+                    std::make_unique<mock_slave>([](double x) {
+                        return x + 1.234;
+                    }),
+                    "adder" + std::to_string(i)));
+            execution.connect_variables(
+                cosim::variable_id{simulators[i - 1], cosim::variable_type::real, realOutRef},
+                cosim::variable_id{simulators[i], cosim::variable_type::real, realInRef});
+        }
+
+        // Save initial state
+        execution.initialize();
+        auto state0Values = get_reals(*observer, simulators, realOutRef);
+        const auto state0 = execution.export_current_state();
+
+        // Advance to time1 and save state again
+        execution.simulate_until(time1);
+        auto state1Values = get_reals(*observer, simulators, realOutRef);
+        const auto state1 = execution.export_current_state();
+        REQUIRE(state1Values > state0Values);
+
+        // Advance to time2 and save state again
+        execution.simulate_until(time2);
+        auto state2Values = get_reals(*observer, simulators, realOutRef);
+        const auto state2 = execution.export_current_state();
+        REQUIRE(state2Values > state1Values);
+
+        // Restore state0 and compare values
+        execution.import_state(state0);
+        REQUIRE(execution.current_time() == time0);
+        auto state0ValuesAgain = get_reals(*observer, simulators, realOutRef);
+        REQUIRE(state0ValuesAgain == state0Values);
+
+        // Advance to time1 again and compare values
+        execution.simulate_until(time1);
+        auto state1ValuesAgain = get_reals(*observer, simulators, realOutRef);
+        REQUIRE(state1ValuesAgain == state1Values);
+
+        // Restore state2 and compare values
+        execution.import_state(state2);
+        REQUIRE(execution.current_time() == time2);
+        auto state2ValuesAgain = get_reals(*observer, simulators, realOutRef);
+        REQUIRE(state2ValuesAgain == state2Values);
+
+    } catch (const std::exception& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+        return 1;
+    }
+    return 0;
+}

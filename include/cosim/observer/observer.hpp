@@ -115,6 +115,9 @@ public:
         duration lastStepSize,
         time_point currentTime) = 0;
 
+    /// The simulation was restored to a previously saved state.
+    virtual void state_restored(step_number currentStep, time_point currentTime) = 0;
+
     virtual ~observer() noexcept { }
 };
 

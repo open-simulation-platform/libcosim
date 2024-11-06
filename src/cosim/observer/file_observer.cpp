@@ -429,6 +429,15 @@ void file_observer::simulator_step_complete(simulator_index index, step_number l
     }
 }
 
+void file_observer::state_restored(step_number currentStep, time_point currentTime)
+{
+    if (recording_) {
+        for (const auto& entry : valueWriters_) {
+            entry.second->observe(currentStep, currentTime);
+        }
+    }
+}
+
 cosim::filesystem::path file_observer::get_log_path()
 {
     return logDir_;

@@ -170,6 +170,8 @@ public:
         duration lastStepSize,
         time_point currentTime) override;
 
+    void state_restored(step_number currentStep, time_point currentTime) override;
+
     cosim::filesystem::path get_log_path();
 
     ~file_observer() override;
