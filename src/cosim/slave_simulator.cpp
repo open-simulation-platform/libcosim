@@ -224,20 +224,34 @@ public:
         if (!hasRunModifiers_) {
             for (const auto& entry : modifiers_) {
                 const auto ref = entry.first;
-                if (!filter || filter && (*filter)(ref)) {
-                    auto& arrayIndex = exposedVariables_.at(ref).arrayIndex;
-                    if (arrayIndex < 0) {
-                        arrayIndex = references_.size();
-                        assert(references_.size() == values_.size());
-                        references_.emplace_back(ref);
-                        values_.emplace_back(exposedVariables_.at(ref).lastValue);
-                    }
-                    values_[arrayIndex] = entry.second(values_[arrayIndex], deltaT);
+                auto& arrayIndex = exposedVariables_.at(ref).arrayIndex;
+                if (arrayIndex < 0) {
+                    arrayIndex = references_.size();
+                    assert(references_.size() == values_.size());
+                    references_.emplace_back(ref);
+                    values_.emplace_back(exposedVariables_.at(ref).lastValue);
                 }
+                values_[arrayIndex] = entry.second(values_[arrayIndex], deltaT);
             }
             assert(references_.size() == values_.size());
             hasRunModifiers_ = true;
         }
+
+        if (filter) {
+            references_filtered_.clear();
+            values_filtered_.clear();
+
+            for (int i = 0; i < references_.size(); i++) {
+                auto& ref = references_.at(i);
+                if ((*filter)(ref)) {
+                    references_filtered_.push_back(ref);
+                    values_filtered_.push_back(values_.at(i));
+                }
+            }
+
+            return std::pair(gsl::make_span(references_filtered_), gsl::make_span(values_filtered_));
+        }
+
         return std::pair(gsl::make_span(references_), gsl::make_span(values_));
     }
 
@@ -248,6 +262,8 @@ public:
         }
         references_.clear();
         values_.clear();
+        references_filtered_.clear();
+        values_filtered_.clear();
         hasRunModifiers_ = false;
     }
 
@@ -273,6 +289,10 @@ private:
     // The references and values of the variables that will be set next.
     std::vector<value_reference> references_;
     boost::container::vector<T> values_;
+
+    // Filtered references and values of the values to be set next (if a filter is applied).
+    std::vector<value_reference> references_filtered_;
+    boost::container::vector<T> values_filtered_;
 };
 
 
