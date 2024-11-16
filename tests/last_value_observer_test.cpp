@@ -93,7 +93,6 @@ int main()
 
         observer->get_real(sim, gsl::make_span(&realInRef, 1), gsl::make_span(&realInValue, 1));
         observer->get_real(sim, gsl::make_span(&realOutRef, 1), gsl::make_span(&realOutValue, 1));
-        std::cout << realInValue << std::endl;
         REQUIRE(std::fabs(realInValue - 2.0) < 1.0e-9);
         REQUIRE(std::fabs(realOutValue - 3.234) < 1.0e-9);
 
