@@ -120,6 +120,11 @@ public:
     virtual void start_simulation() = 0;
 
     /**
+     * Runs fmiXSetINI (4.2.4) functions to initialize variables' start values.
+     */
+    virtual void initialize_start_values() = 0;
+
+    /**
      *  Performs a single time step.
      *
      *  This causes the simulator to perform its computations for the logical

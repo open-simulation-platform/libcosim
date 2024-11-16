@@ -7,7 +7,7 @@
         <Simulator name="example" source="../fmi2/StateInitExample.fmu">
             <InitialValues>
                 <InitialValue variable="Parameters.Integrator1_x0">
-                    <Real value="10" />
+                    <Real value="10.0" />
                 </InitialValue>
             </InitialValues>
         </Simulator>

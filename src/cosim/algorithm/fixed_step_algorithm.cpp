@@ -151,6 +151,23 @@ public:
 
     void initialize()
     {
+        // FMU's start values are set in "instantiated" state (4.2.4)
+        // Some of the FMUs do not see start values if this is not 
+        // done before fmiXEnterInitializationMode
+        for (auto& s : simulators_) {
+            pool_.submit([&] {
+                s.second.sim->initialize_start_values();
+            });
+        }
+        pool_.wait_for_tasks_to_finish();
+
+        for (auto& s : simulators_) {
+            pool_.submit([&] {
+                s.second.sim->setup(startTime_, stopTime_, std::nullopt);
+            });
+        }
+        pool_.wait_for_tasks_to_finish();
+
         // Run N iterations of the simulators' and functions' step/calculation
         // procedures, where N is the number of simulators in the system,
         // to propagate initial values.
@@ -163,13 +180,6 @@ public:
             pool_.wait_for_tasks_to_finish();
             calculate_and_transfer();
         }
-
-        for (auto& s : simulators_) {
-            pool_.submit([&] {
-                s.second.sim->setup(startTime_, stopTime_, std::nullopt);
-            });
-        }
-        pool_.wait_for_tasks_to_finish();
 
 
         for (auto& s : simulators_) {

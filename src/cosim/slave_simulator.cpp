@@ -12,6 +12,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <unordered_map>
+#include <iostream>
 
 
 namespace cosim
@@ -216,19 +217,23 @@ public:
         }
     }
 
-    std::pair<gsl::span<value_reference>, gsl::span<const T>> modify_and_get(duration deltaT)
+    std::pair<gsl::span<value_reference>, gsl::span<const T>> modify_and_get(
+        duration deltaT,
+        std::optional<std::function<bool(const value_reference&)>> filter = std::nullopt)
     {
         if (!hasRunModifiers_) {
             for (const auto& entry : modifiers_) {
                 const auto ref = entry.first;
-                auto& arrayIndex = exposedVariables_.at(ref).arrayIndex;
-                if (arrayIndex < 0) {
-                    arrayIndex = references_.size();
-                    assert(references_.size() == values_.size());
-                    references_.emplace_back(ref);
-                    values_.emplace_back(exposedVariables_.at(ref).lastValue);
+                if (!filter || filter && (*filter)(ref)) {
+                    auto& arrayIndex = exposedVariables_.at(ref).arrayIndex;
+                    if (arrayIndex < 0) {
+                        arrayIndex = references_.size();
+                        assert(references_.size() == values_.size());
+                        references_.emplace_back(ref);
+                        values_.emplace_back(exposedVariables_.at(ref).lastValue);
+                    }
+                    values_[arrayIndex] = entry.second(values_[arrayIndex], deltaT);
                 }
-                values_[arrayIndex] = entry.second(values_[arrayIndex], deltaT);
             }
             assert(references_.size() == values_.size());
             hasRunModifiers_ = true;
@@ -518,6 +523,34 @@ public:
         return result;
     }
 
+    void initialize_start_values()
+    {
+        auto deltaT = duration::zero();
+        auto filter = [&](variable_type vt) {
+            return [&vt, this](const value_reference &vr) {
+                const auto &vd = this->find_variable_description(vr, vt);
+                /// FMI Specification 2.0.4 - Section 4.2.4
+                return vd.variability != variable_variability::constant &&
+                       vd.causality != variable_causality::input;
+            };
+        };
+
+        const auto [realRefs, realValues] = realSetCache_.modify_and_get(deltaT, filter(variable_type::real));
+        const auto [integerRefs, integerValues] = integerSetCache_.modify_and_get(deltaT, filter(variable_type::integer));
+        const auto [booleanRefs, booleanValues] = booleanSetCache_.modify_and_get(deltaT, filter(variable_type::boolean));
+        const auto [stringRefs, stringValues] = stringSetCache_.modify_and_get(deltaT, filter(variable_type::string));
+
+        slave_->set_variables(
+            gsl::make_span(realRefs),
+            gsl::make_span(realValues),
+            gsl::make_span(integerRefs),
+            gsl::make_span(integerValues),
+            gsl::make_span(booleanRefs),
+            gsl::make_span(booleanValues),
+            gsl::make_span(stringRefs),
+            gsl::make_span(stringValues));
+    }
+
 private:
     void set_variables(duration deltaT)
     {
@@ -802,5 +835,10 @@ step_result slave_simulator::do_step(
     return pimpl_->do_step(currentT, deltaT);
 }
 
+
+void slave_simulator::initialize_start_values()
+{
+    return pimpl_->initialize_start_values();
+}
 
 } // namespace cosim

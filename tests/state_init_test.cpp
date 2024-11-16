@@ -35,15 +35,15 @@ int main()
         execution.simulate_until(cosim::to_time_point(0.1));
 
         auto sim = entityMaps.simulators.at("example"); 
-        const cosim::value_reference inRef = 2;
-        const cosim::value_reference outRef = 3;
+        const auto inRef = config.system_structure.get_variable_description({"example", "Parameters.Integrator1_x0"}).reference;
+        const auto outRef = config.system_structure.get_variable_description({"example", "Integrator_out1"}).reference;
 
         double initialValue = 0.0;
         double outputValue = 0.0;
         lvObserver->get_real(sim, gsl::make_span(&inRef, 1), gsl::make_span(&initialValue, 1));
         lvObserver->get_real(sim, gsl::make_span(&outRef, 1), gsl::make_span(&outputValue, 1));
 
-        REQUIRE(initialValue == 1.0);
+        REQUIRE(std::fabs(initialValue - 10.0) < 1.0e-9);
         REQUIRE(std::fabs(outputValue - 10.1) < 1.0e-9);
 
     } catch (const std::exception& e) {
