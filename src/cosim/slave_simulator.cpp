@@ -13,6 +13,7 @@
 #include <stdexcept>
 #include <unordered_map>
 #include <iostream>
+#include <cosim/utility/utility.hpp>
 
 
 namespace cosim
@@ -219,7 +220,7 @@ public:
 
     std::pair<gsl::span<value_reference>, gsl::span<const T>> modify_and_get(
         duration deltaT,
-        std::optional<std::function<bool(const value_reference&)>> filter = std::nullopt)
+        std::optional<std::function<bool(const value_reference&, const T&)>> filter = std::nullopt)
     {
         if (!hasRunModifiers_) {
             for (const auto& entry : modifiers_) {
@@ -243,9 +244,11 @@ public:
 
             for (size_t i = 0; i < references_.size(); i++) {
                 auto& ref = references_.at(i);
-                if ((*filter)(ref)) {
+                auto& value = values_.at(i);
+                
+                if ((*filter)(ref, value)) {
                     references_filtered_.push_back(ref);
-                    values_filtered_.push_back(values_.at(i));
+                    values_filtered_.push_back(value);
                 }
             }
 
@@ -546,19 +549,25 @@ public:
     void initialize_start_values()
     {
         auto deltaT = duration::zero();
-        auto filter = [&](variable_type vt) {
-            return [&vt, this](const value_reference &vr) {
-                const auto &vd = this->find_variable_description(vr, vt);
-                /// FMI Specification 2.0.4 - Section 4.2.4
-                return vd.variability != variable_variability::constant &&
-                       vd.causality != variable_causality::input;
-            };
+        auto filter = [this](const value_reference& vr, const std::variant<double, int, bool, std::string>& vt) {
+            variable_type type;
+            std::visit(
+                visitor(
+                    [&](double) { type = variable_type::real; },
+                    [&](int) { type = variable_type::integer; },
+                    [&](bool) { type = variable_type::boolean; },
+                    [&](const std::string&) { type = variable_type::string; }),
+                vt);
+            const auto& vd = this->find_variable_description(vr, type);
+            /// FMI Specification 2.0.4 - Section 4.2.4
+            return vd.variability != variable_variability::constant &&
+                vd.causality != variable_causality::input;
         };
 
-        const auto [realRefs, realValues] = realSetCache_.modify_and_get(deltaT, filter(variable_type::real));
-        const auto [integerRefs, integerValues] = integerSetCache_.modify_and_get(deltaT, filter(variable_type::integer));
-        const auto [booleanRefs, booleanValues] = booleanSetCache_.modify_and_get(deltaT, filter(variable_type::boolean));
-        const auto [stringRefs, stringValues] = stringSetCache_.modify_and_get(deltaT, filter(variable_type::string));
+        const auto [realRefs, realValues] = realSetCache_.modify_and_get(deltaT, filter);
+        const auto [integerRefs, integerValues] = integerSetCache_.modify_and_get(deltaT, filter);
+        const auto [booleanRefs, booleanValues] = booleanSetCache_.modify_and_get(deltaT, filter);
+        const auto [stringRefs, stringValues] = stringSetCache_.modify_and_get(deltaT, filter);
 
         slave_->set_variables(
             gsl::make_span(realRefs),
