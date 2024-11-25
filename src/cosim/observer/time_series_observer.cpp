@@ -262,6 +262,14 @@ void time_series_observer::simulator_step_complete(
     slaveObservers_.at(index)->observe(lastStep, currentTime);
 }
 
+void time_series_observer::state_restored(
+    step_number currentStep, time_point currentTime)
+{
+    for (const auto& entry : slaveObservers_) {
+        entry.second->observe(currentStep, currentTime);
+    }
+}
+
 void time_series_observer::start_observing(variable_id id)
 {
     slaveObservers_.at(id.simulator)->start_observing(id.type, id.reference);

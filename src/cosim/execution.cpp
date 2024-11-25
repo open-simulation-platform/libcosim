@@ -6,6 +6,7 @@
 #include "cosim/execution.hpp"
 
 #include "cosim/algorithm.hpp"
+#include "cosim/error.hpp"
 #include "cosim/exception.hpp"
 #include "cosim/slave_simulator.hpp"
 #include "cosim/utility/utility.hpp"
@@ -48,6 +49,7 @@ public:
         std::string_view name,
         duration stepSizeHint)
     {
+        COSIM_PRECONDITION(!initialized_);
         const auto index = static_cast<simulator_index>(simulators_.size());
         simulators_.push_back(std::make_unique<slave_simulator>(slave, name));
         algorithm_->add_simulator(index, simulators_.back().get(), stepSizeHint);
@@ -63,6 +65,7 @@ public:
 
     function_index add_function(std::shared_ptr<function> fun)
     {
+        COSIM_PRECONDITION(!initialized_);
         const auto index = static_cast<function_index>(functions_.size());
         functions_.push_back(fun);
         algorithm_->add_function(index, fun.get());
@@ -114,12 +117,7 @@ public:
         return currentTime_;
     }
 
-    bool is_running() const noexcept
-    {
-        return !stopped_;
-    }
-
-    duration step()
+    void initialize()
     {
         if (!initialized_) {
             algorithm_->initialize();
@@ -128,6 +126,17 @@ public:
                 obs->simulation_initialized(lastStep_, currentTime_);
             }
         }
+    }
+
+
+    bool is_running() const noexcept
+    {
+        return !stopped_;
+    }
+
+    duration step()
+    {
+        initialize(); // For backwards compatibility. Should be replaced with a precondition check at some point.
         for (const auto& man : manipulators_) {
             man->step_commencing(currentTime_);
         }
@@ -258,6 +267,52 @@ public:
         simulators_.at(sim)->set_string(var, value);
     }
 
+    serialization::node export_current_state() const
+    {
+        COSIM_PRECONDITION(initialized_ && !is_running());
+        serialization::node simulatorState;
+        for (const auto& sim : simulators_) {
+            const auto savedStateIndex = sim->save_state();
+            simulatorState.put_child(sim->name(), sim->export_state(savedStateIndex));
+            sim->release_state(savedStateIndex);
+        }
+        serialization::node exportedState;
+        exportedState.put("last_step_number", lastStep_);
+        exportedState.put<std::int64_t>("current_time_ticks", currentTime_.time_since_epoch().count());
+        exportedState.put_child("algorithm_state", algorithm_->export_current_state());
+        exportedState.put_child("simulator_state", simulatorState);
+        return exportedState;
+    }
+
+    void import_state(const serialization::node& exportedState)
+    {
+        COSIM_PRECONDITION(initialized_ && !is_running());
+        try {
+            lastStep_ = exportedState.get<step_number>("last_step_number");
+            currentTime_ = time_point(duration(
+                    exportedState.get<std::int64_t>("current_time_ticks")));
+            const auto& simulatorState = exportedState.get_child("simulator_state");
+            for (const auto& sim : simulators_) {
+                const auto savedStateIndex =
+                    sim->import_state(simulatorState.get_child(sim->name()));
+                sim->restore_state(savedStateIndex);
+                sim->release_state(savedStateIndex);
+            }
+            algorithm_->import_state(exportedState.get_child("algorithm_state"));
+        } catch (const error&) {
+            throw;
+        } catch (...) {
+            throw error(
+                make_error_code(errc::bad_file),
+                "The serialized execution state is invalid or corrupt");
+        }
+
+        // Update observers
+        for (const auto& obs : observers_) {
+            obs->state_restored(lastStep_, currentTime_);
+        }
+    }
+
 private:
     template<typename OutputID, typename InputID>
     void connect_variables_impl(
@@ -381,6 +436,11 @@ time_point execution::current_time() const noexcept
     return pimpl_->current_time();
 }
 
+void execution::initialize()
+{
+    pimpl_->initialize();
+}
+
 bool execution::simulate_until(std::optional<time_point> endTime)
 {
     return pimpl_->simulate_until(endTime);
@@ -444,6 +504,16 @@ void execution::set_boolean_initial_value(simulator_index sim, value_reference v
 void execution::set_string_initial_value(simulator_index sim, value_reference var, const std::string& value)
 {
     pimpl_->set_string_initial_value(sim, var, value);
+}
+
+serialization::node execution::export_current_state() const
+{
+    return pimpl_->export_current_state();
+}
+
+void execution::import_state(const serialization::node& exportedState)
+{
+    pimpl_->import_state(exportedState);
 }
 
 

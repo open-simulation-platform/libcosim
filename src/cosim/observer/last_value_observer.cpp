@@ -61,6 +61,15 @@ void last_value_observer::simulator_step_complete(
     valueProviders_.at(index)->observe();
 }
 
+void last_value_observer::state_restored(
+    step_number /*currentStep*/,
+    time_point /*currentTime*/)
+{
+    for (const auto& entry : valueProviders_) {
+        entry.second->observe();
+    }
+}
+
 void last_value_observer::get_real(
     simulator_index sim,
     gsl::span<const value_reference> variables,
