@@ -103,6 +103,8 @@ struct node_data_translator
 
 std::ostream& operator<<(std::ostream& out, const cosim::serialization::node& data);
 
+std::istream& operator>>(std::istream& in, cosim::serialization::node& data);
+
 // Ordinarily, the following function would be in the `cosim::serialization`
 // namespace and found by the compiler via ADL.  This doesn't work here,
 // because `cosim::serialization::node` is just an alias for a type in the
