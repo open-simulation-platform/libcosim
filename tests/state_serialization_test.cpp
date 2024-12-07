@@ -210,20 +210,20 @@ int main()
         inFile >> state1_a;
         inFile.close();
 
-        // execution.simulate_until(time1);
-        // auto state1ValuesAgain = get_reals(*observer, simulators, realOutRef);
-        // REQUIRE(state1ValuesAgain == state1Values);
-        //
-        // // Restore state2 from file and compare values
-        // cosim::serialization::node state2_a;
-        // inFile = std::ifstream("state2.bin", std::ios::binary);
-        // inFile >> state2_a;
-        // inFile.close();
-        //
-        // execution.import_state(state2_a);
-        // REQUIRE(execution.current_time() == time2);
-        // auto state2ValuesAgain = get_reals(*observer, simulators, realOutRef);
-        // REQUIRE(state2ValuesAgain == state2Values);
+        execution.simulate_until(time1);
+        auto state1ValuesAgain = get_reals(*observer, simulators, realOutRef);
+        REQUIRE(state1ValuesAgain == state1Values);
+
+        // Restore state2 from file and compare values
+        cosim::serialization::node state2_a;
+        inFile = std::ifstream("state2.bin", std::ios::binary);
+        inFile >> state2_a;
+        inFile.close();
+
+        execution.import_state(state2_a);
+        REQUIRE(execution.current_time() == time2);
+        auto state2ValuesAgain = get_reals(*observer, simulators, realOutRef);
+        REQUIRE(state2ValuesAgain == state2Values);
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
         return 1;

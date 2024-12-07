@@ -148,7 +148,6 @@ namespace
         {
             auto value = v < 0 ? cbor_build_negint8(v) : cbor_build_uint8(v);
             value = cbor_build_tag(TYPE_INT, value);
-            std::cout << "BUILD TA 8" << std::endl;
             cbor_map_add(data_, {cbor_move(cbor_build_string(key_)), cbor_move(value)});
         }
 
@@ -161,7 +160,6 @@ namespace
         {
             auto value = v < 0 ? cbor_build_negint16(v) : cbor_build_uint16(v);
             value = cbor_build_tag(TYPE_INT, value);
-            std::cout << "BUILD TA 16" << std::endl;
             cbor_map_add(data_, {cbor_move(cbor_build_string(key_)), cbor_move(value)});
         }
 
@@ -174,7 +172,6 @@ namespace
         {
             auto value = v < 0 ? cbor_build_negint32(v) : cbor_build_uint32(v);
             value = cbor_build_tag(TYPE_INT, value);
-            std::cout << "BUILD TA 32" << std::endl;
             cbor_map_add(data_, {cbor_move(cbor_build_string(key_)), cbor_move(value)});
         }
 
@@ -187,7 +184,6 @@ namespace
         {
             auto value = v < 0 ? cbor_build_negint64(v) : cbor_build_uint64(v);
             value = cbor_build_tag(TYPE_INT, value);
-            std::cout << "BUILD TA 64" << std::endl;
             cbor_map_add(data_, {cbor_move(cbor_build_string(key_)), cbor_move(value)});
         }
 
@@ -229,20 +225,33 @@ namespace
     }
 
 
-    struct cbor_reader
+    class cbor_reader
     {
+
+    public:
+        cbor_reader(cosim::serialization::node& root)
+            : root(root)
+        {
+        }
+
         enum STATE {
             READING_INDEF_ARRAY = 0x01,
             READING_ARRAY       = 0x02,
             READING_MAP         = 0x03
         };
 
-        std::vector<cosim::serialization::node> data{};
-        std::vector<std::string> keys{};
-        std::vector<uint64_t> tag{};
-        std::vector<std::byte> byte_array{};
-        size_t byte_array_length{};
-        STATE state = READING_MAP;
+        cosim::serialization::node& current_node()
+        {
+            if (children.size() == 0) {
+                return root;
+            }
+            return children.back();
+        }
+
+        inline bool current_string_is_key()
+        {
+            return children.size() == keys.size();
+        }
 
         static void cbor_read_tag(void* _ctx, uint64_t tag)
         {
@@ -253,33 +262,38 @@ namespace
         static void cbor_read_null_undefined(void* _ctx)
         {
             auto node = reinterpret_cast<cbor_reader*>(_ctx);
-            node->data.back().put(node->keys.back(), nullptr);
+            node->current_node().put(node->keys.back(), nullptr);
             node->keys.pop_back();
         }
 
         static void cbor_indef_map_start(void* _ctx)
         {
-            std::cout << "indf map st" << std::endl;
             auto node = reinterpret_cast<cbor_reader*>(_ctx);
-            node->data.emplace_back();
+            node->level++;
+            if (node->level > 0) {
+                node->children.emplace_back();
+            }
         }
 
         static void cbor_indef_break(void* _ctx)
         {
-            std::cout << "indef break" << std::endl;
             auto node = reinterpret_cast<cbor_reader*>(_ctx);
             if (node->state == READING_MAP) {
                 if (!node->keys.empty()) {
                     auto key = node->keys.back();
-                    auto map = node->data.back();
-                    node->data.pop_back();
-                    node->data.back().put_child(key, map);
+                    auto map = node->current_node();
+                    if(!node->children.empty()) {
+                        node->children.pop_back();
+                    }
+                    node->current_node().put_child(key, map);
                     node->keys.pop_back();
                 }
+                node->level--;
             } else if (node->state == READING_INDEF_ARRAY) {
-                std::cout << "PUSHED BACK" << std::endl;
-                node->data.back().put(node->keys.back(), node->byte_array);
+                node->current_node().put(node->keys.back(), node->byte_array);
                 node->state = READING_MAP;
+            } else {
+                BOOST_LOG_SEV(cosim::log::logger(), cosim::log::warning) << "Unexpected parsing state " << node->state;
             }
         }
 
@@ -287,10 +301,10 @@ namespace
         {
             auto node = reinterpret_cast<cbor_reader*>(_ctx);
             auto value = std::string(reinterpret_cast<const char*>(buffer), len);
-            if (node->data.size() - 1 == node->keys.size()) {
+            if (node->current_string_is_key()) {
                 node->keys.push_back(value);
             } else {
-                node->data.back().put(node->keys.back(), value);
+                node->current_node().put(node->keys.back(), value);
                 node->keys.pop_back();
             }
         }
@@ -298,21 +312,21 @@ namespace
         static void cbor_read_boolean(void* _ctx, bool v)
         {
             auto node = reinterpret_cast<cbor_reader*>(_ctx);
-            node->data.back().put(node->keys.back(), v);
+            node->current_node().put(node->keys.back(), v);
             node->keys.pop_back();
         }
 
         static void cbor_read_half_float(void* _ctx, float v)
         {
             auto node = reinterpret_cast<cbor_reader*>(_ctx);
-            node->data.back().put(node->keys.back(), v);
+            node->current_node().put(node->keys.back(), v);
             node->keys.pop_back();
         }
 
         static void cbor_read_double_float(void* _ctx, double v)
         {
             auto node = reinterpret_cast<cbor_reader*>(_ctx);
-            node->data.back().put(node->keys.back(), v);
+            node->current_node().put(node->keys.back(), v);
             node->keys.pop_back();
         }
 
@@ -320,7 +334,7 @@ namespace
         {
             auto node = reinterpret_cast<cbor_reader*>(_ctx);
             auto value = std::string(reinterpret_cast<const char*>(data), len);
-            node->data.back().put(node->keys.back(), value);
+            node->current_node().put(node->keys.back(), value);
             node->keys.pop_back();
         }
 
@@ -367,13 +381,11 @@ namespace
         static void cbor_read_int(void* _ctx, T v)
         {
             auto node = reinterpret_cast<cbor_reader*>(_ctx);
-            std::cout << "KEY " << node->keys.back() << "INT VALUE " << v << " type " << typeid(T).name() << std::endl;
             if (!node->tag.empty()) {
-                std::cout << "INT TYPE " << typeid(typename int_type<T>::type).name() << std::endl;
-                node->data.back().put(node->keys.back(), static_cast<typename int_type<T>::type>(v));
+                node->current_node().put(node->keys.back(), static_cast<typename int_type<T>::type>(v));
                 node->tag.clear();
             } else {
-                node->data.back().put(node->keys.back(), v);
+                node->current_node().put(node->keys.back(), v);
             }
             node->keys.pop_back();
         }
@@ -383,26 +395,32 @@ namespace
             auto node = reinterpret_cast<cbor_reader*>(_ctx);
 
             if (!node->tag.empty()) {
-                std::cout << "INT TYPE " << std::endl;
-                node->data.back().put(node->keys.back(), static_cast<int8_t>(v));
+                node->current_node().put(node->keys.back(), static_cast<int8_t>(v));
                 node->tag.clear();
             } else if (node->state == READING_ARRAY || node->state == READING_INDEF_ARRAY) {
-                std::cout << "READ BYTYE" << std::endl;
                 node->byte_array.push_back(static_cast<std::byte>(v));
 
                 if (node->state == READING_ARRAY && node->byte_array.size() == node->byte_array_length) {
-                    std::cout << "PUSHED BACK" << std::endl;
-                    node->data.back().put(node->keys.back(), node->byte_array);
+                    node->current_node().put(node->keys.back(), node->byte_array);
                     node->state = READING_MAP;
                 } else {
                     return;
                 }
             } else {
-                node->data.back().put(node->keys.back(), v);
+                node->current_node().put(node->keys.back(), v);
             }
 
             node->keys.pop_back();
         }
+    private:
+        cosim::serialization::node& root;
+        std::vector<cosim::serialization::node> children{};
+        std::vector<std::string> keys{};
+        std::vector<uint64_t> tag{};
+        std::vector<std::byte> byte_array{};
+        size_t byte_array_length{};
+        STATE state = READING_MAP;
+        int level = -1;
     };
 
 }
@@ -410,9 +428,7 @@ namespace
 std::ostream& operator<<(std::ostream& out, const cosim::serialization::node& data)
 {
     auto root = cbor_new_indefinite_map();
-    {
-        serialize_cbor(root, data);
-    } // To finalize vec by calling cbor_encoding_data's destructor
+    serialize_cbor(root, data);
 
     unsigned char* buffer;
     size_t buffer_size;
@@ -420,18 +436,13 @@ std::ostream& operator<<(std::ostream& out, const cosim::serialization::node& da
     cbor_serialize_alloc(root, &buffer, &buffer_size);
     out.write(reinterpret_cast<const char*>(buffer), static_cast<std::streamsize>(buffer_size));
 
-    // for (size_t i = 0; i < buffer_size; ++i) {
-    //     std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(buffer[i]) << " ";
-    // }
-    // std::cout << std::endl;
-
     free(buffer);
     cbor_decref(&root);
     return out;
 }
 
 
-std::istream& operator>>(std::istream& in, cosim::serialization::node& data)
+std::istream& operator>>(std::istream& in, cosim::serialization::node& root)
 {
     in.seekg(0, std::ios::end);
     std::streamsize length = in.tellg();
@@ -440,12 +451,13 @@ std::istream& operator>>(std::istream& in, cosim::serialization::node& data)
     std::vector<uint8_t> buf(length);
     in.read(reinterpret_cast<char*>(buf.data()), length);
 
+    cbor_reader reader{root};
     struct cbor_callbacks cbs = cbor_empty_callbacks;
-    struct cbor_reader reader;
     struct cbor_decoder_result decode_result{};
     auto len = static_cast<size_t>(length);
     size_t bytes_read = 0;
 
+    // Callback functions for reading the input node recursively
     cbs.string = cbor_reader::cbor_read_string;
     cbs.uint8 = cbor_reader::cbor_read_int;
     cbs.uint16 = cbor_reader::cbor_read_int;
@@ -467,15 +479,12 @@ std::istream& operator>>(std::istream& in, cosim::serialization::node& data)
     cbs.indef_array_start = cbor_reader::cbor_indef_array_start;
     cbs.array_start = cbor_reader::cbor_array_start;
 
-    // // Print buffer as hex string
-    // std::cout << "Buffer as hex string: ";
-    // for (const auto& byte : buf) {
-    //     std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(byte);
-    // }
-
     while(bytes_read < len) {
         decode_result = cbor_stream_decode(buf.data() + bytes_read, len - bytes_read, &cbs, &reader);
-        assert(decode_result.status == cbor_decoder_status::CBOR_DECODER_FINISHED);
+        if (decode_result.status != cbor_decoder_status::CBOR_DECODER_FINISHED) {
+            BOOST_LOG_SEV(cosim::log::logger(), cosim::log::error) << "Decoding error " << decode_result.status;
+            return in;
+        }
         bytes_read += decode_result.read;
     }
     return in;
