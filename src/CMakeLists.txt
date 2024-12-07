@@ -180,7 +180,7 @@ target_link_libraries(cosim
         libzip::zip
         XercesC::XercesC
         yaml-cpp
-        tinycbor::tinycbor
+        libcbor::libcbor
     )
 
 if(LIBCOSIM_WITH_PROXYFMU)

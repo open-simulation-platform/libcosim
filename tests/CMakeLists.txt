@@ -50,7 +50,7 @@ foreach(test IN LISTS tests)
         "cpp_${test}"
         FOLDER "C++ tests"
         SOURCES "${test}.cpp"
-        DEPENDENCIES "cosim;tinycbor::tinycbor"
+        DEPENDENCIES "cosim;libcbor::libcbor"
         DATA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/data"
     )
 endforeach()

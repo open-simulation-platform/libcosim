@@ -3,25 +3,26 @@
 #include <ios>
 #include <iterator>
 #include <utility>
-#include <tinycbor/cbor.h>
 #include <cosim/log/logger.hpp>
 #include <iostream>
 #include <optional>
 #include <unordered_map>
 #include <typeindex>
 #include <iomanip>
+#include <cbor.h>
+#include <memory>
 
 namespace
 {
-    inline void throw_parsing_error(const std::string& msg, std::optional<CborError> ce = std::nullopt)
-    {
-        std::stringstream ss;
-        ss << "Error while parsing CBOR: " << msg;
-        if (ce) {
-            ss << ", cbor error: " << cbor_error_string(*ce);
-        }
-        throw std::runtime_error(ss.str());
-    }
+    // inline void throw_parsing_error(const std::string& msg, std::optional<CborError> ce = std::nullopt)
+    // {
+    //     std::stringstream ss;
+    //     ss << "Error while parsing CBOR: " << msg;
+    //     if (ce) {
+    //         ss << ", cbor error: " << cbor_error_string(*ce);
+    //     }
+    //     throw std::runtime_error(ss.str());
+    // }
 
     // Visitor class which prints the value(s) contained in a leaf node to an
     // output stream and returns whether anything was written.
@@ -103,458 +104,329 @@ namespace
             out << '}';
         }
     }
-    
-    constexpr size_t DEFAULT_CBOR_BLOCK_SIZE = 1024;
 
-    class cbor_encoding_data
-    {
-    public:
-        std::shared_ptr<CborEncoder> encoder;
-        std::vector<uint8_t>& buf;
-
-        explicit cbor_encoding_data(std::vector<uint8_t>& buf_ref)
-            : encoder(std::make_shared<CborEncoder>())
-            , buf(buf_ref)
-            , parent_(std::make_shared<CborEncoder>())
-        {
-            cbor_encoder_init(parent_.get(), buf.data(), buf.size(), 0);
-            wrap_cbor_encoding(cbor_encoder_create_map, parent_.get(), encoder.get(), CborIndefiniteLength);
-            root_ = parent_;
-        }
-
-        cbor_encoding_data(const cbor_encoding_data& data)
-            : encoder(data.encoder)
-            , buf(data.buf)
-            , root_(data.root_)
-            , parent_(data.parent_)
-        {
-        }
-
-        ~cbor_encoding_data()
-        {
-            resize_buffer(128, true); // Always give some extra space to avoid CborErrorOutOfMemory while closing the current container
-            auto err = cbor_encoder_close_container(parent_.get(), encoder.get());
-            if (err != CborNoError) {
-                std::stringstream ss;
-                ss << "Encountered an issue while closing CBOR container: " << cbor_error_string(err);
-                BOOST_LOG_SEV(cosim::log::logger(), cosim::log::warning) << ss.str();
-            }
-
-            if (root_ == parent_) {
-                auto buf_size = cbor_encoder_get_buffer_size(parent_.get(), buf.data());
-                buf.resize(buf_size);
-            }
-        }
-
-        cbor_encoding_data new_child_map()
-        {
-            auto map_encoder = std::make_shared<CborEncoder>();
-            wrap_cbor_encoding(cbor_encoder_create_map, encoder.get(), map_encoder.get(), CborIndefiniteLength);
-            auto new_data = cbor_encoding_data{*this};
-            new_data.encoder = map_encoder;
-            new_data.parent_ = encoder;
-            return new_data;
-        }
-
-        cbor_encoding_data new_child_array()
-        {
-            auto array_encoder = std::make_shared<CborEncoder>();
-            wrap_cbor_encoding(cbor_encoder_create_array, encoder.get(), array_encoder.get(), CborIndefiniteLength);
-            auto new_data = cbor_encoding_data{*this};
-            new_data.encoder = array_encoder;
-            new_data.parent_ = encoder;
-            return new_data;
-        }
-
-        template<typename F, typename... Args>
-        CborError wrap_cbor_encoding(F&& f, Args&&... args)
-        {
-            total_bytes_ = cbor_encoder_get_buffer_size(encoder.get(), buf.data());
-            auto err = std::forward<F>(f)(std::forward<Args>(args)...);
-
-            if (err == CborErrorOutOfMemory) {
-                BOOST_LOG_SEV(cosim::log::logger(), cosim::log::debug) << "Out of memory while encoding CBOR, resizing a buffer.";
-                resize_buffer(DEFAULT_CBOR_BLOCK_SIZE);
-                err = std::forward<F>(f)(std::forward<Args>(args)...);
-            }
-
-            if (err != CborNoError) {
-                throw_parsing_error("encoding error", err);
-            }
-            return err;
-        }
-
-    private:
-        void resize_buffer(size_t inc, bool skip_extra = false)
-        {
-            auto extra_bytes = skip_extra ? 0 : cbor_encoder_get_extra_bytes_needed(encoder.get());
-            auto new_size = buf.size() + extra_bytes + inc;
-            buf.resize(new_size);
-
-            // Update the encoder's buffer pointer
-            encoder->data.ptr = buf.data() + total_bytes_;
-            encoder->end = buf.data() + new_size;
-            encoder->remaining = CborIndefiniteLength + 1;
-        }
-
-        std::shared_ptr<CborEncoder> root_, parent_;
-        size_t total_bytes_{};
-    };
-
-    typedef enum IntTags {
-        Uint8  = 0x100,
-        Uint16 = 0x101,
-        Uint32 = 0x102,
-        Uint64 = 0x103,
-        Int8   = 0x104,
-        Int16  = 0x105,
-        Int32  = 0x106,
-        Int64  = 0x107
-    } IntTags;
-
-    constexpr int INT_MASK = 0xfff8;
-    constexpr int INT_FLAG = 0x100;
+    constexpr uint64_t TYPE_INT  = 0x8000;
+    constexpr uint64_t TYPE_UINT = 0x8001;
 
     struct cbor_write_visitor
     {
-        explicit cbor_write_visitor(cbor_encoding_data& data)
+        cbor_write_visitor(cbor_item_t* data, const char* key)
             : data_(data)
-        { }
-
-        cbor_write_visitor() = delete;
-
+            , key_(key)
+        {
+        }
         void operator()(std::nullptr_t v)
         {
-            data_.wrap_cbor_encoding(cbor_encode_null, data_.encoder.get());
+            cbor_map_add(data_, {cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_ctrl(CBOR_CTRL_NULL))});
         }
 
         void operator()(std::byte v)
         {
-            data_.wrap_cbor_encoding(cbor_encode_simple_value, data_.encoder.get(), static_cast<uint8_t>(v));
+            cbor_map_add(data_, {cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_uint8(static_cast<uint8_t>(v)))});
         }
 
         void operator()(const std::vector<std::byte>& blob)
         {
-            auto child = data_.new_child_array();
+            auto* array = cbor_new_definite_array(blob.size());
             for (const auto& b : blob) {
-                child.wrap_cbor_encoding(cbor_encode_simple_value, child.encoder.get(), static_cast<unsigned char>(b)); 
+                cbor_array_push(array, cbor_build_uint8(static_cast<uint8_t>(b)));
             }
+            cbor_map_add(data_, {cbor_move(cbor_build_string(key_)), cbor_move(array)});
         }
 
         void operator()(bool v)
         {
-            data_.wrap_cbor_encoding(cbor_encode_boolean, data_.encoder.get(), v);
+            cbor_map_add(data_, {cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_bool(v))});
         }
 
         void operator()(uint8_t v)
         {
-            data_.wrap_cbor_encoding(cbor_encode_tag, data_.encoder.get(), IntTags::Uint8);
-            data_.wrap_cbor_encoding(cbor_encode_uint, data_.encoder.get(), v);
+            cbor_map_add(data_, {cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_uint8(v))});
         }
 
         void operator()(int8_t v)
         {
-            data_.wrap_cbor_encoding(cbor_encode_tag, data_.encoder.get(), IntTags::Int8);
-            data_.wrap_cbor_encoding(cbor_encode_int, data_.encoder.get(), v);
+            auto value = v < 0 ? cbor_build_negint8(v) : cbor_build_uint8(v);
+            value = cbor_build_tag(TYPE_INT, value);
+            std::cout << "BUILD TA 8" << std::endl;
+            cbor_map_add(data_, {cbor_move(cbor_build_string(key_)), cbor_move(value)});
         }
 
         void operator()(uint16_t v)
         {
-            data_.wrap_cbor_encoding(cbor_encode_tag, data_.encoder.get(), IntTags::Uint16);
-            data_.wrap_cbor_encoding(cbor_encode_uint, data_.encoder.get(), v);
+            cbor_map_add(data_, {cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_uint16(v))});
         }
 
         void operator()(int16_t v)
         {
-            data_.wrap_cbor_encoding(cbor_encode_tag, data_.encoder.get(), IntTags::Int16);
-            data_.wrap_cbor_encoding(cbor_encode_int, data_.encoder.get(), v);
+            auto value = v < 0 ? cbor_build_negint16(v) : cbor_build_uint16(v);
+            value = cbor_build_tag(TYPE_INT, value);
+            std::cout << "BUILD TA 16" << std::endl;
+            cbor_map_add(data_, {cbor_move(cbor_build_string(key_)), cbor_move(value)});
         }
 
         void operator()(uint32_t v)
         {
-            data_.wrap_cbor_encoding(cbor_encode_tag, data_.encoder.get(), IntTags::Uint32);
-            data_.wrap_cbor_encoding(cbor_encode_uint, data_.encoder.get(), v);
+            cbor_map_add(data_, {cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_uint32(v))});
         }
 
         void operator()(int32_t v)
         {
-            data_.wrap_cbor_encoding(cbor_encode_tag, data_.encoder.get(), IntTags::Int32);
-            data_.wrap_cbor_encoding(cbor_encode_int, data_.encoder.get(), v);
+            auto value = v < 0 ? cbor_build_negint32(v) : cbor_build_uint32(v);
+            value = cbor_build_tag(TYPE_INT, value);
+            std::cout << "BUILD TA 32" << std::endl;
+            cbor_map_add(data_, {cbor_move(cbor_build_string(key_)), cbor_move(value)});
         }
 
         void operator()(uint64_t v)
         {
-            data_.wrap_cbor_encoding(cbor_encode_tag, data_.encoder.get(), IntTags::Uint64);
-            data_.wrap_cbor_encoding(cbor_encode_uint, data_.encoder.get(), v);
+            cbor_map_add(data_, {cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_uint64(v))});
         }
 
         void operator()(int64_t v)
         {
-            data_.wrap_cbor_encoding(cbor_encode_tag, data_.encoder.get(), IntTags::Int64);
-            data_.wrap_cbor_encoding(cbor_encode_int, data_.encoder.get(), v);
+            auto value = v < 0 ? cbor_build_negint64(v) : cbor_build_uint64(v);
+            value = cbor_build_tag(TYPE_INT, value);
+            std::cout << "BUILD TA 64" << std::endl;
+            cbor_map_add(data_, {cbor_move(cbor_build_string(key_)), cbor_move(value)});
         }
 
         void operator()(float v)
         {
-            data_.wrap_cbor_encoding(cbor_encode_float, data_.encoder.get(), v);
+            cbor_map_add(data_, {cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_float4(v))});
         }
 
         void operator()(double v)
         {
-            data_.wrap_cbor_encoding(cbor_encode_double, data_.encoder.get(), v);
+            cbor_map_add(data_, {cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_float8(v))});
         }
 
         void operator()(char v)
         {
-            data_.wrap_cbor_encoding(cbor_encode_text_string, data_.encoder.get(), &v, 1);
+            cbor_map_add(data_, {cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_ctrl(v))});
         }
 
-        void operator()(std::string v)
+        void operator()(const std::string& v)
         {
-            data_.wrap_cbor_encoding(cbor_encode_text_string, data_.encoder.get(), v.data(), v.size());
+            cbor_map_add(data_, {cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_string(v.c_str()))});
         }
-
     private:
-        cbor_encoding_data& data_;
+        cbor_item_t* data_;
+        const char* key_;
     };
 
-    void serialize_cbor(cbor_encoding_data& data, const cosim::serialization::node& tree)
+    void serialize_cbor(cbor_item_t *item, const cosim::serialization::node& tree)
     {
         for (auto child = tree.begin(); child != tree.end(); ++child) {
-            data.wrap_cbor_encoding(cbor_encode_text_stringz, data.encoder.get(), child->first.c_str());
             if (child->second.begin() != child->second.end()) {
-                auto new_data = data.new_child_map();
-                serialize_cbor(new_data, child->second);
+                auto new_map = cbor_new_indefinite_map();
+                serialize_cbor(new_map, child->second);
+                cbor_map_add(item, {cbor_move(cbor_build_string(child->first.c_str())), cbor_move(new_map)});
             } else {
-                std::visit(cbor_write_visitor(data), child->second.data());
+                std::visit(cbor_write_visitor(item, child->first.c_str()), child->second.data());
             }
         }
     }
 
-    template<typename F, typename... Args>
-    CborError wrap_cbor_call(F&& f, Args&&... args)
+
+    struct cbor_reader
     {
-        auto result = std::forward<F>(f)(std::forward<Args>(args)...);
-        if (result != CborNoError) {
-            throw_parsing_error("decoding error", result);
-        }
-        return result;
-    }
-    
-    template<typename T, typename F, typename... Args>
-    void wrap_cbor_put_simple(cosim::serialization::node& node, char* key, F&& f, Args&&... args)
-    {
-       T result;
-       wrap_cbor_call(std::forward<F>(f), std::forward<Args>(args)..., &result);
-       node.put(key, result);
-    }
+        enum STATE {
+            READING_INDEF_ARRAY = 0x01,
+            READING_ARRAY       = 0x02,
+            READING_MAP         = 0x03
+        };
 
-    template<IntTags Tag, typename Enable = void>
-    struct CborValueGetter;
+        std::vector<cosim::serialization::node> data{};
+        std::vector<std::string> keys{};
+        std::vector<uint64_t> tag{};
+        std::vector<std::byte> byte_array{};
+        size_t byte_array_length{};
+        STATE state = READING_MAP;
 
-    template<IntTags Tag>
-    struct CborValueGetter<Tag, typename std::enable_if<(Tag == Uint8 || Tag == Uint16 || Tag == Uint32 || Tag == Uint64)>::type> {
-        using CastTo = typename std::conditional<
-            Tag == Uint8, uint8_t,
-            typename std::conditional<
-                Tag == Uint16, uint16_t,
-                typename std::conditional<
-                    Tag == Uint32, uint32_t,
-                    uint64_t
-                >::type
-            >::type
-        >::type;
-    };
-
-    template<IntTags Tag>
-    struct CborValueGetter<Tag, typename std::enable_if<(Tag == Int8 || Tag == Int16 || Tag == Int32 || Tag == Int64)>::type> {
-        using CastTo = typename std::conditional<
-            Tag == Int8, int8_t,
-            typename std::conditional<
-                Tag == Int16, int16_t,
-                typename std::conditional<
-                    Tag == Int32, int32_t,
-                    int64_t
-                >::type
-            >::type
-        >::type;
-    };
-
-    template<IntTags Tag, typename std::enable_if<(Tag == Uint8 || Tag == Uint16 || Tag == Uint32 || Tag == Uint64)>::type* = nullptr>
-    void wrap_cbor_put_int(cosim::serialization::node& node, char* key, CborValue& value)
-    {
-        uint64_t int_val;
-        wrap_cbor_call(cbor_value_get_uint64, &value, &int_val);
-        node.put(key, static_cast<typename CborValueGetter<Tag>::CastTo>(int_val));
-    }
-
-    template<IntTags Tag, typename std::enable_if<(Tag == Int8 || Tag == Int16 || Tag == Int32 || Tag == Int64)>::type* = nullptr>
-    void wrap_cbor_put_int(cosim::serialization::node& node, char* key, CborValue& value)
-    {
-        int64_t int_val;
-        wrap_cbor_call(cbor_value_get_int64, &value, &int_val);
-        node.put(key, static_cast<typename CborValueGetter<Tag>::CastTo>(int_val));
-    }
-
-    void read_entry(CborValue& value, cosim::serialization::node& node)
-    {
-        if(!cbor_value_is_valid(&value)) {
-            throw_parsing_error("Invalid CBOR value while parsing map entries!");
+        static void cbor_read_tag(void* _ctx, uint64_t tag)
+        {
+            auto node = reinterpret_cast<cbor_reader*>(_ctx);
+            node->tag.push_back(tag);
         }
 
-        if(!cbor_value_is_text_string(&value)) {
-            throw_parsing_error("A map's key is expected to be a string type");
+        static void cbor_read_null_undefined(void* _ctx)
+        {
+            auto node = reinterpret_cast<cbor_reader*>(_ctx);
+            node->data.back().put(node->keys.back(), nullptr);
+            node->keys.pop_back();
         }
 
-        size_t key_len;
-        wrap_cbor_call(cbor_value_get_string_length, &value, &key_len);
-        std::vector<char> keyvec(key_len + 1);
-        wrap_cbor_call(cbor_value_copy_text_string, &value, keyvec.data(), &key_len, &value);
-        keyvec.push_back('\0');
-        char* key = keyvec.data();
-        std::cout << "Paring " << key << std::endl;
+        static void cbor_indef_map_start(void* _ctx)
+        {
+            std::cout << "indf map st" << std::endl;
+            auto node = reinterpret_cast<cbor_reader*>(_ctx);
+            node->data.emplace_back();
+        }
 
-        if (cbor_value_is_tag(&value)) {
-            CborTag tag;
-            cbor_value_get_tag(&value, &tag);
-            cbor_value_advance(&value);
-            std::cout << "has tag" << std::endl;
-
-            switch (tag) {
-                case Uint8:
-                    std::cout << "uint8" << std::endl;
-                    wrap_cbor_put_int<Uint8>(node, key, value);
-                    break;
-                case Uint16:
-                    std::cout << "uint16" << std::endl;
-                    wrap_cbor_put_int<Uint16>(node, key, value);
-                    break;
-                case Uint32:
-                    std::cout << "uint32"  << std::endl;
-                    wrap_cbor_put_int<Uint32>(node, key, value);
-                    break;
-                case Uint64:
-                    std::cout << "uint64"  << std::endl;
-                    wrap_cbor_put_int<Uint64>(node, key, value);
-                    break;
-                case Int8:
-                    std::cout << "int8"  << std::endl;
-                    wrap_cbor_put_int<Int8>(node, key, value);
-                    break;
-                case Int16:
-                    std::cout << "int16"  << std::endl;
-                    wrap_cbor_put_int<Int16>(node, key, value);
-                    break;
-                case Int32:
-                    std::cout << "int32"  << std::endl;
-                    wrap_cbor_put_int<Int32>(node, key, value);
-                    break;
-                case Int64:
-                    std::cout << "int64"  << std::endl;
-                    wrap_cbor_put_int<Int64>(node, key, value);
-                    break;
-                default:
-                    std::stringstream ss;
-                    ss << "Unknown integer type: " << tag;
-                    throw_parsing_error(ss.str());
-            }
-        } else if (cbor_value_is_null(&value) || cbor_value_is_undefined(&value)) {
-            node.put(key, std::nullptr_t());
-        } else if (cbor_value_is_boolean(&value)) {
-            wrap_cbor_put_simple<bool>(node, key, cbor_value_get_boolean, &value);
-        } else if (cbor_value_is_double(&value)) {
-            wrap_cbor_put_simple<double>(node, key, cbor_value_get_double, &value);
-        } else if (cbor_value_is_float(&value)) {
-            wrap_cbor_put_simple<float>(node, key, cbor_value_get_float, &value);
-        } else if (cbor_value_is_text_string(&value)) {
-            size_t len;
-            wrap_cbor_call(cbor_value_get_string_length, &value, &len);
-            std::vector<char> buf(len);
-            wrap_cbor_call(cbor_value_copy_text_string, &value, buf.data(), &len, &value);
-            if (len == 0) {
-                node.put(key, std::string());
-            } else {
-                node.put(key, std::string(buf.data()));
-            }
-            return;
-        } else if (cbor_value_is_byte_string(&value)) {
-            size_t len;
-            wrap_cbor_call(cbor_value_get_string_length, &value, &len);
-            std::vector<uint8_t> buf(len);
-            wrap_cbor_call(cbor_value_copy_byte_string, &value, buf.data(), &len, &value);
-            if (len == 0) {
-                node.put(key, std::string());
-            } else {
-                node.put(key, std::string(reinterpret_cast<char*>(buf.data()), buf.size()));
-            }
-            return;
-        } else if (cbor_value_is_map(&value)) {
-            CborValue recur;
-            std::cout << "enter cont 2" << std::endl;
-            wrap_cbor_call(cbor_value_enter_container, &value, &recur);
-            cosim::serialization::node child;
-            while (!cbor_value_at_end(&recur)) {
-                std::cout << "read next entry" << std::endl;
-                read_entry(recur, child);
-            }
-            node.put_child(key, child);
-            wrap_cbor_call(cbor_value_leave_container, &value, &recur);
-            std::cout << "leave cont 2" << std::endl;
-            return;
-        } else if (cbor_value_is_array(&value)) {
-            /// For our node_type value, array can only be std::vector<std::byte>
-            CborValue recur;
-            wrap_cbor_call(cbor_value_enter_container, &value, &recur);
-            std::vector<std::byte> buf;
-            while (!cbor_value_at_end(&recur)) {
-                if (!cbor_value_is_simple_type(&recur)) {
-                    throw_parsing_error("node_type array can only be byte type");
+        static void cbor_indef_break(void* _ctx)
+        {
+            std::cout << "indef break" << std::endl;
+            auto node = reinterpret_cast<cbor_reader*>(_ctx);
+            if (node->state == READING_MAP) {
+                if (!node->keys.empty()) {
+                    auto key = node->keys.back();
+                    auto map = node->data.back();
+                    node->data.pop_back();
+                    node->data.back().put_child(key, map);
+                    node->keys.pop_back();
                 }
-                uint8_t byte_;
-                wrap_cbor_call(cbor_value_get_simple_type, &value, &byte_);
-                buf.push_back(static_cast<std::byte>(byte_));
-                wrap_cbor_call(cbor_value_advance, &recur);
+            } else if (node->state == READING_INDEF_ARRAY) {
+                std::cout << "PUSHED BACK" << std::endl;
+                node->data.back().put(node->keys.back(), node->byte_array);
+                node->state = READING_MAP;
             }
-            node.put(key, buf);
-            wrap_cbor_call(cbor_value_leave_container, &value, &recur);
-            return;
-        } else {
-            std::stringstream ss;
-            ss << "Unexpected data type: " << std::hex << std::setw(2) << std::setfill('0') << cbor_value_get_type(&value);
-            throw_parsing_error(ss.str());
         }
-        std::cout << "IS END " << cbor_value_at_end(&value) << std::endl;
-        wrap_cbor_call(cbor_value_advance, &value);
-    }
 
-    void parse_cbor(CborValue& value, cosim::serialization::node& tree)
-    {
-        if (!cbor_value_is_map(&value)) {
-            throw_parsing_error("expected a map type");
+        static void cbor_read_string(void* _ctx, cbor_data buffer, uint64_t len)
+        {
+            auto node = reinterpret_cast<cbor_reader*>(_ctx);
+            auto value = std::string(reinterpret_cast<const char*>(buffer), len);
+            if (node->data.size() - 1 == node->keys.size()) {
+                node->keys.push_back(value);
+            } else {
+                node->data.back().put(node->keys.back(), value);
+                node->keys.pop_back();
+            }
         }
-        
-        std::cout << "enter container" << std::endl;
 
-        CborValue map;
-        wrap_cbor_call(cbor_value_enter_container, &value, &map);
-
-        while (!cbor_value_at_end(&map)) {
-            read_entry(map, tree);
+        static void cbor_read_boolean(void* _ctx, bool v)
+        {
+            auto node = reinterpret_cast<cbor_reader*>(_ctx);
+            node->data.back().put(node->keys.back(), v);
+            node->keys.pop_back();
         }
-        std::cout << "leave cont" << std::endl;
-        wrap_cbor_call(cbor_value_leave_container, &value, &map);
-    }
+
+        static void cbor_read_half_float(void* _ctx, float v)
+        {
+            auto node = reinterpret_cast<cbor_reader*>(_ctx);
+            node->data.back().put(node->keys.back(), v);
+            node->keys.pop_back();
+        }
+
+        static void cbor_read_double_float(void* _ctx, double v)
+        {
+            auto node = reinterpret_cast<cbor_reader*>(_ctx);
+            node->data.back().put(node->keys.back(), v);
+            node->keys.pop_back();
+        }
+
+        static void cbor_read_byte_string(void * _ctx, cbor_data data, uint64_t len)
+        {
+            auto node = reinterpret_cast<cbor_reader*>(_ctx);
+            auto value = std::string(reinterpret_cast<const char*>(data), len);
+            node->data.back().put(node->keys.back(), value);
+            node->keys.pop_back();
+        }
+
+        static void cbor_array_start(void * _ctx, uint64_t len)
+        {
+            auto node = reinterpret_cast<cbor_reader*>(_ctx);
+            node->state = READING_ARRAY;
+            node->byte_array.clear();
+            node->byte_array_length = len;
+        }
+
+        static void cbor_indef_array_start(void * _ctx)
+        {
+            auto node = reinterpret_cast<cbor_reader*>(_ctx);
+            node->state = READING_INDEF_ARRAY;
+            node->byte_array.clear();
+        }
+
+
+        template<typename T>
+        struct int_type;
+
+        template<>
+        struct int_type<uint8_t> {
+           using type = int8_t;
+        };
+
+        template<>
+        struct int_type<uint16_t> {
+            using type = int16_t;
+        };
+
+        template<>
+        struct int_type<uint32_t> {
+            using type = int32_t;
+        };
+
+        template<>
+        struct int_type<uint64_t> {
+            using type = int64_t;
+        };
+
+        template<typename T>
+        static void cbor_read_int(void* _ctx, T v)
+        {
+            auto node = reinterpret_cast<cbor_reader*>(_ctx);
+            std::cout << "KEY " << node->keys.back() << "INT VALUE " << v << " type " << typeid(T).name() << std::endl;
+            if (!node->tag.empty()) {
+                std::cout << "INT TYPE " << typeid(typename int_type<T>::type).name() << std::endl;
+                node->data.back().put(node->keys.back(), static_cast<typename int_type<T>::type>(v));
+                node->tag.clear();
+            } else {
+                node->data.back().put(node->keys.back(), v);
+            }
+            node->keys.pop_back();
+        }
+
+        static void cbor_read_int(void* _ctx, uint8_t v)
+        {
+            auto node = reinterpret_cast<cbor_reader*>(_ctx);
+
+            if (!node->tag.empty()) {
+                std::cout << "INT TYPE " << std::endl;
+                node->data.back().put(node->keys.back(), static_cast<int8_t>(v));
+                node->tag.clear();
+            } else if (node->state == READING_ARRAY || node->state == READING_INDEF_ARRAY) {
+                std::cout << "READ BYTYE" << std::endl;
+                node->byte_array.push_back(static_cast<std::byte>(v));
+
+                if (node->state == READING_ARRAY && node->byte_array.size() == node->byte_array_length) {
+                    std::cout << "PUSHED BACK" << std::endl;
+                    node->data.back().put(node->keys.back(), node->byte_array);
+                    node->state = READING_MAP;
+                } else {
+                    return;
+                }
+            } else {
+                node->data.back().put(node->keys.back(), v);
+            }
+
+            node->keys.pop_back();
+        }
+    };
+
 }
 
 std::ostream& operator<<(std::ostream& out, const cosim::serialization::node& data)
 {
-    std::vector<uint8_t> vec(DEFAULT_CBOR_BLOCK_SIZE);
+    auto root = cbor_new_indefinite_map();
     {
-        auto cbor_array = cbor_encoding_data(vec);
-        serialize_cbor(cbor_array, data);
+        serialize_cbor(root, data);
     } // To finalize vec by calling cbor_encoding_data's destructor
 
-    out.write(reinterpret_cast<const char*>(vec.data()), vec.size());
+    unsigned char* buffer;
+    size_t buffer_size;
+
+    cbor_serialize_alloc(root, &buffer, &buffer_size);
+    out.write(reinterpret_cast<const char*>(buffer), static_cast<std::streamsize>(buffer_size));
+
+    // for (size_t i = 0; i < buffer_size; ++i) {
+    //     std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(buffer[i]) << " ";
+    // }
+    // std::cout << std::endl;
+
+    free(buffer);
+    cbor_decref(&root);
     return out;
 }
 
@@ -562,17 +434,50 @@ std::ostream& operator<<(std::ostream& out, const cosim::serialization::node& da
 std::istream& operator>>(std::istream& in, cosim::serialization::node& data)
 {
     in.seekg(0, std::ios::end);
-    std::streamsize size = in.tellg();
+    std::streamsize length = in.tellg();
     in.clear();
     in.seekg(0, std::ios::beg);
-    std::vector<uint8_t> buf(size);
-    in.read(reinterpret_cast<char*>(buf.data()), size);
+    std::vector<uint8_t> buf(length);
+    in.read(reinterpret_cast<char*>(buf.data()), length);
 
-    CborParser parser;
-    CborValue value;
-    cbor_parser_init(buf.data(), size, 0, &parser, &value);
-    
-    parse_cbor(value, data);
+    struct cbor_callbacks cbs = cbor_empty_callbacks;
+    struct cbor_reader reader;
+    struct cbor_decoder_result decode_result{};
+    auto len = static_cast<size_t>(length);
+    size_t bytes_read = 0;
+
+    cbs.string = cbor_reader::cbor_read_string;
+    cbs.uint8 = cbor_reader::cbor_read_int;
+    cbs.uint16 = cbor_reader::cbor_read_int;
+    cbs.uint32 = cbor_reader::cbor_read_int;
+    cbs.uint64 = cbor_reader::cbor_read_int;
+    cbs.negint8 = cbor_reader::cbor_read_int;
+    cbs.negint16 = cbor_reader::cbor_read_int;
+    cbs.negint32 = cbor_reader::cbor_read_int;
+    cbs.negint64 = cbor_reader::cbor_read_int;
+    cbs.boolean = cbor_reader::cbor_read_boolean;
+    cbs.float4 = cbor_reader::cbor_read_half_float;
+    cbs.float8 = cbor_reader::cbor_read_double_float;
+    cbs.indef_map_start = cbor_reader::cbor_indef_map_start;
+    cbs.indef_break = cbor_reader::cbor_indef_break;
+    cbs.undefined = cbor_reader::cbor_read_null_undefined;
+    cbs.null = cbor_reader::cbor_read_null_undefined;
+    cbs.tag = cbor_reader::cbor_read_tag;
+    cbs.byte_string = cbor_reader::cbor_read_byte_string;
+    cbs.indef_array_start = cbor_reader::cbor_indef_array_start;
+    cbs.array_start = cbor_reader::cbor_array_start;
+
+    // // Print buffer as hex string
+    // std::cout << "Buffer as hex string: ";
+    // for (const auto& byte : buf) {
+    //     std::cout << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(byte);
+    // }
+
+    while(bytes_read < len) {
+        decode_result = cbor_stream_decode(buf.data() + bytes_read, len - bytes_read, &cbs, &reader);
+        assert(decode_result.status == cbor_decoder_status::CBOR_DECODER_FINISHED);
+        bytes_read += decode_result.read;
+    }
     return in;
 }
 
