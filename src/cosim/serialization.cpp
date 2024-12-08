@@ -14,16 +14,6 @@
 
 namespace
 {
-    // inline void throw_parsing_error(const std::string& msg, std::optional<CborError> ce = std::nullopt)
-    // {
-    //     std::stringstream ss;
-    //     ss << "Error while parsing CBOR: " << msg;
-    //     if (ce) {
-    //         ss << ", cbor error: " << cbor_error_string(*ce);
-    //     }
-    //     throw std::runtime_error(ss.str());
-    // }
-
     // Visitor class which prints the value(s) contained in a leaf node to an
     // output stream and returns whether anything was written.
     struct leaf_output_visitor
@@ -235,9 +225,12 @@ namespace
         cosim::serialization::node& root;
         std::vector<cosim::serialization::node> children{};
         std::vector<std::string> keys{};
-        std::vector<uint64_t> tag{};
+        std::optional<uint64_t> tag{};
+
+        /// For FMU states
         std::vector<std::byte> byte_array{};
         size_t byte_array_length{};
+
         STATE state = READING_MAP;
         int level = -1;
     };
@@ -263,7 +256,7 @@ namespace
         static void cbor_read_tag(void* _ctx, uint64_t tag)
         {
             auto node = reinterpret_cast<cbor_reader_ctx*>(_ctx);
-            node->tag.push_back(tag);
+            node->tag = tag;
         }
 
         static void cbor_read_null_undefined(void* _ctx)
@@ -360,7 +353,6 @@ namespace
             ctx->byte_array.clear();
         }
 
-
         template<typename T>
         struct int_type;
 
@@ -388,9 +380,11 @@ namespace
         static void cbor_read_int(void* _ctx, T v)
         {
             auto ctx = reinterpret_cast<cbor_reader_ctx*>(_ctx);
-            if (!ctx->tag.empty()) {
+
+            // If tag is defined, read the value as signed integer.
+            if (ctx->tag) {
                 current_node(ctx).put(ctx->keys.back(), static_cast<typename int_type<T>::type>(v));
-                ctx->tag.clear();
+                ctx->tag = std::nullopt;
             } else {
                 current_node(ctx).put(ctx->keys.back(), v);
             }
@@ -401,10 +395,11 @@ namespace
         {
             auto ctx = reinterpret_cast<cbor_reader_ctx*>(_ctx);
 
-            if (!ctx->tag.empty()) {
+            if (ctx->tag) {
                 current_node(ctx).put(ctx->keys.back(), static_cast<int8_t>(v));
-                ctx->tag.clear();
+                ctx->tag = std::nullopt;
             } else if (ctx->state == STATE::READING_ARRAY || ctx->state == STATE::READING_INDEF_ARRAY) {
+                // While reading array, cast the value to std::byte.
                 ctx->byte_array.push_back(static_cast<std::byte>(v));
 
                 if (ctx->state == STATE::READING_ARRAY && ctx->byte_array.size() == ctx->byte_array_length) {
