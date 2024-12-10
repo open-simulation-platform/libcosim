@@ -2,10 +2,8 @@
 
 #include <cosim/algorithm.hpp>
 #include <cosim/execution.hpp>
-#include <cosim/osp_config_parser.hpp>
 #include <cosim/log/simple.hpp>
 #include <cosim/observer/last_value_observer.hpp>
-#include <cosim/observer/time_series_observer.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <cosim/serialization.hpp>
 

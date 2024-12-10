@@ -7,10 +7,7 @@
 #include <iostream>
 #include <optional>
 #include <unordered_map>
-#include <typeindex>
-#include <iomanip>
 #include <cbor.h>
-#include <memory>
 
 namespace
 {
