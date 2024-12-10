@@ -9,6 +9,14 @@
 #include <unordered_map>
 #include <cbor.h>
 
+
+namespace cosim
+{
+namespace serialization
+{
+} // namespace serilization
+} // namespace cosim
+
 namespace
 {
     // Visitor class which prints the value(s) contained in a leaf node to an
@@ -95,6 +103,15 @@ namespace
     constexpr uint64_t TYPE_INT  = 0x8000;
     constexpr uint64_t TYPE_UINT = 0x8001;
 
+    template<typename F, typename... Args>
+    void wrap_cbor_call(F&& f, Args&&... args)
+    {
+        auto result = std::forward<F>(f)(std::forward<Args>(args)...);
+        if (!result) {
+            throw std::runtime_error("Failed Cbor operation!");
+        }
+    }
+
     struct cbor_write_visitor
     {
         cbor_write_visitor(cbor_item_t* data, const char* key)
@@ -102,96 +119,96 @@ namespace
             , key_(key)
         {
         }
-        void operator()(std::nullptr_t v)
+        void operator()(std::nullptr_t)
         {
-            cbor_map_add(data_, {cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_ctrl(CBOR_CTRL_NULL))});
+            wrap_cbor_call(cbor_map_add, data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_ctrl(CBOR_CTRL_NULL))});
         }
 
         void operator()(std::byte v)
         {
-            cbor_map_add(data_, {cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_uint8(static_cast<uint8_t>(v)))});
+            wrap_cbor_call(cbor_map_add, data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_uint8(static_cast<uint8_t>(v)))});
         }
 
         void operator()(const std::vector<std::byte>& blob)
         {
             auto* array = cbor_new_definite_array(blob.size());
             for (const auto& b : blob) {
-                cbor_array_push(array, cbor_build_uint8(static_cast<uint8_t>(b)));
+                wrap_cbor_call(cbor_array_push, array, cbor_build_uint8(static_cast<uint8_t>(b)));
             }
-            cbor_map_add(data_, {cbor_move(cbor_build_string(key_)), cbor_move(array)});
+            wrap_cbor_call(cbor_map_add, data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(array)});
         }
 
         void operator()(bool v)
         {
-            cbor_map_add(data_, {cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_bool(v))});
+            wrap_cbor_call(cbor_map_add, data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_bool(v))});
         }
 
         void operator()(uint8_t v)
         {
-            cbor_map_add(data_, {cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_uint8(v))});
+            wrap_cbor_call(cbor_map_add, data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_uint8(v))});
         }
 
         void operator()(int8_t v)
         {
             auto value = v < 0 ? cbor_build_negint8(v) : cbor_build_uint8(v);
             value = cbor_build_tag(TYPE_INT, value);
-            cbor_map_add(data_, {cbor_move(cbor_build_string(key_)), cbor_move(value)});
+            wrap_cbor_call(cbor_map_add, data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(value)});
         }
 
         void operator()(uint16_t v)
         {
-            cbor_map_add(data_, {cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_uint16(v))});
+            wrap_cbor_call(cbor_map_add, data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_uint16(v))});
         }
 
         void operator()(int16_t v)
         {
             auto value = v < 0 ? cbor_build_negint16(v) : cbor_build_uint16(v);
             value = cbor_build_tag(TYPE_INT, value);
-            cbor_map_add(data_, {cbor_move(cbor_build_string(key_)), cbor_move(value)});
+            wrap_cbor_call(cbor_map_add, data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(value)});
         }
 
         void operator()(uint32_t v)
         {
-            cbor_map_add(data_, {cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_uint32(v))});
+            wrap_cbor_call(cbor_map_add, data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_uint32(v))});
         }
 
         void operator()(int32_t v)
         {
             auto value = v < 0 ? cbor_build_negint32(v) : cbor_build_uint32(v);
             value = cbor_build_tag(TYPE_INT, value);
-            cbor_map_add(data_, {cbor_move(cbor_build_string(key_)), cbor_move(value)});
+            wrap_cbor_call(cbor_map_add, data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(value)});
         }
 
         void operator()(uint64_t v)
         {
-            cbor_map_add(data_, {cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_uint64(v))});
+            wrap_cbor_call(cbor_map_add, data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_uint64(v))});
         }
 
         void operator()(int64_t v)
         {
             auto value = v < 0 ? cbor_build_negint64(v) : cbor_build_uint64(v);
             value = cbor_build_tag(TYPE_INT, value);
-            cbor_map_add(data_, {cbor_move(cbor_build_string(key_)), cbor_move(value)});
+            wrap_cbor_call(cbor_map_add, data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(value)});
         }
 
         void operator()(float v)
         {
-            cbor_map_add(data_, {cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_float4(v))});
+            wrap_cbor_call(cbor_map_add, data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_float4(v))});
         }
 
         void operator()(double v)
         {
-            cbor_map_add(data_, {cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_float8(v))});
+            wrap_cbor_call(cbor_map_add, data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_float8(v))});
         }
 
         void operator()(char v)
         {
-            cbor_map_add(data_, {cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_ctrl(v))});
+            wrap_cbor_call(cbor_map_add, data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_ctrl(v))});
         }
 
         void operator()(const std::string& v)
         {
-            cbor_map_add(data_, {cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_string(v.c_str()))});
+            wrap_cbor_call(cbor_map_add, data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_string(v.c_str()))});
         }
     private:
         cbor_item_t* data_;
@@ -204,7 +221,7 @@ namespace
             if (child->second.begin() != child->second.end()) {
                 auto new_map = cbor_new_definite_map(child->second.size());
                 serialize_cbor(new_map, child->second);
-                cbor_map_add(item, {cbor_move(cbor_build_string(child->first.c_str())), cbor_move(new_map)});
+                wrap_cbor_call(cbor_map_add, item, cbor_pair{cbor_move(cbor_build_string(child->first.c_str())), cbor_move(new_map)});
             } else {
                 std::visit(cbor_write_visitor(item, child->first.c_str()), child->second.data());
             }
@@ -240,6 +257,38 @@ namespace
         // Indicates current level when parsing maps recursively
         int level = -1;
     };
+
+    namespace serialization
+    {
+
+        template<typename T>
+        struct int_type;
+
+        template<>
+        struct int_type<uint8_t>
+        {
+            using type = int8_t;
+        };
+
+        template<>
+        struct int_type<uint16_t>
+        {
+            using type = int16_t;
+        };
+
+        template<>
+        struct int_type<uint32_t>
+        {
+            using type = int32_t;
+        };
+
+        template<>
+        struct int_type<uint64_t>
+        {
+            using type = int64_t;
+        };
+
+    }
 
     class cbor_reader
     {
@@ -424,36 +473,13 @@ namespace
         }
 
         template<typename T>
-        struct int_type;
-
-        template<>
-        struct int_type<uint8_t> {
-           using type = int8_t;
-        };
-
-        template<>
-        struct int_type<uint16_t> {
-            using type = int16_t;
-        };
-
-        template<>
-        struct int_type<uint32_t> {
-            using type = int32_t;
-        };
-
-        template<>
-        struct int_type<uint64_t> {
-            using type = int64_t;
-        };
-
-        template<typename T>
         static void cbor_read_int(void* _ctx, T value)
         {
             auto ctx = reinterpret_cast<cbor_reader_ctx*>(_ctx);
 
             // If tag is defined, read the value as signed integer.
             if (ctx->tag) {
-                add_value(ctx, static_cast<typename int_type<T>::type>(value));
+                add_value(ctx, static_cast<typename ::serialization::int_type<T>::type>(value));
                 ctx->tag = std::nullopt;
             } else {
                 add_value(ctx, value);
@@ -555,8 +581,6 @@ std::istream& operator>>(std::istream& in, cosim::serialization::node& root)
         }
         bytes_read += decode_result.read;
     }
-    std::stringstream ss;
-    print_ptree(ss, root);
 
     return in;
 }
