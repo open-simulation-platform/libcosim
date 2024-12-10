@@ -205,7 +205,7 @@ namespace
     {
         for (auto child = tree.begin(); child != tree.end(); ++child) {
             if (child->second.begin() != child->second.end()) {
-                auto new_map = cbor_new_indefinite_map();
+                auto new_map = cbor_new_definite_map(child->second.size());
                 serialize_cbor(new_map, child->second);
                 cbor_map_add(item, {cbor_move(cbor_build_string(child->first.c_str())), cbor_move(new_map)});
             } else {
@@ -219,19 +219,28 @@ namespace
         enum STATE {
             READING_INDEF_ARRAY = 0x01,
             READING_ARRAY       = 0x02,
-            READING_MAP         = 0x03
+            READING_MAP         = 0x03,
+            READING_INDEF_MAP   = 0x04
         };
 
         cosim::serialization::node& root;
+
+        // Cbor parser state
+        std::vector<STATE> states{};
+
         std::vector<cosim::serialization::node> children{};
         std::vector<std::string> keys{};
         std::optional<uint64_t> tag{};
 
-        /// For FMU states
+        // For storing FMU states
         std::vector<std::byte> byte_array{};
         size_t byte_array_length{};
 
-        STATE state = READING_MAP;
+        // For maps with fixed sizes
+        std::vector<uint64_t> map_current_indexes{};
+        std::vector<uint64_t> map_sizes{};
+
+        // Indicates current level when parsing maps recursively
         int level = -1;
     };
 
@@ -248,9 +257,62 @@ namespace
             return ctx->children.back();
         }
 
-        inline static bool current_string_is_key(cbor_reader_ctx* ctx)
+        template<typename T>
+        static void add_value(cbor_reader_ctx* ctx, T&& value)
+        {
+            if (ctx->children.size() == ctx->keys.size() - 1) {
+                current_node(ctx).put(ctx->keys.back(), value);
+                ctx->keys.pop_back();
+            } else {
+                std::stringstream ss;
+                ss << "[Cbor error] Unable to retrieve a key for the value";
+                throw std::runtime_error(ss.str());
+            }
+        }
+
+        inline static bool string_is_key(cbor_reader_ctx* ctx)
         {
             return ctx->children.size() == ctx->keys.size();
+        }
+
+        static void append_map_child(cbor_reader_ctx* ctx)
+        {
+            if (ctx->level > 0 && !ctx->keys.empty()) {
+                auto key = ctx->keys.back();
+                auto map = current_node(ctx);
+                if(!ctx->children.empty()) {
+                    ctx->children.pop_back();
+                }
+                current_node(ctx).put_child(key, map);
+                ctx->keys.pop_back();
+                ctx->level--;
+            }
+        }
+
+        inline static void check_map_end(cbor_reader_ctx* ctx)
+        {
+            if (ctx->states.back() == cbor_reader_ctx::READING_MAP) {
+                if (ctx->map_current_indexes.size() != ctx->map_sizes.size() ||
+                    !ctx->map_current_indexes.size() || !ctx->map_sizes.size()) {
+                    throw std::runtime_error("[Cbor reader] Invalid state while parsing a map - invalid map sizes");
+                }
+                ctx->map_current_indexes.back()++;
+
+                if (ctx->map_current_indexes.back() == ctx->map_sizes.back()) {
+                    ctx->map_current_indexes.pop_back();
+                    ctx->map_sizes.pop_back();
+                    append_map_child(ctx);
+                    ctx->states.pop_back();
+
+                    if (!ctx->states.size()) {
+                        throw std::runtime_error("[Cbor reader] Invalid state while parsing a map - empty state vector");
+                    }
+
+                    if (ctx->states.back() == STATE::READING_MAP) {
+                        check_map_end(ctx);
+                    }
+                }
+            }
         }
 
         static void cbor_read_tag(void* _ctx, uint64_t tag)
@@ -259,89 +321,50 @@ namespace
             node->tag = tag;
         }
 
-        static void cbor_read_null_undefined(void* _ctx)
+        static void cbor_indef_map_start(void* _ctx)
         {
             auto ctx = reinterpret_cast<cbor_reader_ctx*>(_ctx);
-            current_node(ctx).put(ctx->keys.back(), nullptr);
-            ctx->keys.pop_back();
+            ctx->level++;
+
+            // Only add a child node if this is not a root node
+            if (ctx->level > 0) {
+                ctx->children.emplace_back();
+            }
+            ctx->states.emplace_back(STATE::READING_INDEF_MAP);
         }
 
-        static void cbor_indef_map_start(void* _ctx)
+        static void cbor_map_start(void* _ctx, uint64_t size)
         {
             auto ctx = reinterpret_cast<cbor_reader_ctx*>(_ctx);
             ctx->level++;
             if (ctx->level > 0) {
                 ctx->children.emplace_back();
             }
+            ctx->states.emplace_back(cbor_reader_ctx::READING_MAP);
+            ctx->map_sizes.emplace_back(size);
+            ctx->map_current_indexes.emplace_back(0);
         }
 
         static void cbor_indef_break(void* _ctx)
         {
             auto ctx = reinterpret_cast<cbor_reader_ctx*>(_ctx);
-            if (ctx->state == STATE::READING_MAP) {
-                if (!ctx->keys.empty()) {
-                    auto key = ctx->keys.back();
-                    auto map = current_node(ctx);
-                    if(!ctx->children.empty()) {
-                        ctx->children.pop_back();
-                    }
-                    current_node(ctx).put_child(key, map);
-                    ctx->keys.pop_back();
-                }
-                ctx->level--;
-            } else if (ctx->state == STATE::READING_INDEF_ARRAY) {
-                current_node(ctx).put(ctx->keys.back(), ctx->byte_array);
-                ctx->state = STATE::READING_MAP;
+            if (ctx->states.back() == STATE::READING_INDEF_MAP) {
+                append_map_child(ctx);
+            } else if (ctx->states.back() == STATE::READING_INDEF_ARRAY) {
+                add_value(ctx, ctx->byte_array);
             } else {
-                BOOST_LOG_SEV(cosim::log::logger(), cosim::log::warning) << "Unexpected parsing state " << ctx->state;
+                std::stringstream ss;
+                ss << "[Cbor reader] Unexpected parsing state at indefinite item break point: "
+                   << ctx->states.back();
+                throw std::runtime_error(ss.str());
             }
-        }
-
-        static void cbor_read_string(void* _ctx, cbor_data buffer, uint64_t len)
-        {
-            auto ctx = reinterpret_cast<cbor_reader_ctx*>(_ctx);
-            auto value = std::string(reinterpret_cast<const char*>(buffer), len);
-            if (current_string_is_key(ctx)) {
-                ctx->keys.push_back(value);
-            } else {
-                current_node(ctx).put(ctx->keys.back(), value);
-                ctx->keys.pop_back();
-            }
-        }
-
-        static void cbor_read_boolean(void* _ctx, bool v)
-        {
-            auto ctx = reinterpret_cast<cbor_reader_ctx*>(_ctx);
-            current_node(ctx).put(ctx->keys.back(), v);
-            ctx->keys.pop_back();
-        }
-
-        static void cbor_read_half_float(void* _ctx, float v)
-        {
-            auto ctx = reinterpret_cast<cbor_reader_ctx*>(_ctx);
-            current_node(ctx).put(ctx->keys.back(), v);
-            ctx->keys.pop_back();
-        }
-
-        static void cbor_read_double_float(void* _ctx, double v)
-        {
-            auto ctx = reinterpret_cast<cbor_reader_ctx*>(_ctx);
-            current_node(ctx).put(ctx->keys.back(), v);
-            ctx->keys.pop_back();
-        }
-
-        static void cbor_read_byte_string(void * _ctx, cbor_data data, uint64_t len)
-        {
-            auto ctx = reinterpret_cast<cbor_reader_ctx*>(_ctx);
-            auto value = std::string(reinterpret_cast<const char*>(data), len);
-            current_node(ctx).put(ctx->keys.back(), value);
-            ctx->keys.pop_back();
+            ctx->states.pop_back();
         }
 
         static void cbor_array_start(void * _ctx, uint64_t len)
         {
             auto ctx = reinterpret_cast<cbor_reader_ctx*>(_ctx);
-            ctx->state = STATE::READING_ARRAY;
+            ctx->states.emplace_back(STATE::READING_ARRAY);
             ctx->byte_array.clear();
             ctx->byte_array_length = len;
         }
@@ -349,8 +372,58 @@ namespace
         static void cbor_indef_array_start(void * _ctx)
         {
             auto ctx = reinterpret_cast<cbor_reader_ctx*>(_ctx);
-            ctx->state = STATE::READING_INDEF_ARRAY;
+            ctx->states.emplace_back(STATE::READING_INDEF_ARRAY);
             ctx->byte_array.clear();
+        }
+
+        static void cbor_read_null_undefined(void* _ctx)
+        {
+            auto ctx = reinterpret_cast<cbor_reader_ctx*>(_ctx);
+            add_value(ctx, nullptr);
+            check_map_end(ctx);
+        }
+
+        static void cbor_read_string(void* _ctx, cbor_data buffer, uint64_t len)
+        {
+            auto ctx = reinterpret_cast<cbor_reader_ctx*>(_ctx);
+            auto value = std::string(reinterpret_cast<const char*>(buffer), len);
+
+            if (string_is_key(ctx)) {
+                ctx->keys.push_back(value);
+            } else {
+                add_value(ctx, value);
+
+                check_map_end(ctx);
+            }
+        }
+
+        static void cbor_read_boolean(void* _ctx, bool value)
+        {
+            auto ctx = reinterpret_cast<cbor_reader_ctx*>(_ctx);
+            add_value(ctx, value);
+            check_map_end(ctx);
+        }
+
+        static void cbor_read_half_float(void* _ctx, float value)
+        {
+            auto ctx = reinterpret_cast<cbor_reader_ctx*>(_ctx);
+            add_value(ctx, value);
+            check_map_end(ctx);
+        }
+
+        static void cbor_read_double_float(void* _ctx, double value)
+        {
+            auto ctx = reinterpret_cast<cbor_reader_ctx*>(_ctx);
+            add_value(ctx, value);
+            check_map_end(ctx);
+        }
+
+        static void cbor_read_byte_string(void * _ctx, cbor_data data, uint64_t len)
+        {
+            auto ctx = reinterpret_cast<cbor_reader_ctx*>(_ctx);
+            auto value = std::string(reinterpret_cast<const char*>(data), len);
+            add_value(ctx, value);
+            check_map_end(ctx);
         }
 
         template<typename T>
@@ -377,42 +450,44 @@ namespace
         };
 
         template<typename T>
-        static void cbor_read_int(void* _ctx, T v)
+        static void cbor_read_int(void* _ctx, T value)
         {
             auto ctx = reinterpret_cast<cbor_reader_ctx*>(_ctx);
 
             // If tag is defined, read the value as signed integer.
             if (ctx->tag) {
-                current_node(ctx).put(ctx->keys.back(), static_cast<typename int_type<T>::type>(v));
+                add_value(ctx, static_cast<typename int_type<T>::type>(value));
                 ctx->tag = std::nullopt;
             } else {
-                current_node(ctx).put(ctx->keys.back(), v);
+                add_value(ctx, value);
             }
-            ctx->keys.pop_back();
+
+            check_map_end(ctx);
         }
 
-        static void cbor_read_int(void* _ctx, uint8_t v)
+        static void cbor_read_int(void* _ctx, uint8_t value)
         {
             auto ctx = reinterpret_cast<cbor_reader_ctx*>(_ctx);
 
             if (ctx->tag) {
-                current_node(ctx).put(ctx->keys.back(), static_cast<int8_t>(v));
+                add_value(ctx, static_cast<int8_t>(value));
                 ctx->tag = std::nullopt;
-            } else if (ctx->state == STATE::READING_ARRAY || ctx->state == STATE::READING_INDEF_ARRAY) {
-                // While reading array, cast the value to std::byte.
-                ctx->byte_array.push_back(static_cast<std::byte>(v));
-
-                if (ctx->state == STATE::READING_ARRAY && ctx->byte_array.size() == ctx->byte_array_length) {
-                    current_node(ctx).put(ctx->keys.back(), ctx->byte_array);
-                    ctx->state = STATE::READING_MAP;
+            } else if (ctx->states.back() == STATE::READING_INDEF_ARRAY) {
+                ctx->byte_array.push_back(static_cast<std::byte>(value));
+                return;
+            } else if (ctx->states.back() == STATE::READING_ARRAY) {
+                ctx->byte_array.push_back(static_cast<std::byte>(value));
+                if (ctx->byte_array.size() == ctx->byte_array_length) {
+                    add_value(ctx, ctx->byte_array);
+                    ctx->states.pop_back();
                 } else {
                     return;
                 }
             } else {
-                current_node(ctx).put(ctx->keys.back(), v);
+                add_value(ctx, value);
             }
 
-            ctx->keys.pop_back();
+            check_map_end(ctx);
         }
     };
 
@@ -444,7 +519,9 @@ std::istream& operator>>(std::istream& in, cosim::serialization::node& root)
     std::vector<uint8_t> buf(length);
     in.read(reinterpret_cast<char*>(buf.data()), length);
 
+    // Initializing the reader context object
     cbor_reader_ctx ctx{root};
+
     struct cbor_callbacks cbs = cbor_empty_callbacks;
     struct cbor_decoder_result decode_result{};
     auto len = static_cast<size_t>(length);
@@ -464,6 +541,7 @@ std::istream& operator>>(std::istream& in, cosim::serialization::node& root)
     cbs.float4 = cbor_reader::cbor_read_half_float;
     cbs.float8 = cbor_reader::cbor_read_double_float;
     cbs.indef_map_start = cbor_reader::cbor_indef_map_start;
+    cbs.map_start = cbor_reader::cbor_map_start;
     cbs.indef_break = cbor_reader::cbor_indef_break;
     cbs.undefined = cbor_reader::cbor_read_null_undefined;
     cbs.null = cbor_reader::cbor_read_null_undefined;
@@ -475,11 +553,14 @@ std::istream& operator>>(std::istream& in, cosim::serialization::node& root)
     while(bytes_read < len) {
         decode_result = cbor_stream_decode(buf.data() + bytes_read, len - bytes_read, &cbs, &ctx);
         if (decode_result.status != cbor_decoder_status::CBOR_DECODER_FINISHED) {
-            BOOST_LOG_SEV(cosim::log::logger(), cosim::log::error) << "Decoding error " << decode_result.status;
+            BOOST_LOG_SEV(cosim::log::logger(), cosim::log::error) << "[Cbor reader] Decoding error " << decode_result.status;
             return in;
         }
         bytes_read += decode_result.read;
     }
+    std::stringstream ss;
+    print_ptree(ss, root);
+
     return in;
 }
 
