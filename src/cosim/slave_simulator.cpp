@@ -6,14 +6,14 @@
 #include "cosim/slave_simulator.hpp"
 
 #include "cosim/error.hpp"
+#include <cosim/utility/utility.hpp>
 
 #include <algorithm>
 #include <cassert>
+#include <iostream>
 #include <sstream>
 #include <stdexcept>
 #include <unordered_map>
-#include <iostream>
-#include <cosim/utility/utility.hpp>
 
 
 namespace cosim
@@ -245,7 +245,7 @@ public:
             for (size_t i = 0; i < references_.size(); i++) {
                 auto& ref = references_.at(i);
                 auto& value = values_.at(i);
-                
+
                 if ((*filter)(ref, value)) {
                     references_filtered_.push_back(ref);
                     values_filtered_.push_back(value);
@@ -518,6 +518,30 @@ public:
         std::optional<time_point> stopTime,
         std::optional<double> relativeTolerance)
     {
+        auto deltaT = duration::zero();
+        auto filter = [this](const variable_type vt) {
+            return [this, &vt](const value_reference vr, const cosim::scalar_value&) {
+                const auto& vd = this->find_variable_description(vr, vt);
+                return vd.variability != variable_variability::constant &&
+                    vd.causality != variable_causality::input;
+            };
+        };
+
+        const auto [realRefs, realValues] = realSetCache_.modify_and_get(deltaT, filter(variable_type::real));
+        const auto [integerRefs, integerValues] = integerSetCache_.modify_and_get(deltaT, filter(variable_type::integer));
+        const auto [booleanRefs, booleanValues] = booleanSetCache_.modify_and_get(deltaT, filter(variable_type::boolean));
+        const auto [stringRefs, stringValues] = stringSetCache_.modify_and_get(deltaT, filter(variable_type::string));
+
+        slave_->set_variables(
+            gsl::make_span(realRefs),
+            gsl::make_span(realValues),
+            gsl::make_span(integerRefs),
+            gsl::make_span(integerValues),
+            gsl::make_span(booleanRefs),
+            gsl::make_span(booleanValues),
+            gsl::make_span(stringRefs),
+            gsl::make_span(stringValues));
+
         slave_->setup(startTime, stopTime, relativeTolerance);
         get_variables(duration::zero());
     }
@@ -544,34 +568,6 @@ public:
         const auto result = slave_->do_step(currentT, deltaT);
         get_variables(deltaT);
         return result;
-    }
-
-    void initialize_start_values()
-    {
-        auto deltaT = duration::zero();
-        auto filter = [this](const variable_type& vt) {
-            return [this, &vt](const value_reference& vr, const std::variant<double, int, bool, std::string>&) {
-                const auto& vd = this->find_variable_description(vr, vt);
-                /// FMI Specification 2.0.4 - Section 4.2.4
-                return vd.variability != variable_variability::constant &&
-                    vd.causality != variable_causality::input;
-            };
-        };
-        
-        const auto [realRefs, realValues] = realSetCache_.modify_and_get(deltaT, filter(variable_type::real));
-        const auto [integerRefs, integerValues] = integerSetCache_.modify_and_get(deltaT, filter(variable_type::integer));
-        const auto [booleanRefs, booleanValues] = booleanSetCache_.modify_and_get(deltaT, filter(variable_type::boolean));
-        const auto [stringRefs, stringValues] = stringSetCache_.modify_and_get(deltaT, filter(variable_type::string));
-
-        slave_->set_variables(
-            gsl::make_span(realRefs),
-            gsl::make_span(realValues),
-            gsl::make_span(integerRefs),
-            gsl::make_span(integerValues),
-            gsl::make_span(booleanRefs),
-            gsl::make_span(booleanValues),
-            gsl::make_span(stringRefs),
-            gsl::make_span(stringValues));
     }
 
 private:
@@ -856,12 +852,6 @@ step_result slave_simulator::do_step(
     COSIM_PRECONDITION(state_ == slave_state::simulation);
     state_guard guard(state_);
     return pimpl_->do_step(currentT, deltaT);
-}
-
-
-void slave_simulator::initialize_start_values()
-{
-    return pimpl_->initialize_start_values();
 }
 
 } // namespace cosim

@@ -151,16 +151,6 @@ public:
 
     void initialize()
     {
-        // FMU's start values are set in "instantiated" state (4.2.4)
-        // Some of the FMUs do not see start values if this is not 
-        // done before fmiXEnterInitializationMode
-        for (auto& s : simulators_) {
-            pool_.submit([&] {
-                s.second.sim->initialize_start_values();
-            });
-        }
-        pool_.wait_for_tasks_to_finish();
-
         for (auto& s : simulators_) {
             pool_.submit([&] {
                 s.second.sim->setup(startTime_, stopTime_, std::nullopt);

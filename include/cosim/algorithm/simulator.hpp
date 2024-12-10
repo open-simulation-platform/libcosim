@@ -60,7 +60,8 @@ public:
     virtual void set_string(value_reference reference, std::string_view value) = 0;
 
     /**
-     *  Performs pre-simulation setup and enters initialisation mode.
+     *  Performs pre-simulation setup, instantiates the FMUs and enters 
+     *  initialisation mode. 
      *
      *  This function must be called exactly once, before initialisation and
      *  simulation can begin (i.e. before the first time either of
@@ -118,11 +119,6 @@ public:
      *  after any call to `do_iteration()` and before the first `do_step()` call.
      */
     virtual void start_simulation() = 0;
-
-    /**
-     * Runs fmiXSetINI (4.2.4) functions to initialize variables' start values.
-     */
-    virtual void initialize_start_values() = 0;
 
     /**
      *  Performs a single time step.

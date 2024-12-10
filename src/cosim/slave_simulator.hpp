@@ -133,8 +133,6 @@ public:
 
     void do_iteration() override;
 
-    void initialize_start_values() override;
-
     void start_simulation() override;
 
     step_result do_step(
