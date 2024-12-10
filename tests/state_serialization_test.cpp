@@ -2,8 +2,10 @@
 
 #include <cosim/algorithm.hpp>
 #include <cosim/execution.hpp>
+#include <cosim/osp_config_parser.hpp>
 #include <cosim/log/simple.hpp>
 #include <cosim/observer/last_value_observer.hpp>
+#include <cosim/observer/time_series_observer.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <cosim/serialization.hpp>
 
@@ -43,14 +45,76 @@ int main()
         cosim::log::setup_simple_console_logging();
         cosim::log::set_global_output_level(cosim::log::debug);
 
+        // ================================================================
+        // == Reference FMU test - BouncingBall (for byte vectors)
+        // ================================================================
+        constexpr cosim::duration stepSize = cosim::to_duration(0.05);
+
+        const auto testDataDir = std::getenv("TEST_DATA_DIR");
+        REQUIRE(testDataDir);
+        auto configPath = cosim::filesystem::path(testDataDir) / "msmi" / "OspSystemStructure_BouncingBall.xml";
+
+        auto resolver = cosim::default_model_uri_resolver();
+        const auto config = cosim::load_osp_config(configPath, *resolver);
+        auto execution = cosim::execution(
+            config.start_time,
+            std::make_shared<cosim::fixed_step_algorithm>(config.step_size));
+
+        const auto entityMaps = cosim::inject_system_structure(
+            execution, config.system_structure, config.initial_values);
+
+        auto obs = std::make_shared<cosim::last_value_observer>();
+        execution.add_observer(obs);
+
+        const auto timeRef = 0;
+        const auto heightRef = 1;
+        const auto velocityRef = 3;
+
+        execution.simulate_until(cosim::to_time_point(0.5));
+        auto timeValues = get_reals(*obs, {0}, timeRef);
+        auto heightValues = get_reals(*obs, {0}, heightRef);
+        auto velocityValues = get_reals(*obs, {0}, velocityRef);
+
+        const auto state_bb = execution.export_current_state();
+
+        // Export state
+        std::ofstream outFile("state_bb.bin", std::ios::binary);
+        outFile << state_bb;
+        outFile.close();
+
+        execution.simulate_until(cosim::to_time_point(0.5));
+
+        // import state
+        std::ifstream inFile("state_bb.bin", std::ios::binary);
+        cosim::serialization::node state_bb_imported;
+        inFile >> state_bb_imported;
+        inFile.close();
+
+        execution.import_state(state_bb_imported);
+        auto state_bb_2 = execution.export_current_state();
+
+        auto timeValues2 = get_reals(*obs, {0}, timeRef);
+        auto heightValues2 = get_reals(*obs, {0}, heightRef);
+        auto velocityValues2 = get_reals(*obs, {0}, velocityRef);
+
+        REQUIRE(timeValues == timeValues2);
+        REQUIRE(heightValues == heightValues2);
+        REQUIRE(velocityValues == velocityValues2);
+
+        REQUIRE(state_bb_2 == state_bb_imported);
+        REQUIRE(state_bb == state_bb_imported);
+
+
+        // ================================================================
+        // == Mockup tests
+        // ================================================================
         constexpr int simulatorCount = 10;
         constexpr cosim::time_point time0;
         constexpr cosim::time_point time1 = cosim::to_time_point(0.6);
         constexpr cosim::time_point time2 = cosim::to_time_point(1.0);
-        constexpr cosim::duration stepSize = cosim::to_duration(0.05);
 
         // Set up execution
-        auto execution = cosim::execution(
+        execution = cosim::execution(
             time0,
             std::make_unique<cosim::fixed_step_algorithm>(stepSize, 1));
 
@@ -85,8 +149,9 @@ int main()
         auto state0Values = get_reals(*observer, simulators, realOutRef);
         const auto state0 = execution.export_current_state();
 
+        std::cout << state0 << std::endl;
         // Write state0 to a file
-        std::ofstream outFile("state0.bin", std::ios::binary);
+        outFile = std::ofstream("state0.bin", std::ios::binary);
         outFile << state0;
         outFile.close();
 
@@ -114,7 +179,7 @@ int main()
 
         // Restore state0 from file and compare values
         cosim::serialization::node state0_a;
-        std::ifstream inFile("state0.bin", std::ios::binary);
+        inFile = std::ifstream("state0.bin", std::ios::binary);
         inFile >> state0_a;
         inFile.close();
         REQUIRE(state0_a == state0);
