@@ -115,7 +115,15 @@ public:
         duration lastStepSize,
         time_point currentTime) = 0;
 
-    /// The simulation was restored to a previously saved state.
+    /**
+     *  The simulation was restored to a previously saved state.
+     *
+     *  Note that observers which support this feature must be able to
+     *  reconstruct their internal state using information which is available
+     *  through the `observable` objects they have been given access to.  For
+     *  observers where this is not the case, this function should throw
+     *  `cosim::error` with error code `cosim::errc::unsupported_feature`.
+     */
     virtual void state_restored(step_number currentStep, time_point currentTime) = 0;
 
     virtual ~observer() noexcept { }
