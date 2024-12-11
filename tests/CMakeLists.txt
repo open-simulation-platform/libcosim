@@ -14,6 +14,7 @@ set(tests
     "scenario_manager_test"
     "synchronized_xy_series_test"
     "config_end_time_test"
+    "state_serialization_test"
 )
 
 set(unittests
@@ -49,7 +50,7 @@ foreach(test IN LISTS tests)
         "cpp_${test}"
         FOLDER "C++ tests"
         SOURCES "${test}.cpp"
-        DEPENDENCIES cosim
+        DEPENDENCIES "cosim;libcbor::libcbor"
         DATA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/data"
     )
 endforeach()
