@@ -293,7 +293,7 @@ private:
     std::vector<value_reference> references_;
     boost::container::vector<T> values_;
 
-    // Filtered references and values to be set next (if a filter is applied).
+    // Filtered references and values of the values to be set next (if a filter is applied).
     std::vector<value_reference> references_filtered_;
     boost::container::vector<T> values_filtered_;
 };
