@@ -218,7 +218,7 @@ public:
 
     std::pair<gsl::span<value_reference>, gsl::span<const T>> modify_and_get(
         duration deltaT,
-        std::optional<std::function<bool(const value_reference, const T)>> filter = std::nullopt)
+        std::optional<std::function<bool(const value_reference, const T&)>> filter = std::nullopt)
     {
         if (!hasRunModifiers_) {
             for (const auto& entry : modifiers_) {
@@ -518,7 +518,7 @@ public:
     {
         auto deltaT = duration::zero();
         auto filter = [this](const variable_type vt) {
-            return [this, vt](const value_reference vr, const cosim::scalar_value) {
+            return [this, vt](const value_reference vr, const cosim::scalar_value&) {
                 const auto& vd = this->find_variable_description(vr, vt);
                 return vd.variability != variable_variability::constant &&
                     vd.causality != variable_causality::input;
