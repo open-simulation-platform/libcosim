@@ -3,6 +3,18 @@ All notable changes to libcosim will be documented in this file. This includes n
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
+### [v0.10.4] - 2024-12-12
+##### Fixed
+* File observer is now printing the correct FMU author. 
+* Real time factor calculation for small time steps has been improved by computing a rolling average rather than a fixed amount of 5 timesteps. 
+* Variables are now correctly transferred at the points in the FMU initialization sequence where they are permitted to change. 
+* The fixed precision of the file observer can now be specified. 
+* FMU start values will now be correctly initialized before entering initialization mode. 
+* Various bug fixes and improvements. 
+##### Changed
+* Upgraded Conan to v2
+
+
 ### [v0.10.3] - 2024-02-19
 ##### Fixed
 * parseURI null check and error handling implemented.
