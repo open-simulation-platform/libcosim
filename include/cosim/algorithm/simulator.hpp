@@ -60,7 +60,8 @@ public:
     virtual void set_string(value_reference reference, std::string_view value) = 0;
 
     /**
-     *  Performs pre-simulation setup and enters initialisation mode.
+     *  Performs pre-simulation setup, instantiates the FMUs and enters 
+     *  initialisation mode. 
      *
      *  This function must be called exactly once, before initialisation and
      *  simulation can begin (i.e. before the first time either of
