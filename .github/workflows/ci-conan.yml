@@ -1,34 +1,30 @@
-name: libcosim CI Conan
+name: CI with Conan
 
 # This workflow is triggered on pushes to the repository.
 on: [push, workflow_dispatch]
 
 jobs:
-  conan-on-linux:
-    name: Conan
+  linux:
+    name: Linux
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         build_type: [Debug, Release]
         compiler_version: [9]
-        compiler_libcxx: [libstdc++11]
         option_proxyfmu: ['proxyfmu=True', 'proxyfmu=False']
         option_shared: ['shared=True', 'shared=False']
     timeout-minutes: 35
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Generate Dockerfile
         run: |
           mkdir /tmp/osp-builder-docker
           cat <<'EOF' >/tmp/osp-builder-docker/Dockerfile
-          FROM conanio/gcc${{ matrix.compiler_version }}
+          FROM conanio/gcc${{ matrix.compiler_version }}-ubuntu16.04
           ENV CONAN_LOGIN_USERNAME_OSP=${{ secrets.osp_artifactory_usr }}
           ENV CONAN_PASSWORD_OSP=${{ secrets.osp_artifactory_pwd }}
-          ENV CONAN_REVISIONS_ENABLED=1
-          ENV CONAN_NON_INTERACTIVE=1
-          ENV CONAN_USE_ALWAYS_SHORT_PATHS=1
           ENV LIBCOSIM_RUN_TESTS_ON_CONAN_BUILD=1
           COPY entrypoint.sh /
           ENTRYPOINT /entrypoint.sh
@@ -48,28 +44,30 @@ jobs:
             SHORT_REFNAME="${REFNAME:0:40}"
             CHANNEL="testing-${SHORT_REFNAME//\//_}"
           fi
-          conan create -s build_type=${{ matrix.build_type }} -s compiler.version=${{ matrix.compiler_version }} -s compiler.libcxx=${{ matrix.compiler_libcxx }} -o ${{ matrix.option_proxyfmu }} -o ${{ matrix.option_shared }} -b missing . osp/${CHANNEL}
-          conan upload --all -c -r osp '*'
+          conan create \
+            --settings="build_type=${{ matrix.build_type }}" \
+            --options="${{ matrix.option_proxyfmu }}" \
+            --options="${{ matrix.option_shared }}" \
+            --build=missing \
+            --user=osp \
+            --channel="${CHANNEL}" \
+            .
+          conan upload --confirm --remote=osp '*'
           EOF
           chmod 0755 /tmp/osp-builder-docker/entrypoint.sh
       - name: Build Docker image
-        run: |
-          docker build -t osp-builder /tmp/osp-builder-docker/
+        run:  docker build -t osp-builder /tmp/osp-builder-docker/
       - name: Build cosim
         run: |
           docker run --rm --env GITHUB_REF="$GITHUB_REF" -v $(pwd):/mnt/source:ro osp-builder
 
 
-  conan-on-windows:
-    name: Conan
+  windows:
+    name: Windows
     runs-on: ${{ matrix.os }}
     env:
       CONAN_LOGIN_USERNAME_OSP: ${{ secrets.osp_artifactory_usr }}
       CONAN_PASSWORD_OSP: ${{ secrets.osp_artifactory_pwd }}
-      CONAN_REVISIONS_ENABLED: 1
-      CONAN_NON_INTERACTIVE: 1
-      CONAN_USE_ALWAYS_SHORT_PATHS: 1
-      CONAN_USER_HOME_SHORT: C:\c
       LIBCOSIM_RUN_TESTS_ON_CONAN_BUILD: 1
     strategy:
       fail-fast: false
@@ -78,16 +76,18 @@ jobs:
         build_type: [Debug, Release]
         option_proxyfmu: ['proxyfmu=True', 'proxyfmu=False']
         option_shared: ['shared=True', 'shared=False']
-    timeout-minutes: 35
+    timeout-minutes: 120
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install prerequisites
         run: |
           pip3 install --upgrade setuptools pip
-          pip3 install conan==1.59
+          pip3 install conan
       - name: Configure Conan
-        run: conan remote add osp https://osp.jfrog.io/artifactory/api/conan/conan-local --force
+        run: |
+          conan profile detect
+          conan remote add osp https://osp.jfrog.io/artifactory/api/conan/conan-local --force
       - name: Conan create
         shell: bash
         run: |
@@ -99,6 +99,13 @@ jobs:
             SHORT_REFNAME="${REFNAME:0:40}"
             CHANNEL="testing-${SHORT_REFNAME//\//_}"
           fi
-          conan create -s build_type=${{ matrix.build_type }} -o ${{ matrix.option_proxyfmu }} -o ${{ matrix.option_shared }} -b missing . osp/${CHANNEL}
+          conan create \
+            --settings="build_type=${{ matrix.build_type }}" \
+            --options="${{ matrix.option_proxyfmu }}" \
+            --options="${{ matrix.option_shared }}" \
+            --build=missing \
+            --user=osp \
+            --channel="${CHANNEL}" \
+            .
       - name: Conan upload
-        run: conan upload --all -c -r osp '*'
+        run: conan upload --confirm --remote=osp '*'

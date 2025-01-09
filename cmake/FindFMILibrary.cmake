@@ -112,6 +112,7 @@ if (FMILibrary_SHARED_LIBRARY)
         add_library ("fmilib::shared" SHARED IMPORTED)
         set_target_properties ("fmilib::shared" PROPERTIES
             IMPORTED_LINK_INTERFACE_LANGUAGES "C"
+            IMPORTED_LINK_INTERFACE_LIBRARIES "${CMAKE_DL_LIBS}"
             INTERFACE_INCLUDE_DIRECTORIES "${FMILibrary_INCLUDE_DIRS}")
         if (WIN32)
             set_target_properties ("fmilib::shared" PROPERTIES

@@ -538,14 +538,6 @@ entity_index_maps inject_system_structure(
                     " (only supported for simulator variables)");
         }
         const auto& varDesc = sys.get_variable_description(var);
-        if (varDesc.causality != variable_causality::parameter &&
-            varDesc.causality != variable_causality::input) {
-            throw error(
-                make_error_code(errc::invalid_system_structure),
-                "Cannot set initial value of variable " +
-                    to_text(var) +
-                    " (only supported for parameters and inputs)");
-        }
         const auto simIdx = indexMaps.simulators.at(var.entity_name);
         const auto valRef = varDesc.reference;
         std::visit(

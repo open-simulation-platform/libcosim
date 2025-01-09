@@ -205,6 +205,7 @@ BOOST_AUTO_TEST_CASE(file_uri_conversions)
     BOOST_TEST(path_to_file_uri("\\foo bar\\baz") == "file:///foo%20bar/baz");
     BOOST_TEST(path_to_file_uri("/foo bar/baz") == "file:///foo%20bar/baz");
     BOOST_TEST(path_to_file_uri("c:\\foo bar\\baz") == "file:///c:/foo%20bar/baz");
+    BOOST_TEST(path_to_file_uri("\\\\foo\\bar\\baz") == "file://foo/bar/baz");
 #endif
 
     // From URI to path
@@ -213,12 +214,13 @@ BOOST_AUTO_TEST_CASE(file_uri_conversions)
     BOOST_TEST(file_uri_to_path("file:///c:/foo%20bar/baz") == "c:\\foo bar\\baz");
     BOOST_TEST(file_uri_to_path("file://localhost/foo%20bar/baz") == "\\foo bar\\baz");
     BOOST_TEST(file_uri_to_path("file://localhost/c:/foo%20bar/baz") == "c:\\foo bar\\baz");
+    BOOST_TEST(file_uri_to_path("file://foo/bar/baz") == "\\\\foo\\bar\\baz");
 #else
     BOOST_TEST(file_uri_to_path("file:///foo%20bar/baz") == "/foo bar/baz");
     BOOST_TEST(file_uri_to_path("file:///c:/foo%20bar/baz") == "/c:/foo bar/baz");
     BOOST_TEST(file_uri_to_path("file://localhost/foo%20bar/baz") == "/foo bar/baz");
     BOOST_TEST(file_uri_to_path("file://localhost/c:/foo%20bar/baz") == "/c:/foo bar/baz");
+    BOOST_CHECK_THROW(file_uri_to_path("file://foo/bar"), std::invalid_argument);
 #endif
     BOOST_CHECK_THROW(file_uri_to_path("http://foo/bar"), std::invalid_argument);
-    BOOST_CHECK_THROW(file_uri_to_path("file://foo/bar"), std::invalid_argument);
 }

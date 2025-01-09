@@ -116,7 +116,7 @@ public:
         gsl::span<const cosim::value_reference> variables,
         gsl::span<double> values) const override
     {
-        for (int i = 0; i < variables.size(); ++i) {
+        for (std::size_t i = 0; i < variables.size(); ++i) {
             if (variables[i] == real_out_reference) {
                 values[i] = realOp_ ? realOp_(currentTime_, currentStepSize_, realIn_) : realIn_;
             } else if (variables[i] == real_in_reference) {
@@ -131,7 +131,7 @@ public:
         gsl::span<const cosim::value_reference> variables,
         gsl::span<int> values) const override
     {
-        for (int i = 0; i < variables.size(); ++i) {
+        for (std::size_t i = 0; i < variables.size(); ++i) {
             if (variables[i] == integer_out_reference) {
                 values[i] = intOp_ ? intOp_(currentTime_, currentStepSize_, intIn_) : intIn_;
             } else if (variables[i] == integer_in_reference) {
@@ -146,7 +146,7 @@ public:
         gsl::span<const cosim::value_reference> variables,
         gsl::span<bool> values) const override
     {
-        for (int i = 0; i < variables.size(); ++i) {
+        for (std::size_t i = 0; i < variables.size(); ++i) {
             if (variables[i] == boolean_out_reference) {
                 values[i] = boolOp_ ? boolOp_(currentTime_, currentStepSize_, boolIn_) : boolIn_;
             } else if (variables[i] == boolean_in_reference) {
@@ -161,7 +161,7 @@ public:
         gsl::span<const cosim::value_reference> variables,
         gsl::span<std::string> values) const override
     {
-        for (int i = 0; i < variables.size(); ++i) {
+        for (std::size_t i = 0; i < variables.size(); ++i) {
             if (variables[i] == string_out_reference) {
                 values[i] = stringOp_ ? stringOp_(currentTime_,currentStepSize_, stringIn_) : stringIn_;
             } else if (variables[i] == string_in_reference) {
@@ -176,7 +176,7 @@ public:
         gsl::span<const cosim::value_reference> variables,
         gsl::span<const double> values) override
     {
-        for (int i = 0; i < variables.size(); ++i) {
+        for (std::size_t i = 0; i < variables.size(); ++i) {
             if (variables[i] == real_in_reference) {
                 realIn_ = values[i];
             } else {
@@ -189,7 +189,7 @@ public:
         gsl::span<const cosim::value_reference> variables,
         gsl::span<const int> values) override
     {
-        for (int i = 0; i < variables.size(); ++i) {
+        for (std::size_t i = 0; i < variables.size(); ++i) {
             if (variables[i] == integer_in_reference) {
                 intIn_ = values[i];
             } else {
@@ -202,7 +202,7 @@ public:
         gsl::span<const cosim::value_reference> variables,
         gsl::span<const bool> values) override
     {
-        for (int i = 0; i < variables.size(); ++i) {
+        for (std::size_t i = 0; i < variables.size(); ++i) {
             if (variables[i] == boolean_in_reference) {
                 boolIn_ = values[i];
             } else {
@@ -215,7 +215,7 @@ public:
         gsl::span<const cosim::value_reference> variables,
         gsl::span<const std::string> values) override
     {
-        for (int i = 0; i < variables.size(); ++i) {
+        for (std::size_t i = 0; i < variables.size(); ++i) {
             if (variables[i] == string_in_reference) {
                 stringIn_ = values[i];
             } else {

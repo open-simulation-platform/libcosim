@@ -391,6 +391,11 @@ void add_variable_value(
     scalar_value value)
 {
     const auto& varDescription = systemStructure.get_variable_description(variable);
+    if (varDescription.variability == variable_variability::constant) {
+        std::ostringstream msg;
+        msg << "Cannot modify value of constant variable '" << variable << "'";
+        throw error(make_error_code(errc::invalid_system_structure), msg.str());
+    }
     if (std::string e; !is_valid_variable_value(varDescription, value, &e)) {
         std::ostringstream msg;
         msg << "Invalid value for variable '" << variable << "': " << e;

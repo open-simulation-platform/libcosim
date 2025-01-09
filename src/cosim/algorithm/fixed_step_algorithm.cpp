@@ -168,16 +168,9 @@ public:
                 });
             }
             pool_.wait_for_tasks_to_finish();
-
-            for (const auto& s : simulators_) {
-                transfer_variables(s.second.outgoingSimConnections);
-                transfer_variables(s.second.outgoingFunConnections);
-            }
-            for (const auto& f : functions_) {
-                f.second.fun->calculate();
-                transfer_variables(f.second.outgoingSimConnections);
-            }
+            calculate_and_transfer();
         }
+
 
         for (auto& s : simulators_) {
             pool_.submit([&] {
@@ -185,6 +178,7 @@ public:
             });
         }
         pool_.wait_for_tasks_to_finish();
+        calculate_and_transfer();
     }
 
     std::pair<duration, std::unordered_set<simulator_index>> do_step(time_point currentT)
@@ -193,8 +187,8 @@ public:
         bool failed = false;
         std::stringstream errMessages;
         std::unordered_set<simulator_index> finished;
-        // Initiate simulator time steps.
 
+        // Initiate simulator time steps.
         for (auto& s : simulators_) {
             auto& info = s.second;
             if (stepCounter_ % info.decimationFactor == 0) {
@@ -220,37 +214,20 @@ public:
                 });
             }
         }
-
         ++stepCounter_;
-
         for (auto& [idx, info] : simulators_) {
             if (stepCounter_ % info.decimationFactor == 0) {
                 finished.insert(idx);
             }
         }
 
+        // Wait for all time steps to finish, then calculate functions and
+        // transfer variables.
         pool_.wait_for_tasks_to_finish();
-
         if (failed) {
             throw error(make_error_code(errc::simulation_error), errMessages.str());
         }
-
-        // Transfer the outputs from simulators that have finished their
-        // individual time steps within this co-simulation time step.
-        for (auto simIndex : finished) {
-            auto& simInfo = simulators_.at(simIndex);
-            transfer_variables(simInfo.outgoingSimConnections);
-            transfer_variables(simInfo.outgoingFunConnections);
-        }
-
-        // Calculate functions and transfer their outputs to simulators.
-        for (const auto& f : functions_) {
-            const auto& info = f.second;
-            if (stepCounter_ % info.decimationFactor == 0) {
-                info.fun->calculate();
-                transfer_variables(info.outgoingSimConnections);
-            }
-        }
+        calculate_and_transfer();
 
         return {baseStepSize_, std::move(finished)};
     }
@@ -328,6 +305,25 @@ private:
                     current,
                     simulators_.at(connection.target.simulator).decimationFactor);
             });
+    }
+
+    void calculate_and_transfer()
+    {
+        // Transfer the outputs from simulators that have finished their
+        // individual time steps within the current co-simulation time step.
+        for (const auto& s : simulators_) {
+            if (stepCounter_ % s.second.decimationFactor == 0) {
+                transfer_variables(s.second.outgoingSimConnections);
+                transfer_variables(s.second.outgoingFunConnections);
+            }
+        }
+        // Calculate functions and transfer their outputs to simulators.
+        for (const auto& f : functions_) {
+            if (stepCounter_ % f.second.decimationFactor == 0) {
+                f.second.fun->calculate();
+                transfer_variables(f.second.outgoingSimConnections);
+            }
+        }
     }
 
     void transfer_variables(const std::vector<connection_ss>& connections)

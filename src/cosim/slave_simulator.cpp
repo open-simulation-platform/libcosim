@@ -6,10 +6,10 @@
 #include "cosim/slave_simulator.hpp"
 
 #include "cosim/error.hpp"
+#include <cosim/utility/utility.hpp>
 
 #include <algorithm>
 #include <cassert>
-#include <sstream>
 #include <stdexcept>
 #include <unordered_map>
 
@@ -216,7 +216,9 @@ public:
         }
     }
 
-    std::pair<gsl::span<value_reference>, gsl::span<const T>> modify_and_get(duration deltaT)
+    std::pair<gsl::span<value_reference>, gsl::span<const T>> modify_and_get(
+        duration deltaT,
+        std::optional<std::function<bool(const value_reference, const T&)>> filter = std::nullopt)
     {
         if (!hasRunModifiers_) {
             for (const auto& entry : modifiers_) {
@@ -233,6 +235,24 @@ public:
             assert(references_.size() == values_.size());
             hasRunModifiers_ = true;
         }
+
+        if (filter) {
+            references_filtered_.clear();
+            values_filtered_.clear();
+
+            for (size_t i = 0; i < references_.size(); i++) {
+                auto& ref = references_.at(i);
+                auto& value = values_.at(i);
+
+                if ((*filter)(ref, value)) {
+                    references_filtered_.push_back(ref);
+                    values_filtered_.push_back(value);
+                }
+            }
+
+            return std::pair(gsl::make_span(references_filtered_), gsl::make_span(values_filtered_));
+        }
+
         return std::pair(gsl::make_span(references_), gsl::make_span(values_));
     }
 
@@ -243,6 +263,8 @@ public:
         }
         references_.clear();
         values_.clear();
+        references_filtered_.clear();
+        values_filtered_.clear();
         hasRunModifiers_ = false;
     }
 
@@ -268,6 +290,10 @@ private:
     // The references and values of the variables that will be set next.
     std::vector<value_reference> references_;
     boost::container::vector<T> values_;
+
+    // Filtered references and values of the values to be set next (if a filter is applied).
+    std::vector<value_reference> references_filtered_;
+    boost::container::vector<T> values_filtered_;
 };
 
 
@@ -490,7 +516,32 @@ public:
         std::optional<time_point> stopTime,
         std::optional<double> relativeTolerance)
     {
-        return slave_->setup(startTime, stopTime, relativeTolerance);
+        auto deltaT = duration::zero();
+        auto filter = [this](const variable_type vt) {
+            return [this, vt](const value_reference vr, const cosim::scalar_value&) {
+                const auto& vd = this->find_variable_description(vr, vt);
+                return vd.variability != variable_variability::constant &&
+                    vd.causality != variable_causality::input;
+            };
+        };
+
+        const auto [realRefs, realValues] = realSetCache_.modify_and_get(deltaT, filter(variable_type::real));
+        const auto [integerRefs, integerValues] = integerSetCache_.modify_and_get(deltaT, filter(variable_type::integer));
+        const auto [booleanRefs, booleanValues] = booleanSetCache_.modify_and_get(deltaT, filter(variable_type::boolean));
+        const auto [stringRefs, stringValues] = stringSetCache_.modify_and_get(deltaT, filter(variable_type::string));
+
+        slave_->set_variables(
+            gsl::make_span(realRefs),
+            gsl::make_span(realValues),
+            gsl::make_span(integerRefs),
+            gsl::make_span(integerValues),
+            gsl::make_span(booleanRefs),
+            gsl::make_span(booleanValues),
+            gsl::make_span(stringRefs),
+            gsl::make_span(stringValues));
+
+        slave_->setup(startTime, stopTime, relativeTolerance);
+        get_variables(duration::zero());
     }
 
     void do_iteration()
@@ -501,6 +552,7 @@ public:
 
     void start_simulation()
     {
+        set_variables(duration::zero());
         slave_->start_simulation();
         get_variables(duration::zero());
     }
@@ -799,6 +851,5 @@ step_result slave_simulator::do_step(
     state_guard guard(state_);
     return pimpl_->do_step(currentT, deltaT);
 }
-
 
 } // namespace cosim
