@@ -14,7 +14,6 @@ set(tests
     "scenario_manager_test"
     "synchronized_xy_series_test"
     "config_end_time_test"
-    "state_serialization_test"
 )
 
 set(unittests

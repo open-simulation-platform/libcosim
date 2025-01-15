@@ -100,15 +100,16 @@ struct node_data_translator
 
 }} // namespace cosim::serialization
 
-
+/**
+ *  Serializes `data` into CBOR format and writes it to the output stream `out`.
+ */
 std::ostream& operator<<(std::ostream& out, const cosim::serialization::node& data);
 
+/**
+ *  Reads CBOR stream from `in` and converts it to `data`.
+ */
 std::istream& operator>>(std::istream& in, cosim::serialization::node& data);
 
-// Ordinarily, the following function would be in the `cosim::serialization`
-// namespace and found by the compiler via ADL.  This doesn't work here,
-// because `cosim::serialization::node` is just an alias for a type in the
-// `boost::property_tree` namespace.
 /**
  *  Writes the contents of `data` to the output stream `out` in a human-readable
  *  format.
@@ -118,6 +119,7 @@ std::istream& operator>>(std::istream& in, cosim::serialization::node& data);
  *  round-trip information or type preservation.
  */
 void print_ptree(std::ostream& out, const cosim::serialization::node& data);
+
 
 // Make node_translator the default translator for property trees whose data
 // type is node_data.

@@ -73,7 +73,7 @@ namespace
         std::fill_n(std::ostream_iterator<char>(out), n, ' ');
     }
 
-    void print_tree(
+    void _print_ptree(
         std::ostream& out,
         const cosim::serialization::node& tree,
         int indent,
@@ -86,13 +86,13 @@ namespace
             out << "{\n";
             print_n_spaces(out, indent + indentStep);
             out << child->first << " = ";
-            print_tree(out, child->second, indent + indentStep, indentStep);
+            _print_ptree(out, child->second, indent + indentStep, indentStep);
             ++child;
             for (; child != tree.end(); ++child) {
                 out << ",\n";
                 print_n_spaces(out, indent + indentStep);
                 out << child->first << " = ";
-                print_tree(out, child->second, indent + indentStep, indentStep);
+                _print_ptree(out, child->second, indent + indentStep, indentStep);
             }
             out << '\n';
             print_n_spaces(out, indent);
@@ -588,5 +588,5 @@ std::istream& operator>>(std::istream& in, cosim::serialization::node& root)
 void print_ptree(std::ostream& out, const cosim::serialization::node& data)
 {
     constexpr int indentStep = 2;
-    print_tree(out, data, 0, indentStep);
+    _print_ptree(out, data, 0, indentStep);
 }
