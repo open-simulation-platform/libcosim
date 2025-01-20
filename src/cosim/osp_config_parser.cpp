@@ -7,29 +7,32 @@
 
 #include "osp_system_structure_schema.hpp"
 
+#include "cosim/algorithm.hpp"
 #include "cosim/function/linear_transformation.hpp"
 #include "cosim/function/vector_sum.hpp"
 #include "cosim/log/logger.hpp"
 #include "cosim/uri.hpp"
-#include "cosim/algorithm.hpp"
 
 #include <boost/lexical_cast.hpp>
 #include <xercesc/dom/DOM.hpp>
 #include <xercesc/framework/MemBufInputSource.hpp>
+#include <xercesc/framework/StdOutFormatTarget.hpp>
 #include <xercesc/framework/Wrapper4InputSource.hpp>
+#include <xercesc/framework/XMLFormatter.hpp>
 #include <xercesc/util/PlatformUtils.hpp>
 #include <xercesc/util/XMLString.hpp>
+#include <xercesc/util/XMLUni.hpp>
 
 #include <ios>
+#include <iostream>
 #include <memory>
+#include <optional>
 #include <sstream>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <iostream>
-#include <optional>
 
 
 namespace cosim
@@ -117,6 +120,20 @@ public:
         const cosim::filesystem::path& configPath);
     ~osp_config_parser() noexcept;
 
+    struct EccoConfiguration
+    {
+        double safetyFactor = 0.99;
+        double stepSize = 1e-3;
+        double minimumStepSize = 1e-5;
+        double maximumStepSize = 1e-2;
+        double minimumChangeRate = 0.2;
+        double maximumChangeRate = 1.5;
+        double proportionalGain = 0.2;
+        double integralGain = 0.15;
+        double relativeTolerance = 1e-6;
+        double absoluteTolerance = 1e-6;
+    };
+
     struct SimulationInformation
     {
         std::string description;
@@ -124,6 +141,7 @@ public:
         double stepSize = 0.1;
         double startTime = 0.0;
         std::optional<double> endTime;
+        std::optional<EccoConfiguration> eccoConfiguration;
     };
 
     const SimulationInformation& get_simulation_information() const;
@@ -271,6 +289,16 @@ osp_config_parser::osp_config_parser(
     const auto parser = static_cast<xercesc::DOMImplementationLS*>(domImpl)->createLSParser(
         xercesc::DOMImplementationLS::MODE_SYNCHRONOUS,
         tc("http://www.w3.org/2001/XMLSchema").get());
+
+    auto serializer = ((xercesc::DOMImplementationLS*)domImpl)->createLSSerializer();
+    if (serializer->getDomConfig()->canSetParameter(xercesc::XMLUni::fgDOMWRTFormatPrettyPrint, true)) {
+        serializer->getDomConfig()->setParameter(xercesc::XMLUni::fgDOMWRTFormatPrettyPrint, true);
+    }
+    serializer->setNewLine(xercesc::XMLString::transcode("\r\n"));
+
+    auto outputTarget = ((xercesc::DOMImplementationLS*)domImpl)->createLSOutput();
+    auto outputFormat = new xercesc::StdOutFormatTarget();
+    outputTarget->setByteStream(outputFormat);
 
     error_handler errorHandler;
 
@@ -445,6 +473,28 @@ osp_config_parser::osp_config_parser(
         simulationInformation_.algorithm = std::string(tc(saNodes->item(0)->getTextContent()).get());
     }
 
+    auto eccoConfigurationElement = static_cast<xercesc::DOMElement*>(rootElement->getElementsByTagName(tc("EccoConfiguration").get())->item(0));
+    if (eccoConfigurationElement) {
+        serializer->write(eccoConfigurationElement, outputTarget);
+        const auto elem = eccoConfigurationElement->getFirstElementChild();
+        serializer->write(elem, outputTarget);
+
+
+        /*
+        std::vector<InitialValue> initialValues;
+        const auto initValsElement = static_cast<xercesc::DOMElement*>(element->getElementsByTagName(tc("InitialValues").get())->item(0));
+
+        if (initValsElement) {
+            for (auto initValElement = initValsElement->getFirstElementChild(); initValElement != nullptr; initValElement = initValElement->getNextElementSibling()) {
+                std::string varName = tc(initValElement->getAttribute(tc("variable").get())).get();
+                variable_type varType = parse_variable_type(std::string(tc(initValElement->getFirstElementChild()->getNodeName()).get()));
+                std::string varValue = tc(initValElement->getFirstElementChild()->getAttribute(tc("value").get())).get();
+        */
+
+        // auto safetyFactor = eccoNodes->getElementsByTagName(tc("SafetyFactor").get());
+        // std::cout << "Safety factor: " << safetyFactor << std::endl;
+    }
+
     auto connectionsElement = static_cast<xercesc::DOMElement*>(rootElement->getElementsByTagName(tc("Connections").get())->item(0));
     if (connectionsElement) {
         auto variableConnectionsElement = connectionsElement->getElementsByTagName(tc("VariableConnection").get());
@@ -515,6 +565,8 @@ osp_config_parser::osp_config_parser(
             signalGroupConnections_.push_back({signal, variable});
         }
     }
+
+    serializer->release();
 }
 
 osp_config_parser::~osp_config_parser() noexcept = default;

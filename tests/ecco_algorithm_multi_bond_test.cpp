@@ -71,7 +71,7 @@ int main()
         auto chassisIndex = entityMaps.simulators.at("chassis");
         auto wheelIndex = entityMaps.simulators.at("wheel");
 
-        auto gravity = cosim::variable_id{chassisIndex, cosim::variable_type::real, 2};
+        //auto gravity = cosim::variable_id{chassisIndex, cosim::variable_type::real, 2};
         auto chassisForce = cosim::variable_id{chassisIndex, cosim::variable_type::real, 19};
         auto chassisVel = cosim::variable_id{chassisIndex, cosim::variable_type::real, 22};
         auto wheelCForce = cosim::variable_id{wheelIndex, cosim::variable_type::real, 26};
