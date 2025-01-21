@@ -260,6 +260,21 @@ private:
     static bool parse_boolean_value(const std::string& s);
 };
 
+[[maybe_unused]] std::ostream& operator<<(std::ostream& os, const osp_config_parser::EccoConfiguration& cfg)
+{
+    return os << "Safety Factor: " << cfg.safetyFactor << std::endl
+              << "Step Size: " << cfg.stepSize << std::endl
+              << "Minimum Step Size: " << cfg.minimumStepSize << std::endl
+              << "Maximum Step Size: " << cfg.maximumStepSize << std::endl
+              << "Minimum Change Rate: " << cfg.minimumChangeRate << std::endl
+              << "Maximum Change Rate: " << cfg.maximumChangeRate << std::endl
+              << "Proportional Gain: " << cfg.proportionalGain << std::endl
+              << "Integral Gain: " << cfg.integralGain << std::endl
+              << "Relative Tolerance: " << cfg.relativeTolerance << std::endl
+              << "Absolute Tolerance: " << cfg.absoluteTolerance << std::endl;
+}
+
+
 namespace
 {
 
@@ -475,24 +490,32 @@ osp_config_parser::osp_config_parser(
 
     auto eccoConfigurationElement = static_cast<xercesc::DOMElement*>(rootElement->getElementsByTagName(tc("EccoConfiguration").get())->item(0));
     if (eccoConfigurationElement) {
-        serializer->write(eccoConfigurationElement, outputTarget);
-        const auto elem = eccoConfigurationElement->getFirstElementChild();
-        serializer->write(elem, outputTarget);
+        const auto safetyFactor = eccoConfigurationElement->getElementsByTagName(tc("SafetyFactor").get())->item(0)->getTextContent();
+        const auto stepSize = eccoConfigurationElement->getElementsByTagName(tc("StepSize").get())->item(0)->getTextContent();
+        const auto minimumStepSize = eccoConfigurationElement->getElementsByTagName(tc("MinimumStepSize").get())->item(0)->getTextContent();
+        const auto maximumStepSize = eccoConfigurationElement->getElementsByTagName(tc("MaximumStepSize").get())->item(0)->getTextContent();
+        const auto minimumChangeRate = eccoConfigurationElement->getElementsByTagName(tc("MinimumChangeRate").get())->item(0)->getTextContent();
+        const auto maximumChangeRate = eccoConfigurationElement->getElementsByTagName(tc("MaximumChangeRate").get())->item(0)->getTextContent();
+        const auto proportionalGain = eccoConfigurationElement->getElementsByTagName(tc("ProportionalGain").get())->item(0)->getTextContent();
+        const auto integralGain = eccoConfigurationElement->getElementsByTagName(tc("IntegralGain").get())->item(0)->getTextContent();
+        const auto relativeTolerance = eccoConfigurationElement->getElementsByTagName(tc("RelativeTolerance").get())->item(0)->getTextContent();
+        const auto absoluteTolerance = eccoConfigurationElement->getElementsByTagName(tc("AbsoluteTolerance").get())->item(0)->getTextContent();
 
+        EccoConfiguration eccoConfig{};
 
-        /*
-        std::vector<InitialValue> initialValues;
-        const auto initValsElement = static_cast<xercesc::DOMElement*>(element->getElementsByTagName(tc("InitialValues").get())->item(0));
+        eccoConfig.safetyFactor = boost::lexical_cast<double>(tc(safetyFactor));
+        eccoConfig.stepSize = boost::lexical_cast<double>(tc(stepSize));
+        eccoConfig.minimumStepSize = boost::lexical_cast<double>(tc(minimumStepSize));
+        eccoConfig.maximumStepSize = boost::lexical_cast<double>(tc(maximumStepSize));
+        eccoConfig.minimumChangeRate = boost::lexical_cast<double>(tc(minimumChangeRate));
+        eccoConfig.maximumChangeRate = boost::lexical_cast<double>(tc(maximumChangeRate));
+        eccoConfig.proportionalGain = boost::lexical_cast<double>(tc(proportionalGain));
+        eccoConfig.integralGain = boost::lexical_cast<double>(tc(integralGain));
+        eccoConfig.relativeTolerance = boost::lexical_cast<double>(tc(relativeTolerance));
+        eccoConfig.absoluteTolerance = boost::lexical_cast<double>(tc(absoluteTolerance));
 
-        if (initValsElement) {
-            for (auto initValElement = initValsElement->getFirstElementChild(); initValElement != nullptr; initValElement = initValElement->getNextElementSibling()) {
-                std::string varName = tc(initValElement->getAttribute(tc("variable").get())).get();
-                variable_type varType = parse_variable_type(std::string(tc(initValElement->getFirstElementChild()->getNodeName()).get()));
-                std::string varValue = tc(initValElement->getFirstElementChild()->getAttribute(tc("value").get())).get();
-        */
-
-        // auto safetyFactor = eccoNodes->getElementsByTagName(tc("SafetyFactor").get());
-        // std::cout << "Safety factor: " << safetyFactor << std::endl;
+        simulationInformation_.eccoConfiguration = eccoConfig; 
+        std::cout << simulationInformation_.algorithm;
     }
 
     auto connectionsElement = static_cast<xercesc::DOMElement*>(rootElement->getElementsByTagName(tc("Connections").get())->item(0));
