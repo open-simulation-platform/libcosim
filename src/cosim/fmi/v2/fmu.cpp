@@ -63,6 +63,12 @@ fmu::fmu(
     modelDescription_.description = fmi2_import_get_description(handle_);
     modelDescription_.author = fmi2_import_get_author(handle_);
     modelDescription_.version = fmi2_import_get_model_version(handle_);
+    modelDescription_.capabilities.can_get_and_set_fmu_state = !!fmi2_import_get_capability(
+        handle_,
+        fmi2_cs_canGetAndSetFMUstate);
+    modelDescription_.capabilities.can_serialize_fmu_state = !!fmi2_import_get_capability(
+        handle_,
+        fmi2_cs_canSerializeFMUstate);
     const auto varList = fmi2_import_get_variable_list(handle_, 0);
     const auto _ = gsl::finally([&]() {
         fmi2_import_free_variable_list(varList);

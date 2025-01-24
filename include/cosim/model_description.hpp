@@ -59,6 +59,13 @@ enum variable_variability
     continuous
 };
 
+/// Subset of Co-Simulation v2 capabilities in the XML schema
+struct cosim_capabilities
+{
+    bool can_get_and_set_fmu_state{};
+    bool can_serialize_fmu_state{};
+};
+
 
 /// Returns a textual representation of `v`.
 constexpr const char* to_text(variable_type v)
@@ -195,6 +202,9 @@ struct model_description
 
     /// Variable descriptions.
     std::vector<variable_description> variables;
+
+    /// FMI 2.0 Co-simulation capabilities
+    cosim_capabilities capabilities;
 };
 
 /// Getter for returning a variable description.
