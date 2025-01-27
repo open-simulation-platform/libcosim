@@ -34,13 +34,13 @@
                 </InitialValue>
             </InitialValues>
         </Simulator>
-    </Simulators>
+    </Simulators>    
     <Connections>
-        <VariableConnection>
+        <VariableConnection powerbond='wheelchassis'>
             <Variable simulator="chassis" name="velocity"/>
             <Variable simulator="wheel" name="in_vel"/>
         </VariableConnection>
-        <VariableConnection>
+        <VariableConnection powerbond='wheelchassis'>
             <Variable simulator="wheel" name="out_spring_damper_f"/>
             <Variable simulator="chassis" name="force"/>
         </VariableConnection> 
@@ -51,6 +51,7 @@
         <MinimumStepSize>0.00001</MinimumStepSize>
         <MaximumStepSize>0.01</MaximumStepSize>
         <MinimumChangeRate>0.2</MinimumChangeRate>
+        
         <MaximumChangeRate>1.5</MaximumChangeRate>
         <ProportionalGain>0.2</ProportionalGain>
         <IntegralGain>0.15</IntegralGain>

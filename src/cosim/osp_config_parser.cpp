@@ -120,20 +120,6 @@ public:
         const cosim::filesystem::path& configPath);
     ~osp_config_parser() noexcept;
 
-    struct EccoConfiguration
-    {
-        double safetyFactor = 0.99;
-        double stepSize = 1e-3;
-        double minimumStepSize = 1e-5;
-        double maximumStepSize = 1e-2;
-        double minimumChangeRate = 0.2;
-        double maximumChangeRate = 1.5;
-        double proportionalGain = 0.2;
-        double integralGain = 0.15;
-        double relativeTolerance = 1e-6;
-        double absoluteTolerance = 1e-6;
-    };
-
     struct SimulationInformation
     {
         std::string description;
@@ -141,7 +127,7 @@ public:
         double stepSize = 0.1;
         double startTime = 0.0;
         std::optional<double> endTime;
-        std::optional<EccoConfiguration> eccoConfiguration;
+        std::optional<cosim::ecco_parameters> eccoConfiguration;
     };
 
     const SimulationInformation& get_simulation_information() const;
@@ -259,21 +245,6 @@ private:
     static variable_type parse_variable_type(const std::string&);
     static bool parse_boolean_value(const std::string& s);
 };
-
-[[maybe_unused]] std::ostream& operator<<(std::ostream& os, const osp_config_parser::EccoConfiguration& cfg)
-{
-    return os << "Safety Factor: " << cfg.safetyFactor << std::endl
-              << "Step Size: " << cfg.stepSize << std::endl
-              << "Minimum Step Size: " << cfg.minimumStepSize << std::endl
-              << "Maximum Step Size: " << cfg.maximumStepSize << std::endl
-              << "Minimum Change Rate: " << cfg.minimumChangeRate << std::endl
-              << "Maximum Change Rate: " << cfg.maximumChangeRate << std::endl
-              << "Proportional Gain: " << cfg.proportionalGain << std::endl
-              << "Integral Gain: " << cfg.integralGain << std::endl
-              << "Relative Tolerance: " << cfg.relativeTolerance << std::endl
-              << "Absolute Tolerance: " << cfg.absoluteTolerance << std::endl;
-}
-
 
 namespace
 {
@@ -501,21 +472,20 @@ osp_config_parser::osp_config_parser(
         const auto relativeTolerance = eccoConfigurationElement->getElementsByTagName(tc("RelativeTolerance").get())->item(0)->getTextContent();
         const auto absoluteTolerance = eccoConfigurationElement->getElementsByTagName(tc("AbsoluteTolerance").get())->item(0)->getTextContent();
 
-        EccoConfiguration eccoConfig{};
+        cosim::ecco_parameters eccoConfig{};
 
-        eccoConfig.safetyFactor = boost::lexical_cast<double>(tc(safetyFactor));
-        eccoConfig.stepSize = boost::lexical_cast<double>(tc(stepSize));
-        eccoConfig.minimumStepSize = boost::lexical_cast<double>(tc(minimumStepSize));
-        eccoConfig.maximumStepSize = boost::lexical_cast<double>(tc(maximumStepSize));
-        eccoConfig.minimumChangeRate = boost::lexical_cast<double>(tc(minimumChangeRate));
-        eccoConfig.maximumChangeRate = boost::lexical_cast<double>(tc(maximumChangeRate));
-        eccoConfig.proportionalGain = boost::lexical_cast<double>(tc(proportionalGain));
-        eccoConfig.integralGain = boost::lexical_cast<double>(tc(integralGain));
-        eccoConfig.relativeTolerance = boost::lexical_cast<double>(tc(relativeTolerance));
-        eccoConfig.absoluteTolerance = boost::lexical_cast<double>(tc(absoluteTolerance));
+        eccoConfig.safety_factor = boost::lexical_cast<double>(tc(safetyFactor));
+        eccoConfig.step_size = cosim::to_duration(boost::lexical_cast<double>(tc(stepSize)));
+        eccoConfig.min_step_size = cosim::to_duration(boost::lexical_cast<double>(tc(minimumStepSize)));
+        eccoConfig.max_step_size = cosim::to_duration(boost::lexical_cast<double>(tc(maximumStepSize)));
+        eccoConfig.min_change_rate = boost::lexical_cast<double>(tc(minimumChangeRate));
+        eccoConfig.max_change_rate = boost::lexical_cast<double>(tc(maximumChangeRate));
+        eccoConfig.p_gain = boost::lexical_cast<double>(tc(proportionalGain));
+        eccoConfig.i_gain = boost::lexical_cast<double>(tc(integralGain));
+        eccoConfig.rel_tolerance = boost::lexical_cast<double>(tc(relativeTolerance));
+        eccoConfig.abs_tolerance = boost::lexical_cast<double>(tc(absoluteTolerance));
 
-        simulationInformation_.eccoConfiguration = eccoConfig; 
-        std::cout << simulationInformation_.algorithm;
+        simulationInformation_.eccoConfiguration = eccoConfig;
     }
 
     auto connectionsElement = static_cast<xercesc::DOMElement*>(rootElement->getElementsByTagName(tc("Connections").get())->item(0));
@@ -1035,6 +1005,22 @@ osp_config load_osp_config(
     config.step_size = to_duration(simInfo.stepSize);
     if (simInfo.endTime.has_value()) {
         config.end_time = to_time_point(simInfo.endTime.value());
+    }
+
+    auto algorithm = simInfo.algorithm;
+    std::transform(algorithm.begin(), algorithm.end(), algorithm.begin(),
+        [](unsigned char c) { return std::tolower(c); });
+
+    if (simInfo.algorithm == "ecco") {
+        if (simInfo.eccoConfiguration.has_value()) {
+            config.algorithm_configuration = simInfo.eccoConfiguration.value();
+        } else {
+            throw std::invalid_argument("No configuration parameters found for ecco algorithm.");
+        }
+    } else if (simInfo.algorithm == "fixedstep") {
+        config.algorithm_configuration = cosim::fixed_step_configuration{simInfo.stepSize};
+    } else {
+        throw std::invalid_argument("Invalid algorithm choice. Allowed values are fixedStep, ecco.");
     }
 
     auto simulators = parser.get_elements();

@@ -2,9 +2,9 @@
 
 #include <cosim/algorithm.hpp>
 #include <cosim/log/simple.hpp>
+#include <cosim/observer/file_observer.hpp>
 #include <cosim/observer/last_value_observer.hpp>
 #include <cosim/observer/time_series_observer.hpp>
-#include <cosim/observer/file_observer.hpp>
 #include <cosim/osp_config_parser.hpp>
 #include <cosim/time.hpp>
 
@@ -23,7 +23,8 @@ int main()
         cosim::log::setup_simple_console_logging();
         cosim::log::set_global_output_level(cosim::log::info);
 
-        constexpr cosim::time_point startTime = cosim::to_time_point(0.0);;
+        constexpr cosim::time_point startTime = cosim::to_time_point(0.0);
+        ;
         constexpr cosim::time_point midTime = cosim::to_time_point(4.0);
 
         auto ecco_params = cosim::ecco_parameters{
@@ -38,12 +39,8 @@ int main()
             0.2,
             0.15};
 
-        // Set up an ecco algo
         auto ecco_algo = std::make_shared<cosim::ecco_algorithm>(ecco_params);
-//        auto fs_algo = std::make_shared<cosim::fixed_step_algorithm>(cosim::to_duration(1e-4));
-
         const auto testDataDir = std::getenv("TEST_DATA_DIR");
-        //const auto configPath = cosim::filesystem::path("C:/dev/osp/demo-cases/quarter-truck/OspSystemStructure.xml");
         const auto configPath = cosim::filesystem::path(testDataDir) / "ecco" / "quarter_truck" / "OspSystemStructure.xml";
         const auto logXmlPath = cosim::filesystem::path(testDataDir) / "ecco" / "quarter_truck" / "LogConfig.xml";
 
@@ -52,50 +49,47 @@ int main()
         auto execution = cosim::execution(
             config.start_time,
             ecco_algo);
-//            fs_algo);
 
-        const auto entityMaps = cosim::inject_system_structure(
-            execution, config.system_structure, config.initial_values);
+        const auto entityMaps = cosim::inject_system_structure(execution, config.system_structure, config.initial_values);
         REQUIRE(entityMaps.simulators.size() == 2);
-//        REQUIRE(boost::size(config.system_structure.connections()) == expectedNumConnections);
 
 
         // Default should not be real time
         const auto realTimeConfig = execution.get_real_time_config();
         REQUIRE(!realTimeConfig->real_time_simulation);
 
-        //auto chassisIndex = entityMaps.simulators.at("chassis");
-        //auto wheelIndex = entityMaps.simulators.at("wheel");
-        //auto groundIndex = entityMaps.simulators.at("ground");
+        // auto chassisIndex = entityMaps.simulators.at("chassis");
+        // auto wheelIndex = entityMaps.simulators.at("wheel");
+        // auto groundIndex = entityMaps.simulators.at("ground");
 
         auto chassisIndex = entityMaps.simulators.at("chassis");
         auto wheelIndex = entityMaps.simulators.at("wheel");
 
-        //auto gravity = cosim::variable_id{chassisIndex, cosim::variable_type::real, 2};
+        // auto gravity = cosim::variable_id{chassisIndex, cosim::variable_type::real, 2};
         auto chassisForce = cosim::variable_id{chassisIndex, cosim::variable_type::real, 19};
         auto chassisVel = cosim::variable_id{chassisIndex, cosim::variable_type::real, 22};
         auto wheelCForce = cosim::variable_id{wheelIndex, cosim::variable_type::real, 26};
         auto wheelCVel = cosim::variable_id{wheelIndex, cosim::variable_type::real, 24};
-        //auto wheelGForce = cosim::variable_id{wheelIndex, cosim::variable_type::real, 17};
-        //auto wheelGVel = cosim::variable_id{wheelIndex, cosim::variable_type::real, 18};
-        //auto groundForce = cosim::variable_id{groundIndex, cosim::variable_type::real, 11};
-        //auto groundVel = cosim::variable_id{groundIndex, cosim::variable_type::real, 12};
+        // auto wheelGForce = cosim::variable_id{wheelIndex, cosim::variable_type::real, 17};
+        // auto wheelGVel = cosim::variable_id{wheelIndex, cosim::variable_type::real, 18};
+        // auto groundForce = cosim::variable_id{groundIndex, cosim::variable_type::real, 11};
+        // auto groundVel = cosim::variable_id{groundIndex, cosim::variable_type::real, 12};
 
         // a = chassis b = wheel
         // a = wheel   b = ground
         // u_a = y_b --- u_b = y_a
         //                          u_a           y_a           u_b         y_b
         ecco_algo->add_power_bond(chassisVel, chassisForce, wheelCForce, wheelCVel); // chassis -> wheel (chassis port)
-        //ecco_algo->add_power_bond(wheelGVel, wheelGForce, groundForce, groundVel); // wheel -> ground (ground port)
+        // ecco_algo->add_power_bond(wheelGVel, wheelGForce, groundForce, groundVel); // wheel -> ground (ground port)
 
-         auto file_obs = std::make_unique<cosim::file_observer>("./logDir", logXmlPath);
-         execution.add_observer(std::move(file_obs));
+        auto file_obs = std::make_unique<cosim::file_observer>("./logDir", logXmlPath);
+        execution.add_observer(std::move(file_obs));
 
-         // auto simResult = execution.simulate_until(midTime);
-         // REQUIRE(simResult);
+        // auto simResult = execution.simulate_until(midTime);
+        // REQUIRE(simResult);
 
 
-         // Add an observer that watches the last slave
+        // Add an observer that watches the last slave
         auto t_observer = std::make_shared<cosim::time_series_observer>(50000);
         execution.add_observer(t_observer);
         t_observer->start_observing(chassisVel);
