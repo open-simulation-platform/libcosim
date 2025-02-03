@@ -52,7 +52,7 @@ class LibcosimConan(ConanFile):
 
     # Exports
     exports = "version.txt"
-    exports_sources = "*"
+    exports_sources = "*", "!cmake-build*", "!.venv", "!.git"
 
     # Build steps
 

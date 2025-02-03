@@ -93,6 +93,17 @@ public:
         adjustIfFull(timeSamples_, bufSize_);
     }
 
+    void reset()
+    {
+        timeSamples_.clear();
+        for (auto& [_, step_numbers] : realSamples_) {
+            step_numbers.clear();
+        }
+        for (auto& [_, step_numbers] : intSamples_) {
+            step_numbers.clear();
+        }
+    }
+
     void start_observing(variable_type type, value_reference reference)
     {
         std::lock_guard<std::mutex> lock(lock_);
@@ -263,10 +274,10 @@ void time_series_observer::simulator_step_complete(
 }
 
 void time_series_observer::state_restored(
-    step_number currentStep, time_point currentTime)
+    step_number, time_point)
 {
     for (const auto& entry : slaveObservers_) {
-        entry.second->observe(currentStep, currentTime);
+        entry.second->reset();
     }
 }
 
