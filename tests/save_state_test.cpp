@@ -38,7 +38,7 @@ std::vector<double> get_reals(
     return values;
 }
 
-int run(const cosim::filesystem::path& configPath)
+int main()
 {
     try {
         cosim::log::setup_simple_console_logging();
@@ -48,6 +48,10 @@ int run(const cosim::filesystem::path& configPath)
         // == Reference FMU test - BouncingBall (for byte vectors)
         // ================================================================
         constexpr cosim::duration stepSize = cosim::to_duration(0.05);
+
+        const auto testDataDir = std::getenv("TEST_DATA_DIR");
+        REQUIRE(testDataDir);
+        auto configPath = cosim::filesystem::path(testDataDir) / "msmi" / "OspSystemStructure_BouncingBall.xml";
 
         auto resolver = cosim::default_model_uri_resolver();
         const auto config = cosim::load_osp_config(configPath, *resolver);
@@ -208,26 +212,7 @@ int run(const cosim::filesystem::path& configPath)
         REQUIRE(state2ValuesAgain == state2Values);
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
-        return 0;
+        return 1;
     }
-    return 1;
-}
-
-int main()
-{
-    const auto testDataDir = std::getenv("TEST_DATA_DIR");
-    REQUIRE(testDataDir);
-
-    auto configPath1 = cosim::filesystem::path(testDataDir) / "msmi" / "OspSystemStructure_BouncingBall.xml";
-    auto result1 = run(configPath1);
-
-    std::cout << "Result 1: " << result1 << std::endl;
-
-    auto configPath2 = cosim::filesystem::path(testDataDir) / "msmi" / "OspSystemStructure_BouncingBall_proxyfmu.xml";
-    auto result2 = run(configPath2);
-
-    std::cout << "Result 2: " << result2 << std::endl;
-
-    REQUIRE(result1 && result2);
     return 0;
 }

@@ -40,6 +40,7 @@ if(LIBCOSIM_WITH_PROXYFMU)
             )
     list(APPEND tests
             "proxyfmu_osp_config_parser_test"
+            "proxyfmu_save_state_test"
             )
 endif()
 
