@@ -43,16 +43,6 @@ int main()
         REQUIRE(entityMaps.simulators.size() == 2);
         REQUIRE(!realTimeConfig->real_time_simulation);
 
-        auto chassisIndex = entityMaps.simulators.at("chassis");
-        auto wheelIndex = entityMaps.simulators.at("wheel");
-
-        auto chassisForce = cosim::variable_id{chassisIndex, cosim::variable_type::real, 19}; // y_a
-        auto chassisVel = cosim::variable_id{chassisIndex, cosim::variable_type::real, 22}; // u_a
-        auto wheelCForce = cosim::variable_id{wheelIndex, cosim::variable_type::real, 26}; // u_b
-        auto wheelCVel = cosim::variable_id{wheelIndex, cosim::variable_type::real, 24}; // y_b
-
-        ecco_algo->add_power_bond(chassisVel, chassisForce, wheelCForce, wheelCVel);
-
         const auto logPath = cosim::filesystem::current_path() / "logs";
         std::cout << "Log path:" << logPath.c_str();
         auto file_obs = std::make_unique<cosim::file_observer>(logPath, logXmlPath);

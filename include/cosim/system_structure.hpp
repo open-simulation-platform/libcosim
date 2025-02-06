@@ -261,6 +261,8 @@ public:
         }
     };
 
+    std::string algorithm;
+
 private:
     using entity_map = std::unordered_map<std::string, entity>;
     using power_bond_map = std::unordered_map<std::string, power_bond>;
@@ -300,7 +302,7 @@ public:
         add_entity({std::string(name), type, {}, std::move(parameters)});
     }
 
-    power_bond_map get_power_bonds();
+    power_bond_map get_power_bonds() const noexcept;
     void add_power_bond(std::string name, power_bond pb);
 
     /**

@@ -1169,6 +1169,8 @@ osp_config load_osp_config(
         throw std::invalid_argument("Invalid algorithm choice. Allowed values are fixedStep, ecco.");
     }
 
+    config.system_structure.algorithm = algorithm;
+
     auto simulators = parser.get_elements();
 
     std::unordered_map<std::string, extended_model_description> emds;

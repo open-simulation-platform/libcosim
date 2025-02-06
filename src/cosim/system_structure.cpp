@@ -130,7 +130,7 @@ void system_structure::add_entity(const entity& e)
     entities_.emplace(e.name, e);
 }
 
-system_structure::power_bond_map system_structure::get_power_bonds()
+system_structure::power_bond_map system_structure::get_power_bonds() const noexcept
 {
     return powerBonds_;
 }
