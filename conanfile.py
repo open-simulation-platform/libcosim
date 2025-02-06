@@ -44,7 +44,7 @@ class LibcosimConan(ConanFile):
         self.requires("ms-gsl/[>=3 <5]", transitive_headers=True)
         self.requires("boost/[~1.85]", transitive_headers=True, transitive_libs=True)  # Required by Thrift
         if self.options.proxyfmu:
-            self.requires("proxyfmu/0.3.3@stc/ss",
+            self.requires("proxyfmu/0.3.3@osp/testing-feature_779-state-serialization",
                           transitive_headers=True,
                           transitive_libs=True)
         self.requires("yaml-cpp/[~0.8]")
