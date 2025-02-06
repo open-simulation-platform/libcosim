@@ -51,6 +51,7 @@ jobs:
             --build=missing \
             --user=osp \
             --channel="${CHANNEL}" \
+            --update \
             .
           conan upload --confirm --remote=osp '*'
           EOF
