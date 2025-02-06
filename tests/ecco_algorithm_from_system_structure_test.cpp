@@ -25,7 +25,7 @@ int main()
         cosim::log::setup_simple_console_logging();
         cosim::log::set_global_output_level(cosim::log::debug);
 
-        constexpr cosim::time_point endTime = cosim::to_time_point(10.0);
+        constexpr cosim::time_point endTime = cosim::to_time_point(0.1);
 
         auto resolver = cosim::default_model_uri_resolver();
         auto configPath = cosim::filesystem::path(testDataDir) / "ecco" / "quarter_truck";
@@ -46,10 +46,10 @@ int main()
         auto chassisIndex = entityMaps.simulators.at("chassis");
         auto wheelIndex = entityMaps.simulators.at("wheel");
 
-        auto chassisForce = cosim::variable_id{chassisIndex, cosim::variable_type::real, 19};
-        auto chassisVel = cosim::variable_id{chassisIndex, cosim::variable_type::real, 22};
-        auto wheelCForce = cosim::variable_id{wheelIndex, cosim::variable_type::real, 26};
-        auto wheelCVel = cosim::variable_id{wheelIndex, cosim::variable_type::real, 24};
+        auto chassisForce = cosim::variable_id{chassisIndex, cosim::variable_type::real, 19}; // y_a
+        auto chassisVel = cosim::variable_id{chassisIndex, cosim::variable_type::real, 22}; // u_a
+        auto wheelCForce = cosim::variable_id{wheelIndex, cosim::variable_type::real, 26}; // u_b
+        auto wheelCVel = cosim::variable_id{wheelIndex, cosim::variable_type::real, 24}; // y_b
 
         ecco_algo->add_power_bond(chassisVel, chassisForce, wheelCForce, wheelCVel);
 

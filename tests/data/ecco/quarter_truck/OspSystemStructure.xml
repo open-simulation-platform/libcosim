@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<OspSystemStructure xmlns="http://opensimulationplatform.com/MSMI/OSPSystemStructure"
-                    version="0.1">
+<OspSystemStructure xmlns="http://opensimulationplatform.com/MSMI/OSPSystemStructure" version="0.1">
     <BaseStepSize>0.0001</BaseStepSize>
     <!--Algorithm>
         <EccoAlgorithm stepSize="" safetyFactor="" minimumStepSize="" maximumStepSize="" minimumChangeRate="" maximumChangeRate="" proportionalGain="" integralGain="" relativeTolerance="" absoluteTolerance=""/>
@@ -34,16 +33,16 @@
                 </InitialValue>
             </InitialValues>
         </Simulator>
-    </Simulators>    
+    </Simulators>
     <Connections>
-        <VariableConnection powerbond='wheelchassis'>
-            <Variable simulator="chassis" name="velocity"/>
-            <Variable simulator="wheel" name="in_vel"/>
+        <VariableConnection powerbond="wheelchassis">
+            <Variable simulator="chassis" name="velocity" eccoparam="u_a"/>
+            <Variable simulator="wheel" name="in_vel" eccoparam="y_b"/>
         </VariableConnection>
-        <VariableConnection powerbond='wheelchassis'>
-            <Variable simulator="wheel" name="out_spring_damper_f"/>
-            <Variable simulator="chassis" name="force"/>
-        </VariableConnection> 
+        <VariableConnection powerbond="wheelchassis">
+            <Variable simulator="wheel" name="out_spring_damper_f" eccoparam="u_b"/>
+            <Variable simulator="chassis" name="force" eccoparam="y_a"/>
+        </VariableConnection>
     </Connections>
     <EccoConfiguration>
         <SafetyFactor>0.99</SafetyFactor>
@@ -51,10 +50,9 @@
         <MinimumStepSize>0.00001</MinimumStepSize>
         <MaximumStepSize>0.01</MaximumStepSize>
         <MinimumChangeRate>0.2</MinimumChangeRate>
-        
         <MaximumChangeRate>1.5</MaximumChangeRate>
         <ProportionalGain>0.2</ProportionalGain>
-        <IntegralGain>0.15</IntegralGain>
+        <IntegralGain>0.15</IntegralGain>   
         <RelativeTolerance>1e-6</RelativeTolerance>
         <AbsoluteTolerance>1e-6</AbsoluteTolerance>
     </EccoConfiguration>

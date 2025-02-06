@@ -133,6 +133,18 @@ inline std::ostream& operator<<(std::ostream& s, const full_variable_name& v)
     return s;
 }
 
+/// Writes a `power_bond` to an output stream.
+/*
+inline std::ostream& operator<<(std::ostream& s, const power_bond& pb)
+{
+    s << "u_a: " << pb.u_a << std::endl
+      << "u_b: " << pb.u_b << std::endl
+      << "y_a: " << pb.y_a << std::endl
+      << "y_b: " << pb.y_b << std::endl;
+    return s;
+}
+*/
+
 /// Returns a string representation of a `full_variable_name`.
 std::string to_text(const full_variable_name& v);
 
@@ -213,8 +225,45 @@ public:
         full_variable_name target;
     };
 
+    /// Information about a powerbond connection. For use with the ecco algorithm only.
+    struct power_bond
+    {
+        /// The u_a variable in the bond, according to the description of the ecco algorithm.
+        full_variable_name u_a{"", ""};
+
+        /// The u_b variable in the bond, according to the description of the ecco algorithm.
+        full_variable_name u_b{"", ""};
+
+        /// The y_a variable in the bond, according to the description of the ecco algorithm.
+        full_variable_name y_a{"", ""};
+
+        /// The y_b variable in the bond, according to the description of the ecco algorithm.
+        full_variable_name y_b{"", ""};
+
+        void set_ua(full_variable_name& ua)
+        {
+            u_a = ua;
+        }
+
+        void set_ub(full_variable_name& ub)
+        {
+            u_b = ub;
+        }
+
+        void set_ya(full_variable_name& ya)
+        {
+            y_a = ya;
+        }
+
+        void set_yb(full_variable_name& yb)
+        {
+            y_b = yb;
+        }
+    };
+
 private:
     using entity_map = std::unordered_map<std::string, entity>;
+    using power_bond_map = std::unordered_map<std::string, power_bond>;
     using connection_map =
         std::unordered_map<full_variable_name, full_variable_name>;
     using connection_transform =
@@ -250,6 +299,9 @@ public:
     {
         add_entity({std::string(name), type, {}, std::move(parameters)});
     }
+
+    power_bond_map get_power_bonds();
+    void add_power_bond(std::string name, power_bond pb);
 
     /**
      *  Returns a list of the entities in the system.
@@ -327,6 +379,8 @@ private:
 
     // Connections. Target is key, source is value.
     connection_map connections_;
+
+    power_bond_map powerBonds_;
 
     // Cache for fast lookup of model info, indexed by model UUID.
     struct model_info

@@ -286,11 +286,11 @@ public:
 
         const auto dt = to_double_duration(stepSize, currentTime);
 
-        for (std::size_t i = 0; i < uVariables_.size(); i+=2) {
+        for (std::size_t i = 0; i < uVariables_.size(); i += 2) {
             auto u_a = uVariables_.at(i);
-            auto u_b = uVariables_.at(i+1);
+            auto u_b = uVariables_.at(i + 1);
             auto y_a = yVariables_.at(i);
-            auto y_b = yVariables_.at(i+1);
+            auto y_b = yVariables_.at(i + 1);
 
             double u_a_value = simulators_.at(u_a.simulator).sim->get_real(u_a.reference);
             double u_b_value = simulators_.at(u_b.simulator).sim->get_real(u_b.reference);
@@ -298,10 +298,10 @@ public:
             double y_b_value = simulators_.at(y_b.simulator).sim->get_real(y_b.reference);
 
             double power_a = u_a_value * y_a_value;
-            energies_.at(i).push_back(power_a*dt);
+            energies_.at(i).push_back(power_a * dt);
 
             double power_b = u_b_value * y_b_value;
-            energies_.at(i+1).push_back(power_b*dt);
+            energies_.at(i + 1).push_back(power_b * dt);
 
             double power_residual = std::abs(power_a - power_b);
 
@@ -320,7 +320,7 @@ public:
             mean_square += std::pow(energy_residual / (params.abs_tolerance + params.rel_tolerance * energy_level), 2);
         }
         const auto num_bonds = power_residuals.size(); // TODO: Still valid for multidimensial bonds?
-        const auto error_estimate = std::sqrt(mean_square / (double) num_bonds);
+        const auto error_estimate = std::sqrt(mean_square / (double)num_bonds);
 
         // std::cout << power_a << " " << power_b << " " << energy_level << " " << energy_residual << " " << sum_power_residual << " " << error_estimate << std::endl;
         if (prev_error_estimate_ == 0 || error_estimate == 0) {
@@ -355,13 +355,14 @@ private:
     std::vector<cosim::variable_id> yVariables_{};
     std::vector<std::vector<double>> energies_{};
 
-    double get_mean(const std::vector<double>& elems) {
+    double get_mean(const std::vector<double>& elems)
+    {
         if (elems.empty()) return 0.0;
         double sum{};
         for (auto elem : elems) {
             sum += elem;
         }
-        return sum / (double) elems.size();
+        return sum / (double)elems.size();
     }
 
     struct connection_ss
@@ -546,7 +547,8 @@ ecco_algorithm::ecco_algorithm(ecco_parameters params, std::optional<unsigned in
 }
 
 
-ecco_algorithm::~ecco_algorithm() noexcept {
+ecco_algorithm::~ecco_algorithm() noexcept
+{
     pimpl_->print_average_energies();
 }
 

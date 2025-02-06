@@ -9,6 +9,8 @@ cmake-build-*/
 
 # Visual Studio Code
 .vscode/
+.lsp/
+.clj-kondo
 
 
 CMakeUserPresets.json
