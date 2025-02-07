@@ -274,10 +274,11 @@ void time_series_observer::simulator_step_complete(
 }
 
 void time_series_observer::state_restored(
-    step_number, time_point)
+    step_number currentStep, time_point currentTime)
 {
     for (const auto& entry : slaveObservers_) {
         entry.second->reset();
+        entry.second->observe(currentStep, currentTime);
     }
 }
 
