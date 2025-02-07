@@ -208,7 +208,7 @@ public:
     {
         std::string simulator{};
         std::string name{};
-        std::optional<std::string> eccoparam{};
+        std::optional<std::string> port{};
     };
 
     struct SignalEndpoint
@@ -283,8 +283,8 @@ T attribute_or(xercesc::DOMElement* el, const char* attributeName, T defaultValu
 
 [[maybe_unused]] std::ostream& operator<<(std::ostream& o, const osp_config_parser::VariableEndpoint& var)
 {
-    const auto eccoparamstr = var.eccoparam.has_value() ? var.eccoparam.value() : "";
-    return o << var.simulator << ", " << var.name << ", " << eccoparamstr << std::endl;
+    const auto port = var.port.has_value() ? var.port.value() : "";
+    return o << var.simulator << ", " << var.name << ", " << port << std::endl;
 }
 
 [[maybe_unused]] std::ostream& operator<<(std::ostream& o, const osp_config_parser::VariableConnection& var)
@@ -536,13 +536,13 @@ osp_config_parser::osp_config_parser(
 
             std::string simulatorA = tc(a->getAttribute(tc("simulator").get())).get();
             std::string nameA = tc(a->getAttribute(tc("name").get())).get();
-            std::string eccoParamA = tc(a->getAttribute(tc("eccoparam").get())).get();
-            VariableEndpoint veA = {simulatorA, nameA, eccoParamA};
+            std::string portA = tc(a->getAttribute(tc("port").get())).get();
+            VariableEndpoint veA = {simulatorA, nameA, portA};
 
             std::string simulatorB = tc(b->getAttribute(tc("simulator").get())).get();
             std::string nameB = tc(b->getAttribute(tc("name").get())).get();
-            std::string eccoParamB = tc(b->getAttribute(tc("eccoparam").get())).get();
-            VariableEndpoint veB = {simulatorB, nameB, eccoParamB};
+            std::string portB = tc(b->getAttribute(tc("port").get())).get();
+            VariableEndpoint veB = {simulatorB, nameB, portB};
 
             VariableConnection vc = {veA, veB};
 
@@ -829,45 +829,58 @@ void add_power_bonds(const std::vector<osp_config_parser::PowerBondConnection>& 
         auto variableC = cosim::full_variable_name{connectionB.connection.variableA.simulator, connectionB.connection.variableA.name};
         auto variableD = cosim::full_variable_name{connectionB.connection.variableB.simulator, connectionB.connection.variableB.name};
 
-        auto variables = std::vector<osp_config_parser::VariableEndpoint>{connectionA.connection.variableA, connectionA.connection.variableB, connectionB.connection.variableA, connectionB.connection.variableB};
+        auto connAVariables = std::vector<osp_config_parser::VariableEndpoint>{connectionA.connection.variableA, connectionA.connection.variableB};
+        auto connBVariables = std::vector<osp_config_parser::VariableEndpoint>{connectionB.connection.variableA, connectionB.connection.variableB};
 
-        auto eccoPrmA = connectionA.connection.variableA.eccoparam;
-        auto eccoPrmB = connectionA.connection.variableB.eccoparam;
-        auto eccoPrmC = connectionB.connection.variableA.eccoparam;
-        auto eccoPrmD = connectionB.connection.variableB.eccoparam;
+        auto portA = connectionA.connection.variableA.port;
+        auto portB = connectionA.connection.variableB.port;
+        auto portC = connectionB.connection.variableA.port;
+        auto portD = connectionB.connection.variableB.port;
 
-        if ((eccoPrmA.has_value() && !eccoPrmB.has_value()) || (!eccoPrmA.has_value() && eccoPrmB.has_value())) {
+        if ((portA.has_value() && !portB.has_value()) || (!portA.has_value() && portB.has_value())) {
             std::ostringstream oss;
-            oss << "Missing ecco param for powerbond connection " << connectionA.connection.variableA.name << " <-> " << connectionA.connection.variableB.name << ". Both variables in a powerbond must have one of the u_a, u_b, y_a, y_b params.";
+            oss << "Missing ecco port for powerbond connection " << connectionA.connection.variableA.name << " <-> " << connectionA.connection.variableB.name << ". Both variables in a powerbond must have one of the u_a, u_b, y_a, y_b ports.";
             throw std::invalid_argument(oss.str());
         }
 
-        if ((eccoPrmC.has_value() && !eccoPrmD.has_value()) || (!eccoPrmC.has_value() && eccoPrmD.has_value())) {
+        if ((portC.has_value() && !portD.has_value()) || (!portC.has_value() && portD.has_value())) {
             std::ostringstream oss;
-            oss << "Missing ecco param for powerbond connection " << connectionB.connection.variableA.name << " <-> " << connectionB.connection.variableB.name << ". Both variables in a powerbond must have one of the u_a, u_b, y_a, y_b params.";
+            oss << "Missing ecco port for powerbond connection " << connectionB.connection.variableA.name << " <-> " << connectionB.connection.variableB.name << ". Both variables in a powerbond must have one of the u_a, u_b, y_a, y_b ports.";
             throw std::invalid_argument(oss.str());
         }
 
         auto powerbond = cosim::system_structure::power_bond{};
 
-        for (auto& var : variables) {
+        for (auto& var : connAVariables) {
             auto variable = cosim::full_variable_name{var.simulator, var.name};
-            switch (str_hash(var.eccoparam.value())) {
-                case "u_a"_hash:
-                    std::cout << "u_a" << std::endl;
+            switch (str_hash(var.port.value())) {
+                case "input"_hash:                    
                     powerbond.set_ua(variable);
                     break;
-                case "u_b"_hash:
-                    std::cout << "u_b" << std::endl;
+                case "output"_hash:
+                    powerbond.set_yb(variable);
+                    break;
+                default:
+                    std::ostringstream oss;
+                    oss << "Invalid port value for variable " << var.name << ": " << var.port.value() << ". Accepted values are input, output.";
+                    throw std::runtime_error(oss.str());
+                    break;
+            }
+        }
+
+        for (auto& var : connBVariables) {
+            auto variable = cosim::full_variable_name{var.simulator, var.name};
+            switch (str_hash(var.port.value())) {
+                case "input"_hash:
                     powerbond.set_ub(variable);
                     break;
-                case "y_a"_hash:
-                    std::cout << "y_a" << std::endl;
+                case "output"_hash:
                     powerbond.set_ya(variable);
                     break;
-                case "y_b"_hash:
-                    std::cout << "y_b" << std::endl;
-                    powerbond.set_yb(variable);
+                default:
+                    std::ostringstream oss;
+                    oss << "Invalid port value for variable " << var.name << ": " << var.port.value() << ". Accepted values are input, output.";
+                    throw std::runtime_error(oss.str());
                     break;
             }
         }

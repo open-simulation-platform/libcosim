@@ -62,6 +62,7 @@
                     <xs:sequence>
                         <xs:element name="VariableGroup" type="osp:variableEndpoint" minOccurs="2" maxOccurs="2"/>
                     </xs:sequence>
+                    <xs:attribute name="powerbond" use="optional" type="xs:string"/>
                 </xs:complexType>
             </xs:element>
             <xs:element name="SignalGroupConnection" minOccurs="0" maxOccurs="unbounded">
@@ -77,7 +78,7 @@
     <xs:complexType name="variableEndpoint">
         <xs:attribute name="simulator" use="required" type="xs:string"/>
         <xs:attribute name="name" use="required" type="xs:string"/>
-        <xs:attribute name="eccoparam" type="xs:string"/>
+        <xs:attribute name="port" type="xs:string"/>
     </xs:complexType>
     <xs:complexType name="signalEndpoint">
         <xs:attribute name="function" use="required" type="xs:string"/>

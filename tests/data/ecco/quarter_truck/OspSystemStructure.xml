@@ -1,10 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <OspSystemStructure xmlns="http://opensimulationplatform.com/MSMI/OSPSystemStructure" version="0.1">
     <BaseStepSize>0.0001</BaseStepSize>
-    <!--Algorithm>
-        <EccoAlgorithm stepSize="" safetyFactor="" minimumStepSize="" maximumStepSize="" minimumChangeRate="" maximumChangeRate="" proportionalGain="" integralGain="" relativeTolerance="" absoluteTolerance=""/>
-        <FixedStepAlgorithm stepSize=""/>
-    </Algorithm-->
     <Algorithm>ecco</Algorithm>
     <Simulators>
         <Simulator name="chassis" source="Chassis.fmu">
@@ -36,12 +32,16 @@
     </Simulators>
     <Connections>
         <VariableConnection powerbond="wheelchassis">
-            <Variable simulator="chassis" name="velocity" eccoparam="u_a"/>
-            <Variable simulator="wheel" name="in_vel" eccoparam="y_b"/>
+            <!-- u_a -->
+            <Variable simulator="chassis" name="velocity" port="input"/>
+            <!-- y_b -->
+            <Variable simulator="wheel" name="in_vel" port="output"/>
         </VariableConnection>
         <VariableConnection powerbond="wheelchassis">
-            <Variable simulator="wheel" name="out_spring_damper_f" eccoparam="u_b"/>
-            <Variable simulator="chassis" name="force" eccoparam="y_a"/>
+            <!-- u_b -->
+            <Variable simulator="wheel" name="out_spring_damper_f" port="input"/>
+            <!-- y_a -->
+            <Variable simulator="chassis" name="force" port="output"/>
         </VariableConnection>
     </Connections>
     <EccoConfiguration>
