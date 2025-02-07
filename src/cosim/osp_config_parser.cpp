@@ -591,7 +591,7 @@ bool osp_config_parser::parse_boolean_value(const std::string& s)
         iss.clear();
         iss >> std::boolalpha >> bool_value;
         if (iss.fail()) {
-            throw std::invalid_argument("Value: '" + s + "' is not convertable to bool");
+            throw std::runtime_error("Value: '" + s + "' is not convertable to bool");
         }
     }
 
@@ -675,7 +675,7 @@ osp_config_parser::SignalConnection find_signal_connection(
     if (it == signalConnections.end()) {
         std::ostringstream oss;
         oss << "Missing expected connection to " << functionName << ":" << signalName;
-        throw std::out_of_range(oss.str());
+        throw std::runtime_error(oss.str());
     }
     return *it;
 }
@@ -713,7 +713,7 @@ extended_model_description get_emd(
     if (emdIt == emds.end()) {
         std::ostringstream oss;
         oss << "Cannot find extended model description for " << element;
-        throw std::out_of_range(oss.str());
+        throw std::runtime_error(oss.str());
     }
     return emdIt->second;
 }
@@ -939,14 +939,14 @@ osp_config load_osp_config(
         std::ostringstream oss;
         oss << "Configured base step size [" << simInfo.stepSize << "] must be nonzero and positive";
         BOOST_LOG_SEV(log::logger(), log::error) << oss.str();
-        throw std::invalid_argument(oss.str());
+        throw std::runtime_error(oss.str());
     }
 
     if (simInfo.endTime.has_value() && simInfo.startTime > simInfo.endTime.value()) {
         std::ostringstream oss;
         oss << "Configured start time [" << simInfo.startTime << "] is larger than configured end time [" << simInfo.endTime.value() << "]";
         BOOST_LOG_SEV(log::logger(), log::error) << oss.str();
-        throw std::invalid_argument(oss.str());
+        throw std::runtime_error(oss.str());
     }
 
     osp_config config;
