@@ -39,8 +39,8 @@ class LibcosimConan(ConanFile):
     def requirements(self):
         self.tool_requires("cmake/[>=3.19]")
         self.requires("fmilibrary/[~2.3]")
-        self.requires("libcbor/[~0.11]")
-        self.requires("libzip/[~1.3]")
+        self.requires("libcbor/0.11.0")
+        self.requires("libzip/[~1.11]")
         self.requires("ms-gsl/[>=3 <5]", transitive_headers=True)
         self.requires("boost/[~1.85]", transitive_headers=True, transitive_libs=True)  # Required by Thrift
         if self.options.proxyfmu:
