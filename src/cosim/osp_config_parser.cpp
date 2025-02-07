@@ -854,7 +854,7 @@ void add_power_bonds(const std::vector<osp_config_parser::PowerBondConnection>& 
         for (auto& var : connAVariables) {
             auto variable = cosim::full_variable_name{var.simulator, var.name};
             switch (str_hash(var.port.value())) {
-                case "input"_hash:                    
+                case "input"_hash:
                     powerbond.set_ua(variable);
                     break;
                 case "output"_hash:
@@ -1166,20 +1166,20 @@ osp_config load_osp_config(
 
     auto algorithm = simInfo.algorithm;
     std::transform(algorithm.begin(), algorithm.end(), algorithm.begin(),
-        [](unsigned char c) { return std::tolower(c); });
+        [](unsigned char c) { return std::tolower(c); });        
 
-    if (simInfo.algorithm == "ecco") {
+    if (algorithm == "ecco") {
         if (simInfo.eccoConfiguration.has_value()) {
             BOOST_LOG_SEV(log::logger(), log::info) << "Configuring algorithm: ecco";
             config.algorithm_configuration = simInfo.eccoConfiguration.value();
         } else {
-            throw std::invalid_argument("No configuration parameters found for ecco algorithm.");
+            throw std::runtime_error("No configuration parameters found for ecco algorithm.");
         }
-    } else if (simInfo.algorithm == "fixedstep") {
+    } else if (algorithm == "fixedstep") {
         BOOST_LOG_SEV(log::logger(), log::info) << "Configuring algorithm: fixedStep";
         config.algorithm_configuration = cosim::fixed_step_configuration{simInfo.stepSize};
     } else {
-        throw std::invalid_argument("Invalid algorithm choice. Allowed values are fixedStep, ecco.");
+        throw std::runtime_error("Invalid algorithm choice. Allowed values are fixedStep, ecco.");
     }
 
     config.system_structure.algorithm = algorithm;
