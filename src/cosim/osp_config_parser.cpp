@@ -816,7 +816,7 @@ void add_power_bonds(const std::vector<osp_config_parser::PowerBondConnection>& 
         if (aPowerBond.size() != 2) {
             std::ostringstream oss;
             oss << "The powerbond " << pbName << " does not have 2 connections! Number of connections found was " << aPowerBond.size();
-            throw std::invalid_argument(oss.str());
+            throw std::runtime_error(oss.str());
         }
 
         const auto& connectionA = aPowerBond[0];
@@ -839,14 +839,14 @@ void add_power_bonds(const std::vector<osp_config_parser::PowerBondConnection>& 
 
         if ((portA.has_value() && !portB.has_value()) || (!portA.has_value() && portB.has_value())) {
             std::ostringstream oss;
-            oss << "Missing ecco port for powerbond connection " << connectionA.connection.variableA.name << " <-> " << connectionA.connection.variableB.name << ". Both variables in a powerbond must have one of the u_a, u_b, y_a, y_b ports.";
-            throw std::invalid_argument(oss.str());
+            oss << "Missing port for powerbond connection " << connectionA.connection.variableA.name << " <-> " << connectionA.connection.variableB.name << ". Both variables in a powerbond must have an input and output port specified as attribute.";
+            throw std::runtime_error(oss.str());
         }
 
         if ((portC.has_value() && !portD.has_value()) || (!portC.has_value() && portD.has_value())) {
             std::ostringstream oss;
-            oss << "Missing ecco port for powerbond connection " << connectionB.connection.variableA.name << " <-> " << connectionB.connection.variableB.name << ". Both variables in a powerbond must have one of the u_a, u_b, y_a, y_b ports.";
-            throw std::invalid_argument(oss.str());
+            oss << "Missing port for powerbond connection " << connectionB.connection.variableA.name << " <-> " << connectionB.connection.variableB.name << ". Both variables in a powerbond must have an input and output port specified as attribute.";
+            throw std::runtime_error(oss.str());
         }
 
         auto powerbond = cosim::system_structure::power_bond{};

@@ -133,18 +133,6 @@ inline std::ostream& operator<<(std::ostream& s, const full_variable_name& v)
     return s;
 }
 
-/// Writes a `power_bond` to an output stream.
-/*
-inline std::ostream& operator<<(std::ostream& s, const power_bond& pb)
-{
-    s << "u_a: " << pb.u_a << std::endl
-      << "u_b: " << pb.u_b << std::endl
-      << "y_a: " << pb.y_a << std::endl
-      << "y_b: " << pb.y_b << std::endl;
-    return s;
-}
-*/
-
 /// Returns a string representation of a `full_variable_name`.
 std::string to_text(const full_variable_name& v);
 
