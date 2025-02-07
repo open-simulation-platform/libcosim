@@ -48,10 +48,10 @@ jobs:
             --settings="build_type=${{ matrix.build_type }}" \
             --options="${{ matrix.option_proxyfmu }}" \
             --options="${{ matrix.option_shared }}" \
+            --update \
             --build=missing \
             --user=osp \
             --channel="${CHANNEL}" \
-            --update \
             .
           conan upload --confirm --remote=osp '*'
           EOF
@@ -104,6 +104,7 @@ jobs:
             --settings="build_type=${{ matrix.build_type }}" \
             --options="${{ matrix.option_proxyfmu }}" \
             --options="${{ matrix.option_shared }}" \
+            --update \
             --build=missing \
             --user=osp \
             --channel="${CHANNEL}" \
