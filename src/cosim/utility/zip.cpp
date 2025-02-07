@@ -107,11 +107,11 @@ void archive::open(const cosim::filesystem::path& path)
     int errorCode;
     auto archive = zip_open(path.string().c_str(), 0, &errorCode);
     if (!archive) {
-        const auto errnoVal = (errorCode == ZIP_ER_READ ? errno : 0);
-        auto msgBuf = std::vector<char>(
-            zip_error_to_str(nullptr, 0, errorCode, errnoVal) + 1);
-        zip_error_to_str(msgBuf.data(), msgBuf.size(), errorCode, errno);
-        throw error("Unzipping of file: '" + path.string() + "' failed with error: " + msgBuf.data());
+        zip_error_t zipError;
+        zip_error_init_with_code(&zipError, errorCode);
+        std::string errorMsg = zip_error_strerror(&zipError);
+        zip_error_fini(&zipError);
+        throw error("Unzipping of file: '" + path.string() + "' failed with error: " + errorMsg);
     }
     m_archive = archive;
 }
