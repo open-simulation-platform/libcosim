@@ -552,6 +552,7 @@ osp_config_parser::osp_config_parser(
                 PowerBondConnection pbc = {powerbondName, vc};
                 powerBondConnections_.emplace_back(pbc);
             }
+
             variableConnections_.push_back(vc);
         }
 
@@ -585,6 +586,15 @@ osp_config_parser::osp_config_parser(
             std::string simulatorB = tc(b->getAttribute(tc("simulator").get())).get();
             std::string nameB = tc(b->getAttribute(tc("name").get())).get();
             VariableEndpoint veB = {simulatorB, nameB};
+
+            VariableConnection vc = {veA, veB};
+
+            auto isPowerbond = connectionElement->hasAttribute(tc("powerbond").get());
+            if (isPowerbond) {
+                std::string powerbondName = tc(connectionElement->getAttribute(tc("powerbond").get())).get();
+                PowerBondConnection pbc = {powerbondName, vc};
+                powerBondConnections_.emplace_back(pbc);
+            }
 
             variableGroupConnections_.push_back({veA, veB});
         }
@@ -1166,7 +1176,7 @@ osp_config load_osp_config(
 
     auto algorithm = simInfo.algorithm;
     std::transform(algorithm.begin(), algorithm.end(), algorithm.begin(),
-        [](unsigned char c) { return std::tolower(c); });        
+        [](unsigned char c) { return std::tolower(c); });
 
     if (algorithm == "ecco") {
         if (simInfo.eccoConfiguration.has_value()) {
