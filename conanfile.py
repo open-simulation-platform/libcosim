@@ -52,7 +52,8 @@ class LibcosimConan(ConanFile):
 
     # Exports
     exports = "version.txt"
-    exports_sources = "*", "!cmake-build*", "!.venv", "!.git"
+    exports_sources = ("src/*", "include/*", "cmake/*", "data/*", "docs/*", "tests/*", "CHANGELOG.md", "CMakeLists.txt",
+                       "CONTRIBUTING.md", "LICENSE", "README.md", "version.txt")
 
     # Build steps
 
@@ -67,7 +68,6 @@ class LibcosimConan(ConanFile):
         if self.options.shared:
             self.options.rm_safe("fPIC")
         self.options["*"].shared = self.options.shared
-        self.options["libcbor/*"].shared = False
 
     def generate(self):
         # Copy dependencies to the folder where executables (tests, mainly)
