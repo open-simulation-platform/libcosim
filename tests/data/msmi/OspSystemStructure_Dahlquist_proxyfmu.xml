@@ -6,7 +6,7 @@
     <BaseStepSize>0.01</BaseStepSize>
     <Algorithm>fixedStep</Algorithm>
     <Simulators>
-        <Simulator name="bouncingball" source="../fmi2/BouncingBall.fmu">
+        <Simulator name="dq" source="proxyfmu://localhost?file=../fmi2/Dahlquist.fmu">
         </Simulator>
     </Simulators>
     <Connections>

@@ -92,7 +92,8 @@ public:
     /**
      * Sets fixed precision value for floating point numbers
      *
-     * \param precision the number of digits after the decimal point
+     * \param precision the number of digits after the decimal point. The observer uses the default precision
+     *  value of 6 if the argument is less than zero.
      */
     void fixed_precision(const int precision)
     {

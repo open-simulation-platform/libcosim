@@ -1,21 +1,16 @@
 #include "cosim/serialization.hpp"
 
-#include <ios>
-#include <iterator>
-#include <utility>
 #include <cosim/log/logger.hpp>
-#include <iostream>
-#include <optional>
-#include <unordered_map>
+
 #include <cbor.h>
 
+#include <ios>
+#include <iostream>
+#include <iterator>
+#include <optional>
+#include <unordered_map>
+#include <utility>
 
-namespace cosim
-{
-namespace serialization
-{
-} // namespace serilization
-} // namespace cosim
 
 namespace
 {
@@ -545,8 +540,8 @@ std::istream& operator>>(std::istream& in, cosim::serialization::node& root)
     // Initializing the reader context object
     cbor_reader_ctx ctx{root};
 
-    struct cbor_callbacks cbs = cbor_empty_callbacks;
-    struct cbor_decoder_result decode_result{};
+    cbor_callbacks cbs = cbor_empty_callbacks;
+    cbor_decoder_result decode_result{};
     auto len = static_cast<size_t>(length);
     size_t bytes_read = 0;
 
@@ -576,8 +571,9 @@ std::istream& operator>>(std::istream& in, cosim::serialization::node& root)
     while(bytes_read < len) {
         decode_result = cbor_stream_decode(buf.data() + bytes_read, len - bytes_read, &cbs, &ctx);
         if (decode_result.status != cbor_decoder_status::CBOR_DECODER_FINISHED) {
-            BOOST_LOG_SEV(cosim::log::logger(), cosim::log::error) << "[Cbor reader] Decoding error " << decode_result.status;
-            return in;
+            const auto err_msg = "[Cbor reader] Decoding error " + decode_result.status;
+            BOOST_LOG_SEV(cosim::log::logger(), cosim::log::error) << err_msg;
+            throw std::runtime_error(err_msg);
         }
         bytes_read += decode_result.read;
     }

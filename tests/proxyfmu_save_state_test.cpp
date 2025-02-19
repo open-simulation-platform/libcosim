@@ -45,13 +45,13 @@ int main()
         cosim::log::set_global_output_level(cosim::log::debug);
 
         // ================================================================
-        // == Reference FMU test - BouncingBall (for byte vectors)
+        // == Reference FMU test - Dahlquist (for byte vectors)
         // ================================================================
         constexpr cosim::duration stepSize = cosim::to_duration(0.05);
 
         const auto testDataDir = std::getenv("TEST_DATA_DIR");
         REQUIRE(testDataDir);
-        auto configPath = cosim::filesystem::path(testDataDir) / "msmi" / "OspSystemStructure_BouncingBall_proxyfmu.xml";
+        auto configPath = cosim::filesystem::path(testDataDir) / "msmi" / "OspSystemStructure_Dahlquist_proxyfmu.xml";
 
         auto resolver = cosim::default_model_uri_resolver();
         const auto config = cosim::load_osp_config(configPath, *resolver);
@@ -66,12 +66,12 @@ int main()
         execution.add_observer(obs);
 
         const auto timeRef = 0;
-        const auto heightRef = 1;
-        const auto velocityRef = 3;
+        const auto xRef = 1;
+        const auto velocityRef = 2;
 
         execution.simulate_until(cosim::to_time_point(0.5));
         auto timeValues = get_reals(*obs, {0}, timeRef);
-        auto heightValues = get_reals(*obs, {0}, heightRef);
+        auto xValues = get_reals(*obs, {0}, xRef);
         auto velocityValues = get_reals(*obs, {0}, velocityRef);
 
         const auto state_bb = execution.export_current_state();
@@ -93,11 +93,11 @@ int main()
         auto state_bb_2 = execution.export_current_state();
 
         auto timeValues2 = get_reals(*obs, {0}, timeRef);
-        auto heightValues2 = get_reals(*obs, {0}, heightRef);
+        auto xValues2 = get_reals(*obs, {0}, xRef);
         auto velocityValues2 = get_reals(*obs, {0}, velocityRef);
 
         REQUIRE(timeValues == timeValues2);
-        REQUIRE(heightValues == heightValues2);
+        REQUIRE(xValues == xValues2);
         REQUIRE(velocityValues == velocityValues2);
 
         REQUIRE(state_bb_2 == state_bb_imported);
