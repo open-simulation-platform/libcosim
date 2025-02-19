@@ -5,17 +5,17 @@
 #include <cosim/osp_config_parser.hpp>
 #include <cosim/log/simple.hpp>
 #include <cosim/observer/last_value_observer.hpp>
-#include <boost/property_tree/json_parser.hpp>
 #include <cosim/serialization.hpp>
 
+#include <boost/property_tree/json_parser.hpp>
+
+#include <chrono>
 #include <exception>
+#include <iostream>
 #include <limits>
 #include <memory>
-#include <stdexcept>
-#include <iostream>
-#include <chrono>
 #include <sstream>
-
+#include <stdexcept>
 
 // A helper macro to test various assertions
 #define REQUIRE(test) \
