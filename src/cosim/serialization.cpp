@@ -1,6 +1,5 @@
-#include "cosim/serialization.hpp"
-
 #include <cosim/log/logger.hpp>
+#include <cosim/serialization.hpp>
 
 #include <cbor.h>
 
