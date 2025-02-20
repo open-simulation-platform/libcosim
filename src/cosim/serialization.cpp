@@ -97,7 +97,7 @@ namespace
     constexpr uint64_t TYPE_UINT = 0x8001;
 
     template<typename F, typename... Args>
-    void wrap_cbor_call(F&& f, std::string err_msg, Args&&... args)
+    void wrap_cbor_call(F&& f, const std::string& err_msg, Args&&... args)
     {
         auto result = std::forward<F>(f)(std::forward<Args>(args)...);
         if (!result) {
