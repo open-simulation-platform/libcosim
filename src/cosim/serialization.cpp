@@ -97,11 +97,11 @@ namespace
     constexpr uint64_t TYPE_UINT = 0x8001;
 
     template<typename F, typename... Args>
-    void wrap_cbor_call(F&& f, Args&&... args)
+    void wrap_cbor_call(F&& f, std::string err_msg, Args&&... args)
     {
         auto result = std::forward<F>(f)(std::forward<Args>(args)...);
         if (!result) {
-            throw std::runtime_error("Failed Cbor operation!");
+            throw std::runtime_error("Error occurred while encoding cbor: " + err_msg);
         }
     }
 
@@ -114,94 +114,94 @@ namespace
         }
         void operator()(std::nullptr_t)
         {
-            wrap_cbor_call(cbor_map_add, data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_ctrl(CBOR_CTRL_NULL))});
+            wrap_cbor_call(cbor_map_add, "adding null to a map", data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_ctrl(CBOR_CTRL_NULL))});
         }
 
         void operator()(std::byte v)
         {
-            wrap_cbor_call(cbor_map_add, data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_uint8(static_cast<uint8_t>(v)))});
+            wrap_cbor_call(cbor_map_add, "adding a byte to a map", data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_uint8(static_cast<uint8_t>(v)))});
         }
 
         void operator()(const std::vector<std::byte>& blob)
         {
             auto* array = cbor_new_definite_array(blob.size());
             for (const auto& b : blob) {
-                wrap_cbor_call(cbor_array_push, array, cbor_build_uint8(static_cast<uint8_t>(b)));
+                wrap_cbor_call(cbor_array_push, "appending a byte to an array", array, cbor_build_uint8(static_cast<uint8_t>(b)));
             }
-            wrap_cbor_call(cbor_map_add, data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(array)});
+            wrap_cbor_call(cbor_map_add, "adding a byte array to a map", data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(array)});
         }
 
         void operator()(bool v)
         {
-            wrap_cbor_call(cbor_map_add, data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_bool(v))});
+            wrap_cbor_call(cbor_map_add, "adding a boolean to a map", data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_bool(v))});
         }
 
         void operator()(uint8_t v)
         {
-            wrap_cbor_call(cbor_map_add, data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_uint8(v))});
+            wrap_cbor_call(cbor_map_add, "adding an uint8 to a map", data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_uint8(v))});
         }
 
         void operator()(int8_t v)
         {
             auto value = v < 0 ? cbor_build_negint8(v) : cbor_build_uint8(v);
             value = cbor_build_tag(TYPE_INT, value);
-            wrap_cbor_call(cbor_map_add, data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(value)});
+            wrap_cbor_call(cbor_map_add, "adding an int8 to a map", data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(value)});
         }
 
         void operator()(uint16_t v)
         {
-            wrap_cbor_call(cbor_map_add, data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_uint16(v))});
+            wrap_cbor_call(cbor_map_add, "adding an uint16 to a map", data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_uint16(v))});
         }
 
         void operator()(int16_t v)
         {
             auto value = v < 0 ? cbor_build_negint16(v) : cbor_build_uint16(v);
             value = cbor_build_tag(TYPE_INT, value);
-            wrap_cbor_call(cbor_map_add, data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(value)});
+            wrap_cbor_call(cbor_map_add, "adding an int16 to a map", data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(value)});
         }
 
         void operator()(uint32_t v)
         {
-            wrap_cbor_call(cbor_map_add, data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_uint32(v))});
+            wrap_cbor_call(cbor_map_add, "adding an uint32 to a map", data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_uint32(v))});
         }
 
         void operator()(int32_t v)
         {
             auto value = v < 0 ? cbor_build_negint32(v) : cbor_build_uint32(v);
             value = cbor_build_tag(TYPE_INT, value);
-            wrap_cbor_call(cbor_map_add, data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(value)});
+            wrap_cbor_call(cbor_map_add, "adding an int32 to a map", data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(value)});
         }
 
         void operator()(uint64_t v)
         {
-            wrap_cbor_call(cbor_map_add, data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_uint64(v))});
+            wrap_cbor_call(cbor_map_add, "adding an uint64 to a map", data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_uint64(v))});
         }
 
         void operator()(int64_t v)
         {
             auto value = v < 0 ? cbor_build_negint64(v) : cbor_build_uint64(v);
             value = cbor_build_tag(TYPE_INT, value);
-            wrap_cbor_call(cbor_map_add, data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(value)});
+            wrap_cbor_call(cbor_map_add, "adding an int64 to a map", data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(value)});
         }
 
         void operator()(float v)
         {
-            wrap_cbor_call(cbor_map_add, data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_float4(v))});
+            wrap_cbor_call(cbor_map_add, "adding a float to a map", data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_float4(v))});
         }
 
         void operator()(double v)
         {
-            wrap_cbor_call(cbor_map_add, data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_float8(v))});
+            wrap_cbor_call(cbor_map_add, "adding a double to a map", data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_float8(v))});
         }
 
         void operator()(char v)
         {
-            wrap_cbor_call(cbor_map_add, data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_ctrl(v))});
+            wrap_cbor_call(cbor_map_add, "adding a char to a map", data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_ctrl(v))});
         }
 
         void operator()(const std::string& v)
         {
-            wrap_cbor_call(cbor_map_add, data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_string(v.c_str()))});
+            wrap_cbor_call(cbor_map_add, "adding a string to a map", data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(cbor_build_string(v.c_str()))});
         }
     private:
         cbor_item_t* data_;
@@ -214,7 +214,7 @@ namespace
             if (child->second.begin() != child->second.end()) {
                 auto new_map = cbor_new_definite_map(child->second.size());
                 serialize_cbor(new_map, child->second);
-                wrap_cbor_call(cbor_map_add, item, cbor_pair{cbor_move(cbor_build_string(child->first.c_str())), cbor_move(new_map)});
+                wrap_cbor_call(cbor_map_add, "adding a child map", item, cbor_pair{cbor_move(cbor_build_string(child->first.c_str())), cbor_move(new_map)});
             } else {
                 std::visit(cbor_write_visitor(item, child->first.c_str()), child->second.data());
             }
