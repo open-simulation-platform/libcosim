@@ -10,7 +10,6 @@
 #include <unordered_map>
 #include <utility>
 
-
 namespace
 {
     // Visitor class which prints the value(s) contained in a leaf node to an
@@ -567,7 +566,7 @@ namespace
         while(bytes_read < len) {
             decode_result = cbor_stream_decode(buf.data() + bytes_read, len - bytes_read, &cbs, &ctx);
             if (decode_result.status != cbor_decoder_status::CBOR_DECODER_FINISHED) {
-                const auto err_msg = "[Cbor reader] Decoding error " + decode_result.status;
+                const auto err_msg = "[Cbor reader] Decoding error. CBOR decoder status:  " + std::to_string(decode_result.status);
                 BOOST_LOG_SEV(cosim::log::logger(), cosim::log::error) << err_msg;
                 throw std::runtime_error(err_msg);
             }
