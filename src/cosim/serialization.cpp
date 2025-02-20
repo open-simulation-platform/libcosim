@@ -508,76 +508,115 @@ namespace
         }
     };
 
+    std::ostream& serialize_cbor(std::ostream &out, const cosim::serialization::node& data)
+    {
+        auto root = cbor_new_indefinite_map();
+        serialize_cbor(root, data);
+
+        unsigned char* buffer;
+        size_t buffer_size;
+
+        cbor_serialize_alloc(root, &buffer, &buffer_size);
+        out.write(reinterpret_cast<const char*>(buffer), static_cast<std::streamsize>(buffer_size));
+
+        free(buffer);
+        cbor_decref(&root);
+        return out;
+    }
+
+    std::istream& deserialize_cbor(std::istream &in, cosim::serialization::node& root)
+    {
+        in.seekg(0, std::ios::end);
+        std::streamsize length = in.tellg();
+        in.clear();
+        in.seekg(0, std::ios::beg);
+        std::vector<uint8_t> buf(length);
+        in.read(reinterpret_cast<char*>(buf.data()), length);
+
+        // Initializing the reader context object
+        cbor_reader_ctx ctx{root};
+
+        cbor_callbacks cbs = cbor_empty_callbacks;
+        cbor_decoder_result decode_result{};
+        auto len = static_cast<size_t>(length);
+        size_t bytes_read = 0;
+
+        // Callback functions for reading the input node recursively
+        cbs.string = cbor_reader::cbor_read_string;
+        cbs.uint8 = cbor_reader::cbor_read_int;
+        cbs.uint16 = cbor_reader::cbor_read_int;
+        cbs.uint32 = cbor_reader::cbor_read_int;
+        cbs.uint64 = cbor_reader::cbor_read_int;
+        cbs.negint8 = cbor_reader::cbor_read_int;
+        cbs.negint16 = cbor_reader::cbor_read_int;
+        cbs.negint32 = cbor_reader::cbor_read_int;
+        cbs.negint64 = cbor_reader::cbor_read_int;
+        cbs.boolean = cbor_reader::cbor_read_boolean;
+        cbs.float4 = cbor_reader::cbor_read_half_float;
+        cbs.float8 = cbor_reader::cbor_read_double_float;
+        cbs.indef_map_start = cbor_reader::cbor_indef_map_start;
+        cbs.map_start = cbor_reader::cbor_map_start;
+        cbs.indef_break = cbor_reader::cbor_indef_break;
+        cbs.undefined = cbor_reader::cbor_read_null_undefined;
+        cbs.null = cbor_reader::cbor_read_null_undefined;
+        cbs.tag = cbor_reader::cbor_read_tag;
+        cbs.byte_string = cbor_reader::cbor_read_byte_string;
+        cbs.indef_array_start = cbor_reader::cbor_indef_array_start;
+        cbs.array_start = cbor_reader::cbor_array_start;
+
+        while(bytes_read < len) {
+            decode_result = cbor_stream_decode(buf.data() + bytes_read, len - bytes_read, &cbs, &ctx);
+            if (decode_result.status != cbor_decoder_status::CBOR_DECODER_FINISHED) {
+                const auto err_msg = "[Cbor reader] Decoding error " + decode_result.status;
+                BOOST_LOG_SEV(cosim::log::logger(), cosim::log::error) << err_msg;
+                throw std::runtime_error(err_msg);
+            }
+            bytes_read += decode_result.read;
+        }
+
+        return in;
+    }
 }
+
+namespace cosim
+{
+namespace serialization
+{
+namespace format
+{
+
+std::ios_base& cbor(std::ios_base& os)
+{
+    os.iword(format_xalloc) = FORMAT_CBOR;
+    return os;
+}
+
+} // namespace format
+} // namespace serialization
+} // namespace cosim
+
 
 std::ostream& operator<<(std::ostream& out, const cosim::serialization::node& data)
 {
-    auto root = cbor_new_indefinite_map();
-    serialize_cbor(root, data);
+    if (out.iword(cosim::serialization::format::format_xalloc) == cosim::serialization::format::FORMAT_CBOR) {
+        return serialize_cbor(out, data);
+    }
 
-    unsigned char* buffer;
-    size_t buffer_size;
-
-    cbor_serialize_alloc(root, &buffer, &buffer_size);
-    out.write(reinterpret_cast<const char*>(buffer), static_cast<std::streamsize>(buffer_size));
-
-    free(buffer);
-    cbor_decref(&root);
-    return out;
+    // Default fallback
+    BOOST_LOG_SEV(cosim::log::logger(), cosim::log::warning) << "Unknown serialization format, falling back to CBOR";
+    return serialize_cbor(out, data);
 }
 
 
 std::istream& operator>>(std::istream& in, cosim::serialization::node& root)
 {
-    in.seekg(0, std::ios::end);
-    std::streamsize length = in.tellg();
-    in.clear();
-    in.seekg(0, std::ios::beg);
-    std::vector<uint8_t> buf(length);
-    in.read(reinterpret_cast<char*>(buf.data()), length);
-
-    // Initializing the reader context object
-    cbor_reader_ctx ctx{root};
-
-    cbor_callbacks cbs = cbor_empty_callbacks;
-    cbor_decoder_result decode_result{};
-    auto len = static_cast<size_t>(length);
-    size_t bytes_read = 0;
-
-    // Callback functions for reading the input node recursively
-    cbs.string = cbor_reader::cbor_read_string;
-    cbs.uint8 = cbor_reader::cbor_read_int;
-    cbs.uint16 = cbor_reader::cbor_read_int;
-    cbs.uint32 = cbor_reader::cbor_read_int;
-    cbs.uint64 = cbor_reader::cbor_read_int;
-    cbs.negint8 = cbor_reader::cbor_read_int;
-    cbs.negint16 = cbor_reader::cbor_read_int;
-    cbs.negint32 = cbor_reader::cbor_read_int;
-    cbs.negint64 = cbor_reader::cbor_read_int;
-    cbs.boolean = cbor_reader::cbor_read_boolean;
-    cbs.float4 = cbor_reader::cbor_read_half_float;
-    cbs.float8 = cbor_reader::cbor_read_double_float;
-    cbs.indef_map_start = cbor_reader::cbor_indef_map_start;
-    cbs.map_start = cbor_reader::cbor_map_start;
-    cbs.indef_break = cbor_reader::cbor_indef_break;
-    cbs.undefined = cbor_reader::cbor_read_null_undefined;
-    cbs.null = cbor_reader::cbor_read_null_undefined;
-    cbs.tag = cbor_reader::cbor_read_tag;
-    cbs.byte_string = cbor_reader::cbor_read_byte_string;
-    cbs.indef_array_start = cbor_reader::cbor_indef_array_start;
-    cbs.array_start = cbor_reader::cbor_array_start;
-
-    while(bytes_read < len) {
-        decode_result = cbor_stream_decode(buf.data() + bytes_read, len - bytes_read, &cbs, &ctx);
-        if (decode_result.status != cbor_decoder_status::CBOR_DECODER_FINISHED) {
-            const auto err_msg = "[Cbor reader] Decoding error " + decode_result.status;
-            BOOST_LOG_SEV(cosim::log::logger(), cosim::log::error) << err_msg;
-            throw std::runtime_error(err_msg);
-        }
-        bytes_read += decode_result.read;
+    if (in.iword(cosim::serialization::format::format_xalloc) == cosim::serialization::format::FORMAT_CBOR) {
+        return deserialize_cbor(in, root);
     }
 
-    return in;
+    // Default fallback
+    BOOST_LOG_SEV(cosim::log::logger(), cosim::log::warning) << "Unknown deserialization format, falling back to CBOR";
+    return deserialize_cbor(in, root);
 }
 
 void print_ptree(std::ostream& out, const cosim::serialization::node& data)

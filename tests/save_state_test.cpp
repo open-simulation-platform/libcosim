@@ -80,7 +80,7 @@ int main()
 
         // Export state
         std::ofstream outFile("state_bb.bin", std::ios::binary);
-        outFile << state_bb;
+        outFile << cosim::serialization::format::cbor << state_bb;
         outFile.close();
 
         execution.simulate_until(cosim::to_time_point(0.5));
@@ -88,7 +88,7 @@ int main()
         // import state
         std::ifstream inFile("state_bb.bin", std::ios::binary);
         cosim::serialization::node state_bb_imported;
-        inFile >> state_bb_imported;
+        inFile >> cosim::serialization::format::cbor >> state_bb_imported;
         inFile.close();
 
         execution.import_state(state_bb_imported);
@@ -152,7 +152,7 @@ int main()
 
         // Write state0 to a file
         outFile = std::ofstream("state0.bin", std::ios::binary);
-        outFile << state0;
+        outFile << cosim::serialization::format::cbor << state0;
         outFile.close();
 
         // Advance to time1 and save state again
@@ -162,7 +162,7 @@ int main()
 
         // Write state1 to a file
         outFile = std::ofstream("state1.bin", std::ios::binary);
-        outFile << state1;
+        outFile << cosim::serialization::format::cbor << state1;
         outFile.close();
         REQUIRE(state1Values > state0Values);
 
@@ -173,14 +173,14 @@ int main()
 
         // Write state2 to a file
         outFile = std::ofstream("state2.bin", std::ios::binary);
-        outFile << state2;
+        outFile << cosim::serialization::format::cbor << state2;
         outFile.close();
         REQUIRE(state2Values > state1Values);
 
         // Restore state0 from file and compare values
         cosim::serialization::node state0_a;
         inFile = std::ifstream("state0.bin", std::ios::binary);
-        inFile >> state0_a;
+        inFile >> cosim::serialization::format::cbor >> state0_a;
         inFile.close();
         REQUIRE(state0_a == state0);
 
@@ -193,7 +193,7 @@ int main()
         // Advance to time1 again and compare values
         cosim::serialization::node state1_a;
         inFile = std::ifstream("state1.bin", std::ios::binary);
-        inFile >> state1_a;
+        inFile >> cosim::serialization::format::cbor >> state1_a;
         inFile.close();
         REQUIRE(state1_a == state1);
 
@@ -204,7 +204,7 @@ int main()
         // Restore state2 from file and compare values
         cosim::serialization::node state2_a;
         inFile = std::ifstream("state2.bin", std::ios::binary);
-        inFile >> state2_a;
+        inFile >> cosim::serialization::format::cbor >> state2_a;
         inFile.close();
         REQUIRE(state2_a == state2);
 

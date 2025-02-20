@@ -59,8 +59,8 @@ enum variable_variability
     continuous
 };
 
-/// Subset of Co-Simulation v2 capabilities in the XML schema
-struct cosim_capabilities
+/// A list of simulator capabilities
+struct simulator_capabilities
 {
     bool can_get_and_set_fmu_state{};
     bool can_serialize_fmu_state{};
@@ -203,8 +203,8 @@ struct model_description
     /// Variable descriptions.
     std::vector<variable_description> variables;
 
-    /// FMI 2.0 Co-simulation capabilities
-    cosim_capabilities capabilities;
+    // Simulator capabilities
+    simulator_capabilities capabilities;
 };
 
 /// Getter for returning a variable description.

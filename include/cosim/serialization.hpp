@@ -98,15 +98,25 @@ struct node_data_translator
     node_data put_value(const T& value) { return node_data(value); }
 };
 
-}} // namespace cosim::serialization
+namespace format
+{
+const auto format_xalloc = std::ios_base::xalloc();
+const int FORMAT_CBOR = 1;
+
+std::ios_base& cbor(std::ios_base& os);
+
+} // namespace format
+
+} // namespace serialization
+} // namespace cosim
 
 /**
- *  Serializes `data` into CBOR format and writes it to the output stream `out`.
+ *  Serializes `data` into a format specified via cosim::serialization::format and writes it to the output stream `out`.
  */
 std::ostream& operator<<(std::ostream& out, const cosim::serialization::node& data);
 
 /**
- *  Reads CBOR stream from `in` and converts it to `data`.
+ *  Reads a stream from `in` and converts it to `data` format specified via cosim::serialization::format.
  */
 std::istream& operator>>(std::istream& in, cosim::serialization::node& data);
 
