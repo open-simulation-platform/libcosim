@@ -6,7 +6,6 @@
 #include <cosim/error.hpp>
 #include <cosim/exception.hpp>
 #include <cosim/proxy/remote_slave.hpp>
-#include <proxyfmu/thrift/defs_types.h>
 
 #include <utility>
 
