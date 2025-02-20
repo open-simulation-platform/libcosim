@@ -101,7 +101,7 @@ namespace
     {
         auto result = std::forward<F>(f)(std::forward<Args>(args)...);
         if (!result) {
-            throw std::runtime_error("Error occurred while encoding cbor: " + err_msg);
+            throw std::runtime_error("Error occurred while calling a cbor function: " + err_msg);
         }
     }
 
