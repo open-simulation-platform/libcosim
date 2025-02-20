@@ -78,7 +78,7 @@ int main()
 
         // Export state
         std::ofstream outFile("state_bb.bin", std::ios::binary);
-        outFile << state_bb;
+        outFile << cosim::serialization::format::cbor << state_bb;
         outFile.close();
 
         execution.simulate_until(cosim::to_time_point(0.5));
@@ -86,7 +86,7 @@ int main()
         // import state
         std::ifstream inFile("state_bb.bin", std::ios::binary);
         cosim::serialization::node state_bb_imported;
-        inFile >> state_bb_imported;
+        inFile >> cosim::serialization::format::cbor >> state_bb_imported;
         inFile.close();
 
         execution.import_state(state_bb_imported);
