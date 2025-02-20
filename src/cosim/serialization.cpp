@@ -67,7 +67,7 @@ namespace
         std::fill_n(std::ostream_iterator<char>(out), n, ' ');
     }
 
-    void _print_ptree(
+    void print_ptree(
         std::ostream& out,
         const cosim::serialization::node& tree,
         int indent,
@@ -80,13 +80,13 @@ namespace
             out << "{\n";
             print_n_spaces(out, indent + indentStep);
             out << child->first << " = ";
-            _print_ptree(out, child->second, indent + indentStep, indentStep);
+            print_ptree(out, child->second, indent + indentStep, indentStep);
             ++child;
             for (; child != tree.end(); ++child) {
                 out << ",\n";
                 print_n_spaces(out, indent + indentStep);
                 out << child->first << " = ";
-                _print_ptree(out, child->second, indent + indentStep, indentStep);
+                print_ptree(out, child->second, indent + indentStep, indentStep);
             }
             out << '\n';
             print_n_spaces(out, indent);
@@ -591,6 +591,12 @@ std::ios_base& cbor(std::ios_base& os)
     return os;
 }
 
+std::ios_base& pretty_print(std::ios_base& os)
+{
+    os.iword(format_xalloc) = FORMAT_PRETTY_PRINT;
+    return os;
+}
+
 } // namespace format
 } // namespace serialization
 } // namespace cosim
@@ -598,8 +604,14 @@ std::ios_base& cbor(std::ios_base& os)
 
 std::ostream& operator<<(std::ostream& out, const cosim::serialization::node& data)
 {
-    if (out.iword(cosim::serialization::format::format_xalloc) == cosim::serialization::format::FORMAT_CBOR) {
+    const auto format = out.iword(cosim::serialization::format::format_xalloc);
+
+    if (format == cosim::serialization::format::FORMAT_CBOR) {
         return serialize_cbor(out, data);
+    } else if (format == cosim::serialization::format::FORMAT_PRETTY_PRINT) {
+        constexpr int indentStep = 2;
+        print_ptree(out, data, 0, indentStep);
+        return out;
     }
 
     // Default fallback
@@ -610,17 +622,13 @@ std::ostream& operator<<(std::ostream& out, const cosim::serialization::node& da
 
 std::istream& operator>>(std::istream& in, cosim::serialization::node& root)
 {
-    if (in.iword(cosim::serialization::format::format_xalloc) == cosim::serialization::format::FORMAT_CBOR) {
+    const auto format = in.iword(cosim::serialization::format::format_xalloc);
+
+    if (format == cosim::serialization::format::FORMAT_CBOR) {
         return deserialize_cbor(in, root);
     }
 
     // Default fallback
     BOOST_LOG_SEV(cosim::log::logger(), cosim::log::warning) << "Unknown deserialization format, falling back to CBOR";
     return deserialize_cbor(in, root);
-}
-
-void print_ptree(std::ostream& out, const cosim::serialization::node& data)
-{
-    constexpr int indentStep = 2;
-    _print_ptree(out, data, 0, indentStep);
 }

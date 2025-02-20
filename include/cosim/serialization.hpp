@@ -102,8 +102,10 @@ namespace format
 {
 const auto format_xalloc = std::ios_base::xalloc();
 const int FORMAT_CBOR = 1;
+const int FORMAT_PRETTY_PRINT = 2;
 
 std::ios_base& cbor(std::ios_base& os);
+std::ios_base& pretty_print(std::ios_base& os);
 
 } // namespace format
 
