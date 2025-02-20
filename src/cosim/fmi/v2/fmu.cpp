@@ -630,7 +630,7 @@ serialization::node slave_instance::export_state(state_index stateIndex) const
     const auto& savedState = savedStates_.at(stateIndex);
 
     // Check that the FMU supports state serialization
-    if (!fmi2_import_get_capability(handle_, fmi2_cs_canSerializeFMUstate))
+    if (!fmu_->model_description()->capabilities.can_serialize_fmu_state)
     {
         throw error(
             make_error_code(errc::unsupported_feature),
@@ -743,7 +743,7 @@ fmi2_import_t* slave_instance::fmilib_handle() const
 
 void slave_instance::copy_current_state(saved_state& state)
 {
-    if (!fmi2_import_get_capability(handle_, fmi2_cs_canGetAndSetFMUstate)) {
+    if (!fmu_->model_description()->capabilities.can_get_and_set_fmu_state) {
         throw error(
             make_error_code(errc::unsupported_feature),
             instanceName_ + ": FMU does not support state saving");
