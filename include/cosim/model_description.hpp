@@ -62,8 +62,8 @@ enum variable_variability
 /// A list of simulator capabilities
 struct simulator_capabilities
 {
-    bool can_get_and_set_fmu_state{};
-    bool can_serialize_fmu_state{};
+    bool can_save_state = false;
+    bool can_export_state = false;
 };
 
 
@@ -203,7 +203,7 @@ struct model_description
     /// Variable descriptions.
     std::vector<variable_description> variables;
 
-    // Simulator capabilities
+    /// Simulator capabilities
     simulator_capabilities capabilities;
 };
 

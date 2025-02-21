@@ -71,8 +71,8 @@ std::unique_ptr<cosim::model_description> parse_model_description(const proxyfmu
     _md->author = md.author;
     _md->name = md.modelName;
     _md->description = md.description;
-    _md->capabilities.can_get_and_set_fmu_state = md.canGetAndSetFMUstate;
-    _md->capabilities.can_serialize_fmu_state = md.canSerializeFMUstate;
+    _md->capabilities.can_save_state = md.canGetAndSetFMUstate;
+    _md->capabilities.can_export_state = md.canSerializeFMUstate;
 
     for (auto& var : md.modelVariables) {
         cosim::variable_description vd;
