@@ -6,6 +6,7 @@
 #include <cosim/error.hpp>
 #include <cosim/exception.hpp>
 #include <cosim/proxy/remote_slave.hpp>
+#include <proxyfmu/state.hpp>
 
 #include <utility>
 
@@ -224,7 +225,7 @@ void cosim::proxy::remote_slave::release_state(state_index idx)
 
 cosim::serialization::node cosim::proxy::remote_slave::export_state(state_index idx) const
 {
-    proxyfmu::thrift::ExportedState state;
+    proxyfmu::state::exported_state state;
     slave_->export_state(idx, state);
 
     // Create the exported state
@@ -245,7 +246,7 @@ cosim::serialization::node cosim::proxy::remote_slave::export_state(state_index 
 cosim::slave::state_index cosim::proxy::remote_slave::import_state(
     const cosim::serialization::node& node)
 {
-    proxyfmu::thrift::ExportedState state;
+    proxyfmu::state::exported_state state;
     state.schemeVersion = node.get<std::int32_t>("scheme_version");
     state.uuid = node.get<std::string>("fmu_uuid");
 
