@@ -506,10 +506,10 @@ public:
             };
         };
 
-        const auto [realRefs, realValues] = realSetCache_.modify_and_get(deltaT, filter(variable_type::real));
-        const auto [integerRefs, integerValues] = integerSetCache_.modify_and_get(deltaT, filter(variable_type::integer));
-        const auto [booleanRefs, booleanValues] = booleanSetCache_.modify_and_get(deltaT, filter(variable_type::boolean));
-        const auto [stringRefs, stringValues] = stringSetCache_.modify_and_get(deltaT, filter(variable_type::string));
+        const auto [realRefs, realValues] = state_.realSetCache.modify_and_get(deltaT, filter(variable_type::real));
+        const auto [integerRefs, integerValues] = state_.integerSetCache.modify_and_get(deltaT, filter(variable_type::integer));
+        const auto [booleanRefs, booleanValues] = state_.booleanSetCache.modify_and_get(deltaT, filter(variable_type::boolean));
+        const auto [stringRefs, stringValues] = state_.stringSetCache.modify_and_get(deltaT, filter(variable_type::string));
 
         slave_->set_variables(
             gsl::make_span(realRefs),
