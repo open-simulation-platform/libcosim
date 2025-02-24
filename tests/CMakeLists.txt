@@ -40,6 +40,7 @@ if(LIBCOSIM_WITH_PROXYFMU)
             )
     list(APPEND tests
             "proxyfmu_osp_config_parser_test"
+            "proxyfmu_save_state_test"
             )
 endif()
 
@@ -49,7 +50,7 @@ foreach(test IN LISTS tests)
         "cpp_${test}"
         FOLDER "C++ tests"
         SOURCES "${test}.cpp"
-        DEPENDENCIES cosim
+        DEPENDENCIES "cosim"
         DATA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/data"
     )
 endforeach()

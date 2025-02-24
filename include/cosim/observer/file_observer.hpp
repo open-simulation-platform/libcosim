@@ -23,6 +23,7 @@ namespace cosim
 
 class file_observer;
 
+
 /**
  * Configuration options for file_observer.
  */
@@ -88,9 +89,22 @@ public:
      */
     static file_observer_config parse(const filesystem::path& configPath);
 
+    /**
+     * Sets fixed precision value for floating point numbers
+     *
+     * \param precision the number of digits after the decimal point. The observer uses the default precision
+     *  value of 6 if the argument is less than zero.
+     */
+    void fixed_precision(const int precision)
+    {
+        precision_ = precision;
+    }
+
 private:
     bool timeStampedFileNames_{true};
     size_t defaultDecimationFactor_{1};
+    int precision_{-1};
+
     std::unordered_map<std::string, std::pair<size_t, std::vector<std::string>>> variablesToLog_;
 
     [[nodiscard]] bool should_log_simulator(const std::string& name) const

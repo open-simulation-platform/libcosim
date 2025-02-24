@@ -98,13 +98,30 @@ struct node_data_translator
     node_data put_value(const T& value) { return node_data(value); }
 };
 
-}} // namespace cosim::serialization
+namespace format
+{
+const auto format_xalloc = std::ios_base::xalloc();
+const int FORMAT_CBOR = 1;
+const int FORMAT_PRETTY_PRINT = 2;
 
+std::ios_base& cbor(std::ios_base& os);
+std::ios_base& pretty_print(std::ios_base& os);
 
-// Ordinarily, the following function would be in the `cosim::serialization`
-// namespace and found by the compiler via ADL.  This doesn't work here,
-// because `cosim::serialization::node` is just an alias for a type in the
-// `boost::property_tree` namespace.
+} // namespace format
+
+} // namespace serialization
+} // namespace cosim
+
+/**
+ *  Serializes `data` into a format specified via cosim::serialization::format and writes it to the output stream `out`.
+ */
+std::ostream& operator<<(std::ostream& out, const cosim::serialization::node& data);
+
+/**
+ *  Reads a stream from `in` and converts it to `data` format specified via cosim::serialization::format.
+ */
+std::istream& operator>>(std::istream& in, cosim::serialization::node& data);
+
 /**
  *  Writes the contents of `data` to the output stream `out` in a human-readable
  *  format.
@@ -113,7 +130,7 @@ struct node_data_translator
  *  corresponding "read" function, nor is the output format designed to support
  *  round-trip information or type preservation.
  */
-std::ostream& operator<<(std::ostream& out, const cosim::serialization::node& data);
+void print_ptree(std::ostream& out, const cosim::serialization::node& data);
 
 
 // Make node_translator the default translator for property trees whose data

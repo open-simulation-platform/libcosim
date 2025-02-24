@@ -1,7 +1,7 @@
 # FMI 2.0 test FMUs
 
 | Name                   | Origin                  | License                                  |
-| ---------------------- | ----------------------- | ---------------------------------------- |
+|------------------------|-------------------------|------------------------------------------|
 | `CraneController.fmu`  | OSP                     | [MPL 2.0](../../../LICENSE)              |
 | `Dahlquist.fmu`        | [Reference FMUs] 0.0.31 | [2-clause BSD](./reference-fmus_LICENSE) |
 | `KnuckleBoomCrane.fmu` | OSP                     | [MPL 2.0](../../../LICENSE)              |
