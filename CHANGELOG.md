@@ -3,6 +3,16 @@ All notable changes to libcosim will be documented in this file. This includes n
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
+### [v0.10.4] - 2024-12-12
+##### Fixed
+* Real time factor calculation for small time steps has been improved by computing a rolling average rather than a fixed amount of 5 timesteps. 
+* Variables are now correctly transferred at the points in the FMU initialization sequence where they are permitted to change. 
+* FMU start values will now be correctly initialized before entering initialization mode. 
+* Various bug fixes and improvements. 
+##### Changed
+* The fixed precision of the file observer can now be specified. 
+* File observer is now printing the correct FMU author. 
+
 ### [v0.10.3] - 2024-02-19
 ##### Fixed
 * parseURI null check and error handling implemented.
@@ -224,3 +234,4 @@ First OSP JIP partner release
 [v0.10.1]: https://github.com/open-simulation-platform/cse-core/compare/v0.10.0...v0.10.1
 [v0.10.2]: https://github.com/open-simulation-platform/cse-core/compare/v0.10.1...v0.10.2
 [v0.10.3]: https://github.com/open-simulation-platform/cse-core/compare/v0.10.2...v0.10.3
+[v0.10.4]: https://github.com/open-simulation-platform/cse-core/compare/v0.10.3...v0.10.4

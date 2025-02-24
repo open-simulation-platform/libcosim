@@ -76,7 +76,7 @@ constexpr const char* to_text(variable_type v)
         case variable_type::boolean: return "boolean";
         case variable_type::string: return "string";
         case variable_type::enumeration: return "enumeration";
-        default: return nullptr;
+        default: return "NULL";
     }
 }
 
@@ -90,7 +90,7 @@ constexpr const char* to_text(variable_causality v)
         case variable_causality::input: return "input";
         case variable_causality::output: return "output";
         case variable_causality::local: return "local";
-        default: return nullptr;
+        default: return "NULL";
     }
 }
 
@@ -104,7 +104,7 @@ constexpr const char* to_text(variable_variability v)
         case variable_variability::tunable: return "tunable";
         case variable_variability::discrete: return "discrete";
         case variable_variability::continuous: return "continuous";
-        default: return nullptr;
+        default: return "NULL";
     }
 }
 
