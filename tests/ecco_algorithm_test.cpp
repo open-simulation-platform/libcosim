@@ -89,15 +89,15 @@ int main()
                 }),
                 "B"));
 
-        auto y1 = cosim::variable_id{slaves[0], cosim::variable_type::real, realOutRef};
-        auto u1 = cosim::variable_id{slaves[0], cosim::variable_type::real, realInRef};
-        auto y2 = cosim::variable_id{slaves[1], cosim::variable_type::real, realOutRef};
-        auto u2 = cosim::variable_id{slaves[1], cosim::variable_type::real, realInRef};
+        auto output1 = cosim::variable_id{slaves[0], cosim::variable_type::real, realOutRef};
+        auto input1 = cosim::variable_id{slaves[0], cosim::variable_type::real, realInRef};
+        auto output2 = cosim::variable_id{slaves[1], cosim::variable_type::real, realOutRef};
+        auto input2 = cosim::variable_id{slaves[1], cosim::variable_type::real, realInRef};
 
-        execution.connect_variables(y1, u2);
-        execution.connect_variables(y2, u1);
+        execution.connect_variables(output1, input2);
+        execution.connect_variables(output2, input1);
 
-        ecco_algo->add_power_bond(u1, y1, u2, y2);
+        ecco_algo->add_power_bond(input1, output1, input2, output2);
 
         execution.set_real_initial_value(slaves[0], realInRef, 0.5);
 
