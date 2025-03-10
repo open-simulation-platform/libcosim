@@ -51,7 +51,7 @@ int calculate_decimation_factor(
 class ecco_algorithm::impl
 {
 public:
-    explicit impl(ecco_parameters params, std::optional<unsigned int> workerThreadCount)
+    explicit impl(ecco_algorithm_params params, std::optional<unsigned int> workerThreadCount)
         : params_(params)
         , stepSize_(params.step_size)
         , pool_(std::min(workerThreadCount.value_or(max_threads_), max_threads_))
@@ -279,7 +279,7 @@ public:
         }
     }
 
-    duration adjust_step_size(time_point currentTime, const duration& stepSize, const ecco_parameters& params)
+    duration adjust_step_size(time_point currentTime, const duration& stepSize, const ecco_algorithm_params& params)
     {
         std::vector<double> power_residuals{};
         std::vector<double> power{};
@@ -528,7 +528,7 @@ private:
         }
     }
 
-    const ecco_parameters params_;
+    const ecco_algorithm_params params_;
     duration stepSize_;
     time_point startTime_;
     std::optional<time_point> stopTime_;
@@ -541,7 +541,7 @@ private:
 };
 
 
-ecco_algorithm::ecco_algorithm(ecco_parameters params, std::optional<unsigned int> workerThreadCount)
+ecco_algorithm::ecco_algorithm(ecco_algorithm_params params, std::optional<unsigned int> workerThreadCount)
     : pimpl_(std::make_unique<impl>(params, workerThreadCount))
 {
 }

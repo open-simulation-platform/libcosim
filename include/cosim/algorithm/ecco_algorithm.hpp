@@ -48,7 +48,7 @@ public:
      *  \param workerThreadCount
      *      The number of worker threads to spawn for running FMUs
      */
-    explicit ecco_algorithm(ecco_parameters params, std::optional<unsigned int> workerThreadCount = std::nullopt);
+    explicit ecco_algorithm(ecco_algorithm_params params, std::optional<unsigned int> workerThreadCount = std::nullopt);
 
     ~ecco_algorithm() noexcept;
 

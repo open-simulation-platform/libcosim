@@ -128,7 +128,7 @@ public:
         double stepSize = 0.1;
         double startTime = 0.0;
         std::optional<double> endTime;
-        std::optional<cosim::ecco_parameters> eccoConfiguration;
+        std::optional<cosim::ecco_algorithm_params> eccoConfiguration;
     };
 
     const SimulationInformation& get_simulation_information() const;
@@ -509,7 +509,7 @@ osp_config_parser::osp_config_parser(
         const auto relativeTolerance = eccoConfigurationElement->getElementsByTagName(tc("RelativeTolerance").get())->item(0)->getTextContent();
         const auto absoluteTolerance = eccoConfigurationElement->getElementsByTagName(tc("AbsoluteTolerance").get())->item(0)->getTextContent();
 
-        cosim::ecco_parameters eccoConfig{};
+        cosim::ecco_algorithm_params eccoConfig{};
 
         eccoConfig.safety_factor = boost::lexical_cast<double>(tc(safetyFactor));
         eccoConfig.step_size = cosim::to_duration(boost::lexical_cast<double>(tc(stepSize)));
