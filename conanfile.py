@@ -39,20 +39,18 @@ class LibcosimConan(ConanFile):
     def requirements(self):
         self.tool_requires("cmake/[>=3.19]")
         self.requires("fmilibrary/[~2.3]")
-        self.requires("libzip/[>=1.7 <1.10]") # 1.10 deprecates some functions we use
+        self.requires("libzip/[~1.11]") # 1.10 deprecates some functions we use
         self.requires("ms-gsl/[>=3 <5]", transitive_headers=True)
+        self.requires("boost/[~1.85]", transitive_headers=True, transitive_libs=True)
         if self.options.proxyfmu:
-            self.requires("proxyfmu/0.3.2@osp/stable")
-            self.requires("boost/[~1.81]", transitive_headers=True, transitive_libs=True) # Required by Thrift
-        else:
-            self.requires("boost/[>=1.71]", transitive_headers=True, transitive_libs=True)
+            self.requires("proxyfmu/0.3.2@osp/stable", transitive_headers=True, transitive_libs=True)
         self.requires("yaml-cpp/[~0.8]")
         self.requires("xerces-c/[~3.2]")
 
     # Exports
     exports = "version.txt"
-    exports_sources = "*", "!cmake-build*", "!.venv", "!.git"
-
+    exports_sources = ("src/*", "include/*", "cmake/*", "data/*", "docs/*", "tests/*", "CHANGELOG.md", "CMakeLists.txt",
+                       "CONTRIBUTING.md", "LICENSE", "README.md", "version.txt")
     # Build steps
 
     def layout(self):

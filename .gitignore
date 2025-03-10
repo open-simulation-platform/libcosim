@@ -3,6 +3,9 @@ build/
 debug-build/
 release-build/
 
+# CTest:
+Testing/
+
 # JetBrains CLion:
 .idea/
 cmake-build-*/
