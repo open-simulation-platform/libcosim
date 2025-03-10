@@ -5,15 +5,15 @@ set(publicHeaderDir "${CMAKE_SOURCE_DIR}/include")
 # ==============================================================================
 
 set(publicHeaders
-    "cosim/algorithm.hpp"
-    "cosim/algorithm/algorithm.hpp"
-    "cosim/algorithm/fixed_step_algorithm.hpp"
+    "cosim/algorithm.hpp"    
+    "cosim/algorithm/algorithm.hpp"     
     "cosim/algorithm/ecco_algorithm.hpp"
+    "cosim/algorithm/fixed_step_algorithm.hpp"   
     "cosim/algorithm/simulator.hpp"
-    "cosim/config.hpp"
+    "cosim/config.hpp"    
     "cosim/exception.hpp"
     "cosim/execution.hpp"
-    "cosim/file_cache.hpp"
+    "cosim/file_cache.hpp"    
     "cosim/fmi/fmu.hpp"
     "cosim/fmi/importer.hpp"
     "cosim/fmi/v1/fmu.hpp"
@@ -64,12 +64,12 @@ set(privateHeaders
     "cosim/utility/uuid.hpp"
     "cosim/utility/zip.hpp"
 )
-set(sources
-    "cosim/algorithm/fixed_step_algorithm.cpp"
+set(sources    
     "cosim/algorithm/ecco_algorithm.cpp"
     "cosim/error.cpp"
     "cosim/exception.cpp"
     "cosim/execution.cpp"
+    "cosim/algorithm/fixed_step_algorithm.cpp"
     "cosim/file_cache.cpp"
     "cosim/fmi/glue.cpp"
     "cosim/fmi/importer.cpp"

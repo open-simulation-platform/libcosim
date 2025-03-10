@@ -41,8 +41,8 @@ int main()
 
         auto ecco_algo = std::make_shared<cosim::ecco_algorithm>(ecco_params);
         const auto testDataDir = std::getenv("TEST_DATA_DIR");
-        const auto configPath = cosim::filesystem::path(testDataDir) / "ecco" / "quarter_truck" / "OspSystemStructure.xml";
-        const auto logXmlPath = cosim::filesystem::path(testDataDir) / "ecco" / "quarter_truck" / "LogConfig.xml";
+        const auto configPath = cosim::filesystem::path(testDataDir) / "fmi2" / "quarter_truck" / "OspSystemStructure.xml";
+        const auto logXmlPath = cosim::filesystem::path(testDataDir) / "fmi2" / "quarter_truck" / "LogConfig.xml";
 
         auto resolver = cosim::default_model_uri_resolver();
         const auto config = cosim::load_osp_config(configPath, *resolver);

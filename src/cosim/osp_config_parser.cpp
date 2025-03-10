@@ -313,12 +313,6 @@ osp_config_parser::osp_config_parser(
         xercesc::DOMImplementationLS::MODE_SYNCHRONOUS,
         tc("http://www.w3.org/2001/XMLSchema").get());
 
-    auto serializer = ((xercesc::DOMImplementationLS*)domImpl)->createLSSerializer();
-    if (serializer->getDomConfig()->canSetParameter(xercesc::XMLUni::fgDOMWRTFormatPrettyPrint, true)) {
-        serializer->getDomConfig()->setParameter(xercesc::XMLUni::fgDOMWRTFormatPrettyPrint, true);
-    }
-    serializer->setNewLine(xercesc::XMLString::transcode("\r\n"));
-
     auto outputTarget = ((xercesc::DOMImplementationLS*)domImpl)->createLSOutput();
     auto outputFormat = new xercesc::StdOutFormatTarget();
     outputTarget->setByteStream(outputFormat);
@@ -616,8 +610,6 @@ osp_config_parser::osp_config_parser(
             signalGroupConnections_.push_back({signal, variable});
         }
     }
-
-    serializer->release();
 }
 
 osp_config_parser::~osp_config_parser() noexcept = default;

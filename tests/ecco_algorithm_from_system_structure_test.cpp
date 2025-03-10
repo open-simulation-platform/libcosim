@@ -28,8 +28,8 @@ int main()
         constexpr cosim::time_point endTime = cosim::to_time_point(0.1);
 
         auto resolver = cosim::default_model_uri_resolver();
-        auto configPath = cosim::filesystem::path(testDataDir) / "ecco" / "quarter_truck";
-        const auto logXmlPath = cosim::filesystem::path(testDataDir) / "ecco" / "quarter_truck" / "LogConfig.xml";
+        auto configPath = cosim::filesystem::path(testDataDir) / "fmi2" / "quarter_truck";
+        const auto logXmlPath = cosim::filesystem::path(testDataDir) / "fmi2" / "quarter_truck" / "LogConfig.xml";
         const auto config = cosim::load_osp_config(configPath, *resolver);
 
         auto ecco_params = std::get<cosim::ecco_algorithm_params>(config.algorithm_configuration);

@@ -1,11 +1,11 @@
-set(tests
-    "fixed_step_algorithm_test"
-    "ecco_algorithm_test"
-    "ecco_algorithm_multi_bond_test"
+set(tests        
     "ecco_algorithm_from_system_structure_test"
+    "ecco_algorithm_multi_bond_test"    
+    "ecco_algorithm_test"
     "file_observer_dynamic_logging_test"
     "file_observer_logging_test"
     "file_observer_logging_from_config_test"
+    "fixed_step_algorithm_test"
     "last_value_observer_test"
     "monitor_modified_variables_test"
     "multi_fixed_step_algorithm_test"
