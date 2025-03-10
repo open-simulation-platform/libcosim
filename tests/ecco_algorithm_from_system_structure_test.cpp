@@ -32,7 +32,7 @@ int main()
         const auto logXmlPath = cosim::filesystem::path(testDataDir) / "ecco" / "quarter_truck" / "LogConfig.xml";
         const auto config = cosim::load_osp_config(configPath, *resolver);
 
-        auto ecco_params = std::get<cosim::ecco_parameters>(config.algorithm_configuration);
+        auto ecco_params = std::get<cosim::ecco_algorithm_params>(config.algorithm_configuration);
         auto ecco_algo = std::make_shared<cosim::ecco_algorithm>(ecco_params);
 
         auto execution = cosim::execution(config.start_time, ecco_algo);

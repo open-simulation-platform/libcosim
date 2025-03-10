@@ -15,7 +15,7 @@
 namespace cosim
 {
 
-struct ecco_parameters
+struct ecco_algorithm_params
 {
     double safety_factor;
     duration step_size;

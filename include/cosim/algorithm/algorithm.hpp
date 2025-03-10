@@ -41,11 +41,6 @@ namespace cosim
  *    3. `do_step()` (possibly repeatedly)
  */
 
-struct fixed_step_configuration
-{
-    double stepSize;
-};
-
 class algorithm
 {
 public:

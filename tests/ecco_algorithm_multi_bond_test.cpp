@@ -27,7 +27,7 @@ int main()
         ;
         constexpr cosim::time_point midTime = cosim::to_time_point(4.0);
 
-        auto ecco_params = cosim::ecco_parameters{
+        auto ecco_params = cosim::ecco_algorithm_params{
             0.8,
             cosim::to_duration(1e-4),
             cosim::to_duration(1e-4),

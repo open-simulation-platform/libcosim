@@ -546,9 +546,9 @@ osp_config_parser::osp_config_parser(
 
             VariableConnection vc = {veA, veB};
 
-            auto isPowerbond = connectionElement->hasAttribute(tc("powerbond").get());
+            auto isPowerbond = connectionElement->hasAttribute(tc("powerBond").get());
             if (isPowerbond) {
-                std::string powerbondName = tc(connectionElement->getAttribute(tc("powerbond").get())).get();
+                std::string powerbondName = tc(connectionElement->getAttribute(tc("powerBond").get())).get();
                 PowerBondConnection pbc = {powerbondName, vc};
                 powerBondConnections_.emplace_back(pbc);
             }
@@ -589,9 +589,9 @@ osp_config_parser::osp_config_parser(
 
             VariableConnection vc = {veA, veB};
 
-            auto isPowerbond = connectionElement->hasAttribute(tc("powerbond").get());
+            auto isPowerbond = connectionElement->hasAttribute(tc("powerBond").get());
             if (isPowerbond) {
-                std::string powerbondName = tc(connectionElement->getAttribute(tc("powerbond").get())).get();
+                std::string powerbondName = tc(connectionElement->getAttribute(tc("powerBond").get())).get();
                 PowerBondConnection pbc = {powerbondName, vc};
                 powerBondConnections_.emplace_back(pbc);
             }
@@ -1187,7 +1187,7 @@ osp_config load_osp_config(
         }
     } else if (algorithm == "fixedstep") {
         BOOST_LOG_SEV(log::logger(), log::info) << "Configuring algorithm: fixedStep";
-        config.algorithm_configuration = cosim::fixed_step_configuration{simInfo.stepSize};
+        config.algorithm_configuration = cosim::fixed_step_algorithm_params{simInfo.stepSize};
     } else {
         throw std::runtime_error("Invalid algorithm choice. Allowed values are fixedStep, ecco.");
     }

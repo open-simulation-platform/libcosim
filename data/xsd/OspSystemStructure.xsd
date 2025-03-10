@@ -46,7 +46,7 @@
                     <xs:sequence>
                         <xs:element name="Variable" type="osp:variableEndpoint" minOccurs="2" maxOccurs="2"/>
                     </xs:sequence>
-                    <xs:attribute name="powerbond" use="optional" type="xs:string"/>
+                    <xs:attribute name="powerBond" use="optional" type="xs:string"/>
                 </xs:complexType>
             </xs:element>
             <xs:element name="SignalConnection" minOccurs="0" maxOccurs="unbounded">
@@ -62,7 +62,7 @@
                     <xs:sequence>
                         <xs:element name="VariableGroup" type="osp:variableEndpoint" minOccurs="2" maxOccurs="2"/>
                     </xs:sequence>
-                    <xs:attribute name="powerbond" use="optional" type="xs:string"/>
+                    <xs:attribute name="powerBond" use="optional" type="xs:string"/>
                 </xs:complexType>
             </xs:element>
             <xs:element name="SignalGroupConnection" minOccurs="0" maxOccurs="unbounded">

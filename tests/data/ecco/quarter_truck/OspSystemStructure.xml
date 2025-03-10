@@ -31,11 +31,11 @@
         </Simulator>
     </Simulators>
     <Connections>
-        <VariableConnection powerbond="wheelchassis">
+        <VariableConnection powerBond="wheelchassis">
             <Variable simulator="chassis" name="velocity" port="input"/>
             <Variable simulator="wheel" name="in_vel" port="output"/>
         </VariableConnection>
-        <VariableConnection powerbond="wheelchassis">
+        <VariableConnection powerBond="wheelchassis">
             <Variable simulator="wheel" name="out_spring_damper_f" port="input"/>
             <Variable simulator="chassis" name="force" port="output"/>
         </VariableConnection>

@@ -15,6 +15,11 @@
 namespace cosim
 {
 
+struct fixed_step_algorithm_params
+{
+    double stepSize;
+};
+
 /**
  *  A fixed-stepsize co-simulation algorithm.
  *
