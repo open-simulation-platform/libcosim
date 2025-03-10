@@ -9,6 +9,7 @@
 #ifndef LIBCOSIM_OSP_CONFIG_PARSER_HPP
 #define LIBCOSIM_OSP_CONFIG_PARSER_HPP
 
+#include <cosim/algorithm.hpp>
 #include <cosim/model_description.hpp>
 #include <cosim/orchestration.hpp>
 #include <cosim/system_structure.hpp>
@@ -23,6 +24,9 @@ struct osp_config
 {
     /// The system structure
     cosim::system_structure system_structure;
+
+    // The algorithm
+    std::variant<cosim::fixed_step_algorithm_params, cosim::ecco_algorithm_params> algorithm_configuration;
 
     /// The default start time for a simulation
     time_point start_time;

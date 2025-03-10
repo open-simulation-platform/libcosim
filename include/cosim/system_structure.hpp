@@ -213,8 +213,47 @@ public:
         full_variable_name target;
     };
 
+    /// Information about a powerbond connection. For use with the ecco algorithm only.
+    struct power_bond
+    {
+        /// The input_a variable in the bond, according to the description of the ecco algorithm.
+        full_variable_name input_a{"", ""};
+
+        /// The output_a variable in the bond, according to the description of the ecco algorithm.
+        full_variable_name output_a{"", ""};
+
+        /// The input_b variable in the bond, according to the description of the ecco algorithm.
+        full_variable_name input_b{"", ""};
+
+        /// The output_b variable in the bond, according to the description of the ecco algorithm.
+        full_variable_name output_b{"", ""};
+
+        void set_input_a(full_variable_name& ua)
+        {
+            input_a = ua;
+        }
+
+        void set_output_a(full_variable_name& ya)
+        {
+            output_a = ya;
+        }
+
+        void set_input_b(full_variable_name& ub)
+        {
+            input_b = ub;
+        }
+
+        void set_output_b(full_variable_name& yb)
+        {
+            output_b = yb;
+        }
+    };
+
+    std::string algorithm;
+
 private:
     using entity_map = std::unordered_map<std::string, entity>;
+    using power_bond_map = std::unordered_map<std::string, power_bond>;
     using connection_map =
         std::unordered_map<full_variable_name, full_variable_name>;
     using connection_transform =
@@ -250,6 +289,9 @@ public:
     {
         add_entity({std::string(name), type, {}, std::move(parameters)});
     }
+
+    power_bond_map get_power_bonds() const noexcept;
+    void add_power_bond(std::string name, power_bond pb);
 
     /**
      *  Returns a list of the entities in the system.
@@ -327,6 +369,8 @@ private:
 
     // Connections. Target is key, source is value.
     connection_map connections_;
+
+    power_bond_map powerBonds_;
 
     // Cache for fast lookup of model info, indexed by model UUID.
     struct model_info

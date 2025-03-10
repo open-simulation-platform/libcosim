@@ -302,6 +302,9 @@ public:
     /// Returns a map of currently modified variables
     std::vector<variable_id> get_modified_variables() const;
 
+    /// Returns the algorithm used in this execution
+    std::shared_ptr<cosim::algorithm> get_algorithm() const;
+
     /// Set initial value for a variable of type real. Must be called before simulation is started.
     void set_real_initial_value(simulator_index sim, value_reference var, double value);
 
@@ -313,7 +316,6 @@ public:
 
     /// Set initial value for a variable of type string. Must be called before simulation is started.
     void set_string_initial_value(simulator_index sim, value_reference var, const std::string& value);
-
 
 private:
     class impl;

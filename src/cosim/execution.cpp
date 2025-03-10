@@ -159,7 +159,7 @@ public:
 
     std::future<bool> simulate_until_async(std::optional<time_point> endTime)
     {
-        return std::async(std::launch::async, [this, endTime]{
+        return std::async(std::launch::async, [this, endTime] {
             return simulate_until(endTime);
         });
     }
@@ -220,6 +220,11 @@ public:
         }
 
         return modifiedVariables;
+    }
+
+    std::shared_ptr<cosim::algorithm> get_algorithm()
+    {
+        return algorithm_;
     }
 
     void set_real_initial_value(simulator_index sim, value_reference var, double value)
@@ -426,6 +431,11 @@ std::vector<variable_id> execution::get_modified_variables() const
     return pimpl_->get_modified_variables();
 }
 
+std::shared_ptr<cosim::algorithm> execution::get_algorithm() const
+{
+    return pimpl_->get_algorithm();
+}
+
 void execution::set_real_initial_value(simulator_index sim, value_reference var, double value)
 {
     pimpl_->set_real_initial_value(sim, var, value);
@@ -547,6 +557,22 @@ entity_index_maps inject_system_structure(
                 [&](bool v) { exe.set_boolean_initial_value(simIdx, valRef, v); },
                 [&](const std::string& v) { exe.set_string_initial_value(simIdx, valRef, v); }),
             val);
+    }
+
+    // For ECCO algorithm, add the powerbonds
+    if (sys.algorithm == "ecco") {
+        const auto powerbonds = sys.get_power_bonds();
+        auto algo = (cosim::algorithm*)exe.get_algorithm().get();
+        auto algorithm = reinterpret_cast<cosim::ecco_algorithm*>(algo); /// ugly downcasting, better alternatives?
+
+        for (const auto& [name, pb] : powerbonds) {
+            auto input_a = make_variable_id(sys, indexMaps, pb.input_a);
+            auto output_a = make_variable_id(sys, indexMaps, pb.output_a);
+            auto input_b = make_variable_id(sys, indexMaps, pb.input_b);        
+            auto output_b = make_variable_id(sys, indexMaps, pb.output_b);
+
+            algorithm->add_power_bond(input_a, output_a, input_b, output_b);
+        }
     }
 
     return indexMaps;
