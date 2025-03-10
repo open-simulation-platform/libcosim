@@ -111,7 +111,7 @@ void archive::open(const cosim::filesystem::path& path)
         zip_error_init_with_code(&zipError, errorCode);
         std::string errorMsg = zip_error_strerror(&zipError);
         zip_error_fini(&zipError);
-        throw error("Unzipping of file: '" + path.string() + "' failed with error: " + msgBuf.data());
+        throw error("Unzipping of file: '" + path.string() + "' failed with error: " + errorMsg);
     }
     m_archive = archive;
 }
