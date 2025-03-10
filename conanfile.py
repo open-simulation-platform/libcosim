@@ -47,7 +47,7 @@ class LibcosimConan(ConanFile):
         self.requires("boost/[~1.81]", transitive_headers=True, transitive_libs=True)
         if self.options.proxyfmu:
             self.requires(
-                "proxyfmu/0.3.2@osp/stable",
+                "proxyfmu/0.3.3@osp/testing",
                 transitive_headers=True,
                 transitive_libs=True,
             )
