@@ -56,6 +56,8 @@ public:
         duration lastStepSize,
         time_point currentTime) override;
 
+    void state_restored(step_number currentStep, time_point currentTime) override;
+
     void get_real(
         simulator_index sim,
         gsl::span<const value_reference> variables,

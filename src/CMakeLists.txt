@@ -41,6 +41,7 @@ set(publicHeaders
     "cosim/osp_config_parser.hpp"
     "cosim/scenario.hpp"
     "cosim/scenario_parser.hpp"
+    "cosim/serialization.hpp"
     "cosim/slave.hpp"
     "cosim/ssp/ssp_loader.hpp"
     "cosim/system_structure.hpp"
@@ -88,6 +89,7 @@ set(sources
     "cosim/orchestration.cpp"
     "cosim/osp_config_parser.cpp"
     "cosim/scenario_parser.cpp"
+    "cosim/serialization.cpp"
     "cosim/slave_simulator.cpp"
     "cosim/ssp/ssp_loader.cpp"
     "cosim/ssp/ssp_parser.cpp"
@@ -178,6 +180,7 @@ target_link_libraries(cosim
         libzip::zip
         XercesC::XercesC
         yaml-cpp
+        libcbor::libcbor
     )
 
 if(LIBCOSIM_WITH_PROXYFMU)

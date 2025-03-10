@@ -15,6 +15,7 @@
 #include <cosim/function/function.hpp>
 #include <cosim/model_description.hpp>
 #include <cosim/observer/observer.hpp>
+#include <cosim/serialization.hpp>
 #include <cosim/time.hpp>
 
 #include <functional>
@@ -157,7 +158,9 @@ public:
      *  values for some of them.
      *
      *  This function is guaranteed to be called after `setup()` and before
-     *  the first `do_step()` call.
+     *  the first `do_step()` call. Furthermore, no more subsimulators and
+     *  functions will be added or removed after `initialize()` has been called;
+     *  that is, `{add,remove}_{simulator,function}()` will not be called again.
      */
     virtual void initialize() = 0;
 
@@ -179,6 +182,36 @@ public:
      *      to `maxDeltaT`, if specified.
      */
     virtual std::pair<duration, std::unordered_set<simulator_index>> do_step(time_point currentT) = 0;
+
+    /**
+     *  Exports the current state of the algorithm.
+     *
+     *  Note that system-structural information should not be included in the
+     *  data exported by this function, only internal, algorithm-specific data.
+     *  This is because it will be assumed that the system structure is
+     *  unchanged or has already been restored when the state is imported
+     *  again, as explained in the `import_state()` function documentation.
+     */
+    virtual serialization::node export_current_state() const = 0;
+
+    /**
+     *  Imports a previously-exported algorithm state.
+     *
+     *  When this function is called, it should be assumed that the system
+     *  structure is the same as when the state was exported. That is, either
+     *
+     *  1. this is the algorithm instance from which the state was exported,
+     *     and the system structure actually hasn't changed
+     *  2. this is a new instance, but the original system structure has been
+     *     restored prior to calling this function
+     *
+     *  By "system structure", we here mean the subsimulator indexes, the
+     *  function indexes, and the variable connections.
+     *
+     *  It is guaranteed that this function is never called before
+     *  `initialize()`.
+     */
+    virtual void import_state(const serialization::node& exportedState) = 0;
 
     virtual ~algorithm() noexcept = default;
 };

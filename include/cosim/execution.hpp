@@ -19,6 +19,7 @@
 
 #include <boost/functional/hash.hpp>
 
+#include <cstdint>
 #include <future>
 #include <memory>
 #include <optional>
@@ -36,7 +37,7 @@ using simulator_index = int;
 using function_index = int;
 
 /// An number which identifies a specific time step in an execution.
-using step_number = long long;
+using step_number = std::int64_t;
 
 /// An object which uniquely identifies a simulator variable in a simulation.
 struct variable_id
@@ -145,6 +146,13 @@ class simulator;
  *  The `execution` class manages all the entities involved in an execution
  *  and provides a high-level API for driving the co-simulation algorithm
  *  forward.
+ *
+ *  \warning
+ *      In general, the member functions of this class are not exception safe.
+ *      This means that if any of them throw an exception, one must assume that
+ *      the `execution` object is in an invalid state and can no longer be used.
+ *      The same holds for its associated algorithm and any simulators or
+ *      functions that are part of the execution.
  */
 class execution
 {
@@ -179,13 +187,19 @@ public:
      *      The recommended co-simulation step size for this slave.
      *      Whether and how this is taken into account is algorithm dependent.
      *      If zero, the algorithm will attempt to choose a sensible default.
+     *
+     *  \pre `initialize()` has not been called.
      */
     simulator_index add_slave(
         std::shared_ptr<slave> slave,
         std::string_view name,
         duration stepSizeHint = duration::zero());
 
-    /// Adds a function to the execution.
+    /**
+     *  Adds a function to the execution.
+     *
+     *  \pre `initialize()` has not been called.
+     */
     function_index add_function(std::shared_ptr<function> fun);
 
     /// Adds an observer to the execution.
@@ -243,6 +257,14 @@ public:
     time_point current_time() const noexcept;
 
     /**
+     *  Initialize the co-simulation (in an algorithm-dependent manner).
+     *
+     *  After this function is called, it is no longer possible to add more
+     *  subsimulators or functions.
+     */
+    void initialize();
+
+    /**
      *  Advance the co-simulation forward to the given logical time (blocks the current thread).
      *
      *  \param targetTime
@@ -255,6 +277,12 @@ public:
      *      `true` if the co-simulation was advanced to the given time,
      *      or `false` if it was stopped before this. In the latter case,
      *      `current_time()` may be called to determine the actual end time.
+     *
+     *  \note
+     *      For backwards compatibility, this function automatically calls
+     *      `initialize()` if this hasn't already been done. However, new code
+     *      should always call `initialize()` before any of the
+     *      simulation/stepping functions.
      */
     bool simulate_until(std::optional<time_point> targetTime);
 
@@ -271,6 +299,12 @@ public:
      *      `true` if the co-simulation was advanced to the given time,
      *      or `false` if it was stopped before this. In the latter case,
      *      `current_time()` may be called to determine the actual end time.
+     *
+     *  \note
+     *      For backwards compatibility, this function automatically calls
+     *      `initialize()` if this hasn't already been done. However, new code
+     *      should always call `initialize()` before any of the
+     *      simulation/stepping functions.
      */
     std::future<bool> simulate_until_async(std::optional<time_point> targetTime);
 
@@ -281,6 +315,12 @@ public:
      *      The actual duration of the step.
      *      `current_time()` may be called to determine the actual time after
      *      the step completed.
+     *
+     *  \note
+     *      For backwards compatibility, this function automatically calls
+     *      `initialize()` if this hasn't already been done. However, new code
+     *      should always call `initialize()` before any of the
+     *      simulation/stepping functions.
      */
     duration step();
 
@@ -314,6 +354,28 @@ public:
     /// Set initial value for a variable of type string. Must be called before simulation is started.
     void set_string_initial_value(simulator_index sim, value_reference var, const std::string& value);
 
+    /**
+     *  Exports the current state of the co-simulation.
+     *
+     *  \pre `initialize()` has been called.
+     *  \pre `!is_running()`
+     */
+    serialization::node export_current_state() const;
+
+    /**
+     *  Imports a previously-exported co-simulation state.
+     *
+     *  Note that the data returned by `export_current_state()` only describe
+     *  the *state* of the system, not its structure.  This means that it's the
+     *  caller's responsibility to either
+     *
+     *  1. not modify the system structure between state export and state import
+     *  2. restore the pre-export system structure prior to state import
+     *
+     *  \pre `initialize()` has been called.
+     *  \pre `!is_running()`
+     */
+    void import_state(const serialization::node& exportedState);
 
 private:
     class impl;

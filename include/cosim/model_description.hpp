@@ -59,6 +59,13 @@ enum variable_variability
     continuous
 };
 
+/// A list of simulator capabilities
+struct simulator_capabilities
+{
+    bool can_save_state = false;
+    bool can_export_state = false;
+};
+
 
 /// Returns a textual representation of `v`.
 constexpr const char* to_text(variable_type v)
@@ -195,6 +202,9 @@ struct model_description
 
     /// Variable descriptions.
     std::vector<variable_description> variables;
+
+    /// Simulator capabilities
+    simulator_capabilities capabilities;
 };
 
 /// Getter for returning a variable description.

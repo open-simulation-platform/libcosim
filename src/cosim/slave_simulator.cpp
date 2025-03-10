@@ -6,6 +6,8 @@
 #include "cosim/slave_simulator.hpp"
 
 #include "cosim/error.hpp"
+#include "cosim/exception.hpp"
+
 #include <cosim/utility/utility.hpp>
 
 #include <algorithm>
@@ -30,86 +32,6 @@ struct var_view_type<std::string>
 {
     using type = std::string_view;
 };
-
-/**
- *  Helper class which checks, sets and resets the state variable for
- *  an `slave_simulator`.
- *
- *  The constructors of this class take a reference to the `slave_state`
- *  variable to be managed, and immediately set it to `indeterminate`.
- *  On destruction, the managed variable will be automatically set to
- *  a specified value, or, if an exception is currently "in flight", to
- *  the special `error` value.
- */
-class state_guard
-{
-public:
-    /**
-     *  Constructs a `state_guard` that sets `stateVariable` to `finalState`
-     *  on destruction.
-     */
-    state_guard(slave_state& stateVariable, slave_state finalState)
-        : stateVariable_(&stateVariable)
-        , finalState_(finalState)
-    {
-        stateVariable = slave_state::indeterminate;
-    }
-
-    /**
-     *  Constructs a `state_guard` that resets `stateVariable` to its original
-     *  value on destruction.
-     */
-    state_guard(slave_state& stateVariable)
-        : state_guard(stateVariable, stateVariable)
-    { }
-
-    /**
-     *  Manually sets the managed variable to its final value and relinquishes
-     *  control of it.  Does not check for exceptions.
-     */
-    void reset() noexcept
-    {
-        if (stateVariable_ != nullptr) {
-            *stateVariable_ = finalState_;
-            stateVariable_ = nullptr;
-        }
-    }
-
-    ~state_guard() noexcept
-    {
-        if (stateVariable_ != nullptr) {
-            if (std::uncaught_exceptions()) {
-                *stateVariable_ = slave_state::error;
-            } else {
-                *stateVariable_ = finalState_;
-            }
-        }
-    }
-
-    // Disallow copying, so that we don't inadvertently end up in a situation
-    // where multiple `state_guard` objects try to manage the same state.
-    state_guard(const state_guard&) = delete;
-    state_guard& operator=(const state_guard&) = delete;
-
-    state_guard(state_guard&& other) noexcept
-        : stateVariable_(other.stateVariable_)
-        , finalState_(other.finalState_)
-    {
-        other.stateVariable_ = nullptr;
-    }
-    state_guard& operator=(state_guard&& other) noexcept
-    {
-        stateVariable_ = other.stateVariable_;
-        finalState_ = other.finalState_;
-        other.stateVariable_ = nullptr;
-        return *this;
-    }
-
-private:
-    slave_state* stateVariable_;
-    slave_state finalState_;
-};
-
 
 template<typename T>
 struct get_variable_cache
@@ -158,6 +80,38 @@ struct get_variable_cache
             }
         }
     }
+
+    serialization::node export_state() const
+    {
+        assert(references.size() == originalValues.size());
+        assert(std::all_of(modifiers.begin(), modifiers.end(), [](auto m) { return !m; }));
+        serialization::node exportedState;
+        for (std::size_t i = 0; i < references.size(); ++i) {
+            exportedState.put(
+                std::to_string(references[i]),
+                originalValues[i]);
+        }
+        return exportedState;
+    }
+
+    void import_state(const serialization::node& exportedState)
+    {
+        std::vector<value_reference> importedReferences;
+        boost::container::vector<T> importedValues;
+        std::unordered_map<value_reference, std::size_t> newMapping;
+        for (const auto& [key, child] : exportedState) {
+            const value_reference ref = std::stoul(key);
+            const auto val = child.template get_value<T>();
+            importedReferences.push_back(ref);
+            importedValues.push_back(val);
+            newMapping[ref] = importedReferences.size() - 1;
+        }
+        references.swap(importedReferences);
+        originalValues.swap(importedValues);
+        modifiedValues = originalValues; // copy
+        modifiers.assign(modifiedValues.size(), nullptr);
+        indexMapping.swap(newMapping);
+    }
 };
 
 
@@ -181,12 +135,7 @@ public:
             throw std::out_of_range(oss.str());
         }
         it->second.lastValue = v;
-        if (it->second.arrayIndex < 0) {
-            it->second.arrayIndex = references_.size();
-            assert(references_.size() == values_.size());
-            references_.emplace_back(r);
-            values_.emplace_back(v);
-        } else {
+        if (!make_cache_slot(r, it->second)) {
             assert(references_[it->second.arrayIndex] == r);
             values_[it->second.arrayIndex] = v;
         }
@@ -202,13 +151,7 @@ public:
                 << " not found in exposed variables. Variables must be exposed before calling set_modifier()";
             throw std::out_of_range(oss.str());
         }
-        if (it->second.arrayIndex < 0) {
-            // Ensure that the simulator receives an updated value.
-            it->second.arrayIndex = references_.size();
-            assert(references_.size() == values_.size());
-            references_.emplace_back(r);
-            values_.emplace_back(it->second.lastValue);
-        }
+        make_cache_slot(r, it->second);
         if (m) {
             modifiers_[r] = m;
         } else {
@@ -223,14 +166,10 @@ public:
         if (!hasRunModifiers_) {
             for (const auto& entry : modifiers_) {
                 const auto ref = entry.first;
-                auto& arrayIndex = exposedVariables_.at(ref).arrayIndex;
-                if (arrayIndex < 0) {
-                    arrayIndex = references_.size();
-                    assert(references_.size() == values_.size());
-                    references_.emplace_back(ref);
-                    values_.emplace_back(exposedVariables_.at(ref).lastValue);
-                }
-                values_[arrayIndex] = entry.second(values_[arrayIndex], deltaT);
+                auto& exposedVariable = exposedVariables_.at(ref);
+                make_cache_slot(ref, exposedVariable);
+                values_[exposedVariable.arrayIndex] =
+                    entry.second(values_[exposedVariable.arrayIndex], deltaT);
             }
             assert(references_.size() == values_.size());
             hasRunModifiers_ = true;
@@ -268,6 +207,31 @@ public:
         hasRunModifiers_ = false;
     }
 
+    serialization::node export_state() const
+    {
+        assert(modifiers_.empty());
+        serialization::node exportedState;
+        for (const auto& [ref, var] : exposedVariables_) {
+            exportedState.put(std::to_string(ref), var.lastValue);
+        }
+        return exportedState;
+    }
+
+    void import_state(const serialization::node& exportedState)
+    {
+        assert(modifiers_.empty());
+        std::unordered_map<value_reference, exposed_variable> variables;
+        for (const auto& [key, child] : exportedState) {
+            variables.emplace(
+                std::stoul(key),
+                exposed_variable{child.template get_value<T>()});
+        }
+        exposedVariables_.swap(variables);
+        hasRunModifiers_ = false;
+        references_.clear();
+        values_.clear();
+    }
+
 private:
     struct exposed_variable
     {
@@ -278,6 +242,23 @@ private:
         // -1 if it hasn't been added to them yet.
         std::ptrdiff_t arrayIndex = -1;
     };
+
+    // If the given `exposed_variable` does not yet have slots in the
+    // `references_` and `values_` arrays, this function creates them and
+    // returns `true`.  Otherwise, it returns `false` to signify that no new
+    // slot needed to be created.
+    bool make_cache_slot(value_reference ref, exposed_variable& var)
+    {
+        if (var.arrayIndex < 0) {
+            var.arrayIndex = references_.size();
+            assert(references_.size() == values_.size());
+            references_.emplace_back(ref);
+            values_.emplace_back(var.lastValue);
+            return true;
+        } else {
+            return false;
+        }
+    }
 
     std::unordered_map<value_reference, exposed_variable> exposedVariables_;
 
@@ -350,16 +331,16 @@ public:
     {
         switch (type) {
             case variable_type::real:
-                realGetCache_.expose(ref);
+                state_.realGetCache.expose(ref);
                 break;
             case variable_type::integer:
-                integerGetCache_.expose(ref);
+                state_.integerGetCache.expose(ref);
                 break;
             case variable_type::boolean:
-                booleanGetCache_.expose(ref);
+                state_.booleanGetCache.expose(ref);
                 break;
             case variable_type::string:
-                stringGetCache_.expose(ref);
+                state_.stringGetCache.expose(ref);
                 break;
             case variable_type::enumeration:
                 COSIM_PANIC();
@@ -368,22 +349,22 @@ public:
 
     double get_real(value_reference ref) const
     {
-        return realGetCache_.get(ref);
+        return state_.realGetCache.get(ref);
     }
 
     int get_integer(value_reference ref) const
     {
-        return integerGetCache_.get(ref);
+        return state_.integerGetCache.get(ref);
     }
 
     bool get_boolean(value_reference ref) const
     {
-        return booleanGetCache_.get(ref);
+        return state_.booleanGetCache.get(ref);
     }
 
     std::string_view get_string(value_reference ref) const
     {
-        return stringGetCache_.get(ref);
+        return state_.stringGetCache.get(ref);
     }
 
     void expose_for_setting(variable_type type, value_reference ref)
@@ -391,16 +372,16 @@ public:
         const auto vd = find_variable_description(ref, type);
         switch (type) {
             case variable_type::real:
-                realSetCache_.expose(ref, get_start_value<double>(vd));
+                state_.realSetCache.expose(ref, get_start_value<double>(vd));
                 break;
             case variable_type::integer:
-                integerSetCache_.expose(ref, get_start_value<int>(vd));
+                state_.integerSetCache.expose(ref, get_start_value<int>(vd));
                 break;
             case variable_type::boolean:
-                booleanSetCache_.expose(ref, get_start_value<bool>(vd));
+                state_.booleanSetCache.expose(ref, get_start_value<bool>(vd));
                 break;
             case variable_type::string:
-                stringSetCache_.expose(ref, get_start_value<std::string>(vd));
+                state_.stringSetCache.expose(ref, get_start_value<std::string>(vd));
                 break;
             case variable_type::enumeration:
                 COSIM_PANIC();
@@ -409,29 +390,29 @@ public:
 
     void set_real(value_reference ref, double value)
     {
-        realSetCache_.set_value(ref, value);
+        state_.realSetCache.set_value(ref, value);
     }
 
     void set_integer(value_reference ref, int value)
     {
-        integerSetCache_.set_value(ref, value);
+        state_.integerSetCache.set_value(ref, value);
     }
 
     void set_boolean(value_reference ref, bool value)
     {
-        booleanSetCache_.set_value(ref, value);
+        state_.booleanSetCache.set_value(ref, value);
     }
 
     void set_string(value_reference ref, std::string_view value)
     {
-        stringSetCache_.set_value(ref, value);
+        state_.stringSetCache.set_value(ref, value);
     }
 
     void set_real_input_modifier(
         value_reference ref,
         std::function<double(double, duration)> modifier)
     {
-        realSetCache_.set_modifier(ref, modifier);
+        state_.realSetCache.set_modifier(ref, modifier);
         set_modified_reference(modifiedRealVariables_, ref, modifier ? true : false);
     }
 
@@ -439,7 +420,7 @@ public:
         value_reference ref,
         std::function<int(int, duration)> modifier)
     {
-        integerSetCache_.set_modifier(ref, modifier);
+        state_.integerSetCache.set_modifier(ref, modifier);
         set_modified_reference(modifiedIntegerVariables_, ref, modifier ? true : false);
     }
 
@@ -447,7 +428,7 @@ public:
         value_reference ref,
         std::function<bool(bool, duration)> modifier)
     {
-        booleanSetCache_.set_modifier(ref, modifier);
+        state_.booleanSetCache.set_modifier(ref, modifier);
         set_modified_reference(modifiedBooleanVariables_, ref, modifier ? true : false);
     }
 
@@ -455,7 +436,7 @@ public:
         value_reference ref,
         std::function<std::string(std::string_view, duration)> modifier)
     {
-        stringSetCache_.set_modifier(ref, modifier);
+        state_.stringSetCache.set_modifier(ref, modifier);
         set_modified_reference(modifiedStringVariables_, ref, modifier ? true : false);
     }
 
@@ -463,7 +444,7 @@ public:
         value_reference ref,
         std::function<double(double, duration)> modifier)
     {
-        realGetCache_.set_modifier(ref, modifier);
+        state_.realGetCache.set_modifier(ref, modifier);
         set_modified_reference(modifiedRealVariables_, ref, modifier ? true : false);
     }
 
@@ -471,7 +452,7 @@ public:
         value_reference ref,
         std::function<int(int, duration)> modifier)
     {
-        integerGetCache_.set_modifier(ref, modifier);
+        state_.integerGetCache.set_modifier(ref, modifier);
         set_modified_reference(modifiedIntegerVariables_, ref, modifier ? true : false);
     }
 
@@ -479,7 +460,7 @@ public:
         value_reference ref,
         std::function<bool(bool, duration)> modifier)
     {
-        booleanGetCache_.set_modifier(ref, modifier);
+        state_.booleanGetCache.set_modifier(ref, modifier);
         set_modified_reference(modifiedBooleanVariables_, ref, modifier ? true : false);
     }
 
@@ -487,7 +468,7 @@ public:
         value_reference ref,
         std::function<std::string(std::string_view, duration)> modifier)
     {
-        stringGetCache_.set_modifier(ref, modifier);
+        state_.stringGetCache.set_modifier(ref, modifier);
         set_modified_reference(modifiedStringVariables_, ref, modifier ? true : false);
     }
 
@@ -525,10 +506,10 @@ public:
             };
         };
 
-        const auto [realRefs, realValues] = realSetCache_.modify_and_get(deltaT, filter(variable_type::real));
-        const auto [integerRefs, integerValues] = integerSetCache_.modify_and_get(deltaT, filter(variable_type::integer));
-        const auto [booleanRefs, booleanValues] = booleanSetCache_.modify_and_get(deltaT, filter(variable_type::boolean));
-        const auto [stringRefs, stringValues] = stringSetCache_.modify_and_get(deltaT, filter(variable_type::string));
+        const auto [realRefs, realValues] = state_.realSetCache.modify_and_get(deltaT, filter(variable_type::real));
+        const auto [integerRefs, integerValues] = state_.integerSetCache.modify_and_get(deltaT, filter(variable_type::integer));
+        const auto [booleanRefs, booleanValues] = state_.booleanSetCache.modify_and_get(deltaT, filter(variable_type::boolean));
+        const auto [stringRefs, stringValues] = state_.stringSetCache.modify_and_get(deltaT, filter(variable_type::string));
 
         slave_->set_variables(
             gsl::make_span(realRefs),
@@ -561,20 +542,107 @@ public:
         time_point currentT,
         duration deltaT)
     {
-
         set_variables(deltaT);
         const auto result = slave_->do_step(currentT, deltaT);
         get_variables(deltaT);
         return result;
     }
 
+    simulator::state_index save_state()
+    {
+        check_state_saving_allowed();
+        const auto stateIndex = slave_->save_state();
+        savedStates_.emplace(stateIndex, state_);
+        return stateIndex;
+    }
+
+    void save_state(simulator::state_index stateIndex)
+    {
+        check_state_saving_allowed();
+        slave_->save_state(stateIndex);
+        savedStates_.at(stateIndex) = state_;
+    }
+
+    void restore_state(simulator::state_index stateIndex)
+    {
+        check_state_saving_allowed();
+        slave_->restore_state(stateIndex);
+        state_ = savedStates_.at(stateIndex);
+    }
+
+    void release_state(simulator::state_index stateIndex)
+    {
+        slave_->release_state(stateIndex);
+        savedStates_.erase(stateIndex);
+    }
+
+    // IMPORTANT:
+    // Since the cosim::slave_simulator class may evolve over time, and the
+    // state that needs to be serialized may change, we need some versioning.
+    // Increment this number whenever the "exported state" changes form, and
+    // always consider whether backwards compatibility measures are warranted.
+    static constexpr std::int32_t export_scheme_version = 0;
+
+    serialization::node export_state(state_index stateIndex) const
+    {
+        serialization::node exportedState;
+        exportedState.put("scheme_version", export_scheme_version);
+        exportedState.put_child("state", slave_->export_state(stateIndex));
+        const auto& savedState = savedStates_.at(stateIndex);
+        exportedState.put_child("real_get_cache", savedState.realGetCache.export_state());
+        exportedState.put_child("integer_get_cache", savedState.integerGetCache.export_state());
+        exportedState.put_child("boolean_get_cache", savedState.booleanGetCache.export_state());
+        exportedState.put_child("string_get_cache", savedState.stringGetCache.export_state());
+        exportedState.put_child("real_set_cache", savedState.realSetCache.export_state());
+        exportedState.put_child("integer_set_cache", savedState.integerSetCache.export_state());
+        exportedState.put_child("boolean_set_cache", savedState.booleanSetCache.export_state());
+        exportedState.put_child("string_set_cache", savedState.stringSetCache.export_state());
+        return exportedState;
+    }
+
+    state_index import_state(const serialization::node& exportedState)
+    {
+        try {
+            if (exportedState.get<std::int32_t>("scheme_version")
+                    != export_scheme_version) {
+                throw error(
+                    make_error_code(errc::bad_file),
+                    "The serialized state of subsimulator '" + name_
+                        + "' uses an incompatible scheme");
+            }
+            const auto stateIndex =
+                slave_->import_state(exportedState.get_child("state"));
+            assert(savedStates_.count(stateIndex) == 0);
+            auto& savedState = savedStates_.try_emplace(stateIndex).first->second;
+            savedState.realGetCache.import_state(exportedState.get_child("real_get_cache"));
+            savedState.integerGetCache.import_state(exportedState.get_child("integer_get_cache"));
+            savedState.booleanGetCache.import_state(exportedState.get_child("boolean_get_cache"));
+            savedState.stringGetCache.import_state(exportedState.get_child("string_get_cache"));
+            savedState.realSetCache.import_state(exportedState.get_child("real_set_cache"));
+            savedState.integerSetCache.import_state(exportedState.get_child("integer_set_cache"));
+            savedState.booleanSetCache.import_state(exportedState.get_child("boolean_set_cache"));
+            savedState.stringSetCache.import_state(exportedState.get_child("string_set_cache"));
+            return stateIndex;
+        } catch (const boost::property_tree::ptree_bad_path&) {
+            throw error(
+                make_error_code(errc::bad_file),
+                "The serialized state of subsimulator '" + name_
+                    + "' is invalid or corrupt");
+        } catch (const std::bad_variant_access&) {
+            throw error(
+                make_error_code(errc::bad_file),
+                "The serialized state of subsimulator '" + name_
+                    + "' is invalid or corrupt");
+        }
+    }
+
 private:
     void set_variables(duration deltaT)
     {
-        const auto [realRefs, realValues] = realSetCache_.modify_and_get(deltaT);
-        const auto [integerRefs, integerValues] = integerSetCache_.modify_and_get(deltaT);
-        const auto [booleanRefs, booleanValues] = booleanSetCache_.modify_and_get(deltaT);
-        const auto [stringRefs, stringValues] = stringSetCache_.modify_and_get(deltaT);
+        const auto [realRefs, realValues] = state_.realSetCache.modify_and_get(deltaT);
+        const auto [integerRefs, integerValues] = state_.integerSetCache.modify_and_get(deltaT);
+        const auto [booleanRefs, booleanValues] = state_.booleanSetCache.modify_and_get(deltaT);
+        const auto [stringRefs, stringValues] = state_.stringSetCache.modify_and_get(deltaT);
         slave_->set_variables(
             gsl::make_span(realRefs),
             gsl::make_span(realValues),
@@ -584,28 +652,28 @@ private:
             gsl::make_span(booleanValues),
             gsl::make_span(stringRefs),
             gsl::make_span(stringValues));
-        realSetCache_.reset();
-        integerSetCache_.reset();
-        booleanSetCache_.reset();
-        stringSetCache_.reset();
+        state_.realSetCache.reset();
+        state_.integerSetCache.reset();
+        state_.booleanSetCache.reset();
+        state_.stringSetCache.reset();
     }
 
     void get_variables(duration deltaT)
     {
         slave_->get_variables(
-            &variable_values_,
-            gsl::make_span(realGetCache_.references),
-            gsl::make_span(integerGetCache_.references),
-            gsl::make_span(booleanGetCache_.references),
-            gsl::make_span(stringGetCache_.references));
-        copy_contents(variable_values_.real, realGetCache_.originalValues);
-        copy_contents(variable_values_.integer, integerGetCache_.originalValues);
-        copy_contents(variable_values_.boolean, booleanGetCache_.originalValues);
-        copy_contents(variable_values_.string, stringGetCache_.originalValues);
-        realGetCache_.run_modifiers(deltaT);
-        integerGetCache_.run_modifiers(deltaT);
-        booleanGetCache_.run_modifiers(deltaT);
-        stringGetCache_.run_modifiers(deltaT);
+            &variableValues_,
+            gsl::make_span(state_.realGetCache.references),
+            gsl::make_span(state_.integerGetCache.references),
+            gsl::make_span(state_.booleanGetCache.references),
+            gsl::make_span(state_.stringGetCache.references));
+        copy_contents(variableValues_.real, state_.realGetCache.originalValues);
+        copy_contents(variableValues_.integer, state_.integerGetCache.originalValues);
+        copy_contents(variableValues_.boolean, state_.booleanGetCache.originalValues);
+        copy_contents(variableValues_.string, state_.stringGetCache.originalValues);
+        state_.realGetCache.run_modifiers(deltaT);
+        state_.integerGetCache.run_modifiers(deltaT);
+        state_.booleanGetCache.run_modifiers(deltaT);
+        state_.stringGetCache.run_modifiers(deltaT);
     }
 
     variable_description find_variable_description(value_reference ref, variable_type type)
@@ -633,27 +701,45 @@ private:
         }
     }
 
+    void check_state_saving_allowed() const
+    {
+        if (modifiedRealVariables_.empty() && modifiedIntegerVariables_.empty() &&
+            modifiedBooleanVariables_.empty() && modifiedStringVariables_.empty()) {
+            return;
+        }
+        throw error(
+            make_error_code(errc::unsupported_feature),
+            "Cannot save or restore subsimulator state when variable modifiers are active");
+    }
+
 private:
     std::shared_ptr<slave> slave_;
     std::string name_;
     cosim::model_description modelDescription_;
 
-    get_variable_cache<double> realGetCache_;
-    get_variable_cache<int> integerGetCache_;
-    get_variable_cache<bool> booleanGetCache_;
-    get_variable_cache<std::string> stringGetCache_;
+    struct state
+    {
+        get_variable_cache<double> realGetCache;
+        get_variable_cache<int> integerGetCache;
+        get_variable_cache<bool> booleanGetCache;
+        get_variable_cache<std::string> stringGetCache;
 
-    set_variable_cache<double> realSetCache_;
-    set_variable_cache<int> integerSetCache_;
-    set_variable_cache<bool> booleanSetCache_;
-    set_variable_cache<std::string> stringSetCache_;
+        set_variable_cache<double> realSetCache;
+        set_variable_cache<int> integerSetCache;
+        set_variable_cache<bool> booleanSetCache;
+        set_variable_cache<std::string> stringSetCache;
+    };
+    state state_;
+    std::unordered_map<state_index, state> savedStates_;
 
     std::unordered_set<value_reference> modifiedRealVariables_;
     std::unordered_set<value_reference> modifiedIntegerVariables_;
     std::unordered_set<value_reference> modifiedBooleanVariables_;
     std::unordered_set<value_reference> modifiedStringVariables_;
 
-    cosim::slave::variable_values variable_values_;
+    // This is a temporary storage which gets reused within certain functions
+    // to avoid frequent reallocations.
+    cosim::slave::variable_values variableValues_;
 };
 
 
@@ -661,7 +747,6 @@ slave_simulator::slave_simulator(
     std::shared_ptr<slave> slave,
     std::string_view name)
     : pimpl_(std::make_unique<impl>(std::move(slave), name))
-    , state_(slave_state::created)
 {
 }
 
@@ -681,7 +766,6 @@ std::string slave_simulator::name() const
 
 cosim::model_description slave_simulator::model_description() const
 {
-    COSIM_PRECONDITION(state_ != slave_state::error);
     return pimpl_->model_description();
 }
 
@@ -826,8 +910,6 @@ void slave_simulator::setup(
     std::optional<time_point> stopTime,
     std::optional<double> relativeTolerance)
 {
-    COSIM_PRECONDITION(state_ == slave_state::created);
-    state_guard guard(state_, slave_state::initialisation);
     return pimpl_->setup(startTime, stopTime, relativeTolerance);
 }
 
@@ -838,8 +920,6 @@ void slave_simulator::do_iteration()
 
 void slave_simulator::start_simulation()
 {
-    COSIM_PRECONDITION(state_ == slave_state::initialisation);
-    state_guard guard(state_, slave_state::simulation);
     return pimpl_->start_simulation();
 }
 
@@ -847,9 +927,39 @@ step_result slave_simulator::do_step(
     time_point currentT,
     duration deltaT)
 {
-    COSIM_PRECONDITION(state_ == slave_state::simulation);
-    state_guard guard(state_);
     return pimpl_->do_step(currentT, deltaT);
 }
+
+simulator::state_index slave_simulator::save_state()
+{
+    return pimpl_->save_state();
+}
+
+void slave_simulator::save_state(state_index stateIndex)
+{
+    pimpl_->save_state(stateIndex);
+}
+
+void slave_simulator::restore_state(state_index stateIndex)
+{
+    pimpl_->restore_state(stateIndex);
+}
+
+void slave_simulator::release_state(state_index stateIndex)
+{
+    pimpl_->release_state(stateIndex);
+}
+
+serialization::node slave_simulator::export_state(state_index stateIndex) const
+{
+    return pimpl_->export_state(stateIndex);
+}
+
+simulator::state_index slave_simulator::import_state(
+    const serialization::node& exportedState)
+{
+    return pimpl_->import_state(exportedState);
+}
+
 
 } // namespace cosim

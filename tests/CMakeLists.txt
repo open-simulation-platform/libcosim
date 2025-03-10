@@ -8,6 +8,7 @@ set(tests
     "multi_fixed_step_algorithm_test"
     "osp_config_parser_test"
     "ramp_modifier_test"
+    "save_state_test"
     "time_series_observer_test"
     "trend_buffer_test"
     "scenario_manager_test"
@@ -22,6 +23,7 @@ set(unittests
     "fmi_v2_fmu_unittest"
     "orchestration_unittest"
     "scenario_parser_unittest"
+    "slave_simulator_unittest"
     "ssp_loader_unittest"
     "system_structure_unittest"
     "time_unittest"
@@ -39,6 +41,7 @@ if(LIBCOSIM_WITH_PROXYFMU)
             )
     list(APPEND tests
             "proxyfmu_osp_config_parser_test"
+            "proxyfmu_save_state_test"
             )
 endif()
 
@@ -48,7 +51,7 @@ foreach(test IN LISTS tests)
         "cpp_${test}"
         FOLDER "C++ tests"
         SOURCES "${test}.cpp"
-        DEPENDENCIES cosim
+        DEPENDENCIES "cosim"
         DATA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/data"
     )
 endforeach()

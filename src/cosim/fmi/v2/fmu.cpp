@@ -18,6 +18,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cstdarg>
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <mutex>
@@ -62,6 +63,12 @@ fmu::fmu(
     modelDescription_.description = fmi2_import_get_description(handle_);
     modelDescription_.author = fmi2_import_get_author(handle_);
     modelDescription_.version = fmi2_import_get_model_version(handle_);
+    modelDescription_.capabilities.can_save_state = !!fmi2_import_get_capability(
+        handle_,
+        fmi2_cs_canGetAndSetFMUstate);
+    modelDescription_.capabilities.can_export_state = !!fmi2_import_get_capability(
+        handle_,
+        fmi2_cs_canSerializeFMUstate);
     const auto varList = fmi2_import_get_variable_list(handle_, 0);
     const auto _ = gsl::finally([&]() {
         fmi2_import_free_variable_list(varList);
@@ -569,6 +576,159 @@ void slave_instance::set_string_variables(
 }
 
 
+slave::state_index slave_instance::save_state()
+{
+    saved_state currentState;
+    copy_current_state(currentState);
+    return store_new_state(std::move(currentState));
+}
+
+
+void slave_instance::save_state(state_index stateIndex)
+{
+    copy_current_state(savedStates_.at(stateIndex));
+}
+
+
+void slave_instance::restore_state(state_index stateIndex)
+{
+    const auto& state  = savedStates_.at(stateIndex);
+    const auto status = fmi2_import_set_fmu_state(handle_, state.fmuState);
+    if (status != fmi2_status_ok && status != fmi2_status_warning) {
+        throw error(
+            make_error_code(errc::model_error),
+            last_log_record(instanceName_).message);
+    }
+    setupComplete_ = state.setupComplete;
+    simStarted_ = state.simStarted;
+}
+
+
+void slave_instance::release_state(state_index state)
+{
+    auto fmuState = savedStates_.at(state).fmuState;
+    savedStatesFreelist_.push(state);
+    const auto status = fmi2_import_free_fmu_state(handle_, &fmuState);
+    if (status != fmi2_status_ok && status != fmi2_status_warning) {
+        throw error(
+            make_error_code(errc::model_error),
+            last_log_record(instanceName_).message);
+    }
+}
+
+
+// IMPORTANT:
+// Since the cosim::fmi::v2::slave_instance class may evolve over time, and the
+// state that needs to be serialized may change, we need some versioning.
+// Increment this number whenever the "exported state" changes form, and
+// always consider whether backwards compatibility measures are warranted.
+constexpr std::int32_t export_scheme_version = 0;
+
+
+serialization::node slave_instance::export_state(state_index stateIndex) const
+{
+    const auto& savedState = savedStates_.at(stateIndex);
+
+    // Check that the FMU supports state serialization
+    if (!fmu_->model_description()->capabilities.can_export_state)
+    {
+        throw error(
+            make_error_code(errc::unsupported_feature),
+            instanceName_ + ": FMU does not support state serialization");
+    }
+
+    // Get size of serialized FMU state
+    std::size_t fmuStateSize = 0;
+    const auto sizeStatus = fmi2_import_serialized_fmu_state_size(
+        handle_, savedState.fmuState, &fmuStateSize);
+    if (sizeStatus != fmi2_status_ok && sizeStatus != fmi2_status_warning) {
+        throw error(
+            make_error_code(errc::model_error),
+            last_log_record(instanceName_).message);
+    }
+
+    // Serialize FMU state
+    auto serializedFMUState = std::vector<std::byte>(fmuStateSize);
+    const auto status = fmi2_import_serialize_fmu_state(
+        handle_, savedState.fmuState,
+        reinterpret_cast<fmi2_byte_t*>(serializedFMUState.data()), fmuStateSize);
+    if (status != fmi2_status_ok && status != fmi2_status_warning) {
+        throw error(
+            make_error_code(errc::model_error),
+            last_log_record(instanceName_).message);
+    }
+
+    // Create the exported state
+    serialization::node exportedState;
+    exportedState.put("scheme_version", export_scheme_version);
+    exportedState.put("fmu_uuid", fmu_->model_description()->uuid);
+    exportedState.put("serialized_fmu_state", serializedFMUState);
+    exportedState.put("setup_complete", savedState.setupComplete);
+    exportedState.put("simulation_started", savedState.simStarted);
+    return exportedState;
+}
+
+
+slave::state_index slave_instance::import_state(
+    const serialization::node& exportedState)
+{
+    saved_state savedState;
+    try {
+        // First some sanity checks
+        const auto schemeVersion = exportedState.get<std::int32_t>("scheme_version");
+        if (schemeVersion != export_scheme_version) {
+            throw error(
+                make_error_code(errc::bad_file),
+                "The serialized state of subsimulator '" + instanceName_
+                    + "' uses an incompatible scheme");
+        }
+        const auto fmuUUID = std::get<std::string>(
+            exportedState.get_child("fmu_uuid").data());
+        if (fmuUUID != fmu_->model_description()->uuid) {
+            throw error(
+                make_error_code(errc::bad_file),
+                "The serialized state of subsimulator '" + instanceName_
+                    + "' was created with a different FMU");
+        }
+        if (!fmi2_import_get_capability(handle_, fmi2_cs_canSerializeFMUstate))
+        {
+            throw error(
+                make_error_code(errc::unsupported_feature),
+                instanceName_ + ": FMU does not support state deserialization");
+        }
+
+        // Deserialize FMU state
+        const auto& serializedFMUState = std::get<std::vector<std::byte>>(
+            exportedState.get_child("serialized_fmu_state").data());
+        const auto status = fmi2_import_de_serialize_fmu_state(
+            handle_,
+            reinterpret_cast<const fmi2_byte_t*>(serializedFMUState.data()),
+            serializedFMUState.size(),
+            &savedState.fmuState);
+        if (status != fmi2_status_ok && status != fmi2_status_warning) {
+            throw error(
+                make_error_code(errc::model_error),
+                last_log_record(instanceName_).message);
+        }
+
+        // Get other data
+        savedState.setupComplete = exportedState.get<bool>("setup_complete");
+        savedState.simStarted = exportedState.get<bool>("simulation_started");
+    } catch (const boost::property_tree::ptree_bad_path&) {
+        throw error(
+            make_error_code(errc::bad_file),
+            "The serialized state of subsimulator '" + instanceName_
+                + "' is invalid or corrupt");
+    } catch (const std::bad_variant_access&) {
+        throw error(
+            make_error_code(errc::bad_file),
+            "The serialized state of subsimulator '" + instanceName_
+                + "' is invalid or corrupt");
+    }
+    return store_new_state(std::move(savedState));
+}
+
+
 std::shared_ptr<v2::fmu> slave_instance::v2_fmu() const
 {
     return fmu_;
@@ -578,6 +738,38 @@ std::shared_ptr<v2::fmu> slave_instance::v2_fmu() const
 fmi2_import_t* slave_instance::fmilib_handle() const
 {
     return handle_;
+}
+
+
+void slave_instance::copy_current_state(saved_state& state)
+{
+    if (!fmu_->model_description()->capabilities.can_save_state) {
+        throw error(
+            make_error_code(errc::unsupported_feature),
+            instanceName_ + ": FMU does not support state saving");
+    }
+    const auto status = fmi2_import_get_fmu_state(handle_, &state.fmuState);
+    if (status != fmi2_status_ok && status != fmi2_status_warning) {
+        throw error(
+            make_error_code(errc::model_error),
+            last_log_record(instanceName_).message);
+    }
+    state.setupComplete = setupComplete_;
+    state.simStarted = simStarted_;
+}
+
+
+slave::state_index slave_instance::store_new_state(saved_state state)
+{
+    if (savedStatesFreelist_.empty()) {
+        savedStates_.push_back(std::move(state));
+        return static_cast<state_index>(savedStates_.size()-1);
+    } else {
+        const auto stateIndex = savedStatesFreelist_.front();
+        savedStatesFreelist_.pop();
+        savedStates_.at(stateIndex) = std::move(state);
+        return stateIndex;
+    }
 }
 
 
