@@ -1,6 +1,6 @@
 /**
  *  \file
- *  Defines the class for a fixed step algorithm
+ *  Defines the class for a ECCO (Energy-Conservation-based Co-Simulation) algorithm
  *
  *  \copyright
  *      This Source Code Form is subject to the terms of the Mozilla Public
