@@ -42,7 +42,7 @@ class LibcosimConan(ConanFile):
     def requirements(self):
         self.tool_requires("cmake/[>=3.19]")
         self.requires("fmilibrary/[~2.3]")
-        self.requires("libzip/[>=1.7 <1.10]")  # 1.10 deprecates some functions we use
+        self.requires("libzip/[~1.11]")  
         self.requires("ms-gsl/[>=3 <5]", transitive_headers=True)
         self.requires("boost/[~1.85]", transitive_headers=True, transitive_libs=True)
         if self.options.proxyfmu:
