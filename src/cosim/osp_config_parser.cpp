@@ -865,10 +865,10 @@ void add_power_bonds(const std::vector<osp_config_parser::PowerBondConnection>& 
             auto variable = cosim::full_variable_name{var.simulator, var.name};
             switch (str_hash(var.port.value())) {
                 case "input"_hash:
-                    powerbond.set_ua(variable);
+                    powerbond.set_input_a(variable);
                     break;
                 case "output"_hash:
-                    powerbond.set_yb(variable);
+                    powerbond.set_output_b(variable);
                     break;
                 default:
                     std::ostringstream oss;
@@ -882,10 +882,10 @@ void add_power_bonds(const std::vector<osp_config_parser::PowerBondConnection>& 
             auto variable = cosim::full_variable_name{var.simulator, var.name};
             switch (str_hash(var.port.value())) {
                 case "input"_hash:
-                    powerbond.set_ub(variable);
+                    powerbond.set_input_b(variable);
                     break;
                 case "output"_hash:
-                    powerbond.set_ya(variable);
+                    powerbond.set_output_a(variable);
                     break;
                 default:
                     std::ostringstream oss;

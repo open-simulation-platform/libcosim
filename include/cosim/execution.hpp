@@ -51,11 +51,6 @@ struct variable_id
     value_reference reference;
 };
 
-/// An object that uniquely identifies a simulator variable group in a simulation.
-struct variable_group
-{
-};
-
 /// Equality operator for `variable_id`.
 inline bool operator==(const variable_id& a, const variable_id& b) noexcept
 {

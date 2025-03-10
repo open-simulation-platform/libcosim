@@ -91,7 +91,7 @@ public:
      * \param uVec
      *     The index of the variable.
      */
-    void add_power_bond(cosim::variable_id u_a, cosim::variable_id y_a, cosim::variable_id u_b, cosim::variable_id y_b);
+    void add_power_bond(cosim::variable_id input_a, cosim::variable_id output_a, cosim::variable_id input_b, cosim::variable_id output_b);
 
 private:
     class impl;

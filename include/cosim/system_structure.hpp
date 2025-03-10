@@ -216,36 +216,36 @@ public:
     /// Information about a powerbond connection. For use with the ecco algorithm only.
     struct power_bond
     {
-        /// The u_a variable in the bond, according to the description of the ecco algorithm.
-        full_variable_name u_a{"", ""};
+        /// The input_a variable in the bond, according to the description of the ecco algorithm.
+        full_variable_name input_a{"", ""};
 
-        /// The u_b variable in the bond, according to the description of the ecco algorithm.
-        full_variable_name u_b{"", ""};
+        /// The output_a variable in the bond, according to the description of the ecco algorithm.
+        full_variable_name output_a{"", ""};
 
-        /// The y_a variable in the bond, according to the description of the ecco algorithm.
-        full_variable_name y_a{"", ""};
+        /// The input_b variable in the bond, according to the description of the ecco algorithm.
+        full_variable_name input_b{"", ""};
 
-        /// The y_b variable in the bond, according to the description of the ecco algorithm.
-        full_variable_name y_b{"", ""};
+        /// The output_b variable in the bond, according to the description of the ecco algorithm.
+        full_variable_name output_b{"", ""};
 
-        void set_ua(full_variable_name& ua)
+        void set_input_a(full_variable_name& ua)
         {
-            u_a = ua;
+            input_a = ua;
         }
 
-        void set_ub(full_variable_name& ub)
+        void set_output_a(full_variable_name& ya)
         {
-            u_b = ub;
+            output_a = ya;
         }
 
-        void set_ya(full_variable_name& ya)
+        void set_input_b(full_variable_name& ub)
         {
-            y_a = ya;
+            input_b = ub;
         }
 
-        void set_yb(full_variable_name& yb)
+        void set_output_b(full_variable_name& yb)
         {
-            y_b = yb;
+            output_b = yb;
         }
     };
 

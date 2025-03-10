@@ -286,21 +286,21 @@ public:
 
         const auto dt = to_double_duration(stepSize, currentTime);
 
-        for (std::size_t i = 0; i < uVariables_.size(); i += 2) {
-            auto u_a = uVariables_.at(i);
-            auto u_b = uVariables_.at(i + 1);
-            auto y_a = yVariables_.at(i);
-            auto y_b = yVariables_.at(i + 1);
+        for (std::size_t i = 0; i < inputVariables_.size(); i += 2) {
+            auto input_a = inputVariables_.at(i);
+            auto input_b = inputVariables_.at(i + 1);
+            auto output_a = outputVariables_.at(i);
+            auto output_b = outputVariables_.at(i + 1);
 
-            double u_a_value = simulators_.at(u_a.simulator).sim->get_real(u_a.reference);
-            double u_b_value = simulators_.at(u_b.simulator).sim->get_real(u_b.reference);
-            double y_a_value = simulators_.at(y_a.simulator).sim->get_real(y_a.reference);
-            double y_b_value = simulators_.at(y_b.simulator).sim->get_real(y_b.reference);
+            double input_a_value = simulators_.at(input_a.simulator).sim->get_real(input_a.reference);
+            double input_b_value = simulators_.at(input_b.simulator).sim->get_real(input_b.reference);
+            double output_a_value = simulators_.at(output_a.simulator).sim->get_real(output_a.reference);
+            double output_b_value = simulators_.at(output_b.simulator).sim->get_real(output_b.reference);
 
-            double power_a = u_a_value * y_a_value;
+            double power_a = input_a_value * output_a_value;
             energies_.at(i).push_back(power_a * dt);
 
-            double power_b = u_b_value * y_b_value;
+            double power_b = input_b_value * output_b_value;
             energies_.at(i + 1).push_back(power_b * dt);
 
             double power_residual = std::abs(power_a - power_b);
@@ -340,19 +340,19 @@ public:
         return actual_new_step_size;
     }
 
-    void add_power_bond(cosim::variable_id u_a, cosim::variable_id y_a, cosim::variable_id u_b, cosim::variable_id y_b)
+    void add_power_bond(cosim::variable_id input_a, cosim::variable_id output_a, cosim::variable_id input_b, cosim::variable_id output_b)
     {
         energies_.emplace_back();
         energies_.emplace_back();
-        uVariables_.push_back(u_a);
-        uVariables_.push_back(u_b);
-        yVariables_.push_back(y_a);
-        yVariables_.push_back(y_b);
+        inputVariables_.push_back(input_a);
+        outputVariables_.push_back(output_a);
+        inputVariables_.push_back(input_b);
+        outputVariables_.push_back(output_b);
     }
 
 private:
-    std::vector<cosim::variable_id> uVariables_{};
-    std::vector<cosim::variable_id> yVariables_{};
+    std::vector<cosim::variable_id> inputVariables_{};
+    std::vector<cosim::variable_id> outputVariables_{};
     std::vector<std::vector<double>> energies_{};
 
     double get_mean(const std::vector<double>& elems)
@@ -638,9 +638,9 @@ void ecco_algorithm::set_stepsize_decimation_factor(cosim::simulator_index simul
     pimpl_->set_stepsize_decimation_factor(simulator, factor);
 }
 
-void ecco_algorithm::add_power_bond(cosim::variable_id u_a, cosim::variable_id y_a, cosim::variable_id u_b, cosim::variable_id y_b)
+void ecco_algorithm::add_power_bond(cosim::variable_id input_a, cosim::variable_id output_a, cosim::variable_id input_b, cosim::variable_id output_b)
 {
-    pimpl_->add_power_bond(u_a, y_a, u_b, y_b);
+    pimpl_->add_power_bond(input_a, output_a, input_b, output_b);
 }
 
 } // namespace cosim

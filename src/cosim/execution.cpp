@@ -567,12 +567,12 @@ entity_index_maps inject_system_structure(
         auto algorithm = reinterpret_cast<cosim::ecco_algorithm*>(algo); /// ugly downcasting, better alternatives?
 
         for (const auto& [name, pb] : powerbonds) {
-            auto u_a = make_variable_id(sys, indexMaps, pb.u_a);
-            auto u_b = make_variable_id(sys, indexMaps, pb.u_b);
-            auto y_a = make_variable_id(sys, indexMaps, pb.y_a);
-            auto y_b = make_variable_id(sys, indexMaps, pb.y_b);
+            auto input_a = make_variable_id(sys, indexMaps, pb.input_a);
+            auto output_a = make_variable_id(sys, indexMaps, pb.output_a);
+            auto input_b = make_variable_id(sys, indexMaps, pb.input_b);        
+            auto output_b = make_variable_id(sys, indexMaps, pb.output_b);
 
-            algorithm->add_power_bond(u_a, u_b, y_a, y_b);
+            algorithm->add_power_bond(input_a, output_a, input_b, output_b);
         }
     }
 
