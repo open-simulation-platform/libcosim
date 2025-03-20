@@ -857,10 +857,10 @@ void add_power_bonds(const std::vector<osp_config_parser::PowerBondConnection>& 
             auto variable = cosim::full_variable_name{var.simulator, var.name};
             switch (str_hash(var.port.value())) {
                 case "input"_hash:
-                    powerbond.set_input_a(variable);
+                    powerbond.input_a = variable;
                     break;
                 case "output"_hash:
-                    powerbond.set_output_b(variable);
+                    powerbond.output_b = variable;
                     break;
                 default:
                     std::ostringstream oss;
@@ -874,10 +874,10 @@ void add_power_bonds(const std::vector<osp_config_parser::PowerBondConnection>& 
             auto variable = cosim::full_variable_name{var.simulator, var.name};
             switch (str_hash(var.port.value())) {
                 case "input"_hash:
-                    powerbond.set_input_b(variable);
+                    powerbond.input_b = variable;
                     break;
                 case "output"_hash:
-                    powerbond.set_output_a(variable);
+                    powerbond.output_a = variable;
                     break;
                 default:
                     std::ostringstream oss;
@@ -1183,8 +1183,6 @@ osp_config load_osp_config(
     } else {
         throw std::runtime_error("Invalid algorithm choice. Allowed values are fixedStep, ecco.");
     }
-
-    config.system_structure.algorithm = algorithm;
 
     auto simulators = parser.get_elements();
 

@@ -560,15 +560,16 @@ entity_index_maps inject_system_structure(
     }
 
     // For ECCO algorithm, add the powerbonds
-    if (sys.algorithm == "ecco") {
+    if (auto algorithm = std::dynamic_pointer_cast<ecco_algorithm>(exe.get_algorithm())) {
         const auto powerbonds = sys.get_power_bonds();
-        auto algo = (cosim::algorithm*)exe.get_algorithm().get();
-        auto algorithm = reinterpret_cast<cosim::ecco_algorithm*>(algo); /// ugly downcasting, better alternatives?
+        if (powerbonds.empty()) {
+            throw error(make_error_code(errc::invalid_system_structure), "No power bonds were found, bonds need to be configured in the system structure order to use the ECCO algorithm.");
+        }
 
         for (const auto& [name, pb] : powerbonds) {
             auto input_a = make_variable_id(sys, indexMaps, pb.input_a);
             auto output_a = make_variable_id(sys, indexMaps, pb.output_a);
-            auto input_b = make_variable_id(sys, indexMaps, pb.input_b);        
+            auto input_b = make_variable_id(sys, indexMaps, pb.input_b);
             auto output_b = make_variable_id(sys, indexMaps, pb.output_b);
 
             algorithm->add_power_bond(input_a, output_a, input_b, output_b);

@@ -227,29 +227,7 @@ public:
 
         /// The output_b variable in the bond, according to the description of the ecco algorithm.
         full_variable_name output_b{"", ""};
-
-        void set_input_a(full_variable_name& ua)
-        {
-            input_a = ua;
-        }
-
-        void set_output_a(full_variable_name& ya)
-        {
-            output_a = ya;
-        }
-
-        void set_input_b(full_variable_name& ub)
-        {
-            input_b = ub;
-        }
-
-        void set_output_b(full_variable_name& yb)
-        {
-            output_b = yb;
-        }
     };
-
-    std::string algorithm;
 
 private:
     using entity_map = std::unordered_map<std::string, entity>;
