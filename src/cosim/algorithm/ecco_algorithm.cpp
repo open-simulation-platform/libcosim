@@ -281,22 +281,19 @@ public:
         }
         const auto num_bonds = power_residuals.size(); // TODO: Still valid for multidimensial bonds?
         const auto error_estimate = std::sqrt(mean_square / (double)num_bonds);
-
-        // std::cout << power_a << " " << power_b << " " << energy_level << " " << energy_residual << " " << sum_power_residual << " " << error_estimate << std::endl;
+        
         if (prev_error_estimate_ == 0 || error_estimate == 0) {
             prev_error_estimate_ = error_estimate;
             return stepSize;
         }
+
         // Compute a new step size
-        const auto new_step_size_gain_value = params.safety_factor * std::pow(error_estimate, -params.i_gain - params.p_gain) * std::pow(prev_error_estimate_, params.p_gain);
-        // std::cout << "step size gain unclamped=" << new_step_size_gain_value << " ";
+        const auto new_step_size_gain_value = params.safety_factor * std::pow(error_estimate, -params.i_gain - params.p_gain) * std::pow(prev_error_estimate_, params.p_gain);        
         auto new_step_size_gain = std::clamp(new_step_size_gain_value, params.min_change_rate, params.max_change_rate);
 
         prev_error_estimate_ = error_estimate;
         const auto new_step_size = to_duration(new_step_size_gain * to_double_duration(stepSize, currentTime));
         const auto actual_new_step_size = std::clamp(new_step_size, params.min_step_size, params.max_step_size);
-        // std::cout << to_double_time_point(currentTime) << " "<<  max_power_residual << " " << error_estimate << " " << std::endl;
-        // std::cout << "new step size: " << to_double_duration(actual_new_step_size, {}) << std::endl;
         return actual_new_step_size;
     }
 

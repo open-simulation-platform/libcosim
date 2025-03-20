@@ -2,9 +2,7 @@
 
 | Name                   | Origin         | License                       |
 | ---------------------- | -------------- | ----------------------------- |
-| `Chassis.fmu`  | OSP            | [MIT](LICENSE)   |
-| `Wheel.fmu` | OSP            | [MIT](LICENSE)   |
-| `Ground.fmu`           | [MIT] | [MIT](LICENSE) |
-
+| `Chassis.fmu`          | OSP            | [MIT](LICENSE)                |
+| `Wheel.fmu`            | OSP            | [MIT](LICENSE)                |
 
 [OSP demo-cases]: https://github.com/open-simulation-platform/demo-cases

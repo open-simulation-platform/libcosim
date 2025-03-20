@@ -208,7 +208,7 @@ public:
     {
         std::string simulator{};
         std::string name{};
-        std::optional<std::string> port{};
+        std::optional<std::string> causality{};
     };
 
     struct SignalEndpoint
@@ -283,8 +283,8 @@ T attribute_or(xercesc::DOMElement* el, const char* attributeName, T defaultValu
 
 [[maybe_unused]] std::ostream& operator<<(std::ostream& o, const osp_config_parser::VariableEndpoint& var)
 {
-    const auto port = var.port.has_value() ? var.port.value() : "";
-    return o << var.simulator << ", " << var.name << ", " << port << std::endl;
+    const auto causality = var.causality.has_value() ? var.causality.value() : "";
+    return o << var.simulator << ", " << var.name << ", " << causality << std::endl;
 }
 
 [[maybe_unused]] std::ostream& operator<<(std::ostream& o, const osp_config_parser::VariableConnection& var)
@@ -530,13 +530,13 @@ osp_config_parser::osp_config_parser(
 
             std::string simulatorA = tc(a->getAttribute(tc("simulator").get())).get();
             std::string nameA = tc(a->getAttribute(tc("name").get())).get();
-            std::string portA = tc(a->getAttribute(tc("port").get())).get();
-            VariableEndpoint veA = {simulatorA, nameA, portA};
+            std::string varA = tc(a->getAttribute(tc("causality").get())).get();
+            VariableEndpoint veA = {simulatorA, nameA, varA};
 
             std::string simulatorB = tc(b->getAttribute(tc("simulator").get())).get();
             std::string nameB = tc(b->getAttribute(tc("name").get())).get();
-            std::string portB = tc(b->getAttribute(tc("port").get())).get();
-            VariableEndpoint veB = {simulatorB, nameB, portB};
+            std::string varB = tc(b->getAttribute(tc("causality").get())).get();
+            VariableEndpoint veB = {simulatorB, nameB, varB};
 
             VariableConnection vc = {veA, veB};
 
@@ -834,20 +834,20 @@ void add_power_bonds(const std::vector<osp_config_parser::PowerBondConnection>& 
         auto connAVariables = std::vector<osp_config_parser::VariableEndpoint>{connectionA.connection.variableA, connectionA.connection.variableB};
         auto connBVariables = std::vector<osp_config_parser::VariableEndpoint>{connectionB.connection.variableA, connectionB.connection.variableB};
 
-        auto portA = connectionA.connection.variableA.port;
-        auto portB = connectionA.connection.variableB.port;
-        auto portC = connectionB.connection.variableA.port;
-        auto portD = connectionB.connection.variableB.port;
+        auto varA = connectionA.connection.variableA.causality;
+        auto varB = connectionA.connection.variableB.causality;
+        auto varC = connectionB.connection.variableA.causality;
+        auto varD = connectionB.connection.variableB.causality;
 
-        if ((portA.has_value() && !portB.has_value()) || (!portA.has_value() && portB.has_value())) {
+        if ((varA.has_value() && !varB.has_value()) || (!varA.has_value() && varB.has_value())) {
             std::ostringstream oss;
-            oss << "Missing port for powerbond connection " << connectionA.connection.variableA.name << " <-> " << connectionA.connection.variableB.name << ". Both variables in a powerbond must have an input and output port specified as attribute.";
+            oss << "Missing causality for powerbond connection " << connectionA.connection.variableA.name << " <-> " << connectionA.connection.variableB.name << ". Both variables in a powerbond must have an input and output causality specified as attribute.";
             throw std::runtime_error(oss.str());
         }
 
-        if ((portC.has_value() && !portD.has_value()) || (!portC.has_value() && portD.has_value())) {
+        if ((varC.has_value() && !varD.has_value()) || (!varC.has_value() && varD.has_value())) {
             std::ostringstream oss;
-            oss << "Missing port for powerbond connection " << connectionB.connection.variableA.name << " <-> " << connectionB.connection.variableB.name << ". Both variables in a powerbond must have an input and output port specified as attribute.";
+            oss << "Missing causality for powerbond connection " << connectionB.connection.variableA.name << " <-> " << connectionB.connection.variableB.name << ". Both variables in a powerbond must have an input and output causality specified as attribute.";
             throw std::runtime_error(oss.str());
         }
 
@@ -855,7 +855,7 @@ void add_power_bonds(const std::vector<osp_config_parser::PowerBondConnection>& 
 
         for (auto& var : connAVariables) {
             auto variable = cosim::full_variable_name{var.simulator, var.name};
-            switch (str_hash(var.port.value())) {
+            switch (str_hash(var.causality.value())) {
                 case "input"_hash:
                     powerbond.input_a = variable;
                     break;
@@ -864,7 +864,7 @@ void add_power_bonds(const std::vector<osp_config_parser::PowerBondConnection>& 
                     break;
                 default:
                     std::ostringstream oss;
-                    oss << "Invalid port value for variable " << var.name << ": " << var.port.value() << ". Accepted values are input, output.";
+                    oss << "Invalid causality value for variable " << var.name << ": " << var.causality.value() << ". Accepted values are input, output.";
                     throw std::runtime_error(oss.str());
                     break;
             }
@@ -872,7 +872,7 @@ void add_power_bonds(const std::vector<osp_config_parser::PowerBondConnection>& 
 
         for (auto& var : connBVariables) {
             auto variable = cosim::full_variable_name{var.simulator, var.name};
-            switch (str_hash(var.port.value())) {
+            switch (str_hash(var.causality.value())) {
                 case "input"_hash:
                     powerbond.input_b = variable;
                     break;
@@ -881,7 +881,7 @@ void add_power_bonds(const std::vector<osp_config_parser::PowerBondConnection>& 
                     break;
                 default:
                     std::ostringstream oss;
-                    oss << "Invalid port value for variable " << var.name << ": " << var.port.value() << ". Accepted values are input, output.";
+                    oss << "Invalid causality value for variable " << var.name << ": " << var.causality.value() << ". Accepted values are input, output.";
                     throw std::runtime_error(oss.str());
                     break;
             }

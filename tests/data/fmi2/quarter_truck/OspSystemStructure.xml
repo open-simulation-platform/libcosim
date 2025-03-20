@@ -32,12 +32,12 @@
     </Simulators>
     <Connections>
         <VariableConnection powerBond="wheelchassis">
-            <Variable simulator="chassis" name="velocity" port="input"/>
-            <Variable simulator="wheel" name="in_vel" port="output"/>
+            <Variable simulator="chassis" name="velocity" causality="input"/>
+            <Variable simulator="wheel" name="in_vel" causality="output"/>
         </VariableConnection>
         <VariableConnection powerBond="wheelchassis">
-            <Variable simulator="wheel" name="out_spring_damper_f" port="input"/>
-            <Variable simulator="chassis" name="force" port="output"/>
+            <Variable simulator="wheel" name="out_spring_damper_f" causality="input"/>
+            <Variable simulator="chassis" name="force" causality="output"/>
         </VariableConnection>
     </Connections>
     <EccoConfiguration>
