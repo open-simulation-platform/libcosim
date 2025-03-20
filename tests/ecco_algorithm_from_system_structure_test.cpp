@@ -13,7 +13,23 @@
 #include <memory>
 #include <stdexcept>
 
-// A helper macro to test various assertions
+/**
+ * This test showcases how the ECCO algorithm may be configured via the OSPSystemStructure XMLs.
+ *
+ * The OspSystemStructure in the quarter_truck directory can be used as an example configuration. The key points are:
+ *
+ * * <Algorithm> in OspSystemStructure now accepts either "ecco" or "fixedStep".
+ * * The configuration for the Ecco algorithm can be added to the root of OspSystemStructure as seen in the quarter_truck example.
+ * * To describe a powerbond, add the attribute powerbond="mypowerbond" to either a VariableConnection or VariableGroupConnection element.
+ *   This defines a name for the powerbond that the parsing uses to group correctly.
+ * * To define the individual variables, the attribute port has been added to the Variable element. Here the user must specify whether the
+ *   variable is the input or output port of it's side of the bond. So, if we are coupling for instance a force <-> velocity bond, this
+ *   results in a tuple with one input and one output port for each VariableConnection that is used in the bond.
+ * * This information is then parsed by osp_config_parser, which results in a power_bond_map available through the system_structure object.
+ * * Finally, the power_bond_map is iterated and power bonds added to the algorithm by execution::inject_system_structure.
+ *
+ **/
+
 #define REQUIRE(test) \
     if (!(test)) throw std::runtime_error("Requirement not satisfied: " #test)
 
