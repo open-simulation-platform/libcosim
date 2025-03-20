@@ -72,21 +72,6 @@ public:
     std::pair<duration, std::unordered_set<simulator_index>> do_step(time_point currentT) override;
 
     /**
-     * Sets step size decimation factor for a simulator.
-     *
-     * This will effectively set the simulator step size to a multiple
-     * of the algorithm's base step size. The default decimation factor is 1.
-     * Must be called *after* the simulator has been added to the algorithm with `add_simulator()`.
-     *
-     * \param simulator
-     *      The index of the simulator.
-     *
-     * \param factor
-     *      The stepsize decimation factor.
-     */
-    void set_stepsize_decimation_factor(simulator_index simulator, int factor);
-
-    /**
      * Adds a variable pair for the power residual calculation.
      * \param uVec
      *     The index of the variable.

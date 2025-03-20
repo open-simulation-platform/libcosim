@@ -22,31 +22,6 @@
 
 namespace cosim
 {
-namespace
-{
-
-int calculate_decimation_factor(
-    std::string_view name,
-    duration baseStepSize,
-    duration simulatorStepSize)
-{
-    if (simulatorStepSize == duration::zero()) return 1;
-    const auto result = std::div(simulatorStepSize.count(), baseStepSize.count());
-    const int factor = std::max<int>(1, static_cast<int>(result.quot));
-    if (result.rem > 0 || result.quot < 1) {
-        duration actualStepSize = baseStepSize * factor;
-        const auto startTime = time_point();
-        BOOST_LOG_SEV(log::logger(), log::warning)
-            << "Effective step size for " << name
-            << " will be " << to_double_duration(actualStepSize, startTime) << " s"
-            << " instead of configured value "
-            << to_double_duration(simulatorStepSize, startTime) << " s";
-    }
-    return factor;
-}
-
-} // namespace
-
 
 class ecco_algorithm::impl
 {
@@ -69,12 +44,10 @@ public:
     impl(impl&&) = delete;
     impl& operator=(impl&&) = delete;
 
-    void add_simulator(simulator_index i, simulator* s, duration stepSizeHint)
+    void add_simulator(simulator_index i, simulator* s, [[maybe_unused]] duration stepSizeHint)
     {
         assert(simulators_.count(i) == 0);
         simulators_[i].sim = s;
-        simulators_[i].decimationFactor =
-            calculate_decimation_factor(s->name(), stepSize_, stepSizeHint);
     }
 
     void remove_simulator(simulator_index i)
@@ -111,7 +84,6 @@ public:
         auto& simInfo = simulators_.at(input.simulator);
         simInfo.sim->expose_for_setting(input.type, input.reference);
         funInfo.outgoingSimConnections.push_back({output, input});
-        update_function_decimation_factor(funInfo);
     }
 
     void disconnect_variable(variable_id input)
@@ -202,36 +174,32 @@ public:
 
         for (auto& s : simulators_) {
             auto& info = s.second;
-            if (stepCounter_ % info.decimationFactor == 0) {
-                pool_.submit([&] {
-                    try {
-                        info.stepResult = info.sim->do_step(currentT, stepSize_ * info.decimationFactor);
+            pool_.submit([&] {
+                try {
+                    info.stepResult = info.sim->do_step(currentT, stepSize_);
 
-                        if (info.stepResult != step_result::complete) {
-                            std::lock_guard<std::mutex> lck(m);
-                            errMessages
-                                << info.sim->name() << ": "
-                                << "Step not complete" << '\n';
-                            failed = true;
-                        }
-
-                    } catch (std::exception& ex) {
+                    if (info.stepResult != step_result::complete) {
                         std::lock_guard<std::mutex> lck(m);
                         errMessages
                             << info.sim->name() << ": "
-                            << ex.what() << '\n';
+                            << "Step not complete" << '\n';
                         failed = true;
                     }
-                });
-            }
+
+                } catch (std::exception& ex) {
+                    std::lock_guard<std::mutex> lck(m);
+                    errMessages
+                        << info.sim->name() << ": "
+                        << ex.what() << '\n';
+                    failed = true;
+                }
+            });
         }
 
         ++stepCounter_;
 
         for (auto& [idx, info] : simulators_) {
-            if (stepCounter_ % info.decimationFactor == 0) {
-                finished.insert(idx);
-            }
+            finished.insert(idx);
         }
 
         pool_.wait_for_tasks_to_finish();
@@ -256,20 +224,12 @@ public:
         // Calculate functions and transfer their outputs to simulators.
         for (const auto& f : functions_) {
             const auto& info = f.second;
-            if (stepCounter_ % info.decimationFactor == 0) {
-                info.fun->calculate();
-                transfer_variables(info.outgoingSimConnections);
-            }
+            info.fun->calculate();
+            transfer_variables(info.outgoingSimConnections);
         }
 
 
         return {stepSizeTaken, std::move(finished)};
-    }
-
-    void set_stepsize_decimation_factor(cosim::simulator_index i, int factor)
-    {
-        COSIM_INPUT_CHECK(factor > 0);
-        simulators_.at(i).decimationFactor = factor;
     }
 
     void print_average_energies()
@@ -386,7 +346,6 @@ private:
     struct simulator_info
     {
         simulator* sim;
-        int decimationFactor = 1;
         step_result stepResult;
         std::vector<connection_ss> outgoingSimConnections;
         std::vector<connection_sf> outgoingFunConnections;
@@ -395,7 +354,6 @@ private:
     struct function_info
     {
         function* fun;
-        int decimationFactor = 1;
         std::vector<connection_fs> outgoingSimConnections;
     };
 
@@ -419,49 +377,24 @@ private:
         }
     }
 
-    void update_function_decimation_factor(function_info& f)
-    {
-        f.decimationFactor = std::accumulate(
-            f.outgoingSimConnections.begin(),
-            f.outgoingSimConnections.end(),
-            1,
-            [&](int current, const auto& connection) {
-                return std::lcm(
-                    current,
-                    simulators_.at(connection.target.simulator).decimationFactor);
-            });
-    }
-
     void transfer_variables(const std::vector<connection_ss>& connections)
     {
         for (const auto& c : connections) {
-            const auto sdf = simulators_.at(c.source.simulator).decimationFactor;
-            const auto tdf = simulators_.at(c.target.simulator).decimationFactor;
-            if (stepCounter_ % std::lcm(sdf, tdf) == 0) {
-                transfer_variable(c);
-            }
+            transfer_variable(c);
         }
     }
 
     void transfer_variables(const std::vector<connection_sf>& connections)
     {
         for (const auto& c : connections) {
-            const auto sdf = simulators_.at(c.source.simulator).decimationFactor;
-            const auto tdf = functions_.at(c.target.function).decimationFactor;
-            if (stepCounter_ % std::lcm(sdf, tdf) == 0) {
-                transfer_variable(c);
-            }
+            transfer_variable(c);
         }
     }
 
     void transfer_variables(const std::vector<connection_fs>& connections)
     {
         for (const auto& c : connections) {
-            const auto sdf = functions_.at(c.source.function).decimationFactor;
-            const auto tdf = simulators_.at(c.target.simulator).decimationFactor;
-            if (stepCounter_ % std::lcm(sdf, tdf) == 0) {
-                transfer_variable(c);
-            }
+            transfer_variable(c);
         }
     }
 
@@ -631,11 +564,6 @@ std::pair<duration, std::unordered_set<simulator_index>> ecco_algorithm::do_step
     time_point currentT)
 {
     return pimpl_->do_step(currentT);
-}
-
-void ecco_algorithm::set_stepsize_decimation_factor(cosim::simulator_index simulator, int factor)
-{
-    pimpl_->set_stepsize_decimation_factor(simulator, factor);
 }
 
 void ecco_algorithm::add_power_bond(cosim::variable_id input_a, cosim::variable_id output_a, cosim::variable_id input_b, cosim::variable_id output_b)
