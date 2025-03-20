@@ -56,9 +56,10 @@ int main()
 
         auto resolver = cosim::default_model_uri_resolver();
         const auto config = cosim::load_osp_config(configPath, *resolver);
+        auto algorithm_cfg = std::get<cosim::fixed_step_algorithm_params>(config.algorithm_configuration);
         auto execution = cosim::execution(
             config.start_time,
-            std::make_shared<cosim::fixed_step_algorithm>(config.step_size));
+            std::make_shared<cosim::fixed_step_algorithm>(algorithm_cfg));
 
         const auto entityMaps = cosim::inject_system_structure(
             execution, config.system_structure, config.initial_values);
@@ -129,7 +130,7 @@ int main()
         std::vector<cosim::simulator_index> simulators;
         simulators.push_back(
             execution.add_slave(
-                std::make_unique<mock_slave>([](cosim::time_point t, double) {
+                std::make_unique<mock_slave>([](cosim::time_point t, [[maybe_unused]] cosim::duration d, double) {
                     return cosim::to_double_time_point(t);
                 }),
                 "clock"));

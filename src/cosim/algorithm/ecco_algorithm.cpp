@@ -232,6 +232,16 @@ public:
         return {stepSizeTaken, std::move(finished)};
     }
 
+    serialization::node export_current_state() const
+    {
+        throw error(make_error_code(errc::unsupported_feature), "State saving not yet supported by the ECCO algorithm!");
+    }
+
+    void import_state([[maybe_unused]] const serialization::node& exportedState)
+    {
+        throw error(make_error_code(errc::unsupported_feature), "State saving not yet supported by the ECCO algorithm!");
+    }
+
     void get_energies()
     {
         for (std::size_t i = 0; i < energies_.size(); ++i) {
@@ -565,6 +575,16 @@ std::pair<duration, std::unordered_set<simulator_index>> ecco_algorithm::do_step
     time_point currentT)
 {
     return pimpl_->do_step(currentT);
+}
+
+serialization::node ecco_algorithm::export_current_state() const
+{
+    return pimpl_->export_current_state();
+}
+
+void ecco_algorithm::import_state(const serialization::node& exportedState)
+{
+    pimpl_->import_state(exportedState);
 }
 
 void ecco_algorithm::add_power_bond(cosim::variable_id input_a, cosim::variable_id output_a, cosim::variable_id input_b, cosim::variable_id output_b)

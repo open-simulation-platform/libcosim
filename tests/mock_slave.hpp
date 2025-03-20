@@ -38,7 +38,7 @@ public:
         std::function<double(cosim::time_point, cosim::duration, double)> realOp = nullptr,
         std::function<int(cosim::time_point, cosim::duration, int)> intOp = nullptr,
         std::function<bool(cosim::time_point, cosim::duration, bool)> boolOp = nullptr,
-        std::function<std::string(cosim::time_point,  cosim::duration, std::string_view)> stringOp = nullptr,
+        std::function<std::string(cosim::time_point, cosim::duration, std::string_view)> stringOp = nullptr,
         std::function<void(cosim::time_point, cosim::duration)> stepAction = nullptr)
         : realOp_(std::move(realOp))
         , intOp_(std::move(intOp))
@@ -70,7 +70,6 @@ public:
         if (!timeIndependentOp) return nullptr;
         return [op = std::move(timeIndependentOp)](cosim::time_point, cosim::duration, T... value) { return op(value...); };
     }
-
 
     cosim::model_description model_description() const override
     {
@@ -106,7 +105,8 @@ public:
 
     cosim::step_result do_step(cosim::time_point currentT, cosim::duration deltaT) override
     {
-        if (stepAction_) stepAction_(currentT);
+        state_.currentStepSize = deltaT;
+        if (stepAction_) stepAction_(currentT, deltaT);
         state_.currentTime = currentT + deltaT;
         return cosim::step_result::complete;
     }
@@ -117,7 +117,7 @@ public:
     {
         for (std::size_t i = 0; i < variables.size(); ++i) {
             if (variables[i] == real_out_reference) {
-                values[i] = realOp_ ? realOp_(state_.currentTime, state_.realIn) : state_.realIn;
+                values[i] = realOp_ ? realOp_(state_.currentTime, state_.currentStepSize, state_.realIn) : state_.realIn;
             } else if (variables[i] == real_in_reference) {
                 values[i] = state_.realIn;
             } else {
@@ -132,7 +132,7 @@ public:
     {
         for (std::size_t i = 0; i < variables.size(); ++i) {
             if (variables[i] == integer_out_reference) {
-                values[i] = intOp_ ? intOp_(state_.currentTime, state_.intIn) : state_.intIn;
+                values[i] = intOp_ ? intOp_(state_.currentTime, state_.currentStepSize, state_.intIn) : state_.intIn;
             } else if (variables[i] == integer_in_reference) {
                 values[i] = state_.intIn;
             } else {
@@ -147,7 +147,7 @@ public:
     {
         for (std::size_t i = 0; i < variables.size(); ++i) {
             if (variables[i] == boolean_out_reference) {
-                values[i] = boolOp_ ? boolOp_(state_.currentTime, state_.boolIn) : state_.boolIn;
+                values[i] = boolOp_ ? boolOp_(state_.currentTime, state_.currentStepSize, state_.boolIn) : state_.boolIn;
             } else if (variables[i] == boolean_in_reference) {
                 values[i] = state_.boolIn;
             } else {
@@ -162,7 +162,7 @@ public:
     {
         for (std::size_t i = 0; i < variables.size(); ++i) {
             if (variables[i] == string_out_reference) {
-                values[i] = stringOp_ ? stringOp_(state_.currentTime, state_.stringIn) : state_.stringIn;
+                values[i] = stringOp_ ? stringOp_(state_.currentTime, state_.currentStepSize, state_.stringIn) : state_.stringIn;
             } else if (variables[i] == string_in_reference) {
                 values[i] = state_.stringIn;
             } else {
@@ -248,7 +248,8 @@ public:
     {
         const auto& ss = savedStates_.at(state);
         cosim::serialization::node es;
-        es.put("currentTime", ss.currentTime.time_since_epoch().count());
+        es.put("currentTime", cosim::to_double_time_point(ss.currentTime));
+        es.put("currentStepSize", cosim::to_double_duration(ss.currentStepSize, ss.currentTime));
         es.put("realIn", ss.realIn);
         es.put("intIn", ss.intIn);
         es.put("boolIn", ss.boolIn);
@@ -259,8 +260,8 @@ public:
     state_index import_state(const cosim::serialization::node& exportedState) override
     {
         state ss;
-        ss.currentTime = cosim::time_point(cosim::time_point::duration(
-            exportedState.get<cosim::time_point::rep>("currentTime")));
+        ss.currentTime = cosim::time_point(cosim::time_point::duration(exportedState.get<cosim::time_point::rep>("currentTime")));
+        ss.currentStepSize = cosim::to_duration(exportedState.get<double>("currentStepSize"));
         ss.realIn = exportedState.get<decltype(ss.realIn)>("realIn");
         ss.intIn = exportedState.get<decltype(ss.intIn)>("intIn");
         ss.boolIn = exportedState.get<decltype(ss.boolIn)>("boolIn");
@@ -279,6 +280,7 @@ private:
     struct state
     {
         cosim::time_point currentTime;
+        cosim::duration currentStepSize{1000};
 
         double realIn = 0.0;
         int intIn = 0;
