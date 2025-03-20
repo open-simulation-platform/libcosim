@@ -62,6 +62,8 @@ public:
     void setup(time_point startTime, std::optional<time_point> stopTime) override;
     void initialize() override;
     std::pair<duration, std::unordered_set<simulator_index>> do_step(time_point currentT) override;
+    serialization::node export_current_state() const override;
+    void import_state(const serialization::node& exportedState) override;
 
     /**
      * Sets step size decimation factor for a simulator.

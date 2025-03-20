@@ -199,9 +199,9 @@ public:
             if (stepCounter_ % info.decimationFactor == 0) {
                 pool_.submit([&] {
                     try {
-                        info.stepResult = info.sim->do_step(currentT, baseStepSize_ * info.decimationFactor);
+                        const auto stepResult = info.sim->do_step(currentT, baseStepSize_ * info.decimationFactor);
 
-                        if (info.stepResult != step_result::complete) {
+                        if (stepResult != step_result::complete) {
                             std::lock_guard<std::mutex> lck(m);
                             errMessages
                                 << info.sim->name() << ": "
@@ -237,6 +237,28 @@ public:
         return {baseStepSize_, std::move(finished)};
     }
 
+    serialization::node export_current_state() const
+    {
+        auto exportedState = serialization::node();
+        exportedState.put("type", std::string("fixed_step_algorithm"));
+        exportedState.put("step_counter", stepCounter_);
+        return exportedState;
+    }
+
+    void import_state(const serialization::node& exportedState)
+    {
+        try {
+            if (exportedState.get<std::string>("type") != "fixed_step_algorithm") {
+                throw std::exception();
+            }
+            stepCounter_ = exportedState.get<std::int64_t>("step_counter");
+        } catch (...) {
+            throw error(
+                make_error_code(errc::bad_file),
+                "The serialized algorithm state is invalid or corrupt");
+        }
+    }
+
     void set_stepsize_decimation_factor(cosim::simulator_index i, int factor)
     {
         COSIM_INPUT_CHECK(factor > 0);
@@ -267,7 +289,6 @@ private:
     {
         simulator* sim;
         int decimationFactor = 1;
-        step_result stepResult;
         std::vector<connection_ss> outgoingSimConnections;
         std::vector<connection_sf> outgoingFunConnections;
     };
@@ -427,13 +448,20 @@ private:
         }
     }
 
+    // Algorithm parameters
     const duration baseStepSize_;
     time_point startTime_;
     std::optional<time_point> stopTime_;
+    unsigned int max_threads_ = std::thread::hardware_concurrency() - 1;
+
+    // System structure
     std::unordered_map<simulator_index, simulator_info> simulators_;
     std::unordered_map<function_index, function_info> functions_;
-    int64_t stepCounter_ = 0;
-    unsigned int max_threads_ = std::thread::hardware_concurrency() - 1;
+
+    // Simulation state
+    std::int64_t stepCounter_ = 0;
+
+    // Other
     utility::thread_pool pool_;
 };
 
@@ -530,6 +558,16 @@ std::pair<duration, std::unordered_set<simulator_index>> fixed_step_algorithm::d
     time_point currentT)
 {
     return pimpl_->do_step(currentT);
+}
+
+serialization::node fixed_step_algorithm::export_current_state() const
+{
+    return pimpl_->export_current_state();
+}
+
+void fixed_step_algorithm::import_state(const serialization::node& exportedState)
+{
+    pimpl_->import_state(exportedState);
 }
 
 void fixed_step_algorithm::set_stepsize_decimation_factor(cosim::simulator_index simulator, int factor)

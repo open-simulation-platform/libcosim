@@ -6,6 +6,7 @@
 #include <cosim/error.hpp>
 #include <cosim/exception.hpp>
 #include <cosim/proxy/remote_slave.hpp>
+#include <proxyfmu/state.hpp>
 
 #include <utility>
 
@@ -200,6 +201,64 @@ void cosim::proxy::remote_slave::set_string_variables(gsl::span<const cosim::val
     if (!status) {
         bad_status_throw("set_string");
     }
+}
+
+cosim::slave::state_index cosim::proxy::remote_slave::save_state()
+{
+    return slave_->save_state();
+}
+
+void cosim::proxy::remote_slave::save_state(state_index idx)
+{
+    slave_->save_state(idx);
+}
+
+void cosim::proxy::remote_slave::restore_state(state_index idx)
+{
+    slave_->restore_state(idx);
+}
+
+void cosim::proxy::remote_slave::release_state(state_index idx)
+{
+    slave_->release_state(idx);
+}
+
+cosim::serialization::node cosim::proxy::remote_slave::export_state(state_index idx) const
+{
+    proxyfmu::state::exported_state state;
+    slave_->export_state(idx, state);
+
+    // Create the exported state
+    serialization::node exportedState;
+    exportedState.put("scheme_version", state.schemeVersion);
+    exportedState.put("fmu_uuid", state.uuid);
+
+    std::vector<std::byte> vec;
+    std::transform(state.fmuState.begin(), state.fmuState.end(), std::back_inserter(vec),
+        [](unsigned char c) { return std::byte(c); });
+
+    exportedState.put("serialized_fmu_state", vec);
+    exportedState.put("setup_complete", state.setupComplete);
+    exportedState.put("simulation_started", state.simStarted);
+    return exportedState;
+}
+
+cosim::slave::state_index cosim::proxy::remote_slave::import_state(
+    const cosim::serialization::node& node)
+{
+    proxyfmu::state::exported_state state;
+    state.schemeVersion = node.get<std::int32_t>("scheme_version");
+    state.uuid = node.get<std::string>("fmu_uuid");
+
+    const auto& serializedFMUState = std::get<std::vector<std::byte>>(
+        node.get_child("serialized_fmu_state").data());
+    state.fmuState.reserve(serializedFMUState.size());
+    std::transform(serializedFMUState.begin(), serializedFMUState.end(), std::back_inserter(state.fmuState),
+        [](std::byte b) { return static_cast<unsigned char>(b); });
+
+    state.setupComplete = node.get<bool>("setup_complete");
+    state.simStarted = node.get<bool>("simulation_started");
+    return slave_->import_state(state);
 }
 
 cosim::proxy::remote_slave::~remote_slave()
