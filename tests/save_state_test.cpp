@@ -2,9 +2,9 @@
 
 #include <cosim/algorithm.hpp>
 #include <cosim/execution.hpp>
-#include <cosim/osp_config_parser.hpp>
 #include <cosim/log/simple.hpp>
 #include <cosim/observer/last_value_observer.hpp>
+#include <cosim/osp_config_parser.hpp>
 #include <cosim/serialization.hpp>
 
 #include <boost/property_tree/json_parser.hpp>
@@ -130,7 +130,7 @@ int main()
         std::vector<cosim::simulator_index> simulators;
         simulators.push_back(
             execution.add_slave(
-                std::make_unique<mock_slave>([](cosim::time_point t, [[maybe_unused]] cosim::duration d, double) {
+                std::make_unique<mock_slave>([](cosim::time_point t, cosim::duration, double) {
                     return cosim::to_double_time_point(t);
                 }),
                 "clock"));
