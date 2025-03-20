@@ -92,7 +92,8 @@ public:
     /**
      * Sets fixed precision value for floating point numbers
      *
-     * \param precision the number of digits after the decimal point
+     * \param precision the number of digits after the decimal point. The observer uses the default precision
+     *  value of 6 if the argument is less than zero.
      */
     void fixed_precision(const int precision)
     {
@@ -182,6 +183,8 @@ public:
         step_number lastStep,
         duration lastStepSize,
         time_point currentTime) override;
+
+    void state_restored(step_number currentStep, time_point currentTime) override;
 
     cosim::filesystem::path get_log_path();
 

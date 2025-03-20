@@ -21,9 +21,11 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <queue>
 
 
 struct fmi2_import_t;
+using fmi2_FMU_state_t = void*;
 
 
 namespace cosim
@@ -165,6 +167,13 @@ public:
         gsl::span<const value_reference> variables,
         gsl::span<const std::string> values) override;
 
+    state_index save_state() override;
+    void save_state(state_index stateIndex) override;
+    void restore_state(state_index stateIndex) override;
+    void release_state(state_index stateIndex) override;
+    serialization::node export_state(state_index stateIndex) const override;
+    state_index import_state(const serialization::node& exportedState) override;
+
     // fmi::slave_instance methods
     std::shared_ptr<fmi::fmu> fmu() const override
     {
@@ -178,6 +187,15 @@ public:
     fmi2_import_t* fmilib_handle() const;
 
 private:
+    struct saved_state
+    {
+        fmi2_FMU_state_t fmuState = nullptr;
+        bool setupComplete = false;
+        bool simStarted = false;
+    };
+    void copy_current_state(saved_state& state);
+    state_index store_new_state(saved_state state);
+
     std::shared_ptr<v2::fmu> fmu_;
     fmi2_import_t* handle_;
 
@@ -185,6 +203,9 @@ private:
     bool simStarted_ = false;
 
     std::string instanceName_;
+
+    std::vector<saved_state> savedStates_;
+    std::queue<state_index> savedStatesFreelist_;
 };
 
 
