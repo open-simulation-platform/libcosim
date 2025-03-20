@@ -78,6 +78,13 @@ public:
      */
     void add_power_bond(cosim::variable_id input_a, cosim::variable_id output_a, cosim::variable_id input_b, cosim::variable_id output_b);
 
+    /**
+     * Retrieves the energies in the power bond for the given simulator index.add_variable_value
+     * \param simulator_index 
+     *      The index of the simulator. 
+     */
+    std::vector<double> get_powerbond_energies(cosim::simulator_index simulator_index);
+
 private:
     class impl;
     std::unique_ptr<impl> pimpl_;

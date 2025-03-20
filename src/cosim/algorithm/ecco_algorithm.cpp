@@ -232,7 +232,7 @@ public:
         return {stepSizeTaken, std::move(finished)};
     }
 
-    void print_average_energies()
+    void get_energies()
     {
         for (std::size_t i = 0; i < energies_.size(); ++i) {
             std::cout << "Avg energy for sim idx " << i << ": " << get_mean(energies_.at(i)) << std::endl;
@@ -281,14 +281,14 @@ public:
         }
         const auto num_bonds = power_residuals.size(); // TODO: Still valid for multidimensial bonds?
         const auto error_estimate = std::sqrt(mean_square / (double)num_bonds);
-        
+
         if (prev_error_estimate_ == 0 || error_estimate == 0) {
             prev_error_estimate_ = error_estimate;
             return stepSize;
         }
 
         // Compute a new step size
-        const auto new_step_size_gain_value = params.safety_factor * std::pow(error_estimate, -params.i_gain - params.p_gain) * std::pow(prev_error_estimate_, params.p_gain);        
+        const auto new_step_size_gain_value = params.safety_factor * std::pow(error_estimate, -params.i_gain - params.p_gain) * std::pow(prev_error_estimate_, params.p_gain);
         auto new_step_size_gain = std::clamp(new_step_size_gain_value, params.min_change_rate, params.max_change_rate);
 
         prev_error_estimate_ = error_estimate;
@@ -305,6 +305,11 @@ public:
         outputVariables_.push_back(output_a);
         inputVariables_.push_back(input_b);
         outputVariables_.push_back(output_b);
+    }
+
+    std::vector<double> get_powerbond_energies(cosim::simulator_index simulator_index)
+    {
+        return energies_.at(simulator_index);
     }
 
 private:
@@ -479,7 +484,6 @@ ecco_algorithm::ecco_algorithm(ecco_algorithm_params params, std::optional<unsig
 
 ecco_algorithm::~ecco_algorithm() noexcept
 {
-    pimpl_->print_average_energies();
 }
 
 
@@ -566,6 +570,11 @@ std::pair<duration, std::unordered_set<simulator_index>> ecco_algorithm::do_step
 void ecco_algorithm::add_power_bond(cosim::variable_id input_a, cosim::variable_id output_a, cosim::variable_id input_b, cosim::variable_id output_b)
 {
     pimpl_->add_power_bond(input_a, output_a, input_b, output_b);
+}
+
+std::vector<double> ecco_algorithm::get_powerbond_energies(cosim::simulator_index simulator_index)
+{
+    return pimpl_->get_powerbond_energies(simulator_index);
 }
 
 } // namespace cosim
