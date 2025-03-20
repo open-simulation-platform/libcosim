@@ -56,6 +56,11 @@ public:
         COSIM_INPUT_CHECK(baseStepSize.count() > 0);
     }
 
+    explicit impl(fixed_step_algorithm_params params, std::optional<unsigned int> workerThreadCount)
+        : impl(params.stepSize, workerThreadCount)
+    {
+    }
+
     ~impl() noexcept = default;
 
     impl(const impl&) = delete;
@@ -435,6 +440,11 @@ private:
 
 fixed_step_algorithm::fixed_step_algorithm(duration baseStepSize, std::optional<unsigned int> workerThreadCount)
     : pimpl_(std::make_unique<impl>(baseStepSize, workerThreadCount))
+{
+}
+
+fixed_step_algorithm::fixed_step_algorithm(fixed_step_algorithm_params params, std::optional<unsigned int> workerThreadCount)
+    : fixed_step_algorithm(params.stepSize, workerThreadCount)
 {
 }
 

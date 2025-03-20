@@ -1,11 +1,12 @@
 #include <cosim/algorithm/fixed_step_algorithm.hpp>
-#include <cosim/osp_config_parser.hpp>
-#include <cosim/observer/file_observer.hpp>
 #include <cosim/exception.hpp>
 #include <cosim/execution.hpp>
 #include <cosim/function/linear_transformation.hpp>
+#include <cosim/observer/file_observer.hpp>
 #include <cosim/observer/last_value_observer.hpp>
+#include <cosim/osp_config_parser.hpp>
 #include <cosim/system_structure.hpp>
+
 #include <algorithm>
 #include <iostream>
 
@@ -22,10 +23,11 @@ int main()
 
         auto resolver = cosim::default_model_uri_resolver();
         const auto config = cosim::load_osp_config(configPath / "msmi" / "OspSystemStructure_StateInitExample.xml", *resolver);
+        auto algorithm_cfg = std::get<cosim::fixed_step_algorithm_params>(config.algorithm_configuration);
 
         auto execution = cosim::execution(
             config.start_time,
-            std::make_shared<cosim::fixed_step_algorithm>(config.step_size));
+            std::make_shared<cosim::fixed_step_algorithm>(algorithm_cfg));
 
         const auto entityMaps = cosim::inject_system_structure(
             execution, config.system_structure, config.initial_values);
@@ -34,7 +36,7 @@ int main()
         execution.add_observer(lvObserver);
         execution.simulate_until(cosim::to_time_point(0.1));
 
-        auto sim = entityMaps.simulators.at("example"); 
+        auto sim = entityMaps.simulators.at("example");
         const auto paramRef = config.system_structure.get_variable_description({"example", "Parameters.Integrator1_x0"}).reference;
         const auto outRef = config.system_structure.get_variable_description({"example", "Integrator_out1"}).reference;
 

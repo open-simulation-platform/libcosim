@@ -17,7 +17,7 @@ namespace cosim
 
 struct fixed_step_algorithm_params
 {
-    double stepSize;
+    duration stepSize;
 };
 
 /**
@@ -40,6 +40,7 @@ public:
      *      The number of worker threads to spawn for running FMUs
      */
     explicit fixed_step_algorithm(duration baseStepSize, std::optional<unsigned int> workerThreadCount = std::nullopt);
+    explicit fixed_step_algorithm(fixed_step_algorithm_params params, std::optional<unsigned int> workerThreadCount = std::nullopt);
 
     ~fixed_step_algorithm() noexcept;
 

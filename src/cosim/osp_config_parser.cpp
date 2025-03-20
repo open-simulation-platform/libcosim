@@ -1161,7 +1161,6 @@ osp_config load_osp_config(
 
     osp_config config;
     config.start_time = to_time_point(simInfo.startTime);
-    config.step_size = to_duration(simInfo.stepSize);
     if (simInfo.endTime.has_value()) {
         config.end_time = to_time_point(simInfo.endTime.value());
     }
@@ -1179,7 +1178,7 @@ osp_config load_osp_config(
         }
     } else if (algorithm == "fixedstep") {
         BOOST_LOG_SEV(log::logger(), log::info) << "Configuring algorithm: fixedStep";
-        config.algorithm_configuration = cosim::fixed_step_algorithm_params{simInfo.stepSize};
+        config.algorithm_configuration = cosim::fixed_step_algorithm_params{to_duration(simInfo.stepSize)};
     } else {
         throw std::runtime_error("Invalid algorithm choice. Allowed values are fixedStep, ecco.");
     }
