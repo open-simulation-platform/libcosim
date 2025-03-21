@@ -140,7 +140,6 @@ void system_structure::add_power_bond(std::string name, system_structure::power_
     powerBonds_.emplace(name, pb);
 }
 
-
 system_structure::entity_range system_structure::entities() const noexcept
 {
     return boost::adaptors::values(entities_);

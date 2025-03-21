@@ -23,6 +23,7 @@
 #include <xercesc/util/XMLString.hpp>
 #include <xercesc/util/XMLUni.hpp>
 
+#include <algorithm>
 #include <ios>
 #include <iostream>
 #include <memory>
@@ -804,12 +805,14 @@ constexpr uint64_t operator"" _hash(const char* str, size_t len)
 
 void add_power_bonds(const std::vector<osp_config_parser::PowerBondConnection>& pbConnections, system_structure& systemStructure)
 {
-    std::set<std::string> powerbondNames;
+    std::vector<std::string> powerBondNames;
+    std::set<std::string> uniquePowerBondNames;
     for (const auto& pbConnection : pbConnections) {
-        powerbondNames.insert(pbConnection.name);
+        powerBondNames.emplace_back(pbConnection.name);
+        uniquePowerBondNames.insert(pbConnection.name);
     }
 
-    for (const auto& pbName : powerbondNames) {
+    for (const auto& pbName : uniquePowerBondNames) {
         std::vector<osp_config_parser::PowerBondConnection> aPowerBond;
         std::copy_if(pbConnections.begin(), pbConnections.end(), std::back_inserter(aPowerBond), [pbName](osp_config_parser::PowerBondConnection conn) {
             return pbName == conn.name;
@@ -888,6 +891,17 @@ void add_power_bonds(const std::vector<osp_config_parser::PowerBondConnection>& 
         }
 
         systemStructure.add_power_bond(pbName, powerbond);
+
+        // Check that the number of unique power bond names is equal to the number of power bonds. Otherwise, it is not possible to correctly connect the bonds.
+        std::sort(powerBondNames.begin(), powerBondNames.end());
+        auto uniqueCount = static_cast<int>(std::unique(powerBondNames.begin(), powerBondNames.end()) - powerBondNames.begin());
+        auto numPowerBonds = static_cast<int>(systemStructure.get_power_bonds().size());
+
+        if (uniqueCount != systemStructure.get_power_bonds().size()) {
+            std::ostringstream oss;
+            oss << "The number of powerbonds (" << numPowerBonds << ") is not equal to the number of unique power bond names (" << uniqueCount << ") found in the configured system. Power bond names must be unique pr. bond, that is found on only and exactly the two VariableConnections that form the bond.";
+            throw std::runtime_error(oss.str());
+        }
     }
 }
 

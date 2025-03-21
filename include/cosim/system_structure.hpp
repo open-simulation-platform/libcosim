@@ -269,7 +269,8 @@ public:
     }
 
     power_bond_map get_power_bonds() const noexcept;
-    void add_power_bond(std::string name, power_bond pb);
+    void add_power_bond(std::string name, power_bond pb);    
+
 
     /**
      *  Returns a list of the entities in the system.
