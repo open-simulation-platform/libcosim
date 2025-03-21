@@ -897,7 +897,7 @@ void add_power_bonds(const std::vector<osp_config_parser::PowerBondConnection>& 
         auto uniqueCount = static_cast<int>(std::unique(powerBondNames.begin(), powerBondNames.end()) - powerBondNames.begin());
         auto numPowerBonds = static_cast<int>(systemStructure.get_power_bonds().size());
 
-        if (uniqueCount != systemStructure.get_power_bonds().size()) {
+        if (uniqueCount != numPowerBonds) {
             std::ostringstream oss;
             oss << "The number of powerbonds (" << numPowerBonds << ") is not equal to the number of unique power bond names (" << uniqueCount << ") found in the configured system. Power bond names must be unique pr. bond, that is found on only and exactly the two VariableConnections that form the bond.";
             throw std::runtime_error(oss.str());

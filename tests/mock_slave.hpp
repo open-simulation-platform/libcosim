@@ -260,8 +260,8 @@ public:
     state_index import_state(const cosim::serialization::node& exportedState) override
     {
         state ss;
-        ss.currentTime = cosim::time_point(cosim::time_point::duration(exportedState.get<cosim::time_point::rep>("currentTime")));
-        ss.currentStepSize = cosim::to_duration(exportedState.get<double>("currentStepSize"));
+        ss.currentStepSize = cosim::to_duration(exportedState.get<decltype(ss.realIn)>("currentStepSize"));
+        ss.currentTime = cosim::to_time_point(exportedState.get<decltype(ss.realIn)>("currentTime"));
         ss.realIn = exportedState.get<decltype(ss.realIn)>("realIn");
         ss.intIn = exportedState.get<decltype(ss.intIn)>("intIn");
         ss.boolIn = exportedState.get<decltype(ss.boolIn)>("boolIn");
