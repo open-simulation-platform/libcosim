@@ -16,7 +16,7 @@
                 <xs:element name="Simulators" type="osp:simulators"/>
                 <xs:element name="Functions" type="osp:functions" minOccurs="0"/>
                 <xs:element name="Connections" type="osp:connections" minOccurs="0"/>
-                <xs:element name="EccoConfiguration" type="osp:eccoconfiguration" minOccurs="0" maxOccurs="0"/>
+                <xs:element name="EccoConfiguration" type="osp:eccoconfiguration" minOccurs="0" maxOccurs="1"/>
             </xs:sequence>
             <xs:attribute name="version" type="xs:normalizedString" use="required" fixed="0.1">
                 <xs:annotation>
