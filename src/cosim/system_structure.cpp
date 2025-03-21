@@ -130,6 +130,15 @@ void system_structure::add_entity(const entity& e)
     entities_.emplace(e.name, e);
 }
 
+system_structure::power_bond_map system_structure::get_power_bonds() const noexcept
+{
+    return powerBonds_;
+}
+
+void system_structure::add_power_bond(std::string name, system_structure::power_bond pb)
+{
+    powerBonds_.emplace(name, pb);
+}
 
 system_structure::entity_range system_structure::entities() const noexcept
 {

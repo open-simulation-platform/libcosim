@@ -46,7 +46,7 @@ int main()
         std::vector<cosim::simulator_index> slaves;
         slaves.push_back(
             execution.add_slave(
-                std::make_unique<mock_slave>([](cosim::time_point t, double) {
+                std::make_unique<mock_slave>([](cosim::time_point t, cosim::duration, double) {
                     return cosim::to_double_time_point(t);
                 }),
                 "clock_slave"));

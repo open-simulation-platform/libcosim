@@ -9,13 +9,14 @@
     <xs:element name="OspSystemStructure">
         <xs:complexType>
             <xs:sequence>
-                <xs:element name="StartTime" minOccurs="0" default="0.0" type="xs:double"/>
-                <xs:element name="EndTime" minOccurs="0" type="xs:double"/>
-                <xs:element name="BaseStepSize" minOccurs="0" type="xs:double"/>
-                <xs:element name="Algorithm" minOccurs="0" default="fixedStep" type="xs:string"/>
+                <xs:element name="StartTime" minOccurs="0" maxOccurs="1" default="0.0" type="xs:double"/>
+                <xs:element name="EndTime" minOccurs="0" maxOccurs="1" type="xs:double"/>
+                <xs:element name="BaseStepSize" minOccurs="0" maxOccurs="1" type="xs:double"/>
+                <xs:element name="Algorithm" minOccurs="0" maxOccurs="1" default="fixedStep" type="xs:string"/>
                 <xs:element name="Simulators" type="osp:simulators"/>
                 <xs:element name="Functions" type="osp:functions" minOccurs="0"/>
                 <xs:element name="Connections" type="osp:connections" minOccurs="0"/>
+                <xs:element name="EccoConfiguration" type="osp:eccoconfiguration" minOccurs="0" maxOccurs="1"/>
             </xs:sequence>
             <xs:attribute name="version" type="xs:normalizedString" use="required" fixed="0.1">
                 <xs:annotation>
@@ -24,6 +25,20 @@
             </xs:attribute>
         </xs:complexType>
     </xs:element>
+    <xs:complexType name="eccoconfiguration">
+        <xs:all>
+            <xs:element name="SafetyFactor" type="xs:double"/>
+            <xs:element name="StepSize" type="xs:double"/>
+            <xs:element name="MinimumStepSize" type="xs:double"/>
+            <xs:element name="MaximumStepSize" type="xs:double"/>
+            <xs:element name="MinimumChangeRate" type="xs:double"/>
+            <xs:element name="MaximumChangeRate" type="xs:double"/>
+            <xs:element name="ProportionalGain" type="xs:double"/>
+            <xs:element name="IntegralGain" type="xs:double"/>
+            <xs:element name="RelativeTolerance" type="xs:double"/>
+            <xs:element name="AbsoluteTolerance" type="xs:double"/>
+        </xs:all>
+    </xs:complexType>
     <xs:complexType name="connections">
         <xs:choice maxOccurs="unbounded">
             <xs:element name="VariableConnection" minOccurs="0" maxOccurs="unbounded">
@@ -31,6 +46,7 @@
                     <xs:sequence>
                         <xs:element name="Variable" type="osp:variableEndpoint" minOccurs="2" maxOccurs="2"/>
                     </xs:sequence>
+                    <xs:attribute name="powerBond" use="optional" type="xs:string"/>
                 </xs:complexType>
             </xs:element>
             <xs:element name="SignalConnection" minOccurs="0" maxOccurs="unbounded">
@@ -46,6 +62,7 @@
                     <xs:sequence>
                         <xs:element name="VariableGroup" type="osp:variableEndpoint" minOccurs="2" maxOccurs="2"/>
                     </xs:sequence>
+                    <xs:attribute name="powerBond" use="optional" type="xs:string"/>
                 </xs:complexType>
             </xs:element>
             <xs:element name="SignalGroupConnection" minOccurs="0" maxOccurs="unbounded">
@@ -61,6 +78,7 @@
     <xs:complexType name="variableEndpoint">
         <xs:attribute name="simulator" use="required" type="xs:string"/>
         <xs:attribute name="name" use="required" type="xs:string"/>
+        <xs:attribute name="causality" type="xs:string"/>
     </xs:complexType>
     <xs:complexType name="signalEndpoint">
         <xs:attribute name="function" use="required" type="xs:string"/>

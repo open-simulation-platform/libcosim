@@ -7,6 +7,7 @@
 
 #include "osp_system_structure_schema.hpp"
 
+#include "cosim/algorithm.hpp"
 #include "cosim/function/linear_transformation.hpp"
 #include "cosim/function/vector_sum.hpp"
 #include "cosim/log/logger.hpp"
@@ -15,21 +16,26 @@
 #include <boost/lexical_cast.hpp>
 #include <xercesc/dom/DOM.hpp>
 #include <xercesc/framework/MemBufInputSource.hpp>
+#include <xercesc/framework/StdOutFormatTarget.hpp>
 #include <xercesc/framework/Wrapper4InputSource.hpp>
+#include <xercesc/framework/XMLFormatter.hpp>
 #include <xercesc/util/PlatformUtils.hpp>
 #include <xercesc/util/XMLString.hpp>
+#include <xercesc/util/XMLUni.hpp>
 
+#include <algorithm>
 #include <ios>
+#include <iostream>
 #include <memory>
+#include <optional>
+#include <set>
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <typeinfo>
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <iostream>
-#include <optional>
-
 
 namespace cosim
 {
@@ -119,9 +125,11 @@ public:
     struct SimulationInformation
     {
         std::string description;
+        std::string algorithm;
         double stepSize = 0.1;
         double startTime = 0.0;
         std::optional<double> endTime;
+        std::optional<cosim::ecco_algorithm_params> eccoConfiguration;
     };
 
     const SimulationInformation& get_simulation_information() const;
@@ -192,14 +200,16 @@ public:
         SignalGroup outGroup;
     };
 
-    const std::unordered_map<std::string, LinearTransformationFunction>& get_linear_transformation_functions() const;
-    const std::unordered_map<std::string, SumFunction>& get_sum_functions() const;
-    const std::unordered_map<std::string, VectorSumFunction>& get_vector_sum_functions() const;
+    [[nodiscard]] const std::unordered_map<std::string, LinearTransformationFunction>&
+    get_linear_transformation_functions() const;
+    [[nodiscard]] const std::unordered_map<std::string, SumFunction>& get_sum_functions() const;
+    [[nodiscard]] const std::unordered_map<std::string, VectorSumFunction>& get_vector_sum_functions() const;
 
     struct VariableEndpoint
     {
-        std::string simulator;
-        std::string name;
+        std::string simulator{};
+        std::string name{};
+        std::optional<std::string> causality{};
     };
 
     struct SignalEndpoint
@@ -220,11 +230,24 @@ public:
         VariableEndpoint variable;
     };
 
+    struct PowerBondConnection
+    {
+        std::string name;
+        VariableConnection connection;
+    };
 
-    const std::vector<VariableConnection>& get_variable_connections() const;
-    const std::vector<SignalConnection>& get_signal_connections() const;
-    const std::vector<VariableConnection>& get_variable_group_connections() const;
-    const std::vector<SignalConnection>& get_signal_group_connections() const;
+    struct PowerBond
+    {
+        std::string name;
+        PowerBondConnection connA;
+        PowerBondConnection connB;
+    };
+
+    [[nodiscard]] const std::vector<VariableConnection>& get_variable_connections() const;
+    [[nodiscard]] const std::vector<SignalConnection>& get_signal_connections() const;
+    [[nodiscard]] const std::vector<VariableConnection>& get_variable_group_connections() const;
+    [[nodiscard]] const std::vector<SignalConnection>& get_signal_group_connections() const;
+    [[nodiscard]] const std::vector<PowerBondConnection>& get_power_bond_connections() const;
 
 private:
     SystemDescription systemDescription_;
@@ -237,6 +260,8 @@ private:
     std::vector<VariableConnection> variableGroupConnections_;
     std::vector<SignalConnection> signalConnections_;
     std::vector<SignalConnection> signalGroupConnections_;
+    std::vector<PowerBondConnection> powerBondConnections_;
+    std::vector<PowerBond> powerBonds_;
     static variable_type parse_variable_type(const std::string&);
     static bool parse_boolean_value(const std::string& s);
 };
@@ -257,6 +282,24 @@ T attribute_or(xercesc::DOMElement* el, const char* attributeName, T defaultValu
 
 } // namespace
 
+[[maybe_unused]] std::ostream& operator<<(std::ostream& o, const osp_config_parser::VariableEndpoint& var)
+{
+    const auto causality = var.causality.has_value() ? var.causality.value() : "";
+    return o << var.simulator << ", " << var.name << ", " << causality << std::endl;
+}
+
+[[maybe_unused]] std::ostream& operator<<(std::ostream& o, const osp_config_parser::VariableConnection& var)
+{
+    return o << "Variable connection [simulator, variable name, ecco]:" << std::endl
+             << var.variableA << var.variableB;
+}
+
+[[maybe_unused]] std::ostream& operator<<(std::ostream& o, const osp_config_parser::PowerBondConnection& pb)
+{
+    return o << "Powerbond " << pb.name << " has the connection" << std::endl
+             << pb.connection;
+}
+
 osp_config_parser::osp_config_parser(
     const cosim::filesystem::path& configPath)
 {
@@ -270,6 +313,10 @@ osp_config_parser::osp_config_parser(
     const auto parser = static_cast<xercesc::DOMImplementationLS*>(domImpl)->createLSParser(
         xercesc::DOMImplementationLS::MODE_SYNCHRONOUS,
         tc("http://www.w3.org/2001/XMLSchema").get());
+
+    auto outputTarget = ((xercesc::DOMImplementationLS*)domImpl)->createLSOutput();
+    auto outputFormat = new xercesc::StdOutFormatTarget();
+    outputTarget->setByteStream(outputFormat);
 
     error_handler errorHandler;
 
@@ -439,23 +486,69 @@ osp_config_parser::osp_config_parser(
         simulationInformation_.endTime = boost::lexical_cast<double>(tc(etNodes->item(0)->getTextContent()).get());
     }
 
+    auto saNodes = rootElement->getElementsByTagName(tc("Algorithm").get());
+    if (saNodes->getLength() > 0) {
+        simulationInformation_.algorithm = std::string(tc(saNodes->item(0)->getTextContent()).get());
+    }
+
+    auto eccoConfigurationElement = static_cast<xercesc::DOMElement*>(rootElement->getElementsByTagName(tc("EccoConfiguration").get())->item(0));
+    if (eccoConfigurationElement) {
+        const auto safetyFactor = eccoConfigurationElement->getElementsByTagName(tc("SafetyFactor").get())->item(0)->getTextContent();
+        const auto stepSize = eccoConfigurationElement->getElementsByTagName(tc("StepSize").get())->item(0)->getTextContent();
+        const auto minimumStepSize = eccoConfigurationElement->getElementsByTagName(tc("MinimumStepSize").get())->item(0)->getTextContent();
+        const auto maximumStepSize = eccoConfigurationElement->getElementsByTagName(tc("MaximumStepSize").get())->item(0)->getTextContent();
+        const auto minimumChangeRate = eccoConfigurationElement->getElementsByTagName(tc("MinimumChangeRate").get())->item(0)->getTextContent();
+        const auto maximumChangeRate = eccoConfigurationElement->getElementsByTagName(tc("MaximumChangeRate").get())->item(0)->getTextContent();
+        const auto proportionalGain = eccoConfigurationElement->getElementsByTagName(tc("ProportionalGain").get())->item(0)->getTextContent();
+        const auto integralGain = eccoConfigurationElement->getElementsByTagName(tc("IntegralGain").get())->item(0)->getTextContent();
+        const auto relativeTolerance = eccoConfigurationElement->getElementsByTagName(tc("RelativeTolerance").get())->item(0)->getTextContent();
+        const auto absoluteTolerance = eccoConfigurationElement->getElementsByTagName(tc("AbsoluteTolerance").get())->item(0)->getTextContent();
+
+        cosim::ecco_algorithm_params eccoConfig{};
+
+        eccoConfig.safety_factor = boost::lexical_cast<double>(tc(safetyFactor));
+        eccoConfig.step_size = cosim::to_duration(boost::lexical_cast<double>(tc(stepSize)));
+        eccoConfig.min_step_size = cosim::to_duration(boost::lexical_cast<double>(tc(minimumStepSize)));
+        eccoConfig.max_step_size = cosim::to_duration(boost::lexical_cast<double>(tc(maximumStepSize)));
+        eccoConfig.min_change_rate = boost::lexical_cast<double>(tc(minimumChangeRate));
+        eccoConfig.max_change_rate = boost::lexical_cast<double>(tc(maximumChangeRate));
+        eccoConfig.p_gain = boost::lexical_cast<double>(tc(proportionalGain));
+        eccoConfig.i_gain = boost::lexical_cast<double>(tc(integralGain));
+        eccoConfig.rel_tolerance = boost::lexical_cast<double>(tc(relativeTolerance));
+        eccoConfig.abs_tolerance = boost::lexical_cast<double>(tc(absoluteTolerance));
+
+        simulationInformation_.eccoConfiguration = eccoConfig;
+    }
+
     auto connectionsElement = static_cast<xercesc::DOMElement*>(rootElement->getElementsByTagName(tc("Connections").get())->item(0));
     if (connectionsElement) {
         auto variableConnectionsElement = connectionsElement->getElementsByTagName(tc("VariableConnection").get());
         for (size_t i = 0; i < variableConnectionsElement->getLength(); i++) {
             auto connectionElement = static_cast<xercesc::DOMElement*>(variableConnectionsElement->item(i));
+
             auto a = static_cast<xercesc::DOMElement*>(connectionElement->getElementsByTagName(tc("Variable").get())->item(0));
             auto b = static_cast<xercesc::DOMElement*>(connectionElement->getElementsByTagName(tc("Variable").get())->item(1));
 
             std::string simulatorA = tc(a->getAttribute(tc("simulator").get())).get();
             std::string nameA = tc(a->getAttribute(tc("name").get())).get();
-            VariableEndpoint veA = {simulatorA, nameA};
+            std::string varA = tc(a->getAttribute(tc("causality").get())).get();
+            VariableEndpoint veA = {simulatorA, nameA, varA};
 
             std::string simulatorB = tc(b->getAttribute(tc("simulator").get())).get();
             std::string nameB = tc(b->getAttribute(tc("name").get())).get();
-            VariableEndpoint veB = {simulatorB, nameB};
+            std::string varB = tc(b->getAttribute(tc("causality").get())).get();
+            VariableEndpoint veB = {simulatorB, nameB, varB};
 
-            variableConnections_.push_back({veA, veB});
+            VariableConnection vc = {veA, veB};
+
+            auto isPowerbond = connectionElement->hasAttribute(tc("powerBond").get());
+            if (isPowerbond) {
+                std::string powerbondName = tc(connectionElement->getAttribute(tc("powerBond").get())).get();
+                PowerBondConnection pbc = {powerbondName, vc};
+                powerBondConnections_.emplace_back(pbc);
+            }
+
+            variableConnections_.push_back(vc);
         }
 
         auto signalConnectionsElement = connectionsElement->getElementsByTagName(tc("SignalConnection").get());
@@ -488,6 +581,15 @@ osp_config_parser::osp_config_parser(
             std::string simulatorB = tc(b->getAttribute(tc("simulator").get())).get();
             std::string nameB = tc(b->getAttribute(tc("name").get())).get();
             VariableEndpoint veB = {simulatorB, nameB};
+
+            VariableConnection vc = {veA, veB};
+
+            auto isPowerbond = connectionElement->hasAttribute(tc("powerBond").get());
+            if (isPowerbond) {
+                std::string powerbondName = tc(connectionElement->getAttribute(tc("powerBond").get())).get();
+                PowerBondConnection pbc = {powerbondName, vc};
+                powerBondConnections_.emplace_back(pbc);
+            }
 
             variableGroupConnections_.push_back({veA, veB});
         }
@@ -559,6 +661,11 @@ const std::vector<osp_config_parser::VariableConnection>& osp_config_parser::get
 const std::vector<osp_config_parser::SignalConnection>& osp_config_parser::get_signal_group_connections() const
 {
     return signalGroupConnections_;
+}
+
+const std::vector<osp_config_parser::PowerBondConnection>& osp_config_parser::get_power_bond_connections() const
+{
+    return powerBondConnections_;
 }
 
 variable_type osp_config_parser::parse_variable_type(const std::string& str)
@@ -682,6 +789,122 @@ osp_config_parser::SignalConnection find_signal_connection(
 
 } // namespace
 
+constexpr uint64_t str_hash(std::string_view str)
+{
+    uint64_t hash = 0;
+    for (char c : str) {
+        hash = (hash * 131) + c;
+    }
+    return hash;
+}
+
+constexpr uint64_t operator"" _hash(const char* str, size_t len)
+{
+    return str_hash(std::string_view(str, len));
+}
+
+void add_power_bonds(const std::vector<osp_config_parser::PowerBondConnection>& pbConnections, system_structure& systemStructure)
+{
+    std::vector<std::string> powerBondNames;
+    std::set<std::string> uniquePowerBondNames;
+    for (const auto& pbConnection : pbConnections) {
+        powerBondNames.emplace_back(pbConnection.name);
+        uniquePowerBondNames.insert(pbConnection.name);
+    }
+
+    for (const auto& pbName : uniquePowerBondNames) {
+        std::vector<osp_config_parser::PowerBondConnection> aPowerBond;
+        std::copy_if(pbConnections.begin(), pbConnections.end(), std::back_inserter(aPowerBond), [pbName](osp_config_parser::PowerBondConnection conn) {
+            return pbName == conn.name;
+        });
+
+        if (aPowerBond.size() != 2) {
+            std::ostringstream oss;
+            oss << "The powerbond " << pbName << " does not have 2 connections! Number of connections found was " << aPowerBond.size();
+            throw std::runtime_error(oss.str());
+        }
+
+        const auto& connectionA = aPowerBond[0];
+        const auto& connectionB = aPowerBond[1];
+
+        assert(connectionA.name == connectionB.name);
+
+        auto variableA = cosim::full_variable_name{connectionA.connection.variableA.simulator, connectionA.connection.variableA.name};
+        auto variableB = cosim::full_variable_name{connectionA.connection.variableB.simulator, connectionA.connection.variableB.name};
+        auto variableC = cosim::full_variable_name{connectionB.connection.variableA.simulator, connectionB.connection.variableA.name};
+        auto variableD = cosim::full_variable_name{connectionB.connection.variableB.simulator, connectionB.connection.variableB.name};
+
+        auto connAVariables = std::vector<osp_config_parser::VariableEndpoint>{connectionA.connection.variableA, connectionA.connection.variableB};
+        auto connBVariables = std::vector<osp_config_parser::VariableEndpoint>{connectionB.connection.variableA, connectionB.connection.variableB};
+
+        auto varA = connectionA.connection.variableA.causality;
+        auto varB = connectionA.connection.variableB.causality;
+        auto varC = connectionB.connection.variableA.causality;
+        auto varD = connectionB.connection.variableB.causality;
+
+        if ((varA.has_value() && !varB.has_value()) || (!varA.has_value() && varB.has_value())) {
+            std::ostringstream oss;
+            oss << "Missing causality for powerbond connection " << connectionA.connection.variableA.name << " <-> " << connectionA.connection.variableB.name << ". Both variables in a powerbond must have an input and output causality specified as attribute.";
+            throw std::runtime_error(oss.str());
+        }
+
+        if ((varC.has_value() && !varD.has_value()) || (!varC.has_value() && varD.has_value())) {
+            std::ostringstream oss;
+            oss << "Missing causality for powerbond connection " << connectionB.connection.variableA.name << " <-> " << connectionB.connection.variableB.name << ". Both variables in a powerbond must have an input and output causality specified as attribute.";
+            throw std::runtime_error(oss.str());
+        }
+
+        auto powerbond = cosim::system_structure::power_bond{};
+
+        for (auto& var : connAVariables) {
+            auto variable = cosim::full_variable_name{var.simulator, var.name};
+            switch (str_hash(var.causality.value())) {
+                case "input"_hash:
+                    powerbond.input_a = variable;
+                    break;
+                case "output"_hash:
+                    powerbond.output_b = variable;
+                    break;
+                default:
+                    std::ostringstream oss;
+                    oss << "Invalid causality value for variable " << var.name << ": " << var.causality.value() << ". Accepted values are input, output.";
+                    throw std::runtime_error(oss.str());
+                    break;
+            }
+        }
+
+        for (auto& var : connBVariables) {
+            auto variable = cosim::full_variable_name{var.simulator, var.name};
+            switch (str_hash(var.causality.value())) {
+                case "input"_hash:
+                    powerbond.input_b = variable;
+                    break;
+                case "output"_hash:
+                    powerbond.output_a = variable;
+                    break;
+                default:
+                    std::ostringstream oss;
+                    oss << "Invalid causality value for variable " << var.name << ": " << var.causality.value() << ". Accepted values are input, output.";
+                    throw std::runtime_error(oss.str());
+                    break;
+            }
+        }
+
+        systemStructure.add_power_bond(pbName, powerbond);
+
+        // Check that the number of unique power bond names is equal to the number of power bonds. Otherwise, it is not possible to correctly connect the bonds.
+        std::sort(powerBondNames.begin(), powerBondNames.end());
+        auto uniqueCount = static_cast<int>(std::unique(powerBondNames.begin(), powerBondNames.end()) - powerBondNames.begin());
+        auto numPowerBonds = static_cast<int>(systemStructure.get_power_bonds().size());
+
+        if (uniqueCount != numPowerBonds) {
+            std::ostringstream oss;
+            oss << "The number of powerbonds (" << numPowerBonds << ") is not equal to the number of unique power bond names (" << uniqueCount << ") found in the configured system. Power bond names must be unique pr. bond, that is found on only and exactly the two VariableConnections that form the bond.";
+            throw std::runtime_error(oss.str());
+        }
+    }
+}
+
 void connect_variables(
     const std::vector<osp_config_parser::VariableConnection>& variableConnections,
     system_structure& systemStructure)
@@ -696,6 +919,7 @@ void connect_variables(
 
         const auto causalityA =
             systemStructure.get_variable_description(variableA).causality;
+
         if (causalityA == variable_causality::output ||
             causalityA == variable_causality::calculated_parameter) {
             systemStructure.connect_variables(variableA, variableB);
@@ -951,9 +1175,26 @@ osp_config load_osp_config(
 
     osp_config config;
     config.start_time = to_time_point(simInfo.startTime);
-    config.step_size = to_duration(simInfo.stepSize);
     if (simInfo.endTime.has_value()) {
         config.end_time = to_time_point(simInfo.endTime.value());
+    }
+
+    auto algorithm = simInfo.algorithm;
+    std::transform(algorithm.begin(), algorithm.end(), algorithm.begin(),
+        [](unsigned char c) { return std::tolower(c); });
+
+    if (algorithm == "ecco") {
+        if (simInfo.eccoConfiguration.has_value()) {
+            BOOST_LOG_SEV(log::logger(), log::info) << "Configuring algorithm: ecco";
+            config.algorithm_configuration = simInfo.eccoConfiguration.value();
+        } else {
+            throw std::runtime_error("No configuration parameters found for ecco algorithm.");
+        }
+    } else if (algorithm == "fixedstep") {
+        BOOST_LOG_SEV(log::logger(), log::info) << "Configuring algorithm: fixedStep";
+        config.algorithm_configuration = cosim::fixed_step_algorithm_params{to_duration(simInfo.stepSize)};
+    } else {
+        throw std::runtime_error("Invalid algorithm choice. Allowed values are fixedStep, ecco.");
     }
 
     auto simulators = parser.get_elements();
@@ -996,6 +1237,7 @@ osp_config load_osp_config(
     connect_linear_transformation_functions(parser.get_linear_transformation_functions(), parser.get_signal_connections(), config.system_structure);
     connect_sum_functions(parser.get_sum_functions(), parser.get_signal_connections(), config.system_structure);
     connect_vector_sum_functions(parser.get_vector_sum_functions(), parser.get_signal_group_connections(), config.system_structure, emds);
+    add_power_bonds(parser.get_power_bond_connections(), config.system_structure);
 
     return config;
 }

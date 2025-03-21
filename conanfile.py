@@ -10,8 +10,11 @@ from conan.tools.files import copy, load
 class LibcosimConan(ConanFile):
     # Basic package info
     name = "libcosim"
+
     def set_version(self):
-        self.version = load(self, os.path.join(self.recipe_folder, "version.txt")).strip()
+        self.version = load(
+            self, os.path.join(self.recipe_folder, "version.txt")
+        ).strip()
 
     # Metadata
     license = "MPL-2.0"
@@ -73,10 +76,8 @@ class LibcosimConan(ConanFile):
         # Copy dependencies to the folder where executables (tests, mainly)
         # will be placed, so it's easier to run them.
         bindir = os.path.join(
-            self.build_folder,
-            "output",
-            str(self.settings.build_type).lower(),
-            "bin")
+            self.build_folder, "output", str(self.settings.build_type).lower(), "bin"
+        )
         for dep in self.dependencies.values():
             for depdir in dep.cpp_info.bindirs:
                 copy(self, "*.dll", depdir, bindir, keep_path=False)
@@ -115,9 +116,14 @@ class LibcosimConan(ConanFile):
 
     def validate(self):
         if self.options.shared and not self.dependencies["boost"].options.shared:
-            raise ConanInvalidConfiguration("Option libcosim:shared=True also requires option boost:shared=True")
+            raise ConanInvalidConfiguration(
+                "Option libcosim:shared=True also requires option boost:shared=True"
+            )
 
     # Helper functions
 
     def _is_tests_enabled(self):
-        return os.getenv("LIBCOSIM_RUN_TESTS_ON_CONAN_BUILD", "False").lower() in ("true", "1")
+        return os.getenv("LIBCOSIM_RUN_TESTS_ON_CONAN_BUILD", "False").lower() in (
+            "true",
+            "1",
+        )
