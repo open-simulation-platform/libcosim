@@ -38,6 +38,9 @@ namespace cosim
  */
 struct full_variable_name
 {
+    /// Default constructor
+    full_variable_name() = default;
+    
     /// Constructor for simulator variables.
     full_variable_name(std::string simulatorName, std::string variableName)
         : entity_name(std::move(simulatorName))
@@ -217,16 +220,16 @@ public:
     struct power_bond
     {
         /// The input_a variable in the bond, according to the description of the ecco algorithm.
-        full_variable_name input_a{"", ""};
+        full_variable_name input_a;
 
         /// The output_a variable in the bond, according to the description of the ecco algorithm.
-        full_variable_name output_a{"", ""};
+        full_variable_name output_a;
 
         /// The input_b variable in the bond, according to the description of the ecco algorithm.
-        full_variable_name input_b{"", ""};
+        full_variable_name input_b;
 
         /// The output_b variable in the bond, according to the description of the ecco algorithm.
-        full_variable_name output_b{"", ""};
+        full_variable_name output_b;
     };
 
 private:
