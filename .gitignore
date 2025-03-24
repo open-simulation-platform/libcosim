@@ -3,13 +3,16 @@ build/
 debug-build/
 release-build/
 
+# CTest:
+Testing/
+
 # JetBrains CLion:
 .idea/
 cmake-build-*/
 
 # Visual Studio Code
 .vscode/
-.clj-kondo/
 .lsp/
+.clj-kondo
 
 CMakeUserPresets.json

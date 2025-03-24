@@ -18,7 +18,7 @@ void test(const cosim::filesystem::path& configPath, size_t expectedNumConnectio
     const auto config = cosim::load_osp_config(configPath, *resolver);
     auto execution = cosim::execution(
         config.start_time,
-        std::make_shared<cosim::fixed_step_algorithm>(config.step_size));
+        std::make_shared<cosim::fixed_step_algorithm>(std::get<cosim::fixed_step_algorithm_params>(config.algorithm_configuration)));
 
     const auto entityMaps = cosim::inject_system_structure(
         execution, config.system_structure, config.initial_values);

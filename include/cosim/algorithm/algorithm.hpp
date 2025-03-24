@@ -41,6 +41,7 @@ namespace cosim
  *    2. `initialize()`
  *    3. `do_step()` (possibly repeatedly)
  */
+
 class algorithm
 {
 public:

@@ -3,15 +3,17 @@
  *  License, v. 2.0. If a copy of the MPL was not distributed with this
  *  file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
-#include "cosim/algorithm/fixed_step_algorithm.hpp"
+#include "cosim/algorithm/ecco_algorithm.hpp"
 
 #include "cosim/error.hpp"
 #include "cosim/exception.hpp"
 #include "cosim/log/logger.hpp"
+#include "cosim/time.hpp"
 #include "cosim/utility/thread_pool.hpp"
 
 #include <algorithm>
 #include <cstdlib>
+#include <iostream>
 #include <numeric>
 #include <sstream>
 #include <unordered_map>
@@ -20,45 +22,18 @@
 
 namespace cosim
 {
-namespace
-{
 
-int calculate_decimation_factor(
-    std::string_view name,
-    duration baseStepSize,
-    duration simulatorStepSize)
-{
-    if (simulatorStepSize == duration::zero()) return 1;
-    const auto result = std::div(simulatorStepSize.count(), baseStepSize.count());
-    const int factor = std::max<int>(1, static_cast<int>(result.quot));
-    if (result.rem > 0 || result.quot < 1) {
-        duration actualStepSize = baseStepSize * factor;
-        const auto startTime = time_point();
-        BOOST_LOG_SEV(log::logger(), log::warning)
-            << "Effective step size for " << name
-            << " will be " << to_double_duration(actualStepSize, startTime) << " s"
-            << " instead of configured value "
-            << to_double_duration(simulatorStepSize, startTime) << " s";
-    }
-    return factor;
-}
-
-} // namespace
-
-
-class fixed_step_algorithm::impl
+class ecco_algorithm::impl
 {
 public:
-    explicit impl(duration baseStepSize, std::optional<unsigned int> workerThreadCount)
-        : baseStepSize_(baseStepSize)
+    explicit impl(ecco_algorithm_params params, std::optional<unsigned int> workerThreadCount)
+        : params_(params)
+        , stepSize_(params.step_size)
         , pool_(std::min(workerThreadCount.value_or(max_threads_), max_threads_))
     {
-        COSIM_INPUT_CHECK(baseStepSize.count() > 0);
-    }
-
-    explicit impl(fixed_step_algorithm_params params, std::optional<unsigned int> workerThreadCount)
-        : impl(params.stepSize, workerThreadCount)
-    {
+        COSIM_INPUT_CHECK(params_.min_step_size.count() > 0);
+        COSIM_INPUT_CHECK(params_.step_size >= params_.min_step_size);
+        COSIM_INPUT_CHECK(params_.step_size <= params_.max_step_size);
     }
 
     ~impl() noexcept = default;
@@ -69,12 +44,10 @@ public:
     impl(impl&&) = delete;
     impl& operator=(impl&&) = delete;
 
-    void add_simulator(simulator_index i, simulator* s, duration stepSizeHint)
+    void add_simulator(simulator_index i, simulator* s, [[maybe_unused]] duration stepSizeHint)
     {
         assert(simulators_.count(i) == 0);
         simulators_[i].sim = s;
-        simulators_[i].decimationFactor =
-            calculate_decimation_factor(s->name(), baseStepSize_, stepSizeHint);
     }
 
     void remove_simulator(simulator_index i)
@@ -111,7 +84,6 @@ public:
         auto& simInfo = simulators_.at(input.simulator);
         simInfo.sim->expose_for_setting(input.type, input.reference);
         funInfo.outgoingSimConnections.push_back({output, input});
-        update_function_decimation_factor(funInfo);
     }
 
     void disconnect_variable(variable_id input)
@@ -173,9 +145,16 @@ public:
                 });
             }
             pool_.wait_for_tasks_to_finish();
-            calculate_and_transfer();
-        }
 
+            for (const auto& s : simulators_) {
+                transfer_variables(s.second.outgoingSimConnections);
+                transfer_variables(s.second.outgoingFunConnections);
+            }
+            for (const auto& f : functions_) {
+                f.second.fun->calculate();
+                transfer_variables(f.second.outgoingSimConnections);
+            }
+        }
 
         for (auto& s : simulators_) {
             pool_.submit([&] {
@@ -183,7 +162,6 @@ public:
             });
         }
         pool_.wait_for_tasks_to_finish();
-        calculate_and_transfer();
     }
 
     std::pair<duration, std::unordered_set<simulator_index>> do_step(time_point currentT)
@@ -192,81 +170,173 @@ public:
         bool failed = false;
         std::stringstream errMessages;
         std::unordered_set<simulator_index> finished;
-
         // Initiate simulator time steps.
+
         for (auto& s : simulators_) {
             auto& info = s.second;
-            if (stepCounter_ % info.decimationFactor == 0) {
-                pool_.submit([&] {
-                    try {
-                        const auto stepResult = info.sim->do_step(currentT, baseStepSize_ * info.decimationFactor);
+            pool_.submit([&] {
+                try {
+                    info.stepResult = info.sim->do_step(currentT, stepSize_);
 
-                        if (stepResult != step_result::complete) {
-                            std::lock_guard<std::mutex> lck(m);
-                            errMessages
-                                << info.sim->name() << ": "
-                                << "Step not complete" << '\n';
-                            failed = true;
-                        }
-
-                    } catch (std::exception& ex) {
+                    if (info.stepResult != step_result::complete) {
                         std::lock_guard<std::mutex> lck(m);
                         errMessages
                             << info.sim->name() << ": "
-                            << ex.what() << '\n';
+                            << "Step not complete" << '\n';
                         failed = true;
                     }
-                });
-            }
-        }
-        ++stepCounter_;
-        for (auto& [idx, info] : simulators_) {
-            if (stepCounter_ % info.decimationFactor == 0) {
-                finished.insert(idx);
-            }
+
+                } catch (std::exception& ex) {
+                    std::lock_guard<std::mutex> lck(m);
+                    errMessages
+                        << info.sim->name() << ": "
+                        << ex.what() << '\n';
+                    failed = true;
+                }
+            });
         }
 
-        // Wait for all time steps to finish, then calculate functions and
-        // transfer variables.
+        ++stepCounter_;
+
+        for (auto& [idx, info] : simulators_) {
+            finished.insert(idx);
+        }
+
         pool_.wait_for_tasks_to_finish();
+
         if (failed) {
             throw error(make_error_code(errc::simulation_error), errMessages.str());
         }
-        calculate_and_transfer();
 
-        return {baseStepSize_, std::move(finished)};
+        const auto stepSizeTaken = stepSize_;
+        if (stepCounter_ >= 2) {
+            stepSize_ = adjust_step_size(currentT, stepSize_, params_);
+        }
+
+        // Transfer the outputs from simulators that have finished their
+        // individual time steps within this co-simulation time step.
+        for (auto simIndex : finished) {
+            auto& simInfo = simulators_.at(simIndex);
+            transfer_variables(simInfo.outgoingSimConnections);
+            transfer_variables(simInfo.outgoingFunConnections);
+        }
+
+        // Calculate functions and transfer their outputs to simulators.
+        for (const auto& f : functions_) {
+            const auto& info = f.second;
+            info.fun->calculate();
+            transfer_variables(info.outgoingSimConnections);
+        }
+
+
+        return {stepSizeTaken, std::move(finished)};
     }
 
     serialization::node export_current_state() const
     {
-        auto exportedState = serialization::node();
-        exportedState.put("type", std::string("fixed_step_algorithm"));
-        exportedState.put("step_counter", stepCounter_);
-        return exportedState;
+        throw error(make_error_code(errc::unsupported_feature), "State saving not yet supported by the ECCO algorithm!");
     }
 
-    void import_state(const serialization::node& exportedState)
+    void import_state([[maybe_unused]] const serialization::node& exportedState)
     {
-        try {
-            if (exportedState.get<std::string>("type") != "fixed_step_algorithm") {
-                throw std::exception();
-            }
-            stepCounter_ = exportedState.get<std::int64_t>("step_counter");
-        } catch (...) {
-            throw error(
-                make_error_code(errc::bad_file),
-                "The serialized algorithm state is invalid or corrupt");
+        throw error(make_error_code(errc::unsupported_feature), "State saving not yet supported by the ECCO algorithm!");
+    }
+
+    void get_energies()
+    {
+        for (std::size_t i = 0; i < energies_.size(); ++i) {
+            std::cout << "Avg energy for sim idx " << i << ": " << get_mean(energies_.at(i)) << std::endl;
         }
     }
 
-    void set_stepsize_decimation_factor(cosim::simulator_index i, int factor)
+    duration adjust_step_size(time_point currentTime, const duration& stepSize, const ecco_algorithm_params& params)
     {
-        COSIM_INPUT_CHECK(factor > 0);
-        simulators_.at(i).decimationFactor = factor;
+        std::vector<double> power_residuals{};
+        std::vector<double> power{};
+
+        const auto dt = to_double_duration(stepSize, currentTime);
+
+        for (std::size_t i = 0; i < inputVariables_.size(); i += 2) {
+            auto input_a = inputVariables_.at(i);
+            auto input_b = inputVariables_.at(i + 1);
+            auto output_a = outputVariables_.at(i);
+            auto output_b = outputVariables_.at(i + 1);
+
+            double input_a_value = simulators_.at(input_a.simulator).sim->get_real(input_a.reference);
+            double input_b_value = simulators_.at(input_b.simulator).sim->get_real(input_b.reference);
+            double output_a_value = simulators_.at(output_a.simulator).sim->get_real(output_a.reference);
+            double output_b_value = simulators_.at(output_b.simulator).sim->get_real(output_b.reference);
+
+            double power_a = input_a_value * output_a_value;
+            energies_.at(i).push_back(power_a * dt);
+
+            double power_b = input_b_value * output_b_value;
+            energies_.at(i + 1).push_back(power_b * dt);
+
+            double power_residual = std::abs(power_a - power_b);
+
+            power_residuals.push_back(power_residual);
+        }
+
+        if (power_residuals.empty()) {
+            return stepSize;
+        }
+
+        double max_power_residual = *std::max_element(power_residuals.begin(), power_residuals.end());
+        const auto energy_level = max_power_residual * dt;
+        double mean_square{};
+        for (auto power_residual : power_residuals) {
+            const auto energy_residual = power_residual * dt;
+            mean_square += std::pow(energy_residual / (params.abs_tolerance + params.rel_tolerance * energy_level), 2);
+        }
+        const auto num_bonds = power_residuals.size(); // TODO: Still valid for multidimensial bonds?
+        const auto error_estimate = std::sqrt(mean_square / (double)num_bonds);
+
+        if (prev_error_estimate_ == 0 || error_estimate == 0) {
+            prev_error_estimate_ = error_estimate;
+            return stepSize;
+        }
+
+        // Compute a new step size
+        const auto new_step_size_gain_value = params.safety_factor * std::pow(error_estimate, -params.i_gain - params.p_gain) * std::pow(prev_error_estimate_, params.p_gain);
+        auto new_step_size_gain = std::clamp(new_step_size_gain_value, params.min_change_rate, params.max_change_rate);
+
+        prev_error_estimate_ = error_estimate;
+        const auto new_step_size = to_duration(new_step_size_gain * to_double_duration(stepSize, currentTime));
+        const auto actual_new_step_size = std::clamp(new_step_size, params.min_step_size, params.max_step_size);
+        return actual_new_step_size;
     }
 
+    void add_power_bond(cosim::variable_id input_a, cosim::variable_id output_a, cosim::variable_id input_b, cosim::variable_id output_b)
+    {
+        energies_.emplace_back();
+        energies_.emplace_back();
+        inputVariables_.push_back(input_a);
+        outputVariables_.push_back(output_a);
+        inputVariables_.push_back(input_b);
+        outputVariables_.push_back(output_b);
+    }
+
+    std::vector<double> get_powerbond_energies(cosim::simulator_index simulator_index)
+    {
+        return energies_.at(simulator_index);
+    }
 
 private:
+    std::vector<cosim::variable_id> inputVariables_{};
+    std::vector<cosim::variable_id> outputVariables_{};
+    std::vector<std::vector<double>> energies_{};
+
+    double get_mean(const std::vector<double>& elems)
+    {
+        if (elems.empty()) return 0.0;
+        double sum{};
+        for (auto elem : elems) {
+            sum += elem;
+        }
+        return sum / (double)elems.size();
+    }
+
     struct connection_ss
     {
         variable_id source;
@@ -288,7 +358,7 @@ private:
     struct simulator_info
     {
         simulator* sim;
-        int decimationFactor = 1;
+        step_result stepResult;
         std::vector<connection_ss> outgoingSimConnections;
         std::vector<connection_sf> outgoingFunConnections;
     };
@@ -296,7 +366,6 @@ private:
     struct function_info
     {
         function* fun;
-        int decimationFactor = 1;
         std::vector<connection_fs> outgoingSimConnections;
     };
 
@@ -320,68 +389,24 @@ private:
         }
     }
 
-    void update_function_decimation_factor(function_info& f)
-    {
-        f.decimationFactor = std::accumulate(
-            f.outgoingSimConnections.begin(),
-            f.outgoingSimConnections.end(),
-            1,
-            [&](int current, const auto& connection) {
-                return std::lcm(
-                    current,
-                    simulators_.at(connection.target.simulator).decimationFactor);
-            });
-    }
-
-    void calculate_and_transfer()
-    {
-        // Transfer the outputs from simulators that have finished their
-        // individual time steps within the current co-simulation time step.
-        for (const auto& s : simulators_) {
-            if (stepCounter_ % s.second.decimationFactor == 0) {
-                transfer_variables(s.second.outgoingSimConnections);
-                transfer_variables(s.second.outgoingFunConnections);
-            }
-        }
-        // Calculate functions and transfer their outputs to simulators.
-        for (const auto& f : functions_) {
-            if (stepCounter_ % f.second.decimationFactor == 0) {
-                f.second.fun->calculate();
-                transfer_variables(f.second.outgoingSimConnections);
-            }
-        }
-    }
-
     void transfer_variables(const std::vector<connection_ss>& connections)
     {
         for (const auto& c : connections) {
-            const auto sdf = simulators_.at(c.source.simulator).decimationFactor;
-            const auto tdf = simulators_.at(c.target.simulator).decimationFactor;
-            if (stepCounter_ % std::lcm(sdf, tdf) == 0) {
-                transfer_variable(c);
-            }
+            transfer_variable(c);
         }
     }
 
     void transfer_variables(const std::vector<connection_sf>& connections)
     {
         for (const auto& c : connections) {
-            const auto sdf = simulators_.at(c.source.simulator).decimationFactor;
-            const auto tdf = functions_.at(c.target.function).decimationFactor;
-            if (stepCounter_ % std::lcm(sdf, tdf) == 0) {
-                transfer_variable(c);
-            }
+            transfer_variable(c);
         }
     }
 
     void transfer_variables(const std::vector<connection_fs>& connections)
     {
         for (const auto& c : connections) {
-            const auto sdf = functions_.at(c.source.function).decimationFactor;
-            const auto tdf = simulators_.at(c.target.simulator).decimationFactor;
-            if (stepCounter_ % std::lcm(sdf, tdf) == 0) {
-                transfer_variable(c);
-            }
+            transfer_variable(c);
         }
     }
 
@@ -448,53 +473,45 @@ private:
         }
     }
 
-    // Algorithm parameters
-    const duration baseStepSize_;
+    const ecco_algorithm_params params_;
+    duration stepSize_;
     time_point startTime_;
     std::optional<time_point> stopTime_;
-    unsigned int max_threads_ = std::thread::hardware_concurrency() - 1;
-
-    // System structure
     std::unordered_map<simulator_index, simulator_info> simulators_;
     std::unordered_map<function_index, function_info> functions_;
-
-    // Simulation state
-    std::int64_t stepCounter_ = 0;
-
-    // Other
+    int64_t stepCounter_ = 0;
+    unsigned int max_threads_ = std::thread::hardware_concurrency() - 1;
     utility::thread_pool pool_;
+    double prev_error_estimate_{1.0};
 };
 
 
-fixed_step_algorithm::fixed_step_algorithm(duration baseStepSize, std::optional<unsigned int> workerThreadCount)
-    : pimpl_(std::make_unique<impl>(baseStepSize, workerThreadCount))
-{
-}
-
-fixed_step_algorithm::fixed_step_algorithm(fixed_step_algorithm_params params, std::optional<unsigned int> workerThreadCount)
-    : fixed_step_algorithm(params.stepSize, workerThreadCount)
+ecco_algorithm::ecco_algorithm(ecco_algorithm_params params, std::optional<unsigned int> workerThreadCount)
+    : pimpl_(std::make_unique<impl>(params, workerThreadCount))
 {
 }
 
 
-fixed_step_algorithm::~fixed_step_algorithm() noexcept = default;
+ecco_algorithm::~ecco_algorithm() noexcept
+{
+}
 
 
-fixed_step_algorithm::fixed_step_algorithm(fixed_step_algorithm&& other) noexcept
+ecco_algorithm::ecco_algorithm(ecco_algorithm&& other) noexcept
     : pimpl_(std::move(other.pimpl_))
 {
 }
 
 
-fixed_step_algorithm& fixed_step_algorithm::operator=(
-    fixed_step_algorithm&& other) noexcept
+ecco_algorithm& ecco_algorithm::operator=(
+    ecco_algorithm&& other) noexcept
 {
     pimpl_ = std::move(other.pimpl_);
     return *this;
 }
 
 
-void fixed_step_algorithm::add_simulator(
+void ecco_algorithm::add_simulator(
     simulator_index i,
     simulator* s,
     duration stepSizeHint)
@@ -503,44 +520,44 @@ void fixed_step_algorithm::add_simulator(
 }
 
 
-void fixed_step_algorithm::remove_simulator(simulator_index i)
+void ecco_algorithm::remove_simulator(simulator_index i)
 {
     pimpl_->remove_simulator(i);
 }
 
 
-void fixed_step_algorithm::add_function(function_index i, function* f)
+void ecco_algorithm::add_function(function_index i, function* f)
 {
     pimpl_->add_function(i, f);
 }
 
-void fixed_step_algorithm::connect_variables(variable_id output, variable_id input)
+void ecco_algorithm::connect_variables(variable_id output, variable_id input)
 {
     pimpl_->connect_variables(output, input);
 }
 
-void fixed_step_algorithm::connect_variables(variable_id output, function_io_id input)
+void ecco_algorithm::connect_variables(variable_id output, function_io_id input)
 {
     pimpl_->connect_variables(output, input);
 }
 
-void fixed_step_algorithm::connect_variables(function_io_id output, variable_id input)
+void ecco_algorithm::connect_variables(function_io_id output, variable_id input)
 {
     pimpl_->connect_variables(output, input);
 }
 
-void fixed_step_algorithm::disconnect_variable(variable_id input)
+void ecco_algorithm::disconnect_variable(variable_id input)
 {
     pimpl_->disconnect_variable(input);
 }
 
-void fixed_step_algorithm::disconnect_variable(function_io_id input)
+void ecco_algorithm::disconnect_variable(function_io_id input)
 {
     pimpl_->disconnect_variable(input);
 }
 
 
-void fixed_step_algorithm::setup(
+void ecco_algorithm::setup(
     time_point startTime,
     std::optional<time_point> stopTime)
 {
@@ -548,32 +565,36 @@ void fixed_step_algorithm::setup(
 }
 
 
-void fixed_step_algorithm::initialize()
+void ecco_algorithm::initialize()
 {
     pimpl_->initialize();
 }
 
 
-std::pair<duration, std::unordered_set<simulator_index>> fixed_step_algorithm::do_step(
+std::pair<duration, std::unordered_set<simulator_index>> ecco_algorithm::do_step(
     time_point currentT)
 {
     return pimpl_->do_step(currentT);
 }
 
-serialization::node fixed_step_algorithm::export_current_state() const
+serialization::node ecco_algorithm::export_current_state() const
 {
     return pimpl_->export_current_state();
 }
 
-void fixed_step_algorithm::import_state(const serialization::node& exportedState)
+void ecco_algorithm::import_state(const serialization::node& exportedState)
 {
     pimpl_->import_state(exportedState);
 }
 
-void fixed_step_algorithm::set_stepsize_decimation_factor(cosim::simulator_index simulator, int factor)
+void ecco_algorithm::add_power_bond(cosim::variable_id input_a, cosim::variable_id output_a, cosim::variable_id input_b, cosim::variable_id output_b)
 {
-    pimpl_->set_stepsize_decimation_factor(simulator, factor);
+    pimpl_->add_power_bond(input_a, output_a, input_b, output_b);
 }
 
+std::vector<double> ecco_algorithm::get_powerbond_energies(cosim::simulator_index simulator_index)
+{
+    return pimpl_->get_powerbond_energies(simulator_index);
+}
 
 } // namespace cosim
