@@ -242,4 +242,4 @@ First OSP JIP partner release
 [v0.10.2]: https://github.com/open-simulation-platform/cse-core/compare/v0.10.1...v0.10.2
 [v0.10.3]: https://github.com/open-simulation-platform/cse-core/compare/v0.10.2...v0.10.3
 [v0.10.4]: https://github.com/open-simulation-platform/cse-core/compare/v0.10.3...v0.10.4
-[v0.10.5]: https://github.com/open-simulation-platform/cse-core/compare/v0.10.4...v0.11.0
+[v0.11.0]: https://github.com/open-simulation-platform/cse-core/compare/v0.10.4...v0.11.0
