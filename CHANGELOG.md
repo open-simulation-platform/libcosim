@@ -3,12 +3,12 @@ All notable changes to libcosim will be documented in this file. This includes n
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
-### [v0.10.5] - 2025-03-31
+### [v0.11.0] - 2025-03-31
 ##### New
-* The ECCO (Energy Conservation-based Co-simulation) algorithm has received a reference implementation that is now configurable through OspSystemStructure. See the tests prefixed with `ecco` for details. 
-* Libcosim now supports the state saving API from FMI2. FMUs that support this feature should flag it by setting the `canGetAndSetFMUstate` and `canSerializeFMUstate` fields in their model description to `true`. See the tests prefixed with `state_saving` for details.
+* The ECCO (Energy Conservation-based Co-simulation) algorithm has received a reference implementation that is now configurable through OspSystemStructure. See the tests prefixed with `ecco_algorithm` for details. 
+* Libcosim now supports the state saving and serialization API from FMI2. Serialization to file is done with the CBOR (Concise Binary Object Representation) format. FMUs that support this feature should flag it by setting the `canGetAndSetFMUstate` and `canSerializeFMUstate` fields in their model description to `true`. See the test prefixed with `save_state` for details.
 ##### Fixes
-* Some exceptions thrown when parsing configuration XMLs have been changed to `std::runtime_error` where less appropriate classes for runtime errors like `std::logic_error` or `std::out_of_range` were previously used.
+* Some exceptions thrown when parsing configuration XMLs have been changed to `std::runtime_error`, where less appropriate classes for runtime errors like `std::logic_error` or `std::out_of_range` were previously used.
 
 ### [v0.10.4] - 2024-12-12
 ##### Fixed
@@ -242,4 +242,4 @@ First OSP JIP partner release
 [v0.10.2]: https://github.com/open-simulation-platform/cse-core/compare/v0.10.1...v0.10.2
 [v0.10.3]: https://github.com/open-simulation-platform/cse-core/compare/v0.10.2...v0.10.3
 [v0.10.4]: https://github.com/open-simulation-platform/cse-core/compare/v0.10.3...v0.10.4
-[v0.10.5]: https://github.com/open-simulation-platform/cse-core/compare/v0.10.4...v0.10.5
+[v0.10.5]: https://github.com/open-simulation-platform/cse-core/compare/v0.10.4...v0.11.0
