@@ -52,6 +52,7 @@ class LibcosimConan(ConanFile):
                           transitive_libs=True)
         self.requires("yaml-cpp/[~0.8]")
         self.requires("xerces-c/[~3.2]")
+        self.requires("libevent/[>=2.1.12")
 
     # Exports
     exports = "version.txt"
