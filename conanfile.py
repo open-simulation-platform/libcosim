@@ -40,7 +40,7 @@ class LibcosimConan(ConanFile):
 
     # Dependencies/requirements
     def requirements(self):
-        self.tool_requires("cmake/[>=3.19]")
+        self.tool_requires("cmake/[>=3.19 <4.0]")
         self.requires("fmilibrary/[~2.3]")
         self.requires("libcbor/0.11.0")
         self.requires("libzip/[~1.11]")
