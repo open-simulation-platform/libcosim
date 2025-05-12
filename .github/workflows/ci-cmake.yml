@@ -30,7 +30,7 @@ jobs:
               libmsgsl-dev \
               libyaml-cpp-dev \
               libxerces-c-dev \
-              libzip-dev zipcmp zipmerge ziptool
+              libzip-dev zipcmp zipmerge ziptool libcbor-dev
           RUN wget \
               --no-check-certificate \
               "https://github.com/viproma/debian-fmilib/releases/download/debian%2F2.0.3-1/libfmilib2_2.0.3-1_amd64.deb" \
