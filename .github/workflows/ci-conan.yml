@@ -51,6 +51,7 @@ jobs:
             --options="${{ matrix.option_shared }}" \
             --update \
             --build=missing \
+            --build=b2 \
             --user=osp \
             --channel="${CHANNEL}" \
             .
