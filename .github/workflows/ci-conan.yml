@@ -36,7 +36,7 @@ jobs:
           set -eu
           cd /mnt/source
           pip install conan --upgrade
-          conan remote add osp https://osp.jfrog.io/artifactory/api/conan/conan-local --force --index 0
+          conan remote add osp https://osp.jfrog.io/artifactory/api/conan/conan-local --force
           REFNAME="${GITHUB_REF#refs/*/}"
           VERSION="v$(<version.txt)"
           if [[ $GITHUB_REF == refs/tags/* ]] && [[ $REFNAME == $VERSION ]]; then CHANNEL="stable"
@@ -51,7 +51,7 @@ jobs:
             --options="${{ matrix.option_shared }}" \
             --update \
             --build=missing \
-            --build=compatible:b2/* \
+            --build=b2/* \
             --user=osp \
             --channel="${CHANNEL}" \
             .
