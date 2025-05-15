@@ -37,6 +37,7 @@ jobs:
               "https://github.com/viproma/debian-fmilib/releases/download/debian%2F2.0.3-1/libfmilib2-dev_2.0.3-1_amd64.deb"
           RUN dpkg -i libfmilib2_2.0.3-1_amd64.deb libfmilib2-dev_2.0.3-1_amd64.deb
           RUN wget https://github.com/PJK/libcbor/archive/refs/tags/v0.11.0.tar.gz && \
+                tar xaf v0.11.0.tar.gz && cd v0.11.0 \
                 cmake -DCMAKE_BUILD_TYPE=Release libcbor && make && make install
           COPY entrypoint.sh /
           ENTRYPOINT /entrypoint.sh
