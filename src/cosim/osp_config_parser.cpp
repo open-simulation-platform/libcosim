@@ -209,7 +209,6 @@ public:
     {
         std::string simulator{};
         std::string name{};
-        std::optional<std::string> causality{};
     };
 
     struct SignalEndpoint
@@ -284,8 +283,7 @@ T attribute_or(xercesc::DOMElement* el, const char* attributeName, T defaultValu
 
 [[maybe_unused]] std::ostream& operator<<(std::ostream& o, const osp_config_parser::VariableEndpoint& var)
 {
-    const auto causality = var.causality.has_value() ? var.causality.value() : "";
-    return o << var.simulator << ", " << var.name << ", " << causality << std::endl;
+    return o << var.simulator << ", " << var.name << std::endl;
 }
 
 [[maybe_unused]] std::ostream& operator<<(std::ostream& o, const osp_config_parser::VariableConnection& var)
@@ -531,13 +529,11 @@ osp_config_parser::osp_config_parser(
 
             std::string simulatorA = tc(a->getAttribute(tc("simulator").get())).get();
             std::string nameA = tc(a->getAttribute(tc("name").get())).get();
-            std::string varA = tc(a->getAttribute(tc("causality").get())).get();
-            VariableEndpoint veA = {simulatorA, nameA, varA};
+            VariableEndpoint veA = {simulatorA, nameA};
 
             std::string simulatorB = tc(b->getAttribute(tc("simulator").get())).get();
             std::string nameB = tc(b->getAttribute(tc("name").get())).get();
-            std::string varB = tc(b->getAttribute(tc("causality").get())).get();
-            VariableEndpoint veB = {simulatorB, nameB, varB};
+            VariableEndpoint veB = {simulatorB, nameB};
 
             VariableConnection vc = {veA, veB};
 
@@ -789,18 +785,29 @@ osp_config_parser::SignalConnection find_signal_connection(
 
 } // namespace
 
-constexpr uint64_t str_hash(std::string_view str)
+void validate_power_bond(system_structure& systemStructure, std::string name, cosim::system_structure::power_bond pb)
 {
-    uint64_t hash = 0;
-    for (char c : str) {
-        hash = (hash * 131) + c;
-    }
-    return hash;
-}
+    std::vector<cosim::system_structure::connection> connections = {pb.connection_a, pb.connection_b};
 
-constexpr uint64_t operator"" _hash(const char* str, size_t len)
-{
-    return str_hash(std::string_view(str, len));
+    for (const auto& conn : connections) {
+        auto source_variable = systemStructure.get_variable_description(conn.source);
+        auto target_variable = systemStructure.get_variable_description(conn.target);
+
+        std::cout << "Powerbond " << name << " has source variable " << source_variable.name << " with causality " << source_variable.causality << std::endl;
+        std::cout << "Powerbond " << name << " has target variable " << target_variable.name << " with causality " << target_variable.causality << std::endl;
+
+        if (source_variable.causality != variable_causality::output) {
+            std::ostringstream oss;
+            oss << "Failed validating powerbond: source causality is not output for variable " << source_variable.name;
+            throw std::runtime_error(oss.str());
+        }
+
+        if (target_variable.causality != variable_causality::input) {
+            std::ostringstream oss;
+            oss << "Failed validating powerbond: source causality is not input for variable " << target_variable.name;
+            throw std::runtime_error(oss.str());
+        }
+    }
 }
 
 void add_power_bonds(const std::vector<osp_config_parser::PowerBondConnection>& pbConnections, system_structure& systemStructure)
@@ -829,79 +836,25 @@ void add_power_bonds(const std::vector<osp_config_parser::PowerBondConnection>& 
 
         assert(connectionA.name == connectionB.name);
 
+        /*
         auto variableA = cosim::full_variable_name{connectionA.connection.variableA.simulator, connectionA.connection.variableA.name};
         auto variableB = cosim::full_variable_name{connectionA.connection.variableB.simulator, connectionA.connection.variableB.name};
         auto variableC = cosim::full_variable_name{connectionB.connection.variableA.simulator, connectionB.connection.variableA.name};
         auto variableD = cosim::full_variable_name{connectionB.connection.variableB.simulator, connectionB.connection.variableB.name};
+        */
 
-        auto connAVariables = std::vector<osp_config_parser::VariableEndpoint>{connectionA.connection.variableA, connectionA.connection.variableB};
-        auto connBVariables = std::vector<osp_config_parser::VariableEndpoint>{connectionB.connection.variableA, connectionB.connection.variableB};
-
-        auto varA = connectionA.connection.variableA.causality;
-        auto varB = connectionA.connection.variableB.causality;
-        auto varC = connectionB.connection.variableA.causality;
-        auto varD = connectionB.connection.variableB.causality;
-
-        if ((varA.has_value() && !varB.has_value()) || (!varA.has_value() && varB.has_value())) {
-            std::ostringstream oss;
-            oss << "Missing causality for powerbond connection " << connectionA.connection.variableA.name << " <-> " << connectionA.connection.variableB.name << ". Both variables in a powerbond must have an input and output causality specified as attribute.";
-            throw std::runtime_error(oss.str());
-        }
-
-        if ((varC.has_value() && !varD.has_value()) || (!varC.has_value() && varD.has_value())) {
-            std::ostringstream oss;
-            oss << "Missing causality for powerbond connection " << connectionB.connection.variableA.name << " <-> " << connectionB.connection.variableB.name << ". Both variables in a powerbond must have an input and output causality specified as attribute.";
-            throw std::runtime_error(oss.str());
-        }
 
         auto connection_a_variable_a = cosim::full_variable_name{connectionA.connection.variableA.simulator, connectionA.connection.variableA.name};
         auto connection_a_variable_b = cosim::full_variable_name{connectionA.connection.variableB.simulator, connectionA.connection.variableB.name};
         auto connection_b_variable_a = cosim::full_variable_name{connectionB.connection.variableA.simulator, connectionB.connection.variableA.name};
-        auto connection_b_variable_b = cosim::full_variable_name{connectionB.connection.variableB.simulator, connectionA.connection.variableB.name};
-
-        std::cout << "Connection A Variable A: " << connection_a_variable_a << std::endl; 
-        std::cout << "Connection A Variable B: " << connection_a_variable_b << std::endl; 
-        std::cout << "Connection B Variable A: " << connection_b_variable_a << std::endl; 
-        std::cout << "Connection B Variable B: " << connection_b_variable_b << std::endl; 
+        auto connection_b_variable_b = cosim::full_variable_name{connectionB.connection.variableB.simulator, connectionB.connection.variableB.name};
 
         auto connection_a = cosim::system_structure::connection{connection_a_variable_a, connection_a_variable_b};
         auto connection_b = cosim::system_structure::connection{connection_b_variable_a, connection_b_variable_b};
-        auto powerbond = cosim::system_structure::power_bond{};
 
-        for (auto& var : connAVariables) {
-            auto variable = cosim::full_variable_name{var.simulator, var.name};
-            switch (str_hash(var.causality.value())) {
-                case "input"_hash:
-                    powerbond.input_a = variable;
-                    break;
-                case "output"_hash:
-                    powerbond.output_b = variable;
-                    break;
-                default:
-                    std::ostringstream oss;
-                    oss << "Invalid causality value for variable " << var.name << ": " << var.causality.value() << ". Accepted values are input, output.";
-                    throw std::runtime_error(oss.str());
-                    break;
-            }
-        }
+        auto powerbond = cosim::system_structure::power_bond{connection_a, connection_b};
 
-        for (auto& var : connBVariables) {
-            auto variable = cosim::full_variable_name{var.simulator, var.name};
-            switch (str_hash(var.causality.value())) {
-                case "input"_hash:
-                    powerbond.input_b = variable;
-                    break;
-                case "output"_hash:
-                    powerbond.output_a = variable;
-                    break;
-                default:
-                    std::ostringstream oss;
-                    oss << "Invalid causality value for variable " << var.name << ": " << var.causality.value() << ". Accepted values are input, output.";
-                    throw std::runtime_error(oss.str());
-                    break;
-            }
-        }
-
+        validate_power_bond(systemStructure, pbName, powerbond);
         systemStructure.add_power_bond(pbName, powerbond);
 
         // Check that the number of unique power bond names is equal to the number of power bonds. Otherwise, it is not possible to correctly connect the bonds.

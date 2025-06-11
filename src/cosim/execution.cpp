@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <atomic>
+#include <iostream>
 #include <sstream>
 #include <unordered_map>
 #include <utility>
@@ -295,7 +296,7 @@ public:
         try {
             lastStep_ = exportedState.get<step_number>("last_step_number");
             currentTime_ = time_point(duration(
-                    exportedState.get<std::int64_t>("current_time_ticks")));
+                exportedState.get<std::int64_t>("current_time_ticks")));
             const auto& simulatorState = exportedState.get_child("simulator_state");
             for (const auto& sim : simulators_) {
                 const auto savedStateIndex =
@@ -637,10 +638,10 @@ entity_index_maps inject_system_structure(
         }
 
         for (const auto& [name, pb] : powerbonds) {
-            auto input_a = make_variable_id(sys, indexMaps, pb.input_a);
-            auto output_a = make_variable_id(sys, indexMaps, pb.output_a);
-            auto input_b = make_variable_id(sys, indexMaps, pb.input_b);
-            auto output_b = make_variable_id(sys, indexMaps, pb.output_b);
+            auto input_a = make_variable_id(sys, indexMaps, pb.connection_a.target);
+            auto output_a = make_variable_id(sys, indexMaps, pb.connection_a.source);
+            auto input_b = make_variable_id(sys, indexMaps, pb.connection_b.target);
+            auto output_b = make_variable_id(sys, indexMaps, pb.connection_b.source);
 
             algorithm->add_power_bond(input_a, output_a, input_b, output_b);
         }
