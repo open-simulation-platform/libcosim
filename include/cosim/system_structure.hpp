@@ -219,6 +219,8 @@ public:
     /// Information about a powerbond connection. For use with the ecco algorithm only.
     struct power_bond
     {
+        connection connection_a;
+        connection connection_b;
         /// The input_a variable in the bond, according to the description of the ecco algorithm.
         full_variable_name input_a;
 

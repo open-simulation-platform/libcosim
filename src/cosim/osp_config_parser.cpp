@@ -854,6 +854,18 @@ void add_power_bonds(const std::vector<osp_config_parser::PowerBondConnection>& 
             throw std::runtime_error(oss.str());
         }
 
+        auto connection_a_variable_a = cosim::full_variable_name{connectionA.connection.variableA.simulator, connectionA.connection.variableA.name};
+        auto connection_a_variable_b = cosim::full_variable_name{connectionA.connection.variableB.simulator, connectionA.connection.variableB.name};
+        auto connection_b_variable_a = cosim::full_variable_name{connectionB.connection.variableA.simulator, connectionB.connection.variableA.name};
+        auto connection_b_variable_b = cosim::full_variable_name{connectionB.connection.variableB.simulator, connectionA.connection.variableB.name};
+
+        std::cout << "Connection A Variable A: " << connection_a_variable_a << std::endl; 
+        std::cout << "Connection A Variable B: " << connection_a_variable_b << std::endl; 
+        std::cout << "Connection B Variable A: " << connection_b_variable_a << std::endl; 
+        std::cout << "Connection B Variable B: " << connection_b_variable_b << std::endl; 
+
+        auto connection_a = cosim::system_structure::connection{connection_a_variable_a, connection_a_variable_b};
+        auto connection_b = cosim::system_structure::connection{connection_b_variable_a, connection_b_variable_b};
         auto powerbond = cosim::system_structure::power_bond{};
 
         for (auto& var : connAVariables) {

@@ -10,6 +10,7 @@ set(tests
     "monitor_modified_variables_test"
     "multi_fixed_step_algorithm_test"
     "osp_config_parser_test"
+    "powerbond_parsing_test"
     "ramp_modifier_test"
     "save_state_test"
     "time_series_observer_test"
