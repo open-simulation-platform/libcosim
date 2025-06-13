@@ -13,6 +13,7 @@
 #include <cctype>
 #include <cstddef>
 #include <iomanip>
+#include <iostream>
 #include <sstream>
 #include <unordered_map>
 
@@ -136,7 +137,7 @@ system_structure::power_bond_map system_structure::get_power_bonds() const noexc
 }
 
 void system_structure::add_power_bond(std::string name, system_structure::power_bond pb)
-{
+{    
     powerBonds_.emplace(name, pb);
 }
 

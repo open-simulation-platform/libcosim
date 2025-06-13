@@ -82,14 +82,30 @@ public:
 
     /**
      * Retrieves the energies in the power bond for the given simulator index.add_variable_value
-     * \param simulator_index 
-     *      The index of the simulator. 
+     * \param simulator_index
+     *      The index of the simulator.
      */
     std::vector<double> get_powerbond_energies(cosim::simulator_index simulator_index);
 
+    /**
+     * Enables the step-size adjusting controller. By default the controller is enabled, so this function has no effect unless the controller has been
+     * disabled first by calling disable_step_size_controller. This may be useful if the coupling error indicates that adjusting the step size
+     * is necessary.
+     */
+    void enable_step_size_controller();
+
+    /**
+     * Disables the step-size adjusting controller. By default the controller is enabled, so this function should be called before
+     * running the simulation if the intent is to run with it off. Toggling the flag to off in the middle of a simulation run has the effect of maintaining
+     * the last adjusted step size value. This may be useful to improve simulation speeds when the error is sufficiently low with the current adjusted
+     * step size.
+     */
+    void disable_step_size_controller();
+
+
 private:
     class impl;
-    std::unique_ptr<impl> pimpl_;
+    std::unique_ptr<impl> pimpl_;    
 };
 
 } // namespace cosim

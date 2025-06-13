@@ -209,7 +209,7 @@ public:
         }
 
         const auto stepSizeTaken = stepSize_;
-        if (stepCounter_ >= 2) {
+        if (stepCounter_ >= 2 && controllerEnabled_) {
             stepSize_ = adjust_step_size(currentT, stepSize_, params_);
         }
 
@@ -228,7 +228,7 @@ public:
             transfer_variables(info.outgoingSimConnections);
         }
 
-
+        // Have to return size of the current step, since step is taken before any step size adjustment.
         return {stepSizeTaken, std::move(finished)};
     }
 
@@ -285,6 +285,7 @@ public:
         double max_power_residual = *std::max_element(power_residuals.begin(), power_residuals.end());
         const auto energy_level = max_power_residual * dt;
         double mean_square{};
+
         for (auto power_residual : power_residuals) {
             const auto energy_residual = power_residual * dt;
             mean_square += std::pow(energy_residual / (params.abs_tolerance + params.rel_tolerance * energy_level), 2);
@@ -303,8 +304,9 @@ public:
 
         prev_error_estimate_ = error_estimate;
         const auto new_step_size = to_duration(new_step_size_gain * to_double_duration(stepSize, currentTime));
-        const auto actual_new_step_size = std::clamp(new_step_size, params.min_step_size, params.max_step_size);
-        return actual_new_step_size;
+        const auto new_step_size_clamped = std::clamp(new_step_size, params.min_step_size, params.max_step_size);
+
+        return new_step_size_clamped;
     }
 
     void add_power_bond(cosim::variable_id input_a, cosim::variable_id output_a, cosim::variable_id input_b, cosim::variable_id output_b)
@@ -320,6 +322,16 @@ public:
     std::vector<double> get_powerbond_energies(cosim::simulator_index simulator_index)
     {
         return energies_.at(simulator_index);
+    }
+
+    void enable_step_size_controller()
+    {
+        controllerEnabled_ = true;
+    }
+
+    void disable_step_size_controller()
+    {
+        controllerEnabled_ = false;
     }
 
 private:
@@ -483,6 +495,7 @@ private:
     unsigned int max_threads_ = std::thread::hardware_concurrency() - 1;
     utility::thread_pool pool_;
     double prev_error_estimate_{1.0};
+    bool controllerEnabled_ = true;
 };
 
 
@@ -595,6 +608,16 @@ void ecco_algorithm::add_power_bond(cosim::variable_id input_a, cosim::variable_
 std::vector<double> ecco_algorithm::get_powerbond_energies(cosim::simulator_index simulator_index)
 {
     return pimpl_->get_powerbond_energies(simulator_index);
+}
+
+void ecco_algorithm::enable_step_size_controller()
+{
+    pimpl_->enable_step_size_controller();
+}
+
+void ecco_algorithm::disable_step_size_controller()
+{
+    pimpl_->disable_step_size_controller();
 }
 
 } // namespace cosim

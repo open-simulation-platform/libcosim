@@ -798,13 +798,13 @@ void validate_power_bond(system_structure& systemStructure, std::string name, co
 
         if (source_variable.causality != variable_causality::output) {
             std::ostringstream oss;
-            oss << "Failed validating powerbond: source causality is not output for variable " << source_variable.name;
+            oss << "Failed validating powerbond: causality is not output for source variable " << source_variable.name;
             throw std::runtime_error(oss.str());
         }
 
         if (target_variable.causality != variable_causality::input) {
             std::ostringstream oss;
-            oss << "Failed validating powerbond: source causality is not input for variable " << target_variable.name;
+            oss << "Failed validating powerbond: causality is not input for target variable " << target_variable.name;
             throw std::runtime_error(oss.str());
         }
     }
@@ -816,6 +816,7 @@ void add_power_bonds(const std::vector<osp_config_parser::PowerBondConnection>& 
     std::set<std::string> uniquePowerBondNames;
     for (const auto& pbConnection : pbConnections) {
         powerBondNames.emplace_back(pbConnection.name);
+        std::cout << "Inserting powerbond " << pbConnection.name << std::endl;
         uniquePowerBondNames.insert(pbConnection.name);
     }
 
@@ -836,14 +837,6 @@ void add_power_bonds(const std::vector<osp_config_parser::PowerBondConnection>& 
 
         assert(connectionA.name == connectionB.name);
 
-        /*
-        auto variableA = cosim::full_variable_name{connectionA.connection.variableA.simulator, connectionA.connection.variableA.name};
-        auto variableB = cosim::full_variable_name{connectionA.connection.variableB.simulator, connectionA.connection.variableB.name};
-        auto variableC = cosim::full_variable_name{connectionB.connection.variableA.simulator, connectionB.connection.variableA.name};
-        auto variableD = cosim::full_variable_name{connectionB.connection.variableB.simulator, connectionB.connection.variableB.name};
-        */
-
-
         auto connection_a_variable_a = cosim::full_variable_name{connectionA.connection.variableA.simulator, connectionA.connection.variableA.name};
         auto connection_a_variable_b = cosim::full_variable_name{connectionA.connection.variableB.simulator, connectionA.connection.variableB.name};
         auto connection_b_variable_a = cosim::full_variable_name{connectionB.connection.variableA.simulator, connectionB.connection.variableA.name};
@@ -854,19 +847,17 @@ void add_power_bonds(const std::vector<osp_config_parser::PowerBondConnection>& 
 
         auto powerbond = cosim::system_structure::power_bond{connection_a, connection_b};
 
-        validate_power_bond(systemStructure, pbName, powerbond);
         systemStructure.add_power_bond(pbName, powerbond);
+        validate_power_bond(systemStructure, pbName, powerbond);
+    }
 
-        // Check that the number of unique power bond names is equal to the number of power bonds. Otherwise, it is not possible to correctly connect the bonds.
-        std::sort(powerBondNames.begin(), powerBondNames.end());
-        auto uniqueCount = static_cast<int>(std::unique(powerBondNames.begin(), powerBondNames.end()) - powerBondNames.begin());
-        auto numPowerBonds = static_cast<int>(systemStructure.get_power_bonds().size());
+    auto uniquePowerBonds = static_cast<int>(uniquePowerBondNames.size());
+    auto numPowerBonds = static_cast<int>(systemStructure.get_power_bonds().size());
 
-        if (uniqueCount != numPowerBonds) {
-            std::ostringstream oss;
-            oss << "The number of powerbonds (" << numPowerBonds << ") is not equal to the number of unique power bond names (" << uniqueCount << ") found in the configured system. Power bond names must be unique pr. bond, that is found on only and exactly the two VariableConnections that form the bond.";
-            throw std::runtime_error(oss.str());
-        }
+    if (uniquePowerBonds != numPowerBonds) {
+        std::ostringstream oss;
+        oss << "The number of powerbonds (" << numPowerBonds << ") is not equal to the number of unique power bond names (" << uniquePowerBonds << ") found in the configured system. Power bond names must be unique pr. bond, that is found on only and exactly the two VariableConnections that form the bond.";
+        throw std::runtime_error(oss.str());
     }
 }
 
