@@ -1,7 +1,7 @@
 # libcosim - An open-source co-simulation library for C++
 
-![libcosim CI Conan](https://github.com/open-simulation-platform/libcosim/workflows/libcosim%20CI%20Conan/badge.svg)
-![libcosim CI CMake](https://github.com/open-simulation-platform/libcosim/workflows/libcosim%20CI%20CMake/badge.svg)
+[![libcosim CI Conan](https://github.com/open-simulation-platform/libcosim/actions/workflows/ci-conan.yml/badge.svg)](https://github.com/open-simulation-platform/libcosim/actions/workflows/ci-conan.yml)
+[![libcosim CI CMake](https://github.com/open-simulation-platform/libcosim/actions/workflows/ci-cmake.yml/badge.svg)](https://github.com/open-simulation-platform/libcosim/actions/workflows/ci-cmake.yml)
 
 Libcosim was developed as part of the [Open Simulation Platform][OSP] (OSP).
 See [`CONTRIBUTING.md`] for contributor guidelines and [`LICENSE`] for terms
