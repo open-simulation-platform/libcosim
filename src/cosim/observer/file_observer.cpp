@@ -567,8 +567,7 @@ file_observer_config file_observer_config::parse(const filesystem::path& configP
         boost::property_tree::xml_parser::no_comments | boost::property_tree::xml_parser::trim_whitespace);
 
     file_observer_config config;
-    const auto simulators = ptree.get_child("simulators");
-    for (const auto& simulator : simulators) {
+    for (const auto& simulator : ptree.get_child("simulators")) {
         if (simulator.first == "simulator") {
             const auto modelName = get_attribute<std::string>(simulator.second, "name");
             const auto decimationFactor = get_optional_attribute<size_t>(simulator.second, "decimationFactor");
@@ -583,15 +582,12 @@ file_observer_config file_observer_config::parse(const filesystem::path& configP
         }
     }
     if (const auto configuration = ptree.get_child_optional("configuration")) {
-        const auto timestamps = get_optional_attribute<bool>(*configuration, "timestampedFilenames");
-        if (timestamps) {
+        if (const auto timestamps = get_optional_attribute<bool>(*configuration, "timestampedFilenames")) {
             config.set_timestamped_filenames(*timestamps);
         }
-        const auto precision = get_optional_attribute<int>(*configuration, "floatingPointPrecision");
-        if (precision) {
+        if (const auto precision = get_optional_attribute<int>(*configuration, "floatingPointPrecision")) {
             config.fixed_precision(*precision);
         }
-
     }
 
     return config;
