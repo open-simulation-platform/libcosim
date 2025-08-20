@@ -582,12 +582,12 @@ file_observer_config file_observer_config::parse(const filesystem::path& configP
             config.log_simulator_variables(modelName, variableNames, decimationFactor);
         }
     }
-    if (const auto configuration = ptree.get_child("configuration")) {
-        const auto timestamps = get_optional_attribute<bool>(configuration, "timestampedFilenames");
+    if (const auto configuration = ptree.get_child_optional("configuration")) {
+        const auto timestamps = get_optional_attribute<bool>(*configuration, "timestampedFilenames");
         if (timestamps) {
             config.set_timestamped_filenames(*timestamps);
         }
-        const auto precision = get_optional_attribute<size_t>(configuration, "floatingPointPrecision");
+        const auto precision = get_optional_attribute<int>(*configuration, "floatingPointPrecision");
         if (precision) {
             config.fixed_precision(*precision);
         }
