@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
+<configuration timestampedFilenames="false" floatingPointPrecision="1"/>
 <simulators xmlns="http://opensimulationplatform.com/LogConfig">
 
     <simulator name="slave" decimationFactor="20">
