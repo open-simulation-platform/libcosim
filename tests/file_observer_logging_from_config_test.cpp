@@ -64,6 +64,9 @@ int main()
         auto simResult = execution.simulate_until(endTime);
         REQUIRE(simResult);
 
+        REQUIRE(cosim::filesystem::exists(cosim::filesystem::path(csvPath / "slave.csv")));
+        REQUIRE(cosim::filesystem::exists(cosim::filesystem::path(csvPath / "slave2.csv")));
+
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
         return 1;
