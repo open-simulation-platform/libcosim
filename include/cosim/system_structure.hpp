@@ -233,9 +233,7 @@ private:
 
 public:
     using entity_range = boost::select_second_const_range<entity_map>;
-    using connection_range =
-        boost::transformed_range<
-            connection_transform, const connection_map>;
+    using connection_range = boost::transformed_range<connection_transform, const connection_map>;
 
     /**
      *  Adds an entity to the system.
@@ -381,7 +379,6 @@ std::shared_ptr<T> entity_type_to(system_structure::entity_type et) noexcept
     return t ? *t : nullptr;
 }
 
-
 /**
  *  Checks whether `value` is a valid value for a variable described by
  *  `variable`.
@@ -457,4 +454,5 @@ void add_variable_value(
 
 
 } // namespace cosim
+
 #endif // header guard
