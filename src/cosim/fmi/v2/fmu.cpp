@@ -243,7 +243,8 @@ void log_message(
             break;
     }
     BOOST_LOG_SEV(log::logger(), logLevel)
-        << "[FMI status=" << statusName << ", category=" << category << "] "
+        << "[FMI status=" << statusName
+        << ", category=" << (category ? category : "") << "] "
         << msgBuffer.data();
 
     g_logMutex.lock();
