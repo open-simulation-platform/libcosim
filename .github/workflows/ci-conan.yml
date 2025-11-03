@@ -35,7 +35,9 @@ jobs:
           #!/bin/bash -v
           set -eu
           cd /mnt/source
-          pip install conan --upgrade
+          rm -rf ~/.conan2
+          pip install --user --upgrade conan~=2.22
+          conan profile detect --force
           conan remote add osp https://osp.jfrog.io/artifactory/api/conan/conan-local --force
           REFNAME="${GITHUB_REF#refs/*/}"
           VERSION="v$(<version.txt)"
