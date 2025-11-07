@@ -23,6 +23,7 @@
                     <xs:documentation>Version of CSE configuration format</xs:documentation>
                 </xs:annotation>
             </xs:attribute>
+            <xs:assert test="not(Algorithm eq 'ecco') or not(Connections/osp:VariableConnection[not(@powerBond)])" vc:maxVersion="1.1"/>
         </xs:complexType>
     </xs:element>
     <xs:complexType name="eccoconfiguration">
