@@ -219,7 +219,7 @@ public:
                 });
             }
         }
-        ++stepCounter_;
+
         for (auto& [idx, info] : simulators_) {
             if (stepCounter_ % info.decimationFactor == 0) {
                 finished.insert(idx);
@@ -234,6 +234,7 @@ public:
         }
         calculate_and_transfer();
 
+        ++stepCounter_;
         return {baseStepSize_, std::move(finished)};
     }
 
