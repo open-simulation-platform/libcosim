@@ -28,7 +28,7 @@ jobs:
         run: |
           apt-get update
           apt-get install -y pipx cmake doxygen
-          pipx install conan
+          pipx install conan cmake
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - name: Configure Conan
         run: |
