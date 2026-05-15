@@ -50,7 +50,7 @@ class LibcosimConan(ConanFile):
             self.requires("proxyfmu/0.4.1@osp/stable",
                           transitive_headers=True,
                           transitive_libs=True)
-        self.requires("yaml-cpp/[~0.8]")
+        self.requires("yaml-cpp/[~0.9]")
         self.requires("xerces-c/[~3.2]")
 
     # Exports
