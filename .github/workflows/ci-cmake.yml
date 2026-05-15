@@ -20,7 +20,7 @@ jobs:
         run: |
           mkdir /tmp/osp-builder-docker
           cat <<EOF >/tmp/osp-builder-docker/Dockerfile
-          FROM debian:bookworm
+          FROM ubuntu:24.04
           ENV PATH="/root/.local/bin:$PATH"
           RUN apt-get update && apt-get install -y python3 pipx
           RUN pipx install cmake
