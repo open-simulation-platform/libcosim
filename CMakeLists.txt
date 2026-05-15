@@ -95,9 +95,9 @@ set(LIBCOSIM_EXPORT_TARGET "${PROJECT_NAME}-targets")
 # Map non-Release configs to Release for imported targets.
 # "NOCONFIG" is needed for system-installed packages (e.g. from apt) whose
 # CMake config files use IMPORTED_LOCATION_NOCONFIG rather than a named config.
-set(CMAKE_MAP_IMPORTED_CONFIG_DEBUG Release NOCONFIG "")
-set(CMAKE_MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release NOCONFIG "")
-set(CMAKE_MAP_IMPORTED_CONFIG_MINSIZEREL Release NOCONFIG "")
+#set(CMAKE_MAP_IMPORTED_CONFIG_DEBUG Release "")
+#set(CMAKE_MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release "")
+#set(CMAKE_MAP_IMPORTED_CONFIG_MINSIZEREL Release "")
 
 # ==============================================================================
 # Dependencies
