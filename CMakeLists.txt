@@ -97,7 +97,6 @@ set(LIBCOSIM_EXPORT_TARGET "${PROJECT_NAME}-targets")
 set(CMAKE_MAP_IMPORTED_CONFIG_DEBUG Release "")
 set(CMAKE_MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release "")
 set(CMAKE_MAP_IMPORTED_CONFIG_MINSIZEREL Release "")
-set(CMAKE_MAP_IMPORTED_CONFIG_MINSIZEREL Release "")
 
 # ==============================================================================
 # Dependencies

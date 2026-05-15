@@ -30,6 +30,7 @@ jobs:
               libyaml-cpp-dev \
               libxerces-c-dev \
               libzip-dev zipcmp zipmerge ziptool python3 pipx
+          ENV PATH="/root/.local/bin:$PATH"
           RUN pipx install cmake
           RUN wget \
               --no-check-certificate \

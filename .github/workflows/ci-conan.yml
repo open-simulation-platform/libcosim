@@ -39,7 +39,6 @@ jobs:
         run: |
           REFNAME="${GITHUB_REF#refs/*/}"
           VERSION="v$(<version.txt)"
-          cmake --version
           if [[ $GITHUB_REF == refs/tags/* ]] && [[ $REFNAME == $VERSION ]]; then CHANNEL="stable"
           elif [[ $REFNAME == master ]]; then CHANNEL="testing"
           else
@@ -91,7 +90,6 @@ jobs:
         run: |
           REFNAME="${GITHUB_REF#refs/*/}"
           VERSION="v$(<version.txt)"
-          cmake --version
           if [[ $GITHUB_REF == refs/tags/* ]] && [[ $REFNAME == $VERSION ]]; then CHANNEL="stable"
           elif [[ $REFNAME == master ]]; then CHANNEL="testing"
           else
