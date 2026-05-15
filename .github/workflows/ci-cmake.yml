@@ -48,8 +48,7 @@ jobs:
           #!/bin/bash
           mkdir build
           cd build
-          cmake --version
-          cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DBUILD_${{ matrix.shared_libs }} -DCMAKE_POLICY_VERSION_MINIMUM=3.5 /mnt/source
+          cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DBUILD_${{ matrix.shared_libs }} /mnt/source
           cmake --build .
           ctest --output-on-failure
           EOF
