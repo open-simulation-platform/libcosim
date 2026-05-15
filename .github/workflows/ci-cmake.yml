@@ -21,8 +21,8 @@ jobs:
           mkdir /tmp/osp-builder-docker
           cat <<EOF >/tmp/osp-builder-docker/Dockerfile
           FROM debian:bookworm
+          RUN pip3 install cmake
           RUN apt-get update && apt-get install -y --no-install-recommends \
-              cmake \
               build-essential \
               doxygen \
               wget \
