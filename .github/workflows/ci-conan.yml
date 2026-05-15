@@ -50,7 +50,7 @@ jobs:
             --options="&:${{ matrix.option_proxyfmu }}" \
             --options="*:${{ matrix.option_shared }}" \
             --update \
-            --build=missing --build=proxyfmu\
+            --build=missing \
             --build=b2/* \
             --user=osp \
             --channel="${CHANNEL}" \
@@ -101,7 +101,7 @@ jobs:
             --options="&:${{ matrix.option_proxyfmu }}" \
             --options="*:${{ matrix.option_shared }}" \
             --update \
-            --build=missing --build=proxyfmu/*\
+            --build=missing \
             --user=osp \
             --channel="${CHANNEL}" \
             .
