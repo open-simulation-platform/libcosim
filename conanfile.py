@@ -91,10 +91,7 @@ class LibcosimConan(ConanFile):
         tc.cache_variables["LIBCOSIM_NO_FMI_LOGGING"] = self.options.no_fmi_logging
         tc.cache_variables["LIBCOSIM_WITH_PROXYFMU"] = self.options.proxyfmu
         tc.generate()
-
-        deps = CMakeDeps(self)
-        # deps.configuration = "Release"
-        deps.generate()
+        CMakeDeps(self).generate()
 
     def build(self):
         cmake = CMake(self)
