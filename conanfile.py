@@ -93,7 +93,8 @@ class LibcosimConan(ConanFile):
         tc.generate()
 
         deps = CMakeDeps(self)
-        deps.configuration = "Release"
+        if self.settings.os == "Windows":
+            deps.configuration = "Release"
         deps.generate()
 
     def build(self):
