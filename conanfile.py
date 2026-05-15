@@ -93,6 +93,7 @@ class LibcosimConan(ConanFile):
         tc.generate()
 
         deps = CMakeDeps(self)
+        # deps.configuration = "Release"
         deps.generate()
 
     def build(self):
