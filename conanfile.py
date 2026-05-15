@@ -2,7 +2,7 @@ import os
 
 from conan import ConanFile
 from conan.errors import ConanInvalidConfiguration
-from conan.tools.cmake import CMakeToolchain, CMake, CMakeDeps, cmake_layout, CMakeConfigDeps
+from conan.tools.cmake import CMakeToolchain, CMake, CMakeDeps, cmake_layout
 from conan.tools.env import VirtualRunEnv
 from conan.tools.files import copy, load
 
@@ -92,7 +92,7 @@ class LibcosimConan(ConanFile):
         tc.cache_variables["LIBCOSIM_WITH_PROXYFMU"] = self.options.proxyfmu
         tc.generate()
 
-        deps = CMakeConfigDeps(self)
+        deps = CMakeDeps(self)
         # deps.configuration = "Release"
         deps.generate()
 
