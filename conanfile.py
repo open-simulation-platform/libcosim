@@ -92,7 +92,9 @@ class LibcosimConan(ConanFile):
         tc.cache_variables["LIBCOSIM_WITH_PROXYFMU"] = self.options.proxyfmu
         tc.generate()
 
-        CMakeDeps(self).generate()
+        deps = CMakeDeps(self)
+        deps.configuration = "Release"
+        deps.generate()
 
     def build(self):
         cmake = CMake(self)
