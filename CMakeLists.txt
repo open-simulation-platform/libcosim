@@ -92,6 +92,13 @@ set(LIBCOSIM_INSTALL_DESTINATIONS
     INCLUDES DESTINATION "${LIBCOSIM_HEADER_INSTALL_DIR}")
 set(LIBCOSIM_EXPORT_TARGET "${PROJECT_NAME}-targets")
 
+# Map non-Release configs to Release for Conan-imported targets.
+# This allows building our code in Debug while linking Release dependencies.
+set(CMAKE_MAP_IMPORTED_CONFIG_DEBUG Release "")
+set(CMAKE_MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release "")
+set(CMAKE_MAP_IMPORTED_CONFIG_MINSIZEREL Release "")
+set(CMAKE_MAP_IMPORTED_CONFIG_MINSIZEREL Release "")
+
 # ==============================================================================
 # Dependencies
 # ==============================================================================
