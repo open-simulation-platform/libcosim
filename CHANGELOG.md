@@ -3,6 +3,20 @@ All notable changes to libcosim will be documented in this file. This includes n
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
+### [v0.11.2] - 2026-05-18
+##### New
+- Expose file observer functionality through logger config file [\#776](https://github.com/open-simulation-platform/libcosim/issues/776)
+- PoC for DCP [\#192](https://github.com/open-simulation-platform/libcosim/issues/192)
+- Implement additional logconfig xml functionality [\#794](https://github.com/open-simulation-platform/libcosim/pull/794) ([eidekrist](https://github.com/eidekrist))
+
+##### Fixes
+- Conan-based CI builds are failing [\#800](https://github.com/open-simulation-platform/libcosim/issues/800)
+- Conan warnings in CI build output [\#798](https://github.com/open-simulation-platform/libcosim/issues/798)
+- libcosim crashes when FMUs log messages using a NULL category [\#796](https://github.com/open-simulation-platform/libcosim/issues/796)
+- Windows 2019 Github Actions Runners have been deprecated [\#792](https://github.com/open-simulation-platform/libcosim/issues/792)
+- Don't crash if FMUs log with category=NULL [\#797](https://github.com/open-simulation-platform/libcosim/pull/797) ([kyllingstad](https://github.com/kyllingstad))
+
+
 ### [v0.11.0] - 2025-03-31
 ##### New
 * The ECCO (Energy Conservation-based Co-simulation) algorithm has received a reference implementation that is now configurable through OspSystemStructure. See the tests prefixed with `ecco_algorithm` for details. 
@@ -243,3 +257,4 @@ First OSP JIP partner release
 [v0.10.3]: https://github.com/open-simulation-platform/cse-core/compare/v0.10.2...v0.10.3
 [v0.10.4]: https://github.com/open-simulation-platform/cse-core/compare/v0.10.3...v0.10.4
 [v0.11.0]: https://github.com/open-simulation-platform/cse-core/compare/v0.10.4...v0.11.0
+[v0.11.2]: https://github.com/open-simulation-platform/cse-core/compare/v0.11.0...v0.11.2
