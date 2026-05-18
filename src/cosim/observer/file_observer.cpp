@@ -217,7 +217,7 @@ private:
 
         if (fsw_.fail()) {
             std::stringstream error;
-            error << "Failed to open log file stream: " << filePath.c_str();
+            error << "Failed to open log file stream: " << filePath.string();
             throw std::runtime_error(error.str());
         }
 
@@ -279,7 +279,7 @@ private:
 
         if (fsw_.fail()) {
             std::stringstream error;
-            error << "Failed to open log metadata file stream: " << filePath.c_str();
+            error << "Failed to open log metadata file stream: " << filePath.string();
             throw std::runtime_error(error.str());
         }
 

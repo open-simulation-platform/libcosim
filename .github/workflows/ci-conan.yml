@@ -6,37 +6,37 @@ on: [push, workflow_dispatch]
 jobs:
   linux:
     name: Linux
-    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         build_type: [Debug, Release]
-        compiler_version: [9]
+        compiler_version: [14]
         option_proxyfmu: ['proxyfmu=True', 'proxyfmu=False']
         option_shared: ['shared=True', 'shared=False']
+    runs-on: ubuntu-latest
+    container:
+      image: gcc:${{ matrix.compiler_version }}
+    env:
+      CONAN_LOGIN_USERNAME_OSP: ${{ secrets.osp_artifactory_usr }}
+      CONAN_PASSWORD_OSP: ${{ secrets.osp_artifactory_pwd }}
+      LIBCOSIM_RUN_TESTS_ON_CONAN_BUILD: 1
     timeout-minutes: 35
 
     steps:
-      - uses: actions/checkout@v4
-      - name: Generate Dockerfile
+      - uses: actions/checkout@v6
+      - name: Install prerequisites
         run: |
-          mkdir /tmp/osp-builder-docker
-          cat <<'EOF' >/tmp/osp-builder-docker/Dockerfile
-          FROM conanio/gcc${{ matrix.compiler_version }}-ubuntu16.04
-          ENV CONAN_LOGIN_USERNAME_OSP=${{ secrets.osp_artifactory_usr }}
-          ENV CONAN_PASSWORD_OSP=${{ secrets.osp_artifactory_pwd }}
-          ENV LIBCOSIM_RUN_TESTS_ON_CONAN_BUILD=1
-          COPY entrypoint.sh /
-          ENTRYPOINT /entrypoint.sh
-          EOF
-      - name: Generate entrypoint.sh
+          apt-get update
+          apt-get install -y pipx doxygen
+          pipx install conan
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: Configure Conan
         run: |
-          cat <<'EOF' >/tmp/osp-builder-docker/entrypoint.sh
-          #!/bin/bash -v
-          set -eu
-          cd /mnt/source
-          pip install conan --upgrade
-          conan remote add osp https://osp.jfrog.io/artifactory/api/conan/conan-local --force
+          conan profile detect
+          conan remote add osp https://osp.jfrog.io/artifactory/api/conan/conan-local
+      - name: Build package
+        shell: bash
+        run: |
           REFNAME="${GITHUB_REF#refs/*/}"
           VERSION="v$(<version.txt)"
           if [[ $GITHUB_REF == refs/tags/* ]] && [[ $REFNAME == $VERSION ]]; then CHANNEL="stable"
@@ -47,23 +47,17 @@ jobs:
           fi
           conan create \
             --settings="build_type=${{ matrix.build_type }}" \
-            --options="${{ matrix.option_proxyfmu }}" \
-            --options="${{ matrix.option_shared }}" \
+            --options="&:${{ matrix.option_proxyfmu }}" \
+            --options="*:${{ matrix.option_shared }}" \
             --update \
             --build=missing \
             --build=b2/* \
             --user=osp \
             --channel="${CHANNEL}" \
             .
-          conan upload --confirm --remote=osp '*'
-          EOF
-          chmod 0755 /tmp/osp-builder-docker/entrypoint.sh
-      - name: Build Docker image
-        run:  docker build -t osp-builder /tmp/osp-builder-docker/
-      - name: Build cosim
+      - name: Upload package
         run: |
-          docker run --rm --env GITHUB_REF="$GITHUB_REF" -v $(pwd):/mnt/source:ro osp-builder
-
+          conan upload --confirm --remote=osp '*'
 
   windows:
     name: Windows
@@ -82,7 +76,7 @@ jobs:
     timeout-minutes: 120
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install prerequisites
         run: |
           pip3 install --upgrade setuptools pip
@@ -104,8 +98,8 @@ jobs:
           fi
           conan create \
             --settings="build_type=${{ matrix.build_type }}" \
-            --options="${{ matrix.option_proxyfmu }}" \
-            --options="${{ matrix.option_shared }}" \
+            --options="&:${{ matrix.option_proxyfmu }}" \
+            --options="*:${{ matrix.option_shared }}" \
             --update \
             --build=missing \
             --user=osp \
