@@ -309,6 +309,10 @@ public:
 
     void add_power_bond(cosim::variable_id input_a, cosim::variable_id output_a, cosim::variable_id input_b, cosim::variable_id output_b)
     {
+        simulators_.at(input_a.simulator).sim->expose_for_getting(input_a.type, input_a.reference);
+        simulators_.at(output_a.simulator).sim->expose_for_getting(output_a.type, output_a.reference);
+        simulators_.at(input_b.simulator).sim->expose_for_getting(input_b.type, input_b.reference);
+        simulators_.at(output_b.simulator).sim->expose_for_getting(output_b.type, output_b.reference);
         energies_.emplace_back();
         energies_.emplace_back();
         inputVariables_.push_back(input_a);
