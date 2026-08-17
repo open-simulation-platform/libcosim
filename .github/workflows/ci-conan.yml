@@ -98,7 +98,7 @@ jobs:
           fi
           conan create \
             --settings="build_type=${{ matrix.build_type }}" \
-            --conf="tools.cmake.cmaketoolchain:generator=Ninja" \
+            --conf="tools.cmake.cmaketoolchain:generator=Ninja Multi-Config" \
             --options="&:${{ matrix.option_proxyfmu }}" \
             --options="*:${{ matrix.option_shared }}" \
             --update \
