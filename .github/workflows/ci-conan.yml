@@ -27,7 +27,7 @@ jobs:
       - name: Install prerequisites
         run: |
           apt-get update
-          apt-get install -y pipx doxygen
+          apt-get install -y pipx doxygen cmake
           pipx install conan
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - name: Configure Conan
