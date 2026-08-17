@@ -98,6 +98,7 @@ jobs:
           fi
           conan create \
             --settings="build_type=${{ matrix.build_type }}" \
+            --settings="compiler.version=194" \
             --options="&:${{ matrix.option_proxyfmu }}" \
             --options="*:${{ matrix.option_shared }}" \
             --update \
