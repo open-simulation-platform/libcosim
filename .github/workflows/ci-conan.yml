@@ -69,7 +69,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2025]
+        os: [windows-2022]
         build_type: [Debug, Release]
         option_proxyfmu: ['proxyfmu=True', 'proxyfmu=False']
         option_shared: ['shared=True', 'shared=False']
@@ -98,7 +98,6 @@ jobs:
           fi
           conan create \
             --settings="build_type=${{ matrix.build_type }}" \
-            --conf="tools.cmake.cmaketoolchain:generator=Ninja Multi-Config" \
             --options="&:${{ matrix.option_proxyfmu }}" \
             --options="*:${{ matrix.option_shared }}" \
             --update \
