@@ -80,7 +80,7 @@ jobs:
       - name: Install prerequisites
         run: |
           pip3 install --upgrade setuptools pip
-          pip3 install conan cmake
+          pip3 install conan cmake ninja
       - name: Configure Conan
         run: |
           conan profile detect
@@ -98,7 +98,7 @@ jobs:
           fi
           conan create \
             --settings="build_type=${{ matrix.build_type }}" \
-            --settings="compiler.version=194" \
+            --conf="tools.cmake.cmaketoolchain:generator=Ninja" \
             --options="&:${{ matrix.option_proxyfmu }}" \
             --options="*:${{ matrix.option_shared }}" \
             --update \
