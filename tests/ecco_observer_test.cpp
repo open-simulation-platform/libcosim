@@ -113,6 +113,12 @@ int main()
         REQUIRE(bondState.power_b == bondState.input_b_value * bondState.output_b_value);
         REQUIRE(bondState.power_residual == std::abs(bondState.power_a - bondState.power_b));
 
+        // The accumulated energy residual must be non-negative.
+        REQUIRE(bondState.energy_residual >= 0.0);
+
+        // The per-bond error contribution must be non-negative.
+        REQUIRE(bondState.error_contribution >= 0.0);
+
         // Querying an unknown bond must throw.
         bool threw = false;
         try {

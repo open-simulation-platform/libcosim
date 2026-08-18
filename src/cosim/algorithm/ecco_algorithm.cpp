@@ -278,6 +278,7 @@ public:
             state.power_residual = power_residual;
             state.energy_a += power_a * dt;
             state.energy_b += power_b * dt;
+            state.energy_residual += power_residual * dt;
         }
 
         if (power_residuals.empty()) {
@@ -287,9 +288,11 @@ public:
         double max_power_residual = *std::max_element(power_residuals.begin(), power_residuals.end());
         const auto energy_level = max_power_residual * dt;
         double mean_square{};
-        for (auto power_residual : power_residuals) {
-            const auto energy_residual = power_residual * dt;
-            mean_square += std::pow(energy_residual / (params.abs_tolerance + params.rel_tolerance * energy_level), 2);
+        for (std::size_t i = 0; i < power_residuals.size(); ++i) {
+            const auto energy_residual = power_residuals.at(i) * dt;
+            const auto contribution = std::pow(energy_residual / (params.abs_tolerance + params.rel_tolerance * energy_level), 2);
+            powerBondStates_.at(i).error_contribution = contribution;
+            mean_square += contribution;
         }
         const auto num_bonds = power_residuals.size(); // TODO: Still valid for multidimensial bonds?
         const auto error_estimate = std::sqrt(mean_square / (double)num_bonds);

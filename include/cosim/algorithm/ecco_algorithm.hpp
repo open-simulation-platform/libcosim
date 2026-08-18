@@ -63,6 +63,12 @@ struct power_bond_state
     /// Energy accumulated on each side of the bond since the start [J].
     double energy_a;
     double energy_b;
+
+    /// Accumulated absolute energy residual across the bond since the start [J].
+    double energy_residual;
+
+    /// The contribution to the last step's error estimate.
+    double error_contribution;
 };
 
 /**
