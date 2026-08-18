@@ -5,7 +5,7 @@
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified"
            targetNamespace="http://opensimulationplatform.com/MSMI/OSPSystemStructure"
            xmlns:osp="http://opensimulationplatform.com/MSMI/OSPSystemStructure"
-           version="0.1.1">
+           version="0.1.2">
     <xs:element name="OspSystemStructure">
         <xs:complexType>
             <xs:sequence>
