@@ -6,10 +6,12 @@
 #include <cosim/time.hpp>
 
 #include <cmath>
+#include <cstddef>
 #include <exception>
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 
 // A helper macro to test various assertions
@@ -89,8 +91,8 @@ int main()
         ecco_algo->add_power_bond("bond", input1, output1, input2, output2);
         execution.set_real_initial_value(slaves[0], realInRef, 0.5);
 
-        // Observe the power bond states with the ecco_observer.
-        auto eccoObserver = std::make_shared<cosim::ecco_observer>(ecco_algo);
+        constexpr std::size_t bufferSize = 8;
+        auto eccoObserver = std::make_shared<cosim::ecco_observer>(ecco_algo, bufferSize);
         execution.add_observer(eccoObserver);
 
         auto simResult = execution.simulate_until(endTime);
@@ -101,7 +103,7 @@ int main()
         REQUIRE(states.size() == 1);
         REQUIRE(states.count("bond") == 1);
 
-        const auto bondState = eccoObserver->get_power_bond_state("bond");
+        const auto bondState = eccoObserver->get_current_power_bond_state("bond");
 
         // The polled state must match the one exposed by the observer.
         REQUIRE(bondState.time == states.at("bond").time);
@@ -119,10 +121,31 @@ int main()
         // The per-bond error contribution must be non-negative.
         REQUIRE(bondState.error_contribution >= 0.0);
 
+        // The buffer must be bounded by the buffer size and ordered oldest to newest.
+        const auto buffer = eccoObserver->get_power_bond_state_buffer("bond");
+        REQUIRE(!buffer.empty());
+        REQUIRE(buffer.size() <= bufferSize);
+        for (std::size_t i = 1; i < buffer.size(); ++i) {
+            REQUIRE(buffer[i].time >= buffer[i - 1].time);
+        }
+
+        // The newest buffer sample must equal the latest polled state.
+        REQUIRE(buffer.back().time == bondState.time);
+        REQUIRE(buffer.back().power_residual == bondState.power_residual);
+
+        // Requesting buffer for an unknown bond must throw.
+        bool bufferThrew = false;
+        try {
+            eccoObserver->get_power_bond_state_buffer("does_not_exist");
+        } catch (const std::out_of_range&) {
+            bufferThrew = true;
+        }
+        REQUIRE(bufferThrew);
+
         // Querying an unknown bond must throw.
         bool threw = false;
         try {
-            eccoObserver->get_power_bond_state("does_not_exist");
+            eccoObserver->get_current_power_bond_state("does_not_exist");
         } catch (const std::out_of_range&) {
             threw = true;
         }

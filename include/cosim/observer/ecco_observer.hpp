@@ -13,10 +13,13 @@
 #include <cosim/algorithm/ecco_algorithm.hpp>
 #include <cosim/observer/observer.hpp>
 
+#include <cstddef>
+#include <deque>
 #include <memory>
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <vector>
 
 
 namespace cosim
@@ -28,11 +31,21 @@ namespace cosim
 class ecco_observer : public observer
 {
 public:
-    explicit ecco_observer(std::shared_ptr<ecco_algorithm> algorithm);
+    /**
+     *  Constructor.
+     *
+     *  \param algorithm
+     *      The ECCO algorithm whose power bond states are observed.
+     *  \param bufferSize
+     *      The number of most recent states retained per bond. Must be greater than zero.
+     */
+    explicit ecco_observer(std::shared_ptr<ecco_algorithm> algorithm, std::size_t bufferSize = 10000);
 
     std::unordered_map<std::string, power_bond_state> get_power_bond_states() const;
 
-    power_bond_state get_power_bond_state(std::string_view name) const;
+    power_bond_state get_current_power_bond_state(std::string_view name) const;
+
+    std::vector<power_bond_state> get_power_bond_state_buffer(std::string_view name) const;
 
     void simulator_added(simulator_index, observable*, time_point) override;
     void simulator_removed(simulator_index, time_point) override;
@@ -45,7 +58,9 @@ public:
 
 private:
     std::shared_ptr<ecco_algorithm> algorithm_;
+    std::size_t bufferSize_;
     std::unordered_map<std::string, power_bond_state> latestStates_;
+    std::unordered_map<std::string, std::deque<power_bond_state>> history_;
 };
 
 
