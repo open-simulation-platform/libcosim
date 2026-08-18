@@ -29,6 +29,16 @@ struct ecco_algorithm_params
     double i_gain;
 };
 
+/// Description of a power bond for runtime lookup.
+struct power_bond_info
+{
+    std::string name;
+    variable_id input_a;
+    variable_id output_a;
+    variable_id input_b;
+    variable_id output_b;
+};
+
 /**
  *  A fixed-stepsize co-simulation algorithm.
  *
@@ -75,10 +85,10 @@ public:
 
     /**
      * Adds a variable pair for the power residual calculation.
-     * \param uVec
-     *     The index of the variable.
+     * \param name
+     *     The unique name identifying the power bond.
      */
-    void add_power_bond(cosim::variable_id input_a, cosim::variable_id output_a, cosim::variable_id input_b, cosim::variable_id output_b);
+    void add_power_bond(std::string name, cosim::variable_id input_a, cosim::variable_id output_a, cosim::variable_id input_b, cosim::variable_id output_b);
 
     /**
      * Retrieves the energies in the power bond for the given simulator index.add_variable_value

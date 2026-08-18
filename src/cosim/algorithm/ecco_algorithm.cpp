@@ -307,8 +307,9 @@ public:
         return actual_new_step_size;
     }
 
-    void add_power_bond(cosim::variable_id input_a, cosim::variable_id output_a, cosim::variable_id input_b, cosim::variable_id output_b)
+    void add_power_bond(std::string name, cosim::variable_id input_a, cosim::variable_id output_a, cosim::variable_id input_b, cosim::variable_id output_b)
     {
+        powerBonds_.push_back({std::move(name), input_a, output_a, input_b, output_b});
         energies_.emplace_back();
         energies_.emplace_back();
         inputVariables_.push_back(input_a);
@@ -323,6 +324,7 @@ public:
     }
 
 private:
+    std::vector<power_bond_info> powerBonds_{};
     std::vector<cosim::variable_id> inputVariables_{};
     std::vector<cosim::variable_id> outputVariables_{};
     std::vector<std::vector<double>> energies_{};
@@ -587,9 +589,9 @@ void ecco_algorithm::import_state(const serialization::node& exportedState)
     pimpl_->import_state(exportedState);
 }
 
-void ecco_algorithm::add_power_bond(cosim::variable_id input_a, cosim::variable_id output_a, cosim::variable_id input_b, cosim::variable_id output_b)
+void ecco_algorithm::add_power_bond(std::string name, cosim::variable_id input_a, cosim::variable_id output_a, cosim::variable_id input_b, cosim::variable_id output_b)
 {
-    pimpl_->add_power_bond(input_a, output_a, input_b, output_b);
+    pimpl_->add_power_bond(std::move(name), input_a, output_a, input_b, output_b);
 }
 
 std::vector<double> ecco_algorithm::get_powerbond_energies(cosim::simulator_index simulator_index)
