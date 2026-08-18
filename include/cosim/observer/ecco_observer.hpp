@@ -23,24 +23,15 @@ namespace cosim
 {
 
 /**
- *  An observer that makes the power bond states of a running `ecco_algorithm`
- *  available at each communication point.
- *
- *  Consumers poll the latest states with `get_power_bond_state()` /
- *  `get_power_bond_states()`.
+ *  An observer that exposes the power bonds in a given `ecco_algorithm`, and their states, at each communication point.
  */
 class ecco_observer : public observer
 {
 public:
     explicit ecco_observer(std::shared_ptr<ecco_algorithm> algorithm);
 
-    /// Returns the most recently observed states of all power bonds, keyed by name.
     std::unordered_map<std::string, power_bond_state> get_power_bond_states() const;
 
-    /**
-     * Returns the most recently observed state of the named power bond.
-     * \throws std::out_of_range if no power bond with the given name exists.
-     */
     power_bond_state get_power_bond_state(std::string_view name) const;
 
     void simulator_added(simulator_index, observable*, time_point) override;

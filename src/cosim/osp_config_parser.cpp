@@ -787,8 +787,6 @@ osp_config_parser::SignalConnection find_signal_connection(
 
 void add_power_bonds(const std::vector<osp_config_parser::PowerBondConnection>& pbConnections, system_structure& systemStructure)
 {
-    // Resolves whether a power bond variable is an input from the FMU model
-    // description; output/calculated_parameter count as an output side.
     const auto isInput = [&systemStructure](const osp_config_parser::VariableEndpoint& var) -> bool {
         const auto variable = cosim::full_variable_name{var.simulator, var.name};
         const auto causality = systemStructure.get_variable_description(variable).causality;
@@ -796,7 +794,6 @@ void add_power_bonds(const std::vector<osp_config_parser::PowerBondConnection>& 
             case variable_causality::input:
                 return true;
             case variable_causality::output:
-            case variable_causality::calculated_parameter:
                 return false;
             default:
                 std::ostringstream oss;
