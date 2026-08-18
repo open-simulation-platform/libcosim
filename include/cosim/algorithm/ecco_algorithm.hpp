@@ -14,6 +14,7 @@
 
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <vector>
 
 namespace cosim
@@ -41,6 +42,25 @@ struct power_bond_info
     variable_id output_a;
     variable_id input_b;
     variable_id output_b;
+};
+
+/// Snapshot of a power bond's variable values and energies at a simulation step.
+struct power_bond_state
+{
+    /// The time the snapshot reflects (start of the last completed step).
+    time_point time;
+    double input_a_value;
+    double output_a_value;
+    double input_b_value;
+    double output_b_value;
+    /// Instantaneous power on each side of the bond [W].
+    double power_a;
+    double power_b;
+    /// Absolute power residual across the bond, |power_a - power_b| [W].
+    double power_residual;
+    /// Energy accumulated on each side of the bond since the start [J].
+    double energy_a;
+    double energy_b;
 };
 
 /**
@@ -102,6 +122,16 @@ public:
      * \throws std::out_of_range if no power bond with the given name exists.
      */
     const power_bond_info& get_power_bond(std::string_view name) const;
+
+    /**
+     * Returns the most recently computed state of the named power bond.
+     * Values reflect the last completed step; before the second step they are zero-initialized.
+     * \throws std::out_of_range if no power bond with the given name exists.
+     */
+    power_bond_state get_power_bond_state(std::string_view name) const;
+
+    /// Returns the most recently computed states of all power bonds, keyed by name.
+    std::unordered_map<std::string, power_bond_state> get_power_bond_states() const;
 
     /**
      * Retrieves the energies in the power bond for the given simulator index.add_variable_value

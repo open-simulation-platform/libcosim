@@ -278,6 +278,18 @@ public:
             double power_residual = std::abs(power_a - power_b);
 
             power_residuals.push_back(power_residual);
+
+            auto& state = powerBondStates_.at(i / 2);
+            state.time = currentTime;
+            state.input_a_value = input_a_value;
+            state.output_a_value = output_a_value;
+            state.input_b_value = input_b_value;
+            state.output_b_value = output_b_value;
+            state.power_a = power_a;
+            state.power_b = power_b;
+            state.power_residual = power_residual;
+            state.energy_a += power_a * dt;
+            state.energy_b += power_b * dt;
         }
 
         if (power_residuals.empty()) {
@@ -312,6 +324,7 @@ public:
     void add_power_bond(std::string name, cosim::variable_id input_a, cosim::variable_id output_a, cosim::variable_id input_b, cosim::variable_id output_b)
     {
         powerBonds_.push_back({std::move(name), input_a, output_a, input_b, output_b});
+        powerBondStates_.emplace_back();
         energies_.emplace_back();
         energies_.emplace_back();
         inputVariables_.push_back(input_a);
@@ -332,12 +345,22 @@ public:
 
     const power_bond_info& get_power_bond(std::string_view name) const
     {
-        const auto it = std::find_if(powerBonds_.begin(), powerBonds_.end(),
-            [name](const power_bond_info& bond) { return bond.name == name; });
-        if (it == powerBonds_.end()) {
-            throw std::out_of_range("No power bond named '" + std::string(name) + "'");
+        return powerBonds_.at(power_bond_index(name));
+    }
+
+    power_bond_state get_power_bond_state(std::string_view name) const
+    {
+        return powerBondStates_.at(power_bond_index(name));
+    }
+
+    std::unordered_map<std::string, power_bond_state> get_power_bond_states() const
+    {
+        std::unordered_map<std::string, power_bond_state> states;
+        states.reserve(powerBonds_.size());
+        for (std::size_t i = 0; i < powerBonds_.size(); ++i) {
+            states.emplace(powerBonds_.at(i).name, powerBondStates_.at(i));
         }
-        return *it;
+        return states;
     }
 
     std::vector<double> get_powerbond_energies(cosim::simulator_index simulator_index)
@@ -347,9 +370,20 @@ public:
 
 private:
     std::vector<power_bond_info> powerBonds_{};
+    std::vector<power_bond_state> powerBondStates_{};
     std::vector<cosim::variable_id> inputVariables_{};
     std::vector<cosim::variable_id> outputVariables_{};
     std::vector<std::vector<double>> energies_{};
+
+    std::size_t power_bond_index(std::string_view name) const
+    {
+        const auto it = std::find_if(powerBonds_.begin(), powerBonds_.end(),
+            [name](const power_bond_info& bond) { return bond.name == name; });
+        if (it == powerBonds_.end()) {
+            throw std::out_of_range("No power bond named '" + std::string(name) + "'");
+        }
+        return static_cast<std::size_t>(std::distance(powerBonds_.begin(), it));
+    }
 
     double get_mean(const std::vector<double>& elems)
     {
@@ -624,6 +658,16 @@ std::vector<std::string> ecco_algorithm::get_power_bond_names() const
 const power_bond_info& ecco_algorithm::get_power_bond(std::string_view name) const
 {
     return pimpl_->get_power_bond(name);
+}
+
+power_bond_state ecco_algorithm::get_power_bond_state(std::string_view name) const
+{
+    return pimpl_->get_power_bond_state(name);
+}
+
+std::unordered_map<std::string, power_bond_state> ecco_algorithm::get_power_bond_states() const
+{
+    return pimpl_->get_power_bond_states();
 }
 
 std::vector<double> ecco_algorithm::get_powerbond_energies(cosim::simulator_index simulator_index)
