@@ -27,7 +27,7 @@ jobs:
       - name: Install prerequisites
         run: |
           apt-get update
-          apt-get install -y pipx doxygen
+          apt-get install -y pipx doxygen cmake
           pipx install conan
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - name: Configure Conan
@@ -69,7 +69,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2025]
+        os: [windows-2022]
         build_type: [Debug, Release]
         option_proxyfmu: ['proxyfmu=True', 'proxyfmu=False']
         option_shared: ['shared=True', 'shared=False']
@@ -80,7 +80,7 @@ jobs:
       - name: Install prerequisites
         run: |
           pip3 install --upgrade setuptools pip
-          pip3 install conan
+          pip3 install conan cmake ninja
       - name: Configure Conan
         run: |
           conan profile detect
