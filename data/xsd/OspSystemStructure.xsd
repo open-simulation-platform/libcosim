@@ -78,7 +78,6 @@
     <xs:complexType name="variableEndpoint">
         <xs:attribute name="simulator" use="required" type="xs:string"/>
         <xs:attribute name="name" use="required" type="xs:string"/>
-        <xs:attribute name="causality" type="xs:string"/>
     </xs:complexType>
     <xs:complexType name="signalEndpoint">
         <xs:attribute name="function" use="required" type="xs:string"/>
