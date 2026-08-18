@@ -310,7 +310,10 @@ public:
     }
 
     void add_power_bond(std::string name, cosim::variable_id input_a, cosim::variable_id output_a, cosim::variable_id input_b, cosim::variable_id output_b)
-    {
+    {        
+        for (const auto& var : {input_a, output_a, input_b, output_b}) {
+            simulators_.at(var.simulator).sim->expose_for_getting(var.type, var.reference);
+        }
         powerBonds_.push_back({std::move(name), input_a, output_a, input_b, output_b});
         powerBondStates_.emplace_back();
     }
