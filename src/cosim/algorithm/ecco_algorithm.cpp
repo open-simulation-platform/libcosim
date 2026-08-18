@@ -16,6 +16,8 @@
 #include <iostream>
 #include <numeric>
 #include <sstream>
+#include <stdexcept>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 
@@ -318,6 +320,26 @@ public:
         outputVariables_.push_back(output_b);
     }
 
+    std::vector<std::string> get_power_bond_names() const
+    {
+        std::vector<std::string> names;
+        names.reserve(powerBonds_.size());
+        for (const auto& bond : powerBonds_) {
+            names.push_back(bond.name);
+        }
+        return names;
+    }
+
+    const power_bond_info& get_power_bond(std::string_view name) const
+    {
+        const auto it = std::find_if(powerBonds_.begin(), powerBonds_.end(),
+            [name](const power_bond_info& bond) { return bond.name == name; });
+        if (it == powerBonds_.end()) {
+            throw std::out_of_range("No power bond named '" + std::string(name) + "'");
+        }
+        return *it;
+    }
+
     std::vector<double> get_powerbond_energies(cosim::simulator_index simulator_index)
     {
         return energies_.at(simulator_index);
@@ -592,6 +614,16 @@ void ecco_algorithm::import_state(const serialization::node& exportedState)
 void ecco_algorithm::add_power_bond(std::string name, cosim::variable_id input_a, cosim::variable_id output_a, cosim::variable_id input_b, cosim::variable_id output_b)
 {
     pimpl_->add_power_bond(std::move(name), input_a, output_a, input_b, output_b);
+}
+
+std::vector<std::string> ecco_algorithm::get_power_bond_names() const
+{
+    return pimpl_->get_power_bond_names();
+}
+
+const power_bond_info& ecco_algorithm::get_power_bond(std::string_view name) const
+{
+    return pimpl_->get_power_bond(name);
 }
 
 std::vector<double> ecco_algorithm::get_powerbond_energies(cosim::simulator_index simulator_index)

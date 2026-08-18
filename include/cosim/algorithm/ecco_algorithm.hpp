@@ -12,6 +12,10 @@
 
 #include <cosim/algorithm/algorithm.hpp>
 
+#include <string>
+#include <string_view>
+#include <vector>
+
 namespace cosim
 {
 
@@ -89,6 +93,15 @@ public:
      *     The unique name identifying the power bond.
      */
     void add_power_bond(std::string name, cosim::variable_id input_a, cosim::variable_id output_a, cosim::variable_id input_b, cosim::variable_id output_b);
+
+    /// Returns the names of all configured power bonds, in the order they were added.
+    std::vector<std::string> get_power_bond_names() const;
+
+    /**
+     * Returns the description of the named power bond.
+     * \throws std::out_of_range if no power bond with the given name exists.
+     */
+    const power_bond_info& get_power_bond(std::string_view name) const;
 
     /**
      * Retrieves the energies in the power bond for the given simulator index.add_variable_value
