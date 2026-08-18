@@ -25,6 +25,16 @@
 namespace cosim
 {
 
+/// Aggregate statistics of a power bond's residual, accumulated over all observed samples.
+struct power_bond_statistics
+{
+    std::size_t sample_count;
+    double power_residual_min;
+    double power_residual_max;
+    double power_residual_mean;
+    double power_residual_rms;
+};
+
 /**
  *  An observer that exposes the power bonds in a given `ecco_algorithm`, and their states, at each communication point.
  */
@@ -47,6 +57,8 @@ public:
 
     std::vector<power_bond_state> get_power_bond_state_buffer(std::string_view name) const;
 
+    power_bond_statistics get_power_bond_statistics(std::string_view name) const;
+
     void simulator_added(simulator_index, observable*, time_point) override;
     void simulator_removed(simulator_index, time_point) override;
     void variables_connected(variable_id output, variable_id input, time_point) override;
@@ -61,6 +73,17 @@ private:
     std::size_t bufferSize_;
     std::unordered_map<std::string, power_bond_state> latestStates_;
     std::unordered_map<std::string, std::deque<power_bond_state>> history_;
+
+    /// Note: this will aggregate over all observed samples, independent of the configured ring buffer size. 
+    struct residual_accumulator
+    {
+        std::size_t count = 0;
+        double sum = 0.0;
+        double sum_squares = 0.0;
+        double min = 0.0;
+        double max = 0.0;
+    };
+    std::unordered_map<std::string, residual_accumulator> statistics_;
 };
 
 

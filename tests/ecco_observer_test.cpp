@@ -133,6 +133,15 @@ int main()
         REQUIRE(buffer.back().time == bondState.time);
         REQUIRE(buffer.back().power_residual == bondState.power_residual);
 
+        // The aggregate statistics must be consistent.
+        const auto stats = eccoObserver->get_power_bond_statistics("bond");
+        REQUIRE(stats.sample_count > 0);
+        REQUIRE(stats.power_residual_min >= 0.0);
+        REQUIRE(stats.power_residual_max >= stats.power_residual_min);
+        REQUIRE(stats.power_residual_mean >= stats.power_residual_min);
+        REQUIRE(stats.power_residual_mean <= stats.power_residual_max);
+        REQUIRE(stats.power_residual_rms >= stats.power_residual_mean);
+
         // Requesting buffer for an unknown bond must throw.
         bool bufferThrew = false;
         try {
@@ -141,6 +150,16 @@ int main()
             bufferThrew = true;
         }
         REQUIRE(bufferThrew);
+
+        
+        // Requesting statistics for an unknown bond must throw.
+        bool statsThrew = false;
+        try {
+            eccoObserver->get_power_bond_statistics("does_not_exist");
+        } catch (const std::out_of_range&) {
+            statsThrew = true;
+        }
+        REQUIRE(statsThrew);
 
         // Querying an unknown bond must throw.
         bool threw = false;

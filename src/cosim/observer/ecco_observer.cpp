@@ -5,6 +5,8 @@
  */
 #include "cosim/observer/ecco_observer.hpp"
 
+#include <algorithm>
+#include <cmath>
 #include <stdexcept>
 #include <utility>
 
@@ -47,6 +49,22 @@ std::vector<power_bond_state> ecco_observer::get_power_bond_state_buffer(std::st
     return {it->second.begin(), it->second.end()};
 }
 
+power_bond_statistics ecco_observer::get_power_bond_statistics(std::string_view name) const
+{
+    const auto it = statistics_.find(std::string(name));
+    if (it == statistics_.end()) {
+        throw std::out_of_range("No samples recorded for power bond '" + std::string(name) + "'");
+    }
+    const auto& acc = it->second;
+    const auto count = static_cast<double>(acc.count);
+    return {
+        acc.count,
+        acc.min,
+        acc.max,
+        acc.sum / count,
+        std::sqrt(acc.sum_squares / count)};
+}
+
 void ecco_observer::simulator_added(simulator_index, observable*, time_point) { }
 
 void ecco_observer::simulator_removed(simulator_index, time_point) { }
@@ -66,6 +84,19 @@ void ecco_observer::step_complete(step_number, duration, time_point)
         if (buffer.size() > bufferSize_) {
             buffer.pop_front();
         }
+
+        auto& acc = statistics_[name];
+        const auto residual = state.power_residual;
+        if (acc.count == 0) {
+            acc.min = residual;
+            acc.max = residual;
+        } else {
+            acc.min = std::min(acc.min, residual);
+            acc.max = std::max(acc.max, residual);
+        }
+        acc.count += 1;
+        acc.sum += residual;
+        acc.sum_squares += residual * residual;
     }
 }
 
