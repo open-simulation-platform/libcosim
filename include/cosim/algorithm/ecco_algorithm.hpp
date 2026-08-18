@@ -133,13 +133,6 @@ public:
     /// Returns the most recently computed states of all power bonds, keyed by name.
     std::unordered_map<std::string, power_bond_state> get_power_bond_states() const;
 
-    /**
-     * Retrieves the energies in the power bond for the given simulator index.add_variable_value
-     * \param simulator_index 
-     *      The index of the simulator. 
-     */
-    std::vector<double> get_powerbond_energies(cosim::simulator_index simulator_index);
-
 private:
     class impl;
     std::unique_ptr<impl> pimpl_;

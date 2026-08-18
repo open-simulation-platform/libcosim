@@ -13,7 +13,6 @@
 
 #include <algorithm>
 #include <cstdlib>
-#include <iostream>
 #include <numeric>
 #include <sstream>
 #include <stdexcept>
@@ -244,25 +243,18 @@ public:
         throw error(make_error_code(errc::unsupported_feature), "State saving not yet supported by the ECCO algorithm!");
     }
 
-    void get_energies()
-    {
-        for (std::size_t i = 0; i < energies_.size(); ++i) {
-            std::cout << "Avg energy for sim idx " << i << ": " << get_mean(energies_.at(i)) << std::endl;
-        }
-    }
-
     duration adjust_step_size(time_point currentTime, const duration& stepSize, const ecco_algorithm_params& params)
     {
         std::vector<double> power_residuals{};
-        std::vector<double> power{};
 
         const auto dt = to_double_duration(stepSize, currentTime);
 
-        for (std::size_t i = 0; i < inputVariables_.size(); i += 2) {
-            auto input_a = inputVariables_.at(i);
-            auto input_b = inputVariables_.at(i + 1);
-            auto output_a = outputVariables_.at(i);
-            auto output_b = outputVariables_.at(i + 1);
+        for (std::size_t i = 0; i < powerBonds_.size(); ++i) {
+            const auto& bond = powerBonds_.at(i);
+            const auto input_a = bond.input_a;
+            const auto output_a = bond.output_a;
+            const auto input_b = bond.input_b;
+            const auto output_b = bond.output_b;
 
             double input_a_value = simulators_.at(input_a.simulator).sim->get_real(input_a.reference);
             double input_b_value = simulators_.at(input_b.simulator).sim->get_real(input_b.reference);
@@ -270,16 +262,12 @@ public:
             double output_b_value = simulators_.at(output_b.simulator).sim->get_real(output_b.reference);
 
             double power_a = input_a_value * output_a_value;
-            energies_.at(i).push_back(power_a * dt);
-
             double power_b = input_b_value * output_b_value;
-            energies_.at(i + 1).push_back(power_b * dt);
-
             double power_residual = std::abs(power_a - power_b);
 
             power_residuals.push_back(power_residual);
 
-            auto& state = powerBondStates_.at(i / 2);
+            auto& state = powerBondStates_.at(i);
             state.time = currentTime;
             state.input_a_value = input_a_value;
             state.output_a_value = output_a_value;
@@ -325,12 +313,6 @@ public:
     {
         powerBonds_.push_back({std::move(name), input_a, output_a, input_b, output_b});
         powerBondStates_.emplace_back();
-        energies_.emplace_back();
-        energies_.emplace_back();
-        inputVariables_.push_back(input_a);
-        outputVariables_.push_back(output_a);
-        inputVariables_.push_back(input_b);
-        outputVariables_.push_back(output_b);
     }
 
     std::vector<std::string> get_power_bond_names() const
@@ -363,17 +345,9 @@ public:
         return states;
     }
 
-    std::vector<double> get_powerbond_energies(cosim::simulator_index simulator_index)
-    {
-        return energies_.at(simulator_index);
-    }
-
 private:
     std::vector<power_bond_info> powerBonds_{};
     std::vector<power_bond_state> powerBondStates_{};
-    std::vector<cosim::variable_id> inputVariables_{};
-    std::vector<cosim::variable_id> outputVariables_{};
-    std::vector<std::vector<double>> energies_{};
 
     std::size_t power_bond_index(std::string_view name) const
     {
@@ -383,16 +357,6 @@ private:
             throw std::out_of_range("No power bond named '" + std::string(name) + "'");
         }
         return static_cast<std::size_t>(std::distance(powerBonds_.begin(), it));
-    }
-
-    double get_mean(const std::vector<double>& elems)
-    {
-        if (elems.empty()) return 0.0;
-        double sum{};
-        for (auto elem : elems) {
-            sum += elem;
-        }
-        return sum / (double)elems.size();
     }
 
     struct connection_ss
@@ -668,11 +632,6 @@ power_bond_state ecco_algorithm::get_power_bond_state(std::string_view name) con
 std::unordered_map<std::string, power_bond_state> ecco_algorithm::get_power_bond_states() const
 {
     return pimpl_->get_power_bond_states();
-}
-
-std::vector<double> ecco_algorithm::get_powerbond_energies(cosim::simulator_index simulator_index)
-{
-    return pimpl_->get_powerbond_energies(simulator_index);
 }
 
 } // namespace cosim
