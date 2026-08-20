@@ -633,7 +633,7 @@ entity_index_maps inject_system_structure(
     if (auto algorithm = std::dynamic_pointer_cast<ecco_algorithm>(exe.get_algorithm())) {
         const auto powerbonds = sys.get_power_bonds();
         if (powerbonds.empty()) {
-            throw error(make_error_code(errc::invalid_system_structure), "No power bonds were found, bonds need to be configured in the system structure order to use the ECCO algorithm.");
+            throw error(make_error_code(errc::invalid_system_structure), "No power bonds were found, bonds need to be configured in the system structure in order to use the ECCO algorithm.");
         }
 
         for (const auto& [name, pb] : powerbonds) {
@@ -642,7 +642,7 @@ entity_index_maps inject_system_structure(
             auto input_b = make_variable_id(sys, indexMaps, pb.input_b);
             auto output_b = make_variable_id(sys, indexMaps, pb.output_b);
 
-            algorithm->add_power_bond(input_a, output_a, input_b, output_b);
+            algorithm->add_power_bond(name, input_a, output_a, input_b, output_b);
         }
     }
 

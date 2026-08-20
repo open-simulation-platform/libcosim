@@ -97,7 +97,7 @@ int main()
         execution.connect_variables(output1, input2);
         execution.connect_variables(output2, input1);
 
-        ecco_algo->add_power_bond(input1, output1, input2, output2);
+        ecco_algo->add_power_bond("bond", input1, output1, input2, output2);
 
         execution.set_real_initial_value(slaves[0], realInRef, 0.5);
 

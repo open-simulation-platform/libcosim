@@ -2,6 +2,7 @@ set(tests
     "ecco_algorithm_from_system_structure_test"
     "ecco_algorithm_multi_bond_test"    
     "ecco_algorithm_test"
+    "ecco_observer_test"
     "file_observer_dynamic_logging_test"
     "file_observer_logging_test"
     "file_observer_logging_from_config_test"
