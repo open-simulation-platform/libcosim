@@ -73,7 +73,7 @@ int main()
         REQUIRE(slaveLog);
         std::stringstream slaveLogContents;
         slaveLogContents << slaveLog.rdbuf();
-        REQUIRE(slaveLogContents.str().find(",1.2,") != std::string::npos);
+        REQUIRE(slaveLogContents.str().find(",1.2,1,hello log") != std::string::npos);
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
