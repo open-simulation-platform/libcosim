@@ -7,7 +7,9 @@
 #include <cosim/observer/file_observer.hpp>
 
 #include <exception>
+#include <fstream>
 #include <memory>
+#include <sstream>
 #include <stdexcept>
 
 
@@ -66,6 +68,12 @@ int main()
 
         REQUIRE(cosim::filesystem::exists(cosim::filesystem::path(csvPath / "slave.csv")));
         REQUIRE(cosim::filesystem::exists(cosim::filesystem::path(csvPath / "slave2.csv")));
+
+        std::ifstream slaveLog(csvPath / "slave.csv");
+        REQUIRE(slaveLog);
+        std::stringstream slaveLogContents;
+        slaveLogContents << slaveLog.rdbuf();
+        REQUIRE(slaveLogContents.str().find(",1.2,") != std::string::npos);
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
