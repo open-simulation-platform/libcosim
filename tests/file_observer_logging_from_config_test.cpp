@@ -65,6 +65,7 @@ int main()
         // Run the simulation
         auto simResult = execution.simulate_until(endTime);
         REQUIRE(simResult);
+        csv_observer->stop_recording();
 
         REQUIRE(cosim::filesystem::exists(cosim::filesystem::path(csvPath / "slave.csv")));
         REQUIRE(cosim::filesystem::exists(cosim::filesystem::path(csvPath / "slave2.csv")));
