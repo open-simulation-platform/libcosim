@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fmiModelDescription
+        fmiVersion="2.0"
+        modelName="libcosim.fmi2.derivatives"
+        guid="{2D4E616C-74A9-4B69-932A-3C6DDBF24E20}"
+        generationTool="libcosim test fixture"
+        variableNamingConvention="flat"
+        numberOfEventIndicators="0">
+    <CoSimulation
+            modelIdentifier="Fmi2Derivatives"
+            canHandleVariableCommunicationStepSize="true"
+            providesDirectionalDerivative="true"/>
+    <DefaultExperiment startTime="0" stopTime="10" stepSize="0.1"/>
+    <ModelVariables>
+        <ScalarVariable name="known0" valueReference="1"
+                causality="input" variability="continuous">
+            <Real start="0"/>
+        </ScalarVariable>
+        <ScalarVariable name="known1" valueReference="2"
+                causality="input" variability="continuous">
+            <Real start="0"/>
+        </ScalarVariable>
+        <ScalarVariable name="known2" valueReference="3"
+                causality="input" variability="continuous">
+            <Real start="0"/>
+        </ScalarVariable>
+        <ScalarVariable name="unknown0" valueReference="10"
+                causality="output" variability="continuous"
+                initial="calculated">
+            <Real/>
+        </ScalarVariable>
+        <ScalarVariable name="unknown1" valueReference="11"
+                causality="output" variability="continuous"
+                initial="calculated">
+            <Real/>
+        </ScalarVariable>
+        <ScalarVariable name="derivativeStatus" valueReference="100"
+                description="Injected fmi2Status: 0=OK through 5=Pending"
+                causality="input" variability="discrete">
+            <Integer start="0" min="0" max="5"/>
+        </ScalarVariable>
+        <ScalarVariable name="directionalCallCount" valueReference="101"
+                causality="output" variability="discrete"
+                initial="calculated">
+            <Integer/>
+        </ScalarVariable>
+        <ScalarVariable name="nonReal" valueReference="102"
+                description="Non-Real value reference for rejection tests"
+                causality="input" variability="discrete">
+            <Boolean start="false"/>
+        </ScalarVariable>
+    </ModelVariables>
+    <ModelStructure>
+        <Outputs>
+            <Unknown index="4" dependencies="1 2 3"
+                    dependenciesKind="dependent dependent dependent"/>
+            <Unknown index="5" dependencies="1 2 3"
+                    dependenciesKind="dependent dependent dependent"/>
+            <Unknown index="7" dependencies=""/>
+        </Outputs>
+        <InitialUnknowns>
+            <Unknown index="4" dependencies="1 2 3"
+                    dependenciesKind="dependent dependent dependent"/>
+            <Unknown index="5" dependencies="1 2 3"
+                    dependenciesKind="dependent dependent dependent"/>
+            <Unknown index="7" dependencies=""/>
+        </InitialUnknowns>
+    </ModelStructure>
+</fmiModelDescription>
