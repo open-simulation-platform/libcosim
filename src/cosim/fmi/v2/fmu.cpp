@@ -291,6 +291,7 @@ slave_instance::slave_instance(
             make_error_code(errc::bad_file),
             fmu->importer()->last_error_message());
     }
+    cache_directional_derivative_metadata();
 
     fmi2_callback_functions_t callbacks;
     callbacks.allocateMemory = std::calloc;
@@ -306,6 +307,9 @@ slave_instance::slave_instance(
             make_error_code(errc::dl_load_error),
             fmu->importer()->last_error_message());
     }
+    providesDirectionalDerivatives_ = !!fmi2_import_get_capability(
+        handle_,
+        fmi2_cs_providesDirectionalDerivatives);
 
     const auto rc = fmi2_import_instantiate(
         handle_,
@@ -361,6 +365,7 @@ void slave_instance::setup(
     }
 
     setupComplete_ = true;
+    lifecycleState_ = lifecycle_state::initialization;
 }
 
 
@@ -375,6 +380,7 @@ void slave_instance::start_simulation()
             last_log_record(instanceName_).message);
     }
     simStarted_ = true;
+    lifecycleState_ = lifecycle_state::step;
 }
 
 
@@ -388,6 +394,7 @@ void slave_instance::end_simulation()
             make_error_code(errc::model_error),
             last_log_record(instanceName_).message);
     }
+    lifecycleState_ = lifecycle_state::terminated;
 }
 
 
@@ -602,6 +609,7 @@ void slave_instance::restore_state(state_index stateIndex)
     }
     setupComplete_ = state.setupComplete;
     simStarted_ = state.simStarted;
+    lifecycleState_ = state.lifecycleState;
 }
 
 
@@ -623,7 +631,7 @@ void slave_instance::release_state(state_index state)
 // state that needs to be serialized may change, we need some versioning.
 // Increment this number whenever the "exported state" changes form, and
 // always consider whether backwards compatibility measures are warranted.
-constexpr std::int32_t export_scheme_version = 0;
+constexpr std::int32_t export_scheme_version = 1;
 
 
 serialization::node slave_instance::export_state(state_index stateIndex) const
@@ -666,6 +674,9 @@ serialization::node slave_instance::export_state(state_index stateIndex) const
     exportedState.put("serialized_fmu_state", serializedFMUState);
     exportedState.put("setup_complete", savedState.setupComplete);
     exportedState.put("simulation_started", savedState.simStarted);
+    exportedState.put(
+        "lifecycle_state",
+        static_cast<std::int32_t>(savedState.lifecycleState));
     return exportedState;
 }
 
@@ -674,10 +685,15 @@ slave::state_index slave_instance::import_state(
     const serialization::node& exportedState)
 {
     saved_state savedState;
+    const auto releaseOnFailure = gsl::finally([this, &savedState]() {
+        if (savedState.fmuState != nullptr) {
+            fmi2_import_free_fmu_state(handle_, &savedState.fmuState);
+        }
+    });
     try {
         // First some sanity checks
         const auto schemeVersion = exportedState.get<std::int32_t>("scheme_version");
-        if (schemeVersion != export_scheme_version) {
+        if (schemeVersion != 0 && schemeVersion != export_scheme_version) {
             throw error(
                 make_error_code(errc::bad_file),
                 "The serialized state of subsimulator '" + instanceName_
@@ -698,7 +714,59 @@ slave::state_index slave_instance::import_state(
                 instanceName_ + ": FMU does not support state deserialization");
         }
 
-        // Deserialize FMU state
+        // Validate wrapper state before asking the FMU to allocate a state.
+        savedState.setupComplete = exportedState.get<bool>("setup_complete");
+        savedState.simStarted = exportedState.get<bool>("simulation_started");
+        if (schemeVersion == 0) {
+            if (savedState.setupComplete && !savedState.simStarted) {
+                throw error(
+                    make_error_code(errc::bad_file),
+                    "The serialized state of subsimulator '" + instanceName_
+                        + "' uses scheme 0 lifecycle data that is ambiguous "
+                          "between Initialization Mode and Terminated");
+            }
+            savedState.lifecycleState = savedState.simStarted
+                ? lifecycle_state::step
+                : lifecycle_state::instantiated;
+        } else {
+            const auto serializedLifecycleState =
+                exportedState.get<std::int32_t>("lifecycle_state");
+            switch (serializedLifecycleState) {
+                case static_cast<std::int32_t>(lifecycle_state::instantiated):
+                    savedState.lifecycleState = lifecycle_state::instantiated;
+                    break;
+                case static_cast<std::int32_t>(lifecycle_state::initialization):
+                    savedState.lifecycleState = lifecycle_state::initialization;
+                    break;
+                case static_cast<std::int32_t>(lifecycle_state::step):
+                    savedState.lifecycleState = lifecycle_state::step;
+                    break;
+                case static_cast<std::int32_t>(lifecycle_state::terminated):
+                    savedState.lifecycleState = lifecycle_state::terminated;
+                    break;
+                default:
+                    throw error(
+                        make_error_code(errc::bad_file),
+                        "The serialized state of subsimulator '" + instanceName_
+                            + "' contains an invalid lifecycle state");
+            }
+            const bool lifecycleStateConsistent =
+                (savedState.lifecycleState == lifecycle_state::instantiated &&
+                    !savedState.setupComplete && !savedState.simStarted) ||
+                (savedState.lifecycleState == lifecycle_state::initialization &&
+                    savedState.setupComplete && !savedState.simStarted) ||
+                (savedState.lifecycleState == lifecycle_state::step &&
+                    savedState.setupComplete && savedState.simStarted) ||
+                (savedState.lifecycleState == lifecycle_state::terminated &&
+                    savedState.setupComplete && !savedState.simStarted);
+            if (!lifecycleStateConsistent) {
+                throw error(
+                    make_error_code(errc::bad_file),
+                    "The serialized state of subsimulator '" + instanceName_
+                        + "' contains inconsistent lifecycle data");
+            }
+        }
+
         const auto& serializedFMUState = std::get<std::vector<std::byte>>(
             exportedState.get_child("serialized_fmu_state").data());
         const auto status = fmi2_import_de_serialize_fmu_state(
@@ -711,10 +779,6 @@ slave::state_index slave_instance::import_state(
                 make_error_code(errc::model_error),
                 last_log_record(instanceName_).message);
         }
-
-        // Get other data
-        savedState.setupComplete = exportedState.get<bool>("setup_complete");
-        savedState.simStarted = exportedState.get<bool>("simulation_started");
     } catch (const boost::property_tree::ptree_bad_path&) {
         throw error(
             make_error_code(errc::bad_file),
@@ -726,7 +790,9 @@ slave::state_index slave_instance::import_state(
             "The serialized state of subsimulator '" + instanceName_
                 + "' is invalid or corrupt");
     }
-    return store_new_state(std::move(savedState));
+    const auto stateIndex = store_new_state(std::move(savedState));
+    savedState.fmuState = nullptr;
+    return stateIndex;
 }
 
 
@@ -739,6 +805,125 @@ std::shared_ptr<v2::fmu> slave_instance::v2_fmu() const
 fmi2_import_t* slave_instance::fmilib_handle() const
 {
     return handle_;
+}
+
+
+bool slave_instance::provides_directional_derivatives() const noexcept
+{
+    return providesDirectionalDerivatives_;
+}
+
+
+void slave_instance::get_directional_derivative(
+    gsl::span<const value_reference> unknowns,
+    gsl::span<const value_reference> knowns,
+    gsl::span<const double> seed,
+    gsl::span<double> sensitivity) const
+{
+    if (!providesDirectionalDerivatives_) {
+        throw error(
+            make_error_code(errc::unsupported_feature),
+            instanceName_ + ": FMU does not provide directional derivatives");
+    }
+    if (lifecycleState_ != lifecycle_state::initialization &&
+        lifecycleState_ != lifecycle_state::step &&
+        lifecycleState_ != lifecycle_state::terminated) {
+        throw error(
+            make_error_code(errc::model_error),
+            instanceName_ +
+                ": invalid lifecycle operation: GetDirectionalDerivative");
+    }
+    COSIM_INPUT_CHECK(!unknowns.empty());
+    COSIM_INPUT_CHECK(!knowns.empty());
+    COSIM_INPUT_CHECK(seed.size() == knowns.size());
+    COSIM_INPUT_CHECK(sensitivity.size() == unknowns.size());
+
+    const auto contains = [](const auto& references, value_reference reference) {
+        return std::find(
+                   references.begin(),
+                   references.end(),
+                   reference) != references.end();
+    };
+    const bool initializing =
+        lifecycleState_ == lifecycle_state::initialization;
+
+    for (const auto reference : unknowns) {
+        const auto variable = fmi2_import_get_variable_by_vr(
+            handle_, fmi2_base_type_real, reference);
+        const auto variability = variable == nullptr
+            ? fmi2_variability_enu_unknown
+            : fmi2_import_get_variability(variable);
+        const bool eligibleOutput =
+            contains(outputReferences_, reference) &&
+            (variability == fmi2_variability_enu_continuous ||
+                variability == fmi2_variability_enu_discrete);
+        const bool validUnknown = initializing
+            ? contains(initialUnknownReferences_, reference)
+            : eligibleOutput ||
+                contains(derivativeReferences_, reference);
+        if (variable == nullptr || !validUnknown) {
+            throw error(
+                make_error_code(errc::model_error),
+                instanceName_ + ": directional derivative unknown value reference " +
+                    std::to_string(reference) +
+                    " is not a mode-appropriate Real ModelStructure entry");
+        }
+    }
+
+    for (const auto reference : knowns) {
+        const auto variable = fmi2_import_get_variable_by_vr(
+            handle_, fmi2_base_type_real, reference);
+        bool validKnown = false;
+        if (variable != nullptr) {
+            const auto causality = fmi2_import_get_causality(variable);
+            validKnown =
+                causality == fmi2_causality_enu_input ||
+                causality == fmi2_causality_enu_independent;
+            if (initializing) {
+                validKnown =
+                    validKnown ||
+                    fmi2_import_get_initial(variable) ==
+                        fmi2_initial_enu_exact;
+            } else {
+                validKnown =
+                    validKnown ||
+                    contains(continuousStateReferences_, reference);
+            }
+        }
+        if (!validKnown) {
+            throw error(
+                make_error_code(errc::model_error),
+                instanceName_ + ": directional derivative known value reference " +
+                    std::to_string(reference) +
+                    " is not a mode-appropriate Real known");
+        }
+    }
+
+    std::vector<double> stagedSensitivity(sensitivity.size());
+    const auto status = fmi2_import_get_directional_derivative(
+        handle_,
+        knowns.data(),
+        knowns.size(),
+        unknowns.data(),
+        unknowns.size(),
+        seed.data(),
+        stagedSensitivity.data());
+    if (status != fmi2_status_ok && status != fmi2_status_warning) {
+        auto message =
+            instanceName_ + ": GetDirectionalDerivative returned " +
+            fmi2_status_to_string(status);
+        const auto logMessage = last_log_record(instanceName_).message;
+        if (!logMessage.empty()) {
+            message += ": " + logMessage;
+        }
+        throw error(
+            make_error_code(errc::model_error),
+            message);
+    }
+    std::copy(
+        stagedSensitivity.begin(),
+        stagedSensitivity.end(),
+        sensitivity.begin());
 }
 
 
@@ -757,6 +942,73 @@ void slave_instance::copy_current_state(saved_state& state)
     }
     state.setupComplete = setupComplete_;
     state.simStarted = simStarted_;
+    state.lifecycleState = lifecycleState_;
+}
+
+
+void slave_instance::cache_directional_derivative_metadata()
+{
+    std::vector<fmi2_import_real_variable_t*> continuousStateVariables;
+    const auto cacheList =
+        [&continuousStateVariables](
+            fmi2_import_variable_list_t* list,
+            std::vector<value_reference>& references,
+            bool cacheContinuousStates) {
+            if (list == nullptr) return;
+            const auto freeList = gsl::finally([list]() {
+                fmi2_import_free_variable_list(list);
+            });
+            const auto count = fmi2_import_get_variable_list_size(list);
+            references.reserve(count);
+            for (std::size_t i = 0; i < count; ++i) {
+                const auto variable = fmi2_import_get_variable(list, i);
+                references.push_back(fmi2_import_get_variable_vr(variable));
+                if (cacheContinuousStates) {
+                    const auto realVariable =
+                        fmi2_import_get_variable_as_real(variable);
+                    if (realVariable != nullptr) {
+                        const auto stateVariable =
+                            fmi2_import_get_real_variable_derivative_of(
+                                realVariable);
+                        if (stateVariable != nullptr) {
+                            continuousStateVariables.push_back(stateVariable);
+                        }
+                    }
+                }
+            }
+        };
+
+    cacheList(
+        fmi2_import_get_outputs_list(handle_),
+        outputReferences_,
+        false);
+    cacheList(
+        fmi2_import_get_derivatives_list(handle_),
+        derivativeReferences_,
+        true);
+    cacheList(
+        fmi2_import_get_initial_unknowns_list(handle_),
+        initialUnknownReferences_,
+        false);
+
+    const auto variables = fmi2_import_get_variable_list(handle_, 0);
+    if (variables == nullptr) return;
+    const auto freeVariables = gsl::finally([variables]() {
+        fmi2_import_free_variable_list(variables);
+    });
+    const auto variableCount = fmi2_import_get_variable_list_size(variables);
+    for (std::size_t i = 0; i < variableCount; ++i) {
+        const auto variable = fmi2_import_get_variable(variables, i);
+        const auto realVariable = fmi2_import_get_variable_as_real(variable);
+        if (realVariable != nullptr &&
+            std::find(
+                continuousStateVariables.begin(),
+                continuousStateVariables.end(),
+                realVariable) != continuousStateVariables.end()) {
+            continuousStateReferences_.push_back(
+                fmi2_import_get_variable_vr(variable));
+        }
+    }
 }
 
 

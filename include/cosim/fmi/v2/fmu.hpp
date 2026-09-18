@@ -186,21 +186,50 @@ public:
     /// Returns the underlying C API handle (for FMI Library)
     fmi2_import_t* fmilib_handle() const;
 
+    /// Reports whether the FMU provides directional derivatives.
+    bool provides_directional_derivatives() const noexcept;
+
+    /**
+     *  Computes directional derivatives of unknown Real variables with respect
+     *  to known Real variables.
+     */
+    void get_directional_derivative(
+        gsl::span<const value_reference> unknowns,
+        gsl::span<const value_reference> knowns,
+        gsl::span<const double> seed,
+        gsl::span<double> sensitivity) const;
+
 private:
+    enum class lifecycle_state : std::int32_t
+    {
+        instantiated = 0,
+        initialization = 1,
+        step = 2,
+        terminated = 3
+    };
+
     struct saved_state
     {
         fmi2_FMU_state_t fmuState = nullptr;
         bool setupComplete = false;
         bool simStarted = false;
+        lifecycle_state lifecycleState = lifecycle_state::instantiated;
     };
     void copy_current_state(saved_state& state);
     state_index store_new_state(saved_state state);
+    void cache_directional_derivative_metadata();
 
     std::shared_ptr<v2::fmu> fmu_;
     fmi2_import_t* handle_;
 
     bool setupComplete_ = false;
     bool simStarted_ = false;
+    lifecycle_state lifecycleState_ = lifecycle_state::instantiated;
+    bool providesDirectionalDerivatives_ = false;
+    std::vector<value_reference> outputReferences_;
+    std::vector<value_reference> derivativeReferences_;
+    std::vector<value_reference> initialUnknownReferences_;
+    std::vector<value_reference> continuousStateReferences_;
 
     std::string instanceName_;
 
