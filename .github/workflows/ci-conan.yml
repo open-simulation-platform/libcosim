@@ -19,6 +19,7 @@ jobs:
     env:
       CONAN_LOGIN_USERNAME_OSP: ${{ secrets.osp_artifactory_usr }}
       CONAN_PASSWORD_OSP: ${{ secrets.osp_artifactory_pwd }}
+      CONAN_HOME: ${{ github.workspace }}/.conan2
       LIBCOSIM_RUN_TESTS_ON_CONAN_BUILD: 1
     timeout-minutes: 35
 
@@ -30,10 +31,17 @@ jobs:
           apt-get install -y pipx doxygen cmake
           pipx install conan
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: Cache Conan packages
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.CONAN_HOME }}
+          key: conan-${{ github.workflow }}-${{ runner.os }}-${{ matrix.compiler_version }}-${{ matrix.build_type }}-${{ matrix.option_proxyfmu }}-${{ matrix.option_shared }}-${{ hashFiles('conanfile.py', 'version.txt', '.github/workflows/ci-conan.yml') }}
+          restore-keys: |
+           conan-${{ github.workflow }}-${{ runner.os }}-${{ matrix.compiler_version }}-${{ matrix.build_type }}-${{ matrix.option_proxyfmu }}-${{ matrix.option_shared }}-
       - name: Configure Conan
         run: |
-          conan profile detect
-          conan remote add osp https://osp.jfrog.io/artifactory/api/conan/conan-local
+          conan profile detect -f
+          conan remote add osp https://osp.jfrog.io/artifactory/api/conan/conan-local --force
       - name: Build package
         shell: bash
         run: |
@@ -55,9 +63,9 @@ jobs:
             --user=osp \
             --channel="${CHANNEL}" \
             .
-      - name: Upload package
-        run: |
-          conan upload --confirm --remote=osp '*'
+#      - name: Upload package
+#        run: |
+#          conan upload --confirm --remote=osp '*'
 
   windows:
     name: Windows
@@ -65,11 +73,12 @@ jobs:
     env:
       CONAN_LOGIN_USERNAME_OSP: ${{ secrets.osp_artifactory_usr }}
       CONAN_PASSWORD_OSP: ${{ secrets.osp_artifactory_pwd }}
+      CONAN_HOME: ${{ github.workspace }}/.conan2
       LIBCOSIM_RUN_TESTS_ON_CONAN_BUILD: 1
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2022]
+        os: [windows-2025]
         build_type: [Debug, Release]
         option_proxyfmu: ['proxyfmu=True', 'proxyfmu=False']
         option_shared: ['shared=True', 'shared=False']
@@ -81,9 +90,16 @@ jobs:
         run: |
           pip3 install --upgrade setuptools pip
           pip3 install conan cmake ninja
+      - name: Cache Conan packages
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.CONAN_HOME }}
+          key: conan-${{ github.workflow }}-${{ runner.os }}-${{ matrix.os }}-${{ matrix.build_type }}-${{ matrix.option_proxyfmu }}-${{ matrix.option_shared }}-${{ hashFiles('conanfile.py', 'version.txt', '.github/workflows/ci-conan.yml') }}
+          restore-keys: |
+            conan-${{ github.workflow }}-${{ runner.os }}-${{ matrix.os }}-${{ matrix.build_type }}-${{ matrix.option_proxyfmu }}-${{ matrix.option_shared }}-
       - name: Configure Conan
         run: |
-          conan profile detect
+          conan profile detect -f
           conan remote add osp https://osp.jfrog.io/artifactory/api/conan/conan-local --force
       - name: Conan create
         shell: bash
@@ -105,5 +121,5 @@ jobs:
             --user=osp \
             --channel="${CHANNEL}" \
             .
-      - name: Conan upload
-        run: conan upload --confirm --remote=osp '*'
+#      - name: Conan upload
+#        run: conan upload --confirm --remote=osp '*'
