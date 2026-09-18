@@ -278,7 +278,8 @@ bool is_valid_variable_value(
             [=](double) { return variable_type::real; },
             [=](int) { return variable_type::integer; },
             [=](const std::string&) { return variable_type::string; },
-            [=](bool) { return variable_type::boolean; }),
+            [=](bool) { return variable_type::boolean; },
+            [&](const auto&) { return type_of(value); }),
         value);
     if (valueType != variable.type) {
         if (reason != nullptr) {
