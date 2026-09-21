@@ -31,13 +31,6 @@ jobs:
           apt-get install -y pipx doxygen cmake
           pipx install conan
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
-      - name: Cache Conan packages
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.CONAN_HOME }}
-          key: conan-${{ github.workflow }}-${{ runner.os }}-${{ matrix.compiler_version }}-${{ matrix.build_type }}-${{ matrix.option_proxyfmu }}-${{ matrix.option_shared }}-${{ hashFiles('conanfile.py', 'version.txt', '.github/workflows/ci-conan.yml') }}
-          restore-keys: |
-           conan-${{ github.workflow }}-${{ runner.os }}-${{ matrix.compiler_version }}-${{ matrix.build_type }}-${{ matrix.option_proxyfmu }}-${{ matrix.option_shared }}-
       - name: Configure Conan
         run: |
           conan profile detect -f
@@ -63,9 +56,9 @@ jobs:
             --user=osp \
             --channel="${CHANNEL}" \
             .
-#      - name: Upload package
-#        run: |
-#          conan upload --confirm --remote=osp '*'
+      - name: Upload package
+        run: |
+          conan upload --confirm --remote=osp '*'
 
   windows:
     name: Windows
@@ -90,13 +83,6 @@ jobs:
         run: |
           pip3 install --upgrade setuptools pip
           pip3 install conan cmake ninja
-      - name: Cache Conan packages
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.CONAN_HOME }}
-          key: conan-${{ github.workflow }}-${{ runner.os }}-${{ matrix.os }}-${{ matrix.build_type }}-${{ matrix.option_proxyfmu }}-${{ matrix.option_shared }}-${{ hashFiles('conanfile.py', 'version.txt', '.github/workflows/ci-conan.yml') }}
-          restore-keys: |
-            conan-${{ github.workflow }}-${{ runner.os }}-${{ matrix.os }}-${{ matrix.build_type }}-${{ matrix.option_proxyfmu }}-${{ matrix.option_shared }}-
       - name: Configure Conan
         run: |
           conan profile detect -f
@@ -121,5 +107,5 @@ jobs:
             --user=osp \
             --channel="${CHANNEL}" \
             .
-#      - name: Conan upload
-#        run: conan upload --confirm --remote=osp '*'
+      - name: Conan upload
+        run: conan upload --confirm --remote=osp '*'
