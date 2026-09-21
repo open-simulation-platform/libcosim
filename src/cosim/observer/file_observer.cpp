@@ -167,6 +167,8 @@ private:
                 break;
             case variable_type::enumeration:
                 COSIM_PANIC();
+            default:
+                COSIM_PANIC();
         }
     }
 
