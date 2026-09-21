@@ -33,9 +33,9 @@ using value_reference = std::uint32_t;
 /// Variable data types.
 enum class variable_type
 {
-    /// FMI 3 Float64.
+    /// FMI Float64.
     real,
-    /// FMI 3 Int32 and the legacy FMI integer type.
+    /// FMI Int32 and the legacy FMI integer type.
     integer,
     /// FMI Boolean.
     boolean,
