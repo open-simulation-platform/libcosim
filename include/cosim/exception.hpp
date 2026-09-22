@@ -51,7 +51,10 @@ enum class errc
     invalid_system_structure,
 
     /// ZIP file error
-    zip_error
+    zip_error,
+
+    /// Invalid operation (e.g. calling a function at the invalid time in the simulation lifecycle)
+    invalid_operation
 };
 
 

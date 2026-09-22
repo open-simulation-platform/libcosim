@@ -8,6 +8,7 @@
 
 #include <array>
 #include <cstdlib>
+#include <string>
 
 
 using namespace cosim;
@@ -113,7 +114,12 @@ BOOST_AUTO_TEST_CASE(v2_reference_directional_derivatives)
             sensitivity),
         cosim::error,
         [](const cosim::error& error) {
-            return error.code() == make_error_code(errc::model_error);
+            return error.code() == make_error_code(errc::invalid_operation) &&
+                std::string(error.what()).find(
+                    "GetDirectionalDerivative can only be called in lifecycle states "
+                    "initialization (1), step (2), or terminated (3); current lifecycle "
+                    "state: 0") !=
+                std::string::npos;
         });
 
     instance->setup(

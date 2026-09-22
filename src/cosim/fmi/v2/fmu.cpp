@@ -329,7 +329,7 @@ slave_instance::slave_instance(
 
 slave_instance::~slave_instance() noexcept
 {
-    if (simStarted_) {
+    if (lifecycleState_ == lifecycle_state::step) {
         fmi2_import_terminate(handle_);
     }
     fmi2_import_free_instance(handle_);
@@ -343,7 +343,7 @@ void slave_instance::setup(
     std::optional<time_point> stopTime,
     std::optional<double> relativeTolerance)
 {
-    assert(!setupComplete_);
+    assert(lifecycleState_ == lifecycle_state::instantiated);
     const auto rcs = fmi2_import_setup_experiment(
         handle_,
         relativeTolerance ? fmi2_true : fmi2_false,
@@ -364,31 +364,27 @@ void slave_instance::setup(
             last_log_record(instanceName_).message);
     }
 
-    setupComplete_ = true;
     lifecycleState_ = lifecycle_state::initialization;
 }
 
 
 void slave_instance::start_simulation()
 {
-    assert(setupComplete_);
-    assert(!simStarted_);
+    assert(lifecycleState_ == lifecycle_state::initialization);
     const auto rc = fmi2_import_exit_initialization_mode(handle_);
     if (rc != fmi2_status_ok && rc != fmi2_status_warning) {
         throw error(
             make_error_code(errc::model_error),
             last_log_record(instanceName_).message);
     }
-    simStarted_ = true;
     lifecycleState_ = lifecycle_state::step;
 }
 
 
 void slave_instance::end_simulation()
 {
-    assert(simStarted_);
+    assert(lifecycleState_ == lifecycle_state::step);
     const auto rc = fmi2_import_terminate(handle_);
-    simStarted_ = false;
     if (rc != fmi2_status_ok && rc != fmi2_status_warning) {
         throw error(
             make_error_code(errc::model_error),
@@ -400,7 +396,7 @@ void slave_instance::end_simulation()
 
 step_result slave_instance::do_step(time_point currentT, duration deltaT)
 {
-    assert(simStarted_);
+    assert(lifecycleState_ == lifecycle_state::step);
     const auto rc = fmi2_import_do_step(
         handle_,
         to_double_time_point(currentT),
@@ -607,8 +603,6 @@ void slave_instance::restore_state(state_index stateIndex)
             make_error_code(errc::model_error),
             last_log_record(instanceName_).message);
     }
-    setupComplete_ = state.setupComplete;
-    simStarted_ = state.simStarted;
     lifecycleState_ = state.lifecycleState;
 }
 
@@ -631,7 +625,7 @@ void slave_instance::release_state(state_index state)
 // state that needs to be serialized may change, we need some versioning.
 // Increment this number whenever the "exported state" changes form, and
 // always consider whether backwards compatibility measures are warranted.
-constexpr std::int32_t export_scheme_version = 1;
+constexpr std::int32_t export_scheme_version = 0;
 
 
 serialization::node slave_instance::export_state(state_index stateIndex) const
@@ -672,8 +666,6 @@ serialization::node slave_instance::export_state(state_index stateIndex) const
     exportedState.put("scheme_version", export_scheme_version);
     exportedState.put("fmu_uuid", fmu_->model_description()->uuid);
     exportedState.put("serialized_fmu_state", serializedFMUState);
-    exportedState.put("setup_complete", savedState.setupComplete);
-    exportedState.put("simulation_started", savedState.simStarted);
     exportedState.put(
         "lifecycle_state",
         static_cast<std::int32_t>(savedState.lifecycleState));
@@ -693,7 +685,7 @@ slave::state_index slave_instance::import_state(
     try {
         // First some sanity checks
         const auto schemeVersion = exportedState.get<std::int32_t>("scheme_version");
-        if (schemeVersion != 0 && schemeVersion != export_scheme_version) {
+        if (schemeVersion != export_scheme_version) {
             throw error(
                 make_error_code(errc::bad_file),
                 "The serialized state of subsimulator '" + instanceName_
@@ -715,56 +707,26 @@ slave::state_index slave_instance::import_state(
         }
 
         // Validate wrapper state before asking the FMU to allocate a state.
-        savedState.setupComplete = exportedState.get<bool>("setup_complete");
-        savedState.simStarted = exportedState.get<bool>("simulation_started");
-        if (schemeVersion == 0) {
-            if (savedState.setupComplete && !savedState.simStarted) {
+        const auto serializedLifecycleState =
+            exportedState.get<std::int32_t>("lifecycle_state");
+        switch (serializedLifecycleState) {
+            case static_cast<std::int32_t>(lifecycle_state::instantiated):
+                savedState.lifecycleState = lifecycle_state::instantiated;
+                break;
+            case static_cast<std::int32_t>(lifecycle_state::initialization):
+                savedState.lifecycleState = lifecycle_state::initialization;
+                break;
+            case static_cast<std::int32_t>(lifecycle_state::step):
+                savedState.lifecycleState = lifecycle_state::step;
+                break;
+            case static_cast<std::int32_t>(lifecycle_state::terminated):
+                savedState.lifecycleState = lifecycle_state::terminated;
+                break;
+            default:
                 throw error(
                     make_error_code(errc::bad_file),
                     "The serialized state of subsimulator '" + instanceName_
-                        + "' uses scheme 0 lifecycle data that is ambiguous "
-                          "between Initialization Mode and Terminated");
-            }
-            savedState.lifecycleState = savedState.simStarted
-                ? lifecycle_state::step
-                : lifecycle_state::instantiated;
-        } else {
-            const auto serializedLifecycleState =
-                exportedState.get<std::int32_t>("lifecycle_state");
-            switch (serializedLifecycleState) {
-                case static_cast<std::int32_t>(lifecycle_state::instantiated):
-                    savedState.lifecycleState = lifecycle_state::instantiated;
-                    break;
-                case static_cast<std::int32_t>(lifecycle_state::initialization):
-                    savedState.lifecycleState = lifecycle_state::initialization;
-                    break;
-                case static_cast<std::int32_t>(lifecycle_state::step):
-                    savedState.lifecycleState = lifecycle_state::step;
-                    break;
-                case static_cast<std::int32_t>(lifecycle_state::terminated):
-                    savedState.lifecycleState = lifecycle_state::terminated;
-                    break;
-                default:
-                    throw error(
-                        make_error_code(errc::bad_file),
-                        "The serialized state of subsimulator '" + instanceName_
-                            + "' contains an invalid lifecycle state");
-            }
-            const bool lifecycleStateConsistent =
-                (savedState.lifecycleState == lifecycle_state::instantiated &&
-                    !savedState.setupComplete && !savedState.simStarted) ||
-                (savedState.lifecycleState == lifecycle_state::initialization &&
-                    savedState.setupComplete && !savedState.simStarted) ||
-                (savedState.lifecycleState == lifecycle_state::step &&
-                    savedState.setupComplete && savedState.simStarted) ||
-                (savedState.lifecycleState == lifecycle_state::terminated &&
-                    savedState.setupComplete && !savedState.simStarted);
-            if (!lifecycleStateConsistent) {
-                throw error(
-                    make_error_code(errc::bad_file),
-                    "The serialized state of subsimulator '" + instanceName_
-                        + "' contains inconsistent lifecycle data");
-            }
+                        + "' contains an invalid lifecycle state");
         }
 
         const auto& serializedFMUState = std::get<std::vector<std::byte>>(
@@ -829,9 +791,12 @@ void slave_instance::get_directional_derivative(
         lifecycleState_ != lifecycle_state::step &&
         lifecycleState_ != lifecycle_state::terminated) {
         throw error(
-            make_error_code(errc::model_error),
+            make_error_code(errc::invalid_operation),
             instanceName_ +
-                ": invalid lifecycle operation: GetDirectionalDerivative");
+                ": GetDirectionalDerivative can only be called in lifecycle states "
+                "initialization (1), step (2), or terminated (3); current lifecycle "
+                "state: " +
+                std::to_string(static_cast<std::int32_t>(lifecycleState_)));
     }
     COSIM_INPUT_CHECK(!unknowns.empty());
     COSIM_INPUT_CHECK(!knowns.empty());
@@ -844,9 +809,6 @@ void slave_instance::get_directional_derivative(
                    references.end(),
                    reference) != references.end();
     };
-    const bool initializing =
-        lifecycleState_ == lifecycle_state::initialization;
-
     for (const auto reference : unknowns) {
         const auto variable = fmi2_import_get_variable_by_vr(
             handle_, fmi2_base_type_real, reference);
@@ -857,7 +819,8 @@ void slave_instance::get_directional_derivative(
             contains(outputReferences_, reference) &&
             (variability == fmi2_variability_enu_continuous ||
                 variability == fmi2_variability_enu_discrete);
-        const bool validUnknown = initializing
+        const bool validUnknown =
+            lifecycleState_ == lifecycle_state::initialization
             ? contains(initialUnknownReferences_, reference)
             : eligibleOutput ||
                 contains(derivativeReferences_, reference);
@@ -879,7 +842,7 @@ void slave_instance::get_directional_derivative(
             validKnown =
                 causality == fmi2_causality_enu_input ||
                 causality == fmi2_causality_enu_independent;
-            if (initializing) {
+            if (lifecycleState_ == lifecycle_state::initialization) {
                 validKnown =
                     validKnown ||
                     fmi2_import_get_initial(variable) ==
@@ -940,8 +903,6 @@ void slave_instance::copy_current_state(saved_state& state)
             make_error_code(errc::model_error),
             last_log_record(instanceName_).message);
     }
-    state.setupComplete = setupComplete_;
-    state.simStarted = simStarted_;
     state.lifecycleState = lifecycleState_;
 }
 

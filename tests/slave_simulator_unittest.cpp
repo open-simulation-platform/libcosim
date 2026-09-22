@@ -1,4 +1,5 @@
 #define BOOST_TEST_MODULE cosim::slave_simulator unittest
+#include <cosim/exception.hpp>
 #include <cosim/fmi/importer.hpp>
 #include <cosim/fmi/fmu.hpp>
 #include <cosim/fs_portability.hpp>
@@ -32,6 +33,8 @@ BOOST_AUTO_TEST_CASE(slave_simulator_save_state)
     const auto value0 = sim.get_real(xVar);
     BOOST_TEST(value0 == 1.0);
     const auto state0 = sim.save_state();
+    const auto exportedState0 = sim.export_state(state0);
+    BOOST_TEST(exportedState0.get_child("state").get<int>("lifecycle_state") == 1);
 
     sim.start_simulation();
     sim.do_step(t, dt);
@@ -40,6 +43,20 @@ BOOST_AUTO_TEST_CASE(slave_simulator_save_state)
     BOOST_TEST((0.0 < value1 && value1 < value0));
     const auto state1 = sim.save_state();
     const auto exportedState1 = sim.export_state(state1);
+    const auto& exportedFmuState = exportedState1.get_child("state");
+    BOOST_TEST(exportedFmuState.get<int>("scheme_version") == 0);
+    BOOST_TEST(exportedFmuState.get<int>("lifecycle_state") == 2);
+    BOOST_TEST(!exportedFmuState.get_child_optional("setup_complete"));
+    BOOST_TEST(!exportedFmuState.get_child_optional("simulation_started"));
+
+    auto incompatibleState = exportedState1;
+    incompatibleState.get_child("state").put("scheme_version", 1);
+    BOOST_CHECK_EXCEPTION(
+        sim.import_state(incompatibleState),
+        cosim::error,
+        [](const cosim::error& error) {
+            return error.code() == cosim::make_error_code(cosim::errc::bad_file);
+        });
     sim.release_state(state1);
 
     sim.do_step(t, dt);
