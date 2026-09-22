@@ -49,6 +49,15 @@ ExternalProject_Add(
     INSTALL_COMMAND ""
     TEST_COMMAND "")
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
+if(NOT DEFINED GEN_TEST_DATA_DIR)
+    set(GEN_TEST_DATA_DIR
+        "${CMAKE_CURRENT_BINARY_DIR}/generated-test-data")
+endif()
+include(PrepareDahlquistTestData)
+prepare_dahlquist_test_data()
+
 if(WIN32 AND CMAKE_SIZEOF_VOID_P EQUAL 8)
     set(FMI2_TEST_PLATFORM "win64")
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND
@@ -167,6 +176,8 @@ foreach(test IN LISTS tests)
         SOURCES "${test}.cpp"
         DEPENDENCIES "cosim"
         DATA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/data"
+        REFERENCE_FMU_V2_DIR "${REFERENCE_FMUS_V2_BINARY_DIR}/fmus"
+        GEN_TEST_DATA_DIR "${GEN_TEST_DATA_DIR}"
     )
 endforeach()
 
@@ -183,6 +194,8 @@ foreach(test IN LISTS unittests)
         SOURCES "${test}.cpp"
         DEPENDENCIES ${dependencies}
         DATA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/data"
+        REFERENCE_FMU_V2_DIR "${REFERENCE_FMUS_V2_BINARY_DIR}/fmus"
+        GEN_TEST_DATA_DIR "${GEN_TEST_DATA_DIR}"
     )
     target_include_directories("cpp_${test}" PRIVATE "$<TARGET_PROPERTY:cosim,SOURCE_DIR>")
 endforeach()
@@ -190,8 +203,14 @@ endforeach()
 add_dependencies(
     cpp_fmi_v2_fmu_unittest
     fmi2_derivative_fixture)
-set_property(
-    TEST cpp_fmi_v2_fmu_unittest
-    APPEND
-    PROPERTY ENVIRONMENT
-        "REFERENCE_FMU_V2_DIR=${REFERENCE_FMUS_V2_BINARY_DIR}/fmus")
+
+set(reference_fmu_test_targets
+    cpp_save_state_test
+    cpp_slave_simulator_unittest)
+if(LIBCOSIM_WITH_PROXYFMU)
+    list(APPEND reference_fmu_test_targets cpp_proxyfmu_save_state_test)
+endif()
+
+foreach(reference_fmu_test IN LISTS reference_fmu_test_targets)
+    add_dependencies("${reference_fmu_test}" reference_fmus_v2_build)
+endforeach()

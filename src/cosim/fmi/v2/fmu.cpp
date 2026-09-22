@@ -625,7 +625,7 @@ void slave_instance::release_state(state_index state)
 // state that needs to be serialized may change, we need some versioning.
 // Increment this number whenever the "exported state" changes form, and
 // always consider whether backwards compatibility measures are warranted.
-constexpr std::int32_t export_scheme_version = 0;
+constexpr std::int32_t export_scheme_version = 1;
 
 
 serialization::node slave_instance::export_state(state_index stateIndex) const
