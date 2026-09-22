@@ -685,7 +685,7 @@ slave::state_index slave_instance::import_state(
     try {
         // First some sanity checks
         const auto schemeVersion = exportedState.get<std::int32_t>("scheme_version");
-        if (schemeVersion != 0 && schemeVersion != export_scheme_version) {
+        if (schemeVersion != export_scheme_version) {
             throw error(
                 make_error_code(errc::bad_file),
                 "The serialized state of subsimulator '" + instanceName_
