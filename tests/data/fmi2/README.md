@@ -3,10 +3,13 @@
 | Name                   | Origin                  | License                                  |
 |------------------------|-------------------------|------------------------------------------|
 | `CraneController.fmu`  | OSP                     | [MPL 2.0](../../../LICENSE)              |
-| `Dahlquist.fmu`        | [Reference FMUs] 0.0.31 | [2-clause BSD](./reference-fmus_LICENSE) |
 | `KnuckleBoomCrane.fmu` | OSP                     | [MPL 2.0](../../../LICENSE)              |
 | `vector.fmu`           | [OSP cpp-fmus]          | [MIT](./osp_cpp-fmus_LICENSE)            |
 
+`Dahlquist.fmu` is generated from the pinned
+[Reference-FMUs] release during CMake configuration and build. FMI 2 tests
+receive its path through `REFERENCE_FMU_V2_DIR`.
+
 
 [OSP cpp-fmus]: https://github.com/open-simulation-platform/cpp-fmus
-[Reference FMUs]: https://github.com/modelica/Reference-FMUs
+[Reference-FMUs]: https://github.com/open-simulation-platform/Reference-FMUs

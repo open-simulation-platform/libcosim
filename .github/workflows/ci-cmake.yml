@@ -38,7 +38,6 @@ jobs:
             zipcmp \
             zipmerge \
             ziptool
-          rm -rf /var/lib/apt/lists/*
       - uses: actions/checkout@v4
       - name: Install FMI Library and libcbor
         shell: bash

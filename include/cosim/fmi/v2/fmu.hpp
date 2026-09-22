@@ -211,8 +211,6 @@ private:
     struct saved_state
     {
         fmi2_FMU_state_t fmuState = nullptr;
-        bool setupComplete = false;
-        bool simStarted = false;
         lifecycle_state lifecycleState = lifecycle_state::instantiated;
     };
     void copy_current_state(saved_state& state);
@@ -222,8 +220,6 @@ private:
     std::shared_ptr<v2::fmu> fmu_;
     fmi2_import_t* handle_;
 
-    bool setupComplete_ = false;
-    bool simStarted_ = false;
     lifecycle_state lifecycleState_ = lifecycle_state::instantiated;
     bool providesDirectionalDerivatives_ = false;
     std::vector<value_reference> outputReferences_;
