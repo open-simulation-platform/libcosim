@@ -50,7 +50,7 @@ BOOST_AUTO_TEST_CASE(slave_simulator_save_state)
     BOOST_TEST(!exportedFmuState.get_child_optional("simulation_started"));
 
     auto incompatibleState = exportedState1;
-    incompatibleState.get_child("state").put("scheme_version", 1);
+    incompatibleState.get_child("state").put("scheme_version", 0);
     BOOST_CHECK_EXCEPTION(
         sim.import_state(incompatibleState),
         cosim::error,
