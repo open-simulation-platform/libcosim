@@ -13,9 +13,10 @@
 
 #include <algorithm>
 #include <cstdlib>
-#include <iostream>
 #include <numeric>
 #include <sstream>
+#include <stdexcept>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 
@@ -242,25 +243,18 @@ public:
         throw error(make_error_code(errc::unsupported_feature), "State saving not yet supported by the ECCO algorithm!");
     }
 
-    void get_energies()
-    {
-        for (std::size_t i = 0; i < energies_.size(); ++i) {
-            std::cout << "Avg energy for sim idx " << i << ": " << get_mean(energies_.at(i)) << std::endl;
-        }
-    }
-
     duration adjust_step_size(time_point currentTime, const duration& stepSize, const ecco_algorithm_params& params)
     {
         std::vector<double> power_residuals{};
-        std::vector<double> power{};
 
         const auto dt = to_double_duration(stepSize, currentTime);
 
-        for (std::size_t i = 0; i < inputVariables_.size(); i += 2) {
-            auto input_a = inputVariables_.at(i);
-            auto input_b = inputVariables_.at(i + 1);
-            auto output_a = outputVariables_.at(i);
-            auto output_b = outputVariables_.at(i + 1);
+        for (std::size_t i = 0; i < powerBonds_.size(); ++i) {
+            const auto& bond = powerBonds_.at(i);
+            const auto input_a = bond.input_a;
+            const auto output_a = bond.output_a;
+            const auto input_b = bond.input_b;
+            const auto output_b = bond.output_b;
 
             double input_a_value = simulators_.at(input_a.simulator).sim->get_real(input_a.reference);
             double input_b_value = simulators_.at(input_b.simulator).sim->get_real(input_b.reference);
@@ -268,14 +262,23 @@ public:
             double output_b_value = simulators_.at(output_b.simulator).sim->get_real(output_b.reference);
 
             double power_a = input_a_value * output_a_value;
-            energies_.at(i).push_back(power_a * dt);
-
             double power_b = input_b_value * output_b_value;
-            energies_.at(i + 1).push_back(power_b * dt);
-
             double power_residual = std::abs(power_a - power_b);
 
             power_residuals.push_back(power_residual);
+
+            auto& state = powerBondStates_.at(i);
+            state.time = currentTime;
+            state.input_a_value = input_a_value;
+            state.output_a_value = output_a_value;
+            state.input_b_value = input_b_value;
+            state.output_b_value = output_b_value;
+            state.power_a = power_a;
+            state.power_b = power_b;
+            state.power_residual = power_residual;
+            state.energy_a += power_a * dt;
+            state.energy_b += power_b * dt;
+            state.energy_residual += power_residual * dt;
         }
 
         if (power_residuals.empty()) {
@@ -285,9 +288,11 @@ public:
         double max_power_residual = *std::max_element(power_residuals.begin(), power_residuals.end());
         const auto energy_level = max_power_residual * dt;
         double mean_square{};
-        for (auto power_residual : power_residuals) {
-            const auto energy_residual = power_residual * dt;
-            mean_square += std::pow(energy_residual / (params.abs_tolerance + params.rel_tolerance * energy_level), 2);
+        for (std::size_t i = 0; i < power_residuals.size(); ++i) {
+            const auto energy_residual = power_residuals.at(i) * dt;
+            const auto contribution = std::pow(energy_residual / (params.abs_tolerance + params.rel_tolerance * energy_level), 2);
+            powerBondStates_.at(i).error_contribution = contribution;
+            mean_square += contribution;
         }
         const auto num_bonds = power_residuals.size(); // TODO: Still valid for multidimensial bonds?
         const auto error_estimate = std::sqrt(mean_square / (double)num_bonds);
@@ -307,34 +312,57 @@ public:
         return actual_new_step_size;
     }
 
-    void add_power_bond(cosim::variable_id input_a, cosim::variable_id output_a, cosim::variable_id input_b, cosim::variable_id output_b)
-    {
-        energies_.emplace_back();
-        energies_.emplace_back();
-        inputVariables_.push_back(input_a);
-        outputVariables_.push_back(output_a);
-        inputVariables_.push_back(input_b);
-        outputVariables_.push_back(output_b);
+    void add_power_bond(std::string name, cosim::variable_id input_a, cosim::variable_id output_a, cosim::variable_id input_b, cosim::variable_id output_b)
+    {        
+        for (const auto& var : {input_a, output_a, input_b, output_b}) {
+            simulators_.at(var.simulator).sim->expose_for_getting(var.type, var.reference);
+        }
+        powerBonds_.push_back({std::move(name), input_a, output_a, input_b, output_b});
+        powerBondStates_.emplace_back();
     }
 
-    std::vector<double> get_powerbond_energies(cosim::simulator_index simulator_index)
+    std::vector<std::string> get_power_bond_names() const
     {
-        return energies_.at(simulator_index);
+        std::vector<std::string> names;
+        names.reserve(powerBonds_.size());
+        for (const auto& bond : powerBonds_) {
+            names.push_back(bond.name);
+        }
+        return names;
+    }
+
+    const power_bond_info& get_power_bond(std::string_view name) const
+    {
+        return powerBonds_.at(power_bond_index(name));
+    }
+
+    power_bond_state get_power_bond_state(std::string_view name) const
+    {
+        return powerBondStates_.at(power_bond_index(name));
+    }
+
+    std::unordered_map<std::string, power_bond_state> get_power_bond_states() const
+    {
+        std::unordered_map<std::string, power_bond_state> states;
+        states.reserve(powerBonds_.size());
+        for (std::size_t i = 0; i < powerBonds_.size(); ++i) {
+            states.emplace(powerBonds_.at(i).name, powerBondStates_.at(i));
+        }
+        return states;
     }
 
 private:
-    std::vector<cosim::variable_id> inputVariables_{};
-    std::vector<cosim::variable_id> outputVariables_{};
-    std::vector<std::vector<double>> energies_{};
+    std::vector<power_bond_info> powerBonds_{};
+    std::vector<power_bond_state> powerBondStates_{};
 
-    double get_mean(const std::vector<double>& elems)
+    std::size_t power_bond_index(std::string_view name) const
     {
-        if (elems.empty()) return 0.0;
-        double sum{};
-        for (auto elem : elems) {
-            sum += elem;
+        const auto it = std::find_if(powerBonds_.begin(), powerBonds_.end(),
+            [name](const power_bond_info& bond) { return bond.name == name; });
+        if (it == powerBonds_.end()) {
+            throw std::out_of_range("No power bond named '" + std::string(name) + "'");
         }
-        return sum / (double)elems.size();
+        return static_cast<std::size_t>(std::distance(powerBonds_.begin(), it));
     }
 
     struct connection_ss
@@ -587,14 +615,29 @@ void ecco_algorithm::import_state(const serialization::node& exportedState)
     pimpl_->import_state(exportedState);
 }
 
-void ecco_algorithm::add_power_bond(cosim::variable_id input_a, cosim::variable_id output_a, cosim::variable_id input_b, cosim::variable_id output_b)
+void ecco_algorithm::add_power_bond(std::string name, cosim::variable_id input_a, cosim::variable_id output_a, cosim::variable_id input_b, cosim::variable_id output_b)
 {
-    pimpl_->add_power_bond(input_a, output_a, input_b, output_b);
+    pimpl_->add_power_bond(std::move(name), input_a, output_a, input_b, output_b);
 }
 
-std::vector<double> ecco_algorithm::get_powerbond_energies(cosim::simulator_index simulator_index)
+std::vector<std::string> ecco_algorithm::get_power_bond_names() const
 {
-    return pimpl_->get_powerbond_energies(simulator_index);
+    return pimpl_->get_power_bond_names();
+}
+
+const power_bond_info& ecco_algorithm::get_power_bond(std::string_view name) const
+{
+    return pimpl_->get_power_bond(name);
+}
+
+power_bond_state ecco_algorithm::get_power_bond_state(std::string_view name) const
+{
+    return pimpl_->get_power_bond_state(name);
+}
+
+std::unordered_map<std::string, power_bond_state> ecco_algorithm::get_power_bond_states() const
+{
+    return pimpl_->get_power_bond_states();
 }
 
 } // namespace cosim

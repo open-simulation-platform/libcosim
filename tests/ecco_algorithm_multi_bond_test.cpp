@@ -62,7 +62,7 @@ int main()
         auto chassisVel = cosim::variable_id{chassisIndex, cosim::variable_type::real, 22};
         auto wheelCForce = cosim::variable_id{wheelIndex, cosim::variable_type::real, 26};
         auto wheelCVel = cosim::variable_id{wheelIndex, cosim::variable_type::real, 24};
-        ecco_algo->add_power_bond(chassisVel, chassisForce, wheelCForce, wheelCVel); // chassis -> wheel (chassis port)
+        ecco_algo->add_power_bond("chassiswheel", chassisVel, chassisForce, wheelCForce, wheelCVel); // chassis -> wheel (chassis port)
 
         auto file_obs = std::make_unique<cosim::file_observer>("./logDir", logXmlPath);
         execution.add_observer(std::move(file_obs));
