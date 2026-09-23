@@ -118,7 +118,7 @@ add_custom_target(
     fmi2_derivative_fixture
     DEPENDS "${FMI2_DERIVATIVE_FIXTURE}")
 
-set(tests        
+set(tests
     "ecco_algorithm_from_system_structure_test"
     "ecco_algorithm_multi_bond_test"    
     "ecco_algorithm_test"
