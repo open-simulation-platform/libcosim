@@ -195,14 +195,14 @@ endif ()
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     target_link_libraries(cosim INTERFACE "atomic" "stdc++fs")
 endif()
+
 if(WIN32)
-    target_link_libraries(cosim PUBLIC "Bcrypt")
-    if(BUILD_SHARED_LIBS)
-        target_link_libraries(cosim PUBLIC "Shlwapi") # Windows API DLLs
-    else()
+    target_link_libraries(cosim PUBLIC "Bcrypt" "Shlwapi")
+    if(NOT BUILD_SHARED_LIBS)
         set_target_properties(cosim PROPERTIES OUTPUT_NAME "libcosim")
     endif()
 endif()
+
 if(LIBCOSIM_STANDALONE_INSTALLATION)
     set_target_properties(cosim PROPERTIES INSTALL_RPATH "\$ORIGIN")
 endif()
