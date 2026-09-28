@@ -281,6 +281,7 @@ using scalar_value = std::variant<
     int,
     bool,
     std::string,
+    enumeration_value,
     float,
     std::int8_t,
     std::uint8_t,
@@ -289,7 +290,6 @@ using scalar_value = std::variant<
     std::uint32_t,
     std::int64_t,
     std::uint64_t,
-    enumeration_value,
     binary_value>;
 
 
@@ -305,6 +305,7 @@ using scalar_value_view = std::variant<
     int,
     bool,
     std::string_view,
+    enumeration_value,
     float,
     std::int8_t,
     std::uint8_t,
@@ -313,7 +314,6 @@ using scalar_value_view = std::variant<
     std::uint32_t,
     std::int64_t,
     std::uint64_t,
-    enumeration_value,
     const binary_value*>;
 
 

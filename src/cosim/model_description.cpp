@@ -30,24 +30,41 @@ std::ostream& operator<<(std::ostream& stream, const binary_value& value)
 
 variable_type type_of(const scalar_value& value) noexcept
 {
-    static constexpr variable_type types[] = {
-        variable_type::real,
-        variable_type::integer,
-        variable_type::boolean,
-        variable_type::string,
-        variable_type::float32,
-        variable_type::int8,
-        variable_type::uint8,
-        variable_type::int16,
-        variable_type::uint16,
-        variable_type::uint32,
-        variable_type::int64,
-        variable_type::uint64,
-        variable_type::enumeration,
-        variable_type::binary};
-    static_assert(
-        sizeof(types) / sizeof(types[0]) == std::variant_size_v<scalar_value>);
-    return types[value.index()];
+    return std::visit(
+        [](const auto& value) {
+            using value_type = std::decay_t<decltype(value)>;
+            if constexpr (std::is_same_v<value_type, double>) {
+                return variable_type::real;
+            } else if constexpr (std::is_same_v<value_type, int>) {
+                return variable_type::integer;
+            } else if constexpr (std::is_same_v<value_type, bool>) {
+                return variable_type::boolean;
+            } else if constexpr (std::is_same_v<value_type, std::string>) {
+                return variable_type::string;
+            } else if constexpr (
+                std::is_same_v<value_type, enumeration_value>) {
+                return variable_type::enumeration;
+            } else if constexpr (std::is_same_v<value_type, float>) {
+                return variable_type::float32;
+            } else if constexpr (std::is_same_v<value_type, std::int8_t>) {
+                return variable_type::int8;
+            } else if constexpr (std::is_same_v<value_type, std::uint8_t>) {
+                return variable_type::uint8;
+            } else if constexpr (std::is_same_v<value_type, std::int16_t>) {
+                return variable_type::int16;
+            } else if constexpr (std::is_same_v<value_type, std::uint16_t>) {
+                return variable_type::uint16;
+            } else if constexpr (std::is_same_v<value_type, std::uint32_t>) {
+                return variable_type::uint32;
+            } else if constexpr (std::is_same_v<value_type, std::int64_t>) {
+                return variable_type::int64;
+            } else if constexpr (std::is_same_v<value_type, std::uint64_t>) {
+                return variable_type::uint64;
+            } else if constexpr (std::is_same_v<value_type, binary_value>) {
+                return variable_type::binary;
+            }
+        },
+        value);
 }
 
 
