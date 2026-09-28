@@ -428,6 +428,8 @@ private:
                 break;
             case variable_type::enumeration:
                 COSIM_PANIC_M("Can't handle variable of type 'enumeration' yet");
+            default:
+                COSIM_PANIC_M("Can't transfer variable of this type yet");
         }
     }
 
@@ -449,6 +451,8 @@ private:
                 break;
             case variable_type::enumeration:
                 COSIM_PANIC_M("Can't handle variable of type 'enumeration' yet");
+            default:
+                COSIM_PANIC_M("Can't transfer variable of this type yet");
         }
     }
 
@@ -470,6 +474,8 @@ private:
                 break;
             case variable_type::enumeration:
                 COSIM_PANIC_M("Can't handle variable of type 'enumeration' yet");
+            default:
+                COSIM_PANIC_M("Can't transfer variable of this type yet");
         }
     }
 

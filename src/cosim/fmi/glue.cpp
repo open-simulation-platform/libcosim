@@ -134,13 +134,14 @@ variable_description to_variable_description(fmi1_import_variable_t* fmiVariable
     assert(fmiVariable != nullptr);
     const auto fmiVariability = fmi1_import_get_variability(fmiVariable);
     const auto type = to_variable_type(fmi1_import_get_variable_base_type(fmiVariable));
-    return {
-        fmi1_import_get_variable_name(fmiVariable),
-        fmi1_import_get_variable_vr(fmiVariable),
-        type,
-        to_variable_causality(fmi1_import_get_causality(fmiVariable), fmiVariability),
-        to_variable_variability(fmiVariability),
-        fmi1_to_start_value(fmiVariable, type)};
+    variable_description description{};
+    description.name = fmi1_import_get_variable_name(fmiVariable);
+    description.reference = fmi1_import_get_variable_vr(fmiVariable);
+    description.type = type;
+    description.causality = to_variable_causality(fmi1_import_get_causality(fmiVariable), fmiVariability);
+    description.variability = to_variable_variability(fmiVariability);
+    description.start = fmi1_to_start_value(fmiVariable, type);
+    return description;
 }
 
 
@@ -170,13 +171,14 @@ variable_description to_variable_description(fmi2_import_variable_t* fmiVariable
 {
     assert(fmiVariable != nullptr);
     const auto type = to_variable_type(fmi2_import_get_variable_base_type(fmiVariable));
-    return {
-        fmi2_import_get_variable_name(fmiVariable),
-        fmi2_import_get_variable_vr(fmiVariable),
-        type,
-        to_variable_causality(fmi2_import_get_causality(fmiVariable)),
-        to_variable_variability(fmi2_import_get_variability(fmiVariable)),
-        fmi2_to_start_value(fmiVariable, type)};
+    variable_description description{};
+    description.name = fmi2_import_get_variable_name(fmiVariable);
+    description.reference = fmi2_import_get_variable_vr(fmiVariable);
+    description.type = type;
+    description.causality = to_variable_causality(fmi2_import_get_causality(fmiVariable));
+    description.variability = to_variable_variability(fmi2_import_get_variability(fmiVariable));
+    description.start = fmi2_to_start_value(fmiVariable, type);
+    return description;
 }
 
 
