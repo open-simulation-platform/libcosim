@@ -891,17 +891,20 @@ void add_power_bonds(const std::vector<osp_config_parser::PowerBondConnection>& 
         }
 
         systemStructure.add_power_bond(pbName, powerbond);
+    }
 
-        // Check that the number of unique power bond names is equal to the number of power bonds. Otherwise, it is not possible to correctly connect the bonds.
-        std::sort(powerBondNames.begin(), powerBondNames.end());
-        auto uniqueCount = static_cast<int>(std::unique(powerBondNames.begin(), powerBondNames.end()) - powerBondNames.begin());
-        auto numPowerBonds = static_cast<int>(systemStructure.get_power_bonds().size());
+    // Check that the number of unique power bond names is equal to the number of
+    // power bonds. This must be verified after all bonds have been added; checking
+    // inside the loop would compare a partial count against the full unique-name
+    // count and spuriously throw when more than one bond is configured.
+    std::sort(powerBondNames.begin(), powerBondNames.end());
+    auto uniqueCount = static_cast<int>(std::unique(powerBondNames.begin(), powerBondNames.end()) - powerBondNames.begin());
+    auto numPowerBonds = static_cast<int>(systemStructure.get_power_bonds().size());
 
-        if (uniqueCount != numPowerBonds) {
-            std::ostringstream oss;
-            oss << "The number of powerbonds (" << numPowerBonds << ") is not equal to the number of unique power bond names (" << uniqueCount << ") found in the configured system. Power bond names must be unique pr. bond, that is found on only and exactly the two VariableConnections that form the bond.";
-            throw std::runtime_error(oss.str());
-        }
+    if (uniqueCount != numPowerBonds) {
+        std::ostringstream oss;
+        oss << "The number of powerbonds (" << numPowerBonds << ") is not equal to the number of unique power bond names (" << uniqueCount << ") found in the configured system. Power bond names must be unique pr. bond, that is found on only and exactly the two VariableConnections that form the bond.";
+        throw std::runtime_error(oss.str());
     }
 }
 
