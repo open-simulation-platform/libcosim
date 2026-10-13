@@ -344,6 +344,8 @@ public:
                 break;
             case variable_type::enumeration:
                 COSIM_PANIC();
+            default:
+                COSIM_PANIC();
         }
     }
 
@@ -384,6 +386,8 @@ public:
                 state_.stringSetCache.expose(ref, get_start_value<std::string>(vd));
                 break;
             case variable_type::enumeration:
+                COSIM_PANIC();
+            default:
                 COSIM_PANIC();
         }
     }

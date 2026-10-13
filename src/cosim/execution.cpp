@@ -625,7 +625,13 @@ entity_index_maps inject_system_structure(
                 [&](double v) { exe.set_real_initial_value(simIdx, valRef, v); },
                 [&](int v) { exe.set_integer_initial_value(simIdx, valRef, v); },
                 [&](bool v) { exe.set_boolean_initial_value(simIdx, valRef, v); },
-                [&](const std::string& v) { exe.set_string_initial_value(simIdx, valRef, v); }),
+                [&](const std::string& v) { exe.set_string_initial_value(simIdx, valRef, v); },
+                [&](const auto&) {
+                    throw error(
+                        make_error_code(errc::unsupported_feature),
+                        std::string("Initial value type '") + to_text(varDesc.type) +
+                            "' is not supported by the current execution API");
+                }),
             val);
     }
 

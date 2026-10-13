@@ -15,6 +15,10 @@ using namespace cosim;
 
 BOOST_TEST_DONT_PRINT_LOG_VALUE(fmi::fmi_version)
 
+static_assert(variable_type::float64 == variable_type::real);
+static_assert(variable_type::int32 == variable_type::integer);
+static_assert(static_cast<int>(variable_type::boolean) == 2);
+
 namespace
 {
 cosim::filesystem::path reference_fmu_directory()
@@ -70,6 +74,8 @@ BOOST_AUTO_TEST_CASE(v2_fmu)
         if (v.name == "input[0]") {
             foundInput0 = true;
             BOOST_TEST(v.type == variable_type::real);
+            BOOST_TEST(v.type == variable_type::float64);
+            BOOST_TEST(std::string(to_text(v.type)) == "real");
             BOOST_TEST(v.variability == variable_variability::discrete);
             BOOST_TEST(v.causality == variable_causality::input);
             double start = std::get<double>(*v.start);
@@ -169,6 +175,13 @@ BOOST_AUTO_TEST_CASE(v2_reference_directional_derivatives)
 BOOST_AUTO_TEST_CASE(v2_directional_derivative_contract)
 {
     auto instance = instantiate_derivative_fixture("fmi2-derivative-contract");
+    const auto status =
+        find_variable(instance->model_description(), "derivativeStatus");
+    BOOST_REQUIRE(status.has_value());
+    BOOST_TEST(status->type == variable_type::integer);
+    BOOST_TEST(status->type == variable_type::int32);
+    BOOST_TEST(std::string(to_text(status->type)) == "integer");
+
     instance->setup(
         to_time_point(0.0), to_time_point(1.0), std::nullopt);
 

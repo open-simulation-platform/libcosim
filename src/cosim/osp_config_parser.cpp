@@ -8,6 +8,7 @@
 #include "osp_system_structure_schema.hpp"
 
 #include "cosim/algorithm.hpp"
+#include "cosim/error.hpp"
 #include "cosim/function/linear_transformation.hpp"
 #include "cosim/function/vector_sum.hpp"
 #include "cosim/log/logger.hpp"
@@ -387,6 +388,8 @@ osp_config_parser::osp_config_parser(
                     case variable_type::enumeration:
                         initialValues.push_back({varName, varType, boost::lexical_cast<int>(varValue)});
                         break;
+                    default:
+                        COSIM_PANIC_M("Can't initialize variable of this type yet");
                 }
             }
         }
