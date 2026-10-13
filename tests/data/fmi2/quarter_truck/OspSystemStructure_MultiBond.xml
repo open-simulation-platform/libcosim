@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Two independent chassis+wheel pairs, each connected by a separate power bond.
+  Used by ecco_algorithm_two_bond_test to exercise the multi-bond code path.
+
+  Before the fix in add_power_bonds() (osp_config_parser.cpp), load_osp_config()
+  would throw "1 != 2" on this file because the uniqueCount validation was placed
+  inside the per-bond loop and fired after the first bond was added.
+-->
+<OspSystemStructure xmlns="http://opensimulationplatform.com/MSMI/OSPSystemStructure" version="0.1">
+    <BaseStepSize>0.0001</BaseStepSize>
+    <Algorithm>ecco</Algorithm>
+    <Simulators>
+        <Simulator name="chassis1" source="Chassis.fmu">
+            <InitialValues>
+                <InitialValue variable="mass">
+                    <Real value="400"/>
+                </InitialValue>
+                <InitialValue variable="solverType">
+                    <String value="Euler"/>
+                </InitialValue>
+                <InitialValue variable="timeStep">
+                    <Real value="1e-5"/>
+                </InitialValue>
+            </InitialValues>
+        </Simulator>
+        <Simulator name="wheel1" source="Wheel.fmu">
+            <InitialValues>
+                <InitialValue variable="mass">
+                    <Real value="40"/>
+                </InitialValue>
+                <InitialValue variable="solverType">
+                    <String value="Euler"/>
+                </InitialValue>
+                <InitialValue variable="timeStep">
+                    <Real value="1e-5"/>
+                </InitialValue>
+            </InitialValues>
+        </Simulator>
+        <Simulator name="chassis2" source="Chassis.fmu">
+            <InitialValues>
+                <InitialValue variable="mass">
+                    <Real value="400"/>
+                </InitialValue>
+                <InitialValue variable="solverType">
+                    <String value="Euler"/>
+                </InitialValue>
+                <InitialValue variable="timeStep">
+                    <Real value="1e-5"/>
+                </InitialValue>
+            </InitialValues>
+        </Simulator>
+        <Simulator name="wheel2" source="Wheel.fmu">
+            <InitialValues>
+                <InitialValue variable="mass">
+                    <Real value="40"/>
+                </InitialValue>
+                <InitialValue variable="solverType">
+                    <String value="Euler"/>
+                </InitialValue>
+                <InitialValue variable="timeStep">
+                    <Real value="1e-5"/>
+                </InitialValue>
+            </InitialValues>
+        </Simulator>
+    </Simulators>
+    <Connections>
+        <VariableConnection powerBond="bond1">
+            <Variable simulator="chassis1" name="velocity" causality="input"/>
+            <Variable simulator="wheel1" name="in_vel" causality="output"/>
+        </VariableConnection>
+        <VariableConnection powerBond="bond1">
+            <Variable simulator="wheel1" name="out_spring_damper_f" causality="input"/>
+            <Variable simulator="chassis1" name="force" causality="output"/>
+        </VariableConnection>
+        <VariableConnection powerBond="bond2">
+            <Variable simulator="chassis2" name="velocity" causality="input"/>
+            <Variable simulator="wheel2" name="in_vel" causality="output"/>
+        </VariableConnection>
+        <VariableConnection powerBond="bond2">
+            <Variable simulator="wheel2" name="out_spring_damper_f" causality="input"/>
+            <Variable simulator="chassis2" name="force" causality="output"/>
+        </VariableConnection>
+    </Connections>
+    <EccoConfiguration>
+        <SafetyFactor>0.99</SafetyFactor>
+        <StepSize>0.0001</StepSize>
+        <MinimumStepSize>0.00001</MinimumStepSize>
+        <MaximumStepSize>0.01</MaximumStepSize>
+        <MinimumChangeRate>0.2</MinimumChangeRate>
+        <MaximumChangeRate>1.5</MaximumChangeRate>
+        <ProportionalGain>0.2</ProportionalGain>
+        <IntegralGain>0.15</IntegralGain>
+        <RelativeTolerance>1e-6</RelativeTolerance>
+        <AbsoluteTolerance>1e-6</AbsoluteTolerance>
+    </EccoConfiguration>
+</OspSystemStructure>
