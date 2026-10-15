@@ -39,7 +39,8 @@ namespace cosim
  *          End initialisation mode, start simulation.
  *    4. `do_step()`, `get_<type>_variables()`, `set_<type>_variables()`:
  *          Simulation.  The functions may be called multiple times, in this
- *          order.
+ *          order.  `set_variables_do_step_get_variables()` may be called
+ *          instead, to do the setting, stepping and getting in one call.
  *    5. `end_simulation()`:
  *          End simulation.
  *
@@ -50,6 +51,18 @@ namespace cosim
  *  indicate that one or more variables were out of the allowed range, but
  *  that the slave has either ignored or accepted these values and is able
  *  to proceed.
+ *
+ *  Subclasses must implement all the pure virtual functions.  The batched
+ *  functions `get_variables()`, `set_variables()` and
+ *  `set_variables_do_step_get_variables()` have default implementations in
+ *  terms of the per-type functions and `do_step()`, and only need to be
+ *  overridden by slaves for which each call has a significant fixed cost,
+ *  such as slaves in another process.  Such slaves should normally override
+ *  all three, so that both initialisation and simulation steps benefit.
+ *  Note that overriding the `get_variables()` and `set_variables()` virtual
+ *  functions hides the convenience overloads of the same names in the
+ *  subclass, unless they are brought back in with
+ *  `using slave::get_variables;` and `using slave::set_variables;`.
  */
 class slave
 {
@@ -224,7 +237,31 @@ public:
         gsl::span<const value_reference> variables,
         gsl::span<const std::string> values) = 0;
 
-    /// Result type for `get_variables()`.
+    /**
+     *  References to variables of every type, for the batched
+     *  `get_variables()`, `set_variables()` and
+     *  `set_variables_do_step_get_variables()` functions.
+     *
+     *  There is one field per variable type, so supporting a new type means
+     *  adding a field here and in `variable_values` and `variable_values_view`
+     *  rather than changing function signatures.
+     */
+    struct variable_references
+    {
+        /// Real variable references.
+        gsl::span<const value_reference> real;
+
+        /// Integer variable references.
+        gsl::span<const value_reference> integer;
+
+        /// Boolean variable references.
+        gsl::span<const value_reference> boolean;
+
+        /// String variable references.
+        gsl::span<const value_reference> string;
+    };
+
+    /// Variable values of every type, as retrieved by `get_variables()`.
     struct variable_values
     {
         /// Real variable values.
@@ -240,6 +277,164 @@ public:
         std::vector<std::string> string;
     };
 
+    /// Variable values of every type, as passed to `set_variables()`.
+    struct variable_values_view
+    {
+        /// Real variable values.
+        gsl::span<const double> real;
+
+        /// Integer variable values.
+        gsl::span<const int> integer;
+
+        /// Boolean variable values.
+        gsl::span<const bool> boolean;
+
+        /// String variable values.
+        gsl::span<const std::string> string;
+    };
+
+    /**
+     *  Retrieves the values of variables of every type.
+     *
+     *  The default implementation calls `get_<type>_variables()` once per
+     *  type.  Slaves for which each call carries a significant fixed cost,
+     *  e.g. because it involves inter-process communication, may override
+     *  it to retrieve everything in a single operation.
+     *
+     *  \param [in] variables
+     *      The variables to retrieve, per type.  Any of the spans may be empty.
+     *  \param [out] values
+     *      On return, each vector will have been resized to the size of the
+     *      corresponding span in `variables` and filled with the values of
+     *      those variables, in the same order.
+     *
+     *  \throws
+     *      Any exception thrown by `get_<type>_variables()`, or by an
+     *      overriding implementation.  The slave is then considered broken,
+     *      and the contents of `values` are unspecified.
+     */
+    virtual void get_variables(
+        const variable_references& variables,
+        variable_values& values) const
+    {
+        values.real.resize(variables.real.size());
+        values.integer.resize(variables.integer.size());
+        values.boolean.resize(variables.boolean.size());
+        values.string.resize(variables.string.size());
+
+        get_real_variables(variables.real, values.real);
+        get_integer_variables(variables.integer, values.integer);
+        get_boolean_variables(variables.boolean, values.boolean);
+        get_string_variables(variables.string, values.string);
+    }
+
+    /**
+     *  Sets the values of variables of every type.
+     *
+     *  The default implementation calls `set_<type>_variables()` once per
+     *  type, in the order real, integer, boolean, string.  As with
+     *  `get_variables()`, slaves may override it to set everything in a
+     *  single operation.
+     *
+     *  \param [in] variables
+     *      The variables to set, per type.  Any of the spans may be empty.
+     *  \param [in] values
+     *      The values to set, per type, in the same order as `variables`.
+     *
+     *  \throws nonfatal_bad_value
+     *      If one or more values were out of range or invalid, but have been
+     *      accepted or ignored so the simulation can proceed.  With the
+     *      default implementation, the variable types after the one that
+     *      threw have then not been set.
+     *  \throws
+     *      Any other exception thrown by `set_<type>_variables()`, or by an
+     *      overriding implementation.  The slave is then considered broken.
+     *
+     *  \pre Each span in `values` has the same size as the corresponding
+     *      span in `variables`.
+     */
+    virtual void set_variables(
+        const variable_references& variables,
+        const variable_values_view& values)
+    {
+        set_real_variables(variables.real, values.real);
+        set_integer_variables(variables.integer, values.integer);
+        set_boolean_variables(variables.boolean, values.boolean);
+        set_string_variables(variables.string, values.string);
+    }
+
+    /**
+     *  Sets variable values, performs a time step and retrieves variable
+     *  values, in that order.
+     *
+     *  This is equivalent to calling `set_variables()`, `do_step()` and
+     *  `get_variables()` in sequence, which is exactly what the default
+     *  implementation does.  Slaves for which each call carries a significant
+     *  fixed cost, e.g. because it involves inter-process communication, may
+     *  override it to perform the whole sequence in a single operation.
+     *
+     *  \param [in] setVariables
+     *      The variables to set before the step, per type.  Any of the spans
+     *      may be empty.
+     *  \param [in] setValues
+     *      The values to set, per type, in the same order as `setVariables`.
+     *  \param [in] currentT
+     *      The start of the time step, as for `do_step()`.
+     *  \param [in] deltaT
+     *      The length of the time step, as for `do_step()`.
+     *  \param [in] getVariables
+     *      The variables to retrieve after the step, per type.  Any of the
+     *      spans may be empty.
+     *  \param [out] getValues
+     *      On return, holds the values of `getVariables` as described for
+     *      `get_variables()`.  The values are retrieved regardless of the step
+     *      result, as with the separate calls.
+     *
+     *  \returns
+     *      The result of the time step, as for `do_step()`.
+     *
+     *  \throws
+     *      Any exception that `set_variables()`, `do_step()` or
+     *      `get_variables()` may throw.  With the default implementation, a
+     *      `nonfatal_bad_value` from `set_variables()` means that the step has
+     *      not been performed.
+     *
+     *  \pre Each span in `setValues` has the same size as the corresponding
+     *      span in `setVariables`, and the preconditions of `do_step()` hold.
+     */
+    virtual step_result set_variables_do_step_get_variables(
+        const variable_references& setVariables,
+        const variable_values_view& setValues,
+        time_point currentT,
+        duration deltaT,
+        const variable_references& getVariables,
+        variable_values& getValues)
+    {
+        set_variables(setVariables, setValues);
+        const auto result = do_step(currentT, deltaT);
+        get_variables(getVariables, getValues);
+        return result;
+    }
+
+    /**
+     *  Retrieves the values of real, integer, boolean and string variables.
+     *
+     *  Convenience overload which forwards to
+     *  `get_variables(const variable_references&, variable_values&)`,
+     *  and has the same semantics and exceptions.
+     *
+     *  \param [out] values
+     *      On return, holds the variable values, as for the forwarded-to
+     *      function.  Must not be null.
+     *  \param [in] real_variables
+     *      The real variables to retrieve.
+     *  \param [in] integer_variables
+     *      The integer variables to retrieve.
+     *  \param [in] boolean_variables
+     *      The boolean variables to retrieve.
+     *  \param [in] string_variables
+     *      The string variables to retrieve.
+     */
     void get_variables(
         variable_values* values,
         gsl::span<const value_reference> real_variables,
@@ -247,21 +442,20 @@ public:
         gsl::span<const value_reference> boolean_variables,
         gsl::span<const value_reference> string_variables) const
     {
-        if (static_cast<size_t>(values->real.size()) != static_cast<size_t>(real_variables.size()))
-            values->real.resize(real_variables.size());
-        if (static_cast<size_t>(values->integer.size()) != static_cast<size_t>(integer_variables.size()))
-            values->integer.resize(integer_variables.size());
-        if (static_cast<size_t>(values->boolean.size()) != static_cast<size_t>(boolean_variables.size()))
-            values->boolean.resize(boolean_variables.size());
-        if (static_cast<size_t>(values->string.size()) != static_cast<size_t>(string_variables.size()))
-            values->string.resize(string_variables.size());
-
-        get_real_variables(real_variables, values->real);
-        get_integer_variables(integer_variables, values->integer);
-        get_boolean_variables(boolean_variables, values->boolean);
-        get_string_variables(string_variables, values->string);
+        get_variables(
+            variable_references{real_variables, integer_variables, boolean_variables, string_variables},
+            *values);
     }
 
+    /**
+     *  Sets the values of real, integer, boolean and string variables.
+     *
+     *  Convenience overload which forwards to
+     *  `set_variables(const variable_references&, const variable_values_view&)`,
+     *  and has the same semantics, exceptions and preconditions.  Each
+     *  `<type>_values` span holds the values for the variables in the
+     *  corresponding `<type>_variables` span, in the same order.
+     */
     void set_variables(
         gsl::span<const value_reference> real_variables,
         gsl::span<const double> real_values,
@@ -272,11 +466,9 @@ public:
         gsl::span<const value_reference> string_variables,
         gsl::span<const std::string> string_values)
     {
-
-        set_real_variables(real_variables, real_values);
-        set_integer_variables(integer_variables, integer_values);
-        set_boolean_variables(boolean_variables, boolean_values);
-        set_string_variables(string_variables, string_values);
+        set_variables(
+            variable_references{real_variables, integer_variables, boolean_variables, string_variables},
+            variable_values_view{real_values, integer_values, boolean_values, string_values});
     }
 
     /// A type used for references to saved states (see `save_state()`).

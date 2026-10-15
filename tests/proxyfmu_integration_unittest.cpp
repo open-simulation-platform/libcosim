@@ -133,6 +133,78 @@ BOOST_AUTO_TEST_CASE(test_fmi1)
     instance->end_simulation();
 }
 
+BOOST_AUTO_TEST_CASE(test_fmi1_set_variables_do_step_get_variables)
+{
+    const auto testDataDir = std::getenv("TEST_DATA_DIR");
+    BOOST_TEST_REQUIRE(!!testDataDir);
+
+    auto path = proxyfmu::filesystem::path(testDataDir) / "fmi1" / "identity.fmu";
+    auto fmu = proxy::remote_fmu(path);
+
+    const auto d = fmu.description();
+    const auto ref = [&d](const std::string& name) {
+        for (const auto& v : d->variables) {
+            if (v.name == name) return v.reference;
+        }
+        throw std::out_of_range("No such variable: " + name);
+    };
+    const auto realIn = ref("realIn"), integerIn = ref("integerIn"),
+               booleanIn = ref("booleanIn"), stringIn = ref("stringIn"),
+               realOut = ref("realOut"), integerOut = ref("integerOut"),
+               booleanOut = ref("booleanOut"), stringOut = ref("stringOut");
+
+    const auto tStart = time_point();
+    const auto tMax = to_time_point(1.0);
+    const auto dt = to_duration(0.1);
+
+    auto instance = fmu.instantiate("testSlave");
+    instance->setup(tStart, tMax + dt, std::nullopt);
+    instance->start_simulation();
+
+    double realVal = 0.0;
+    int integerVal = 0;
+    bool booleanVal = false;
+    std::string stringVal;
+
+    for (auto t = tStart; t < tMax; t += dt) {
+        realVal += 1.0;
+        integerVal += 1;
+        booleanVal = !booleanVal;
+        stringVal += 'a';
+
+        cosim::slave::variable_values vars;
+        const auto result = instance->set_variables_do_step_get_variables(
+            {gsl::make_span(&realIn, 1), gsl::make_span(&integerIn, 1),
+                gsl::make_span(&booleanIn, 1), gsl::make_span(&stringIn, 1)},
+            {gsl::make_span(&realVal, 1), gsl::make_span(&integerVal, 1),
+                gsl::make_span(&booleanVal, 1), gsl::make_span(&stringVal, 1)},
+            t, dt,
+            {gsl::make_span(&realOut, 1), gsl::make_span(&integerOut, 1),
+                gsl::make_span(&booleanOut, 1), gsl::make_span(&stringOut, 1)},
+            vars);
+        BOOST_TEST_REQUIRE((result == step_result::complete));
+
+        BOOST_TEST_REQUIRE(vars.real.size() == 1U);
+        BOOST_TEST_REQUIRE(vars.integer.size() == 1U);
+        BOOST_TEST_REQUIRE(vars.boolean.size() == 1U);
+        BOOST_TEST_REQUIRE(vars.string.size() == 1U);
+        BOOST_TEST(vars.real[0] == realVal);
+        BOOST_TEST(vars.integer[0] == integerVal);
+        BOOST_TEST(vars.boolean[0] == booleanVal);
+        BOOST_TEST(vars.string[0] == stringVal);
+    }
+
+    // Nothing to set and nothing to get.
+    cosim::slave::variable_values vars;
+    const auto emptyResult = instance->set_variables_do_step_get_variables(
+        {}, {}, tMax, dt, {}, vars);
+    BOOST_TEST((emptyResult == step_result::complete));
+    BOOST_TEST(vars.real.empty());
+    BOOST_TEST(vars.string.empty());
+
+    instance->end_simulation();
+}
+
 BOOST_AUTO_TEST_CASE(test_fmi2)
 {
     const auto testDataDir = std::getenv("TEST_DATA_DIR");

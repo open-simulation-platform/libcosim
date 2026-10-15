@@ -542,9 +542,22 @@ public:
         time_point currentT,
         duration deltaT)
     {
-        set_variables(deltaT);
-        const auto result = slave_->do_step(currentT, deltaT);
-        get_variables(deltaT);
+        const auto [realRefs, realValues] = state_.realSetCache.modify_and_get(deltaT);
+        const auto [integerRefs, integerValues] = state_.integerSetCache.modify_and_get(deltaT);
+        const auto [booleanRefs, booleanValues] = state_.booleanSetCache.modify_and_get(deltaT);
+        const auto [stringRefs, stringValues] = state_.stringSetCache.modify_and_get(deltaT);
+        const auto result = slave_->set_variables_do_step_get_variables(
+            {realRefs, integerRefs, booleanRefs, stringRefs},
+            {realValues, integerValues, booleanValues, stringValues},
+            currentT,
+            deltaT,
+            {state_.realGetCache.references,
+                state_.integerGetCache.references,
+                state_.booleanGetCache.references,
+                state_.stringGetCache.references},
+            variableValues_);
+        reset_set_caches();
+        update_get_caches(deltaT);
         return result;
     }
 
@@ -652,6 +665,11 @@ private:
             gsl::make_span(booleanValues),
             gsl::make_span(stringRefs),
             gsl::make_span(stringValues));
+        reset_set_caches();
+    }
+
+    void reset_set_caches()
+    {
         state_.realSetCache.reset();
         state_.integerSetCache.reset();
         state_.booleanSetCache.reset();
@@ -666,6 +684,13 @@ private:
             gsl::make_span(state_.integerGetCache.references),
             gsl::make_span(state_.booleanGetCache.references),
             gsl::make_span(state_.stringGetCache.references));
+        update_get_caches(deltaT);
+    }
+
+    // Copies the values most recently retrieved into `variableValues_` to
+    // the get caches and applies modifiers.
+    void update_get_caches(duration deltaT)
+    {
         copy_contents(variableValues_.real, state_.realGetCache.originalValues);
         copy_contents(variableValues_.integer, state_.integerGetCache.originalValues);
         copy_contents(variableValues_.boolean, state_.booleanGetCache.originalValues);
