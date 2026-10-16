@@ -59,6 +59,32 @@ public:
     void set_string_variables(gsl::span<const value_reference> variables,
         gsl::span<const std::string> values) override;
 
+    /// Retrieves variables of every type in a single call to the remote slave.
+    void get_variables(const variable_references& variables, variable_values& values) const override;
+
+    /// Sets variables of every type in a single call to the remote slave.
+    void set_variables(const variable_references& variables, const variable_values_view& values) override;
+
+    // Keep the convenience overloads from `slave` visible.
+    using slave::get_variables;
+    using slave::set_variables;
+
+    /**
+     *  Sets variables, performs a time step and retrieves variables in a
+     *  single call to the remote slave.
+     *
+     *  \throws cosim::error
+     *      With `errc::model_error` if the remote slave reports a failure in
+     *      any part of the sequence, or returns the wrong number of values.
+     */
+    step_result set_variables_do_step_get_variables(
+        const variable_references& setVariables,
+        const variable_values_view& setValues,
+        time_point currentT,
+        duration deltaT,
+        const variable_references& getVariables,
+        variable_values& getValues) override;
+
     state_index save_state() override;
 
     void save_state(state_index stateIndex) override;

@@ -6,9 +6,11 @@
 #include <cosim/error.hpp>
 #include <cosim/exception.hpp>
 #include <cosim/proxy/remote_slave.hpp>
+
 #include <proxyfmu/state.hpp>
 
 #include <utility>
+#include <vector>
 
 
 namespace
@@ -18,6 +20,54 @@ void bad_status_throw(const std::string& method)
 {
     std::string reason("Bad status returned from remote slave during call to '" + method + "'.");
     throw cosim::error(make_error_code(cosim::errc::model_error), reason);
+}
+
+template<typename T>
+std::vector<T> to_vector(gsl::span<const T> span)
+{
+    return std::vector<T>(span.begin(), span.end());
+}
+
+proxyfmu::fmi::variable_refs to_variable_refs(const cosim::slave::variable_references& variables)
+{
+    return {
+        to_vector(variables.integer),
+        to_vector(variables.real),
+        to_vector(variables.string),
+        to_vector(variables.boolean)};
+}
+
+proxyfmu::fmi::variable_values to_variable_values(
+    const cosim::slave::variable_references& variables,
+    const cosim::slave::variable_values_view& values)
+{
+    COSIM_INPUT_CHECK(variables.real.size() == values.real.size());
+    COSIM_INPUT_CHECK(variables.integer.size() == values.integer.size());
+    COSIM_INPUT_CHECK(variables.boolean.size() == values.boolean.size());
+    COSIM_INPUT_CHECK(variables.string.size() == values.string.size());
+    return {
+        to_vector(values.integer),
+        to_vector(values.real),
+        to_vector(values.string),
+        to_vector(values.boolean)};
+}
+
+void copy_variable_values(
+    const proxyfmu::fmi::variable_values& from,
+    const proxyfmu::fmi::variable_refs& refs,
+    cosim::slave::variable_values& to)
+{
+    if (from.reals.size() != refs.reals.size() ||
+        from.integers.size() != refs.integers.size() ||
+        from.booleans.size() != refs.booleans.size() ||
+        from.strings.size() != refs.strings.size()) {
+        throw cosim::error(make_error_code(cosim::errc::model_error),
+            "Remote slave returned the wrong number of variable values");
+    }
+    to.real.assign(from.reals.begin(), from.reals.end());
+    to.integer.assign(from.integers.begin(), from.integers.end());
+    to.boolean.assign(from.booleans.begin(), from.booleans.end());
+    to.string.assign(from.strings.begin(), from.strings.end());
 }
 
 } // namespace
@@ -201,6 +251,53 @@ void cosim::proxy::remote_slave::set_string_variables(gsl::span<const cosim::val
     if (!status) {
         bad_status_throw("set_string");
     }
+}
+
+void cosim::proxy::remote_slave::get_variables(
+    const variable_references& variables,
+    variable_values& values) const
+{
+    const auto refs = to_variable_refs(variables);
+    proxyfmu::fmi::variable_values data;
+    if (!refs.empty() && !slave_->get_all(refs, data)) {
+        bad_status_throw("get_all");
+    }
+    copy_variable_values(data, refs, values);
+}
+
+void cosim::proxy::remote_slave::set_variables(
+    const variable_references& variables,
+    const variable_values_view& values)
+{
+    const auto data = to_variable_values(variables, values);
+    const auto refs = to_variable_refs(variables);
+    if (refs.empty()) return;
+    if (!slave_->set_all(refs, data)) {
+        bad_status_throw("set_all");
+    }
+}
+
+cosim::step_result cosim::proxy::remote_slave::set_variables_do_step_get_variables(
+    const variable_references& setVariables,
+    const variable_values_view& setValues,
+    time_point currentT,
+    duration deltaT,
+    const variable_references& getVariables,
+    variable_values& getValues)
+{
+    const auto setData = to_variable_values(setVariables, setValues);
+    const auto setRefs = to_variable_refs(setVariables);
+    const auto getRefs = to_variable_refs(getVariables);
+    proxyfmu::fmi::variable_values getData;
+    const auto status = slave_->step_exchange(
+        setRefs, setData,
+        to_double_time_point(currentT), to_double_duration(deltaT, startTime_),
+        getRefs, getData);
+    if (!status) {
+        bad_status_throw("step_exchange");
+    }
+    copy_variable_values(getData, getRefs, getValues);
+    return cosim::step_result::complete;
 }
 
 cosim::slave::state_index cosim::proxy::remote_slave::save_state()
