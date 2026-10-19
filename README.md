@@ -43,7 +43,8 @@ Note that none of them have complete support for all libcosim features.
 
 The tools needed to build libcosim are:
 
-  * Compilers: [Visual Studio] >= 16.0/2019 (Windows), GCC >= 9 (Linux)
+  * Compilers: [Visual Studio] >= 16.0/2019 (Windows), GCC >= 9 (Linux),
+    Apple Clang >= 17 (macOS on Apple silicon)
   * Build tool: [CMake] >= 3.19
   * Package manager (optional): [Conan] 2.x
   * API documentation generator (optional): [Doxygen]
