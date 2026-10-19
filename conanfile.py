@@ -75,14 +75,22 @@ class LibcosimConan(ConanFile):
     def generate(self):
         # Copy dependencies to the folder where executables (tests, mainly)
         # will be placed, so it's easier to run them.
-        bindir = os.path.join(
-            self.build_folder, "output", str(self.settings.build_type).lower(), "bin"
+        outputdir = os.path.join(
+            self.build_folder, "output", str(self.settings.build_type).lower()
         )
+        bindir = os.path.join(outputdir, "bin")
+        libdir = os.path.join(outputdir, "lib")
         for dep in self.dependencies.values():
             for depdir in dep.cpp_info.bindirs:
                 copy(self, "*.dll", depdir, bindir, keep_path=False)
                 copy(self, "*.pdb", depdir, bindir, keep_path=False)
                 copy(self, "proxyfmu*", depdir, bindir, keep_path=False)
+            if self.settings.os == "Macos":
+                # The proxyfmu executable looks for its libraries in ../lib,
+                # and DYLD_LIBRARY_PATH does not reliably survive into the
+                # child processes it is started in.
+                for depdir in dep.cpp_info.libdirs:
+                    copy(self, "*.dylib", depdir, libdir, keep_path=False)
 
         # Generate CMake toolchain file
         tc = CMakeToolchain(self)
