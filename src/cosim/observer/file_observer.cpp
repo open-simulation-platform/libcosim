@@ -12,7 +12,6 @@
 #include <boost/property_tree/xml_parser.hpp>
 
 #include <algorithm>
-#include <codecvt>
 #include <fstream>
 #include <locale>
 #include <map>
@@ -28,14 +27,12 @@ namespace
 {
 std::string format_time(boost::posix_time::ptime now)
 {
-    std::locale loc(std::wcout.getloc(), new boost::posix_time::wtime_facet(L"%Y%m%d_%H%M%S_%f"));
+    std::locale loc(std::locale::classic(), new boost::posix_time::time_facet("%Y%m%d_%H%M%S_%f"));
 
-    std::basic_stringstream<wchar_t> wss;
-    wss.imbue(loc);
-    wss << now;
-
-    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
-    return converter.to_bytes(wss.str());
+    std::stringstream ss;
+    ss.imbue(loc);
+    ss << now;
+    return ss.str();
 }
 
 void clear_file_contents_if_exists(const cosim::filesystem::path& filePath, std::ofstream& fsw)
