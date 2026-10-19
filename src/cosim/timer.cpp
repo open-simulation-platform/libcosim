@@ -104,7 +104,6 @@ private:
             const auto elapsedRealTime = currentTime - rtStartTime_;
 
             if (elapsedRealTime > sampling_period_to_monitor_.value()) {
-                const auto elapsedSimTime = currentSimulationTime - rtSimulationStartTime_;
                 update_rolling_average_real_time_factor(currentTime, currentSimulationTime, elapsedRealTime);
             }
         } else if (rtCounter_ >= config_->steps_to_monitor.load()) {

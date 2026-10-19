@@ -94,7 +94,7 @@ namespace
     }
 
     constexpr uint64_t TYPE_INT  = 0x8000;
-    constexpr uint64_t TYPE_UINT = 0x8001;
+    [[maybe_unused]] constexpr uint64_t TYPE_UINT = 0x8001;
 
     template<typename F, typename... Args>
     void wrap_cbor_call(F&& f, const std::string& err_msg, Args&&... args)
