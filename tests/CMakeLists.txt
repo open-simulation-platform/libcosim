@@ -38,6 +38,16 @@ set(REFERENCE_FMUS_V2_BINARY_DIR
     "${CMAKE_CURRENT_BINARY_DIR}/reference-fmus-v2-build")
 set(REFERENCE_FMUS_V2_STAMP_DIR
     "${CMAKE_CURRENT_BINARY_DIR}/reference-fmus-v2-stamp-${REFERENCE_FMUS_VERSION}")
+set(reference_fmus_v2_extra_args)
+if(APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(arm64|aarch64)$")
+    # Reference-FMUs v0.0.41 refuses to build FMI 2 FMUs for Apple silicon.
+    # As a stopgap, build them for x86_64 ("darwin64") but as universal
+    # binaries. They then load on Apple silicon through the importer's
+    # fallback from "aarch64-darwin" to "darwin64", which this also tests.
+    list(APPEND reference_fmus_v2_extra_args
+        "-DFMI_ARCHITECTURE=x86_64"
+        "-DCMAKE_C_FLAGS=-arch arm64")
+endif()
 ExternalProject_Add(
     reference_fmus_v2_build
     SOURCE_DIR "${REFERENCE_FMUS_SOURCE_DIR}"
@@ -46,6 +56,7 @@ ExternalProject_Add(
     CMAKE_ARGS
         "-DFMI_VERSION=2"
         "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}"
+        ${reference_fmus_v2_extra_args}
     INSTALL_COMMAND ""
     TEST_COMMAND "")
 
@@ -58,18 +69,19 @@ endif()
 include(PrepareDahlquistTestData)
 prepare_dahlquist_test_data()
 
-if(WIN32 AND CMAKE_SIZEOF_VOID_P EQUAL 8)
-    set(FMI2_TEST_PLATFORM "win64")
-elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND
-       CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|AMD64)$")
-    set(FMI2_TEST_PLATFORM "linux64")
-elseif(APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|AMD64)$")
-    set(FMI2_TEST_PLATFORM "darwin64")
-else()
+# Package the FMI 2 test FMUs that we build ourselves for the platform that
+# FMI Library looks for binaries for. This is the x86 platform name (e.g.
+# "linux64") or, on other platforms, the FMI 3 platform tuple (e.g.
+# "aarch64-darwin") if FMI Library was built accordingly.
+file(STRINGS "${FMILibrary_INCLUDE_DIRS}/fmilib_config.h" fmi2_platform_define
+    REGEX "^#define FMI2_PLATFORM ")
+string(REGEX REPLACE "^#define FMI2_PLATFORM \"([^\"]*)\".*$" "\\1"
+    FMI2_TEST_PLATFORM "${fmi2_platform_define}")
+if(NOT FMI2_TEST_PLATFORM)
     message(FATAL_ERROR
-        "No FMI 2 test platform tuple for ${CMAKE_SYSTEM_NAME} "
-        "${CMAKE_SYSTEM_PROCESSOR}")
+        "Could not read FMI2_PLATFORM from ${FMILibrary_INCLUDE_DIRS}/fmilib_config.h")
 endif()
+message(STATUS "FMI 2 test platform: ${FMI2_TEST_PLATFORM}")
 
 set(fmi2_derivative_binary_directory
     "${CMAKE_CURRENT_BINARY_DIR}/fmi2-derivative-binary")
