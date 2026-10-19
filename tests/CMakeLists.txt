@@ -273,3 +273,40 @@ endif()
 foreach(reference_fmu_test IN LISTS reference_fmu_test_targets)
     add_dependencies("${reference_fmu_test}" reference_fmus_v2_build)
 endforeach()
+
+# Some tests use FMUs from the test data directory which do not contain macOS
+# binaries. Those cannot run there, so we disable the tests which consist
+# entirely of such cases and skip the individual cases in the others.
+set(tests_requiring_bundled_fmu_binaries
+    cpp_config_end_time_test
+    cpp_ecco_algorithm_from_system_structure_test
+    cpp_ecco_algorithm_multi_bond_test
+    cpp_ecco_algorithm_powerbond_logconfig_test
+    cpp_ecco_algorithm_two_bond_test
+    cpp_fmi_v1_fmu_unittest
+    cpp_osp_config_parser_test
+    cpp_state_init_test)
+if(LIBCOSIM_WITH_PROXYFMU)
+    list(APPEND tests_requiring_bundled_fmu_binaries
+        cpp_proxyfmu_integration_unittest
+        cpp_proxyfmu_library_unittest
+        cpp_proxyfmu_osp_config_parser_test)
+endif()
+set(cpp_fmi_v2_fmu_unittest_cases_requiring_bundled_fmu_binaries
+    v2_fmu)
+set(cpp_ssp_loader_unittest_cases_requiring_bundled_fmu_binaries
+    basic_test
+    no_algorithm_test
+    ssp_archive
+    ssp_linear_transformation_test
+    ssp_multiple_parameter_sets_test)
+
+if(APPLE)
+    set_tests_properties(${tests_requiring_bundled_fmu_binaries}
+        PROPERTIES DISABLED TRUE)
+    foreach(test IN ITEMS cpp_fmi_v2_fmu_unittest cpp_ssp_loader_unittest)
+        list(JOIN ${test}_cases_requiring_bundled_fmu_binaries "," excludedCases)
+        set_property(TEST "${test}" APPEND PROPERTY
+            ENVIRONMENT "BOOST_TEST_RUN_FILTERS=!${excludedCases}")
+    endforeach()
+endif()
