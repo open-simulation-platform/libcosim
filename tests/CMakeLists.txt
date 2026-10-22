@@ -171,6 +171,36 @@ set(unittests
     "utility_zip_unittest"
 )
 
+if(FMI2_TEST_PLATFORM STREQUAL "aarch64-darwin")
+    # The importer falls back to darwin64 binaries with arm64 code. Test this
+    # with the universal Dahlquist FMU, and with a copy that only has x86_64
+    # code. (This is keyed on FMI Library's platform, not on the processor,
+    # as a stock FMI Library build looks in darwin64 on Apple silicon too.)
+    set(dahlquist_x86_64_fmu "${REFERENCE_FMUS_V2_BINARY_DIR}/fmus/Dahlquist_x86_64.fmu")
+    set(dahlquist_x86_64_dir "${CMAKE_CURRENT_BINARY_DIR}/dahlquist-x86_64")
+    set(dahlquist_x86_64_library "${dahlquist_x86_64_dir}/binaries/darwin64/Dahlquist.dylib")
+    add_custom_command(
+        OUTPUT "${dahlquist_x86_64_fmu}"
+        COMMAND "${CMAKE_COMMAND}" -E rm -rf "${dahlquist_x86_64_dir}"
+        COMMAND "${CMAKE_COMMAND}" -E make_directory "${dahlquist_x86_64_dir}"
+        COMMAND "${CMAKE_COMMAND}" -E chdir "${dahlquist_x86_64_dir}"
+            "${CMAKE_COMMAND}" -E tar xf "${REFERENCE_FMUS_V2_BINARY_DIR}/fmus/Dahlquist.fmu"
+        COMMAND lipo "${dahlquist_x86_64_library}" -thin x86_64
+            -output "${dahlquist_x86_64_library}.thin"
+        COMMAND "${CMAKE_COMMAND}" -E rename
+            "${dahlquist_x86_64_library}.thin" "${dahlquist_x86_64_library}"
+        COMMAND "${CMAKE_COMMAND}" -E chdir "${dahlquist_x86_64_dir}"
+            "${CMAKE_COMMAND}" -E tar cf "${dahlquist_x86_64_fmu}" --format=zip
+            modelDescription.xml binaries
+        DEPENDS reference_fmus_v2_build "${REFERENCE_FMUS_V2_BINARY_DIR}/fmus/Dahlquist.fmu"
+        VERBATIM)
+    add_custom_target(dahlquist_x86_64_fmu DEPENDS "${dahlquist_x86_64_fmu}")
+    set(fmi2_fallback_test_fmus
+        "${REFERENCE_FMUS_V2_BINARY_DIR}/fmus/Dahlquist.fmu"
+        "${dahlquist_x86_64_fmu}")
+    list(APPEND unittests "fmi2_platform_fallback_unittest")
+endif()
+
 if(LIBCOSIM_WITH_PROXYFMU)
     list(APPEND unittests
             "proxyfmu_integration_unittest"
@@ -223,6 +253,21 @@ set(reference_fmu_test_targets
     cpp_slave_simulator_unittest)
 if(LIBCOSIM_WITH_PROXYFMU)
     list(APPEND reference_fmu_test_targets cpp_proxyfmu_save_state_test)
+endif()
+
+if(TARGET cpp_fmi2_platform_fallback_unittest)
+    # The first FMU has native code in the x86 platform folder, the second
+    # has not.
+    list(GET fmi2_fallback_test_fmus 0 fmu_with_native_code)
+    list(GET fmi2_fallback_test_fmus 1 fmu_without_native_code)
+    target_compile_definitions(cpp_fmi2_platform_fallback_unittest PRIVATE
+        "FMI2_TEST_PLATFORM=\"${FMI2_TEST_PLATFORM}\""
+        "FMU_WITH_NATIVE_CODE=\"${fmu_with_native_code}\""
+        "FMU_WITHOUT_NATIVE_CODE=\"${fmu_without_native_code}\"")
+    if(TARGET dahlquist_x86_64_fmu)
+        add_dependencies(cpp_fmi2_platform_fallback_unittest dahlquist_x86_64_fmu)
+    endif()
+    list(APPEND reference_fmu_test_targets cpp_fmi2_platform_fallback_unittest)
 endif()
 
 foreach(reference_fmu_test IN LISTS reference_fmu_test_targets)
