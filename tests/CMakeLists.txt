@@ -193,6 +193,10 @@ if(FMI2_TEST_PLATFORM STREQUAL "aarch64-darwin")
     set(reference_fmus_v2_x86_folder_args
         "-DFMI_ARCHITECTURE=x86_64"
         "-DCMAKE_OSX_ARCHITECTURES=arm64|x86_64")
+elseif(FMI2_TEST_PLATFORM STREQUAL "aarch64-linux")
+    # On Linux, the architecture only selects the folder, so this puts
+    # 64-bit ARM code in linux64.
+    set(reference_fmus_v2_x86_folder_args "-DFMI_ARCHITECTURE=x86_64")
 endif()
 if(reference_fmus_v2_x86_folder_args)
     set(REFERENCE_FMUS_V2_X86_FOLDER_BINARY_DIR
@@ -238,6 +242,13 @@ if(FMI2_TEST_PLATFORM STREQUAL "aarch64-darwin")
     set(fmi2_fallback_test_fmus
         "${dahlquist_x86_folder_fmu}"
         "${dahlquist_x86_64_fmu}")
+    list(APPEND unittests "fmi2_platform_fallback_unittest")
+elseif(FMI2_TEST_PLATFORM STREQUAL "aarch64-linux")
+    # Test the fallback with the Dahlquist FMU with 64-bit ARM code in
+    # linux64, and with vector.fmu, whose linux64 library is x86_64 code.
+    set(fmi2_fallback_test_fmus
+        "${dahlquist_x86_folder_fmu}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/data/fmi2/vector.fmu")
     list(APPEND unittests "fmi2_platform_fallback_unittest")
 endif()
 
@@ -315,9 +326,10 @@ foreach(reference_fmu_test IN LISTS reference_fmu_test_targets)
     add_dependencies("${reference_fmu_test}" reference_fmus_v2_build)
 endforeach()
 
-# Some tests use FMUs from the test data directory which do not contain macOS
-# binaries. Those cannot run there, so we disable the tests which consist
-# entirely of such cases and skip the individual cases in the others.
+# Some tests use FMUs from the test data directory which only contain binaries
+# for x86 Linux and Windows. Those cannot run elsewhere, so we disable the tests
+# which consist entirely of such cases and skip the individual cases in the
+# others.
 set(tests_requiring_bundled_fmu_binaries
     cpp_config_end_time_test
     cpp_ecco_algorithm_from_system_structure_test
@@ -342,7 +354,7 @@ set(cpp_ssp_loader_unittest_cases_requiring_bundled_fmu_binaries
     ssp_linear_transformation_test
     ssp_multiple_parameter_sets_test)
 
-if(APPLE)
+if(APPLE OR NOT CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|AMD64)$")
     set_tests_properties(${tests_requiring_bundled_fmu_binaries}
         PROPERTIES DISABLED TRUE)
     foreach(test IN ITEMS cpp_fmi_v2_fmu_unittest cpp_ssp_loader_unittest)
