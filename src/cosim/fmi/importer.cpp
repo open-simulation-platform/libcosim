@@ -26,9 +26,11 @@
 #include <string_view>
 #include <system_error>
 
-#ifdef __APPLE__
+#if defined(__APPLE__)
 #    include <mach-o/fat.h>
 #    include <mach-o/loader.h>
+#elif defined(__linux__)
+#    include <elf.h>
 #endif
 
 
@@ -172,10 +174,21 @@ bool is_outdated(
         cosim::filesystem::last_write_time(comparator) > cosim::filesystem::last_write_time(file);
 }
 
-#ifdef __APPLE__
-// Returns whether the Mach-O file at `path` contains arm64 code, i.e., is
-// either an arm64 library or a universal library with an arm64 slice.
-bool contains_arm64_code(const cosim::filesystem::path& path)
+// FMI 2.0.4 only has platform names for x86 (e.g. "darwin64" and "linux64"),
+// and uses the FMI 3 platform tuple (e.g. "aarch64-darwin") for other
+// platforms. Returns the x86 name that FMUs sometimes use for the latter
+// anyway, or an empty string.
+constexpr std::string_view x86_platform_name(std::string_view platform)
+{
+    if (platform == "aarch64-darwin") return "darwin64";
+    if (platform == "aarch64-linux") return "linux64";
+    return {};
+}
+
+#if defined(__APPLE__) || defined(__linux__)
+// Returns whether the shared library at `path` contains 64-bit ARM code.
+// On macOS, this may be a universal library with an arm64 slice.
+bool contains_aarch64_code(const cosim::filesystem::path& path)
 {
     std::ifstream file(path, std::ios::binary);
     const auto read_uint32 = [&file](bool bigEndian) {
@@ -185,7 +198,7 @@ bool contains_arm64_code(const cosim::filesystem::path& path)
             ? std::uint32_t{b[0]} << 24 | std::uint32_t{b[1]} << 16 | std::uint32_t{b[2]} << 8 | b[3]
             : std::uint32_t{b[3]} << 24 | std::uint32_t{b[2]} << 16 | std::uint32_t{b[1]} << 8 | b[0];
     };
-
+#    if defined(__APPLE__)
     const auto magic = read_uint32(true);
     if (magic == FAT_MAGIC || magic == FAT_MAGIC_64) {
         // Universal binary; the headers are big-endian.
@@ -203,50 +216,67 @@ bool contains_arm64_code(const cosim::filesystem::path& path)
         return read_uint32(false) == static_cast<std::uint32_t>(CPU_TYPE_ARM64) && !!file;
     }
     return false;
+#    else
+    unsigned char ident[EI_NIDENT] = {};
+    file.read(reinterpret_cast<char*>(ident), sizeof ident);
+    if (!file || std::memcmp(ident, ELFMAG, SELFMAG) != 0 ||
+        ident[EI_CLASS] != ELFCLASS64 || ident[EI_DATA] != ELFDATA2LSB) {
+        return false;
+    }
+    // e_type and e_machine follow e_ident, both 16 bits.
+    const auto typeAndMachine = read_uint32(false);
+    return !!file && (typeAndMachine >> 16) == EM_AARCH64;
+#    endif
 }
 #endif
 
-// FMI 2.0.4 reserves "darwin64" for 64-bit x86, so FMI 2 FMUs keep their
-// Apple silicon binaries in "aarch64-darwin", which is where FMI Library
-// looks for them on such machines. Many FMUs only have a universal (or even
-// arm64) library in "darwin64", though, so if "aarch64-darwin" is missing
-// and "darwin64" contains arm64 code, we make "aarch64-darwin" a link to
-// "darwin64" in the unpacked FMU.
-void link_darwin64_if_aarch64_darwin_missing(
+// FMI 2.0.4 reserves names like "darwin64" and "linux64" for 64-bit x86, so
+// e.g. FMI 2 FMUs keep their Apple silicon binaries in "aarch64-darwin",
+// which is where FMI Library looks for them on such machines. Many FMUs only
+// have a universal (or even an arm64) library in "darwin64", though, so if
+// the platform folder is missing and the x86 folder contains code for this
+// platform, we make the former a link to the latter in the unpacked FMU.
+void link_x86_platform_folder_if_platform_folder_missing(
     [[maybe_unused]] const cosim::filesystem::path& fmuPath,
     [[maybe_unused]] const cosim::filesystem::path& fmuUnpackDir,
     [[maybe_unused]] const std::string& modelIdentifier)
 {
-#ifdef __APPLE__
+#if defined(__APPLE__) || defined(__linux__)
     constexpr auto platform = std::string_view(FMI2_PLATFORM);
-    if (platform != "aarch64-darwin") return;
+    constexpr auto x86Platform = x86_platform_name(platform);
+    if (x86Platform.empty()) return;
+#    if defined(__APPLE__)
+    constexpr auto librarySuffix = ".dylib";
+#    else
+    constexpr auto librarySuffix = ".so";
+#    endif
 
     const auto binariesDir = fmuUnpackDir / "binaries";
     const auto platformDir = binariesDir / platform;
     const auto platformDirStatus = cosim::filesystem::symlink_status(platformDir);
     if (!cosim::filesystem::exists(platformDirStatus)) {
-        const auto library = binariesDir / "darwin64" / (modelIdentifier + ".dylib");
+        const auto library = binariesDir / x86Platform / (modelIdentifier + librarySuffix);
         if (!cosim::filesystem::exists(library)) return;
-        if (!contains_arm64_code(library)) {
+        if (!contains_aarch64_code(library)) {
             BOOST_LOG_SEV(log::logger(), log::warning)
-                << "FMU '" << fmuPath.string() << "' has no binaries/aarch64-darwin, "
-                << "and its darwin64 library contains no arm64 code";
+                << "FMU '" << fmuPath.string() << "' has no binaries/" << platform
+                << ", and its " << x86Platform << " library contains no code for this platform";
             return;
         }
         std::error_code linkError;
-        cosim::filesystem::create_directory_symlink("darwin64", platformDir, linkError);
+        cosim::filesystem::create_directory_symlink(std::string(x86Platform), platformDir, linkError);
         if (linkError) {
             BOOST_LOG_SEV(log::logger(), log::warning)
-                << "FMU '" << fmuPath.string() << "' has no binaries/aarch64-darwin, "
-                << "and linking it to darwin64 failed: " << linkError.message();
+                << "FMU '" << fmuPath.string() << "' has no binaries/" << platform
+                << ", and linking it to " << x86Platform << " failed: " << linkError.message();
             return;
         }
     } else if (!cosim::filesystem::is_symlink(platformDirStatus)) {
         return;
     }
     BOOST_LOG_SEV(log::logger(), log::warning)
-        << "FMU '" << fmuPath.string() << "' has no binaries/aarch64-darwin; "
-        << "using darwin64, which FMI 2.0.4 reserves for x86_64";
+        << "FMU '" << fmuPath.string() << "' has no binaries/" << platform << "; "
+        << "using " << x86Platform << ", which FMI 2.0.4 reserves for x86";
 #endif
 }
 
@@ -316,7 +346,7 @@ std::shared_ptr<fmu> importer::import(const cosim::filesystem::path& fmuPath)
         }
     }
     if (minModelDesc.fmiVersion == fmi_version::v2_0) {
-        link_darwin64_if_aarch64_darwin_missing(
+        link_x86_platform_folder_if_platform_folder_missing(
             fmuPath,
             fmuUnpackDir->path(),
             minModelDesc.coSimulationModelIdentifier);
