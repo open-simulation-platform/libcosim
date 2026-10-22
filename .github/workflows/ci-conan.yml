@@ -9,11 +9,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        runner: [ubuntu-24.04, ubuntu-24.04-arm]
         build_type: [Debug, Release]
         compiler_version: [14]
         option_proxyfmu: ['proxyfmu=True', 'proxyfmu=False']
         option_shared: ['shared=True', 'shared=False']
-    runs-on: ubuntu-24.04
+    runs-on: ${{ matrix.runner }}
     container:
       image: gcc:${{ matrix.compiler_version }}
     env:
@@ -21,7 +22,9 @@ jobs:
       CONAN_PASSWORD_OSP: ${{ secrets.osp_artifactory_pwd }}
       CONAN_HOME: ${{ github.workspace }}/.conan2
       LIBCOSIM_RUN_TESTS_ON_CONAN_BUILD: 1
-    timeout-minutes: 35
+    # Conan Center has no binaries for 64-bit ARM Linux, so the first build
+    # there compiles all dependencies.
+    timeout-minutes: ${{ matrix.runner == 'ubuntu-24.04-arm' && 120 || 35 }}
 
     steps:
       - uses: actions/checkout@v6
