@@ -85,6 +85,21 @@ public:
     int stateImports = 0;
 };
 
+class started_enumeration_mock_slave : public enumeration_mock_slave
+{
+public:
+    cosim::model_description model_description() const override
+    {
+        auto model = enumeration_mock_slave::model_description();
+        for (auto& variable : model.variables) {
+            if (variable.name == "enumerationIn") {
+                variable.start = cosim::enumeration_value{1};
+            }
+        }
+        return model;
+    }
+};
+
 class enumeration_mock_model : public cosim::model
 {
 public:
@@ -241,7 +256,7 @@ BOOST_AUTO_TEST_CASE(enumeration_time_series_and_file_observation)
 {
     cosim::utility::temp_dir directory;
     {
-        auto slave = std::make_shared<enumeration_mock_slave>();
+        auto slave = std::make_shared<started_enumeration_mock_slave>();
         auto execution = cosim::execution(
             cosim::time_point(),
             std::make_shared<cosim::fixed_step_algorithm>(cosim::to_duration(0.1)));
@@ -273,7 +288,8 @@ BOOST_AUTO_TEST_CASE(enumeration_time_series_and_file_observation)
             sawCsv = contents.find("enumerationOut") != std::string::npos &&
                 contents.find(",1,1\n") != std::string::npos;
         } else if (entry.path().extension() == ".yaml") {
-            sawMetadata = contents.find("enumeration") != std::string::npos;
+            sawMetadata = contents.find("enumerationIn") != std::string::npos &&
+                contents.find("start value:  1") != std::string::npos;
         }
     }
     BOOST_TEST(sawCsv);

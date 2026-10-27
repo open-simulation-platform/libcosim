@@ -6,6 +6,7 @@
 #include "cosim/model_description.hpp"
 
 #include <iomanip>
+#include <istream>
 #include <limits>
 #include <stdexcept>
 #include <type_traits>
@@ -13,6 +14,43 @@
 
 namespace cosim
 {
+
+namespace
+{
+
+template<typename T>
+void read_byte(std::istream& stream, T& value)
+{
+    long long parsed = 0;
+    const auto apply_value = [&]() {
+        if (parsed < static_cast<long long>(std::numeric_limits<T>::min())) {
+            value = std::numeric_limits<T>::min();
+            return true;
+        }
+        if (parsed > static_cast<long long>(std::numeric_limits<T>::max())) {
+            value = std::numeric_limits<T>::max();
+            return true;
+        }
+        if (!stream.fail()) {
+            value = static_cast<T>(parsed);
+        }
+        return false;
+    };
+
+    try {
+        stream >> parsed;
+    } catch (const std::ios_base::failure&) {
+        if (apply_value()) {
+            stream.setstate(std::ios_base::failbit);
+        }
+        throw;
+    }
+    if (apply_value()) {
+        stream.setstate(std::ios_base::failbit);
+    }
+}
+
+} // namespace
 
 std::ostream& operator<<(std::ostream& stream, const binary_value& value)
 {
@@ -24,6 +62,46 @@ std::ostream& operator<<(std::ostream& stream, const binary_value& value)
     }
     stream.flags(flags);
     stream.fill(fill);
+    return stream;
+}
+
+
+std::ostream& operator<<(std::ostream& stream, const scalar_value& value)
+{
+    std::visit(
+        [&](const auto& scalar) {
+            using value_type = std::decay_t<decltype(scalar)>;
+            if constexpr (std::is_same_v<value_type, std::int8_t>) {
+                stream << static_cast<int>(scalar);
+            } else if constexpr (std::is_same_v<value_type, std::uint8_t>) {
+                stream << static_cast<unsigned int>(scalar);
+            } else {
+                stream << scalar;
+            }
+        },
+        value);
+    return stream;
+}
+
+
+std::istream& operator>>(std::istream& stream, scalar_value& value)
+{
+    std::visit(
+        [&](auto& scalar) {
+            using value_type = std::decay_t<decltype(scalar)>;
+            if constexpr (
+                std::is_same_v<value_type, std::int8_t> ||
+                std::is_same_v<value_type, std::uint8_t>) {
+                read_byte(stream, scalar);
+            } else if constexpr (std::is_same_v<value_type, enumeration_value>) {
+                stream >> scalar.value;
+            } else if constexpr (std::is_same_v<value_type, binary_value>) {
+                stream.setstate(std::ios_base::failbit);
+            } else {
+                stream >> scalar;
+            }
+        },
+        value);
     return stream;
 }
 

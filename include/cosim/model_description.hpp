@@ -14,6 +14,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <iosfwd>
 #include <optional>
 #include <ostream>
 #include <string>
@@ -295,6 +296,25 @@ using scalar_value = std::variant<
     std::int64_t,
     std::uint64_t,
     binary_value>;
+
+
+/**
+ *  Streams the held value, treating Int8 and UInt8 as numbers rather than
+ *  characters. This does not change streaming of unwrapped byte values or
+ *  parsing through tools such as boost::lexical_cast<std::uint8_t>.
+ */
+std::ostream& operator<<(std::ostream& stream, const scalar_value& value);
+
+
+/**
+ *  Reads into the existing alternative without changing its type.
+ *
+ *  Int8 and UInt8 values outside their range are clamped and set failbit;
+ *  an input with no number leaves them unchanged. Binary input is unsupported
+ *  and sets failbit without changing the value. Strings are read as tokens,
+ *  so these operators do not provide a general serialization format.
+ */
+std::istream& operator>>(std::istream& stream, scalar_value& value);
 
 
 /**

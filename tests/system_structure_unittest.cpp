@@ -1,5 +1,6 @@
 #define BOOST_TEST_MODULE system_structure unittests
 #include "mock_slave.hpp"
+#include "scalar_value_stream_tests.hpp"
 
 #include <cosim/algorithm/fixed_step_algorithm.hpp>
 #include <cosim/exception.hpp>

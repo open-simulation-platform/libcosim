@@ -279,8 +279,8 @@ private:
                << "    " << std::setw(keyWidth_) << "variability:" << v.variability << std::endl;
 
             if (v.start.has_value()) {
-                ss << "    " << std::setw(keyWidth_) << "start value:";
-                std::visit([&](const auto& val) { ss << val << std::endl; }, v.start.value());
+                ss << "    " << std::setw(keyWidth_) << "start value:"
+                   << *v.start << std::endl;
             }
         }
     }
