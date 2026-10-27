@@ -12,6 +12,11 @@
 #include <boost/test/unit_test.hpp>
 
 #include <algorithm>
+#include <array>
+#include <cstdint>
+#include <string>
+#include <utility>
+#include <variant>
 
 
 class mock_model : public cosim::model
@@ -35,6 +40,80 @@ public:
 private:
     mutable std::shared_ptr<mock_slave> nextSlave_;
 };
+
+
+BOOST_AUTO_TEST_CASE(scalar_value_type_validation)
+{
+    using cosim::scalar_value;
+    using cosim::variable_type;
+
+    const std::array<std::pair<scalar_value, variable_type>, 14> values{{
+        {scalar_value(1.0), variable_type::real},
+        {scalar_value(1), variable_type::integer},
+        {scalar_value(true), variable_type::boolean},
+        {scalar_value(std::string("value")), variable_type::string},
+        {scalar_value(cosim::enumeration_value{1}), variable_type::enumeration},
+        {scalar_value(1.0F), variable_type::float32},
+        {scalar_value(std::int8_t{-1}), variable_type::int8},
+        {scalar_value(std::uint8_t{1}), variable_type::uint8},
+        {scalar_value(std::int16_t{-1}), variable_type::int16},
+        {scalar_value(std::uint16_t{1}), variable_type::uint16},
+        {scalar_value(std::uint32_t{1}), variable_type::uint32},
+        {scalar_value(std::int64_t{-1}), variable_type::int64},
+        {scalar_value(std::uint64_t{1}), variable_type::uint64},
+        {scalar_value(cosim::binary_value{{0x01}}), variable_type::binary},
+    }};
+    BOOST_CHECK_EQUAL(values.size(), std::variant_size_v<scalar_value>);
+
+    cosim::variable_description variable{};
+    for (const auto& [value, expectedType] : values) {
+        BOOST_TEST_CONTEXT("value type: " << cosim::to_text(expectedType)) {
+            BOOST_CHECK(cosim::type_of(value) == expectedType);
+            for (const auto& [unusedValue, targetType] : values) {
+                (void)unusedValue;
+                variable.type = targetType;
+                const bool expectedValid = expectedType == targetType ||
+                    (expectedType == variable_type::integer &&
+                        targetType == variable_type::enumeration);
+                std::string reason = "unchanged";
+                BOOST_TEST_CONTEXT("target type: " << cosim::to_text(targetType)) {
+                    BOOST_CHECK(
+                        cosim::is_valid_variable_value(variable, value, &reason) ==
+                        expectedValid);
+                    BOOST_CHECK(
+                        cosim::is_valid_variable_value(variable, value, nullptr) ==
+                        expectedValid);
+                    if (expectedValid) {
+                        BOOST_CHECK_EQUAL(reason, "unchanged");
+                    } else {
+                        const std::string expectedReason =
+                            std::string("Cannot assign a value of type '") +
+                            cosim::to_text(expectedType) +
+                            "' to a variable of type '" +
+                            cosim::to_text(targetType) + "'.";
+                        BOOST_CHECK_EQUAL(reason, expectedReason);
+                    }
+                }
+            }
+            variable.type = variable_type::clock;
+            std::string reason;
+            BOOST_CHECK(!cosim::is_valid_variable_value(variable, value, &reason));
+            const std::string expectedReason =
+                std::string("Cannot assign a value of type '") +
+                cosim::to_text(expectedType) +
+                "' to a variable of type 'clock'.";
+            BOOST_CHECK_EQUAL(reason, expectedReason);
+        }
+    }
+
+    variable.type = variable_type::enumeration;
+    variable.dimensions = {cosim::fixed_dimension{2}};
+    std::string reason;
+    BOOST_CHECK(!cosim::is_valid_variable_value(variable, scalar_value(1), &reason));
+    BOOST_CHECK_EQUAL(
+        reason,
+        "Cannot assign a value of type 'integer' to a variable of type 'enumeration'.");
+}
 
 
 BOOST_AUTO_TEST_CASE(system_structure_basic_use)

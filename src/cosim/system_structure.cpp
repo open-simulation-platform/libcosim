@@ -7,7 +7,6 @@
 
 #include "cosim/exception.hpp"
 #include "cosim/function/utility.hpp"
-#include "cosim/utility/utility.hpp"
 
 #include <cassert>
 #include <cctype>
@@ -273,14 +272,7 @@ bool is_valid_variable_value(
     const scalar_value& value,
     std::string* reason)
 {
-    const auto valueType = std::visit(
-        visitor(
-            [=](double) { return variable_type::real; },
-            [=](int) { return variable_type::integer; },
-            [=](const std::string&) { return variable_type::string; },
-            [=](bool) { return variable_type::boolean; },
-            [&](const auto&) { return type_of(value); }),
-        value);
+    const auto valueType = type_of(value);
     if (valueType != variable.type &&
         !(variable.type == variable_type::enumeration &&
             variable.dimensions.empty() &&
