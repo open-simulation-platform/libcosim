@@ -18,6 +18,9 @@ BOOST_TEST_DONT_PRINT_LOG_VALUE(fmi::fmi_version)
 static_assert(variable_type::float64 == variable_type::real);
 static_assert(variable_type::int32 == variable_type::integer);
 static_assert(static_cast<int>(variable_type::boolean) == 2);
+static_assert(to_text(variable_type::float64)[0] == 'r');
+static_assert(to_text(variable_type::int32)[0] == 'i');
+static_assert(to_text(static_cast<variable_type>(-1))[0] == 'N');
 
 namespace
 {
@@ -41,6 +44,36 @@ std::shared_ptr<fmi::v2::slave_instance> instantiate_derivative_fixture(
     return fmu->instantiate_v2_slave(instanceName);
 }
 } // namespace
+
+
+BOOST_AUTO_TEST_CASE(model_metadata_enum_text)
+{
+    const std::array<std::pair<variable_type, const char*>, 15> types{{
+        {variable_type::real, "real"},
+        {variable_type::integer, "integer"},
+        {variable_type::boolean, "boolean"},
+        {variable_type::string, "string"},
+        {variable_type::enumeration, "enumeration"},
+        {variable_type::float32, "float32"},
+        {variable_type::int8, "int8"},
+        {variable_type::uint8, "uint8"},
+        {variable_type::int16, "int16"},
+        {variable_type::uint16, "uint16"},
+        {variable_type::uint32, "uint32"},
+        {variable_type::int64, "int64"},
+        {variable_type::uint64, "uint64"},
+        {variable_type::binary, "binary"},
+        {variable_type::clock, "clock"},
+    }};
+    for (const auto& [type, text] : types) {
+        BOOST_TEST(std::string(to_text(type)) == text);
+    }
+    BOOST_TEST(std::string(to_text(variable_type::float64)) == "real");
+    BOOST_TEST(std::string(to_text(variable_type::int32)) == "integer");
+    BOOST_TEST(std::string(to_text(static_cast<variable_type>(-1))) == "NULL");
+    BOOST_TEST(std::string(to_text(static_cast<variable_causality>(7))) == "NULL");
+    BOOST_TEST(std::string(to_text(static_cast<variable_variability>(7))) == "NULL");
+}
 
 
 BOOST_AUTO_TEST_CASE(v2_fmu)

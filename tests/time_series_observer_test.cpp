@@ -4,6 +4,7 @@
 #include <cosim/log/simple.hpp>
 #include <cosim/observer/time_series_observer.hpp>
 
+#include <array>
 #include <exception>
 #include <memory>
 #include <stdexcept>
@@ -33,6 +34,40 @@ int main()
 
         auto simIndex = execution.add_slave(
             std::make_unique<mock_slave>([](double x) { return x + 1.234; }), "slave uno");
+
+        const std::array<cosim::variable_type, 14> unsupportedTypes{{
+            cosim::variable_type::boolean,
+            cosim::variable_type::string,
+            cosim::variable_type::enumeration,
+            cosim::variable_type::float32,
+            cosim::variable_type::int8,
+            cosim::variable_type::uint8,
+            cosim::variable_type::int16,
+            cosim::variable_type::uint16,
+            cosim::variable_type::uint32,
+            cosim::variable_type::int64,
+            cosim::variable_type::uint64,
+            cosim::variable_type::binary,
+            cosim::variable_type::clock,
+            static_cast<cosim::variable_type>(-1),
+        }};
+        for (const auto type : unsupportedTypes) {
+            const cosim::variable_id unsupported{simIndex, type, 0};
+            bool startRejected = false;
+            bool stopRejected = false;
+            try {
+                observer->start_observing(unsupported);
+            } catch (const std::invalid_argument&) {
+                startRejected = true;
+            }
+            try {
+                observer->stop_observing(unsupported);
+            } catch (const std::invalid_argument&) {
+                stopRejected = true;
+            }
+            REQUIRE(startRejected);
+            REQUIRE(stopRejected);
+        }
 
         auto variableId = cosim::variable_id{simIndex, cosim::variable_type::real, 0};
 

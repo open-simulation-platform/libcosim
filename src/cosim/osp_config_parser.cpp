@@ -375,22 +375,32 @@ osp_config_parser::osp_config_parser(
                 switch (varType) {
                     case variable_type::real:
                         initialValues.push_back({varName, varType, boost::lexical_cast<double>(varValue)});
-                        break;
+                        continue;
                     case variable_type::integer:
                         initialValues.push_back({varName, varType, boost::lexical_cast<int>(varValue)});
-                        break;
+                        continue;
                     case variable_type::boolean:
                         initialValues.push_back({varName, varType, parse_boolean_value(varValue)});
-                        break;
+                        continue;
                     case variable_type::string:
                         initialValues.push_back({varName, varType, varValue});
-                        break;
+                        continue;
                     case variable_type::enumeration:
                         initialValues.push_back({varName, varType, boost::lexical_cast<int>(varValue)});
-                        break;
-                    default:
+                        continue;
+                    case variable_type::float32:
+                    case variable_type::int8:
+                    case variable_type::uint8:
+                    case variable_type::int16:
+                    case variable_type::uint16:
+                    case variable_type::uint32:
+                    case variable_type::int64:
+                    case variable_type::uint64:
+                    case variable_type::binary:
+                    case variable_type::clock:
                         COSIM_PANIC_M("Can't initialize variable of this type yet");
                 }
+                COSIM_PANIC_M("Can't initialize variable of this type yet");
             }
         }
         simulators_.push_back({name, source, stepSize, initialValues});

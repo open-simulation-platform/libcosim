@@ -155,21 +155,30 @@ private:
         switch (vd.type) {
             case variable_type::real:
                 realVars_.push_back(vd);
-                break;
+                return;
             case variable_type::integer:
                 intVars_.push_back(vd);
-                break;
+                return;
             case variable_type::string:
                 stringVars_.push_back(vd);
-                break;
+                return;
             case variable_type::boolean:
                 boolVars_.push_back(vd);
-                break;
+                return;
             case variable_type::enumeration:
-                COSIM_PANIC();
-            default:
+            case variable_type::float32:
+            case variable_type::int8:
+            case variable_type::uint8:
+            case variable_type::int16:
+            case variable_type::uint16:
+            case variable_type::uint32:
+            case variable_type::int64:
+            case variable_type::uint64:
+            case variable_type::binary:
+            case variable_type::clock:
                 COSIM_PANIC();
         }
+        COSIM_PANIC();
     }
 
     /** Default constructor initialization, all variables - except those with causality local - are logged. */
@@ -525,7 +534,17 @@ file_observer::simulator_logging_config file_observer::parse_config(const std::s
                         case variable_type::string:
                             config.variables.push_back(vd);
                             break;
-                        default:
+                        case variable_type::enumeration:
+                        case variable_type::float32:
+                        case variable_type::int8:
+                        case variable_type::uint8:
+                        case variable_type::int16:
+                        case variable_type::uint16:
+                        case variable_type::uint32:
+                        case variable_type::int64:
+                        case variable_type::uint64:
+                        case variable_type::binary:
+                        case variable_type::clock:
                             break;
                     }
                 }
@@ -546,10 +565,21 @@ file_observer::simulator_logging_config file_observer::parse_config(const std::s
                         case variable_type::string:
                             config.variables.push_back(*variableDescription);
                             BOOST_LOG_SEV(log::logger(), log::info) << "Logging variable: " << modelName << ":" << name;
-                            break;
-                        default:
+                            continue;
+                        case variable_type::enumeration:
+                        case variable_type::float32:
+                        case variable_type::int8:
+                        case variable_type::uint8:
+                        case variable_type::int16:
+                        case variable_type::uint16:
+                        case variable_type::uint32:
+                        case variable_type::int64:
+                        case variable_type::uint64:
+                        case variable_type::binary:
+                        case variable_type::clock:
                             COSIM_PANIC_M("Variable type not supported.");
                     }
+                    COSIM_PANIC_M("Variable type not supported.");
                 }
             }
             return config;

@@ -40,12 +40,15 @@ bool is_input(cosim::variable_causality causality)
         case calculated_parameter:
         case output:
             return false;
-        default:
-            std::ostringstream oss;
-            oss << "No support for modifying a variable with causality: "
-                << to_text(causality) << ".";
-            throw std::invalid_argument(oss.str());
+        case local:
+        case structural_parameter:
+        case independent:
+            break;
     }
+    std::ostringstream oss;
+    oss << "No support for modifying a variable with causality: "
+        << to_text(causality) << ".";
+    throw std::invalid_argument(oss.str());
 }
 
 } // namespace
@@ -176,19 +179,30 @@ void override_manipulator::reset_variable(
     switch (type) {
         case variable_type::real:
             add_action(index, variable, variable_type::real, scenario::real_modifier{nullptr});
-            break;
+            return;
         case variable_type::integer:
             add_action(index, variable, variable_type::integer, scenario::integer_modifier{nullptr});
-            break;
+            return;
         case variable_type::boolean:
             add_action(index, variable, variable_type::boolean, scenario::boolean_modifier{nullptr});
-            break;
+            return;
         case variable_type::string:
             add_action(index, variable, variable_type::string, scenario::string_modifier{nullptr});
-            break;
-        default:
+            return;
+        case variable_type::enumeration:
+        case variable_type::float32:
+        case variable_type::int8:
+        case variable_type::uint8:
+        case variable_type::int16:
+        case variable_type::uint16:
+        case variable_type::uint32:
+        case variable_type::int64:
+        case variable_type::uint64:
+        case variable_type::binary:
+        case variable_type::clock:
             COSIM_PANIC();
     }
+    COSIM_PANIC();
 }
 
 override_manipulator::~override_manipulator() = default;

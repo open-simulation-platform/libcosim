@@ -111,17 +111,30 @@ public:
             case variable_type::real:
                 realSamples_[reference] = std::map<step_number, double>();
                 observable_->expose_for_getting(type, reference);
-                break;
+                return;
             case variable_type::integer:
                 intSamples_[reference] = std::map<step_number, int>();
                 observable_->expose_for_getting(type, reference);
+                return;
+            case variable_type::boolean:
+            case variable_type::string:
+            case variable_type::enumeration:
+            case variable_type::float32:
+            case variable_type::int8:
+            case variable_type::uint8:
+            case variable_type::int16:
+            case variable_type::uint16:
+            case variable_type::uint32:
+            case variable_type::int64:
+            case variable_type::uint64:
+            case variable_type::binary:
+            case variable_type::clock:
                 break;
-            default:
-                std::ostringstream oss;
-                oss << "No support for observing variable with type " << type
-                    << " and reference " << reference;
-                throw std::invalid_argument(oss.str());
         }
+        std::ostringstream oss;
+        oss << "No support for observing variable with type " << type
+            << " and reference " << reference;
+        throw std::invalid_argument(oss.str());
     }
 
     void stop_observing(variable_type type, value_reference reference)
@@ -130,16 +143,29 @@ public:
         switch (type) {
             case variable_type::real:
                 realSamples_.erase(reference);
-                break;
+                return;
             case variable_type::integer:
                 intSamples_.erase(reference);
+                return;
+            case variable_type::boolean:
+            case variable_type::string:
+            case variable_type::enumeration:
+            case variable_type::float32:
+            case variable_type::int8:
+            case variable_type::uint8:
+            case variable_type::int16:
+            case variable_type::uint16:
+            case variable_type::uint32:
+            case variable_type::int64:
+            case variable_type::uint64:
+            case variable_type::binary:
+            case variable_type::clock:
                 break;
-            default:
-                std::ostringstream oss;
-                oss << "Could not stop observing variable with type " << type
-                    << " and reference " << reference;
-                throw std::invalid_argument(oss.str());
         }
+        std::ostringstream oss;
+        oss << "Could not stop observing variable with type " << type
+            << " and reference " << reference;
+        throw std::invalid_argument(oss.str());
     }
 
     size_t get_real_samples(value_reference valueReference, step_number fromStep, gsl::span<double> values, gsl::span<step_number> steps, gsl::span<time_point> times)

@@ -135,8 +135,8 @@ constexpr const char* to_text(variable_type v)
         case variable_type::uint64: return "uint64";
         case variable_type::binary: return "binary";
         case variable_type::clock: return "clock";
-        default: return "NULL";
     }
+    return "NULL";
 }
 
 
@@ -151,8 +151,8 @@ constexpr const char* to_text(variable_causality v)
         case variable_causality::local: return "local";
         case variable_causality::structural_parameter: return "structural_parameter";
         case variable_causality::independent: return "independent";
-        default: return "NULL";
     }
+    return "NULL";
 }
 
 
@@ -165,8 +165,8 @@ constexpr const char* to_text(variable_variability v)
         case variable_variability::tunable: return "tunable";
         case variable_variability::discrete: return "discrete";
         case variable_variability::continuous: return "continuous";
-        default: return "NULL";
     }
+    return "NULL";
 }
 
 

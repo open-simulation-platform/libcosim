@@ -40,19 +40,30 @@ slave_value_provider::slave_value_provider(observable* observable)
         switch (vd.type) {
             case cosim::variable_type::real:
                 realSamples_[vd.reference] = double();
-                break;
+                continue;
             case cosim::variable_type::integer:
                 intSamples_[vd.reference] = int();
-                break;
+                continue;
             case cosim::variable_type::boolean:
                 boolSamples_[vd.reference] = bool();
-                break;
+                continue;
             case cosim::variable_type::string:
                 stringSamples_[vd.reference] = std::string();
-                break;
-            default:
+                continue;
+            case cosim::variable_type::enumeration:
+            case cosim::variable_type::float32:
+            case cosim::variable_type::int8:
+            case cosim::variable_type::uint8:
+            case cosim::variable_type::int16:
+            case cosim::variable_type::uint16:
+            case cosim::variable_type::uint32:
+            case cosim::variable_type::int64:
+            case cosim::variable_type::uint64:
+            case cosim::variable_type::binary:
+            case cosim::variable_type::clock:
                 COSIM_PANIC();
         }
+        COSIM_PANIC();
     }
 }
 

@@ -332,21 +332,30 @@ public:
         switch (type) {
             case variable_type::real:
                 state_.realGetCache.expose(ref);
-                break;
+                return;
             case variable_type::integer:
                 state_.integerGetCache.expose(ref);
-                break;
+                return;
             case variable_type::boolean:
                 state_.booleanGetCache.expose(ref);
-                break;
+                return;
             case variable_type::string:
                 state_.stringGetCache.expose(ref);
-                break;
+                return;
             case variable_type::enumeration:
-                COSIM_PANIC();
-            default:
+            case variable_type::float32:
+            case variable_type::int8:
+            case variable_type::uint8:
+            case variable_type::int16:
+            case variable_type::uint16:
+            case variable_type::uint32:
+            case variable_type::int64:
+            case variable_type::uint64:
+            case variable_type::binary:
+            case variable_type::clock:
                 COSIM_PANIC();
         }
+        COSIM_PANIC();
     }
 
     double get_real(value_reference ref) const
@@ -375,21 +384,30 @@ public:
         switch (type) {
             case variable_type::real:
                 state_.realSetCache.expose(ref, get_start_value<double>(vd));
-                break;
+                return;
             case variable_type::integer:
                 state_.integerSetCache.expose(ref, get_start_value<int>(vd));
-                break;
+                return;
             case variable_type::boolean:
                 state_.booleanSetCache.expose(ref, get_start_value<bool>(vd));
-                break;
+                return;
             case variable_type::string:
                 state_.stringSetCache.expose(ref, get_start_value<std::string>(vd));
-                break;
+                return;
             case variable_type::enumeration:
-                COSIM_PANIC();
-            default:
+            case variable_type::float32:
+            case variable_type::int8:
+            case variable_type::uint8:
+            case variable_type::int16:
+            case variable_type::uint16:
+            case variable_type::uint32:
+            case variable_type::int64:
+            case variable_type::uint64:
+            case variable_type::binary:
+            case variable_type::clock:
                 COSIM_PANIC();
         }
+        COSIM_PANIC();
     }
 
     void set_real(value_reference ref, double value)

@@ -25,9 +25,8 @@ variable_type to_variable_type(fmi1_base_type_enu_t t)
         case fmi1_base_type_bool: return variable_type::boolean;
         case fmi1_base_type_str: return variable_type::string;
         case fmi1_base_type_enum: return variable_type::enumeration;
-        default:
-            COSIM_PANIC();
     }
+    COSIM_PANIC();
 }
 
 
@@ -39,9 +38,8 @@ variable_type to_variable_type(fmi2_base_type_enu_t t)
         case fmi2_base_type_bool: return variable_type::boolean;
         case fmi2_base_type_str: return variable_type::string;
         case fmi2_base_type_enum: return variable_type::enumeration;
-        default:
-            COSIM_PANIC();
     }
+    COSIM_PANIC();
 }
 
 
@@ -59,9 +57,10 @@ variable_causality to_variable_causality(
         case fmi1_causality_enu_internal:
         case fmi1_causality_enu_none:
             return variable_causality::local;
-        default:
+        case fmi1_causality_enu_unknown:
             COSIM_PANIC();
     }
+    COSIM_PANIC();
 }
 
 
@@ -74,9 +73,10 @@ variable_causality to_variable_causality(fmi2_causality_enu_t c)
         case fmi2_causality_enu_output: return variable_causality::output;
         case fmi2_causality_enu_local:
         case fmi2_causality_enu_independent: return variable_causality::local;
-        default:
+        case fmi2_causality_enu_unknown:
             COSIM_PANIC();
     }
+    COSIM_PANIC();
 }
 
 
@@ -87,9 +87,10 @@ variable_variability to_variable_variability(fmi1_variability_enu_t v)
         case fmi1_variability_enu_parameter: return variable_variability::fixed;
         case fmi1_variability_enu_discrete: return variable_variability::discrete;
         case fmi1_variability_enu_continuous: return variable_variability::continuous;
-        default:
+        case fmi1_variability_enu_unknown:
             COSIM_PANIC();
     }
+    COSIM_PANIC();
 }
 
 
@@ -101,9 +102,10 @@ variable_variability to_variable_variability(fmi2_variability_enu_t v)
         case fmi2_variability_enu_tunable: return variable_variability::tunable;
         case fmi2_variability_enu_discrete: return variable_variability::discrete;
         case fmi2_variability_enu_continuous: return variable_variability::continuous;
-        default:
+        case fmi2_variability_enu_unknown:
             COSIM_PANIC();
     }
+    COSIM_PANIC();
 }
 
 
@@ -123,9 +125,19 @@ std::optional<scalar_value> fmi1_to_start_value(fmi1_import_variable_t* fmiVaria
             return std::string(fmi1_import_get_string_variable_start(fmi1_import_get_variable_as_string(fmiVariable)));
         case variable_type::enumeration:
             return std::nullopt;
-        default:
+        case variable_type::float32:
+        case variable_type::int8:
+        case variable_type::uint8:
+        case variable_type::int16:
+        case variable_type::uint16:
+        case variable_type::uint32:
+        case variable_type::int64:
+        case variable_type::uint64:
+        case variable_type::binary:
+        case variable_type::clock:
             COSIM_PANIC();
     }
+    COSIM_PANIC();
 }
 
 
@@ -161,9 +173,19 @@ std::optional<scalar_value> fmi2_to_start_value(fmi2_import_variable_t* fmiVaria
             return std::string(fmi2_import_get_string_variable_start(fmi2_import_get_variable_as_string(fmiVariable)));
         case variable_type::enumeration:
             return std::nullopt;
-        default:
+        case variable_type::float32:
+        case variable_type::int8:
+        case variable_type::uint8:
+        case variable_type::int16:
+        case variable_type::uint16:
+        case variable_type::uint32:
+        case variable_type::int64:
+        case variable_type::uint64:
+        case variable_type::binary:
+        case variable_type::clock:
             COSIM_PANIC();
     }
+    COSIM_PANIC();
 }
 
 
