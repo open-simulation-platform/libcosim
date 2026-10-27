@@ -51,6 +51,8 @@ slave_value_provider::slave_value_provider(observable* observable)
                 stringSamples_[vd.reference] = std::string();
                 continue;
             case cosim::variable_type::enumeration:
+                enumerationSamples_.emplace(vd.reference, std::nullopt);
+                continue;
             case cosim::variable_type::float32:
             case cosim::variable_type::int8:
             case cosim::variable_type::uint8:
@@ -85,6 +87,21 @@ void slave_value_provider::observe()
     for (auto& [idx, value] : stringSamples_) {
         value = observable_->get_string(idx);
     }
+    for (auto& [idx, value] : enumerationSamples_) {
+        value = observable_->get_variable_value(variable_type::enumeration, idx);
+    }
+}
+
+variable_value slave_value_provider::get_variable_value(
+    variable_type type, value_reference reference)
+{
+    if (type != variable_type::enumeration) {
+        throw std::invalid_argument("Unsupported generic observed variable type");
+    }
+    std::lock_guard<std::mutex> lock(lock_);
+    const auto& sample = enumerationSamples_.at(reference);
+    if (!sample) throw std::out_of_range("no samples available");
+    return *sample;
 }
 
 void slave_value_provider::get_real(gsl::span<const value_reference> variables, gsl::span<double> values)

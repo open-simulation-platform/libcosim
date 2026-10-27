@@ -386,7 +386,10 @@ osp_config_parser::osp_config_parser(
                         initialValues.push_back({varName, varType, varValue});
                         continue;
                     case variable_type::enumeration:
-                        initialValues.push_back({varName, varType, boost::lexical_cast<int>(varValue)});
+                        initialValues.push_back(
+                            {varName, varType,
+                                enumeration_value{
+                                    boost::lexical_cast<std::int64_t>(varValue)}});
                         continue;
                     case variable_type::float32:
                     case variable_type::int8:

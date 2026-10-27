@@ -281,7 +281,10 @@ bool is_valid_variable_value(
             [=](bool) { return variable_type::boolean; },
             [&](const auto&) { return type_of(value); }),
         value);
-    if (valueType != variable.type) {
+    if (valueType != variable.type &&
+        !(variable.type == variable_type::enumeration &&
+            variable.dimensions.empty() &&
+            valueType == variable_type::integer)) {
         if (reason != nullptr) {
             std::ostringstream msg;
             msg << "Cannot assign a value of type '" << to_text(valueType)
@@ -410,6 +413,11 @@ void add_variable_value(
         std::ostringstream msg;
         msg << "Invalid value for variable '" << variable << "': " << e;
         throw error(make_error_code(errc::invalid_system_structure), msg.str());
+    }
+    if (varDescription.type == variable_type::enumeration) {
+        if (const auto integer = std::get_if<int>(&value)) {
+            value = enumeration_value{*integer};
+        }
     }
     variableValues.insert_or_assign(variable, value);
 }

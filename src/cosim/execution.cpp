@@ -272,6 +272,61 @@ public:
         simulators_.at(sim)->set_string(var, value);
     }
 
+    void set_variable_initial_value(
+        variable_id variable, const variable_value& value)
+    {
+        if (initialized_) {
+            throw error(make_error_code(errc::unsupported_feature),
+                "Initial values must be set before simulation is started");
+        }
+        const auto model = simulators_.at(variable.simulator)->model_description();
+        const auto description = std::find_if(
+            model.variables.begin(), model.variables.end(), [&](const auto& candidate) {
+                return candidate.type == variable.type &&
+                    candidate.reference == variable.reference;
+            });
+        if (description == model.variables.end()) {
+            throw std::out_of_range("Invalid variable type or reference");
+        }
+        const bool compatibleInteger =
+            variable.type == variable_type::enumeration &&
+            value.type() == variable_type::integer;
+        if (!description->dimensions.empty() || !value.is_scalar() ||
+            (value.type() != variable.type && !compatibleInteger)) {
+            throw std::invalid_argument("Initial variable value type or shape mismatch");
+        }
+        bool supported = false;
+        switch (variable.type) {
+            case variable_type::real:
+            case variable_type::integer:
+            case variable_type::boolean:
+            case variable_type::string:
+            case variable_type::enumeration:
+                supported = true;
+                break;
+            case variable_type::float32:
+            case variable_type::int8:
+            case variable_type::uint8:
+            case variable_type::int16:
+            case variable_type::uint16:
+            case variable_type::uint32:
+            case variable_type::int64:
+            case variable_type::uint64:
+            case variable_type::binary:
+            case variable_type::clock:
+                throw error(make_error_code(errc::unsupported_feature),
+                    "Initial value type is not supported");
+        }
+        if (!supported) {
+            throw error(make_error_code(errc::unsupported_feature),
+                "Initial value type is not supported");
+        }
+        simulators_.at(variable.simulator)
+            ->expose_for_setting(variable.type, variable.reference);
+        simulators_.at(variable.simulator)
+            ->set_variable_value(variable.type, variable.reference, value);
+    }
+
     serialization::node export_current_state() const
     {
         COSIM_PRECONDITION(initialized_ && !is_running());
@@ -516,6 +571,12 @@ void execution::set_string_initial_value(simulator_index sim, value_reference va
     pimpl_->set_string_initial_value(sim, var, value);
 }
 
+void execution::set_variable_initial_value(
+    variable_id variable, const variable_value& value)
+{
+    pimpl_->set_variable_initial_value(variable, value);
+}
+
 serialization::node execution::export_current_state() const
 {
     return pimpl_->export_current_state();
@@ -623,9 +684,22 @@ entity_index_maps inject_system_structure(
         std::visit(
             visitor(
                 [&](double v) { exe.set_real_initial_value(simIdx, valRef, v); },
-                [&](int v) { exe.set_integer_initial_value(simIdx, valRef, v); },
+                [&](int v) {
+                    if (varDesc.type == variable_type::enumeration) {
+                        exe.set_variable_initial_value(
+                            {simIdx, varDesc.type, valRef},
+                            variable_value(enumeration_values{{enumeration_value{v}}}));
+                    } else {
+                        exe.set_integer_initial_value(simIdx, valRef, v);
+                    }
+                },
                 [&](bool v) { exe.set_boolean_initial_value(simIdx, valRef, v); },
                 [&](const std::string& v) { exe.set_string_initial_value(simIdx, valRef, v); },
+                [&](enumeration_value v) {
+                    exe.set_variable_initial_value(
+                        {simIdx, varDesc.type, valRef},
+                        variable_value(enumeration_values{{v}}));
+                },
                 [&](const auto&) {
                     throw error(
                         make_error_code(errc::unsupported_feature),

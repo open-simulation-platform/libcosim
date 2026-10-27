@@ -224,6 +224,21 @@ public:
         gsl::span<const value_reference> variables,
         gsl::span<const std::string> values) = 0;
 
+    /**
+     * Retrieves complete values. The default bridges scalar Real, Integer,
+     * Boolean, and String variables to the legacy typed methods.
+     */
+    virtual std::vector<variable_value> get_variable_values(
+        gsl::span<const typed_value_reference> variables) const;
+
+    /**
+     * Sets complete values. The default bridges scalar Real, Integer, Boolean,
+     * and String variables to the legacy typed methods.
+     */
+    virtual void set_variable_values(
+        gsl::span<const typed_value_reference> variables,
+        gsl::span<const variable_value> values);
+
     /// Result type for `get_variables()`.
     struct variable_values
     {

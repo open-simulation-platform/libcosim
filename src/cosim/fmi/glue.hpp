@@ -54,9 +54,15 @@ variable_variability to_variable_variability(fmi2_variability_enu_t v);
 /// Converts an FMI 1.0 variable description to a `variable_description` object.
 variable_description to_variable_description(fmi1_import_variable_t* fmiVariable);
 
+/// Converts all FMI 1.0 declared type definitions.
+std::vector<variable_type_definition> to_type_definitions(fmi1_import_t* fmu);
+
 
 /// Converts an FMI 2.0 variable description to a `variable_description` object.
 variable_description to_variable_description(fmi2_import_variable_t* fmiVariable);
+
+/// Converts all FMI 2.0 declared type definitions.
+std::vector<variable_type_definition> to_type_definitions(fmi2_import_t* fmu);
 
 
 } // namespace fmi

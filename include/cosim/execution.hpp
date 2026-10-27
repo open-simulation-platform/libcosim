@@ -357,6 +357,11 @@ public:
     /// Set initial value for a variable of type string. Must be called before simulation is started.
     void set_string_initial_value(simulator_index sim, value_reference var, const std::string& value);
 
+    /// Set an owning scalar initial value before simulation is started.
+    void set_variable_initial_value(
+        variable_id variable,
+        const variable_value& value);
+
     /**
      *  Exports the current state of the co-simulation.
      *

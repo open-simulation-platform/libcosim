@@ -427,7 +427,11 @@ private:
                 simulators_.at(c.target.simulator).sim->set_string(c.target.reference, simulators_.at(c.source.simulator).sim->get_string(c.source.reference));
                 return;
             case variable_type::enumeration:
-                COSIM_PANIC_M("Can't handle variable of type 'enumeration' yet");
+                simulators_.at(c.target.simulator).sim->set_variable_value(
+                    c.target.type, c.target.reference,
+                    simulators_.at(c.source.simulator).sim->get_variable_value(
+                        c.source.type, c.source.reference));
+                return;
             case variable_type::float32:
             case variable_type::int8:
             case variable_type::uint8:
@@ -460,7 +464,11 @@ private:
                 functions_.at(c.target.function).fun->set_string(c.target.reference, simulators_.at(c.source.simulator).sim->get_string(c.source.reference));
                 return;
             case variable_type::enumeration:
-                COSIM_PANIC_M("Can't handle variable of type 'enumeration' yet");
+                functions_.at(c.target.function).fun->set_variable_value(
+                    c.target.reference,
+                    simulators_.at(c.source.simulator).sim->get_variable_value(
+                        c.source.type, c.source.reference));
+                return;
             case variable_type::float32:
             case variable_type::int8:
             case variable_type::uint8:
@@ -493,7 +501,10 @@ private:
                 simulators_.at(c.target.simulator).sim->set_string(c.target.reference, functions_.at(c.source.function).fun->get_string(c.source.reference));
                 return;
             case variable_type::enumeration:
-                COSIM_PANIC_M("Can't handle variable of type 'enumeration' yet");
+                simulators_.at(c.target.simulator).sim->set_variable_value(
+                    c.target.type, c.target.reference,
+                    functions_.at(c.source.function).fun->get_variable_value(c.source.reference));
+                return;
             case variable_type::float32:
             case variable_type::int8:
             case variable_type::uint8:

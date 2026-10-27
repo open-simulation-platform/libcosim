@@ -35,10 +35,9 @@ int main()
         auto simIndex = execution.add_slave(
             std::make_unique<mock_slave>([](double x) { return x + 1.234; }), "slave uno");
 
-        const std::array<cosim::variable_type, 14> unsupportedTypes{{
+        const std::array<cosim::variable_type, 13> unsupportedTypes{{
             cosim::variable_type::boolean,
             cosim::variable_type::string,
-            cosim::variable_type::enumeration,
             cosim::variable_type::float32,
             cosim::variable_type::int8,
             cosim::variable_type::uint8,

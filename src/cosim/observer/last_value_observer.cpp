@@ -70,6 +70,15 @@ void last_value_observer::state_restored(
     }
 }
 
+variable_value last_value_observer::get_variable_value(
+    simulator_index sim, variable_type type, value_reference reference)
+{
+    if (type == variable_type::enumeration) {
+        return valueProviders_.at(sim)->get_variable_value(type, reference);
+    }
+    return last_value_provider::get_variable_value(sim, type, reference);
+}
+
 void last_value_observer::get_real(
     simulator_index sim,
     gsl::span<const value_reference> variables,

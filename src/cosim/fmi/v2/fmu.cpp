@@ -7,11 +7,13 @@
 
 #include "cosim/error.hpp"
 #include "cosim/exception.hpp"
+#include "cosim/fmi/enumeration.hpp"
 #include "cosim/fmi/fmilib.h"
 #include "cosim/fmi/glue.hpp"
 #include "cosim/fmi/importer.hpp"
 #include "cosim/fmi/windows.hpp"
 #include "cosim/log/logger.hpp"
+#include "cosim/utility/enumeration.hpp"
 
 #include <gsl/util>
 
@@ -21,10 +23,12 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <limits>
 #include <mutex>
 #include <stdexcept>
 #include <type_traits>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 
@@ -69,21 +73,75 @@ fmu::fmu(
     modelDescription_.capabilities.can_export_state = !!fmi2_import_get_capability(
         handle_,
         fmi2_cs_canSerializeFMUstate);
+    modelDescription_.type_definitions = to_type_definitions(handle_);
     const auto varList = fmi2_import_get_variable_list(handle_, 0);
+    if (varList == nullptr) {
+        throw error(
+            make_error_code(errc::bad_file),
+            "FMI 2.0 model has no readable ScalarVariable list");
+    }
     const auto _ = gsl::finally([&]() {
         fmi2_import_free_variable_list(varList);
     });
     const auto varCount = fmi2_import_get_variable_list_size(varList);
     for (unsigned int i = 0; i < varCount; ++i) {
         const auto var = fmi2_import_get_variable(varList, i);
-        const auto vd = to_variable_description(var);
-        if (variable_type::enumeration != vd.type) {
-            modelDescription_.variables.push_back(vd);
-        } else {
-            BOOST_LOG_SEV(log::logger(), log::warning)
-                << "FMI 2.0 Enumeration variable type not supported, variable with name "
-                << vd.name << " will be ignored";
+        if (var == nullptr) {
+            throw error(
+                make_error_code(errc::bad_file),
+                "FMI 2.0 model contains an invalid ScalarVariable");
         }
+        auto vd = to_variable_description(var);
+        if (vd.type == variable_type::enumeration) {
+            if (!vd.declared_type) {
+                throw error(
+                    make_error_code(errc::bad_file),
+                    "FMI 2.0 Enumeration variable '" + vd.name +
+                        "' has no declared type");
+            }
+            const auto typeDefinition = std::find_if(
+                modelDescription_.type_definitions.begin(),
+                modelDescription_.type_definitions.end(),
+                [&vd](const auto& definition) {
+                    return definition.name == *vd.declared_type;
+                });
+            if (typeDefinition == modelDescription_.type_definitions.end() ||
+                typeDefinition->type != variable_type::enumeration ||
+                typeDefinition->enumeration_items.empty()) {
+                throw error(
+                    make_error_code(errc::bad_file),
+                    "FMI 2.0 Enumeration variable '" + vd.name +
+                        "' references an invalid declared type");
+            }
+            // FMI Library exposes Enumeration bounds through an unsigned
+            // API and can misorder signed items. Use the validated signed
+            // declared-type metadata instead.
+            vd.min = typeDefinition->min;
+            vd.max = typeDefinition->max;
+            if (vd.start) {
+                const auto* start =
+                    std::get_if<enumeration_value>(&*vd.start);
+                if (start == nullptr) {
+                    throw error(
+                        make_error_code(errc::bad_file),
+                        "FMI 2.0 Enumeration variable '" + vd.name +
+                            "' has an invalid start value");
+                }
+                const auto item = std::find_if(
+                    typeDefinition->enumeration_items.begin(),
+                    typeDefinition->enumeration_items.end(),
+                    [start](const auto& candidate) {
+                        return candidate.value == start->value;
+                    });
+                if (item == typeDefinition->enumeration_items.end()) {
+                    throw error(
+                        make_error_code(errc::bad_file),
+                        "FMI 2.0 Enumeration variable '" + vd.name +
+                            "' has an undeclared start value");
+                }
+            }
+        }
+        modelDescription_.variables.push_back(vd);
     }
 }
 
@@ -270,6 +328,51 @@ log_record last_log_record(const std::string& instanceName)
             std::string(it->second.message.c_str())};
     }
 }
+
+
+std::string status_message(
+    const std::string& instanceName,
+    const char* operation,
+    fmi2_status_t status)
+{
+    auto message =
+        instanceName + ": " + operation + " returned " +
+        fmi2_status_to_string(status);
+    const auto logMessage = last_log_record(instanceName).message;
+    if (!logMessage.empty()) {
+        message += ": " + logMessage;
+    }
+    return message;
+}
+
+
+using detail::find_variable_description;
+using detail::validate_enumeration_value;
+
+void validate_enumeration_references(
+    fmi2_import_t* handle,
+    const model_description& model,
+    gsl::span<const value_reference> variables,
+    const std::string& instanceName)
+{
+    for (const auto reference : variables) {
+        if (fmi2_import_get_variable_by_vr(
+                handle, fmi2_base_type_enum, reference) == nullptr) {
+            throw error(
+                make_error_code(errc::model_error),
+                instanceName + ": value reference " +
+                    std::to_string(reference) + " is not an Enumeration variable");
+        }
+        if (find_variable_description(
+                model, variable_type::enumeration, reference) == nullptr) {
+            throw error(
+                make_error_code(errc::model_error),
+                instanceName + ": value reference " +
+                    std::to_string(reference) +
+                    " has no Enumeration metadata");
+        }
+    }
+}
 } // namespace
 
 
@@ -429,7 +532,7 @@ void slave_instance::get_real_variables(
     if (status != fmi2_status_ok && status != fmi2_status_warning) {
         throw error(
             make_error_code(errc::model_error),
-            last_log_record(instanceName_).message);
+            status_message(instanceName_, "GetReal", status));
     }
 }
 
@@ -443,10 +546,52 @@ void slave_instance::get_integer_variables(
     const auto status = fmi2_import_get_integer(
         handle_, variables.data(), variables.size(), values.data());
     if (status != fmi2_status_ok && status != fmi2_status_warning) {
+        auto message = status_message(instanceName_, "GetInteger", status);
+        message += " (value references:";
+        for (const auto reference : variables) {
+            message += " " + std::to_string(reference);
+        }
+        message += ")";
+        throw error(
+            make_error_code(errc::model_error),
+            message);
+    }
+}
+
+
+void slave_instance::get_enumeration_variables(
+    gsl::span<const value_reference> variables,
+    gsl::span<enumeration_value> values) const
+{
+    COSIM_INPUT_CHECK(variables.size() == values.size());
+    if (variables.empty()) return;
+    validate_enumeration_references(
+        handle_,
+        *fmu_->model_description(),
+        variables,
+        instanceName_);
+
+    std::vector<int> fmiValues(values.size());
+    const auto status = fmi2_import_get_integer(
+        handle_, variables.data(), variables.size(), fmiValues.data());
+    if (status != fmi2_status_ok && status != fmi2_status_warning) {
         throw error(
             make_error_code(errc::model_error),
             last_log_record(instanceName_).message);
     }
+    const auto& model = *fmu_->model_description();
+    std::vector<enumeration_value> stagedValues;
+    stagedValues.reserve(values.size());
+    for (std::size_t i = 0; i < fmiValues.size(); ++i) {
+        const auto value = enumeration_value{
+            static_cast<std::int64_t>(fmiValues[i])};
+        const auto* variable = find_variable_description(
+            model, variable_type::enumeration, variables[i]);
+        assert(variable != nullptr);
+        validate_enumeration_value(model, *variable, value, instanceName_);
+        stagedValues.push_back(value);
+    }
+    std::copy(stagedValues.begin(), stagedValues.end(), values.begin());
 }
 
 
@@ -506,7 +651,7 @@ void slave_instance::set_real_variables(
     } else {
         throw error(
             make_error_code(errc::model_error),
-            last_log_record(instanceName_).message);
+            status_message(instanceName_, "SetReal", status));
     }
 }
 
@@ -526,7 +671,53 @@ void slave_instance::set_integer_variables(
     } else {
         throw error(
             make_error_code(errc::model_error),
-            last_log_record(instanceName_).message);
+            status_message(instanceName_, "SetInteger", status));
+    }
+}
+
+
+void slave_instance::set_enumeration_variables(
+    gsl::span<const value_reference> variables,
+    gsl::span<const enumeration_value> values)
+{
+    COSIM_INPUT_CHECK(variables.size() == values.size());
+    if (variables.empty()) return;
+    validate_enumeration_references(
+        handle_,
+        *fmu_->model_description(),
+        variables,
+        instanceName_);
+
+    const auto& model = *fmu_->model_description();
+    std::vector<int> fmiValues;
+    fmiValues.reserve(values.size());
+    for (std::size_t i = 0; i < values.size(); ++i) {
+        const auto* variable = find_variable_description(
+            model, variable_type::enumeration, variables[i]);
+        assert(variable != nullptr);
+        validate_enumeration_value(
+            model, *variable, values[i], instanceName_);
+        if (values[i].value < (std::numeric_limits<int>::min)() ||
+            values[i].value > (std::numeric_limits<int>::max)()) {
+            throw error(
+                make_error_code(errc::model_error),
+                instanceName_ + ": Enumeration value " +
+                    std::to_string(values[i].value) +
+                    " is outside the FMI 2.0 Integer range");
+        }
+        fmiValues.push_back(static_cast<int>(values[i].value));
+    }
+
+    const auto status = fmi2_import_set_integer(
+        handle_, variables.data(), variables.size(), fmiValues.data());
+    if (status == fmi2_status_ok || status == fmi2_status_warning) {
+        return;
+    } else if (status == fmi2_status_discard) {
+        throw nonfatal_bad_value(last_log_record(instanceName_).message);
+    } else {
+        throw error(
+            make_error_code(errc::model_error),
+            status_message(instanceName_, "SetEnumeration", status));
     }
 }
 
@@ -576,6 +767,154 @@ void slave_instance::set_string_variables(
         throw error(
             make_error_code(errc::model_error),
             last_log_record(instanceName_).message);
+    }
+}
+
+
+std::vector<variable_value> slave_instance::get_variable_values(
+    gsl::span<const typed_value_reference> variables) const
+{
+    std::vector<variable_value> result;
+    result.reserve(variables.size());
+    for (const auto variable : variables) {
+        switch (variable.type) {
+            case variable_type::real: {
+                double value = 0.0;
+                get_real_variables(
+                    gsl::make_span(&variable.reference, 1),
+                    gsl::make_span(&value, 1));
+                result.emplace_back(real_values{{value}});
+                continue;
+            }
+            case variable_type::integer: {
+                int value = 0;
+                get_integer_variables(
+                    gsl::make_span(&variable.reference, 1),
+                    gsl::make_span(&value, 1));
+                result.emplace_back(integer_values{{value}});
+                continue;
+            }
+            case variable_type::boolean: {
+                bool value = false;
+                get_boolean_variables(
+                    gsl::make_span(&variable.reference, 1),
+                    gsl::make_span(&value, 1));
+                result.emplace_back(boolean_values{{value}});
+                continue;
+            }
+            case variable_type::string: {
+                std::string value;
+                get_string_variables(
+                    gsl::make_span(&variable.reference, 1),
+                    gsl::make_span(&value, 1));
+                result.emplace_back(string_values{{std::move(value)}});
+                continue;
+            }
+            case variable_type::enumeration: {
+                enumeration_value value;
+                get_enumeration_variables(
+                    gsl::make_span(&variable.reference, 1),
+                    gsl::make_span(&value, 1));
+                result.emplace_back(enumeration_values{{value}});
+                continue;
+            }
+            case variable_type::float32:
+            case variable_type::int8:
+            case variable_type::uint8:
+            case variable_type::int16:
+            case variable_type::uint16:
+            case variable_type::uint32:
+            case variable_type::int64:
+            case variable_type::uint64:
+            case variable_type::binary:
+            case variable_type::clock:
+                break;
+        }
+        throw error(
+            make_error_code(errc::unsupported_feature),
+            std::string("Generic variable access is not supported for ") +
+                to_text(variable.type));
+    }
+    return result;
+}
+
+
+void slave_instance::set_variable_values(
+    gsl::span<const typed_value_reference> variables,
+    gsl::span<const variable_value> values)
+{
+    COSIM_INPUT_CHECK(variables.size() == values.size());
+    for (std::size_t i = 0; i < variables.size(); ++i) {
+        const auto variable = variables[i];
+        const auto normalized =
+            normalize_enumeration_value(variable.type, values[i]);
+        const auto& value = normalized ? *normalized : values[i];
+        if (value.type() != variable.type) {
+            throw std::invalid_argument(
+                "Variable value type does not match its typed value reference");
+        }
+        if (!value.is_scalar()) {
+            throw error(
+                make_error_code(errc::unsupported_feature),
+                "Legacy scalar slave does not support array variable access");
+        }
+        switch (variable.type) {
+            case variable_type::real: {
+                const auto scalar =
+                    std::get<real_values>(value.values()).values[0];
+                set_real_variables(
+                    gsl::make_span(&variable.reference, 1),
+                    gsl::make_span(&scalar, 1));
+                continue;
+            }
+            case variable_type::integer: {
+                const auto scalar =
+                    std::get<integer_values>(value.values()).values[0];
+                set_integer_variables(
+                    gsl::make_span(&variable.reference, 1),
+                    gsl::make_span(&scalar, 1));
+                continue;
+            }
+            case variable_type::boolean: {
+                const auto scalar =
+                    std::get<boolean_values>(value.values()).values[0];
+                set_boolean_variables(
+                    gsl::make_span(&variable.reference, 1),
+                    gsl::make_span(&scalar, 1));
+                continue;
+            }
+            case variable_type::string: {
+                const auto& scalar =
+                    std::get<string_values>(value.values()).values[0];
+                set_string_variables(
+                    gsl::make_span(&variable.reference, 1),
+                    gsl::make_span(&scalar, 1));
+                continue;
+            }
+            case variable_type::enumeration: {
+                const auto scalar =
+                    std::get<enumeration_values>(value.values()).values[0];
+                set_enumeration_variables(
+                    gsl::make_span(&variable.reference, 1),
+                    gsl::make_span(&scalar, 1));
+                continue;
+            }
+            case variable_type::float32:
+            case variable_type::int8:
+            case variable_type::uint8:
+            case variable_type::int16:
+            case variable_type::uint16:
+            case variable_type::uint32:
+            case variable_type::int64:
+            case variable_type::uint64:
+            case variable_type::binary:
+            case variable_type::clock:
+                break;
+        }
+        throw error(
+            make_error_code(errc::unsupported_feature),
+            std::string("Generic variable access is not supported for ") +
+                to_text(variable.type));
     }
 }
 
