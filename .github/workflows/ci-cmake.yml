@@ -6,9 +6,9 @@ on: [push]
 jobs:
   linux:
     name: Linux
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     container:
-      image: debian:bookworm
+      image: debian:trixie
     strategy:
       fail-fast: false
       matrix:
@@ -38,7 +38,7 @@ jobs:
             zipcmp \
             zipmerge \
             ziptool
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Install FMI Library and libcbor
         shell: bash
         run: |
