@@ -4,6 +4,7 @@
  *  file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 #include "cosim/model_description.hpp"
+#include "cosim/utility/variable_alias.hpp"
 
 #include <iomanip>
 #include <istream>
@@ -242,6 +243,13 @@ std::optional<variable_description> find_variable(const model_description& descr
     for (const auto& variable : description.variables) {
         if (variable.name == variable_name) {
             return variable;
+        }
+    }
+    for (const auto& variable : description.variables) {
+        for (const auto& alias : variable.aliases) {
+            if (alias.name == variable_name) {
+                return detail::describe_alias(variable, alias);
+            }
         }
     }
     return std::nullopt;

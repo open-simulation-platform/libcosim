@@ -41,6 +41,67 @@ private:
     mutable std::shared_ptr<mock_slave> nextSlave_;
 };
 
+BOOST_AUTO_TEST_CASE(nested_alias_name_lookup)
+{
+    auto description = std::make_shared<cosim::model_description>();
+    description->uuid = "alias-model";
+    cosim::variable_description variable{};
+    variable.name = "position";
+    variable.reference = 42;
+    variable.type = cosim::variable_type::real;
+    variable.causality = cosim::variable_causality::output;
+    variable.variability = cosim::variable_variability::continuous;
+    variable.description = "Position";
+    variable.display_unit = "m";
+    variable.aliases = {
+        {"position_ft", std::string("Position in feet"), std::string("ft")},
+        {"position_copy", std::nullopt, std::nullopt}};
+    description->variables.push_back(variable);
+
+    const auto alias = cosim::find_variable(*description, "position_ft");
+    BOOST_REQUIRE(alias);
+    BOOST_TEST(alias->name == "position_ft");
+    BOOST_TEST(alias->reference == 42U);
+    BOOST_TEST(alias->description == "Position in feet");
+    BOOST_REQUIRE(alias->display_unit);
+    BOOST_TEST(*alias->display_unit == "ft");
+    BOOST_TEST(alias->aliases.empty());
+    const auto copy = cosim::find_variable(*description, "position_copy");
+    BOOST_REQUIRE(copy);
+    BOOST_TEST(copy->description.empty());
+    BOOST_REQUIRE(copy->display_unit);
+    BOOST_TEST(*copy->display_unit == "m");
+    BOOST_TEST(!cosim::find_variable(*description, "missing"));
+
+    class metadata_model : public cosim::model
+    {
+    public:
+        explicit metadata_model(std::shared_ptr<const cosim::model_description> md)
+            : description_(std::move(md)) {}
+        std::shared_ptr<const cosim::model_description> description()
+            const noexcept override { return description_; }
+        std::shared_ptr<cosim::slave> instantiate(std::string_view) override
+        {
+            throw std::logic_error("Metadata-only model cannot be instantiated");
+        }
+    private:
+        std::shared_ptr<const cosim::model_description> description_;
+    };
+    cosim::system_structure system;
+    system.add_entity("sim", std::make_shared<metadata_model>(description));
+    const auto& cached = system.get_variable_description({"sim", "position_ft"});
+    BOOST_TEST(cached.reference == 42U);
+    BOOST_TEST(cached.name == "position_ft");
+    BOOST_TEST(cached.description == "Position in feet");
+    BOOST_REQUIRE(cached.display_unit);
+    BOOST_TEST(*cached.display_unit == "ft");
+    description->variables.front().aliases.push_back({"position", std::nullopt, std::nullopt});
+    cosim::system_structure invalid;
+    BOOST_CHECK_THROW(
+        invalid.add_entity("sim", std::make_shared<metadata_model>(description)),
+        cosim::error);
+}
+
 
 BOOST_AUTO_TEST_CASE(scalar_value_type_validation)
 {

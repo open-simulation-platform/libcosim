@@ -8,6 +8,7 @@
 #include <cosim/orchestration.hpp>
 #include <cosim/osp_config_parser.hpp>
 #include <cosim/utility/filesystem.hpp>
+#include <cosim/utility/zip.hpp>
 
 #include <boost/test/unit_test.hpp>
 
@@ -16,6 +17,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <fstream>
+#include <iterator>
 #include <limits>
 #include <stdexcept>
 #include <string>
@@ -24,6 +26,7 @@
 using namespace cosim;
 
 BOOST_TEST_DONT_PRINT_LOG_VALUE(fmi::fmi_version)
+BOOST_TEST_DONT_PRINT_LOG_VALUE(variable_initial)
 
 static_assert(variable_type::float64 == variable_type::real);
 static_assert(variable_type::int32 == variable_type::integer);
@@ -761,4 +764,148 @@ BOOST_AUTO_TEST_CASE(v2_directional_derivative_statuses)
         BOOST_TEST(sensitivity[0] == -100.0);
         BOOST_TEST(sensitivity[1] == -100.0);
     }
+}
+
+BOOST_AUTO_TEST_CASE(v2_effective_metadata)
+{
+    utility::temp_dir directory;
+    utility::zip::archive(mixed_types_fmu()).extract_all(directory.path());
+    const auto path = directory.path() / "modelDescription.xml";
+    std::ifstream input(path);
+    BOOST_REQUIRE(input);
+    std::string xml(
+        (std::istreambuf_iterator<char>(input)), std::istreambuf_iterator<char>());
+    input.close();
+    const auto replace = [&](const std::string& before, const std::string& after) {
+        const auto position = xml.find(before);
+        BOOST_REQUIRE(position != std::string::npos);
+        xml.replace(position, before.size(), after);
+    };
+    replace("<TypeDefinitions>", R"(<UnitDefinitions>
+        <Unit name="force">
+            <BaseUnit kg="1" m="2" s="-2" factor="2" offset="3"/>
+            <DisplayUnit name="displayForce" factor="4" offset="5"/>
+        </Unit>
+        <Unit name="dimensionless"><BaseUnit/></Unit>
+        <Unit name="opaque"/>
+    </UnitDefinitions>
+    <TypeDefinitions>
+        <SimpleType name="Force" description="force type">
+            <Real quantity="Force" unit="force" displayUnit="displayForce"
+                  min="-10" max="20" nominal="2" relativeQuantity="true"/>
+        </SimpleType>
+        <SimpleType name="Count">
+            <Integer quantity="Count" min="-50" max="50"/>
+        </SimpleType>)");
+    replace("name=\"real_input\"", "name=\"real_input\" description=\"real input\"");
+    replace("<Real start=\"0.0\"/>",
+        "<Real declaredType=\"Force\" max=\"25\" start=\"0.0\"/>");
+    replace("<Integer start=\"0\"/>",
+        "<Integer declaredType=\"Count\" min=\"-40\" start=\"0\"/>");
+    replace("declaredType=\"SignedOption\"/>",
+        "declaredType=\"SignedOption\" min=\"-2147483648\" max=\"2\"/>");
+    replace("</ModelVariables>", R"(<ScalarVariable name="state"
+            valueReference="55" causality="local" variability="continuous">
+            <Real start="1"/>
+        </ScalarVariable>
+        <ScalarVariable name="state_derivative"
+            valueReference="56" causality="local" variability="continuous"
+            initial="calculated">
+            <Real derivative="12"/>
+        </ScalarVariable>
+        <ScalarVariable name="time"
+            valueReference="57" causality="independent" variability="continuous">
+            <Real/>
+        </ScalarVariable>
+    </ModelVariables>)");
+    replace("</ModelStructure>", R"(<Derivatives><Unknown index="13"/></Derivatives>
+        <InitialUnknowns><Unknown index="13"/></InitialUnknowns>
+    </ModelStructure>)");
+    std::ofstream output(path, std::ios::trunc);
+    BOOST_REQUIRE(output);
+    output << xml;
+    output.close();
+
+    auto importer = fmi::importer::create();
+    const auto model = importer->import_unpacked(directory.path())->model_description();
+    const auto variable = [&](const std::string& name) {
+        return std::find_if(model->variables.begin(), model->variables.end(),
+            [&](const auto& candidate) { return candidate.name == name; });
+    };
+    const auto real = variable("real_input");
+    BOOST_REQUIRE(real != model->variables.end());
+    BOOST_TEST(real->description == "real input");
+    BOOST_REQUIRE(real->declared_type);
+    BOOST_TEST(*real->declared_type == "Force");
+    BOOST_REQUIRE(real->quantity);
+    BOOST_TEST(*real->quantity == "Force");
+    BOOST_REQUIRE(real->unit);
+    BOOST_TEST(*real->unit == "force");
+    BOOST_REQUIRE(real->display_unit);
+    BOOST_TEST(*real->display_unit == "displayForce");
+    BOOST_REQUIRE(real->min);
+    BOOST_REQUIRE(real->max);
+    BOOST_REQUIRE(real->nominal);
+    BOOST_TEST(std::get<double>(*real->min) == -10.0);
+    BOOST_TEST(std::get<double>(*real->max) == 25.0);
+    BOOST_TEST(std::get<double>(*real->nominal) == 2.0);
+    BOOST_REQUIRE(real->relative_quantity);
+    BOOST_TEST(*real->relative_quantity);
+    BOOST_TEST(!real->initial);
+    BOOST_TEST(!real->reinit);
+
+    const auto integer = variable("integer_input");
+    BOOST_REQUIRE(integer != model->variables.end());
+    BOOST_REQUIRE(integer->min);
+    BOOST_REQUIRE(integer->max);
+    BOOST_TEST(std::get<int>(*integer->min) == -40);
+    BOOST_TEST(std::get<int>(*integer->max) == 50);
+    const auto enumeration = variable("signed_enumeration_output");
+    BOOST_REQUIRE(enumeration != model->variables.end());
+    BOOST_REQUIRE(enumeration->min);
+    BOOST_REQUIRE(enumeration->max);
+    BOOST_TEST(std::get<enumeration_value>(*enumeration->min).value ==
+        (std::numeric_limits<std::int32_t>::min)());
+    BOOST_TEST(std::get<enumeration_value>(*enumeration->max).value == 2);
+    BOOST_REQUIRE(enumeration->initial);
+    BOOST_TEST(*enumeration->initial == variable_initial::calculated);
+    const auto derivative = variable("state_derivative");
+    BOOST_REQUIRE(derivative != model->variables.end());
+    BOOST_REQUIRE(derivative->derivative);
+    BOOST_TEST(*derivative->derivative == 55U);
+    const auto time = variable("time");
+    BOOST_REQUIRE(time != model->variables.end());
+    BOOST_TEST(!time->initial);
+
+    const auto countType = std::find_if(
+        model->type_definitions.begin(), model->type_definitions.end(),
+        [](const auto& candidate) { return candidate.name == "Count"; });
+    BOOST_REQUIRE(countType != model->type_definitions.end());
+    BOOST_REQUIRE(countType->min);
+    BOOST_REQUIRE(countType->max);
+    BOOST_TEST(std::get<int>(*countType->min) == -50);
+    BOOST_TEST(std::get<int>(*countType->max) == 50);
+
+    const auto unit = [&](const std::string& name) {
+        return std::find_if(model->unit_definitions.begin(), model->unit_definitions.end(),
+            [&](const auto& candidate) { return candidate.name == name; });
+    };
+    const auto force = unit("force");
+    const auto dimensionless = unit("dimensionless");
+    const auto opaque = unit("opaque");
+    BOOST_REQUIRE(force != model->unit_definitions.end());
+    BOOST_REQUIRE(dimensionless != model->unit_definitions.end());
+    BOOST_REQUIRE(opaque != model->unit_definitions.end());
+    BOOST_TEST(force->has_si_base_unit);
+    BOOST_TEST(force->kilogram == 1);
+    BOOST_TEST(force->metre == 2);
+    BOOST_TEST(force->second == -2);
+    BOOST_TEST(force->factor == 2.0);
+    BOOST_TEST(force->offset == 3.0);
+    BOOST_REQUIRE_EQUAL(force->display_units.size(), 1U);
+    BOOST_TEST(force->display_units[0].name == "displayForce");
+    BOOST_TEST(force->display_units[0].factor == 4.0);
+    BOOST_TEST(force->display_units[0].offset == 5.0);
+    BOOST_TEST(dimensionless->has_si_base_unit);
+    BOOST_TEST(!opaque->has_si_base_unit);
 }

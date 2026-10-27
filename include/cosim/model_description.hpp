@@ -515,6 +515,14 @@ struct variable_alias
     std::optional<std::string> display_unit;
 };
 
+/// FMI 1 alias relationship for a model-variable entry.
+enum class variable_alias_kind
+{
+    no_alias,
+    alias,
+    negated_alias
+};
+
 
 /// FMI Clock interval variability.
 enum class clock_interval_variability
@@ -672,21 +680,31 @@ struct unit_definition
 
     /// Named display-unit conversions for this unit.
     std::vector<display_unit_definition> display_units;
+
+    /// True when the FMU declares a structured SI base-unit definition.
+    bool has_si_base_unit = false;
 };
 
 
-/// A description of a model variable.
+/**
+ * A description of a model variable.
+ *
+ * The FMI version tags identify which importers populate each field, when
+ * the importer is available. Optional fields and collections may be empty
+ * when metadata is absent or inapplicable. Effective values may include FMI
+ * defaults or values inherited from declared types.
+ */
 struct variable_description
 {
     /**
-     *  A textual identifier for the variable.
+     *  A textual identifier for the variable. [FMI 1, 2, 3]
      *
      *  The name must be unique within the model.
      */
     std::string name;
 
     /**
-     *  A numerical identifier for the value the variable refers to.
+     *  A numerical identifier for the value the variable refers to. [FMI 1, 2, 3]
      *
      *  The variable reference must be unique within the model and data type.
      *  That is, a real variable and an integer variable may have the same
@@ -696,86 +714,90 @@ struct variable_description
      */
     value_reference reference;
 
-    /// The variable's data type.
+    /// The variable's data type. [FMI 1, 2, 3]
     variable_type type;
 
-    /// The variable's causality.
+    /// The variable's causality. [FMI 1, 2, 3]
     variable_causality causality;
 
-    /// The variable's variability.
+    /// The variable's variability. [FMI 1, 2, 3]
     variable_variability variability;
 
-    /// The variable's start value. Arrays use `array_start` below.
+    /// The variable's start value. Arrays use `array_start` below. [FMI 1, 2, 3]
     std::optional<scalar_value> start;
 
-    /// Whether the variable may be accessed during FMI 3 Intermediate Update Mode.
+    /// Whether the variable may be accessed during Intermediate Update Mode. [FMI 3]
     bool intermediate_update = false;
 
-    /// A human-readable description.
+    /// A human-readable description. [FMI 1, 2, 3]
     std::string description;
 
-    /// The FMI `initial` attribute, when present.
+    /// The effective FMI `initial` value, when applicable. [FMI 2, 3]
     std::optional<variable_initial> initial;
 
-    /// The name of the variable's declared type, when present.
+    /// The name of the variable's declared type, when present. [FMI 1, 2, 3]
     std::optional<std::string> declared_type;
 
-    /// Ordered array dimensions. Empty for a scalar.
+    /// Ordered array dimensions. Empty for a scalar. [FMI 3]
     std::vector<variable_dimension_description> dimensions;
 
-    /// The array start value. Scalar starts continue to use `start`.
+    /// The array start value. Scalar starts continue to use `start`. [FMI 3]
     std::optional<variable_value> array_start;
 
-    /// Quantity name, when declared.
+    /// Quantity name, when declared. [FMI 1, 2, 3]
     std::optional<std::string> quantity;
 
-    /// Unit name, when declared.
+    /// Unit name, when declared. [FMI 1, 2, 3]
     std::optional<std::string> unit;
 
-    /// Display unit name, when declared.
+    /// Display unit name, when declared. [FMI 1, 2, 3]
     std::optional<std::string> display_unit;
 
-    /// Optional lower bound.
+    /// Optional lower bound. [FMI 1, 2, 3]
     std::optional<scalar_value> min;
 
-    /// Optional upper bound.
+    /// Optional upper bound. [FMI 1, 2, 3]
     std::optional<scalar_value> max;
 
-    /// Optional nominal value.
+    /// Optional nominal value. [FMI 1, 2, 3]
     std::optional<scalar_value> nominal;
 
-    /// Whether the quantity is relative.
+    /// Whether the quantity is relative. [FMI 1, 2, 3]
     std::optional<bool> relative_quantity;
 
-    /// Whether the value is unbounded.
+    /// Whether the value is unbounded. [FMI 2, 3]
     std::optional<bool> unbounded;
 
-    /// Alternate names for the variable.
+    /// Nested alternate names; FMI 1/2 aliases are separate variables. [FMI 3]
     std::vector<variable_alias> aliases;
 
-    /// Previous-variable reference used by FMI derivative relationships.
+    /// Value reference of the previous-value variable, when declared. [FMI 2, 3]
     std::optional<value_reference> previous;
 
-    /// Derivative-variable reference, when declared.
+    /// Value reference of the variable this variable is a derivative of. [FMI 2, 3]
     std::optional<value_reference> derivative;
 
-    /// Whether the variable may be reinitialized.
+    /// Whether the variable may be reinitialized. [FMI 3]
+    /// FMI 2's Model Exchange-only attribute is not imported.
     std::optional<bool> reinit;
 
-    /// Whether multiple writes at one time instant are supported.
+    /// Whether multiple writes at one time instant are supported. [FMI 2, 3]
     std::optional<bool> can_handle_multiple_set_per_time_instant;
 
-    /// Clocks associated with this variable.
+    /// Clocks associated with this variable. [FMI 3]
     std::vector<value_reference> clocks;
 
-    /// MIME type, when this is a Binary variable.
+    /// MIME type, when this is a Binary variable. [FMI 3]
     std::optional<std::string> mime_type;
 
-    /// Maximum Binary payload size.
+    /// Maximum Binary payload size. [FMI 3]
     std::optional<std::uint64_t> max_size;
 
-    /// Clock-specific metadata.
+    /// Clock-specific metadata. [FMI 3]
     std::optional<clock_description> clock;
+
+    /// Alias relationship; reference-only access remains untransformed. [FMI 1]
+    std::optional<variable_alias_kind> alias_kind;
 };
 
 
@@ -813,9 +835,10 @@ struct model_description
 
     /// FMI unit definitions.
     std::vector<unit_definition> unit_definitions;
+
 };
 
-/// Getter for returning a variable description.
+/// Returns a variable or nested alias description by name, if found.
 std::optional<variable_description> find_variable(const model_description& description, const std::string& variable_name);
 
 /**

@@ -17,6 +17,9 @@
 
 #include <gsl/util>
 
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/xml_parser.hpp>
+
 #include <algorithm>
 #include <cassert>
 #include <cstdarg>
@@ -36,6 +39,52 @@ namespace fmi
 {
 namespace v1
 {
+
+namespace
+{
+
+void warn_about_omitted_variables(
+    const filesystem::path& path,
+    const model_description& model)
+{
+    try {
+        boost::property_tree::ptree xml;
+        boost::property_tree::read_xml(path.string(), xml);
+        const auto variables = xml.get_child_optional("fmiModelDescription.ModelVariables");
+        if (!variables) {
+            BOOST_LOG_SEV(log::logger(), log::warning)
+                << "Cannot check FMI 1.0 variable omissions: ModelVariables is missing";
+            return;
+        }
+
+        std::unordered_map<std::string, std::size_t> imported;
+        for (const auto& variable : model.variables) {
+            ++imported[variable.name];
+        }
+        for (const auto& entry : *variables) {
+            if (entry.first != "ScalarVariable") continue;
+            const auto name = entry.second.get_optional<std::string>("<xmlattr>.name");
+            if (!name || name->empty()) {
+                BOOST_LOG_SEV(log::logger(), log::warning)
+                    << "Cannot check an FMI 1.0 variable omission: variable name is missing";
+                continue;
+            }
+            const auto found = imported.find(*name);
+            if (found != imported.end() && found->second != 0) {
+                --found->second;
+            } else {
+                BOOST_LOG_SEV(log::logger(), log::warning)
+                    << "FMI Library did not import FMI 1.0 variable '" << *name
+                    << "'; it is unavailable in the imported model";
+            }
+        }
+    } catch (const boost::property_tree::ptree_error& exception) {
+        BOOST_LOG_SEV(log::logger(), log::warning)
+            << "Cannot check FMI 1.0 variable omissions: " << exception.what();
+    }
+}
+
+} // namespace
 
 // =============================================================================
 // fmu
@@ -71,6 +120,7 @@ fmu::fmu(
     modelDescription_.author = fmi1_import_get_author(handle_);
     modelDescription_.version = fmi1_import_get_model_version(handle_);
     modelDescription_.type_definitions = to_type_definitions(handle_);
+    modelDescription_.unit_definitions = to_unit_definitions(handle_);
     const auto varList = fmi1_import_get_variable_list(handle_);
     const auto _ = gsl::finally([&]() {
         fmi1_import_free_variable_list(varList);
@@ -80,8 +130,7 @@ fmu::fmu(
         const auto var = fmi1_import_get_variable(varList, i);
         const auto vd = to_variable_description(var);
         if (vd.type == variable_type::enumeration) {
-            if (fmi1_import_get_variable_alias_kind(var) ==
-                fmi1_variable_is_negated_alias) {
+            if (vd.alias_kind == variable_alias_kind::negated_alias) {
                 throw error(make_error_code(errc::unsupported_feature),
                     "FMI 1.0 negated Enumeration alias '" + vd.name +
                         "' cannot be represented by its value reference");
@@ -115,6 +164,7 @@ fmu::fmu(
         }
         modelDescription_.variables.push_back(vd);
     }
+    warn_about_omitted_variables(dir_->path() / "modelDescription.xml", modelDescription_);
     initialized = true;
 }
 

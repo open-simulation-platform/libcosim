@@ -229,8 +229,12 @@ scenario::scenario parse_scenario(
             find_simulator(simulators, specified_or_default(event, "model", defaultOpts.model));
         auto varName =
             specified_or_default(event, "variable", defaultOpts.variable);
-        const auto var =
-            *find_variable(simulator->model_description(), varName);
+        const auto variable = find_variable(simulator->model_description(), varName);
+        if (!variable) {
+            throw std::invalid_argument(
+                "Can't find variable '" + varName + "' in model '" + simulator->name() + "'");
+        }
+        const auto& var = *variable;
 
         auto mode = specified_or_default(event, "action", defaultOpts.action);
         bool isInput = is_input(var.causality);

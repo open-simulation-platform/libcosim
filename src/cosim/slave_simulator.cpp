@@ -851,8 +851,9 @@ public:
                 for (const auto& [key, entry] : node) {
                     const auto reference = parseReference(key);
                     std::optional<enumeration_value> value;
-                    if (entry.get<bool>("has_value")) {
-                        value = enumeration_value{entry.get<std::int64_t>("value")};
+                    if (entry.template get<bool>("has_value")) {
+                        value = enumeration_value{
+                            entry.template get<std::int64_t>("value")};
                     }
                     if (!cache.emplace(reference, value).second) {
                         throw error(make_error_code(errc::bad_file),

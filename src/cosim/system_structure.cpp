@@ -7,6 +7,7 @@
 
 #include "cosim/exception.hpp"
 #include "cosim/function/utility.hpp"
+#include "cosim/utility/variable_alias.hpp"
 
 #include <cassert>
 #include <cctype>
@@ -40,6 +41,14 @@ make_variable_lookup_table(const model_description& md)
     std::unordered_map<std::string, variable_description> table;
     for (const auto& var : md.variables) {
         table.emplace(var.name, var);
+    }
+    for (const auto& var : md.variables) {
+        for (const auto& alias : var.aliases) {
+            if (!table.emplace(alias.name, detail::describe_alias(var, alias)).second) {
+                throw error(make_error_code(errc::invalid_system_structure),
+                    "Duplicate variable or alias name: " + alias.name);
+            }
+        }
     }
     return table;
 }

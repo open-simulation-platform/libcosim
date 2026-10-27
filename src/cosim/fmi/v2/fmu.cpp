@@ -55,6 +55,10 @@ fmu::fmu(
             make_error_code(errc::bad_file),
             importer->last_error_message());
     }
+    bool initialized = false;
+    const auto cleanup = gsl::finally([&]() {
+        if (!initialized) fmi2_import_free(handle_);
+    });
     const auto fmuKind = fmi2_import_get_fmu_kind(handle_);
     if (!(fmuKind & fmi2_fmu_kind_cs)) {
         throw error(
@@ -74,6 +78,12 @@ fmu::fmu(
         handle_,
         fmi2_cs_canSerializeFMUstate);
     modelDescription_.type_definitions = to_type_definitions(handle_);
+    modelDescription_.unit_definitions = to_unit_definitions(handle_);
+    fmi2_enumeration_restrictions enumerationRestrictions;
+    read_xml_metadata(
+        modelDescription_.unit_definitions,
+        dir_->path() / "modelDescription.xml",
+        &enumerationRestrictions);
     const auto varList = fmi2_import_get_variable_list(handle_, 0);
     if (varList == nullptr) {
         throw error(
@@ -84,6 +94,17 @@ fmu::fmu(
         fmi2_import_free_variable_list(varList);
     });
     const auto varCount = fmi2_import_get_variable_list_size(varList);
+    std::unordered_map<fmi2_import_real_variable_t*, fmi2_import_variable_t*>
+        realVariables;
+    for (unsigned int i = 0; i < varCount; ++i) {
+        const auto var = fmi2_import_get_variable(varList, i);
+        if (var != nullptr &&
+            fmi2_import_get_variable_base_type(var) == fmi2_base_type_real) {
+            if (const auto real = fmi2_import_get_variable_as_real(var)) {
+                realVariables.emplace(real, var);
+            }
+        }
+    }
     for (unsigned int i = 0; i < varCount; ++i) {
         const auto var = fmi2_import_get_variable(varList, i);
         if (var == nullptr) {
@@ -92,6 +113,18 @@ fmu::fmu(
                 "FMI 2.0 model contains an invalid ScalarVariable");
         }
         auto vd = to_variable_description(var);
+        if (vd.type == variable_type::real) {
+            const auto real = fmi2_import_get_variable_as_real(var);
+            if (const auto state = fmi2_import_get_real_variable_derivative_of(real)) {
+                const auto target = realVariables.find(state);
+                if (target == realVariables.end()) {
+                    throw error(make_error_code(errc::bad_file),
+                        "FMI 2.0 derivative variable '" + vd.name +
+                            "' references an unknown state");
+                }
+                vd.derivative = fmi2_import_get_variable_vr(target->second);
+            }
+        }
         if (vd.type == variable_type::enumeration) {
             if (!vd.declared_type) {
                 throw error(
@@ -113,11 +146,23 @@ fmu::fmu(
                     "FMI 2.0 Enumeration variable '" + vd.name +
                         "' references an invalid declared type");
             }
-            // FMI Library exposes Enumeration bounds through an unsigned
-            // API and can misorder signed items. Use the validated signed
-            // declared-type metadata instead.
             vd.min = typeDefinition->min;
             vd.max = typeDefinition->max;
+            const auto restrictions = enumerationRestrictions.find(vd.name);
+            if (restrictions != enumerationRestrictions.end()) {
+                if (restrictions->second.min) {
+                    vd.min = enumeration_value{*restrictions->second.min};
+                }
+                if (restrictions->second.max) {
+                    vd.max = enumeration_value{*restrictions->second.max};
+                }
+            }
+            if (std::get<enumeration_value>(*vd.min).value >
+                std::get<enumeration_value>(*vd.max).value) {
+                throw error(make_error_code(errc::bad_file),
+                    "FMI 2.0 Enumeration variable '" + vd.name +
+                        "' has inverted bounds");
+            }
             if (vd.start) {
                 const auto* start =
                     std::get_if<enumeration_value>(&*vd.start);
@@ -133,7 +178,9 @@ fmu::fmu(
                     [start](const auto& candidate) {
                         return candidate.value == start->value;
                     });
-                if (item == typeDefinition->enumeration_items.end()) {
+                if (item == typeDefinition->enumeration_items.end() ||
+                    (vd.min && start->value < std::get<enumeration_value>(*vd.min).value) ||
+                    (vd.max && start->value > std::get<enumeration_value>(*vd.max).value)) {
                     throw error(
                         make_error_code(errc::bad_file),
                         "FMI 2.0 Enumeration variable '" + vd.name +
@@ -143,6 +190,7 @@ fmu::fmu(
         }
         modelDescription_.variables.push_back(vd);
     }
+    initialized = true;
 }
 
 

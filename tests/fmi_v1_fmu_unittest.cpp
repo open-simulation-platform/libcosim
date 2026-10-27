@@ -4,18 +4,26 @@
 #include <cosim/exception.hpp>
 #include <cosim/algorithm/fixed_step_algorithm.hpp>
 #include <cosim/execution.hpp>
+#include <cosim/log/logger.hpp>
 #include <cosim/observer/last_value_observer.hpp>
 #include <cosim/system_structure.hpp>
 #include <cosim/utility/filesystem.hpp>
 #include <cosim/utility/zip.hpp>
 
 #include <boost/test/unit_test.hpp>
+#include <boost/core/null_deleter.hpp>
+#include <boost/log/core.hpp>
+#include <boost/log/expressions.hpp>
+#include <boost/log/sinks/sync_frontend.hpp>
+#include <boost/log/sinks/text_ostream_backend.hpp>
+#include <boost/make_shared.hpp>
 
 #include <cstdlib>
 #include <algorithm>
 #include <fstream>
 #include <iterator>
 #include <limits>
+#include <sstream>
 
 
 using namespace cosim;
@@ -25,6 +33,35 @@ BOOST_TEST_DONT_PRINT_LOG_VALUE(step_result)
 
 namespace
 {
+class warning_capture
+{
+    using sink_type = boost::log::sinks::synchronous_sink<
+        boost::log::sinks::text_ostream_backend>;
+
+public:
+    warning_capture()
+        : sink_(boost::make_shared<sink_type>())
+    {
+        sink_->locked_backend()->add_stream(
+            boost::shared_ptr<std::ostream>(&stream_, boost::null_deleter()));
+        sink_->set_filter(cosim::log::severity == cosim::log::warning);
+        sink_->set_formatter(boost::log::expressions::stream
+            << boost::log::expressions::smessage);
+        boost::log::core::get()->add_sink(sink_);
+    }
+
+    ~warning_capture()
+    {
+        boost::log::core::get()->remove_sink(sink_);
+    }
+
+    std::string messages() const { return stream_.str(); }
+
+private:
+    std::ostringstream stream_;
+    boost::shared_ptr<sink_type> sink_;
+};
+
 class fmu_model : public model
 {
 public:
@@ -168,6 +205,120 @@ BOOST_AUTO_TEST_CASE(v1_fmu_unpacked)
     run_tests(fmu);
 }
 
+BOOST_AUTO_TEST_CASE(v1_effective_metadata)
+{
+    const auto* testDataDir = std::getenv("TEST_DATA_DIR");
+    BOOST_REQUIRE(testDataDir != nullptr);
+    utility::temp_dir directory;
+    utility::zip::archive(
+        cosim::filesystem::path(testDataDir) / "fmi1" / "identity.fmu")
+        .extract_all(directory.path());
+    const auto path = directory.path() / "modelDescription.xml";
+    std::ifstream input(path);
+    BOOST_REQUIRE(input);
+    std::string xml(
+        (std::istreambuf_iterator<char>(input)), std::istreambuf_iterator<char>());
+    input.close();
+    const auto replace = [&](const std::string& before, const std::string& after) {
+        const auto position = xml.find(before);
+        BOOST_REQUIRE(position != std::string::npos);
+        xml.replace(position, before.size(), after);
+    };
+    replace("<ModelVariables>", R"(<UnitDefinitions>
+        <BaseUnit unit="metre">
+            <DisplayUnitDefinition displayUnit="displayLength" gain="4" offset="5"/>
+        </BaseUnit>
+    </UnitDefinitions>
+    <TypeDefinitions>
+        <Type name="Length" description="length type">
+            <RealType quantity="Length" unit="metre" displayUnit="displayLength"
+                      min="-10" max="20" nominal="2" relativeQuantity="true"/>
+        </Type>
+        <Type name="Count">
+            <IntegerType quantity="Count" min="-50" max="50"/>
+        </Type>
+    </TypeDefinitions>
+    <ModelVariables>)");
+    replace("name=\"realIn\"", "name=\"realIn\" description=\"real input\"");
+    replace("<Real    start=\"0.0\"   />",
+        "<Real declaredType=\"Length\" max=\"25\" start=\"0.0\"/>");
+    replace("<Integer start=\"0\"     />",
+        "<Integer declaredType=\"Count\" min=\"-40\" start=\"0\"/>");
+    replace("alias=\"alias\"><Real", "alias=\"negatedAlias\"><Real");
+    std::ofstream output(path, std::ios::trunc);
+    BOOST_REQUIRE(output);
+    output << xml;
+    output.close();
+
+    auto importer = fmi::importer::create();
+    const auto fmu = importer->import_unpacked(directory.path());
+    const auto model = fmu->model_description();
+    const auto real = find_variable(*model, "realIn");
+    BOOST_REQUIRE(real);
+    BOOST_REQUIRE(real->alias_kind);
+    BOOST_CHECK(*real->alias_kind == variable_alias_kind::no_alias);
+    BOOST_TEST(real->description == "real input");
+    BOOST_REQUIRE(real->declared_type);
+    BOOST_TEST(*real->declared_type == "Length");
+    BOOST_REQUIRE(real->quantity);
+    BOOST_TEST(*real->quantity == "Length");
+    BOOST_REQUIRE(real->unit);
+    BOOST_TEST(*real->unit == "metre");
+    BOOST_REQUIRE(real->display_unit);
+    BOOST_TEST(*real->display_unit == "displayLength");
+    BOOST_REQUIRE(real->min);
+    BOOST_REQUIRE(real->max);
+    BOOST_REQUIRE(real->nominal);
+    BOOST_TEST(std::get<double>(*real->min) == -10.0);
+    BOOST_TEST(std::get<double>(*real->max) == 25.0);
+    BOOST_TEST(std::get<double>(*real->nominal) == 2.0);
+    BOOST_REQUIRE(real->relative_quantity);
+    BOOST_TEST(*real->relative_quantity);
+    BOOST_TEST(!real->initial);
+    const auto realOut = find_variable(*model, "realOut");
+    BOOST_REQUIRE(realOut);
+    BOOST_REQUIRE(realOut->alias_kind);
+    BOOST_CHECK(*realOut->alias_kind == variable_alias_kind::negated_alias);
+    const auto integer = find_variable(*model, "integerIn");
+    BOOST_REQUIRE(integer);
+    BOOST_REQUIRE(integer->min);
+    BOOST_REQUIRE(integer->max);
+    BOOST_TEST(std::get<int>(*integer->min) == -40);
+    BOOST_TEST(std::get<int>(*integer->max) == 50);
+
+    const auto type = std::find_if(
+        model->type_definitions.begin(), model->type_definitions.end(),
+        [](const auto& candidate) { return candidate.name == "Count"; });
+    BOOST_REQUIRE(type != model->type_definitions.end());
+    BOOST_REQUIRE(type->min);
+    BOOST_REQUIRE(type->max);
+    BOOST_TEST(std::get<int>(*type->min) == -50);
+    BOOST_TEST(std::get<int>(*type->max) == 50);
+
+    const auto unit = std::find_if(
+        model->unit_definitions.begin(), model->unit_definitions.end(),
+        [](const auto& candidate) { return candidate.name == "metre"; });
+    BOOST_REQUIRE(unit != model->unit_definitions.end());
+    BOOST_TEST(!unit->has_si_base_unit);
+    BOOST_REQUIRE_EQUAL(unit->display_units.size(), 1U);
+    BOOST_TEST(unit->display_units[0].name == "displayLength");
+    BOOST_TEST(unit->display_units[0].factor == 4.0);
+    BOOST_TEST(unit->display_units[0].offset == 5.0);
+
+    auto instance = fmu->instantiate_slave("raw-negated-alias");
+    instance->setup(to_time_point(0), to_time_point(2), std::nullopt);
+    const double inputValue = 2.5;
+    instance->set_real_variables(
+        gsl::make_span(&real->reference, 1), gsl::make_span(&inputValue, 1));
+    instance->start_simulation();
+    instance->do_step(to_time_point(0), to_duration(1));
+    double outputValue = 0.0;
+    instance->get_real_variables(
+        gsl::make_span(&realOut->reference, 1), gsl::make_span(&outputValue, 1));
+    BOOST_TEST(outputValue == inputValue);
+    instance->end_simulation();
+}
+
 BOOST_AUTO_TEST_CASE(v1_enumeration)
 {
     const auto* path = std::getenv("FMI1_ENUMERATION_FMU");
@@ -208,6 +359,8 @@ BOOST_AUTO_TEST_CASE(v1_enumeration)
     BOOST_TEST(!output->start);
     BOOST_TEST(outputAlias->type == variable_type::enumeration);
     BOOST_TEST(outputAlias->reference == output->reference);
+    BOOST_REQUIRE(outputAlias->alias_kind);
+    BOOST_CHECK(*outputAlias->alias_kind == variable_alias_kind::alias);
     BOOST_TEST(integer->type == variable_type::integer);
 
     auto instance = fmu->instantiate_v1_slave("v1-enumeration");
@@ -314,6 +467,59 @@ BOOST_AUTO_TEST_CASE(v1_enumeration_invalid_metadata)
         "alias=\"alias\"",
         "alias=\"negatedAlias\"",
         errc::unsupported_feature);
+}
+
+BOOST_AUTO_TEST_CASE(v1_omitted_variable_warning)
+{
+    const auto* path = std::getenv("FMI1_ENUMERATION_FMU");
+    BOOST_REQUIRE(path != nullptr);
+    warning_capture warnings;
+    auto importer = fmi::importer::create();
+    const auto ordinary = importer->import(path)->model_description();
+    BOOST_REQUIRE(find_variable(*ordinary, "enumeration_output"));
+    BOOST_CHECK(warnings.messages().find("FMI Library did not import FMI 1.0 variable") ==
+        std::string::npos);
+
+    utility::temp_dir directory;
+    utility::zip::archive(path).extract_all(directory.path());
+    const auto description = directory.path() / "modelDescription.xml";
+    std::ifstream input(description);
+    BOOST_REQUIRE(input);
+    std::string xml(
+        (std::istreambuf_iterator<char>(input)), std::istreambuf_iterator<char>());
+    input.close();
+    const auto position = xml.find("</ModelVariables>");
+    BOOST_REQUIRE(position != std::string::npos);
+    xml.insert(position, R"(
+        <ScalarVariable name="dropped_enum_alias" valueReference="3"
+                variability="discrete" causality="input" alias="alias">
+            <Enumeration declaredType="Option" start="1"/>
+        </ScalarVariable>
+        <ScalarVariable name="dropped_negated_enum_alias" valueReference="3"
+                variability="discrete" causality="input" alias="negatedAlias">
+            <Enumeration declaredType="Option" start="1"/>
+        </ScalarVariable>
+    )");
+    std::ofstream output(description, std::ios::trunc);
+    BOOST_REQUIRE(output);
+    output << xml;
+    output.close();
+
+    auto modifiedImporter = fmi::importer::create();
+    auto fmu = modifiedImporter->import_unpacked(directory.path());
+    const auto model = fmu->model_description();
+    BOOST_CHECK(!find_variable(*model, "dropped_enum_alias"));
+    BOOST_CHECK(!find_variable(*model, "dropped_negated_enum_alias"));
+    BOOST_REQUIRE(find_variable(*model, "enumeration_output"));
+    const auto messages = warnings.messages();
+    for (const auto* name : {"dropped_enum_alias", "dropped_negated_enum_alias"}) {
+        const auto expected = std::string("FMI Library did not import FMI 1.0 variable '") +
+            name + "'; it is unavailable in the imported model";
+        const auto first = messages.find(expected);
+        BOOST_REQUIRE(first != std::string::npos);
+        BOOST_CHECK(messages.find(expected, first + expected.size()) == std::string::npos);
+    }
+    BOOST_REQUIRE(fmu->instantiate_slave("omitted-variable"));
 }
 
 BOOST_AUTO_TEST_CASE(v1_v2_enumeration_execution)

@@ -103,7 +103,7 @@ public:
                     boolSamples_[timeStep].push_back(observable_->get_boolean(vd.reference));
                 }
                 for (const auto& vd : stringVars_) {
-                    stringSamples_[timeStep].push_back(observable_->get_string(vd.reference));
+                    stringSamples_[timeStep].emplace_back(observable_->get_string(vd.reference));
                 }
                 for (const auto& vd : enumerationVars_) {
                     const auto value = observable_->get_variable_value(vd.type, vd.reference);
@@ -349,7 +349,7 @@ private:
                 if (realSamples_.count(stepCount)) write<double>(realSamples_[stepCount], ss);
                 if (intSamples_.count(stepCount)) write<int>(intSamples_[stepCount], ss);
                 if (boolSamples_.count(stepCount)) write<bool>(boolSamples_[stepCount], ss);
-                if (stringSamples_.count(stepCount)) write<std::string_view>(stringSamples_[stepCount], ss);
+                if (stringSamples_.count(stepCount)) write<std::string>(stringSamples_[stepCount], ss);
                 if (enumerationSamples_.count(stepCount)) write<std::int64_t>(enumerationSamples_[stepCount], ss);
 
                 ss << std::endl;
@@ -369,7 +369,7 @@ private:
     std::map<step_number, std::vector<double>> realSamples_;
     std::map<step_number, std::vector<int>> intSamples_;
     std::map<step_number, std::vector<bool>> boolSamples_;
-    std::map<step_number, std::vector<std::string_view>> stringSamples_;
+    std::map<step_number, std::vector<std::string>> stringSamples_;
     std::map<step_number, std::vector<std::int64_t>> enumerationSamples_;
     std::map<step_number, double> timeSamples_;
     std::vector<variable_description> realVars_;
