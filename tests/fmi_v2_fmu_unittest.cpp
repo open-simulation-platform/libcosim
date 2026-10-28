@@ -834,6 +834,7 @@ BOOST_AUTO_TEST_CASE(v2_effective_metadata)
     };
     const auto real = variable("real_input");
     BOOST_REQUIRE(real != model->variables.end());
+    BOOST_TEST(real->causality == variable_causality::input);
     BOOST_TEST(real->description == "real input");
     BOOST_REQUIRE(real->declared_type);
     BOOST_TEST(*real->declared_type == "Force");
@@ -871,10 +872,12 @@ BOOST_AUTO_TEST_CASE(v2_effective_metadata)
     BOOST_TEST(*enumeration->initial == variable_initial::calculated);
     const auto derivative = variable("state_derivative");
     BOOST_REQUIRE(derivative != model->variables.end());
+    BOOST_TEST(derivative->causality == variable_causality::local);
     BOOST_REQUIRE(derivative->derivative);
     BOOST_TEST(*derivative->derivative == 55U);
     const auto time = variable("time");
     BOOST_REQUIRE(time != model->variables.end());
+    BOOST_TEST(time->causality == variable_causality::independent);
     BOOST_TEST(!time->initial);
 
     const auto countType = std::find_if(

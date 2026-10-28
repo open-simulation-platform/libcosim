@@ -260,10 +260,13 @@ set_property(TEST cpp_fmi_v1_fmu_unittest APPEND PROPERTY ENVIRONMENT
     "FMI2_MIXED_TYPES_FMU=${FMI2_MIXED_TYPES_FIXTURE}")
 
 set(reference_fmu_test_targets
+    cpp_file_observer_logging_test
     cpp_save_state_test
     cpp_slave_simulator_unittest)
 if(LIBCOSIM_WITH_PROXYFMU)
-    list(APPEND reference_fmu_test_targets cpp_proxyfmu_save_state_test)
+    list(APPEND reference_fmu_test_targets
+        cpp_proxyfmu_integration_unittest
+        cpp_proxyfmu_save_state_test)
 endif()
 
 foreach(reference_fmu_test IN LISTS reference_fmu_test_targets)

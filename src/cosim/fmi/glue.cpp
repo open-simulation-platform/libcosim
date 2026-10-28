@@ -165,8 +165,8 @@ variable_causality to_variable_causality(fmi2_causality_enu_t c)
         case fmi2_causality_enu_calculated_parameter: return variable_causality::calculated_parameter;
         case fmi2_causality_enu_input: return variable_causality::input;
         case fmi2_causality_enu_output: return variable_causality::output;
-        case fmi2_causality_enu_local:
-        case fmi2_causality_enu_independent: return variable_causality::local;
+        case fmi2_causality_enu_local: return variable_causality::local;
+        case fmi2_causality_enu_independent: return variable_causality::independent;
         case fmi2_causality_enu_unknown:
             COSIM_PANIC();
     }
