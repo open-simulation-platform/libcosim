@@ -83,6 +83,12 @@ BOOST_AUTO_TEST_CASE(scalar_streams_preserve_alternatives)
     std::ostringstream binaryOutput;
     binaryOutput << binary;
     BOOST_CHECK_EQUAL(binaryOutput.str(), "000fa5ff");
+
+    std::ostringstream directBinaryOutput;
+    directBinaryOutput << std::dec << std::setfill('*')
+                       << cosim::binary_value{{0x00, 0x0f, 0xa5, 0xff}}
+                       << ' ' << std::setw(3) << 17;
+    BOOST_CHECK_EQUAL(directBinaryOutput.str(), "000fa5ff *17");
 }
 
 

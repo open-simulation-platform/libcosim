@@ -426,14 +426,16 @@ using variable_value_storage = std::variant<
 class variable_value
 {
 public:
-    /// Creates an empty value with the default exact type.
+    /// Creates a Real scalar with value 0.0.
     variable_value();
 
     /**
      *  Creates an owning scalar or array value.
      *
-     *  An empty dimension list represents one scalar element. For arrays,
-     *  `values` must contain exactly `flat_size(dimensions)` elements.
+     *  An empty dimension list represents one scalar element. `values` must
+     *  contain exactly `flat_size(dimensions)` elements.
+     *  Throws `std::invalid_argument` if the element count does not match,
+     *  or `std::overflow_error` if the shape's flat size overflows.
      */
     explicit variable_value(
         variable_value_storage values,
@@ -468,7 +470,9 @@ bool operator!=(const variable_value& a, const variable_value& b);
  *  Calculates the number of flat values described by `dimensions`.
  *
  *  An empty dimension list represents a scalar and therefore has size one.
- *  Throws `std::overflow_error` if the product does not fit in `std::size_t`.
+ *  A shape containing a zero dimension has size zero.
+ *  Throws `std::overflow_error` if a nonzero product does not fit in
+ *  `std::size_t`.
  */
 std::size_t flat_size(const std::vector<std::uint64_t>& dimensions);
 
@@ -550,9 +554,9 @@ enum class clock_interval_variability
 /// Metadata specific to an FMI Clock variable.
 struct clock_description
 {
-    /// How the interval is determined.
+    /// How the interval is determined; unknown until explicitly specified.
     clock_interval_variability interval_variability =
-        clock_interval_variability::triggered;
+        clock_interval_variability::unknown;
 
     /// Whether the Clock can be deactivated in the current mode.
     bool can_be_deactivated = false;
@@ -849,6 +853,7 @@ std::optional<variable_description> find_variable(const model_description& descr
  *
  *  Returns an empty vector for a scalar and `std::nullopt` if at least one
  *  dimension depends on a structural parameter.
+ *  Throws `std::overflow_error` if a fixed shape's flat size overflows.
  */
 std::optional<std::vector<std::uint64_t>>
 fixed_shape(const variable_description& variable);

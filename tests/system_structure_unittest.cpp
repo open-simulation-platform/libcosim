@@ -14,6 +14,8 @@
 #include <algorithm>
 #include <array>
 #include <cstdint>
+#include <limits>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <type_traits>
@@ -200,6 +202,67 @@ BOOST_AUTO_TEST_CASE(scalar_value_type_validation)
     BOOST_CHECK_EQUAL(
         reason,
         "Cannot assign a value of type 'integer' to a variable of type 'enumeration'.");
+}
+
+
+BOOST_AUTO_TEST_CASE(variable_value_shapes_and_defaults)
+{
+    const auto large = std::numeric_limits<std::uint64_t>::max();
+    BOOST_CHECK_EQUAL(cosim::flat_size({}), 1U);
+    BOOST_CHECK_EQUAL(cosim::flat_size({2, 3}), 6U);
+    BOOST_CHECK_EQUAL(cosim::flat_size({0, 3}), 0U);
+    BOOST_CHECK_EQUAL(cosim::flat_size({2, 0, 3}), 0U);
+    BOOST_CHECK_EQUAL(cosim::flat_size({large, large, 0}), 0U);
+    BOOST_CHECK_EQUAL(cosim::flat_size({0, large, large}), 0U);
+    BOOST_CHECK_THROW(cosim::flat_size({large, 2}), std::overflow_error);
+    if constexpr (sizeof(std::size_t) < sizeof(std::uint64_t)) {
+        BOOST_CHECK_THROW(cosim::flat_size({large}), std::overflow_error);
+    }
+
+    const cosim::variable_value defaultValue;
+    BOOST_CHECK(defaultValue.type() == cosim::variable_type::real);
+    BOOST_CHECK(defaultValue.is_scalar());
+    BOOST_CHECK_EQUAL(defaultValue.size(), 1U);
+    BOOST_CHECK(defaultValue.dimensions().empty());
+    const auto& defaultValues = std::get<cosim::real_values>(defaultValue.values()).values;
+    BOOST_REQUIRE_EQUAL(defaultValues.size(), 1U);
+    BOOST_CHECK_EQUAL(defaultValues.front(), 0.0);
+
+    const cosim::variable_value emptyArray(
+        cosim::real_values{std::vector<double>{}}, {large, large, 0});
+    BOOST_CHECK(!emptyArray.is_scalar());
+    BOOST_CHECK_EQUAL(emptyArray.size(), 0U);
+    BOOST_CHECK_THROW(
+        cosim::variable_value(cosim::real_values{{1.0}}, {0}),
+        std::invalid_argument);
+    BOOST_CHECK_THROW(
+        cosim::variable_value(cosim::uint16_values{{1, 2}}, {3}),
+        std::invalid_argument);
+    BOOST_CHECK_THROW(
+        cosim::variable_value(cosim::real_values{{1.0}}, {large, 2}),
+        std::overflow_error);
+
+    cosim::variable_description variable{};
+    const auto scalarShape = cosim::fixed_shape(variable);
+    BOOST_REQUIRE(scalarShape);
+    BOOST_CHECK(scalarShape->empty());
+    variable.dimensions = {cosim::fixed_dimension{2}, cosim::fixed_dimension{3}};
+    const auto fixedShape = cosim::fixed_shape(variable);
+    BOOST_REQUIRE(fixedShape);
+    BOOST_CHECK(*fixedShape == std::vector<std::uint64_t>({2, 3}));
+    variable.dimensions = {
+        cosim::fixed_dimension{large}, cosim::fixed_dimension{large},
+        cosim::fixed_dimension{0}};
+    const auto emptyShape = cosim::fixed_shape(variable);
+    BOOST_REQUIRE(emptyShape);
+    BOOST_CHECK(*emptyShape == std::vector<std::uint64_t>({large, large, 0}));
+    variable.dimensions.pop_back();
+    BOOST_CHECK_THROW(cosim::fixed_shape(variable), std::overflow_error);
+    variable.dimensions.push_back(cosim::variable_dimension{42});
+    BOOST_CHECK(!cosim::fixed_shape(variable));
+
+    const cosim::clock_description clock;
+    BOOST_CHECK(clock.interval_variability == cosim::clock_interval_variability::unknown);
 }
 
 

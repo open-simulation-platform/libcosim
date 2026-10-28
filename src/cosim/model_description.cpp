@@ -6,6 +6,7 @@
 #include "cosim/model_description.hpp"
 #include "cosim/utility/variable_alias.hpp"
 
+#include <algorithm>
 #include <iomanip>
 #include <istream>
 #include <limits>
@@ -149,6 +150,10 @@ variable_type type_of(const scalar_value& value) noexcept
 
 std::size_t flat_size(const std::vector<std::uint64_t>& dimensions)
 {
+    if (std::find(dimensions.begin(), dimensions.end(), 0) != dimensions.end()) {
+        return 0;
+    }
+
     // FMI arrays are stored as one flat, row-major sequence. Check every
     // multiplication before converting the declared shape to host size_t.
     std::size_t result = 1;
@@ -158,8 +163,7 @@ std::size_t flat_size(const std::vector<std::uint64_t>& dimensions)
             throw std::overflow_error("Array dimension does not fit in size_t");
         }
         const auto converted = static_cast<std::size_t>(dimension);
-        if (converted != 0 &&
-            result > std::numeric_limits<std::size_t>::max() / converted) {
+        if (result > std::numeric_limits<std::size_t>::max() / converted) {
             throw std::overflow_error("Array element count overflows size_t");
         }
         result *= converted;
