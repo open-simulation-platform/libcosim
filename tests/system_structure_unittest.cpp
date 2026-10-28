@@ -15,6 +15,8 @@
 #include <array>
 #include <cstdint>
 #include <string>
+#include <string_view>
+#include <type_traits>
 #include <utility>
 #include <variant>
 
@@ -100,6 +102,30 @@ BOOST_AUTO_TEST_CASE(nested_alias_name_lookup)
     BOOST_CHECK_THROW(
         invalid.add_entity("sim", std::make_shared<metadata_model>(description)),
         cosim::error);
+}
+
+
+BOOST_AUTO_TEST_CASE(scalar_value_views)
+{
+    using byte_view = gsl::span<const std::uint8_t>;
+    static_assert(std::is_same_v<decltype(std::declval<byte_view>()[0]), const std::uint8_t&>);
+
+    cosim::binary_value binary{{0x01, 0x7f, 0xff}};
+    cosim::scalar_value_view view{byte_view{binary.data}};
+    const auto bytes = std::get<byte_view>(view);
+    BOOST_REQUIRE_EQUAL(bytes.size(), binary.data.size());
+    BOOST_CHECK(bytes.data() == binary.data.data());
+    BOOST_CHECK_EQUAL(static_cast<unsigned int>(bytes[0]), 0x01U);
+    binary.data[1] = 0x42;
+    BOOST_CHECK_EQUAL(static_cast<unsigned int>(bytes[1]), 0x42U);
+
+    view = byte_view{};
+    BOOST_CHECK(std::get<byte_view>(view).empty());
+    const std::string text = "value";
+    view = std::string_view{text};
+    BOOST_CHECK(std::get<std::string_view>(view) == "value");
+    view = 2.5;
+    BOOST_CHECK_EQUAL(std::get<double>(view), 2.5);
 }
 
 

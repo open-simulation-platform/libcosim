@@ -12,6 +12,8 @@
 
 #include <cosim/time.hpp>
 
+#include <gsl/span>
+
 #include <cstddef>
 #include <cstdint>
 #include <iosfwd>
@@ -321,8 +323,9 @@ std::istream& operator>>(std::istream& stream, scalar_value& value);
  *  An algebraic type that can hold a (possibly) non-owning, read-only view
  *  of a scalar value of one of the supported variable types.
  *
- *  In practice, it's only for strings that this type is a view; for all
- *  other types it holds a copy.
+ *  Strings and Binary values are non-owning views; other types are copied.
+ *  Their underlying storage must remain valid while the view is used.
+ *  An empty Binary span is a valid value.
  */
 using scalar_value_view = std::variant<
     double,
@@ -338,7 +341,7 @@ using scalar_value_view = std::variant<
     std::uint32_t,
     std::int64_t,
     std::uint64_t,
-    const binary_value*>;
+    gsl::span<const std::uint8_t>>;
 
 
 /// Returns the exact variable type represented by `value`.
@@ -862,38 +865,6 @@ enum class step_result
     /// Step canceled
     canceled
 };
-
-
-/**
- *  Detailed information about a completed co-simulation step for one
- *  simulator.
- *
- *  `last_successful_time` is the endpoint actually reached by the simulator.
- *  It is never beyond the requested endpoint. A terminated step is otherwise
- *  successful, but no subsequent steps may be requested.
- */
-struct step_result_info
-{
-    /// Coarse legacy result for callers that do not need FMI control flags.
-    step_result result = step_result::complete;
-
-    /// Endpoint actually reached by the simulator.
-    time_point last_successful_time{};
-
-    /// The FMU returned before the requested communication point.
-    bool early_return = false;
-
-    /// Event Mode processing is required before the next step.
-    bool event_handling_needed = false;
-
-    /// The FMU requested termination; no later step is valid.
-    bool termination_requested = false;
-
-    /// The failed step may be retried with a shorter interval.
-    bool retryable = false;
-};
-
-using step_outcome = step_result_info;
 
 
 } // namespace cosim
