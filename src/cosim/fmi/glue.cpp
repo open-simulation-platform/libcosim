@@ -343,10 +343,15 @@ to_type_definitions(fmi1_import_t* fmu)
             if (const auto real = fmi1_import_get_type_as_real(typeDefinition)) {
                 if (const auto unit = fmi1_import_get_real_type_unit(real)) {
                     definition.unit = nonnull(fmi1_import_get_unit_name(unit));
-                }
-                if (const auto display = fmi1_import_get_type_display_unit(real)) {
-                    definition.display_unit =
-                        nonnull(fmi1_import_get_display_unit_name(display));
+                    // FMI Library reads the display unit through a pointer
+                    // that is null when no unit is declared, so only query
+                    // it when a unit is present. The unit's default display
+                    // unit has an empty name, which means "not declared".
+                    if (const auto display = fmi1_import_get_type_display_unit(real)) {
+                        const std::string name =
+                            nonnull(fmi1_import_get_display_unit_name(display));
+                        if (!name.empty()) definition.display_unit = name;
+                    }
                 }
                 definition.min = fmi1_import_get_real_type_min(real);
                 definition.max = fmi1_import_get_real_type_max(real);
