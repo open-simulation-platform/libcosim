@@ -87,6 +87,8 @@ int integer_input_value(const mock_slave& slave)
 }
 } // namespace
 
+// Execution must reject both mismatch directions before reaching the algorithm,
+// while still forwarding valid same-type connections.
 BOOST_AUTO_TEST_CASE(execution_validates_types_before_calling_algorithm)
 {
     auto algorithm = std::make_shared<recording_connection_algorithm>();
@@ -130,6 +132,8 @@ BOOST_AUTO_TEST_CASE(execution_validates_types_before_calling_algorithm)
     BOOST_TEST(algorithm->connections == 4);
 }
 
+// Both algorithms must reject mismatches across simulator and function paths;
+// valid connections must still transfer values through an actual step.
 BOOST_AUTO_TEST_CASE(execution_rejects_enumeration_integer_connections)
 {
     with_connection_algorithms([](std::shared_ptr<cosim::algorithm> algorithm) {
@@ -195,6 +199,8 @@ BOOST_AUTO_TEST_CASE(execution_rejects_enumeration_integer_connections)
     });
 }
 
+// Direct algorithm callers bypass execution, so they also need rejection before
+// exposing any variables; successful same-type transfers remain supported.
 BOOST_AUTO_TEST_CASE(direct_algorithms_reject_mismatched_connection_types_before_exposure)
 {
     with_connection_algorithms([](std::shared_ptr<cosim::algorithm> algorithm) {

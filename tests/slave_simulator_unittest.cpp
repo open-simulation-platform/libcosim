@@ -161,6 +161,8 @@ private:
 } // namespace
 
 #include "connection_type_tests.hpp"
+#include "default_slave_batch_tests.hpp"
+#include "modifier_reporting_tests.hpp"
 
 BOOST_AUTO_TEST_CASE(enumeration_initial_value_injection)
 {

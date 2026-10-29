@@ -10,6 +10,7 @@
 #include "cosim/model_description.hpp"
 
 #include <algorithm>
+#include <limits>
 #include <string>
 
 namespace cosim
@@ -84,6 +85,43 @@ inline void validate_enumeration_value(
             make_error_code(errc::model_error),
             instanceName + ": Enumeration value " + std::to_string(value.value) +
                 " is not declared for variable '" + variable.name + "'");
+    }
+}
+
+inline void validate_enumeration_reference_value(
+    const model_description& model,
+    value_reference reference,
+    enumeration_value value,
+    const std::string& instanceName)
+{
+    bool found = false;
+    for (const auto& variable : model.variables) {
+        if (variable.type == variable_type::enumeration && variable.reference == reference) {
+            found = true;
+            validate_enumeration_value(model, variable, value, instanceName);
+        }
+    }
+    if (!found) {
+        throw error(make_error_code(errc::model_error),
+            instanceName + ": value reference " + std::to_string(reference) +
+                " is not an Enumeration variable");
+    }
+}
+
+template<typename Integer>
+void validate_legacy_enumeration_assignment(
+    const model_description& model,
+    value_reference reference,
+    enumeration_value value,
+    const std::string& instanceName,
+    const char* version)
+{
+    detail::validate_enumeration_reference_value(model, reference, value, instanceName);
+    if (value.value < (std::numeric_limits<Integer>::min)() ||
+        value.value > (std::numeric_limits<Integer>::max)()) {
+        throw error(make_error_code(errc::model_error),
+            instanceName + ": Enumeration value is outside the FMI " +
+                version + " Integer range");
     }
 }
 

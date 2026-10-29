@@ -176,6 +176,8 @@ public:
         gsl::span<const std::string> values) override;
     std::vector<variable_value> get_variable_values(
         gsl::span<const typed_value_reference> variables) const override;
+    /// Validates the complete batch before dispatch; an FMU failure can still
+    /// leave earlier successful assignments applied.
     void set_variable_values(
         gsl::span<const typed_value_reference> variables,
         gsl::span<const variable_value> values) override;

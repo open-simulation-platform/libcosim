@@ -14,6 +14,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <set>
 #include <stdexcept>
 #include <unordered_map>
 
@@ -70,6 +71,12 @@ struct get_variable_cache
     void set_modifier(value_reference r, std::function<T(T, duration)> m)
     {
         modifiers[indexMapping[r]] = m;
+    }
+
+    bool has_modifier(value_reference r) const
+    {
+        const auto it = indexMapping.find(r);
+        return it != indexMapping.end() && static_cast<bool>(modifiers[it->second]);
     }
 
     void run_modifiers(duration deltaT)
@@ -159,6 +166,11 @@ public:
         } else {
             modifiers_.erase(r);
         }
+    }
+
+    bool has_modifier(value_reference r) const
+    {
+        return modifiers_.count(r) != 0;
     }
 
     std::pair<gsl::span<value_reference>, gsl::span<const T>> modify_and_get(
@@ -613,7 +625,7 @@ public:
         std::function<double(double, duration)> modifier)
     {
         state_.realSetCache.set_modifier(ref, modifier);
-        set_modified_reference(modifiedRealVariables_, ref, modifier ? true : false);
+        set_modified_reference(modifiedRealVariables_, ref, state_.realGetCache, state_.realSetCache);
     }
 
     void set_integer_input_modifier(
@@ -621,7 +633,7 @@ public:
         std::function<int(int, duration)> modifier)
     {
         state_.integerSetCache.set_modifier(ref, modifier);
-        set_modified_reference(modifiedIntegerVariables_, ref, modifier ? true : false);
+        set_modified_reference(modifiedIntegerVariables_, ref, state_.integerGetCache, state_.integerSetCache);
     }
 
     void set_boolean_input_modifier(
@@ -629,7 +641,7 @@ public:
         std::function<bool(bool, duration)> modifier)
     {
         state_.booleanSetCache.set_modifier(ref, modifier);
-        set_modified_reference(modifiedBooleanVariables_, ref, modifier ? true : false);
+        set_modified_reference(modifiedBooleanVariables_, ref, state_.booleanGetCache, state_.booleanSetCache);
     }
 
     void set_string_input_modifier(
@@ -637,7 +649,7 @@ public:
         std::function<std::string(std::string_view, duration)> modifier)
     {
         state_.stringSetCache.set_modifier(ref, modifier);
-        set_modified_reference(modifiedStringVariables_, ref, modifier ? true : false);
+        set_modified_reference(modifiedStringVariables_, ref, state_.stringGetCache, state_.stringSetCache);
     }
 
     void set_real_output_modifier(
@@ -645,7 +657,7 @@ public:
         std::function<double(double, duration)> modifier)
     {
         state_.realGetCache.set_modifier(ref, modifier);
-        set_modified_reference(modifiedRealVariables_, ref, modifier ? true : false);
+        set_modified_reference(modifiedRealVariables_, ref, state_.realGetCache, state_.realSetCache);
     }
 
     void set_integer_output_modifier(
@@ -653,7 +665,7 @@ public:
         std::function<int(int, duration)> modifier)
     {
         state_.integerGetCache.set_modifier(ref, modifier);
-        set_modified_reference(modifiedIntegerVariables_, ref, modifier ? true : false);
+        set_modified_reference(modifiedIntegerVariables_, ref, state_.integerGetCache, state_.integerSetCache);
     }
 
     void set_boolean_output_modifier(
@@ -661,7 +673,7 @@ public:
         std::function<bool(bool, duration)> modifier)
     {
         state_.booleanGetCache.set_modifier(ref, modifier);
-        set_modified_reference(modifiedBooleanVariables_, ref, modifier ? true : false);
+        set_modified_reference(modifiedBooleanVariables_, ref, state_.booleanGetCache, state_.booleanSetCache);
     }
 
     void set_string_output_modifier(
@@ -669,7 +681,7 @@ public:
         std::function<std::string(std::string_view, duration)> modifier)
     {
         state_.stringGetCache.set_modifier(ref, modifier);
-        set_modified_reference(modifiedStringVariables_, ref, modifier ? true : false);
+        set_modified_reference(modifiedStringVariables_, ref, state_.stringGetCache, state_.stringSetCache);
     }
 
     std::unordered_set<value_reference>& get_modified_real_variables()
@@ -690,6 +702,28 @@ public:
     std::unordered_set<value_reference>& get_modified_string_variables()
     {
         return modifiedStringVariables_;
+    }
+
+    std::vector<typed_value_reference> get_modified_variables() const
+    {
+        std::set<std::pair<variable_type, value_reference>> modified;
+        const auto add = [&modified](variable_type type, const auto& references) {
+            for (const auto reference : references) modified.emplace(type, reference);
+        };
+        add(variable_type::real, modifiedRealVariables_);
+        add(variable_type::integer, modifiedIntegerVariables_);
+        add(variable_type::boolean, modifiedBooleanVariables_);
+        add(variable_type::string, modifiedStringVariables_);
+        for (const auto& entry : enumerationInputModifiers_) {
+            modified.emplace(variable_type::enumeration, entry.first);
+        }
+        for (const auto& entry : enumerationOutputModifiers_) {
+            modified.emplace(variable_type::enumeration, entry.first);
+        }
+        std::vector<typed_value_reference> result;
+        result.reserve(modified.size());
+        for (const auto& entry : modified) result.push_back({entry.first, entry.second});
+        return result;
     }
 
     void setup(
@@ -1051,9 +1085,14 @@ private:
         return *it;
     }
 
-    void set_modified_reference(std::unordered_set<value_reference>& modifiedRefs, value_reference& ref, bool modifier)
+    template<typename T>
+    void set_modified_reference(
+        std::unordered_set<value_reference>& modifiedRefs,
+        value_reference ref,
+        const get_variable_cache<T>& getCache,
+        const set_variable_cache<T>& setCache)
     {
-        if (modifier) {
+        if (getCache.has_modifier(ref) || setCache.has_modifier(ref)) {
             modifiedRefs.insert(ref);
         } else {
             modifiedRefs.erase(ref);
@@ -1306,6 +1345,11 @@ std::unordered_set<value_reference>& slave_simulator::get_modified_boolean_varia
 std::unordered_set<value_reference>& slave_simulator::get_modified_string_variables() const
 {
     return pimpl_->get_modified_string_variables();
+}
+
+std::vector<typed_value_reference> slave_simulator::get_modified_variables() const
+{
+    return pimpl_->get_modified_variables();
 }
 
 void slave_simulator::setup(

@@ -31,6 +31,8 @@ using namespace cosim;
 BOOST_TEST_DONT_PRINT_LOG_VALUE(fmi::fmi_version)
 BOOST_TEST_DONT_PRINT_LOG_VALUE(step_result)
 
+#include "fmi12_batch_validation_tests.hpp"
+
 namespace
 {
 class warning_capture
@@ -145,6 +147,21 @@ void run_tests(std::shared_ptr<fmi::fmu> fmu)
     auto instance = fmu->instantiate_slave("testSlave");
     instance->setup(tStart, tMax, std::nullopt);
     instance->start_simulation();
+
+    // The FMI 1 generic bridge must dispatch all four scalar types correctly
+    // after batch prevalidation, including the FMU-owned String value.
+    const typed_value_reference genericInputs[] = {
+        {variable_type::real, realIn}, {variable_type::integer, integerIn},
+        {variable_type::boolean, booleanIn}, {variable_type::string, stringIn}};
+    const variable_value genericValues[] = {
+        variable_value(real_values{{0.0}}), variable_value(integer_values{{0}}),
+        variable_value(boolean_values{{false}}), variable_value(string_values{{""}})};
+    instance->set_variable_values(genericInputs, genericValues);
+    const auto genericResult = instance->get_variable_values(genericInputs);
+    BOOST_REQUIRE_EQUAL(genericResult.size(), 4U);
+    for (std::size_t i = 0; i < genericResult.size(); ++i) {
+        BOOST_CHECK(genericResult[i] == genericValues[i]);
+    }
 
     for (auto t = tStart; t < tMax; t += dt) {
         double getRealVal = -1.0;
@@ -344,6 +361,34 @@ BOOST_AUTO_TEST_CASE(v1_effective_metadata)
         gsl::make_span(&realOut->reference, 1), gsl::make_span(&outputValue, 1));
     BOOST_TEST(outputValue == inputValue);
     instance->end_simulation();
+}
+
+// An invalid later assignment must not change an earlier FMI 1 value.
+// The fixture also demonstrates that an FMU error can still leave prior writes.
+BOOST_AUTO_TEST_CASE(v1_generic_batch_prevalidation_and_fmu_failure)
+{
+    const auto* path = std::getenv("FMI1_ENUMERATION_FMU");
+    BOOST_REQUIRE(path != nullptr);
+    auto importer = fmi::importer::create();
+    auto fmu = std::static_pointer_cast<fmi::v1::fmu>(importer->import(path));
+    auto instance = fmu->instantiate_v1_slave("v1-batch");
+    instance->setup(to_time_point(0), to_time_point(1), std::nullopt);
+    check_legacy_batch_prevalidation(*instance, 3, 1);
+
+    // Make the fixture reject the second setter after the first has succeeded;
+    // resetting the status lets the test inspect that earlier write.
+    const value_reference statusReference = 4;
+    const int failingStatus = 3;
+    instance->set_integer_variables(gsl::make_span(&statusReference, 1), gsl::make_span(&failingStatus, 1));
+    const typed_value_reference references[] = {{variable_type::integer, 3}, {variable_type::enumeration, 1}};
+    const variable_value values[] = {variable_value(integer_values{{44}}), variable_value(integer_values{{1}})};
+    BOOST_CHECK_THROW(instance->set_variable_values(references, values), cosim::error);
+    const int okStatus = 0;
+    instance->set_integer_variables(gsl::make_span(&statusReference, 1), gsl::make_span(&okStatus, 1));
+    int observed = 0;
+    const value_reference integerReference = 3;
+    instance->get_integer_variables(gsl::make_span(&integerReference, 1), gsl::make_span(&observed, 1));
+    BOOST_TEST(observed == 44);
 }
 
 BOOST_AUTO_TEST_CASE(v1_enumeration)

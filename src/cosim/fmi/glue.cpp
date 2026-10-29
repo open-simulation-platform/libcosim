@@ -55,7 +55,13 @@ void read_xml_metadata(
     fmi2_enumeration_restrictions* enumerationRestrictions)
 {
     boost::property_tree::ptree xml;
-    boost::property_tree::read_xml(modelDescription.string(), xml);
+    try {
+        boost::property_tree::read_xml(modelDescription.string(), xml);
+    } catch (const boost::property_tree::ptree_error& exception) {
+        throw error(make_error_code(errc::bad_file),
+            "Cannot read FMI XML metadata from '" + modelDescription.string() +
+                "': " + exception.what());
+    }
     std::unordered_map<std::string, bool> definitions;
     if (const auto unitDefinitions =
             xml.get_child_optional("fmiModelDescription.UnitDefinitions")) {
@@ -63,10 +69,15 @@ void read_xml_metadata(
             if (entry.first != "Unit") continue;
             const auto name =
                 entry.second.get_optional<std::string>("<xmlattr>.name");
-            if (!name || !definitions.emplace(
+            if (!name || name->empty()) {
+                throw error(make_error_code(errc::bad_file),
+                    "Unnamed FMI unit definition in '" + modelDescription.string() + "'");
+            }
+            if (!definitions.emplace(
                     *name, !!entry.second.get_child_optional("BaseUnit")).second) {
                 throw error(make_error_code(errc::bad_file),
-                    "Invalid or duplicate FMI unit definition name");
+                    "Duplicate FMI unit definition '" + *name +
+                        "' in '" + modelDescription.string() + "'");
             }
         }
     }

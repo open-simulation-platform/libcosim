@@ -89,6 +89,7 @@ public:
     std::unordered_set<value_reference>& get_modified_integer_variables() const override;
     std::unordered_set<value_reference>& get_modified_boolean_variables() const override;
     std::unordered_set<value_reference>& get_modified_string_variables() const override;
+    std::vector<typed_value_reference> get_modified_variables() const;
 
     void setup(
         time_point startTime,

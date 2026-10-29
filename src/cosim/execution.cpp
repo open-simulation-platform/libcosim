@@ -200,30 +200,8 @@ public:
 
         auto index = 0;
         for (const auto& sim : simulators_) {
-
-            const auto& realRefs = sim->get_modified_real_variables();
-            const auto& integerRefs = sim->get_modified_integer_variables();
-            const auto& booleanRefs = sim->get_modified_boolean_variables();
-            const auto& stringRefs = sim->get_modified_string_variables();
-
-            for (const auto& ref : realRefs) {
-                variable_id var = {index, variable_type::real, ref};
-                modifiedVariables.push_back(var);
-            }
-
-            for (const auto& ref : integerRefs) {
-                variable_id var = {index, variable_type::integer, ref};
-                modifiedVariables.push_back(var);
-            }
-
-            for (const auto& ref : booleanRefs) {
-                variable_id var = {index, variable_type::boolean, ref};
-                modifiedVariables.push_back(var);
-            }
-
-            for (const auto& ref : stringRefs) {
-                variable_id var = {index, variable_type::string, ref};
-                modifiedVariables.push_back(var);
+            for (const auto& variable : sim->get_modified_variables()) {
+                modifiedVariables.push_back({index, variable.type, variable.reference});
             }
 
             index++;
@@ -439,7 +417,7 @@ private:
     std::atomic<bool> stopped_;
 
     std::shared_ptr<algorithm> algorithm_;
-    std::vector<std::shared_ptr<simulator>> simulators_;
+    std::vector<std::shared_ptr<slave_simulator>> simulators_;
     std::vector<std::shared_ptr<function>> functions_;
     std::vector<std::shared_ptr<observer>> observers_;
     std::vector<std::shared_ptr<manipulator>> manipulators_;

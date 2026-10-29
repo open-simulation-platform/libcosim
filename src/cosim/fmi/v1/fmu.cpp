@@ -11,8 +11,10 @@
 #include "cosim/fmi/fmilib.h"
 #include "cosim/fmi/glue.hpp"
 #include "cosim/fmi/importer.hpp"
+#include "cosim/fmi/value_validation.hpp"
 #include "cosim/fmi/windows.hpp"
 #include "cosim/log/logger.hpp"
+#include "cosim/scalar_value_dispatch.hpp"
 #include "cosim/utility/enumeration.hpp"
 
 #include <gsl/util>
@@ -634,24 +636,8 @@ void slave_instance::set_enumeration_variables(
     std::vector<fmi1_integer_t> fmiValues;
     fmiValues.reserve(values.size());
     for (std::size_t i = 0; i < values.size(); ++i) {
-        const auto* variable = detail::find_variable_description(
-            model, variable_type::enumeration, variables[i]);
-        if (variable == nullptr) {
-            throw error(make_error_code(errc::model_error),
-                instanceName_ + ": value reference " + std::to_string(variables[i]) +
-                    " is not an Enumeration variable");
-        }
-        if (values[i].value < (std::numeric_limits<fmi1_integer_t>::min)() ||
-            values[i].value > (std::numeric_limits<fmi1_integer_t>::max)()) {
-            throw error(make_error_code(errc::model_error),
-                instanceName_ + ": Enumeration value is outside the FMI 1.0 Integer range");
-        }
-        for (const auto& alias : model.variables) {
-            if (alias.type == variable_type::enumeration &&
-                alias.reference == variables[i]) {
-                detail::validate_enumeration_value(model, alias, values[i], instanceName_);
-            }
-        }
+        detail::validate_legacy_enumeration_assignment<fmi1_integer_t>(
+            model, variables[i], values[i], instanceName_, "1.0");
         fmiValues.push_back(static_cast<fmi1_integer_t>(values[i].value));
     }
     const auto status = fmi1_import_set_integer(
@@ -739,11 +725,15 @@ void slave_instance::set_variable_values(
     gsl::span<const typed_value_reference> variables,
     gsl::span<const variable_value> values)
 {
-    COSIM_INPUT_CHECK(variables.size() == values.size());
+    const auto normalized = detail::prevalidate_legacy_values(
+        *fmu_->model_description(), instanceName_, variables, values,
+        [this](value_reference reference, enumeration_value value) {
+            detail::validate_legacy_enumeration_assignment<fmi1_integer_t>(
+                *fmu_->model_description(), reference, value, instanceName_, "1.0");
+        });
     for (std::size_t i = 0; i < variables.size(); ++i) {
         const auto variable = variables[i];
-        const auto normalized = normalize_enumeration_value(variable.type, values[i]);
-        const auto& value = normalized ? *normalized : values[i];
+        const auto& value = normalized[i];
         if (variable.type == variable_type::enumeration) {
             if (value.type() != variable.type || !value.is_scalar()) {
                 throw std::invalid_argument("Enumeration assignment type or shape mismatch");
@@ -753,9 +743,7 @@ void slave_instance::set_variable_values(
                 gsl::make_span(&variable.reference, 1),
                 gsl::make_span(&item, 1));
         } else {
-            slave::set_variable_values(
-                gsl::make_span(&variable, 1),
-                gsl::make_span(&value, 1));
+            ::cosim::detail::set_legacy_scalar_value(*this, variable, value);
         }
     }
 }

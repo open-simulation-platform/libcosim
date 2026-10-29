@@ -69,6 +69,75 @@ std::shared_ptr<fmi::v2::slave_instance> instantiate_derivative_fixture(
 }
 } // namespace
 
+#include "fmi2_review_metadata_tests.hpp"
+#include "fmi12_batch_validation_tests.hpp"
+
+// FMI 2 validates the complete generic batch before writing, but cannot undo
+// an earlier successful FMU call if a later setter itself returns an error.
+BOOST_AUTO_TEST_CASE(v2_generic_batch_prevalidation_and_fmu_failure)
+{
+    auto importer = fmi::importer::create();
+    auto fmu = std::static_pointer_cast<fmi::v2::fmu>(importer->import(mixed_types_fmu()));
+    auto instance = fmu->instantiate_v2_slave("v2-batch");
+    instance->setup(to_time_point(0), to_time_point(1), std::nullopt);
+    check_legacy_batch_prevalidation(*instance, 3, 7);
+    // Status value 9 passes generic type/reference checks but the fixture's
+    // setter rejects it, exposing the limit of batch prevalidation.
+    const typed_value_reference references[] = {{variable_type::integer, 3}, {variable_type::integer, 11}};
+    const variable_value values[] = {variable_value(integer_values{{44}}), variable_value(integer_values{{9}})};
+    BOOST_CHECK_THROW(instance->set_variable_values(references, values), cosim::error);
+    const value_reference integerReference = 3;
+    int observed = 0;
+    instance->get_integer_variables(gsl::make_span(&integerReference, 1), gsl::make_span(&observed, 1));
+    BOOST_TEST(observed == 44);
+}
+
+
+// Mixed FMI 2 scalar writes must retain their dispatch order and values after
+// prevalidation; Enumeration remains on its separately validated path.
+BOOST_AUTO_TEST_CASE(v2_generic_batch_mixed_scalar_dispatch)
+{
+    auto importer = fmi::importer::create();
+    auto fmu = std::static_pointer_cast<fmi::v2::fmu>(importer->import(mixed_types_fmu()));
+    auto instance = fmu->instantiate_v2_slave("v2-mixed-batch");
+    instance->setup(to_time_point(0), to_time_point(1), std::nullopt);
+    const typed_value_reference references[] = {
+        {variable_type::real, 1}, {variable_type::integer, 3},
+        {variable_type::boolean, 5}, {variable_type::enumeration, 7}};
+    const variable_value values[] = {
+        variable_value(real_values{{2.5}}), variable_value(integer_values{{7}}),
+        variable_value(boolean_values{{true}}),
+        variable_value(enumeration_values{{enumeration_value{2}}})};
+    instance->set_variable_values(references, values);
+    const auto result = instance->get_variable_values(references);
+    BOOST_REQUIRE_EQUAL(result.size(), 4U);
+    for (std::size_t i = 0; i < result.size(); ++i) {
+        BOOST_CHECK(result[i] == values[i]);
+    }
+}
+
+// The generated FMI 2 Feedthrough has a String input absent from the mixed
+// fixture, so exercise its generic dispatch and copied getter result as well.
+BOOST_AUTO_TEST_CASE(v2_generic_batch_string_dispatch)
+{
+    auto importer = fmi::importer::create();
+    auto fmu = std::static_pointer_cast<fmi::v2::fmu>(
+        importer->import(reference_fmu_directory() / "Feedthrough.fmu"));
+    const auto model = fmu->model_description();
+    const auto input = std::find_if(
+        model->variables.begin(), model->variables.end(), [](const auto& variable) {
+            return variable.name == "String_input" && variable.type == variable_type::string;
+        });
+    BOOST_REQUIRE(input != model->variables.end());
+    auto instance = fmu->instantiate_v2_slave("v2-string-batch");
+    instance->setup(to_time_point(0), to_time_point(1), std::nullopt);
+    const typed_value_reference reference{variable_type::string, input->reference};
+    const variable_value value(string_values{{"batch string"}});
+    instance->set_variable_values(gsl::make_span(&reference, 1), gsl::make_span(&value, 1));
+    const auto result = instance->get_variable_values(gsl::make_span(&reference, 1));
+    BOOST_REQUIRE_EQUAL(result.size(), 1U);
+    BOOST_CHECK(result[0] == value);
+}
 
 BOOST_AUTO_TEST_CASE(model_metadata_enum_text)
 {
