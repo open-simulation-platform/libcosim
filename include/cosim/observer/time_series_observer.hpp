@@ -71,7 +71,8 @@ public:
      * Start observing a variable.
      *
      * After calling this method, it will then be possible to extract observed values for this variable
-     * with `get_real_samples()` or `get_integer_samples()`.
+     * with `get_real_samples()`, `get_integer_samples()`, or
+     * `get_variable_samples()`.
      */
     void start_observing(variable_id id);
 
@@ -81,6 +82,15 @@ public:
      * After calling this method, it will no longer be possible to extract observed values for this variable.
      */
     void stop_observing(variable_id id);
+
+    std::size_t get_variable_samples(
+        simulator_index sim,
+        variable_type type,
+        value_reference valueReference,
+        step_number fromStep,
+        gsl::span<variable_value> values,
+        gsl::span<step_number> steps,
+        gsl::span<time_point> times) override;
 
     std::size_t get_real_samples(
         simulator_index sim,

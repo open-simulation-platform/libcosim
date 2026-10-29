@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fmiModelDescription
+        fmiVersion="1.0"
+        modelName="libcosim.fmi1.enumeration"
+        modelIdentifier="EnumerationFixture"
+        guid="{82c4c538-550f-4e8d-87d1-fec892744ff8}"
+        numberOfContinuousStates="0"
+        numberOfEventIndicators="0">
+    <TypeDefinitions>
+        <Type name="Option" description="One-based Enumeration values">
+            <EnumerationType min="1" max="2">
+                <Item name="One" description="First item"/>
+                <Item name="Two" description="Second item"/>
+            </EnumerationType>
+        </Type>
+    </TypeDefinitions>
+    <ModelVariables>
+        <ScalarVariable name="enumeration_input" valueReference="1"
+                variability="discrete" causality="input">
+            <Enumeration declaredType="Option" start="1"/>
+        </ScalarVariable>
+        <ScalarVariable name="enumeration_output" valueReference="2"
+                variability="discrete" causality="output">
+            <Enumeration declaredType="Option"/>
+        </ScalarVariable>
+        <ScalarVariable name="enumeration_output_alias" valueReference="2"
+                variability="discrete" causality="output" alias="alias">
+            <Enumeration declaredType="Option"/>
+        </ScalarVariable>
+        <ScalarVariable name="integer_input" valueReference="3"
+                variability="discrete" causality="input">
+            <Integer start="0"/>
+        </ScalarVariable>
+        <ScalarVariable name="status" valueReference="4"
+                variability="discrete" causality="input">
+            <Integer start="0"/>
+        </ScalarVariable>
+    </ModelVariables>
+    <Implementation>
+        <CoSimulation_StandAlone>
+            <Capabilities canHandleVariableCommunicationStepSize="true"/>
+        </CoSimulation_StandAlone>
+    </Implementation>
+</fmiModelDescription>

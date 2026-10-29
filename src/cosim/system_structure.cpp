@@ -7,7 +7,7 @@
 
 #include "cosim/exception.hpp"
 #include "cosim/function/utility.hpp"
-#include "cosim/utility/utility.hpp"
+#include "cosim/utility/variable_alias.hpp"
 
 #include <cassert>
 #include <cctype>
@@ -41,6 +41,14 @@ make_variable_lookup_table(const model_description& md)
     std::unordered_map<std::string, variable_description> table;
     for (const auto& var : md.variables) {
         table.emplace(var.name, var);
+    }
+    for (const auto& var : md.variables) {
+        for (const auto& alias : var.aliases) {
+            if (!table.emplace(alias.name, detail::describe_alias(var, alias)).second) {
+                throw error(make_error_code(errc::invalid_system_structure),
+                    "Duplicate variable or alias name: " + alias.name);
+            }
+        }
     }
     return table;
 }
@@ -273,14 +281,11 @@ bool is_valid_variable_value(
     const scalar_value& value,
     std::string* reason)
 {
-    const auto valueType = std::visit(
-        visitor(
-            [=](double) { return variable_type::real; },
-            [=](int) { return variable_type::integer; },
-            [=](const std::string&) { return variable_type::string; },
-            [=](bool) { return variable_type::boolean; }),
-        value);
-    if (valueType != variable.type) {
+    const auto valueType = type_of(value);
+    if (valueType != variable.type &&
+        !(variable.type == variable_type::enumeration &&
+            variable.dimensions.empty() &&
+            valueType == variable_type::integer)) {
         if (reason != nullptr) {
             std::ostringstream msg;
             msg << "Cannot assign a value of type '" << to_text(valueType)
@@ -409,6 +414,11 @@ void add_variable_value(
         std::ostringstream msg;
         msg << "Invalid value for variable '" << variable << "': " << e;
         throw error(make_error_code(errc::invalid_system_structure), msg.str());
+    }
+    if (varDescription.type == variable_type::enumeration) {
+        if (const auto integer = std::get_if<int>(&value)) {
+            value = enumeration_value{*integer};
+        }
     }
     variableValues.insert_or_assign(variable, value);
 }

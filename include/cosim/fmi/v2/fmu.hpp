@@ -147,6 +147,10 @@ public:
     void get_integer_variables(
         gsl::span<const value_reference> variables,
         gsl::span<int> values) const override;
+    /// Gets FMI 2 Enumeration values using the signed Integer transport.
+    void get_enumeration_variables(
+        gsl::span<const value_reference> variables,
+        gsl::span<enumeration_value> values) const;
     void get_boolean_variables(
         gsl::span<const value_reference> variables,
         gsl::span<bool> values) const override;
@@ -160,12 +164,23 @@ public:
     void set_integer_variables(
         gsl::span<const value_reference> variables,
         gsl::span<const int> values) override;
+    /// Sets FMI 2 Enumeration values after declared-item and bound validation.
+    void set_enumeration_variables(
+        gsl::span<const value_reference> variables,
+        gsl::span<const enumeration_value> values);
     void set_boolean_variables(
         gsl::span<const value_reference> variables,
         gsl::span<const bool> values) override;
     void set_string_variables(
         gsl::span<const value_reference> variables,
         gsl::span<const std::string> values) override;
+    std::vector<variable_value> get_variable_values(
+        gsl::span<const typed_value_reference> variables) const override;
+    /// Validates the complete batch before dispatch; an FMU failure can still
+    /// leave earlier successful assignments applied.
+    void set_variable_values(
+        gsl::span<const typed_value_reference> variables,
+        gsl::span<const variable_value> values) override;
 
     state_index save_state() override;
     void save_state(state_index stateIndex) override;

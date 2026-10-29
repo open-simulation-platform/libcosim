@@ -4,12 +4,243 @@
  *  file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 #include "cosim/model_description.hpp"
+#include "cosim/utility/variable_alias.hpp"
 
+#include <algorithm>
+#include <iomanip>
+#include <istream>
+#include <limits>
 #include <stdexcept>
+#include <type_traits>
 
 
 namespace cosim
 {
+
+namespace
+{
+
+template<typename T>
+void read_byte(std::istream& stream, T& value)
+{
+    long long parsed = 0;
+    const auto apply_value = [&]() {
+        if (parsed < static_cast<long long>(std::numeric_limits<T>::min())) {
+            value = std::numeric_limits<T>::min();
+            return true;
+        }
+        if (parsed > static_cast<long long>(std::numeric_limits<T>::max())) {
+            value = std::numeric_limits<T>::max();
+            return true;
+        }
+        if (!stream.fail()) {
+            value = static_cast<T>(parsed);
+        }
+        return false;
+    };
+
+    try {
+        stream >> parsed;
+    } catch (const std::ios_base::failure&) {
+        if (apply_value()) {
+            stream.setstate(std::ios_base::failbit);
+        }
+        throw;
+    }
+    if (apply_value()) {
+        stream.setstate(std::ios_base::failbit);
+    }
+}
+
+} // namespace
+
+std::ostream& operator<<(std::ostream& stream, const binary_value& value)
+{
+    const auto flags = stream.flags();
+    const auto fill = stream.fill();
+    stream << std::hex << std::setfill('0');
+    for (const auto byte : value.data) {
+        stream << std::setw(2) << static_cast<unsigned int>(byte);
+    }
+    stream.flags(flags);
+    stream.fill(fill);
+    return stream;
+}
+
+
+std::ostream& operator<<(std::ostream& stream, const scalar_value& value)
+{
+    std::visit(
+        [&](const auto& scalar) {
+            using value_type = std::decay_t<decltype(scalar)>;
+            if constexpr (std::is_same_v<value_type, std::int8_t>) {
+                stream << static_cast<int>(scalar);
+            } else if constexpr (std::is_same_v<value_type, std::uint8_t>) {
+                stream << static_cast<unsigned int>(scalar);
+            } else {
+                stream << scalar;
+            }
+        },
+        value);
+    return stream;
+}
+
+
+std::istream& operator>>(std::istream& stream, scalar_value& value)
+{
+    std::visit(
+        [&](auto& scalar) {
+            using value_type = std::decay_t<decltype(scalar)>;
+            if constexpr (
+                std::is_same_v<value_type, std::int8_t> ||
+                std::is_same_v<value_type, std::uint8_t>) {
+                read_byte(stream, scalar);
+            } else if constexpr (std::is_same_v<value_type, enumeration_value>) {
+                stream >> scalar.value;
+            } else if constexpr (std::is_same_v<value_type, binary_value>) {
+                stream.setstate(std::ios_base::failbit);
+            } else {
+                stream >> scalar;
+            }
+        },
+        value);
+    return stream;
+}
+
+
+variable_type type_of(const scalar_value& value) noexcept
+{
+    return std::visit(
+        [](const auto& value) {
+            using value_type = std::decay_t<decltype(value)>;
+            if constexpr (std::is_same_v<value_type, double>) {
+                return variable_type::real;
+            } else if constexpr (std::is_same_v<value_type, int>) {
+                return variable_type::integer;
+            } else if constexpr (std::is_same_v<value_type, bool>) {
+                return variable_type::boolean;
+            } else if constexpr (std::is_same_v<value_type, std::string>) {
+                return variable_type::string;
+            } else if constexpr (
+                std::is_same_v<value_type, enumeration_value>) {
+                return variable_type::enumeration;
+            } else if constexpr (std::is_same_v<value_type, float>) {
+                return variable_type::float32;
+            } else if constexpr (std::is_same_v<value_type, std::int8_t>) {
+                return variable_type::int8;
+            } else if constexpr (std::is_same_v<value_type, std::uint8_t>) {
+                return variable_type::uint8;
+            } else if constexpr (std::is_same_v<value_type, std::int16_t>) {
+                return variable_type::int16;
+            } else if constexpr (std::is_same_v<value_type, std::uint16_t>) {
+                return variable_type::uint16;
+            } else if constexpr (std::is_same_v<value_type, std::uint32_t>) {
+                return variable_type::uint32;
+            } else if constexpr (std::is_same_v<value_type, std::int64_t>) {
+                return variable_type::int64;
+            } else if constexpr (std::is_same_v<value_type, std::uint64_t>) {
+                return variable_type::uint64;
+            } else if constexpr (std::is_same_v<value_type, binary_value>) {
+                return variable_type::binary;
+            }
+        },
+        value);
+}
+
+
+std::size_t flat_size(const std::vector<std::uint64_t>& dimensions)
+{
+    if (std::find(dimensions.begin(), dimensions.end(), 0) != dimensions.end()) {
+        return 0;
+    }
+
+    // FMI arrays are stored as one flat, row-major sequence. Check every
+    // multiplication before converting the declared shape to host size_t.
+    std::size_t result = 1;
+    for (const auto dimension : dimensions) {
+        if (dimension >
+            static_cast<std::uint64_t>(std::numeric_limits<std::size_t>::max())) {
+            throw std::overflow_error("Array dimension does not fit in size_t");
+        }
+        const auto converted = static_cast<std::size_t>(dimension);
+        if (result > std::numeric_limits<std::size_t>::max() / converted) {
+            throw std::overflow_error("Array element count overflows size_t");
+        }
+        result *= converted;
+    }
+    return result;
+}
+
+
+variable_value::variable_value()
+    : values_(real_values{{0.0}})
+{
+}
+
+
+variable_value::variable_value(
+    variable_value_storage values,
+    std::vector<std::uint64_t> dimensions)
+    : dimensions_(std::move(dimensions))
+    , values_(std::move(values))
+{
+    // Keep shape and storage inseparable: generic transport must never expose
+    // an array whose element count disagrees with its FMI dimensions.
+    if (size() != flat_size(dimensions_)) {
+        throw std::invalid_argument(
+            "Variable value element count does not match its dimensions");
+    }
+}
+
+
+variable_type variable_value::type() const noexcept
+{
+    return std::visit(
+        [](const auto& values) {
+            using values_type = std::decay_t<decltype(values)>;
+            return values_type::type;
+        },
+        values_);
+}
+
+
+bool variable_value::is_scalar() const noexcept
+{
+    return dimensions_.empty();
+}
+
+
+std::size_t variable_value::size() const noexcept
+{
+    return std::visit(
+        [](const auto& values) { return values.values.size(); },
+        values_);
+}
+
+
+const std::vector<std::uint64_t>& variable_value::dimensions() const noexcept
+{
+    return dimensions_;
+}
+
+
+const variable_value_storage& variable_value::values() const noexcept
+{
+    return values_;
+}
+
+
+bool operator==(const variable_value& a, const variable_value& b)
+{
+    return a.dimensions() == b.dimensions() && a.values() == b.values();
+}
+
+
+bool operator!=(const variable_value& a, const variable_value& b)
+{
+    return !(a == b);
+}
+
 
 std::optional<variable_description> find_variable(const model_description& description, const std::string& variable_name)
 {
@@ -18,7 +249,34 @@ std::optional<variable_description> find_variable(const model_description& descr
             return variable;
         }
     }
+    for (const auto& variable : description.variables) {
+        for (const auto& alias : variable.aliases) {
+            if (alias.name == variable_name) {
+                return detail::describe_alias(variable, alias);
+            }
+        }
+    }
     return std::nullopt;
+}
+
+
+std::optional<std::vector<std::uint64_t>>
+fixed_shape(const variable_description& variable)
+{
+    // A shape that depends on a structural parameter is not stable enough for
+    // an unconditional generic Get/Set operation until the parameter is
+    // resolved.
+    std::vector<std::uint64_t> dimensions;
+    dimensions.reserve(variable.dimensions.size());
+    for (const auto& dimension : variable.dimensions) {
+        const auto fixed = std::get_if<fixed_dimension>(&dimension);
+        if (fixed == nullptr) {
+            return std::nullopt;
+        }
+        dimensions.push_back(fixed->size);
+    }
+    flat_size(dimensions);
+    return dimensions;
 }
 
 } // namespace cosim

@@ -34,6 +34,10 @@ namespace cosim
  *  transferring output values to the right input variables) and stepping
  *  simulators.
  *
+ *  Connection endpoint types must match. In particular, Enumeration and
+ *  Integer are distinct types even when scalar assignment accepts an Integer
+ *  for an Enumeration variable.
+ *
  *  Some of the functions in this interface are guaranteed to be called in
  *  a fixed order:
  *

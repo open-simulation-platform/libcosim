@@ -7,19 +7,27 @@
 
 #include "cosim/error.hpp"
 #include "cosim/exception.hpp"
+#include "cosim/fmi/enumeration.hpp"
 #include "cosim/fmi/fmilib.h"
 #include "cosim/fmi/glue.hpp"
 #include "cosim/fmi/importer.hpp"
+#include "cosim/fmi/value_validation.hpp"
 #include "cosim/fmi/windows.hpp"
 #include "cosim/log/logger.hpp"
+#include "cosim/scalar_value_dispatch.hpp"
+#include "cosim/utility/enumeration.hpp"
 
 #include <gsl/util>
+
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/xml_parser.hpp>
 
 #include <algorithm>
 #include <cassert>
 #include <cstdarg>
 #include <cstdlib>
 #include <cstring>
+#include <limits>
 #include <mutex>
 #include <stdexcept>
 #include <type_traits>
@@ -33,6 +41,52 @@ namespace fmi
 {
 namespace v1
 {
+
+namespace
+{
+
+void warn_about_omitted_variables(
+    const filesystem::path& path,
+    const model_description& model)
+{
+    try {
+        boost::property_tree::ptree xml;
+        boost::property_tree::read_xml(path.string(), xml);
+        const auto variables = xml.get_child_optional("fmiModelDescription.ModelVariables");
+        if (!variables) {
+            BOOST_LOG_SEV(log::logger(), log::warning)
+                << "Cannot check FMI 1.0 variable omissions: ModelVariables is missing";
+            return;
+        }
+
+        std::unordered_map<std::string, std::size_t> imported;
+        for (const auto& variable : model.variables) {
+            ++imported[variable.name];
+        }
+        for (const auto& entry : *variables) {
+            if (entry.first != "ScalarVariable") continue;
+            const auto name = entry.second.get_optional<std::string>("<xmlattr>.name");
+            if (!name || name->empty()) {
+                BOOST_LOG_SEV(log::logger(), log::warning)
+                    << "Cannot check an FMI 1.0 variable omission: variable name is missing";
+                continue;
+            }
+            const auto found = imported.find(*name);
+            if (found != imported.end() && found->second != 0) {
+                --found->second;
+            } else {
+                BOOST_LOG_SEV(log::logger(), log::warning)
+                    << "FMI Library did not import FMI 1.0 variable '" << *name
+                    << "'; it is unavailable in the imported model";
+            }
+        }
+    } catch (const boost::property_tree::ptree_error& exception) {
+        BOOST_LOG_SEV(log::logger(), log::warning)
+            << "Cannot check FMI 1.0 variable omissions: " << exception.what();
+    }
+}
+
+} // namespace
 
 // =============================================================================
 // fmu
@@ -50,6 +104,10 @@ fmu::fmu(
             make_error_code(errc::bad_file),
             importer->last_error_message());
     }
+    bool initialized = false;
+    const auto cleanup = gsl::finally([&]() {
+        if (!initialized) fmi1_import_free(handle_);
+    });
     const auto fmuKind = fmi1_import_get_fmu_kind(handle_);
     if (fmuKind != fmi1_fmu_kind_enu_cs_standalone &&
         fmuKind != fmi1_fmu_kind_enu_cs_tool) {
@@ -63,6 +121,8 @@ fmu::fmu(
     modelDescription_.description = fmi1_import_get_description(handle_);
     modelDescription_.author = fmi1_import_get_author(handle_);
     modelDescription_.version = fmi1_import_get_model_version(handle_);
+    modelDescription_.type_definitions = to_type_definitions(handle_);
+    modelDescription_.unit_definitions = to_unit_definitions(handle_);
     const auto varList = fmi1_import_get_variable_list(handle_);
     const auto _ = gsl::finally([&]() {
         fmi1_import_free_variable_list(varList);
@@ -71,14 +131,43 @@ fmu::fmu(
     for (unsigned int i = 0; i < varCount; ++i) {
         const auto var = fmi1_import_get_variable(varList, i);
         const auto vd = to_variable_description(var);
-        if (variable_type::enumeration != vd.type) {
-            modelDescription_.variables.push_back(vd);
-        } else {
-            BOOST_LOG_SEV(log::logger(), log::warning)
-                << "FMI 1.0 Enumeration variable type not supported, variable with name "
-                << vd.name << " will be ignored";
+        if (vd.type == variable_type::enumeration) {
+            if (vd.alias_kind == variable_alias_kind::negated_alias) {
+                throw error(make_error_code(errc::unsupported_feature),
+                    "FMI 1.0 negated Enumeration alias '" + vd.name +
+                        "' cannot be represented by its value reference");
+            }
+            const auto* definition = vd.declared_type
+                ? detail::find_type_definition(modelDescription_, *vd.declared_type)
+                : nullptr;
+            if (definition == nullptr ||
+                definition->type != variable_type::enumeration ||
+                definition->enumeration_items.empty()) {
+                throw error(make_error_code(errc::bad_file),
+                    "FMI 1.0 Enumeration variable '" + vd.name +
+                        "' has an invalid declared type");
+            }
+            if (vd.start) {
+                const auto start = std::get<enumeration_value>(*vd.start);
+                const auto item = std::find_if(
+                    definition->enumeration_items.begin(),
+                    definition->enumeration_items.end(),
+                    [start](const auto& candidate) {
+                        return candidate.value == start.value;
+                    });
+                if (item == definition->enumeration_items.end() ||
+                    (vd.min && start.value < std::get<enumeration_value>(*vd.min).value) ||
+                    (vd.max && start.value > std::get<enumeration_value>(*vd.max).value)) {
+                    throw error(make_error_code(errc::bad_file),
+                        "FMI 1.0 Enumeration variable '" + vd.name +
+                            "' has an invalid start value");
+                }
+            }
         }
+        modelDescription_.variables.push_back(vd);
     }
+    warn_about_omitted_variables(dir_->path() / "modelDescription.xml", modelDescription_);
+    initialized = true;
 }
 
 
@@ -419,6 +508,43 @@ void slave_instance::get_integer_variables(
     }
 }
 
+void slave_instance::get_enumeration_variables(
+    gsl::span<const value_reference> variables,
+    gsl::span<enumeration_value> values) const
+{
+    COSIM_INPUT_CHECK(variables.size() == values.size());
+    if (variables.empty()) return;
+    const auto& model = *fmu_->model_description();
+    for (const auto reference : variables) {
+        if (detail::find_variable_description(
+                model, variable_type::enumeration, reference) == nullptr) {
+            throw error(make_error_code(errc::model_error),
+                instanceName_ + ": value reference " + std::to_string(reference) +
+                    " is not an Enumeration variable");
+        }
+    }
+    std::vector<fmi1_integer_t> fmiValues(values.size());
+    const auto status = fmi1_import_get_integer(
+        handle_, variables.data(), variables.size(), fmiValues.data());
+    if (status != fmi1_status_ok && status != fmi1_status_warning) {
+        throw error(make_error_code(errc::model_error),
+            last_log_record(instanceName_).message);
+    }
+    std::vector<enumeration_value> staged;
+    staged.reserve(values.size());
+    for (std::size_t i = 0; i < values.size(); ++i) {
+        const auto value = enumeration_value{fmiValues[i]};
+        for (const auto& variable : model.variables) {
+            if (variable.type == variable_type::enumeration &&
+                variable.reference == variables[i]) {
+                detail::validate_enumeration_value(model, variable, value, instanceName_);
+            }
+        }
+        staged.push_back(value);
+    }
+    std::copy(staged.begin(), staged.end(), values.begin());
+}
+
 
 void slave_instance::get_boolean_variables(
     gsl::span<const value_reference> variables,
@@ -500,6 +626,32 @@ void slave_instance::set_integer_variables(
     }
 }
 
+void slave_instance::set_enumeration_variables(
+    gsl::span<const value_reference> variables,
+    gsl::span<const enumeration_value> values)
+{
+    COSIM_INPUT_CHECK(variables.size() == values.size());
+    if (variables.empty()) return;
+    const auto& model = *fmu_->model_description();
+    std::vector<fmi1_integer_t> fmiValues;
+    fmiValues.reserve(values.size());
+    for (std::size_t i = 0; i < values.size(); ++i) {
+        detail::validate_legacy_enumeration_assignment<fmi1_integer_t>(
+            model, variables[i], values[i], instanceName_, "1.0");
+        fmiValues.push_back(static_cast<fmi1_integer_t>(values[i].value));
+    }
+    const auto status = fmi1_import_set_integer(
+        handle_, variables.data(), variables.size(), fmiValues.data());
+    if (status == fmi1_status_ok || status == fmi1_status_warning) {
+        return;
+    } else if (status == fmi1_status_discard) {
+        throw nonfatal_bad_value(last_log_record(instanceName_).message);
+    } else {
+        throw error(make_error_code(errc::model_error),
+            last_log_record(instanceName_).message);
+    }
+}
+
 
 void slave_instance::set_boolean_variables(
     gsl::span<const value_reference> variables,
@@ -546,6 +698,53 @@ void slave_instance::set_string_variables(
         throw error(
             make_error_code(errc::model_error),
             last_log_record(instanceName_).message);
+    }
+}
+
+std::vector<variable_value> slave_instance::get_variable_values(
+    gsl::span<const typed_value_reference> variables) const
+{
+    std::vector<variable_value> result;
+    result.reserve(variables.size());
+    for (const auto variable : variables) {
+        if (variable.type == variable_type::enumeration) {
+            enumeration_value value;
+            get_enumeration_variables(
+                gsl::make_span(&variable.reference, 1),
+                gsl::make_span(&value, 1));
+            result.emplace_back(enumeration_values{{value}});
+        } else {
+            auto scalar = slave::get_variable_values(gsl::make_span(&variable, 1));
+            result.push_back(std::move(scalar.front()));
+        }
+    }
+    return result;
+}
+
+void slave_instance::set_variable_values(
+    gsl::span<const typed_value_reference> variables,
+    gsl::span<const variable_value> values)
+{
+    const auto normalized = detail::prevalidate_legacy_values(
+        *fmu_->model_description(), instanceName_, variables, values,
+        [this](value_reference reference, enumeration_value value) {
+            detail::validate_legacy_enumeration_assignment<fmi1_integer_t>(
+                *fmu_->model_description(), reference, value, instanceName_, "1.0");
+        });
+    for (std::size_t i = 0; i < variables.size(); ++i) {
+        const auto variable = variables[i];
+        const auto& value = normalized[i];
+        if (variable.type == variable_type::enumeration) {
+            if (value.type() != variable.type || !value.is_scalar()) {
+                throw std::invalid_argument("Enumeration assignment type or shape mismatch");
+            }
+            const auto item = std::get<enumeration_values>(value.values()).values[0];
+            set_enumeration_variables(
+                gsl::make_span(&variable.reference, 1),
+                gsl::make_span(&item, 1));
+        } else {
+            ::cosim::detail::set_legacy_scalar_value(*this, variable, value);
+        }
     }
 }
 

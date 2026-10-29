@@ -1,5 +1,6 @@
 #define BOOST_TEST_MODULE system_structure unittests
 #include "mock_slave.hpp"
+#include "scalar_value_stream_tests.hpp"
 
 #include <cosim/algorithm/fixed_step_algorithm.hpp>
 #include <cosim/exception.hpp>
@@ -11,6 +12,15 @@
 #include <boost/test/unit_test.hpp>
 
 #include <algorithm>
+#include <array>
+#include <cstdint>
+#include <limits>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+#include <type_traits>
+#include <utility>
+#include <variant>
 
 
 class mock_model : public cosim::model
@@ -34,6 +44,226 @@ public:
 private:
     mutable std::shared_ptr<mock_slave> nextSlave_;
 };
+
+BOOST_AUTO_TEST_CASE(nested_alias_name_lookup)
+{
+    auto description = std::make_shared<cosim::model_description>();
+    description->uuid = "alias-model";
+    cosim::variable_description variable{};
+    variable.name = "position";
+    variable.reference = 42;
+    variable.type = cosim::variable_type::real;
+    variable.causality = cosim::variable_causality::output;
+    variable.variability = cosim::variable_variability::continuous;
+    variable.description = "Position";
+    variable.display_unit = "m";
+    variable.aliases = {
+        {"position_ft", std::string("Position in feet"), std::string("ft")},
+        {"position_copy", std::nullopt, std::nullopt}};
+    description->variables.push_back(variable);
+
+    const auto alias = cosim::find_variable(*description, "position_ft");
+    BOOST_REQUIRE(alias);
+    BOOST_TEST(alias->name == "position_ft");
+    BOOST_TEST(alias->reference == 42U);
+    BOOST_TEST(alias->description == "Position in feet");
+    BOOST_REQUIRE(alias->display_unit);
+    BOOST_TEST(*alias->display_unit == "ft");
+    BOOST_TEST(alias->aliases.empty());
+    const auto copy = cosim::find_variable(*description, "position_copy");
+    BOOST_REQUIRE(copy);
+    BOOST_TEST(copy->description.empty());
+    BOOST_REQUIRE(copy->display_unit);
+    BOOST_TEST(*copy->display_unit == "m");
+    BOOST_TEST(!cosim::find_variable(*description, "missing"));
+
+    class metadata_model : public cosim::model
+    {
+    public:
+        explicit metadata_model(std::shared_ptr<const cosim::model_description> md)
+            : description_(std::move(md)) {}
+        std::shared_ptr<const cosim::model_description> description()
+            const noexcept override { return description_; }
+        std::shared_ptr<cosim::slave> instantiate(std::string_view) override
+        {
+            throw std::logic_error("Metadata-only model cannot be instantiated");
+        }
+    private:
+        std::shared_ptr<const cosim::model_description> description_;
+    };
+    cosim::system_structure system;
+    system.add_entity("sim", std::make_shared<metadata_model>(description));
+    const auto& cached = system.get_variable_description({"sim", "position_ft"});
+    BOOST_TEST(cached.reference == 42U);
+    BOOST_TEST(cached.name == "position_ft");
+    BOOST_TEST(cached.description == "Position in feet");
+    BOOST_REQUIRE(cached.display_unit);
+    BOOST_TEST(*cached.display_unit == "ft");
+    description->variables.front().aliases.push_back({"position", std::nullopt, std::nullopt});
+    cosim::system_structure invalid;
+    BOOST_CHECK_THROW(
+        invalid.add_entity("sim", std::make_shared<metadata_model>(description)),
+        cosim::error);
+}
+
+
+BOOST_AUTO_TEST_CASE(scalar_value_views)
+{
+    using byte_view = gsl::span<const std::uint8_t>;
+    static_assert(std::is_same_v<decltype(std::declval<byte_view>()[0]), const std::uint8_t&>);
+
+    cosim::binary_value binary{{0x01, 0x7f, 0xff}};
+    cosim::scalar_value_view view{byte_view{binary.data}};
+    const auto bytes = std::get<byte_view>(view);
+    BOOST_REQUIRE_EQUAL(bytes.size(), binary.data.size());
+    BOOST_CHECK(bytes.data() == binary.data.data());
+    BOOST_CHECK_EQUAL(static_cast<unsigned int>(bytes[0]), 0x01U);
+    binary.data[1] = 0x42;
+    BOOST_CHECK_EQUAL(static_cast<unsigned int>(bytes[1]), 0x42U);
+
+    view = byte_view{};
+    BOOST_CHECK(std::get<byte_view>(view).empty());
+    const std::string text = "value";
+    view = std::string_view{text};
+    BOOST_CHECK(std::get<std::string_view>(view) == "value");
+    view = 2.5;
+    BOOST_CHECK_EQUAL(std::get<double>(view), 2.5);
+}
+
+
+BOOST_AUTO_TEST_CASE(scalar_value_type_validation)
+{
+    using cosim::scalar_value;
+    using cosim::variable_type;
+
+    const std::array<std::pair<scalar_value, variable_type>, 14> values{{
+        {scalar_value(1.0), variable_type::real},
+        {scalar_value(1), variable_type::integer},
+        {scalar_value(true), variable_type::boolean},
+        {scalar_value(std::string("value")), variable_type::string},
+        {scalar_value(cosim::enumeration_value{1}), variable_type::enumeration},
+        {scalar_value(1.0F), variable_type::float32},
+        {scalar_value(std::int8_t{-1}), variable_type::int8},
+        {scalar_value(std::uint8_t{1}), variable_type::uint8},
+        {scalar_value(std::int16_t{-1}), variable_type::int16},
+        {scalar_value(std::uint16_t{1}), variable_type::uint16},
+        {scalar_value(std::uint32_t{1}), variable_type::uint32},
+        {scalar_value(std::int64_t{-1}), variable_type::int64},
+        {scalar_value(std::uint64_t{1}), variable_type::uint64},
+        {scalar_value(cosim::binary_value{{0x01}}), variable_type::binary},
+    }};
+    BOOST_CHECK_EQUAL(values.size(), std::variant_size_v<scalar_value>);
+
+    cosim::variable_description variable{};
+    for (const auto& [value, expectedType] : values) {
+        BOOST_TEST_CONTEXT("value type: " << cosim::to_text(expectedType)) {
+            BOOST_CHECK(cosim::type_of(value) == expectedType);
+            for (const auto& [unusedValue, targetType] : values) {
+                (void)unusedValue;
+                variable.type = targetType;
+                const bool expectedValid = expectedType == targetType ||
+                    (expectedType == variable_type::integer &&
+                        targetType == variable_type::enumeration);
+                std::string reason = "unchanged";
+                BOOST_TEST_CONTEXT("target type: " << cosim::to_text(targetType)) {
+                    BOOST_CHECK(
+                        cosim::is_valid_variable_value(variable, value, &reason) ==
+                        expectedValid);
+                    BOOST_CHECK(
+                        cosim::is_valid_variable_value(variable, value, nullptr) ==
+                        expectedValid);
+                    if (expectedValid) {
+                        BOOST_CHECK_EQUAL(reason, "unchanged");
+                    } else {
+                        const std::string expectedReason =
+                            std::string("Cannot assign a value of type '") +
+                            cosim::to_text(expectedType) +
+                            "' to a variable of type '" +
+                            cosim::to_text(targetType) + "'.";
+                        BOOST_CHECK_EQUAL(reason, expectedReason);
+                    }
+                }
+            }
+            variable.type = variable_type::clock;
+            std::string reason;
+            BOOST_CHECK(!cosim::is_valid_variable_value(variable, value, &reason));
+            const std::string expectedReason =
+                std::string("Cannot assign a value of type '") +
+                cosim::to_text(expectedType) +
+                "' to a variable of type 'clock'.";
+            BOOST_CHECK_EQUAL(reason, expectedReason);
+        }
+    }
+
+    variable.type = variable_type::enumeration;
+    variable.dimensions = {cosim::fixed_dimension{2}};
+    std::string reason;
+    BOOST_CHECK(!cosim::is_valid_variable_value(variable, scalar_value(1), &reason));
+    BOOST_CHECK_EQUAL(
+        reason,
+        "Cannot assign a value of type 'integer' to a variable of type 'enumeration'.");
+}
+
+
+BOOST_AUTO_TEST_CASE(variable_value_shapes_and_defaults)
+{
+    const auto large = std::numeric_limits<std::uint64_t>::max();
+    BOOST_CHECK_EQUAL(cosim::flat_size({}), 1U);
+    BOOST_CHECK_EQUAL(cosim::flat_size({2, 3}), 6U);
+    BOOST_CHECK_EQUAL(cosim::flat_size({0, 3}), 0U);
+    BOOST_CHECK_EQUAL(cosim::flat_size({2, 0, 3}), 0U);
+    BOOST_CHECK_EQUAL(cosim::flat_size({large, large, 0}), 0U);
+    BOOST_CHECK_EQUAL(cosim::flat_size({0, large, large}), 0U);
+    BOOST_CHECK_THROW(cosim::flat_size({large, 2}), std::overflow_error);
+    if constexpr (sizeof(std::size_t) < sizeof(std::uint64_t)) {
+        BOOST_CHECK_THROW(cosim::flat_size({large}), std::overflow_error);
+    }
+
+    const cosim::variable_value defaultValue;
+    BOOST_CHECK(defaultValue.type() == cosim::variable_type::real);
+    BOOST_CHECK(defaultValue.is_scalar());
+    BOOST_CHECK_EQUAL(defaultValue.size(), 1U);
+    BOOST_CHECK(defaultValue.dimensions().empty());
+    const auto& defaultValues = std::get<cosim::real_values>(defaultValue.values()).values;
+    BOOST_REQUIRE_EQUAL(defaultValues.size(), 1U);
+    BOOST_CHECK_EQUAL(defaultValues.front(), 0.0);
+
+    const cosim::variable_value emptyArray(
+        cosim::real_values{std::vector<double>{}}, {large, large, 0});
+    BOOST_CHECK(!emptyArray.is_scalar());
+    BOOST_CHECK_EQUAL(emptyArray.size(), 0U);
+    BOOST_CHECK_THROW(
+        cosim::variable_value(cosim::real_values{{1.0}}, {0}),
+        std::invalid_argument);
+    BOOST_CHECK_THROW(
+        cosim::variable_value(cosim::uint16_values{{1, 2}}, {3}),
+        std::invalid_argument);
+    BOOST_CHECK_THROW(
+        cosim::variable_value(cosim::real_values{{1.0}}, {large, 2}),
+        std::overflow_error);
+
+    cosim::variable_description variable{};
+    const auto scalarShape = cosim::fixed_shape(variable);
+    BOOST_REQUIRE(scalarShape);
+    BOOST_CHECK(scalarShape->empty());
+    variable.dimensions = {cosim::fixed_dimension{2}, cosim::fixed_dimension{3}};
+    const auto fixedShape = cosim::fixed_shape(variable);
+    BOOST_REQUIRE(fixedShape);
+    BOOST_CHECK(*fixedShape == std::vector<std::uint64_t>({2, 3}));
+    variable.dimensions = {
+        cosim::fixed_dimension{large}, cosim::fixed_dimension{large},
+        cosim::fixed_dimension{0}};
+    const auto emptyShape = cosim::fixed_shape(variable);
+    BOOST_REQUIRE(emptyShape);
+    BOOST_CHECK(*emptyShape == std::vector<std::uint64_t>({large, large, 0}));
+    variable.dimensions.pop_back();
+    BOOST_CHECK_THROW(cosim::fixed_shape(variable), std::overflow_error);
+    variable.dimensions.push_back(cosim::variable_dimension{42});
+    BOOST_CHECK(!cosim::fixed_shape(variable));
+
+    const cosim::clock_description clock;
+    BOOST_CHECK(clock.interval_variability == cosim::clock_interval_variability::unknown);
+}
 
 
 BOOST_AUTO_TEST_CASE(system_structure_basic_use)
