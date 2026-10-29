@@ -147,6 +147,10 @@ class simulator;
  *  and provides a high-level API for driving the co-simulation algorithm
  *  forward.
  *
+ *  Connected variables must have matching types. Enumeration and Integer
+ *  are distinct types, even when assigning an Integer to a scalar
+ *  Enumeration variable is supported.
+ *
  *  \warning
  *      In general, the member functions of this class are not exception safe.
  *      This means that if any of them throw an exception, one must assume that

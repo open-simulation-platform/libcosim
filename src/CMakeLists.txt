@@ -51,6 +51,7 @@ set(publicHeaders
     "cosim/uri.hpp"
 )
 set(privateHeaders
+    "cosim/algorithm/connection_validation.hpp"
     "cosim/error.hpp"
     "cosim/fmi/fmilib.h"
     "cosim/fmi/enumeration.hpp"

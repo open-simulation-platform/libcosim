@@ -6,6 +6,7 @@
 #include "cosim/execution.hpp"
 
 #include "cosim/algorithm.hpp"
+#include "cosim/algorithm/connection_validation.hpp"
 #include "cosim/error.hpp"
 #include "cosim/exception.hpp"
 #include "cosim/slave_simulator.hpp"
@@ -382,6 +383,7 @@ private:
     {
         validate_variable(output, variable_causality::output);
         validate_variable(input, variable_causality::input);
+        detail::validate_connection_types(output.type, input.type);
 
         if (connections.count(input)) {
             throw std::logic_error("Input variable already connected");
@@ -413,6 +415,10 @@ private:
         const auto description = functions_.at(variable.function)->description();
         const auto& group = description.io_groups.at(variable.reference.group);
         const auto& io = group.ios.at(variable.reference.io);
+        const auto type = std::get_if<variable_type>(&io.type);
+        if (!type || *type != variable.type) {
+            throw std::logic_error("Error connecting function variable: Wrong type");
+        }
         if (io.causality != causality) {
             throw std::logic_error("Error connecting function variable: Wrong causality");
         }

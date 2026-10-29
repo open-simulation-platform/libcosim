@@ -160,6 +160,8 @@ private:
 };
 } // namespace
 
+#include "connection_type_tests.hpp"
+
 BOOST_AUTO_TEST_CASE(enumeration_initial_value_injection)
 {
     auto slave = std::make_shared<enumeration_mock_slave>();

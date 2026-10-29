@@ -234,6 +234,12 @@ BOOST_AUTO_TEST_CASE(v1_effective_metadata)
             <RealType quantity="Length" unit="metre" displayUnit="displayLength"
                       min="-10" max="20" nominal="2" relativeQuantity="true"/>
         </Type>
+        <Type name="LengthWithoutDisplay">
+            <RealType unit="metre"/>
+        </Type>
+        <Type name="Unitless">
+            <RealType/>
+        </Type>
         <Type name="Count">
             <IntegerType quantity="Count" min="-50" max="50"/>
         </Type>
@@ -294,6 +300,27 @@ BOOST_AUTO_TEST_CASE(v1_effective_metadata)
     BOOST_REQUIRE(type->max);
     BOOST_TEST(std::get<int>(*type->min) == -50);
     BOOST_TEST(std::get<int>(*type->max) == 50);
+
+    const auto findType = [&](const std::string& name) {
+        return std::find_if(
+            model->type_definitions.begin(), model->type_definitions.end(),
+            [&](const auto& candidate) { return candidate.name == name; });
+    };
+    const auto lengthType = findType("Length");
+    BOOST_REQUIRE(lengthType != model->type_definitions.end());
+    BOOST_REQUIRE(lengthType->unit);
+    BOOST_TEST(*lengthType->unit == "metre");
+    BOOST_REQUIRE(lengthType->display_unit);
+    BOOST_TEST(*lengthType->display_unit == "displayLength");
+    const auto noDisplayType = findType("LengthWithoutDisplay");
+    BOOST_REQUIRE(noDisplayType != model->type_definitions.end());
+    BOOST_REQUIRE(noDisplayType->unit);
+    BOOST_TEST(*noDisplayType->unit == "metre");
+    BOOST_TEST(!noDisplayType->display_unit);
+    const auto unitlessType = findType("Unitless");
+    BOOST_REQUIRE(unitlessType != model->type_definitions.end());
+    BOOST_TEST(!unitlessType->unit);
+    BOOST_TEST(!unitlessType->display_unit);
 
     const auto unit = std::find_if(
         model->unit_definitions.begin(), model->unit_definitions.end(),

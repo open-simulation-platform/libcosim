@@ -5,6 +5,7 @@
  */
 #include "cosim/algorithm/ecco_algorithm.hpp"
 
+#include "cosim/algorithm/connection_validation.hpp"
 #include "cosim/error.hpp"
 #include "cosim/exception.hpp"
 #include "cosim/log/logger.hpp"
@@ -64,6 +65,7 @@ public:
 
     void connect_variables(variable_id output, variable_id input)
     {
+        detail::validate_connection_types(output.type, input.type);
         auto& sourceSimInfo = simulators_.at(output.simulator);
         auto& targetSimInfo = simulators_.at(input.simulator);
         sourceSimInfo.sim->expose_for_getting(output.type, output.reference);
@@ -73,6 +75,7 @@ public:
 
     void connect_variables(variable_id output, function_io_id input)
     {
+        detail::validate_connection_types(output.type, input.type);
         auto& simInfo = simulators_.at(output.simulator);
         simInfo.sim->expose_for_getting(output.type, output.reference);
         simInfo.outgoingFunConnections.push_back({output, input});
@@ -80,6 +83,7 @@ public:
 
     void connect_variables(function_io_id output, variable_id input)
     {
+        detail::validate_connection_types(output.type, input.type);
         auto& funInfo = functions_.at(output.function);
         auto& simInfo = simulators_.at(input.simulator);
         simInfo.sim->expose_for_setting(input.type, input.reference);
