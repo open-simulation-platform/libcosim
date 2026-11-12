@@ -1,9 +1,9 @@
 #include "cosim/fmi/enumeration.hpp"
 #include "cosim/fmi/glue.hpp"
 
-// Reject malformed or ambiguous secondary XML with contextual errors instead
-// of silently dropping metadata; valid unit and Enumeration restrictions survive.
-BOOST_AUTO_TEST_CASE(v2_secondary_metadata_errors)
+// Malformed optional metadata must not prevent an FMU accepted by FMI Library
+// from loading; valid unit and Enumeration restrictions still survive.
+BOOST_AUTO_TEST_CASE(v2_secondary_metadata_recovery)
 {
     utility::temp_dir directory;
     const auto path = directory.path() / "modelDescription.xml";
@@ -12,27 +12,25 @@ BOOST_AUTO_TEST_CASE(v2_secondary_metadata_errors)
         BOOST_REQUIRE(output);
         output << xml;
     };
-    const auto bad = [&](const std::string& xml, const std::string& message) {
+    const auto malformed = [&](const std::string& xml) {
         write(xml);
         std::vector<unit_definition> units;
         fmi::fmi2_enumeration_restrictions restrictions;
-        BOOST_CHECK_EXCEPTION(
-            fmi::read_xml_metadata(units, path, &restrictions),
-            cosim::error,
-            [&](const cosim::error& error) {
-                return error.code() == make_error_code(errc::bad_file) &&
-                    std::string(error.what()).find(message) != std::string::npos;
-            });
+        BOOST_CHECK_NO_THROW(fmi::read_xml_metadata(units, path, &restrictions));
+        BOOST_TEST(restrictions.empty());
     };
-    bad("<fmiModelDescription><broken>", path.string());
-    bad("<fmiModelDescription><UnitDefinitions><Unit/></UnitDefinitions></fmiModelDescription>",
-        "Unnamed FMI unit definition");
-    bad("<fmiModelDescription><UnitDefinitions><Unit name=\"\"/></UnitDefinitions></fmiModelDescription>",
-        "Unnamed FMI unit definition");
-    bad("<fmiModelDescription><UnitDefinitions><Unit name=\"u\"/><Unit name=\"u\"/></UnitDefinitions></fmiModelDescription>",
-        "Duplicate FMI unit definition 'u'");
-    bad("<fmiModelDescription><ModelVariables><ScalarVariable name=\"x\"><Enumeration min=\"bad\"/></ScalarVariable></ModelVariables></fmiModelDescription>",
-        "Invalid Enumeration bound");
+    malformed("<fmiModelDescription><broken>");
+    malformed(
+        "<fmiModelDescription><UnitDefinitions><Unit/>"
+        "</UnitDefinitions></fmiModelDescription>");
+    malformed(
+        "<fmiModelDescription><UnitDefinitions><Unit name=\"\"/></UnitDefinitions></fmiModelDescription>");
+    malformed(
+        "<fmiModelDescription><UnitDefinitions><Unit name=\"u\"/><Unit name=\"u\"/>"
+        "</UnitDefinitions></fmiModelDescription>");
+    malformed(
+        "<fmiModelDescription><ModelVariables><ScalarVariable name=\"x\">"
+        "<Enumeration min=\"bad\"/></ScalarVariable></ModelVariables></fmiModelDescription>");
 
     write("<fmiModelDescription><UnitDefinitions><Unit name=\"u\"><BaseUnit/></Unit><Unit name=\"opaque\"/></UnitDefinitions>"
           "<ModelVariables><ScalarVariable name=\"x\"><Enumeration min=\"1\" max=\"2\"/></ScalarVariable></ModelVariables></fmiModelDescription>");
@@ -43,6 +41,24 @@ BOOST_AUTO_TEST_CASE(v2_secondary_metadata_errors)
     fmi::read_xml_metadata(units, path, &restrictions);
     BOOST_TEST(units[0].has_si_base_unit);
     BOOST_TEST(!units[1].has_si_base_unit);
+    BOOST_REQUIRE(restrictions.at("x").min);
+    BOOST_REQUIRE(restrictions.at("x").max);
+    BOOST_TEST(*restrictions.at("x").min == 1);
+    BOOST_TEST(*restrictions.at("x").max == 2);
+
+    write(
+        "<fmiModelDescription><UnitDefinitions><Unit/><Unit name=\"u\"><BaseUnit/></Unit>"
+        "<Unit name=\"u\"/></UnitDefinitions><ModelVariables><ScalarVariable>"
+        "<Enumeration min=\"1\"/></ScalarVariable><ScalarVariable name=\"invalid\">"
+        "<Enumeration min=\"bad\"/></ScalarVariable><ScalarVariable name=\"x\">"
+        "<Enumeration min=\"1\" max=\"2\"/></ScalarVariable><ScalarVariable name=\"x\">"
+        "<Enumeration min=\"3\" max=\"3\"/></ScalarVariable></ModelVariables>"
+        "</fmiModelDescription>");
+    units[0].has_si_base_unit = false;
+    restrictions.clear();
+    fmi::read_xml_metadata(units, path, &restrictions);
+    BOOST_TEST(units[0].has_si_base_unit);
+    BOOST_TEST(restrictions.size() == 1U);
     BOOST_REQUIRE(restrictions.at("x").min);
     BOOST_REQUIRE(restrictions.at("x").max);
     BOOST_TEST(*restrictions.at("x").min == 1);

@@ -81,7 +81,10 @@ struct fmi2_enumeration_restriction
 using fmi2_enumeration_restrictions =
     std::unordered_map<std::string, fmi2_enumeration_restriction>;
 
-/// Loads XML-only unit presence and FMI 2 Enumeration restrictions.
+/// Best-effort loads XML-only unit presence and FMI 2 Enumeration restrictions.
+///
+/// Malformed optional metadata is omitted with a warning so an FMU accepted by
+/// FMI Library remains loadable.
 void read_xml_metadata(
     std::vector<unit_definition>& units,
     const filesystem::path& modelDescription,

@@ -7,6 +7,7 @@
 
 #include "cosim/error.hpp"
 #include "cosim/exception.hpp"
+#include "cosim/log/logger.hpp"
 
 #include <boost/lexical_cast.hpp>
 #include <boost/property_tree/ptree.hpp>
@@ -58,9 +59,10 @@ void read_xml_metadata(
     try {
         boost::property_tree::read_xml(modelDescription.string(), xml);
     } catch (const boost::property_tree::ptree_error& exception) {
-        throw error(make_error_code(errc::bad_file),
-            "Cannot read FMI XML metadata from '" + modelDescription.string() +
-                "': " + exception.what());
+        BOOST_LOG_SEV(log::logger(), log::warning)
+            << "Cannot read optional FMI XML metadata from '"
+            << modelDescription.string() << "': " << exception.what();
+        return;
     }
     std::unordered_map<std::string, bool> definitions;
     if (const auto unitDefinitions =
@@ -70,14 +72,16 @@ void read_xml_metadata(
             const auto name =
                 entry.second.get_optional<std::string>("<xmlattr>.name");
             if (!name || name->empty()) {
-                throw error(make_error_code(errc::bad_file),
-                    "Unnamed FMI unit definition in '" + modelDescription.string() + "'");
+                BOOST_LOG_SEV(log::logger(), log::warning)
+                    << "Skipping FMI 2.0 unit definition without a name in '"
+                    << modelDescription.string() << "'";
+                continue;
             }
             if (!definitions.emplace(
                     *name, !!entry.second.get_child_optional("BaseUnit")).second) {
-                throw error(make_error_code(errc::bad_file),
-                    "Duplicate FMI unit definition '" + *name +
-                        "' in '" + modelDescription.string() + "'");
+                BOOST_LOG_SEV(log::logger(), log::warning)
+                    << "Skipping duplicate FMI 2.0 unit definition '" << *name
+                    << "' in '" << modelDescription.string() << "'";
             }
         }
     }
@@ -96,26 +100,35 @@ void read_xml_metadata(
             if (!enumeration) continue;
             const auto name =
                 entry.second.get_optional<std::string>("<xmlattr>.name");
-            if (!name) {
-                throw error(make_error_code(errc::bad_file),
-                    "FMI 2.0 Enumeration variable has no name");
+            if (!name || name->empty()) {
+                BOOST_LOG_SEV(log::logger(), log::warning)
+                    << "Skipping FMI 2.0 Enumeration restriction without a variable name in '"
+                    << modelDescription.string() << "'";
+                continue;
             }
             fmi2_enumeration_restriction restriction;
+            bool valid = true;
             const auto parseBound = [&](const char* attribute) -> std::optional<int> {
                 const auto value = enumeration->get_optional<std::string>(attribute);
                 if (!value) return std::nullopt;
                 try {
                     return boost::lexical_cast<int>(*value);
                 } catch (const boost::bad_lexical_cast&) {
-                    throw error(make_error_code(errc::bad_file),
-                        "Invalid Enumeration bound for variable '" + *name + "'");
+                    BOOST_LOG_SEV(log::logger(), log::warning)
+                        << "Skipping FMI 2.0 Enumeration restriction for variable '"
+                        << *name << "' in '" << modelDescription.string()
+                        << "': invalid " << attribute << " value '" << *value << "'";
+                    valid = false;
+                    return std::nullopt;
                 }
             };
             restriction.min = parseBound("<xmlattr>.min");
             restriction.max = parseBound("<xmlattr>.max");
+            if (!valid) continue;
             if (!enumerationRestrictions->emplace(*name, restriction).second) {
-                throw error(make_error_code(errc::bad_file),
-                    "Duplicate FMI 2.0 Enumeration variable '" + *name + "'");
+                BOOST_LOG_SEV(log::logger(), log::warning)
+                    << "Skipping duplicate FMI 2.0 Enumeration restriction for variable '"
+                    << *name << "' in '" << modelDescription.string() << "'";
             }
         }
     }
