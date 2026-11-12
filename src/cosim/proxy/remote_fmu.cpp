@@ -42,6 +42,8 @@ cosim::variable_causality get_causality(const proxyfmu::fmi::scalar_variable& v)
         return cosim::variable_causality::calculated_parameter;
     } else if (v.causality == "local") {
         return cosim::variable_causality::local;
+    } else if (v.causality == "independent") {
+        return cosim::variable_causality::independent;
     } else {
         return cosim::variable_causality::local;
     }

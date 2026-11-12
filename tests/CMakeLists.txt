@@ -71,6 +71,52 @@ else()
         "${CMAKE_SYSTEM_PROCESSOR}")
 endif()
 
+add_library(fmi1_enumeration_fixture_library SHARED
+    "fmi1_enumeration_fixture/model.c")
+target_include_directories(fmi1_enumeration_fixture_library PRIVATE
+    "${FMILibrary_INCLUDE_DIRS}")
+target_compile_definitions(fmi1_enumeration_fixture_library PRIVATE
+    MODEL_IDENTIFIER=EnumerationFixture)
+set_target_properties(fmi1_enumeration_fixture_library PROPERTIES
+    PREFIX "" OUTPUT_NAME "EnumerationFixture")
+set(FMI1_ENUMERATION_FIXTURE
+    "${CMAKE_CURRENT_BINARY_DIR}/fmi1-enumeration/EnumerationFixture.fmu")
+add_custom_command(
+    OUTPUT "${FMI1_ENUMERATION_FIXTURE}"
+    COMMAND "${CMAKE_COMMAND}"
+        "-DOUTPUT_FMU=${FMI1_ENUMERATION_FIXTURE}"
+        "-DFIXTURE_BINARY=$<TARGET_FILE:fmi1_enumeration_fixture_library>"
+        "-DMODEL_DESCRIPTION=${CMAKE_CURRENT_SOURCE_DIR}/fmi1_enumeration_fixture/modelDescription.xml"
+        "-DFMI2_TEST_PLATFORM=${FMI2_TEST_PLATFORM}"
+        -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/CreateFmi2MixedTypesFixture.cmake"
+    DEPENDS fmi1_enumeration_fixture_library
+        "${CMAKE_CURRENT_SOURCE_DIR}/fmi1_enumeration_fixture/modelDescription.xml"
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/CreateFmi2MixedTypesFixture.cmake"
+    VERBATIM)
+add_custom_target(fmi1_enumeration_fixture DEPENDS "${FMI1_ENUMERATION_FIXTURE}")
+
+add_library(fmi2_mixed_types_fixture_library SHARED
+    "fmi2_mixed_types_fixture/model.c")
+target_include_directories(fmi2_mixed_types_fixture_library PRIVATE
+    "${FMILibrary_INCLUDE_DIRS}")
+set_target_properties(fmi2_mixed_types_fixture_library PROPERTIES
+    PREFIX "" OUTPUT_NAME "MixedTypes")
+set(FMI2_MIXED_TYPES_FIXTURE
+    "${CMAKE_CURRENT_BINARY_DIR}/fmi2-mixed-types/MixedTypes.fmu")
+add_custom_command(
+    OUTPUT "${FMI2_MIXED_TYPES_FIXTURE}"
+    COMMAND "${CMAKE_COMMAND}"
+        "-DOUTPUT_FMU=${FMI2_MIXED_TYPES_FIXTURE}"
+        "-DFIXTURE_BINARY=$<TARGET_FILE:fmi2_mixed_types_fixture_library>"
+        "-DMODEL_DESCRIPTION=${CMAKE_CURRENT_SOURCE_DIR}/fmi2_mixed_types_fixture/modelDescription.xml"
+        "-DFMI2_TEST_PLATFORM=${FMI2_TEST_PLATFORM}"
+        -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/CreateFmi2MixedTypesFixture.cmake"
+    DEPENDS fmi2_mixed_types_fixture_library
+        "${CMAKE_CURRENT_SOURCE_DIR}/fmi2_mixed_types_fixture/modelDescription.xml"
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/CreateFmi2MixedTypesFixture.cmake"
+    VERBATIM)
+add_custom_target(fmi2_mixed_types_fixture DEPENDS "${FMI2_MIXED_TYPES_FIXTURE}")
+
 set(fmi2_derivative_binary_directory
     "${CMAKE_CURRENT_BINARY_DIR}/fmi2-derivative-binary")
 add_library(
@@ -118,7 +164,7 @@ add_custom_target(
     fmi2_derivative_fixture
     DEPENDS "${FMI2_DERIVATIVE_FIXTURE}")
 
-set(tests        
+set(tests
     "ecco_algorithm_from_system_structure_test"
     "ecco_algorithm_multi_bond_test"
     "ecco_algorithm_powerbond_logconfig_test"
@@ -204,13 +250,25 @@ endforeach()
 
 add_dependencies(
     cpp_fmi_v2_fmu_unittest
-    fmi2_derivative_fixture)
+    fmi2_derivative_fixture
+    fmi2_mixed_types_fixture)
+set_property(TEST cpp_fmi_v2_fmu_unittest APPEND PROPERTY ENVIRONMENT
+    "FMI2_MIXED_TYPES_FMU=${FMI2_MIXED_TYPES_FIXTURE}")
+
+add_dependencies(cpp_fmi_v1_fmu_unittest
+    fmi1_enumeration_fixture fmi2_mixed_types_fixture)
+set_property(TEST cpp_fmi_v1_fmu_unittest APPEND PROPERTY ENVIRONMENT
+    "FMI1_ENUMERATION_FMU=${FMI1_ENUMERATION_FIXTURE}"
+    "FMI2_MIXED_TYPES_FMU=${FMI2_MIXED_TYPES_FIXTURE}")
 
 set(reference_fmu_test_targets
+    cpp_file_observer_logging_test
     cpp_save_state_test
     cpp_slave_simulator_unittest)
 if(LIBCOSIM_WITH_PROXYFMU)
-    list(APPEND reference_fmu_test_targets cpp_proxyfmu_save_state_test)
+    list(APPEND reference_fmu_test_targets
+        cpp_proxyfmu_integration_unittest
+        cpp_proxyfmu_save_state_test)
 endif()
 
 foreach(reference_fmu_test IN LISTS reference_fmu_test_targets)

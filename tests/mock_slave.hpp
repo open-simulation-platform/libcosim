@@ -76,14 +76,30 @@ public:
         cosim::model_description md;
         md.name = "mock_slave";
         md.uuid = "09b7ee06-fc07-4ad0-86f1-cd183fbae519";
-        md.variables.push_back(cosim::variable_description{"realOut", real_out_reference, cosim::variable_type::real, cosim::variable_causality::output, cosim::variable_variability::discrete, std::nullopt});
-        md.variables.push_back(cosim::variable_description{"realIn", real_in_reference, cosim::variable_type::real, cosim::variable_causality::input, cosim::variable_variability::discrete, 0.0});
-        md.variables.push_back(cosim::variable_description{"intOut", integer_out_reference, cosim::variable_type::integer, cosim::variable_causality::output, cosim::variable_variability::discrete, std::nullopt});
-        md.variables.push_back(cosim::variable_description{"intIn", integer_in_reference, cosim::variable_type::integer, cosim::variable_causality::input, cosim::variable_variability::discrete, 0});
-        md.variables.push_back(cosim::variable_description{"stringOut", string_out_reference, cosim::variable_type::string, cosim::variable_causality::output, cosim::variable_variability::discrete, std::nullopt});
-        md.variables.push_back(cosim::variable_description{"stringIn", string_in_reference, cosim::variable_type::string, cosim::variable_causality::input, cosim::variable_variability::discrete, std::string()});
-        md.variables.push_back(cosim::variable_description{"booleanOut", boolean_out_reference, cosim::variable_type::boolean, cosim::variable_causality::output, cosim::variable_variability::discrete, std::nullopt});
-        md.variables.push_back(cosim::variable_description{"booleanIn", boolean_in_reference, cosim::variable_type::boolean, cosim::variable_causality::input, cosim::variable_variability::discrete, false});
+        const auto add_variable =
+            [&md](const char* name,
+                cosim::value_reference reference,
+                cosim::variable_type type,
+                cosim::variable_causality causality,
+                cosim::variable_variability variability,
+                auto start) {
+                cosim::variable_description description{};
+                description.name = name;
+                description.reference = reference;
+                description.type = type;
+                description.causality = causality;
+                description.variability = variability;
+                description.start = std::move(start);
+                md.variables.push_back(std::move(description));
+            };
+        add_variable("realOut", real_out_reference, cosim::variable_type::real, cosim::variable_causality::output, cosim::variable_variability::discrete, std::nullopt);
+        add_variable("realIn", real_in_reference, cosim::variable_type::real, cosim::variable_causality::input, cosim::variable_variability::discrete, 0.0);
+        add_variable("intOut", integer_out_reference, cosim::variable_type::integer, cosim::variable_causality::output, cosim::variable_variability::discrete, std::nullopt);
+        add_variable("intIn", integer_in_reference, cosim::variable_type::integer, cosim::variable_causality::input, cosim::variable_variability::discrete, 0);
+        add_variable("stringOut", string_out_reference, cosim::variable_type::string, cosim::variable_causality::output, cosim::variable_variability::discrete, std::nullopt);
+        add_variable("stringIn", string_in_reference, cosim::variable_type::string, cosim::variable_causality::input, cosim::variable_variability::discrete, std::string());
+        add_variable("booleanOut", boolean_out_reference, cosim::variable_type::boolean, cosim::variable_causality::output, cosim::variable_variability::discrete, std::nullopt);
+        add_variable("booleanIn", boolean_in_reference, cosim::variable_type::boolean, cosim::variable_causality::input, cosim::variable_variability::discrete, false);
         return md;
     }
 

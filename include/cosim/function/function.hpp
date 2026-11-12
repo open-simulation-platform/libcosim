@@ -125,6 +125,14 @@ public:
     virtual void set_string(const function_io_reference& reference, std::string_view value) = 0;
 
     /**
+     * Sets a complete variable value. The default bridges scalar Real,
+     * Integer, Boolean, and String values to the typed methods.
+     */
+    virtual void set_variable_value(
+        const function_io_reference& reference,
+        const variable_value& value);
+
+    /**
      *  Retrieves the value of a real variable.
      *
      *  If `reference` refers to an output variable, the function is only
@@ -166,6 +174,13 @@ public:
      *  time any of the functions in this interface are called.
      */
     virtual std::string_view get_string(const function_io_reference& reference) const = 0;
+
+    /**
+     * Retrieves a complete variable value. The default bridges scalar Real,
+     * Integer, Boolean, and String values to the typed methods.
+     */
+    virtual variable_value get_variable_value(
+        const function_io_reference& reference) const;
 
     /// Performs the function calculations.
     virtual void calculate() = 0;

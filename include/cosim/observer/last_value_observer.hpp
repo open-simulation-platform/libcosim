@@ -58,6 +58,9 @@ public:
 
     void state_restored(step_number currentStep, time_point currentTime) override;
 
+    variable_value get_variable_value(
+        simulator_index sim, variable_type type, value_reference reference) override;
+
     void get_real(
         simulator_index sim,
         gsl::span<const value_reference> variables,

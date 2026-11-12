@@ -5,6 +5,7 @@
  */
 #include "cosim/algorithm/ecco_algorithm.hpp"
 
+#include "cosim/algorithm/connection_validation.hpp"
 #include "cosim/error.hpp"
 #include "cosim/exception.hpp"
 #include "cosim/log/logger.hpp"
@@ -64,6 +65,7 @@ public:
 
     void connect_variables(variable_id output, variable_id input)
     {
+        detail::validate_connection_types(output.type, input.type);
         auto& sourceSimInfo = simulators_.at(output.simulator);
         auto& targetSimInfo = simulators_.at(input.simulator);
         sourceSimInfo.sim->expose_for_getting(output.type, output.reference);
@@ -73,6 +75,7 @@ public:
 
     void connect_variables(variable_id output, function_io_id input)
     {
+        detail::validate_connection_types(output.type, input.type);
         auto& simInfo = simulators_.at(output.simulator);
         simInfo.sim->expose_for_getting(output.type, output.reference);
         simInfo.outgoingFunConnections.push_back({output, input});
@@ -80,6 +83,7 @@ public:
 
     void connect_variables(function_io_id output, variable_id input)
     {
+        detail::validate_connection_types(output.type, input.type);
         auto& funInfo = functions_.at(output.function);
         auto& simInfo = simulators_.at(input.simulator);
         simInfo.sim->expose_for_setting(input.type, input.reference);
@@ -420,19 +424,35 @@ private:
         switch (c.target.type) {
             case variable_type::real:
                 simulators_.at(c.target.simulator).sim->set_real(c.target.reference, simulators_.at(c.source.simulator).sim->get_real(c.source.reference));
-                break;
+                return;
             case variable_type::integer:
                 simulators_.at(c.target.simulator).sim->set_integer(c.target.reference, simulators_.at(c.source.simulator).sim->get_integer(c.source.reference));
-                break;
+                return;
             case variable_type::boolean:
                 simulators_.at(c.target.simulator).sim->set_boolean(c.target.reference, simulators_.at(c.source.simulator).sim->get_boolean(c.source.reference));
-                break;
+                return;
             case variable_type::string:
                 simulators_.at(c.target.simulator).sim->set_string(c.target.reference, simulators_.at(c.source.simulator).sim->get_string(c.source.reference));
-                break;
+                return;
             case variable_type::enumeration:
-                COSIM_PANIC_M("Can't handle variable of type 'enumeration' yet");
+                simulators_.at(c.target.simulator).sim->set_variable_value(
+                    c.target.type, c.target.reference,
+                    simulators_.at(c.source.simulator).sim->get_variable_value(
+                        c.source.type, c.source.reference));
+                return;
+            case variable_type::float32:
+            case variable_type::int8:
+            case variable_type::uint8:
+            case variable_type::int16:
+            case variable_type::uint16:
+            case variable_type::uint32:
+            case variable_type::int64:
+            case variable_type::uint64:
+            case variable_type::binary:
+            case variable_type::clock:
+                COSIM_PANIC_M("Can't transfer variable of this type yet");
         }
+        COSIM_PANIC_M("Can't transfer variable of this type yet");
     }
 
     void transfer_variable(const connection_sf& c)
@@ -441,19 +461,35 @@ private:
         switch (c.target.type) {
             case variable_type::real:
                 functions_.at(c.target.function).fun->set_real(c.target.reference, simulators_.at(c.source.simulator).sim->get_real(c.source.reference));
-                break;
+                return;
             case variable_type::integer:
                 functions_.at(c.target.function).fun->set_integer(c.target.reference, simulators_.at(c.source.simulator).sim->get_integer(c.source.reference));
-                break;
+                return;
             case variable_type::boolean:
                 functions_.at(c.target.function).fun->set_boolean(c.target.reference, simulators_.at(c.source.simulator).sim->get_boolean(c.source.reference));
-                break;
+                return;
             case variable_type::string:
                 functions_.at(c.target.function).fun->set_string(c.target.reference, simulators_.at(c.source.simulator).sim->get_string(c.source.reference));
-                break;
+                return;
             case variable_type::enumeration:
-                COSIM_PANIC_M("Can't handle variable of type 'enumeration' yet");
+                functions_.at(c.target.function).fun->set_variable_value(
+                    c.target.reference,
+                    simulators_.at(c.source.simulator).sim->get_variable_value(
+                        c.source.type, c.source.reference));
+                return;
+            case variable_type::float32:
+            case variable_type::int8:
+            case variable_type::uint8:
+            case variable_type::int16:
+            case variable_type::uint16:
+            case variable_type::uint32:
+            case variable_type::int64:
+            case variable_type::uint64:
+            case variable_type::binary:
+            case variable_type::clock:
+                COSIM_PANIC_M("Can't transfer variable of this type yet");
         }
+        COSIM_PANIC_M("Can't transfer variable of this type yet");
     }
 
     void transfer_variable(const connection_fs& c)
@@ -462,19 +498,34 @@ private:
         switch (c.target.type) {
             case variable_type::real:
                 simulators_.at(c.target.simulator).sim->set_real(c.target.reference, functions_.at(c.source.function).fun->get_real(c.source.reference));
-                break;
+                return;
             case variable_type::integer:
                 simulators_.at(c.target.simulator).sim->set_integer(c.target.reference, functions_.at(c.source.function).fun->get_integer(c.source.reference));
-                break;
+                return;
             case variable_type::boolean:
                 simulators_.at(c.target.simulator).sim->set_boolean(c.target.reference, functions_.at(c.source.function).fun->get_boolean(c.source.reference));
-                break;
+                return;
             case variable_type::string:
                 simulators_.at(c.target.simulator).sim->set_string(c.target.reference, functions_.at(c.source.function).fun->get_string(c.source.reference));
-                break;
+                return;
             case variable_type::enumeration:
-                COSIM_PANIC_M("Can't handle variable of type 'enumeration' yet");
+                simulators_.at(c.target.simulator).sim->set_variable_value(
+                    c.target.type, c.target.reference,
+                    functions_.at(c.source.function).fun->get_variable_value(c.source.reference));
+                return;
+            case variable_type::float32:
+            case variable_type::int8:
+            case variable_type::uint8:
+            case variable_type::int16:
+            case variable_type::uint16:
+            case variable_type::uint32:
+            case variable_type::int64:
+            case variable_type::uint64:
+            case variable_type::binary:
+            case variable_type::clock:
+                COSIM_PANIC_M("Can't transfer variable of this type yet");
         }
+        COSIM_PANIC_M("Can't transfer variable of this type yet");
     }
 
     const ecco_algorithm_params params_;

@@ -7,11 +7,14 @@
 
 #include "cosim/error.hpp"
 #include "cosim/exception.hpp"
+#include "cosim/utility/enumeration.hpp"
 
+#include <charconv>
 #include <cosim/utility/utility.hpp>
 
 #include <algorithm>
 #include <cassert>
+#include <set>
 #include <stdexcept>
 #include <unordered_map>
 
@@ -68,6 +71,12 @@ struct get_variable_cache
     void set_modifier(value_reference r, std::function<T(T, duration)> m)
     {
         modifiers[indexMapping[r]] = m;
+    }
+
+    bool has_modifier(value_reference r) const
+    {
+        const auto it = indexMapping.find(r);
+        return it != indexMapping.end() && static_cast<bool>(modifiers[it->second]);
     }
 
     void run_modifiers(duration deltaT)
@@ -157,6 +166,11 @@ public:
         } else {
             modifiers_.erase(r);
         }
+    }
+
+    bool has_modifier(value_reference r) const
+    {
+        return modifiers_.count(r) != 0;
     }
 
     std::pair<gsl::span<value_reference>, gsl::span<const T>> modify_and_get(
@@ -292,6 +306,37 @@ T get_start_value(variable_description vd)
     if (!vd.start) return T();
     return std::get<T>(*vd.start);
 }
+
+template<typename Values, typename Scalar>
+Scalar apply_scalar_modifier(
+    const manipulable::variable_modifier& modifier,
+    Scalar original,
+    duration deltaT)
+{
+    auto modified = modifier(variable_value(Values{{original}}), deltaT);
+    if (modified.type() != Values::type || !modified.is_scalar()) {
+        throw error(make_error_code(errc::simulation_error),
+            "A whole-variable modifier changed the value type or shape");
+    }
+    return std::get<Values>(modified.values()).values[0];
+}
+
+variable_value apply_enumeration_modifier(
+    const manipulable::variable_modifier& modifier,
+    enumeration_value original,
+    duration deltaT)
+{
+    auto modified = modifier(variable_value(enumeration_values{{original}}), deltaT);
+    if (const auto normalized =
+            normalize_enumeration_value(variable_type::enumeration, modified)) {
+        modified = *normalized;
+    }
+    if (modified.type() != variable_type::enumeration || !modified.is_scalar()) {
+        throw error(make_error_code(errc::simulation_error),
+            "A whole-variable modifier changed the value type or shape");
+    }
+    return modified;
+}
 } // namespace
 
 
@@ -332,19 +377,36 @@ public:
         switch (type) {
             case variable_type::real:
                 state_.realGetCache.expose(ref);
-                break;
+                return;
             case variable_type::integer:
                 state_.integerGetCache.expose(ref);
-                break;
+                return;
             case variable_type::boolean:
                 state_.booleanGetCache.expose(ref);
-                break;
+                return;
             case variable_type::string:
                 state_.stringGetCache.expose(ref);
-                break;
+                return;
             case variable_type::enumeration:
+                if (!find_variable_description(ref, type).dimensions.empty()) {
+                    throw error(make_error_code(errc::unsupported_feature),
+                        "Array Enumeration access is not supported");
+                }
+                state_.enumerationGetCache.try_emplace(ref, std::nullopt);
+                return;
+            case variable_type::float32:
+            case variable_type::int8:
+            case variable_type::uint8:
+            case variable_type::int16:
+            case variable_type::uint16:
+            case variable_type::uint32:
+            case variable_type::int64:
+            case variable_type::uint64:
+            case variable_type::binary:
+            case variable_type::clock:
                 COSIM_PANIC();
         }
+        COSIM_PANIC();
     }
 
     double get_real(value_reference ref) const
@@ -367,25 +429,56 @@ public:
         return state_.stringGetCache.get(ref);
     }
 
+    variable_value get_enumeration_value(value_reference ref) const
+    {
+        const auto& value = state_.enumerationGetCache.at(ref);
+        if (!value) {
+            throw std::logic_error("Exposed Enumeration variable has not been retrieved yet");
+        }
+        return variable_value(enumeration_values{{*value}});
+    }
+
     void expose_for_setting(variable_type type, value_reference ref)
     {
         const auto vd = find_variable_description(ref, type);
         switch (type) {
             case variable_type::real:
                 state_.realSetCache.expose(ref, get_start_value<double>(vd));
-                break;
+                return;
             case variable_type::integer:
                 state_.integerSetCache.expose(ref, get_start_value<int>(vd));
-                break;
+                return;
             case variable_type::boolean:
                 state_.booleanSetCache.expose(ref, get_start_value<bool>(vd));
-                break;
+                return;
             case variable_type::string:
                 state_.stringSetCache.expose(ref, get_start_value<std::string>(vd));
-                break;
+                return;
             case variable_type::enumeration:
+                if (!vd.dimensions.empty()) {
+                    throw error(make_error_code(errc::unsupported_feature),
+                        "Array Enumeration access is not supported");
+                }
+                {
+                    std::optional<enumeration_value> start;
+                    if (vd.start) start = std::get<enumeration_value>(*vd.start);
+                    state_.enumerationSetCache.try_emplace(
+                        ref, enumeration_set_entry{start, false});
+                }
+                return;
+            case variable_type::float32:
+            case variable_type::int8:
+            case variable_type::uint8:
+            case variable_type::int16:
+            case variable_type::uint16:
+            case variable_type::uint32:
+            case variable_type::int64:
+            case variable_type::uint64:
+            case variable_type::binary:
+            case variable_type::clock:
                 COSIM_PANIC();
         }
+        COSIM_PANIC();
     }
 
     void set_real(value_reference ref, double value)
@@ -408,12 +501,131 @@ public:
         state_.stringSetCache.set_value(ref, value);
     }
 
+    void set_enumeration_value(value_reference ref, const variable_value& value)
+    {
+        if (!value.is_scalar()) {
+            throw std::invalid_argument("Enumeration assignment must be scalar");
+        }
+        enumeration_value normalized;
+        if (value.type() == variable_type::enumeration) {
+            normalized = std::get<enumeration_values>(value.values()).values[0];
+        } else if (value.type() == variable_type::integer) {
+            normalized.value = std::get<integer_values>(value.values()).values[0];
+        } else {
+            throw std::invalid_argument("Enumeration assignment type mismatch");
+        }
+        auto& entry = state_.enumerationSetCache.at(ref);
+        entry.value = normalized;
+        entry.pending = true;
+    }
+
+    void set_variable_input_modifier(
+        variable_type type, value_reference ref, manipulable::variable_modifier modifier)
+    {
+        if (type == variable_type::enumeration) {
+            auto& entry = state_.enumerationSetCache.at(ref);
+            if (modifier) {
+                enumerationInputModifiers_[ref] = std::move(modifier);
+            } else {
+                enumerationInputModifiers_.erase(ref);
+                entry.pending = entry.value.has_value();
+            }
+            return;
+        }
+        switch (type) {
+            case variable_type::real:
+                set_real_input_modifier(ref, modifier ? [modifier](double v, duration dt) {
+                    return apply_scalar_modifier<real_values>(modifier, v, dt);
+                } : std::function<double(double, duration)>{});
+                return;
+            case variable_type::integer:
+                set_integer_input_modifier(ref, modifier ? [modifier](int v, duration dt) {
+                    return apply_scalar_modifier<integer_values>(modifier, v, dt);
+                } : std::function<int(int, duration)>{});
+                return;
+            case variable_type::boolean:
+                set_boolean_input_modifier(ref, modifier ? [modifier](bool v, duration dt) {
+                    return apply_scalar_modifier<boolean_values>(modifier, v, dt);
+                } : std::function<bool(bool, duration)>{});
+                return;
+            case variable_type::string:
+                set_string_input_modifier(ref, modifier ? [modifier](std::string_view v, duration dt) {
+                    return apply_scalar_modifier<string_values>(modifier, std::string(v), dt);
+                } : std::function<std::string(std::string_view, duration)>{});
+                return;
+            case variable_type::enumeration:
+            case variable_type::float32:
+            case variable_type::int8:
+            case variable_type::uint8:
+            case variable_type::int16:
+            case variable_type::uint16:
+            case variable_type::uint32:
+            case variable_type::int64:
+            case variable_type::uint64:
+            case variable_type::binary:
+            case variable_type::clock:
+                break;
+        }
+        throw error(make_error_code(errc::unsupported_feature),
+            "Whole-value input modifier type is not supported");
+    }
+
+    void set_variable_output_modifier(
+        variable_type type, value_reference ref, manipulable::variable_modifier modifier)
+    {
+        if (type == variable_type::enumeration) {
+            (void)state_.enumerationGetCache.at(ref);
+            if (modifier) {
+                enumerationOutputModifiers_[ref] = std::move(modifier);
+            } else {
+                enumerationOutputModifiers_.erase(ref);
+            }
+            return;
+        }
+        switch (type) {
+            case variable_type::real:
+                set_real_output_modifier(ref, modifier ? [modifier](double v, duration dt) {
+                    return apply_scalar_modifier<real_values>(modifier, v, dt);
+                } : std::function<double(double, duration)>{});
+                return;
+            case variable_type::integer:
+                set_integer_output_modifier(ref, modifier ? [modifier](int v, duration dt) {
+                    return apply_scalar_modifier<integer_values>(modifier, v, dt);
+                } : std::function<int(int, duration)>{});
+                return;
+            case variable_type::boolean:
+                set_boolean_output_modifier(ref, modifier ? [modifier](bool v, duration dt) {
+                    return apply_scalar_modifier<boolean_values>(modifier, v, dt);
+                } : std::function<bool(bool, duration)>{});
+                return;
+            case variable_type::string:
+                set_string_output_modifier(ref, modifier ? [modifier](std::string_view v, duration dt) {
+                    return apply_scalar_modifier<string_values>(modifier, std::string(v), dt);
+                } : std::function<std::string(std::string_view, duration)>{});
+                return;
+            case variable_type::enumeration:
+            case variable_type::float32:
+            case variable_type::int8:
+            case variable_type::uint8:
+            case variable_type::int16:
+            case variable_type::uint16:
+            case variable_type::uint32:
+            case variable_type::int64:
+            case variable_type::uint64:
+            case variable_type::binary:
+            case variable_type::clock:
+                break;
+        }
+        throw error(make_error_code(errc::unsupported_feature),
+            "Whole-value output modifier type is not supported");
+    }
+
     void set_real_input_modifier(
         value_reference ref,
         std::function<double(double, duration)> modifier)
     {
         state_.realSetCache.set_modifier(ref, modifier);
-        set_modified_reference(modifiedRealVariables_, ref, modifier ? true : false);
+        set_modified_reference(modifiedRealVariables_, ref, state_.realGetCache, state_.realSetCache);
     }
 
     void set_integer_input_modifier(
@@ -421,7 +633,7 @@ public:
         std::function<int(int, duration)> modifier)
     {
         state_.integerSetCache.set_modifier(ref, modifier);
-        set_modified_reference(modifiedIntegerVariables_, ref, modifier ? true : false);
+        set_modified_reference(modifiedIntegerVariables_, ref, state_.integerGetCache, state_.integerSetCache);
     }
 
     void set_boolean_input_modifier(
@@ -429,7 +641,7 @@ public:
         std::function<bool(bool, duration)> modifier)
     {
         state_.booleanSetCache.set_modifier(ref, modifier);
-        set_modified_reference(modifiedBooleanVariables_, ref, modifier ? true : false);
+        set_modified_reference(modifiedBooleanVariables_, ref, state_.booleanGetCache, state_.booleanSetCache);
     }
 
     void set_string_input_modifier(
@@ -437,7 +649,7 @@ public:
         std::function<std::string(std::string_view, duration)> modifier)
     {
         state_.stringSetCache.set_modifier(ref, modifier);
-        set_modified_reference(modifiedStringVariables_, ref, modifier ? true : false);
+        set_modified_reference(modifiedStringVariables_, ref, state_.stringGetCache, state_.stringSetCache);
     }
 
     void set_real_output_modifier(
@@ -445,7 +657,7 @@ public:
         std::function<double(double, duration)> modifier)
     {
         state_.realGetCache.set_modifier(ref, modifier);
-        set_modified_reference(modifiedRealVariables_, ref, modifier ? true : false);
+        set_modified_reference(modifiedRealVariables_, ref, state_.realGetCache, state_.realSetCache);
     }
 
     void set_integer_output_modifier(
@@ -453,7 +665,7 @@ public:
         std::function<int(int, duration)> modifier)
     {
         state_.integerGetCache.set_modifier(ref, modifier);
-        set_modified_reference(modifiedIntegerVariables_, ref, modifier ? true : false);
+        set_modified_reference(modifiedIntegerVariables_, ref, state_.integerGetCache, state_.integerSetCache);
     }
 
     void set_boolean_output_modifier(
@@ -461,7 +673,7 @@ public:
         std::function<bool(bool, duration)> modifier)
     {
         state_.booleanGetCache.set_modifier(ref, modifier);
-        set_modified_reference(modifiedBooleanVariables_, ref, modifier ? true : false);
+        set_modified_reference(modifiedBooleanVariables_, ref, state_.booleanGetCache, state_.booleanSetCache);
     }
 
     void set_string_output_modifier(
@@ -469,7 +681,7 @@ public:
         std::function<std::string(std::string_view, duration)> modifier)
     {
         state_.stringGetCache.set_modifier(ref, modifier);
-        set_modified_reference(modifiedStringVariables_, ref, modifier ? true : false);
+        set_modified_reference(modifiedStringVariables_, ref, state_.stringGetCache, state_.stringSetCache);
     }
 
     std::unordered_set<value_reference>& get_modified_real_variables()
@@ -490,6 +702,28 @@ public:
     std::unordered_set<value_reference>& get_modified_string_variables()
     {
         return modifiedStringVariables_;
+    }
+
+    std::vector<typed_value_reference> get_modified_variables() const
+    {
+        std::set<std::pair<variable_type, value_reference>> modified;
+        const auto add = [&modified](variable_type type, const auto& references) {
+            for (const auto reference : references) modified.emplace(type, reference);
+        };
+        add(variable_type::real, modifiedRealVariables_);
+        add(variable_type::integer, modifiedIntegerVariables_);
+        add(variable_type::boolean, modifiedBooleanVariables_);
+        add(variable_type::string, modifiedStringVariables_);
+        for (const auto& entry : enumerationInputModifiers_) {
+            modified.emplace(variable_type::enumeration, entry.first);
+        }
+        for (const auto& entry : enumerationOutputModifiers_) {
+            modified.emplace(variable_type::enumeration, entry.first);
+        }
+        std::vector<typed_value_reference> result;
+        result.reserve(modified.size());
+        for (const auto& entry : modified) result.push_back({entry.first, entry.second});
+        return result;
     }
 
     void setup(
@@ -521,6 +755,7 @@ public:
             gsl::make_span(stringRefs),
             gsl::make_span(stringValues));
 
+        set_enumerations(true, deltaT);
         slave_->setup(startTime, stopTime, relativeTolerance);
         get_variables(duration::zero());
     }
@@ -597,6 +832,23 @@ public:
         exportedState.put_child("integer_set_cache", savedState.integerSetCache.export_state());
         exportedState.put_child("boolean_set_cache", savedState.booleanSetCache.export_state());
         exportedState.put_child("string_set_cache", savedState.stringSetCache.export_state());
+        serialization::node enumerationGet;
+        for (const auto& [reference, value] : savedState.enumerationGetCache) {
+            serialization::node entry;
+            entry.put("has_value", value.has_value());
+            if (value) entry.put("value", value->value);
+            enumerationGet.put_child(std::to_string(reference), entry);
+        }
+        exportedState.put_child("enumeration_get_cache", enumerationGet);
+        serialization::node enumerationSet;
+        for (const auto& [reference, cached] : savedState.enumerationSetCache) {
+            serialization::node entry;
+            entry.put("has_value", cached.value.has_value());
+            entry.put("pending", cached.pending);
+            if (cached.value) entry.put("value", cached.value->value);
+            enumerationSet.put_child(std::to_string(reference), entry);
+        }
+        exportedState.put_child("enumeration_set_cache", enumerationSet);
         return exportedState;
     }
 
@@ -610,10 +862,7 @@ public:
                     "The serialized state of subsimulator '" + name_
                         + "' uses an incompatible scheme");
             }
-            const auto stateIndex =
-                slave_->import_state(exportedState.get_child("state"));
-            assert(savedStates_.count(stateIndex) == 0);
-            auto& savedState = savedStates_.try_emplace(stateIndex).first->second;
+            state savedState;
             savedState.realGetCache.import_state(exportedState.get_child("real_get_cache"));
             savedState.integerGetCache.import_state(exportedState.get_child("integer_get_cache"));
             savedState.booleanGetCache.import_state(exportedState.get_child("boolean_get_cache"));
@@ -622,6 +871,76 @@ public:
             savedState.integerSetCache.import_state(exportedState.get_child("integer_set_cache"));
             savedState.booleanSetCache.import_state(exportedState.get_child("boolean_set_cache"));
             savedState.stringSetCache.import_state(exportedState.get_child("string_set_cache"));
+            const auto parseReference = [](const std::string& key) {
+                value_reference reference{};
+                const auto result =
+                    std::from_chars(key.data(), key.data() + key.size(), reference);
+                if (result.ec != std::errc{} || result.ptr != key.data() + key.size()) {
+                    throw error(make_error_code(errc::bad_file),
+                        "Invalid Enumeration cache reference");
+                }
+                return reference;
+            };
+            const auto importEnumerations = [&parseReference](const serialization::node& node, auto& cache) {
+                for (const auto& [key, entry] : node) {
+                    const auto reference = parseReference(key);
+                    std::optional<enumeration_value> value;
+                    if (entry.template get<bool>("has_value")) {
+                        value = enumeration_value{
+                            entry.template get<std::int64_t>("value")};
+                    }
+                    if (!cache.emplace(reference, value).second) {
+                        throw error(make_error_code(errc::bad_file),
+                            "Duplicate Enumeration cache reference");
+                    }
+                }
+            };
+            const auto getNode = exportedState.get_child_optional("enumeration_get_cache");
+            const auto setNode = exportedState.get_child_optional("enumeration_set_cache");
+            if (static_cast<bool>(getNode) != static_cast<bool>(setNode)) {
+                throw error(make_error_code(errc::bad_file),
+                    "Incomplete Enumeration caches in serialized state");
+            }
+            if (getNode) {
+                importEnumerations(*getNode, savedState.enumerationGetCache);
+            } else {
+                for (const auto& [reference, value] : state_.enumerationGetCache) {
+                    savedState.enumerationGetCache.emplace(reference, std::nullopt);
+                }
+            }
+            if (setNode) {
+                for (const auto& [key, entry] : *setNode) {
+                    const auto reference = parseReference(key);
+                    std::optional<enumeration_value> value;
+                    if (entry.get<bool>("has_value")) {
+                        value = enumeration_value{entry.get<std::int64_t>("value")};
+                    }
+                    const auto pending = entry.get<bool>("pending");
+                    if (pending && !value) {
+                        throw error(make_error_code(errc::bad_file),
+                            "Pending Enumeration cache entry has no value");
+                    }
+                    if (!savedState.enumerationSetCache.emplace(
+                            reference, enumeration_set_entry{value, pending}).second) {
+                        throw error(make_error_code(errc::bad_file),
+                            "Duplicate Enumeration cache reference");
+                    }
+                }
+            } else {
+                for (const auto& [reference, cached] : state_.enumerationSetCache) {
+                    savedState.enumerationSetCache.emplace(
+                        reference, enumeration_set_entry{std::nullopt, false});
+                }
+            }
+            const auto stateIndex =
+                slave_->import_state(exportedState.get_child("state"));
+            assert(savedStates_.count(stateIndex) == 0);
+            try {
+                savedStates_.emplace(stateIndex, std::move(savedState));
+            } catch (...) {
+                slave_->release_state(stateIndex);
+                throw;
+            }
             return stateIndex;
         } catch (const boost::property_tree::ptree_bad_path&) {
             throw error(
@@ -633,10 +952,56 @@ public:
                 make_error_code(errc::bad_file),
                 "The serialized state of subsimulator '" + name_
                     + "' is invalid or corrupt");
+        } catch (const boost::property_tree::ptree_bad_data&) {
+            throw error(
+                make_error_code(errc::bad_file),
+                "The serialized state of subsimulator '" + name_
+                    + "' is invalid or corrupt");
+        } catch (const std::invalid_argument&) {
+            throw error(
+                make_error_code(errc::bad_file),
+                "The serialized state of subsimulator '" + name_
+                    + "' is invalid or corrupt");
+        } catch (const std::out_of_range&) {
+            throw error(
+                make_error_code(errc::bad_file),
+                "The serialized state of subsimulator '" + name_
+                    + "' is invalid or corrupt");
         }
     }
 
 private:
+    void set_enumerations(bool beforeSetup, duration deltaT)
+    {
+        std::vector<typed_value_reference> references;
+        std::vector<variable_value> values;
+        for (const auto& [reference, cached] : state_.enumerationSetCache) {
+            const auto modifier = enumerationInputModifiers_.find(reference);
+            if (!cached.pending && modifier == enumerationInputModifiers_.end()) continue;
+            if (!cached.value) {
+                throw error(make_error_code(errc::simulation_error),
+                    "Cannot modify an Enumeration variable without an initial value");
+            }
+            if (beforeSetup) {
+                const auto description =
+                    find_variable_description(reference, variable_type::enumeration);
+                if (description.variability == variable_variability::constant ||
+                    description.causality == variable_causality::input) {
+                    continue;
+                }
+            }
+            references.push_back({variable_type::enumeration, reference});
+            values.push_back(modifier == enumerationInputModifiers_.end()
+                ? variable_value(enumeration_values{{*cached.value}})
+                : apply_enumeration_modifier(modifier->second, *cached.value, deltaT));
+        }
+        if (references.empty()) return;
+        slave_->set_variable_values(references, values);
+        for (const auto variable : references) {
+            state_.enumerationSetCache.at(variable.reference).pending = false;
+        }
+    }
+
     void set_variables(duration deltaT)
     {
         const auto [realRefs, realValues] = state_.realSetCache.modify_and_get(deltaT);
@@ -652,6 +1017,7 @@ private:
             gsl::make_span(booleanValues),
             gsl::make_span(stringRefs),
             gsl::make_span(stringValues));
+        set_enumerations(false, deltaT);
         state_.realSetCache.reset();
         state_.integerSetCache.reset();
         state_.booleanSetCache.reset();
@@ -674,6 +1040,33 @@ private:
         state_.integerGetCache.run_modifiers(deltaT);
         state_.booleanGetCache.run_modifiers(deltaT);
         state_.stringGetCache.run_modifiers(deltaT);
+        std::vector<typed_value_reference> references;
+        for (const auto& [reference, value] : state_.enumerationGetCache) {
+            references.push_back({variable_type::enumeration, reference});
+        }
+        if (!references.empty()) {
+            const auto values = slave_->get_variable_values(references);
+            if (values.size() != references.size()) {
+                throw error(make_error_code(errc::model_error),
+                    "Slave returned an incorrect number of Enumeration values");
+            }
+            for (std::size_t i = 0; i < values.size(); ++i) {
+                if (values[i].type() != variable_type::enumeration ||
+                    !values[i].is_scalar()) {
+                    throw error(make_error_code(errc::model_error),
+                        "Slave returned an invalid Enumeration value");
+                }
+            }
+            for (std::size_t i = 0; i < values.size(); ++i) {
+                auto value = std::get<enumeration_values>(values[i].values()).values[0];
+                const auto modifier = enumerationOutputModifiers_.find(references[i].reference);
+                if (modifier != enumerationOutputModifiers_.end()) {
+                    const auto modified = apply_enumeration_modifier(modifier->second, value, deltaT);
+                    value = std::get<enumeration_values>(modified.values()).values[0];
+                }
+                state_.enumerationGetCache.at(references[i].reference) = value;
+            }
+        }
     }
 
     variable_description find_variable_description(value_reference ref, variable_type type)
@@ -692,9 +1085,14 @@ private:
         return *it;
     }
 
-    void set_modified_reference(std::unordered_set<value_reference>& modifiedRefs, value_reference& ref, bool modifier)
+    template<typename T>
+    void set_modified_reference(
+        std::unordered_set<value_reference>& modifiedRefs,
+        value_reference ref,
+        const get_variable_cache<T>& getCache,
+        const set_variable_cache<T>& setCache)
     {
-        if (modifier) {
+        if (getCache.has_modifier(ref) || setCache.has_modifier(ref)) {
             modifiedRefs.insert(ref);
         } else {
             modifiedRefs.erase(ref);
@@ -704,7 +1102,8 @@ private:
     void check_state_saving_allowed() const
     {
         if (modifiedRealVariables_.empty() && modifiedIntegerVariables_.empty() &&
-            modifiedBooleanVariables_.empty() && modifiedStringVariables_.empty()) {
+            modifiedBooleanVariables_.empty() && modifiedStringVariables_.empty() &&
+            enumerationInputModifiers_.empty() && enumerationOutputModifiers_.empty()) {
             return;
         }
         throw error(
@@ -713,6 +1112,12 @@ private:
     }
 
 private:
+    struct enumeration_set_entry
+    {
+        std::optional<enumeration_value> value;
+        bool pending = false;
+    };
+
     std::shared_ptr<slave> slave_;
     std::string name_;
     cosim::model_description modelDescription_;
@@ -728,6 +1133,10 @@ private:
         set_variable_cache<int> integerSetCache;
         set_variable_cache<bool> booleanSetCache;
         set_variable_cache<std::string> stringSetCache;
+        std::unordered_map<value_reference, std::optional<enumeration_value>>
+            enumerationGetCache;
+        std::unordered_map<value_reference, enumeration_set_entry>
+            enumerationSetCache;
     };
     state state_;
     std::unordered_map<state_index, state> savedStates_;
@@ -736,6 +1145,8 @@ private:
     std::unordered_set<value_reference> modifiedIntegerVariables_;
     std::unordered_set<value_reference> modifiedBooleanVariables_;
     std::unordered_set<value_reference> modifiedStringVariables_;
+    std::unordered_map<value_reference, manipulable::variable_modifier> enumerationInputModifiers_;
+    std::unordered_map<value_reference, manipulable::variable_modifier> enumerationOutputModifiers_;
 
     // This is a temporary storage which gets reused within certain functions
     // to avoid frequent reallocations.
@@ -799,6 +1210,15 @@ std::string_view slave_simulator::get_string(value_reference ref) const
     return pimpl_->get_string(ref);
 }
 
+variable_value slave_simulator::get_variable_value(
+    variable_type type, value_reference ref) const
+{
+    if (type == variable_type::enumeration) {
+        return pimpl_->get_enumeration_value(ref);
+    }
+    return observable::get_variable_value(type, ref);
+}
+
 
 void slave_simulator::expose_for_setting(variable_type type, value_reference ref)
 {
@@ -827,6 +1247,16 @@ void slave_simulator::set_boolean(value_reference ref, bool value)
 void slave_simulator::set_string(value_reference ref, std::string_view value)
 {
     pimpl_->set_string(ref, value);
+}
+
+void slave_simulator::set_variable_value(
+    variable_type type, value_reference ref, const variable_value& value)
+{
+    if (type == variable_type::enumeration) {
+        pimpl_->set_enumeration_value(ref, value);
+    } else {
+        simulator::set_variable_value(type, ref, value);
+    }
 }
 
 void slave_simulator::set_real_input_modifier(
@@ -885,6 +1315,18 @@ void slave_simulator::set_string_output_modifier(
     pimpl_->set_string_output_modifier(ref, modifier);
 }
 
+void slave_simulator::set_variable_input_modifier(
+    variable_type type, value_reference ref, variable_modifier modifier)
+{
+    pimpl_->set_variable_input_modifier(type, ref, std::move(modifier));
+}
+
+void slave_simulator::set_variable_output_modifier(
+    variable_type type, value_reference ref, variable_modifier modifier)
+{
+    pimpl_->set_variable_output_modifier(type, ref, std::move(modifier));
+}
+
 std::unordered_set<value_reference>& slave_simulator::get_modified_real_variables() const
 {
     return pimpl_->get_modified_real_variables();
@@ -903,6 +1345,11 @@ std::unordered_set<value_reference>& slave_simulator::get_modified_boolean_varia
 std::unordered_set<value_reference>& slave_simulator::get_modified_string_variables() const
 {
     return pimpl_->get_modified_string_variables();
+}
+
+std::vector<typed_value_reference> slave_simulator::get_modified_variables() const
+{
+    return pimpl_->get_modified_variables();
 }
 
 void slave_simulator::setup(

@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fmiModelDescription
+        fmiVersion="2.0"
+        modelName="libcosim.fmi2.mixed_types"
+        guid="{b6a8bb7d-3c77-4f0c-9c1d-4b6b1a17e0d2}"
+        generationTool="libcosim test fixture"
+        variableNamingConvention="flat"
+        numberOfEventIndicators="0">
+    <CoSimulation
+            modelIdentifier="MixedTypes"
+            canHandleVariableCommunicationStepSize="true"/>
+    <TypeDefinitions>
+        <SimpleType
+                name="Option"
+                description="Enumeration values shared with the FMI 3 fixture">
+            <Enumeration>
+                <Item name="One" value="1" description="One"/>
+                <Item name="Two" value="2" description="Two"/>
+            </Enumeration>
+        </SimpleType>
+        <SimpleType
+                name="SignedOption"
+                description="Signed Enumeration values used by interoperability tests">
+            <Enumeration>
+                <Item
+                        name="Negative"
+                        value="-2147483648"
+                        description="Minimum FMI 2 Integer value"/>
+                <Item
+                        name="Zero"
+                        value="0"
+                        description="Zero"/>
+                <Item
+                        name="One"
+                        value="1"
+                        description="One"/>
+                <Item
+                        name="Two"
+                        value="2"
+                        description="Two"/>
+                <Item
+                        name="Positive"
+                        value="2147483647"
+                        description="Maximum FMI 2 Integer value"/>
+            </Enumeration>
+        </SimpleType>
+    </TypeDefinitions>
+    <ModelVariables>
+        <ScalarVariable
+                name="real_input"
+                valueReference="1"
+                causality="input"
+                variability="continuous">
+            <Real start="0.0"/>
+        </ScalarVariable>
+        <ScalarVariable
+                name="real_output"
+                valueReference="2"
+                causality="output"
+                variability="continuous">
+            <Real/>
+        </ScalarVariable>
+        <ScalarVariable
+                name="integer_input"
+                valueReference="3"
+                causality="input"
+                variability="discrete">
+            <Integer start="0"/>
+        </ScalarVariable>
+        <ScalarVariable
+                name="integer_output"
+                valueReference="4"
+                causality="output"
+                variability="discrete">
+            <Integer/>
+        </ScalarVariable>
+        <ScalarVariable
+                name="boolean_input"
+                valueReference="5"
+                causality="input"
+                variability="discrete">
+            <Boolean start="false"/>
+        </ScalarVariable>
+        <ScalarVariable
+                name="boolean_output"
+                valueReference="6"
+                causality="output"
+                variability="discrete">
+            <Boolean/>
+        </ScalarVariable>
+        <ScalarVariable
+                name="enumeration_input"
+                valueReference="7"
+                causality="input"
+                variability="discrete">
+            <Enumeration
+                    declaredType="Option"
+                    start="1"/>
+        </ScalarVariable>
+        <ScalarVariable
+                name="enumeration_output"
+                valueReference="8"
+                causality="output"
+                variability="discrete">
+            <Enumeration
+                    declaredType="Option"/>
+        </ScalarVariable>
+        <ScalarVariable
+                name="signed_enumeration_input"
+                valueReference="9"
+                causality="input"
+                variability="discrete">
+            <Enumeration
+                    declaredType="SignedOption"
+                    start="-2147483648"/>
+        </ScalarVariable>
+        <ScalarVariable
+                name="signed_enumeration_output"
+                valueReference="10"
+                causality="output"
+                variability="discrete">
+            <Enumeration
+                    declaredType="SignedOption"/>
+        </ScalarVariable>
+        <ScalarVariable
+                name="status"
+                valueReference="11"
+                causality="input"
+                variability="discrete">
+            <Integer start="0"/>
+        </ScalarVariable>
+    </ModelVariables>
+    <ModelStructure>
+        <Outputs>
+            <Unknown index="2"/>
+            <Unknown index="4"/>
+            <Unknown index="6"/>
+            <Unknown index="8"/>
+            <Unknown index="10"/>
+        </Outputs>
+    </ModelStructure>
+</fmiModelDescription>

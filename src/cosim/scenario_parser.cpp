@@ -54,12 +54,15 @@ bool is_input(cosim::variable_causality causality)
         case calculated_parameter:
         case output:
             return false;
-        default:
-            std::ostringstream oss;
-            oss << "No support for modifying a variable with causality: "
-                << to_text(causality);
-            throw std::invalid_argument(oss.str());
+        case local:
+        case structural_parameter:
+        case independent:
+            break;
     }
+    std::ostringstream oss;
+    oss << "No support for modifying a variable with causality: "
+        << to_text(causality);
+    throw std::invalid_argument(oss.str());
 }
 
 template<typename T>
@@ -126,11 +129,22 @@ cosim::scenario::variable_action generate_action(
             return cosim::scenario::variable_action{
                 sim, var, cosim::scenario::string_modifier{f}, isInput};
         }
-        default:
-            std::ostringstream oss;
-            oss << "No scenario action support for variable type: " << to_text(type);
-            throw std::invalid_argument(oss.str());
+        case cosim::variable_type::enumeration:
+        case cosim::variable_type::float32:
+        case cosim::variable_type::int8:
+        case cosim::variable_type::uint8:
+        case cosim::variable_type::int16:
+        case cosim::variable_type::uint16:
+        case cosim::variable_type::uint32:
+        case cosim::variable_type::int64:
+        case cosim::variable_type::uint64:
+        case cosim::variable_type::binary:
+        case cosim::variable_type::clock:
+            break;
     }
+    std::ostringstream oss;
+    oss << "No scenario action support for variable type: " << to_text(type);
+    throw std::invalid_argument(oss.str());
 }
 
 struct defaults
@@ -215,8 +229,12 @@ scenario::scenario parse_scenario(
             find_simulator(simulators, specified_or_default(event, "model", defaultOpts.model));
         auto varName =
             specified_or_default(event, "variable", defaultOpts.variable);
-        const auto var =
-            *find_variable(simulator->model_description(), varName);
+        const auto variable = find_variable(simulator->model_description(), varName);
+        if (!variable) {
+            throw std::invalid_argument(
+                "Can't find variable '" + varName + "' in model '" + simulator->name() + "'");
+        }
+        const auto& var = *variable;
 
         auto mode = specified_or_default(event, "action", defaultOpts.action);
         bool isInput = is_input(var.causality);

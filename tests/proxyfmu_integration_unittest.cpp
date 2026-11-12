@@ -6,6 +6,7 @@
 
 #include <boost/test/unit_test.hpp>
 
+#include <algorithm>
 #include <cstdlib>
 
 using namespace cosim;
@@ -180,4 +181,28 @@ BOOST_AUTO_TEST_CASE(test_fmi2)
 
     instance->start_simulation();
     instance->end_simulation();
+}
+
+BOOST_AUTO_TEST_CASE(test_fmi2_independent_causality)
+{
+    const auto* referenceDir = std::getenv("REFERENCE_FMU_V2_DIR");
+    BOOST_REQUIRE(referenceDir != nullptr);
+    auto fmu = proxy::remote_fmu(
+        proxyfmu::filesystem::path(referenceDir) / "Dahlquist.fmu");
+    const auto description = fmu.description();
+    const auto variable = [&](const char* name) {
+        return std::find_if(
+            description->variables.begin(), description->variables.end(),
+            [&](const auto& candidate) { return candidate.name == name; });
+    };
+
+    const auto time = variable("time");
+    BOOST_REQUIRE(time != description->variables.end());
+    BOOST_TEST(time->causality == variable_causality::independent);
+    const auto derivative = variable("der(x)");
+    BOOST_REQUIRE(derivative != description->variables.end());
+    BOOST_TEST(derivative->causality == variable_causality::local);
+    const auto output = variable("x");
+    BOOST_REQUIRE(output != description->variables.end());
+    BOOST_TEST(output->causality == variable_causality::output);
 }

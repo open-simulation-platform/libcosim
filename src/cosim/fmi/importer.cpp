@@ -51,12 +51,10 @@ log::severity_level convert_log_level(jm_log_level_enu_t jmLogLevel)
         case jm_log_level_debug:
         case jm_log_level_nothing:
         case jm_log_level_all:
-        default:
-            // The last two cases + default should never match, and if
-            // they do, we at least make sure a message is printed in
-            // debug mode.
+            // The last two cases should never match.
             return log::debug;
     }
+    return log::debug;
 }
 
 void logger_callback(

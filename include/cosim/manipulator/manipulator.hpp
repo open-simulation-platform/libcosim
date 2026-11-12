@@ -25,6 +25,10 @@ namespace cosim
 class manipulable : public observable
 {
 public:
+    using variable_modifier = std::function<variable_value(
+        const variable_value&,
+        duration)>;
+
     /**
      *  Exposes a variable for assignment with `set_xxx()`.
      *
@@ -148,6 +152,18 @@ public:
     virtual void set_string_output_modifier(
         value_reference reference,
         std::function<std::string(std::string_view, duration)> modifier) = 0;
+
+    /// Sets a modifier for a complete scalar or array input value.
+    virtual void set_variable_input_modifier(
+        variable_type type,
+        value_reference reference,
+        variable_modifier modifier);
+
+    /// Sets a modifier for a complete scalar or array output value.
+    virtual void set_variable_output_modifier(
+        variable_type type,
+        value_reference reference,
+        variable_modifier modifier);
 };
 
 /**

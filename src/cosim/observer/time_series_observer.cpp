@@ -89,6 +89,11 @@ public:
             samples[timeStep] = observable_->get_integer(idx);
             adjustIfFull(samples, bufSize_);
         }
+        for (auto& [idx, samples] : enumerationSamples_) {
+            samples[timeStep] =
+                observable_->get_variable_value(variable_type::enumeration, idx);
+            adjustIfFull(samples, bufSize_);
+        }
         timeSamples_[timeStep] = currentTime;
         adjustIfFull(timeSamples_, bufSize_);
     }
@@ -102,6 +107,9 @@ public:
         for (auto& [_, step_numbers] : intSamples_) {
             step_numbers.clear();
         }
+        for (auto& [_, step_numbers] : enumerationSamples_) {
+            step_numbers.clear();
+        }
     }
 
     void start_observing(variable_type type, value_reference reference)
@@ -111,17 +119,33 @@ public:
             case variable_type::real:
                 realSamples_[reference] = std::map<step_number, double>();
                 observable_->expose_for_getting(type, reference);
-                break;
+                return;
             case variable_type::integer:
                 intSamples_[reference] = std::map<step_number, int>();
                 observable_->expose_for_getting(type, reference);
+                return;
+            case variable_type::enumeration:
+                enumerationSamples_[reference] = {};
+                observable_->expose_for_getting(type, reference);
+                return;
+            case variable_type::boolean:
+            case variable_type::string:
+            case variable_type::float32:
+            case variable_type::int8:
+            case variable_type::uint8:
+            case variable_type::int16:
+            case variable_type::uint16:
+            case variable_type::uint32:
+            case variable_type::int64:
+            case variable_type::uint64:
+            case variable_type::binary:
+            case variable_type::clock:
                 break;
-            default:
-                std::ostringstream oss;
-                oss << "No support for observing variable with type " << type
-                    << " and reference " << reference;
-                throw std::invalid_argument(oss.str());
         }
+        std::ostringstream oss;
+        oss << "No support for observing variable with type " << type
+            << " and reference " << reference;
+        throw std::invalid_argument(oss.str());
     }
 
     void stop_observing(variable_type type, value_reference reference)
@@ -130,16 +154,31 @@ public:
         switch (type) {
             case variable_type::real:
                 realSamples_.erase(reference);
-                break;
+                return;
             case variable_type::integer:
                 intSamples_.erase(reference);
+                return;
+            case variable_type::enumeration:
+                enumerationSamples_.erase(reference);
+                return;
+            case variable_type::boolean:
+            case variable_type::string:
+            case variable_type::float32:
+            case variable_type::int8:
+            case variable_type::uint8:
+            case variable_type::int16:
+            case variable_type::uint16:
+            case variable_type::uint32:
+            case variable_type::int64:
+            case variable_type::uint64:
+            case variable_type::binary:
+            case variable_type::clock:
                 break;
-            default:
-                std::ostringstream oss;
-                oss << "Could not stop observing variable with type " << type
-                    << " and reference " << reference;
-                throw std::invalid_argument(oss.str());
         }
+        std::ostringstream oss;
+        oss << "Could not stop observing variable with type " << type
+            << " and reference " << reference;
+        throw std::invalid_argument(oss.str());
     }
 
     size_t get_real_samples(value_reference valueReference, step_number fromStep, gsl::span<double> values, gsl::span<step_number> steps, gsl::span<time_point> times)
@@ -152,6 +191,12 @@ public:
     {
         std::lock_guard<std::mutex> lock(lock_);
         return get_samples<int>(valueReference, intSamples_, timeSamples_, fromStep, values, steps, times);
+    }
+
+    size_t get_enumeration_samples(value_reference valueReference, step_number fromStep, gsl::span<variable_value> values, gsl::span<step_number> steps, gsl::span<time_point> times)
+    {
+        std::lock_guard<std::mutex> lock(lock_);
+        return get_samples<variable_value>(valueReference, enumerationSamples_, timeSamples_, fromStep, values, steps, times);
     }
 
     void get_step_numbers(time_point tBegin, time_point tEnd, gsl::span<step_number> steps)
@@ -208,6 +253,7 @@ public:
 private:
     std::map<value_reference, std::map<step_number, double>> realSamples_;
     std::map<value_reference, std::map<step_number, int>> intSamples_;
+    std::map<value_reference, std::map<step_number, variable_value>> enumerationSamples_;
     std::map<step_number, time_point> timeSamples_;
     observable* observable_;
     size_t bufSize_;
@@ -290,6 +336,40 @@ void time_series_observer::start_observing(variable_id id)
 void time_series_observer::stop_observing(variable_id id)
 {
     slaveObservers_.at(id.simulator)->stop_observing(id.type, id.reference);
+}
+
+std::size_t time_series_observer::get_variable_samples(
+    simulator_index sim,
+    variable_type type,
+    value_reference valueReference,
+    step_number fromStep,
+    gsl::span<variable_value> values,
+    gsl::span<step_number> steps,
+    gsl::span<time_point> times)
+{
+    COSIM_INPUT_CHECK(values.size() == steps.size());
+    COSIM_INPUT_CHECK(times.size() == values.size());
+    if (type == variable_type::enumeration) {
+        return slaveObservers_.at(sim)->get_enumeration_samples(
+            valueReference, fromStep, values, steps, times);
+    }
+    if (type == variable_type::real) {
+        std::vector<double> samples(values.size());
+        const auto count = get_real_samples(sim, valueReference, fromStep, samples, steps, times);
+        for (std::size_t i = 0; i < count; ++i) {
+            values[i] = variable_value(real_values{{samples[i]}});
+        }
+        return count;
+    }
+    if (type == variable_type::integer) {
+        std::vector<int> samples(values.size());
+        const auto count = get_integer_samples(sim, valueReference, fromStep, samples, steps, times);
+        for (std::size_t i = 0; i < count; ++i) {
+            values[i] = variable_value(integer_values{{samples[i]}});
+        }
+        return count;
+    }
+    throw std::invalid_argument("Unsupported variable type for time-series samples");
 }
 
 std::size_t time_series_observer::get_real_samples(
