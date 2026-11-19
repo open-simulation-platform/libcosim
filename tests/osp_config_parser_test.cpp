@@ -1,4 +1,5 @@
 #include <cosim/algorithm/fixed_step_algorithm.hpp>
+#include <cosim/exception.hpp>
 #include <cosim/fs_portability.hpp>
 #include <cosim/log/simple.hpp>
 #include <cosim/observer/last_value_observer.hpp>
@@ -7,6 +8,7 @@
 
 #include <cstdlib>
 #include <exception>
+#include <fstream>
 
 
 #define REQUIRE(test) \
@@ -44,6 +46,39 @@ void test(const cosim::filesystem::path& configPath, size_t expectedNumConnectio
     REQUIRE(std::fabs(realValue - magicNumberFromConf) < 1e-9);
 }
 
+// Invalid or missing configuration files must be reported as cosim::error
+// with errc::bad_file, so that callers (and language bindings) get an
+// error code rather than a plain std::runtime_error.
+void require_bad_file(const cosim::filesystem::path& configPath)
+{
+    auto resolver = cosim::default_model_uri_resolver();
+    try {
+        cosim::load_osp_config(configPath, *resolver);
+    } catch (const cosim::error& e) {
+        REQUIRE(e.code() == cosim::errc::bad_file);
+        return;
+    }
+    throw std::runtime_error("Expected cosim::error for " + configPath.string());
+}
+
+void test_invalid_configs()
+{
+    const auto dir = cosim::filesystem::temp_directory_path() / "libcosim_osp_config_parser_test";
+    cosim::filesystem::create_directories(dir);
+
+    const auto invalid = dir / "OspSystemStructure.xml";
+    {
+        std::ofstream f(invalid);
+        f << "<?xml version=\"1.0\"?>\n"
+          << "<OspSystemStructure xmlns=\"http://opensimulationplatform.com/MSMI/OSPSystemStructure\">"
+          << "<NotAValidElement/></OspSystemStructure>\n";
+    }
+    require_bad_file(invalid);
+    require_bad_file(dir / "does_not_exist.xml");
+
+    cosim::filesystem::remove_all(dir);
+}
+
 int main()
 {
     try {
@@ -54,6 +89,7 @@ int main()
         REQUIRE(testDataDir);
         test(cosim::filesystem::path(testDataDir) / "msmi", 7);
         test(cosim::filesystem::path(testDataDir) / "msmi" / "OspSystemStructure_Bond.xml", 9);
+        test_invalid_configs();
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what();
         return 1;

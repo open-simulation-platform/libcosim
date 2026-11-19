@@ -1,5 +1,6 @@
 #define BOOST_TEST_MODULE ssp_loader.hpp unittests
 #include <cosim/algorithm/fixed_step_algorithm.hpp>
+#include <cosim/exception.hpp>
 #include <cosim/fs_portability.hpp>
 #include <cosim/log/simple.hpp>
 #include <cosim/observer/last_value_observer.hpp>
@@ -185,4 +186,18 @@ BOOST_AUTO_TEST_CASE(ssp_multiple_parameter_sets_test)
         config.system_structure.get_variable_description({"identity1", "realOut"}).reference;
     observer->get_real(slave1, gsl::make_span(&v1Ref, 1), gsl::make_span(&initialValue, 1));
     BOOST_REQUIRE_CLOSE(initialValue, 4.0, tolerance);
+}
+
+BOOST_AUTO_TEST_CASE(missing_ssd_is_bad_file)
+{
+    const auto dir = cosim::filesystem::temp_directory_path() / "libcosim_ssp_loader_unittest_empty";
+    cosim::filesystem::create_directories(dir);
+
+    cosim::ssp_loader loader;
+    BOOST_CHECK_EXCEPTION(
+        loader.load(dir),
+        cosim::error,
+        [](const cosim::error& e) { return e.code() == cosim::errc::bad_file; });
+
+    cosim::filesystem::remove_all(dir);
 }
