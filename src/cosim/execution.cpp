@@ -8,6 +8,7 @@
 #include "cosim/algorithm.hpp"
 #include "cosim/error.hpp"
 #include "cosim/exception.hpp"
+#include "cosim/orchestration.hpp"
 #include "cosim/slave_simulator.hpp"
 #include "cosim/utility/utility.hpp"
 
@@ -111,6 +112,16 @@ public:
     void connect_variables(function_io_id output, variable_id input)
     {
         connect_variables_impl(fsConnections_, output, input);
+    }
+
+    std::vector<simulator_info> get_simulators() const
+    {
+        std::vector<simulator_info> infos;
+        infos.reserve(simulators_.size());
+        for (std::size_t i = 0; i < simulators_.size(); ++i) {
+            infos.push_back({simulators_[i]->name(), static_cast<simulator_index>(i)});
+        }
+        return infos;
     }
 
     time_point current_time() const noexcept
@@ -533,6 +544,11 @@ double execution::get_total_average_real_time_factor() const
     return pimpl_->get_real_time_metrics()->total_average_real_time_factor;
 }
 
+std::vector<simulator_info> execution::get_simulators() const
+{
+    return pimpl_->get_simulators();
+}
+
 model_description execution::get_model_description(simulator_index index) const
 {
     return pimpl_->get_model_description(index);
@@ -701,5 +717,17 @@ entity_index_maps inject_system_structure(
     return indexMaps;
 }
 
+
+simulator_index add_fmu(
+    execution& exe,
+    const cosim::filesystem::path& fmuPath,
+    const std::string& instanceName,
+    duration stepSizeHint,
+    std::shared_ptr<model_uri_resolver> resolver)
+{
+    if (!resolver) resolver = default_model_uri_resolver();
+    const auto model = resolver->lookup_model(path_to_file_uri(cosim::filesystem::absolute(fmuPath)));
+    return exe.add_slave(model->instantiate(instanceName), instanceName, stepSizeHint);
+}
 
 } // namespace cosim

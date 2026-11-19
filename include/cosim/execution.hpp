@@ -10,6 +10,7 @@
 #ifndef COSIM_EXECUTION_HPP
 #define COSIM_EXECUTION_HPP
 
+#include <cosim/fs_portability.hpp>
 #include <cosim/function/function.hpp>
 #include <cosim/model_description.hpp>
 #include <cosim/slave.hpp>
@@ -24,7 +25,9 @@
 #include <memory>
 #include <optional>
 #include <sstream>
+#include <string>
 #include <unordered_map>
+#include <vector>
 
 
 namespace cosim
@@ -138,6 +141,16 @@ class algorithm;
 class observer;
 class manipulator;
 class simulator;
+
+
+/// Name and index of a simulator in an `execution`.
+struct simulator_info
+{
+    /// The simulator (instance) name.
+    std::string name;
+    /// The simulator's index in the execution.
+    simulator_index index;
+};
 
 
 /**
@@ -375,6 +388,9 @@ public:
     /// Returns the model description for a simulator with the given index
     model_description get_model_description(simulator_index index) const;
 
+    /// Returns the names and indexes of all simulators, ordered by index.
+    std::vector<simulator_info> get_simulators() const;
+
     /// Returns a map of currently modified variables
     std::vector<variable_id> get_modified_variables() const;
 
@@ -505,6 +521,33 @@ entity_index_maps inject_system_structure(
     execution& exe,
     const system_structure& sys,
     const variable_value_map& initialValues);
+
+
+/**
+ *  Loads an FMU and adds an instance of it to an execution.
+ *
+ *  \param exe
+ *      The execution. Its `initialize()` must not have been called.
+ *  \param fmuPath
+ *      Path to an FMU file (or an unpacked FMU directory).
+ *  \param instanceName
+ *      The name of the new simulator instance.
+ *  \param stepSizeHint
+ *      The recommended step size for the simulator (see
+ *      `execution::add_slave()`). Zero lets the algorithm choose.
+ *  \param resolver
+ *      The URI resolver used to load the model. If null,
+ *      `default_model_uri_resolver()` is used.
+ *
+ *  \returns
+ *      The index of the new simulator.
+ */
+simulator_index add_fmu(
+    execution& exe,
+    const cosim::filesystem::path& fmuPath,
+    const std::string& instanceName,
+    duration stepSizeHint = duration::zero(),
+    std::shared_ptr<model_uri_resolver> resolver = nullptr);
 
 } // namespace cosim
 #endif // header guard
