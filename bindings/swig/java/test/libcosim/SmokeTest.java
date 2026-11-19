@@ -3,8 +3,8 @@ package libcosim;
 /**
  * Smoke test for the Java bindings, mirroring the Python/C/Julia tests.
  *
- * Usage: java -Djava.library.path=<dir of cosim_java> -cp <classes>
- *            libcosim.SmokeTest <OspSystemStructure.xml> <identity.fmu>
+ * Usage: java -cp <libcosim.jar>:<test classes> libcosim.SmokeTest <OspSystemStructure.xml> <identity.fmu>
+ *    or: java -Djava.library.path=<dir of cosim_java> -cp <classes> libcosim.SmokeTest ...
  */
 public class SmokeTest {
     static int failures = 0;
@@ -31,7 +31,8 @@ public class SmokeTest {
     }
 
     public static void main(String[] args) throws Exception {
-        System.loadLibrary("cosim_java");
+        // No explicit loading: the native libraries are loaded on first use
+        // (from the JAR, or from java.library.path in a build tree).
         cosim.set_output_level(level.warning);
         String config = args[0];
         String identityFmu = args[1];

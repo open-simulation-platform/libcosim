@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- The Libcosim NuGet package: the SWIG-generated C# sources
+       (GeneratedDir), the hand-written ones, and the native libraries for
+       one or more platforms under runtimes/<rid>/native/ (NativeDir).
+       Staged and packed by `cmake install` (component csharp). -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <PackageId>Libcosim</PackageId>
+    <Version>$(LibcosimVersion)</Version>
+    <Authors>Open Simulation Platform contributors</Authors>
+    <Description>C# bindings for libcosim, a co-simulation library (FMI, OSP, SSP).</Description>
+    <PackageLicenseExpression>MPL-2.0</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/open-simulation-platform/libcosim</PackageProjectUrl>
+    <RootNamespace>Libcosim</RootNamespace>
+    <Nullable>disable</Nullable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <NoWarn>$(NoWarn);CS0108;CS0114;CS1591;CS8981;SYSLIB1054</NoWarn>
+    <GeneratedDir Condition="'$(GeneratedDir)' == ''">gen</GeneratedDir>
+    <NativeDir Condition="'$(NativeDir)' == ''">runtimes</NativeDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(GeneratedDir)/*.cs" />
+    <Compile Include="src/*.cs" />
+    <None Include="$(NativeDir)/**/*" Pack="true" PackagePath="runtimes/%(RecursiveDir)" />
+  </ItemGroup>
+</Project>

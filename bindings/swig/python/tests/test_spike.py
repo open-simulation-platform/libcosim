@@ -1,8 +1,10 @@
 """End-to-end smoke tests for the SWIG Python bindings (spike).
 
-Run with the built package on PYTHONPATH, from the repository root:
+Run with the built package on PYTHONPATH (or the wheel installed):
 
     PYTHONPATH=<build>/bindings/python python -m unittest bindings/swig/python/tests/test_spike.py
+
+The test data is taken from libcosim's tests/data, or LIBCOSIM_TEST_DATA.
 """
 
 import os
@@ -12,10 +14,12 @@ import unittest
 
 import libcosim as cosim
 
-REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
-MSMI = os.path.join(REPO, "tests", "data", "msmi", "OspSystemStructure.xml")
-IDENTITY = os.path.join(REPO, "tests", "data", "fmi1", "identity.fmu")
-QUARTER_TRUCK = os.path.join(REPO, "tests", "data", "fmi2", "quarter_truck")
+# libcosim's test data (tests/data in the libcosim repository)
+DATA = os.environ.get("LIBCOSIM_TEST_DATA") or os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "tests", "data"))
+MSMI = os.path.join(DATA, "msmi", "OspSystemStructure.xml")
+IDENTITY = os.path.join(DATA, "fmi1", "identity.fmu")
+QUARTER_TRUCK = os.path.join(DATA, "fmi2", "quarter_truck")
 
 cosim.set_output_level(cosim.level_warning)
 
@@ -134,7 +138,7 @@ class ExecutionTest(unittest.TestCase):
 
     def test_pathlike_and_end_time(self):
         loaded = cosim.load_execution_from_osp_config(
-            pathlib.Path(REPO) / "tests" / "data" / "msmi" / "OspSystemStructure_EndTime.xml")
+            pathlib.Path(DATA) / "msmi" / "OspSystemStructure_EndTime.xml")
         self.assertTrue(loaded.has_end_time())
         self.assertEqual(loaded.get_end_time(), 1_000_000)
         self.assertAlmostEqual(loaded.get_end_time_seconds(), 0.001)

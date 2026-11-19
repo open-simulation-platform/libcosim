@@ -1,0 +1,41 @@
+# Python wheel for the libcosim SWIG bindings (scikit-build-core).
+#
+# Build (libcosim and SWIG come from Conan; see packaging/README.md):
+#   conan install . -of build/pkg --build=missing
+#   source build/pkg/build/Release/generators/conanbuild.sh
+#   python -m build --wheel . \
+#     -Ccmake.define.CMAKE_TOOLCHAIN_FILE=$PWD/build/pkg/build/Release/generators/conan_toolchain.cmake
+
+[build-system]
+requires = ["scikit-build-core>=0.10"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "libcosim"
+# Follows the libcosim version the bindings are built against.
+version = "0.11.3"
+description = "Python bindings for libcosim, the co-simulation library of the Open Simulation Platform"
+readme = "packaging/python/README.md"
+license = { text = "MPL-2.0" }
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: C++",
+    "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
+]
+
+[tool.scikit-build]
+minimum-version = "0.10"
+build.verbose = false
+cmake.build-type = "Release"
+# Build and install only the Python bindings.
+install.components = ["python"]
+wheel.packages = []
+sdist.include = ["cosim.i", "cmake/", "python/", "c/"]
+
+[tool.scikit-build.cmake.define]
+LIBCOSIM_SWIG_PYTHON = "ON"
+LIBCOSIM_SWIG_C = "OFF"
+LIBCOSIM_SWIG_JAVA = "OFF"
+LIBCOSIM_SWIG_CSHARP = "OFF"
+LIBCOSIM_SWIG_INSTALL = "ON"

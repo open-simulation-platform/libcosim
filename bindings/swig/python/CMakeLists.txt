@@ -1,3 +1,7 @@
+# In a wheel build (scikit-build-core), find exactly the building interpreter.
+if(SKBUILD)
+    set(Python3_EXECUTABLE "${PYTHON_EXECUTABLE}")
+endif()
 find_package(Python3 REQUIRED COMPONENTS Interpreter Development.Module)
 
 set(outDir "${CMAKE_BINARY_DIR}/bindings/python/libcosim")
@@ -20,8 +24,8 @@ set_target_properties(cosim_python PROPERTIES
     LIBRARY_OUTPUT_DIRECTORY "${outDir}"
     COMPILE_OPTIONS "${LIBCOSIM_SWIG_GENERATED_CODE_OPTIONS}"
     INSTALL_RPATH "$ORIGIN")
-target_include_directories(cosim_python PRIVATE "${CMAKE_SOURCE_DIR}/include")
-target_link_libraries(cosim_python PRIVATE cosim Python3::Module)
+target_include_directories(cosim_python PRIVATE "${LIBCOSIM_INCLUDE_DIR}")
+target_link_libraries(cosim_python PRIVATE ${LIBCOSIM_TARGET} Python3::Module)
 
 # libcosim sets per-configuration output directories globally; override them.
 # On Windows the module is a DLL (_cosim.pyd) whose import library would be
@@ -38,11 +42,23 @@ endforeach()
 # Package files
 configure_file(package_init.py "${outDir}/__init__.py" COPYONLY)
 
+if(LIBCOSIM_SWIG_INSTALL)
+    # Python package `libcosim` (installed into the wheel's site-packages by
+    # scikit-build-core): module, proxy, __init__, and the bundled libraries.
+    libcosim_swig_install_with_runtime(cosim_python DESTINATION libcosim COMPONENT python)
+    install(FILES "${outDir}/cosim.py" DESTINATION libcosim COMPONENT python)
+    install(FILES package_init.py DESTINATION libcosim RENAME __init__.py COMPONENT python)
+endif()
+
+if(NOT LIBCOSIM_SWIG_TESTS)
+    return()
+endif()
+
 add_test(
     NAME swig_python
     COMMAND Python3::Interpreter "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_spike.py")
 set_tests_properties(swig_python PROPERTIES
-    ENVIRONMENT "PYTHONPATH=${CMAKE_BINARY_DIR}/bindings/python;LIBCOSIM_DLL_DIRS=$<TARGET_FILE_DIR:cosim>")
+    ENVIRONMENT "PYTHONPATH=${CMAKE_BINARY_DIR}/bindings/python;LIBCOSIM_DLL_DIRS=$<TARGET_FILE_DIR:${LIBCOSIM_TARGET}>")
 
 # Optional: run libcosimpy's own test suite against the libcosimpy
 # compatibility layer (compat/libcosimpy). Set LIBCOSIM_SWIG_LIBCOSIMPY_DIR to a
@@ -62,5 +78,5 @@ if(LIBCOSIM_SWIG_LIBCOSIMPY_DIR)
         set(pathSep ":")
     endif()
     set_tests_properties(swig_libcosimpy_compat PROPERTIES
-        ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/compat${pathSep}${CMAKE_BINARY_DIR}/bindings/python;LIBCOSIM_DLL_DIRS=$<TARGET_FILE_DIR:cosim>")
+        ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/compat${pathSep}${CMAKE_BINARY_DIR}/bindings/python;LIBCOSIM_DLL_DIRS=$<TARGET_FILE_DIR:${LIBCOSIM_TARGET}>")
 endif()

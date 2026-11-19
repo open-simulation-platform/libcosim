@@ -7,6 +7,14 @@
 // classes), so they work with switch, EnumSet and EnumMap.
 %include "enums.swg"
 
+// Load the native libraries (bundled in the JAR, or from java.library.path)
+// when the JNI class is first used.
+%pragma(java) jniclasscode=%{
+  static {
+    libcosim.NativeLoader.load();
+  }
+%}
+
 // -----------------------------------------------------------------------------
 // Errors: cosim::error -> libcosim.CosimException (carries the cosim::errc
 // code), other std::exception -> java.lang.RuntimeException.

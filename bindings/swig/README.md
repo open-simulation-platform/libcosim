@@ -387,3 +387,24 @@ What it took, in the order found (each a separate commit):
 
 Findings 2, 4, 6, 7 and 8 would have hit Windows users of libcosim's
 bindings in practice; 3, 4 and 7 are libcosim issues independent of SWIG.
+
+## Round 5: packaging
+
+Packages for all five languages, built standalone against the libcosim Conan
+package; see [packaging/README.md](packaging/README.md).
+
+| Language | Package | Size (Linux) |
+|---|---|---|
+| C | Conan package `libcosim-c` (`conan create .`, with `test_package`) | — |
+| Python | wheel (scikit-build-core) | 7.4 MB |
+| Java | JAR with native libraries, loaded by `NativeLoader` | 7.2 MB |
+| C# | NuGet package with `runtimes/<rid>/native` | 7.4 MB |
+| Julia | package directory, `ccall` layer generated from the C header | 23 MB unpacked |
+
+`packaging/build_packages.py --test` builds them and tests each with nothing
+but the package on the search paths. Each package bundles libcosim and its
+dependencies, which make up almost all of the size.
+
+`bindings/swig` now builds in two modes: in-tree (as before) and standalone
+(`find_package(libcosim)`), so it can move to its own repository that
+depends on the libcosim Conan package; a git submodule is not needed.
