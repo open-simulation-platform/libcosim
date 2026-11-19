@@ -16,7 +16,9 @@
 #include <cosim/time.hpp>
 
 #include <memory>
+#include <string>
 #include <unordered_map>
+#include <vector>
 
 
 namespace cosim
@@ -77,6 +79,20 @@ public:
         simulator_index sim,
         gsl::span<const value_reference> variables,
         gsl::span<std::string> values) override;
+
+    /**
+     *  \name Convenience getters returning the values
+     *
+     *  Same as the span-based overloads, but return the latest observed
+     *  values in a new vector, ordered like `variables`. These need no
+     *  pre-sized output buffers, and are what language bindings use.
+     */
+    ///@{
+    std::vector<double> get_real(simulator_index sim, const std::vector<value_reference>& variables);
+    std::vector<int> get_integer(simulator_index sim, const std::vector<value_reference>& variables);
+    std::vector<bool> get_boolean(simulator_index sim, const std::vector<value_reference>& variables);
+    std::vector<std::string> get_string(simulator_index sim, const std::vector<value_reference>& variables);
+    ///@}
 
     ~last_value_observer() noexcept override;
 

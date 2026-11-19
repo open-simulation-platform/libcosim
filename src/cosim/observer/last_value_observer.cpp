@@ -106,6 +106,43 @@ void last_value_observer::get_string(
     valueProviders_.at(sim)->get_string(variables, values);
 }
 
+std::vector<double> last_value_observer::get_real(
+    simulator_index sim,
+    const std::vector<value_reference>& variables)
+{
+    std::vector<double> values(variables.size());
+    get_real(sim, gsl::make_span(variables), gsl::make_span(values));
+    return values;
+}
+
+std::vector<int> last_value_observer::get_integer(
+    simulator_index sim,
+    const std::vector<value_reference>& variables)
+{
+    std::vector<int> values(variables.size());
+    get_integer(sim, gsl::make_span(variables), gsl::make_span(values));
+    return values;
+}
+
+std::vector<bool> last_value_observer::get_boolean(
+    simulator_index sim,
+    const std::vector<value_reference>& variables)
+{
+    // std::vector<bool> is not contiguous, so go through a plain buffer.
+    const auto buffer = std::make_unique<bool[]>(variables.size());
+    get_boolean(sim, gsl::make_span(variables), gsl::make_span(buffer.get(), variables.size()));
+    return std::vector<bool>(buffer.get(), buffer.get() + variables.size());
+}
+
+std::vector<std::string> last_value_observer::get_string(
+    simulator_index sim,
+    const std::vector<value_reference>& variables)
+{
+    std::vector<std::string> values(variables.size());
+    get_string(sim, gsl::make_span(variables), gsl::make_span(values));
+    return values;
+}
+
 last_value_observer::~last_value_observer() noexcept = default;
 
 } // namespace cosim
