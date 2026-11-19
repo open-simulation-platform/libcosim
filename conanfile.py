@@ -30,12 +30,14 @@ class LibcosimConan(ConanFile):
         "fPIC": [True, False],
         "proxyfmu": [True, False],
         "no_fmi_logging": [True, False],
+        "swig_bindings": [True, False],
     }
     default_options = {
         "shared": True,
         "fPIC": True,
         "proxyfmu": False,
         "no_fmi_logging": False,
+        "swig_bindings": False,
     }
 
     # Dependencies/requirements
@@ -53,9 +55,13 @@ class LibcosimConan(ConanFile):
         self.requires("yaml-cpp/[~0.9]")
         self.requires("xerces-c/[~3.2]")
 
+    def build_requirements(self):
+        if self.options.swig_bindings:
+            self.tool_requires("swig/[>=4.4 <5]")
+
     # Exports
     exports = "version.txt"
-    exports_sources = ("src/*", "include/*", "cmake/*", "data/*", "docs/*", "tests/*", "CHANGELOG.md", "CMakeLists.txt",
+    exports_sources = ("src/*", "include/*", "cmake/*", "data/*", "docs/*", "tests/*", "bindings/*", "CHANGELOG.md", "CMakeLists.txt",
                        "CONTRIBUTING.md", "LICENSE", "README.md", "version.txt")
 
     # Build steps
@@ -104,6 +110,7 @@ class LibcosimConan(ConanFile):
         tc.cache_variables["LIBCOSIM_BUILD_TESTS"] = self._is_tests_enabled()
         tc.cache_variables["LIBCOSIM_NO_FMI_LOGGING"] = self.options.no_fmi_logging
         tc.cache_variables["LIBCOSIM_WITH_PROXYFMU"] = self.options.proxyfmu
+        tc.cache_variables["LIBCOSIM_BUILD_SWIG_BINDINGS"] = self.options.swig_bindings
         tc.generate()
         CMakeDeps(self).generate()
 

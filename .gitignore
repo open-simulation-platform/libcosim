@@ -16,3 +16,5 @@ cmake-build-*/
 .clj-kondo
 
 CMakeUserPresets.json
+__pycache__/
+*.pyc
