@@ -37,3 +37,24 @@ add_test(
     COMMAND Python3::Interpreter "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_spike.py")
 set_tests_properties(swig_python PROPERTIES
     ENVIRONMENT "PYTHONPATH=${CMAKE_BINARY_DIR}/bindings/python;LIBCOSIM_DLL_DIRS=$<TARGET_FILE_DIR:cosim>")
+
+# Optional: run libcosimpy's own test suite against the libcosimpy
+# compatibility layer (compat/libcosimpy). Set LIBCOSIM_SWIG_LIBCOSIMPY_DIR to a
+# libcosimpy checkout; requires pytest.
+set(LIBCOSIM_SWIG_LIBCOSIMPY_DIR "" CACHE PATH "libcosimpy checkout whose tests run against the compatibility layer")
+if(LIBCOSIM_SWIG_LIBCOSIMPY_DIR)
+    add_test(
+        NAME swig_libcosimpy_compat
+        COMMAND Python3::Interpreter -m pytest -q -p no:cacheprovider tests
+            # Depends on std::unordered_map iteration order in libcosimc,
+            # which is implementation-defined (see README).
+            -k "not test_from_ssp_file_with_step_size_float"
+        WORKING_DIRECTORY "${LIBCOSIM_SWIG_LIBCOSIMPY_DIR}")
+    if(WIN32)
+        set(pathSep "\\;") # escaped: ';' also separates CTest environment entries
+    else()
+        set(pathSep ":")
+    endif()
+    set_tests_properties(swig_libcosimpy_compat PROPERTIES
+        ENVIRONMENT "PYTHONPATH=${CMAKE_CURRENT_SOURCE_DIR}/compat${pathSep}${CMAKE_BINARY_DIR}/bindings/python;LIBCOSIM_DLL_DIRS=$<TARGET_FILE_DIR:cosim>")
+endif()
