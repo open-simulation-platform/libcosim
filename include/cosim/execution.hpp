@@ -336,6 +336,42 @@ public:
     /// Returns a pointer to an object containing real time metrics
     std::shared_ptr<const real_time_metrics> get_real_time_metrics() const;
 
+    /**
+     *  \name Real-time settings and metrics as plain values
+     *
+     *  Convenience accessors for the settings in `get_real_time_config()`
+     *  and the measurements in `get_real_time_metrics()`. They are
+     *  thread-safe, and use plain types so that they can be used from C and
+     *  from other languages through bindings.
+     */
+    ///@{
+
+    /// Enables or disables real-time-synchronized simulation.
+    void set_real_time_simulation(bool enable);
+
+    /// Returns whether real-time-synchronized simulation is enabled.
+    bool is_real_time_simulation() const;
+
+    /// Sets the target real-time factor (1.0 = real time). Must be positive.
+    void set_real_time_factor_target(double factor);
+
+    /// Returns the target real-time factor.
+    double get_real_time_factor_target() const;
+
+    /// Sets the number of steps used for the rolling average real-time factor. Must be positive.
+    void set_steps_to_monitor(int steps);
+
+    /// Returns the number of steps used for the rolling average real-time factor.
+    int get_steps_to_monitor() const;
+
+    /// Returns the current rolling average real-time factor.
+    double get_rolling_average_real_time_factor() const;
+
+    /// Returns the total average real-time factor since the simulation was started.
+    double get_total_average_real_time_factor() const;
+
+    ///@}
+
     /// Returns the model description for a simulator with the given index
     model_description get_model_description(simulator_index index) const;
 

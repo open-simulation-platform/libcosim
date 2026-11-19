@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <atomic>
+#include <stdexcept>
 #include <sstream>
 #include <unordered_map>
 #include <utility>
@@ -484,6 +485,52 @@ const std::shared_ptr<real_time_config> execution::get_real_time_config() const
 std::shared_ptr<const real_time_metrics> execution::get_real_time_metrics() const
 {
     return pimpl_->get_real_time_metrics();
+}
+
+void execution::set_real_time_simulation(bool enable)
+{
+    pimpl_->get_real_time_config()->real_time_simulation = enable;
+}
+
+bool execution::is_real_time_simulation() const
+{
+    return pimpl_->get_real_time_config()->real_time_simulation;
+}
+
+void execution::set_real_time_factor_target(double factor)
+{
+    if (!(factor > 0.0)) {
+        throw std::invalid_argument("Real-time factor target must be positive");
+    }
+    pimpl_->get_real_time_config()->real_time_factor_target = factor;
+}
+
+double execution::get_real_time_factor_target() const
+{
+    return pimpl_->get_real_time_config()->real_time_factor_target;
+}
+
+void execution::set_steps_to_monitor(int steps)
+{
+    if (steps <= 0) {
+        throw std::invalid_argument("Number of steps to monitor must be positive");
+    }
+    pimpl_->get_real_time_config()->steps_to_monitor = steps;
+}
+
+int execution::get_steps_to_monitor() const
+{
+    return pimpl_->get_real_time_config()->steps_to_monitor;
+}
+
+double execution::get_rolling_average_real_time_factor() const
+{
+    return pimpl_->get_real_time_metrics()->rolling_average_real_time_factor;
+}
+
+double execution::get_total_average_real_time_factor() const
+{
+    return pimpl_->get_real_time_metrics()->total_average_real_time_factor;
 }
 
 model_description execution::get_model_description(simulator_index index) const
