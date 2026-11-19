@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <numeric>
+#include <optional>
 #include <sstream>
 #include <stdexcept>
 #include <string_view>
@@ -210,8 +211,9 @@ public:
         }
 
         const auto stepSizeTaken = stepSize_;
-        if (stepCounter_ >= 2) {
-            stepSize_ = adjust_step_size(currentT, stepSize_, params_);
+        const auto errorEstimate = update_power_bond_states(currentT, stepSizeTaken, params_);
+        if (stepCounter_ >= 2 && errorEstimate) {
+            stepSize_ = adjust_step_size(currentT, stepSizeTaken, *errorEstimate, params_);
         }
 
         // Transfer the outputs from simulators that have finished their
@@ -243,9 +245,13 @@ public:
         throw error(make_error_code(errc::unsupported_feature), "State saving not yet supported by the ECCO algorithm!");
     }
 
-    duration adjust_step_size(time_point currentTime, const duration& stepSize, const ecco_algorithm_params& params)
+    std::optional<double> update_power_bond_states(
+        time_point currentTime,
+        const duration& stepSize,
+        const ecco_algorithm_params& params)
     {
         std::vector<double> power_residuals{};
+        power_residuals.reserve(powerBonds_.size());
 
         const auto dt = to_double_duration(stepSize, currentTime);
 
@@ -279,10 +285,11 @@ public:
             state.energy_a += power_a * dt;
             state.energy_b += power_b * dt;
             state.energy_residual += power_residual * dt;
+            state.valid = true;
         }
 
         if (power_residuals.empty()) {
-            return stepSize;
+            return std::nullopt;
         }
 
         double max_power_residual = *std::max_element(power_residuals.begin(), power_residuals.end());
@@ -296,7 +303,15 @@ public:
         }
         const auto num_bonds = power_residuals.size(); // TODO: Still valid for multidimensial bonds?
         const auto error_estimate = std::sqrt(mean_square / (double)num_bonds);
+        return error_estimate;
+    }
 
+    duration adjust_step_size(
+        time_point currentTime,
+        const duration& stepSize,
+        double error_estimate,
+        const ecco_algorithm_params& params)
+    {
         if (prev_error_estimate_ == 0 || error_estimate == 0) {
             prev_error_estimate_ = error_estimate;
             return stepSize;
@@ -331,7 +346,7 @@ public:
         return names;
     }
 
-    const power_bond_info& get_power_bond(std::string_view name) const
+    power_bond_info get_power_bond(std::string_view name) const
     {
         return powerBonds_.at(power_bond_index(name));
     }
@@ -625,7 +640,7 @@ std::vector<std::string> ecco_algorithm::get_power_bond_names() const
     return pimpl_->get_power_bond_names();
 }
 
-const power_bond_info& ecco_algorithm::get_power_bond(std::string_view name) const
+power_bond_info ecco_algorithm::get_power_bond(std::string_view name) const
 {
     return pimpl_->get_power_bond(name);
 }

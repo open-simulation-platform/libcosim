@@ -78,7 +78,13 @@ void ecco_observer::simulation_initialized(step_number, time_point) { }
 void ecco_observer::step_complete(step_number, duration, time_point)
 {
     latestStates_ = algorithm_->get_power_bond_states();
-    for (const auto& [name, state] : latestStates_) {
+    for (auto it = latestStates_.begin(); it != latestStates_.end();) {
+        if (!it->second.valid) {
+            it = latestStates_.erase(it);
+            continue;
+        }
+
+        const auto& [name, state] = *it;
         auto& buffer = history_[name];
         buffer.push_back(state);
         if (buffer.size() > bufferSize_) {
@@ -97,6 +103,7 @@ void ecco_observer::step_complete(step_number, duration, time_point)
         acc.count += 1;
         acc.sum += residual;
         acc.sum_squares += residual * residual;
+        ++it;
     }
 }
 

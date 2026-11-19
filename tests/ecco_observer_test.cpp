@@ -24,7 +24,7 @@ int main()
         cosim::log::setup_simple_console_logging();
         cosim::log::set_global_output_level(cosim::log::warning);
 
-        constexpr cosim::time_point startTime;
+        constexpr cosim::time_point startTime = cosim::to_time_point(0.25);
         constexpr cosim::time_point endTime = cosim::to_time_point(1.0);
 
         auto ecco_params = cosim::ecco_algorithm_params{
@@ -94,6 +94,23 @@ int main()
         constexpr std::size_t bufferSize = 8;
         auto eccoObserver = std::make_shared<cosim::ecco_observer>(ecco_algo, bufferSize);
         execution.add_observer(eccoObserver);
+
+        REQUIRE(!ecco_algo->get_power_bond_state("bond").valid);
+        const auto firstStepSize = execution.step();
+        const auto firstState = ecco_algo->get_power_bond_state("bond");
+        const auto firstStepDuration = cosim::to_double_duration(firstStepSize, startTime);
+        REQUIRE(firstState.valid);
+        REQUIRE(firstState.time == startTime);
+        REQUIRE(std::abs(firstState.energy_a - firstState.power_a * firstStepDuration) < 1e-12);
+        REQUIRE(std::abs(firstState.energy_b - firstState.power_b * firstStepDuration) < 1e-12);
+        REQUIRE(std::abs(firstState.energy_residual - firstState.power_residual * firstStepDuration) < 1e-12);
+
+        const auto firstBuffer = eccoObserver->get_power_bond_state_buffer("bond");
+        REQUIRE(firstBuffer.size() == 1);
+        const auto firstStats = eccoObserver->get_power_bond_statistics("bond");
+        REQUIRE(firstStats.sample_count == 1);
+        REQUIRE(firstStats.power_residual_min == firstState.power_residual);
+        REQUIRE(firstStats.power_residual_mean == firstState.power_residual);
 
         auto simResult = execution.simulate_until(endTime);
         REQUIRE(simResult);

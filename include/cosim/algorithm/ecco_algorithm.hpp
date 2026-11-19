@@ -67,8 +67,13 @@ struct power_bond_state
     /// Accumulated absolute energy residual across the bond since the start [J].
     double energy_residual;
 
-    /// The contribution to the last step's error estimate.
+    /// This bond's term in the last step's error estimate: (e_i / (atol + rtol * E_max))^2,
+    /// where e_i is the bond's energy residual over the step. The estimate itself is
+    /// sqrt(sum of all terms / number of bonds). Larger values mean the bond drives step-size reduction more.
     double error_contribution;
+
+    /// False until the first completed step has populated this state.
+    bool valid = false;
 };
 
 /**
@@ -122,14 +127,14 @@ public:
      */
     void add_power_bond(std::string name, cosim::variable_id input_a, cosim::variable_id output_a, cosim::variable_id input_b, cosim::variable_id output_b);
 
-    /// Returns the names of all configured power bonds, in the order they were added.
+    /// Returns the names of all configured power bonds.
     std::vector<std::string> get_power_bond_names() const;
 
     /**
      * Returns the information for the given power bond. 
      * \throws std::out_of_range if no power bond with the given name exists.
      */
-    const power_bond_info& get_power_bond(std::string_view name) const;
+    power_bond_info get_power_bond(std::string_view name) const;
 
     /**
      * Returns the most recently computed state (from the last completed step) of a given power bond.
