@@ -14,6 +14,9 @@
 
 #include <algorithm>
 #include <atomic>
+#include <chrono>
+#include <future>
+#include <mutex>
 #include <stdexcept>
 #include <sstream>
 #include <unordered_map>
@@ -30,6 +33,7 @@ public:
     impl(time_point startTime, std::shared_ptr<algorithm> algo)
         : lastStep_(0)
         , currentTime_(startTime)
+        , publishedTime_(startTime.time_since_epoch().count())
         , initialized_(false)
         , stopped_(true)
         , algorithm_(std::move(algo))
@@ -38,7 +42,13 @@ public:
         algorithm_->setup(currentTime_, std::nullopt);
     }
 
-    ~impl() noexcept = default;
+    ~impl() noexcept
+    {
+        // Stop and join a simulation started with start_simulation(): the
+        // background thread uses this object.
+        stopped_ = true;
+        if (backgroundRun_.valid()) backgroundRun_.wait();
+    }
 
     impl(const impl&) = delete;
     impl& operator=(const impl&) = delete;
@@ -126,7 +136,8 @@ public:
 
     time_point current_time() const noexcept
     {
-        return currentTime_;
+        // Safe to call while a simulation runs on another thread.
+        return time_point(duration(publishedTime_.load()));
     }
 
     void initialize()
@@ -141,9 +152,16 @@ public:
     }
 
 
+    bool background_active() const noexcept
+    {
+        return backgroundActive_;
+    }
+
     bool is_running() const noexcept
     {
-        return !stopped_;
+        // Also true while a background run finishes its last step after
+        // stop_simulation().
+        return !stopped_ || backgroundActive_;
     }
 
     duration step()
@@ -154,6 +172,7 @@ public:
         }
         const auto [stepSize, finished] = algorithm_->do_step(currentTime_);
         currentTime_ += stepSize;
+        publishedTime_ = currentTime_.time_since_epoch().count();
         ++lastStep_;
         for (const auto& obs : observers_) {
             for (const auto& index : finished) {
@@ -166,16 +185,58 @@ public:
 
     bool simulate_until(std::optional<time_point> endTime)
     {
+        if (backgroundActive_) {
+            throw error(
+                make_error_code(errc::invalid_operation),
+                "A simulation started with start_simulation() is still running");
+        }
         stopped_ = false;
-        timer_.start(currentTime_);
-        duration stepSize;
-        do {
-            stepSize = step();
-            timer_.sleep(currentTime_);
-        } while (!stopped_ && !timed_out(endTime, currentTime_, stepSize));
-        bool isStopped = stopped_;
-        stopped_ = true;
-        return !isStopped;
+        return run_loop(endTime);
+    }
+
+    void start_simulation()
+    {
+        std::lock_guard<std::mutex> lock(runMutex_);
+        collect_background_result();
+        if (backgroundRun_.valid() || is_running()) {
+            throw error(
+                make_error_code(errc::invalid_operation),
+                "A simulation is already running");
+        }
+        lastErrorCode_ = errc::success;
+        lastErrorMessage_.clear();
+        // Set before launching, so a stop_simulation() right after this
+        // call cannot be overwritten by the background thread.
+        stopped_ = false;
+        backgroundActive_ = true;
+        backgroundRun_ = std::async(std::launch::async, [this] {
+            struct clear_on_exit
+            {
+                std::atomic<bool>& active;
+                ~clear_on_exit() { active = false; }
+            } guard{backgroundActive_};
+            return run_loop(std::nullopt);
+        });
+    }
+
+    execution_status get_status() const
+    {
+        std::lock_guard<std::mutex> lock(runMutex_);
+        collect_background_result();
+        execution_status status;
+        status.current_time = current_time();
+        status.state = lastErrorCode_ != errc::success
+            ? execution_state::error
+            : (is_running() ? execution_state::running : execution_state::stopped);
+        status.error_code = lastErrorCode_;
+        status.error_message = lastErrorMessage_;
+        const auto config = timer_.get_real_time_config();
+        const auto metrics = timer_.get_real_time_metrics();
+        status.real_time_simulation = config->real_time_simulation;
+        status.real_time_factor_target = config->real_time_factor_target;
+        status.rolling_average_real_time_factor = metrics->rolling_average_real_time_factor;
+        status.total_average_real_time_factor = metrics->total_average_real_time_factor;
+        return status;
     }
 
     std::future<bool> simulate_until_async(std::optional<time_point> endTime)
@@ -308,6 +369,7 @@ public:
             lastStep_ = exportedState.get<step_number>("last_step_number");
             currentTime_ = time_point(duration(
                     exportedState.get<std::int64_t>("current_time_ticks")));
+            publishedTime_ = currentTime_.time_since_epoch().count();
             const auto& simulatorState = exportedState.get_child("simulator_state");
             for (const auto& sim : simulators_) {
                 const auto savedStateIndex =
@@ -389,10 +451,59 @@ private:
         return false;
     }
 
+    // Runs steps until stopped or `endTime` is reached. `stopped_` must be
+    // false on entry; it is true on exit, also when a step throws.
+    bool run_loop(std::optional<time_point> endTime)
+    {
+        struct stop_on_exit
+        {
+            std::atomic<bool>& stopped;
+            ~stop_on_exit() { stopped = true; }
+        };
+        timer_.start(currentTime_);
+        duration stepSize;
+        bool wasStopped = false;
+        {
+            stop_on_exit guard{stopped_};
+            do {
+                stepSize = step();
+                timer_.sleep(currentTime_);
+            } while (!stopped_ && !timed_out(endTime, currentTime_, stepSize));
+            wasStopped = stopped_;
+        }
+        return !wasStopped;
+    }
+
+    // If a simulation started with start_simulation() has ended, collects
+    // its result and records any error. Requires runMutex_ to be held.
+    void collect_background_result() const
+    {
+        if (!backgroundRun_.valid() ||
+            backgroundRun_.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
+            return;
+        }
+        try {
+            backgroundRun_.get();
+        } catch (const error& e) {
+            lastErrorCode_ = static_cast<errc>(e.code().value());
+            lastErrorMessage_ = e.what();
+        } catch (const std::exception& e) {
+            lastErrorCode_ = errc::simulation_error;
+            lastErrorMessage_ = e.what();
+        }
+    }
+
     step_number lastStep_;
     time_point currentTime_;
+    std::atomic<duration::rep> publishedTime_; // currentTime_, readable from other threads
     bool initialized_;
     std::atomic<bool> stopped_;
+    std::atomic<bool> backgroundActive_ = false; // a start_simulation() thread is running
+
+    mutable std::mutex runMutex_;
+    mutable std::future<bool> backgroundRun_; // from start_simulation()
+    mutable errc lastErrorCode_ = errc::success;
+    mutable std::string lastErrorMessage_;
 
     std::shared_ptr<algorithm> algorithm_;
     std::vector<std::shared_ptr<simulator>> simulators_;
@@ -475,6 +586,11 @@ std::future<bool> execution::simulate_until_async(std::optional<time_point> endT
 
 duration execution::step()
 {
+    if (pimpl_->background_active()) {
+        throw error(
+            make_error_code(errc::invalid_operation),
+            "A simulation started with start_simulation() is still running");
+    }
     return pimpl_->step();
 }
 
@@ -542,6 +658,16 @@ double execution::get_rolling_average_real_time_factor() const
 double execution::get_total_average_real_time_factor() const
 {
     return pimpl_->get_real_time_metrics()->total_average_real_time_factor;
+}
+
+void execution::start_simulation()
+{
+    pimpl_->start_simulation();
+}
+
+execution_status execution::get_status() const
+{
+    return pimpl_->get_status();
 }
 
 std::vector<simulator_info> execution::get_simulators() const

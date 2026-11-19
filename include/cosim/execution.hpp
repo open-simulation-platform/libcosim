@@ -10,6 +10,7 @@
 #ifndef COSIM_EXECUTION_HPP
 #define COSIM_EXECUTION_HPP
 
+#include <cosim/exception.hpp>
 #include <cosim/fs_portability.hpp>
 #include <cosim/function/function.hpp>
 #include <cosim/model_description.hpp>
@@ -141,6 +142,40 @@ class algorithm;
 class observer;
 class manipulator;
 class simulator;
+
+
+/// The state of an `execution`, as reported by `execution::get_status()`.
+enum class execution_state
+{
+    /// Not running.
+    stopped,
+    /// A simulation is running (e.g. started with `start_simulation()`).
+    running,
+    /// A simulation started with `start_simulation()` ended with an error.
+    error
+};
+
+
+/// A snapshot of an execution's state, returned by `execution::get_status()`.
+struct execution_status
+{
+    /// The current logical time.
+    time_point current_time;
+    /// Whether the execution is running, stopped, or has failed.
+    execution_state state = execution_state::stopped;
+    /// The error code if `state == execution_state::error`, else `errc::success`.
+    errc error_code = errc::success;
+    /// The error message if `state == execution_state::error`.
+    std::string error_message;
+    /// Whether real-time-synchronized simulation is enabled.
+    bool real_time_simulation = false;
+    /// The target real-time factor.
+    double real_time_factor_target = 1.0;
+    /// The current rolling average real-time factor.
+    double rolling_average_real_time_factor = 1.0;
+    /// The total average real-time factor since the simulation was started.
+    double total_average_real_time_factor = 1.0;
+};
 
 
 /// Name and index of a simulator in an `execution`.
@@ -337,8 +372,29 @@ public:
      */
     duration step();
 
+    /**
+     *  Starts the co-simulation on a background thread, without blocking.
+     *
+     *  The simulation runs until `stop_simulation()` is called. Use
+     *  `get_status()` to follow its progress and to see whether it ended
+     *  with an error. Destroying the execution stops and waits for it.
+     *
+     *  \throws cosim::error
+     *      with `errc::invalid_operation` if a simulation is already running.
+     */
+    void start_simulation();
+
     /// Stops the co-simulation temporarily (thread-safe operation).
     void stop_simulation();
+
+    /**
+     *  Returns a snapshot of the execution's state (thread-safe operation).
+     *
+     *  An error in a simulation started with `start_simulation()` is
+     *  reported here (state `execution_state::error`) until the next
+     *  `start_simulation()`.
+     */
+    execution_status get_status() const;
 
     /// Is the simulation loop currently running
     bool is_running() const noexcept;
