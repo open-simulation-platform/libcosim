@@ -49,9 +49,10 @@ int main()
         // ================================================================
         constexpr cosim::duration stepSize = cosim::to_duration(0.05);
 
-        const auto testDataDir = std::getenv("TEST_DATA_DIR");
-        REQUIRE(testDataDir);
-        auto configPath = cosim::filesystem::path(testDataDir) / "msmi" / "OspSystemStructure_Dahlquist_proxyfmu.xml";
+        const auto dahlquistTestDataDir = std::getenv("GEN_TEST_DATA_DIR");
+        REQUIRE(dahlquistTestDataDir);
+        auto configPath = cosim::filesystem::path(dahlquistTestDataDir) /
+            "msmi" / "OspSystemStructure_Dahlquist_proxyfmu.xml";
 
         auto resolver = cosim::default_model_uri_resolver();
         const auto config = cosim::load_osp_config(configPath, *resolver);

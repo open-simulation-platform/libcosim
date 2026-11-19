@@ -44,6 +44,8 @@ public:
                 return "Invalid system structure";
             case errc::zip_error:
                 return "ZIP file error";
+            case errc::invalid_operation:
+                return "Invalid operation";
             default:
                 COSIM_PANIC();
         }

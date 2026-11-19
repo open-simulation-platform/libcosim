@@ -7,6 +7,8 @@ jobs:
   linux:
     name: Linux
     runs-on: ubuntu-latest
+    container:
+      image: debian:bookworm
     strategy:
       fail-fast: false
       matrix:
@@ -15,45 +17,69 @@ jobs:
     timeout-minutes: 35
 
     steps:
+      - name: Install Debian prerequisites
+        shell: bash
+        run: |
+          set -euxo pipefail
+          export DEBIAN_FRONTEND=noninteractive
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            build-essential \
+            ca-certificates \
+            cmake \
+            doxygen \
+            git \
+            libboost-all-dev \
+            libmsgsl-dev \
+            libyaml-cpp-dev \
+            libxerces-c-dev \
+            libzip-dev \
+            wget \
+            zipcmp \
+            zipmerge \
+            ziptool
       - uses: actions/checkout@v4
-      - name: Generate Dockerfile
+      - name: Install FMI Library and libcbor
+        shell: bash
         run: |
-          mkdir /tmp/osp-builder-docker
-          cat <<EOF >/tmp/osp-builder-docker/Dockerfile
-          FROM debian:bookworm
-          RUN apt-get update && apt-get install -y --no-install-recommends \
-              cmake \
-              build-essential \
-              doxygen \
-              wget \
-              libboost-all-dev \
-              libmsgsl-dev \
-              libyaml-cpp-dev \
-              libxerces-c-dev \
-              libzip-dev zipcmp zipmerge ziptool
-          RUN wget \
-              --no-check-certificate \
-              "https://github.com/viproma/debian-fmilib/releases/download/debian%2F2.0.3-1/libfmilib2_2.0.3-1_amd64.deb" \
-              "https://github.com/viproma/debian-fmilib/releases/download/debian%2F2.0.3-1/libfmilib2-dev_2.0.3-1_amd64.deb"
-          RUN dpkg -i libfmilib2_2.0.3-1_amd64.deb libfmilib2-dev_2.0.3-1_amd64.deb
-          RUN wget --no-check-certificate https://github.com/PJK/libcbor/archive/refs/tags/v0.11.0.tar.gz && \
-                tar xaf v0.11.0.tar.gz && cd libcbor-0.11.0 && \
-                cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON . && make && make install
-          COPY entrypoint.sh /
-          ENTRYPOINT /entrypoint.sh
-          EOF
-      - name: Generate entrypoint.sh
-        run: |
-          cat <<'EOF' >/tmp/osp-builder-docker/entrypoint.sh
-          #!/bin/bash
-          mkdir build
-          cd build
-          cmake -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DBUILD_${{ matrix.shared_libs }} /mnt/source
-          cmake --build .
-          ctest --output-on-failure
-          EOF
-          chmod 0755 /tmp/osp-builder-docker/entrypoint.sh
-      - name: Build Docker image
-        run: docker build -t osp-builder /tmp/osp-builder-docker/
+          set -euxo pipefail
+          cd /tmp
+          FMILIB_VERSION=3.0.4
+          wget \
+            -O "fmi-library-${FMILIB_VERSION}.tar.gz" \
+            "https://github.com/modelon-community/fmi-library/archive/refs/tags/${FMILIB_VERSION}.tar.gz"
+          tar xaf "fmi-library-${FMILIB_VERSION}.tar.gz"
+          cmake \
+            -S "fmi-library-${FMILIB_VERSION}" \
+            -B fmi-library-build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=/usr/local \
+            -DCMAKE_INSTALL_LIBDIR=lib \
+            -DFMILIB_BUILD_STATIC_LIB=ON \
+            -DFMILIB_BUILD_SHARED_LIB=ON \
+            -DFMILIB_BUILD_TESTS=OFF \
+            -DFMILIB_GENERATE_DOXYGEN_DOC=OFF
+          cmake --build fmi-library-build
+          cmake --install fmi-library-build
+          wget \
+            --no-check-certificate \
+            https://github.com/PJK/libcbor/archive/refs/tags/v0.11.0.tar.gz
+          tar xaf v0.11.0.tar.gz
+          cmake \
+            -S libcbor-0.11.0 \
+            -B libcbor-0.11.0/build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+          cmake --build libcbor-0.11.0/build
+          cmake --install libcbor-0.11.0/build
       - name: Build cosim
-        run: docker run --rm -v $(pwd):/mnt/source:ro osp-builder
+        shell: bash
+        run: |
+          set -euxo pipefail
+          cmake \
+            -S . \
+            -B build \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -DBUILD_${{ matrix.shared_libs }}
+          cmake --build build
+          ctest --test-dir build --output-on-failure

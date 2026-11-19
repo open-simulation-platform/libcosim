@@ -19,6 +19,7 @@ jobs:
     env:
       CONAN_LOGIN_USERNAME_OSP: ${{ secrets.osp_artifactory_usr }}
       CONAN_PASSWORD_OSP: ${{ secrets.osp_artifactory_pwd }}
+      CONAN_HOME: ${{ github.workspace }}/.conan2
       LIBCOSIM_RUN_TESTS_ON_CONAN_BUILD: 1
     timeout-minutes: 35
 
@@ -32,8 +33,8 @@ jobs:
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - name: Configure Conan
         run: |
-          conan profile detect
-          conan remote add osp https://osp.jfrog.io/artifactory/api/conan/conan-local
+          conan profile detect -f
+          conan remote add osp https://osp.jfrog.io/artifactory/api/conan/conan-local --force
       - name: Build package
         shell: bash
         run: |
@@ -65,11 +66,12 @@ jobs:
     env:
       CONAN_LOGIN_USERNAME_OSP: ${{ secrets.osp_artifactory_usr }}
       CONAN_PASSWORD_OSP: ${{ secrets.osp_artifactory_pwd }}
+      CONAN_HOME: ${{ github.workspace }}/.conan2
       LIBCOSIM_RUN_TESTS_ON_CONAN_BUILD: 1
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2022]
+        os: [windows-2025]
         build_type: [Debug, Release]
         option_proxyfmu: ['proxyfmu=True', 'proxyfmu=False']
         option_shared: ['shared=True', 'shared=False']
@@ -83,7 +85,7 @@ jobs:
           pip3 install conan cmake ninja
       - name: Configure Conan
         run: |
-          conan profile detect
+          conan profile detect -f
           conan remote add osp https://osp.jfrog.io/artifactory/api/conan/conan-local --force
       - name: Conan create
         shell: bash

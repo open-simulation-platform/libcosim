@@ -58,11 +58,11 @@ int main()
         auto chassisIndex = entityMaps.simulators.at("chassis");
         auto wheelIndex = entityMaps.simulators.at("wheel");
 
-        auto chassisForce = cosim::variable_id{chassisIndex, cosim::variable_type::real, 19};
-        auto chassisVel = cosim::variable_id{chassisIndex, cosim::variable_type::real, 22};
-        auto wheelCForce = cosim::variable_id{wheelIndex, cosim::variable_type::real, 26};
-        auto wheelCVel = cosim::variable_id{wheelIndex, cosim::variable_type::real, 24};
-        ecco_algo->add_power_bond("chassiswheel", chassisVel, chassisForce, wheelCForce, wheelCVel); // chassis -> wheel (chassis port)
+        auto chassisForce = cosim::variable_id{chassisIndex, cosim::variable_type::real, 23};
+        auto chassisVel = cosim::variable_id{chassisIndex, cosim::variable_type::real, 4};
+        auto wheelCForce = cosim::variable_id{wheelIndex, cosim::variable_type::real, 15};
+        auto wheelCVel = cosim::variable_id{wheelIndex, cosim::variable_type::real, 7};
+        ecco_algo->add_power_bond(chassisVel, chassisForce, wheelCForce, wheelCVel); // chassis -> wheel (chassis port)
 
         auto file_obs = std::make_unique<cosim::file_observer>("./logDir", logXmlPath);
         execution.add_observer(std::move(file_obs));
@@ -71,9 +71,9 @@ int main()
         auto t_observer = std::make_shared<cosim::time_series_observer>(50000);
         execution.add_observer(t_observer);
         t_observer->start_observing(chassisVel);
-        t_observer->start_observing(wheelCVel);
+        t_observer->start_observing(wheelInVel);
         t_observer->start_observing(chassisForce);
-        t_observer->start_observing(wheelCForce);
+        t_observer->start_observing(wheelOutForce);
 
         auto csv_observer = std::make_shared<cosim::file_observer>(".");
         execution.add_observer(csv_observer);
@@ -86,9 +86,7 @@ int main()
         t_observer->get_step_numbers(chassisVel.simulator, startTime, midTime, gsl::make_span(stepNums, 2));
         const auto numSamples = stepNums[1] - stepNums[0];
         std::vector<double> chassisVels(numSamples);
-        std::vector<double> wheelCVels(numSamples);
-        std::vector<double> wheelGVels(numSamples);
-        std::vector<double> groundVels(numSamples);
+        std::vector<double> wheelInVels(numSamples);
         std::vector<cosim::step_number> steps(numSamples);
         std::vector<cosim::time_point> timeValues(numSamples);
 
@@ -100,22 +98,20 @@ int main()
             gsl::make_span(steps),
             gsl::make_span(timeValues));
         t_observer->get_real_samples(
-            wheelCVel.simulator,
-            wheelCVel.reference,
+            wheelInVel.simulator,
+            wheelInVel.reference,
             0,
-            gsl::make_span(wheelCVels),
+            gsl::make_span(wheelInVels),
             gsl::make_span(steps),
             gsl::make_span(timeValues));
 
-        std::cout << "time,step #,stepsize,chassisVel,wheelCVel,wheelGVel,groundVel" << std::endl;
+        std::cout << "time,step #,stepsize,chassisVel,wheelInVel" << std::endl;
         for (int i = 1; i < numSamples; ++i) {
             std::cout << cosim::to_double_time_point(timeValues[i])
                       << "," << steps[i]
                       << "," << cosim::to_double_duration(timeValues[i] - timeValues[i - 1], timeValues[i - 1])
                       << "," << chassisVels[i]
-                      << "," << wheelCVels[i]
-                      << "," << wheelGVels[i]
-                      << "," << groundVels[i]
+                      << "," << wheelInVels[i]
                       << std::endl;
         }
     } catch (const std::exception& e) {
