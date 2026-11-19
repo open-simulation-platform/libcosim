@@ -21,10 +21,12 @@ on top of `feature/binding-friendly-api` (libcosim changes). Nothing pushed.
 | C | SWIG **experimental C backend** (SWIG 4.4.1, pinned) | ✅ smoke test, valgrind-clean; C API drift check |
 | Julia | `ccall` on the generated C library, finalizers | ✅ smoke test |
 | Java | SWIG Java backend | ✅ smoke test |
+| C# | SWIG C# backend (.NET 10) | ✅ smoke test |
 
 All of these run under CTest (`ctest -R swig_`) and in the
 `ci-swig-bindings` workflow. **Verified on Linux (GCC) and Windows (MSVC
-19.4, Visual Studio 2022): 42/42 tests each** (36 libcosim + 6 binding tests).
+19.4, Visual Studio 2022)**: 36 libcosim tests plus 7 binding tests
+(Python, libcosimpy suite, C, C API drift check, Julia, Java, C#).
 See [Round 4](#round-4-windows) for what Windows needed.
 
 **Verdict:** "everything through SWIG" works for Python, C, Julia and Java
@@ -42,6 +44,7 @@ bindings/swig/
   c/cosim_c.i               C: typemaps, errors, ownership, header docs (188 lines)
   c/reference/cosim_c_wrap.h  reference C API header (drift check)
   java/cosim_java.i         Java: time/path typemaps, CosimException, copies (109 lines)
+  csharp/cosim_csharp.i     C#: time/path typemaps, CosimException, copies (~160 lines)
   python/tests/, c/smoke_test.c, julia/smoke_test.jl, java/test/  tests
 ```
 

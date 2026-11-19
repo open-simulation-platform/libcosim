@@ -32,15 +32,17 @@ set(LIBCOSIM_SWIG_TEST_DATA_DIR "${CMAKE_SOURCE_DIR}/tests/data")
 # java.exe or julia.exe loads cosim_java.dll / cosim_c.dll, the libraries
 # those depend on (cosim.dll, ...) are not searched for in the DLL's own
 # directory, only in the executable's directory, the system directories and
-# PATH. (Harmless elsewhere.)
+# PATH. On Linux, .NET's DllImport finds the bindings via LD_LIBRARY_PATH.
 function(libcosim_swig_test_runtime_path testName)
     set_property(TEST ${testName} APPEND PROPERTY ENVIRONMENT_MODIFICATION
-        "PATH=path_list_prepend:$<TARGET_FILE_DIR:cosim>")
+        "PATH=path_list_prepend:$<TARGET_FILE_DIR:cosim>"
+        "LD_LIBRARY_PATH=path_list_prepend:$<TARGET_FILE_DIR:cosim>")
 endfunction()
 
 option(LIBCOSIM_SWIG_PYTHON "Build the SWIG Python bindings" ON)
 option(LIBCOSIM_SWIG_C "Build the SWIG C bindings (SWIG's experimental C backend)" ON)
 option(LIBCOSIM_SWIG_JAVA "Build the SWIG Java bindings (needs a JDK)" OFF)
+option(LIBCOSIM_SWIG_CSHARP "Build the SWIG C# bindings (needs the .NET SDK)" OFF)
 
 if(LIBCOSIM_SWIG_PYTHON)
     add_subdirectory(python)
@@ -50,4 +52,7 @@ if(LIBCOSIM_SWIG_C)
 endif()
 if(LIBCOSIM_SWIG_JAVA)
     add_subdirectory(java)
+endif()
+if(LIBCOSIM_SWIG_CSHARP)
+    add_subdirectory(csharp)
 endif()

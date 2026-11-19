@@ -69,14 +69,14 @@ template<class T> struct hash;
 template<class T> struct is_error_condition_enum;
 }
 
-// C has no operator overloading; Python maps these to ==/!=. Java proxies
-// compare by identity unless equals() is overridden, so it is left out there.
+// C has no operator overloading; Python maps these to ==/!=. Java and C#
+// proxies compare by identity unless Equals is overridden, so it is left out.
 #ifdef SWIGC
 %ignore cosim::operator==(const function_io_id&, const function_io_id&);
 %rename(equals) cosim::operator==;
 %ignore cosim::operator!=;
 #endif
-#ifdef SWIGJAVA
+#if defined(SWIGJAVA) || defined(SWIGCSHARP)
 %ignore cosim::operator==;
 %ignore cosim::operator!=;
 #endif

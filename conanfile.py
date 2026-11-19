@@ -32,6 +32,7 @@ class LibcosimConan(ConanFile):
         "no_fmi_logging": [True, False],
         "swig_bindings": [True, False],
         "swig_java": [True, False],
+        "swig_csharp": [True, False],
     }
     default_options = {
         "shared": True,
@@ -40,6 +41,7 @@ class LibcosimConan(ConanFile):
         "no_fmi_logging": False,
         "swig_bindings": False,
         "swig_java": False,
+        "swig_csharp": False,
     }
 
     # Dependencies/requirements
@@ -119,6 +121,8 @@ class LibcosimConan(ConanFile):
         tc.cache_variables["LIBCOSIM_WITH_PROXYFMU"] = self.options.proxyfmu
         tc.cache_variables["LIBCOSIM_BUILD_SWIG_BINDINGS"] = self.options.swig_bindings
         tc.cache_variables["LIBCOSIM_SWIG_JAVA"] = self.options.swig_bindings and self.options.swig_java
+        # C#: the .NET SDK (dotnet) must be installed; there is no Conan package.
+        tc.cache_variables["LIBCOSIM_SWIG_CSHARP"] = self.options.swig_bindings and self.options.swig_csharp
         tc.generate()
         CMakeDeps(self).generate()
 

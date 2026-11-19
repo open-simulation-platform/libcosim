@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Compiles the SWIG-generated sources (GeneratedDir) with the
+       hand-written ones and the smoke test. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <NoWarn>$(NoWarn);CS0108;CS0114;CS1591;CS8981;SYSLIB1054</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(GeneratedDir)/*.cs" />
+    <Compile Include="../src/*.cs" />
+    <Compile Include="SmokeTest.cs" />
+  </ItemGroup>
+</Project>
