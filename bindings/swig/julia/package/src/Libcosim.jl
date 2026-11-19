@@ -12,15 +12,31 @@ library directly:
 """
 module Libcosim
 
-# Libdl from Base, so the package has no dependencies (no manifest or
-# registry needed to load it).
+import Artifacts
 import Base.Libc.Libdl
 
 const libname = Sys.iswindows() ? "cosim_c.dll" : Sys.isapple() ? "libcosim_c.dylib" : "libcosim_c.so"
 
-# The bundled native libraries live in ../lib. LIBCOSIM_C_LIBRARY overrides
-# the library path (used when testing against a build tree).
-const libcosim_c = get(ENV, "LIBCOSIM_C_LIBRARY", joinpath(@__DIR__, "..", "lib", libname))
+"""
+The path of the C library: from the `libcosim_c` artifact for this platform
+(see Artifacts.toml; Pkg downloads it when the package is installed), or
+LIBCOSIM_C_LIBRARY, e.g. a build tree. Evaluated when the package is
+(pre)compiled; artifact paths are content-addressed and stable.
+"""
+function find_library()
+    override = get(ENV, "LIBCOSIM_C_LIBRARY", "")
+    isempty(override) || return override
+    toml = joinpath(@__DIR__, "..", "Artifacts.toml")
+    hash = isfile(toml) ? Artifacts.artifact_hash("libcosim_c", toml) : nothing
+    hash === nothing && error("Libcosim: no libcosim binaries for this platform " *
+                              "(no `libcosim_c` artifact for it in $toml)")
+    dir = Artifacts.artifact_path(hash)
+    isdir(dir) || error("Libcosim: the libcosim binaries are not installed ($dir); " *
+                        "run `import Pkg; Pkg.instantiate()`")
+    return joinpath(dir, "lib", libname)
+end
+
+const libcosim_c = find_library()
 
 """A libcosim error, with its cosim::errc code."""
 struct CosimError <: Exception

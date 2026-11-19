@@ -9,7 +9,9 @@ Produces in <out>/dist:
     python/libcosim-<v>-<tags>.whl   Python wheel (scikit-build-core)
     java/libcosim-<v>.jar            classes + native libraries
     csharp/Libcosim.<v>.nupkg        NuGet package with runtimes/<rid>/native
-    julia/Libcosim/                  Julia package with the C library in lib/
+    julia/Libcosim/                  Julia package, Artifacts.toml for this platform
+    julia/libcosim_c-<triplet>.tar.gz  its binaries (the `libcosim_c` artifact),
+                                     to upload to the GitHub release
     c/                               C library + cosim_c.h (also: `conan create .`)
 
 Requires Conan 2, CMake, a C++ compiler, and for the languages built: Python
@@ -19,6 +21,8 @@ tested with nothing but the package itself on the search paths.
 import argparse
 import glob
 import os
+import pathlib
+import re
 import shutil
 import subprocess
 import sys
@@ -26,6 +30,7 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 SWIG_DIR = os.path.dirname(HERE)
 ALL = ["c", "python", "java", "csharp", "julia"]
+RELEASES = "https://github.com/open-simulation-platform/libcosim/releases/download"
 WINDOWS = sys.platform == "win32"
 
 
@@ -68,6 +73,8 @@ def main():
     p.add_argument("--test", action="store_true", help="test the packages")
     p.add_argument("--test-data", default=os.path.join(SWIG_DIR, "..", "..", "tests", "data"),
                    help="libcosim's tests/data (default: the enclosing libcosim repository)")
+    p.add_argument("--julia-url", help="where the Julia artifact tarballs will be downloaded "
+                   "from (default: the GitHub release v<version>)")
     p.add_argument("--conan-arg", action="append", default=[],
                    help="extra argument for `conan install`, e.g. --conan-arg=-r=conancenter")
     args = p.parse_args()
@@ -108,6 +115,21 @@ def main():
             prefix = os.path.join(dist, "c") if lang == "c" else dist
             run(["cmake", "--install", build, "--config", "Release",
                  "--prefix", prefix, "--component", lang], conan_env=conan_env)
+
+    if "julia" in langs:
+        log("package julia: artifact")
+        jl = os.path.join(dist, "julia")
+        url = args.julia_url or f"{RELEASES}/v{v}"
+        run(["julia", "--startup-file=no", os.path.join(SWIG_DIR, "julia", "make_artifact.jl"),
+             os.path.join(jl, "native"), jl, url],
+            env=dict(os.environ, JULIA_DEPOT_PATH=os.path.join(out, "julia-depot")))
+        shutil.rmtree(os.path.join(jl, "native"))
+        # This platform's entry; a release concatenates the entries of all
+        # platforms into Artifacts.toml.
+        with open(os.path.join(jl, "Libcosim", "Artifacts.toml"), "w", encoding="utf-8") as f:
+            for entry in sorted(glob.glob(os.path.join(jl, "Artifacts-*.toml"))):
+                with open(entry, encoding="utf-8") as e:
+                    f.write(e.read())
 
     if "python" in langs:
         log("package python")
@@ -164,8 +186,24 @@ def main():
 
     if "julia" in langs:
         log("test julia")
-        run(["julia", "--startup-file=no", f"--project={os.path.join(dist, 'julia', 'Libcosim')}",
-             os.path.join(SWIG_DIR, "julia", "test", "runtests.jl"), osp, identity], env=env)
+        # Install the package as a user would (Pkg downloads the artifact),
+        # with the artifact URL pointing to the local tarball, in a fresh depot.
+        jl_test = os.path.join(tests, "julia")
+        shutil.rmtree(jl_test, ignore_errors=True)
+        pkg = os.path.join(jl_test, "Libcosim")
+        shutil.copytree(os.path.join(dist, "julia", "Libcosim"), pkg)
+        tarballs = pathlib.Path(dist, "julia").as_uri()
+        with open(os.path.join(pkg, "Artifacts.toml"), encoding="utf-8") as f:
+            toml = re.sub(r'url = ".*/(libcosim_c-[^/"]+)"', lambda m: f'url = "{tarballs}/{m.group(1)}"', f.read())
+        with open(os.path.join(pkg, "Artifacts.toml"), "w", encoding="utf-8") as f:
+            f.write(toml)
+        # The trailing separator keeps the default depots (registries).
+        jl_env = dict(env, JULIA_DEPOT_PATH=os.path.join(jl_test, "depot") + os.pathsep)
+        project = os.path.join(jl_test, "env")
+        run(["julia", "--startup-file=no", f"--project={project}", "-e",
+             f'import Pkg; Pkg.develop(path=raw"{pkg}")'], env=jl_env)
+        run(["julia", "--startup-file=no", f"--project={project}",
+             os.path.join(SWIG_DIR, "julia", "test", "runtests.jl"), osp, identity], env=jl_env)
 
     if "c" in langs:
         log("test c: run `conan create .` (builds and runs test_package)")

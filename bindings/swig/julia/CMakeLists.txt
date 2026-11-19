@@ -13,17 +13,20 @@ add_custom_command(
 add_custom_target(libcosim_julia ALL DEPENDS "${generatedJl}")
 add_dependencies(libcosim_julia cosim_c_generate)
 
-# A package directory in the build tree (the library path comes from
-# LIBCOSIM_C_LIBRARY), used by the tests.
+# A package directory in the build tree, without Artifacts.toml (the library
+# path comes from LIBCOSIM_C_LIBRARY), used by the tests.
 set(buildPackage "${CMAKE_CURRENT_BINARY_DIR}/Libcosim")
 add_custom_command(TARGET libcosim_julia POST_BUILD
     COMMAND "${CMAKE_COMMAND}" -E copy_directory "${CMAKE_CURRENT_SOURCE_DIR}/package" "${buildPackage}"
     COMMAND "${CMAKE_COMMAND}" -E copy "${generatedJl}" "${buildPackage}/src/generated.jl")
 
 if(LIBCOSIM_SWIG_INSTALL)
+    # The package (without binaries), and in julia/native the C library with
+    # its dependencies, which packaging/build_packages.py turns into the
+    # package's `libcosim_c` artifact (julia/make_artifact.jl).
     install(DIRECTORY package/ DESTINATION julia/Libcosim COMPONENT julia)
     install(FILES "${generatedJl}" DESTINATION julia/Libcosim/src COMPONENT julia)
-    libcosim_swig_install_with_runtime(cosim_c DESTINATION julia/Libcosim/lib COMPONENT julia)
+    libcosim_swig_install_with_runtime(cosim_c DESTINATION julia/native COMPONENT julia)
 endif()
 
 if(LIBCOSIM_SWIG_TESTS)
