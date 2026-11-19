@@ -331,6 +331,13 @@ inline double to_seconds(std::int64_t nanoseconds) { return std::chrono::duratio
 %ignore cosim::operator<<;
 COSIM_MEMBER_BY_VALUE(cosim::model_description, variables, std::vector<cosim::variable_description>)
 COSIM_MEMBER_BY_VALUE(cosim::model_description, capabilities, cosim::simulator_capabilities)
+// Enumerators that are keywords in some target languages (boolean in Java;
+// string and fixed in C#) get one shared, keyword-safe name in all bindings,
+// instead of each language's own automatic renaming (_boolean, string_,
+// fixed_). C++ keeps its names.
+%rename(boolean_value) cosim::variable_type::boolean;
+%rename(string_value) cosim::variable_type::string;
+%rename(fixed_value) cosim::variable_variability::fixed;
 %include "cosim/model_description.hpp"
 
 // [ADAPT] typed access to the optional variant start value

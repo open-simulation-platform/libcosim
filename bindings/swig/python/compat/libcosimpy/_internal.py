@@ -19,8 +19,8 @@ def cosim():
 _VARIABLE_TYPES = {
     CosimEnums.CosimVariableType.REAL.value: _cosim.variable_type_real,
     CosimEnums.CosimVariableType.INTEGER.value: _cosim.variable_type_integer,
-    CosimEnums.CosimVariableType.STRING.value: _cosim.variable_type_string,
-    CosimEnums.CosimVariableType.BOOLEAN.value: _cosim.variable_type_boolean,
+    CosimEnums.CosimVariableType.STRING.value: _cosim.variable_type_string_value,
+    CosimEnums.CosimVariableType.BOOLEAN.value: _cosim.variable_type_boolean_value,
 }
 _VARIABLE_TYPES_BACK = {v: k for k, v in _VARIABLE_TYPES.items()}
 _VARIABLE_TYPES_BACK[_cosim.variable_type_enumeration] = CosimEnums.CosimVariableType.INTEGER.value
@@ -35,7 +35,7 @@ _CAUSALITIES = {
 
 _VARIABILITIES = {
     _cosim.variable_variability_constant: CosimEnums.CosimVariableVariability.CONSTANT.value,
-    _cosim.variable_variability_fixed: CosimEnums.CosimVariableVariability.FIXED.value,
+    _cosim.variable_variability_fixed_value: CosimEnums.CosimVariableVariability.FIXED.value,
     _cosim.variable_variability_tunable: CosimEnums.CosimVariableVariability.TUNABLE.value,
     _cosim.variable_variability_discrete: CosimEnums.CosimVariableVariability.DISCRETE.value,
     _cosim.variable_variability_continuous: CosimEnums.CosimVariableVariability.CONTINUOUS.value,

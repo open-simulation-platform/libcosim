@@ -113,8 +113,8 @@ enum cosim_errc {
 enum cosim_variable_type {
   cosim_variable_type_real,
   cosim_variable_type_integer,
-  cosim_variable_type_boolean,
-  cosim_variable_type_string,
+  cosim_variable_type_boolean_value,
+  cosim_variable_type_string_value,
   cosim_variable_type_enumeration
 };
 
@@ -128,7 +128,7 @@ enum cosim_variable_causality {
 
 enum cosim_variable_variability {
   cosim_variable_variability_constant,
-  cosim_variable_variability_fixed,
+  cosim_variable_variability_fixed_value,
   cosim_variable_variability_tunable,
   cosim_variable_variability_discrete,
   cosim_variable_variability_continuous

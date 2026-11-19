@@ -3,6 +3,10 @@
 // `cosim_java` (System.loadLibrary("cosim_java")).
 %module cosim
 
+// C++ enums become proper Java enums (SWIG's default is "typesafe enum"
+// classes), so they work with switch, EnumSet and EnumMap.
+%include "enums.swg"
+
 // -----------------------------------------------------------------------------
 // Errors: cosim::error -> libcosim.CosimException (carries the cosim::errc
 // code), other std::exception -> java.lang.RuntimeException.

@@ -265,10 +265,10 @@ class CosimExecution:
 
     def connect_string_variables(self, output_slave_index, output_variable_reference, input_slave_index,
                                  input_variable_reference):
-        return self.__connect(cosim().variable_type_string, output_slave_index, output_variable_reference,
+        return self.__connect(cosim().variable_type_string_value, output_slave_index, output_variable_reference,
                               input_slave_index, input_variable_reference)
 
     def connect_boolean_variables(self, output_slave_index, output_variable_reference, input_slave_index,
                                   input_variable_reference):
-        return self.__connect(cosim().variable_type_boolean, output_slave_index, output_variable_reference,
+        return self.__connect(cosim().variable_type_boolean_value, output_slave_index, output_variable_reference,
                               input_slave_index, input_variable_reference)

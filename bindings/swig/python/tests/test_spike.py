@@ -46,6 +46,15 @@ class ExecutionTest(unittest.TestCase):
         self.assertEqual(names["realIn"].type, cosim.variable_type_real)
         self.assertEqual(names["realIn"].causality, cosim.variable_causality_input)
 
+    def test_keyword_safe_enum_names(self):
+        # Same names in all bindings for enumerators that are keywords in
+        # Java/C# (C++: variable_type::boolean/string, variable_variability::fixed).
+        for name in ("variable_type_boolean_value", "variable_type_string_value",
+                     "variable_variability_fixed_value"):
+            self.assertTrue(hasattr(cosim, name), name)
+        for name in ("variable_type_boolean", "variable_type_string", "variable_variability_fixed"):
+            self.assertFalse(hasattr(cosim, name), name)
+
     def test_member_of_temporary_is_a_copy(self):
         # Struct members of class type are returned by value. Without that,
         # .variables would point into the temporary model description and
