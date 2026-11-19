@@ -10,6 +10,7 @@
 #define LIBCOSIM_SSP_LOADER_HPP
 
 #include <cosim/algorithm/algorithm.hpp>
+#include <cosim/execution.hpp>
 #include <cosim/orchestration.hpp>
 #include <cosim/system_structure.hpp>
 #include <cosim/time.hpp>
@@ -82,6 +83,30 @@ private:
     std::optional<std::string> ssdFileName_;
     std::shared_ptr<cosim::model_uri_resolver> modelResolver_;
 };
+
+
+/**
+ *  Creates a ready-to-run execution from an SSP archive or directory.
+ *
+ *  This loads the configuration with a default `ssp_loader`, creates an
+ *  execution starting at the configured start time, and adds the system
+ *  structure and the chosen parameter set with `inject_system_structure()`.
+ *
+ *  \param configPath
+ *      Path to an `.ssp` archive, an `.ssd` file, or a directory that
+ *      contains `SystemStructure.ssd`.
+ *  \param algorithm
+ *      The co-simulation algorithm. If null, the algorithm given in the
+ *      SSP's default experiment is used; if that is absent too, a
+ *      `cosim::error` with `errc::bad_file` is thrown.
+ *  \param parameterSet
+ *      The name of the parameter set to apply. The empty string (default)
+ *      selects the default parameter values.
+ */
+configured_execution load_execution_from_ssp(
+    const cosim::filesystem::path& configPath,
+    std::shared_ptr<cosim::algorithm> algorithm = nullptr,
+    const std::string& parameterSet = "");
 
 
 } // namespace cosim

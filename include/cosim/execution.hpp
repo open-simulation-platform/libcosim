@@ -434,6 +434,25 @@ struct entity_index_maps
 
 
 /**
+ *  An execution created from a configuration file, ready to run.
+ *
+ *  Returned by `load_execution_from_osp_config()` and
+ *  `load_execution_from_ssp()`.
+ */
+struct configured_execution
+{
+    /// The execution, with all simulators, functions and connections added.
+    std::shared_ptr<cosim::execution> execution;
+
+    /// Mappings between entity names and their indexes in `execution`.
+    entity_index_maps entity_maps;
+
+    /// The end time given by the configuration, if any.
+    std::optional<time_point> end_time;
+};
+
+
+/**
  *  Adds simulators and connections to an execution, and sets initial values,
  *  according to a predefined system structure description.
  *

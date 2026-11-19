@@ -79,6 +79,39 @@ void test_invalid_configs()
     cosim::filesystem::remove_all(dir);
 }
 
+void test_load_execution(const cosim::filesystem::path& testDataDir)
+{
+    auto configured = cosim::load_execution_from_osp_config(testDataDir / "msmi");
+    REQUIRE(configured.execution);
+    REQUIRE(configured.entity_maps.simulators.size() == 4);
+    REQUIRE(!configured.end_time);
+
+    auto& exe = *configured.execution;
+    REQUIRE(std::fabs(cosim::to_double_time_point(exe.current_time()) - 0.01) < 1e-9);
+
+    auto obs = std::make_shared<cosim::last_value_observer>();
+    exe.add_observer(obs);
+    REQUIRE(exe.simulate_until(cosim::to_time_point(0.02)));
+
+    // Initial value from the configuration file has been applied
+    const auto sim = configured.entity_maps.simulators.at("CraneController");
+    cosim::value_reference ref = 0;
+    bool found = false;
+    for (const auto& v : exe.get_model_description(sim).variables) {
+        if (v.name == "cl1_min") {
+            ref = v.reference;
+            found = true;
+        }
+    }
+    REQUIRE(found);
+    REQUIRE(std::fabs(obs->get_real(sim, {ref}).at(0) - 2.2) < 1e-9);
+
+    // End time is passed through
+    const auto withEnd = cosim::load_execution_from_osp_config(testDataDir / "msmi" / "OspSystemStructure_EndTime.xml");
+    REQUIRE(withEnd.end_time);
+    REQUIRE(std::fabs(cosim::to_double_time_point(*withEnd.end_time) - 0.001) < 1e-9);
+}
+
 int main()
 {
     try {
@@ -90,6 +123,7 @@ int main()
         test(cosim::filesystem::path(testDataDir) / "msmi", 7);
         test(cosim::filesystem::path(testDataDir) / "msmi" / "OspSystemStructure_Bond.xml", 9);
         test_invalid_configs();
+        test_load_execution(cosim::filesystem::path(testDataDir));
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what();
         return 1;

@@ -33,6 +33,8 @@
 #include <stdexcept>
 #include <string>
 #include <typeinfo>
+#include <variant>
+#include <type_traits>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -1249,6 +1251,32 @@ osp_config load_osp_config(
     add_power_bonds(parser.get_power_bond_connections(), config.system_structure);
 
     return config;
+}
+
+configured_execution load_execution_from_osp_config(
+    const cosim::filesystem::path& configPath,
+    std::shared_ptr<cosim::model_uri_resolver> resolver)
+{
+    if (!resolver) resolver = default_model_uri_resolver();
+    const auto config = load_osp_config(configPath, *resolver);
+
+    const auto algorithm = std::visit(
+        [](const auto& params) -> std::shared_ptr<cosim::algorithm> {
+            using params_type = std::decay_t<decltype(params)>;
+            if constexpr (std::is_same_v<params_type, fixed_step_algorithm_params>) {
+                return std::make_shared<fixed_step_algorithm>(params);
+            } else {
+                return std::make_shared<ecco_algorithm>(params);
+            }
+        },
+        config.algorithm_configuration);
+
+    configured_execution result;
+    result.execution = std::make_shared<execution>(config.start_time, algorithm);
+    result.entity_maps = inject_system_structure(
+        *result.execution, config.system_structure, config.initial_values);
+    result.end_time = config.end_time;
+    return result;
 }
 
 } // namespace cosim

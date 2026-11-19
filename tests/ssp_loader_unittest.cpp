@@ -201,3 +201,68 @@ BOOST_AUTO_TEST_CASE(missing_ssd_is_bad_file)
 
     cosim::filesystem::remove_all(dir);
 }
+
+namespace
+{
+cosim::value_reference find_reference(
+    const cosim::execution& exe,
+    cosim::simulator_index sim,
+    const std::string& name)
+{
+    for (const auto& v : exe.get_model_description(sim).variables) {
+        if (v.name == name) return v.reference;
+    }
+    throw std::runtime_error("No variable named " + name);
+}
+} // namespace
+
+BOOST_AUTO_TEST_CASE(load_execution_from_ssp_test)
+{
+    const auto testDataDir = std::getenv("TEST_DATA_DIR");
+    BOOST_TEST_REQUIRE(testDataDir != nullptr);
+    const auto sspDir = cosim::filesystem::path(testDataDir) / "ssp" / "demo";
+
+    // Uses the algorithm from the SSP's default experiment
+    auto configured = cosim::load_execution_from_ssp(sspDir);
+    BOOST_REQUIRE(configured.execution);
+    BOOST_REQUIRE(configured.entity_maps.simulators.size() == 2);
+    BOOST_CHECK(!configured.end_time);
+
+    auto& exe = *configured.execution;
+    const auto crane = configured.entity_maps.simulators.at("KnuckleBoomCrane");
+    auto obs = std::make_shared<cosim::last_value_observer>();
+    exe.add_observer(obs);
+    BOOST_REQUIRE(exe.simulate_until(exe.current_time() + cosim::to_duration(1e-3)));
+
+    // Parameter values from the SSD's default parameter set are applied
+    const auto values = obs->get_real(crane, {find_reference(exe, crane, "Spring_Joint.k")});
+    BOOST_CHECK_CLOSE(values.at(0), 0.005, tolerance);
+}
+
+BOOST_AUTO_TEST_CASE(load_execution_from_ssp_algorithm_test)
+{
+    const auto testDataDir = std::getenv("TEST_DATA_DIR");
+    BOOST_TEST_REQUIRE(testDataDir != nullptr);
+    const auto sspDir = cosim::filesystem::path(testDataDir) / "ssp" / "demo" / "no_algorithm_element";
+
+    // No algorithm in the SSP and none given
+    BOOST_CHECK_EXCEPTION(
+        cosim::load_execution_from_ssp(sspDir),
+        cosim::error,
+        [](const cosim::error& e) { return e.code() == cosim::errc::bad_file; });
+
+    // An explicitly given algorithm is used
+    auto configured = cosim::load_execution_from_ssp(
+        sspDir, std::make_shared<cosim::fixed_step_algorithm>(cosim::to_duration(1e-4)));
+    BOOST_CHECK_CLOSE(cosim::to_double_time_point(configured.execution->current_time()), 5.0, tolerance);
+    BOOST_REQUIRE(configured.execution->simulate_until(cosim::to_time_point(5.001)));
+
+    // Unknown parameter set
+    BOOST_CHECK_EXCEPTION(
+        cosim::load_execution_from_ssp(
+            sspDir,
+            std::make_shared<cosim::fixed_step_algorithm>(cosim::to_duration(1e-4)),
+            "no_such_parameter_set"),
+        cosim::error,
+        [](const cosim::error& e) { return e.code() == cosim::errc::bad_file; });
+}
