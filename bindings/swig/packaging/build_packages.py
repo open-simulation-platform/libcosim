@@ -37,10 +37,11 @@ def run(cmd, env=None, cwd=None, conan_env=None):
     """Runs cmd, inside the Conan build environment if conan_env is given."""
     if conan_env:
         if WINDOWS:
-            cmd = ["cmd", "/c", f'"{conan_env}.bat" >nul && {subprocess.list2cmdline(cmd)}']
+            # One string: cmd.exe does its own quote parsing (/s: strip the outer quotes).
+            cmd = f'cmd /s /c ""{conan_env}.bat" >nul && {subprocess.list2cmdline(cmd)}"'
         else:
             cmd = ["bash", "-c", f'source "{conan_env}.sh" >/dev/null && exec "$@"', "_", *cmd]
-    print("+", subprocess.list2cmdline(cmd) if WINDOWS else " ".join(cmd), flush=True)
+    print("+", cmd if isinstance(cmd, str) else subprocess.list2cmdline(cmd), flush=True)
     subprocess.run(cmd, env=env, cwd=cwd, check=True)
 
 
@@ -113,6 +114,9 @@ def main():
         shutil.rmtree(os.path.join(dist, "python"), ignore_errors=True)
         run([sys.executable, "-m", "build", "--wheel", SWIG_DIR, "-o", os.path.join(dist, "python"),
              f"-Ccmake.define.CMAKE_TOOLCHAIN_FILE={toolchain}",
+             # Visual Studio generates all configurations; the Conan
+             # dependencies exist only for Release.
+             "-Ccmake.define.CMAKE_CONFIGURATION_TYPES=Release",
              f"-Cbuild-dir={os.path.join(out, 'wheel-build')}"], conan_env=conan_env)
 
     if not args.test:

@@ -28,7 +28,8 @@ Xerces-C, FMI Library, libzip, …). They are found with CMake's
 (`cmake/BundleRuntime.cmake`); on Linux their RPATH is set to `$ORIGIN`
 (needs `patchelf`). A package therefore needs nothing on `PATH` or
 `LD_LIBRARY_PATH`. The size is dominated by these libraries (about 20 MB
-unpacked on Linux; the wheel is 7.6 MB).
+unpacked on Linux; the wheel, JAR and NuGet package are about 7 MB on Linux
+and 3.4 MB on Windows).
 
 ## Building
 

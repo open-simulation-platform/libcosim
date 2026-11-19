@@ -393,13 +393,15 @@ bindings in practice; 3, 4 and 7 are libcosim issues independent of SWIG.
 Packages for all five languages, built standalone against the libcosim Conan
 package; see [packaging/README.md](packaging/README.md).
 
-| Language | Package | Size (Linux) |
+| Language | Package | Size Linux / Windows |
 |---|---|---|
 | C | Conan package `libcosim-c` (`conan create .`, with `test_package`) | — |
-| Python | wheel (scikit-build-core) | 7.4 MB |
-| Java | JAR with native libraries, loaded by `NativeLoader` | 7.2 MB |
-| C# | NuGet package with `runtimes/<rid>/native` | 7.4 MB |
-| Julia | package directory, `ccall` layer generated from the C header | 23 MB unpacked |
+| Python | wheel (scikit-build-core) | 7.4 / 3.4 MB |
+| Java | JAR with native libraries, loaded by `NativeLoader` | 7.2 / 3.3 MB |
+| C# | NuGet package with `runtimes/<rid>/native` | 7.4 / 3.4 MB |
+| Julia | package directory, `ccall` layer generated from the C header | 23 MB unpacked (Linux) |
+
+All packages built and tested on Linux (GCC) and Windows (MSVC 19.4).
 
 `packaging/build_packages.py --test` builds them and tests each with nothing
 but the package on the search paths. Each package bundles libcosim and its
