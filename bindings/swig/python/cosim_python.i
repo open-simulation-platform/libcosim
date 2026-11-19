@@ -55,28 +55,38 @@ inline bool py_to_nanoseconds(PyObject* obj, long long& out)
 }}
 %}
 
-%define COSIM_TIME_TYPEMAPS(TYPE, FROM_NS, TO_NS)
+%{
+#include <cosim/time.hpp>
+namespace cosim { namespace swig {
+inline long long to_ns(cosim::time_point t) { return t.time_since_epoch().count(); }
+inline long long to_ns(cosim::duration d) { return d.count(); }
+template<typename T> T from_ns(long long ns);
+template<> inline cosim::duration from_ns<cosim::duration>(long long ns) { return cosim::duration(ns); }
+template<> inline cosim::time_point from_ns<cosim::time_point>(long long ns) { return cosim::time_point(cosim::duration(ns)); }
+}}
+%}
+
+%define COSIM_TIME_TYPEMAPS(TYPE)
 %typemap(in) TYPE {
     long long ns = 0;
     if (!cosim::swig::py_to_nanoseconds($input, ns)) SWIG_fail;
-    $1 = FROM_NS;
+    $1 = cosim::swig::from_ns<TYPE>(ns);
 }
 %typemap(in) const TYPE& (TYPE temp) {
     long long ns = 0;
     if (!cosim::swig::py_to_nanoseconds($input, ns)) SWIG_fail;
-    temp = FROM_NS;
+    temp = cosim::swig::from_ns<TYPE>(ns);
     $1 = &temp;
 }
-%typemap(out) TYPE {
-    $result = PyLong_FromLongLong(TO_NS);
-}
+%typemap(out) TYPE "$result = PyLong_FromLongLong(cosim::swig::to_ns($1));"
+%typemap(out) const TYPE& "$result = PyLong_FromLongLong(cosim::swig::to_ns(*$1));"
 %typemap(typecheck, precedence=SWIG_TYPECHECK_INT64) TYPE, const TYPE& {
     $1 = (PyIndex_Check($input) && !PyFloat_Check($input)) ? 1 : 0;
 }
 %enddef
 
-COSIM_TIME_TYPEMAPS(cosim::time_point, cosim::time_point(cosim::duration(ns)), ($1).time_since_epoch().count())
-COSIM_TIME_TYPEMAPS(cosim::duration, cosim::duration(ns), ($1).count())
+COSIM_TIME_TYPEMAPS(cosim::time_point)
+COSIM_TIME_TYPEMAPS(cosim::duration)
 
 // -----------------------------------------------------------------------------
 // Paths: cosim::filesystem::path <-> str (accepts str or any os.PathLike).

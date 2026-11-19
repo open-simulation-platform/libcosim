@@ -26,6 +26,7 @@
 #include <cosim/exception.hpp>
 #include <cosim/execution.hpp>
 #include <cosim/lib_info.hpp>
+#include <cosim/log/level.hpp>
 #include <cosim/manipulator/override_manipulator.hpp>
 #include <cosim/manipulator/scenario_manager.hpp>
 #include <cosim/model_description.hpp>
@@ -43,6 +44,13 @@
 #include <string>
 #include <variant>
 #include <vector>
+%}
+
+// With compactdefaultargs SWIG copies default argument expressions verbatim
+// into the wrapper functions, which live outside namespace cosim. Make the
+// unqualified names used in libcosim default arguments resolve there.
+%{
+using cosim::duration;
 %}
 
 %include <stdint.i>
@@ -131,6 +139,10 @@ inline cosim::fixed_step_algorithm* fixed_step_algorithm(cosim::duration step, u
 {
     return threads == 0 ? new cosim::fixed_step_algorithm(step) : new cosim::fixed_step_algorithm(step, threads);
 }
+inline cosim::ecco_algorithm* ecco_algorithm(const cosim::ecco_algorithm_params& params, unsigned int threads)
+{
+    return threads == 0 ? new cosim::ecco_algorithm(params) : new cosim::ecco_algorithm(params, threads);
+}
 inline cosim::time_series_observer* time_series_observer(size_t bufferSize)
 {
     return bufferSize == 0 ? new cosim::time_series_observer() : new cosim::time_series_observer(bufferSize);
@@ -152,12 +164,21 @@ inline cosim::file_observer* file_observer(const std::string& logDir, const std:
 %enddef
 
 // -----------------------------------------------------------------------------
+// Struct members of time types (ecco_algorithm_params::step_size,
+// execution_status::current_time) are accessed by value, so the time
+// typemaps apply to them too.
+// -----------------------------------------------------------------------------
+%naturalvar cosim::duration;
+%naturalvar cosim::time_point;
+
+// -----------------------------------------------------------------------------
 // Ownership: everything handed to or returned from an execution is held by
 // shared_ptr. Must come before any declaration of these classes.
 // -----------------------------------------------------------------------------
 %shared_ptr(cosim::execution)
 %shared_ptr(cosim::algorithm)
 %shared_ptr(cosim::fixed_step_algorithm)
+%shared_ptr(cosim::ecco_algorithm)
 %shared_ptr(cosim::observer)
 %shared_ptr(cosim::last_value_provider)
 %shared_ptr(cosim::last_value_observer)
@@ -205,21 +226,9 @@ class model_uri_resolver { };
 // concrete classes, so SWIG does not see them.)
 
 // =============================================================================
-// log/simple.hpp — [ADAPT] Boost.Log is inline in the header; expose a plain
-// enum-based level setter instead.
+// log/level.hpp: Boost-free log level control (native).
 // =============================================================================
-%{
-#include <cosim/log/simple.hpp>
-%}
-%inline %{
-namespace cosim { namespace swig {
-enum class log_level { trace, debug, info, warning, error, fatal };
-inline void set_log_level(log_level level)
-{
-    cosim::log::set_global_output_level(static_cast<cosim::log::severity_level>(level));
-}
-}}
-%}
+%include "cosim/log/level.hpp"
 
 // =============================================================================
 // Time units. All times in this API are int64 nanoseconds (as in libcosimc
@@ -336,6 +345,7 @@ inline double to_seconds(std::int64_t nanoseconds) { return std::chrono::duratio
 %include "cosim/execution.hpp"
 
 %template(VariableIdVector) std::vector<cosim::variable_id>;
+%template(SimulatorInfoVector) std::vector<cosim::simulator_info>;
 
 %extend cosim::execution {
     // [ADAPT] replaces simulate_until(std::optional<time_point>)
@@ -359,6 +369,22 @@ COSIM_SINGLE_CONSTRUCTOR(fixed_step_algorithm, (cosim::duration, unsigned int))
     fixed_step_algorithm(cosim::duration baseStepSize, unsigned int workerThreadCount = 0)
     {
         return cosim::swig::create::fixed_step_algorithm(baseStepSize, workerThreadCount);
+    }
+}
+
+// =============================================================================
+// algorithm/ecco_algorithm.hpp
+// =============================================================================
+COSIM_SINGLE_CONSTRUCTOR(ecco_algorithm, (cosim::ecco_algorithm_params, unsigned int))
+%ignore cosim::ecco_algorithm::operator=;
+%include "cosim/algorithm/ecco_algorithm.hpp"
+
+%extend cosim::ecco_algorithm {
+    // [ADAPT] replaces the std::optional<unsigned int> worker-thread argument
+    // (0 = let libcosim choose).
+    ecco_algorithm(cosim::ecco_algorithm_params params, unsigned int workerThreadCount = 0)
+    {
+        return cosim::swig::create::ecco_algorithm(params, workerThreadCount);
     }
 }
 
@@ -459,6 +485,10 @@ namespace cosim { namespace swig {
 inline std::shared_ptr<cosim::fixed_step_algorithm> fixed_step_algorithm_create(cosim::duration baseStepSize, unsigned int workerThreadCount)
 {
     return std::shared_ptr<cosim::fixed_step_algorithm>(create::fixed_step_algorithm(baseStepSize, workerThreadCount));
+}
+inline std::shared_ptr<cosim::ecco_algorithm> ecco_algorithm_create(const cosim::ecco_algorithm_params& params, unsigned int workerThreadCount)
+{
+    return std::shared_ptr<cosim::ecco_algorithm>(create::ecco_algorithm(params, workerThreadCount));
 }
 inline std::shared_ptr<cosim::time_series_observer> time_series_observer_create(size_t bufferSize)
 {

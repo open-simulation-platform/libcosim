@@ -10,8 +10,23 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
+#ifdef _WIN32
+#    include <windows.h>
+#endif
 
 static int failures = 0;
+
+/* Short pause between status polls, so the simulation thread gets to run. */
+static void pause_briefly(void)
+{
+#ifdef _WIN32
+    Sleep(1);
+#else
+    struct timespec ts = {0, 1000000};
+    nanosleep(&ts, NULL);
+#endif
+}
 
 #define CHECK(cond)                                                     \
     do {                                                                \
@@ -59,7 +74,7 @@ int main(int argc, char** argv)
         fprintf(stderr, "usage: %s <OspSystemStructure.xml>\n", argv[0]);
         return 2;
     }
-    cosim_set_log_level(cosim_log_level_warning);
+    cosim_set_output_level(cosim_level_warning);
 
     /* --- Error path: exceptions become a pending SWIG_CException. */
     cosim_configured_execution* bad = cosim_load_execution_from_ssp("/nonexistent/system.ssp", NULL);
@@ -119,6 +134,45 @@ int main(int argc, char** argv)
     cosim_fixed_step_algorithm* algo = cosim_fixed_step_algorithm_create(cosim_to_nanoseconds(1e-3), 0);
     cosim_execution* exe2 = cosim_execution_new(0.0, (cosim_algorithm*)algo);
     CHECK(cosim_execution_current_time(exe2) == 0);
+
+    /* --- add_fmu, get_simulators, non-blocking start and status. */
+    {
+        cosim_fixed_step_algorithm* algo3 = cosim_fixed_step_algorithm_create(cosim_to_nanoseconds(0.1), 0);
+        cosim_execution* exe3 = cosim_execution_new(0, (cosim_algorithm*)algo3);
+        const char* fmu = getenv("IDENTITY_FMU");
+        CHECK(fmu != NULL);
+        if (fmu) {
+            CHECK(cosim_add_fmu(exe3, fmu, "a", 0, NULL) == 0);
+            if (check_error("add_fmu")) return 1;
+            cosim_SimulatorInfoVector* infos = cosim_execution_get_simulators(exe3);
+            CHECK(cosim_SimulatorInfoVector_size(infos) == 1);
+            cosim_simulator_info* info = cosim_SimulatorInfoVector_get(infos, 0); /* borrowed */
+            const char* name = cosim_simulator_info_name_get(info);
+            CHECK(strcmp(name, "a") == 0);
+            free((void*)name);
+            cosim_SimulatorInfoVector_delete(infos);
+
+            cosim_execution_start_simulation(exe3);
+            if (check_error("start_simulation")) return 1;
+            int64_t t = 0;
+            const time_t deadline = time(NULL) + 60; /* generous: valgrind is slow */
+            while (t < cosim_to_nanoseconds(1.0) && time(NULL) < deadline) {
+                cosim_execution_status* st = cosim_execution_get_status(exe3);
+                t = cosim_execution_status_current_time_get(st);
+                cosim_execution_status_delete(st);
+                pause_briefly();
+            }
+            CHECK(t >= cosim_to_nanoseconds(1.0));
+            cosim_execution_stop_simulation(exe3);
+            while (cosim_execution_is_running(exe3)) pause_briefly();
+            cosim_execution_status* st = cosim_execution_get_status(exe3);
+            CHECK(cosim_execution_status_state_get(st) == cosim_execution_state_stopped);
+            CHECK(cosim_execution_status_error_code_get(st) == cosim_errc_success);
+            cosim_execution_status_delete(st);
+        }
+        cosim_execution_delete(exe3);
+        cosim_fixed_step_algorithm_delete(algo3);
+    }
 
     /* --- Cleanup: every object returned by the API is owned by the caller. */
     cosim_execution_delete(exe2);

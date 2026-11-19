@@ -37,18 +37,45 @@
 #include <stdint.h>
 %}
 
-%define COSIM_TIME_TYPEMAPS(TYPE, FROM_NS, TO_NS)
+%{
+#include <cosim/time.hpp>
+namespace cosim { namespace swig {
+inline long long to_ns(cosim::time_point t) { return t.time_since_epoch().count(); }
+inline long long to_ns(cosim::duration d) { return d.count(); }
+template<typename T> T from_ns(long long ns);
+template<> inline cosim::duration from_ns<cosim::duration>(long long ns) { return cosim::duration(ns); }
+template<> inline cosim::time_point from_ns<cosim::time_point>(long long ns) { return cosim::time_point(cosim::duration(ns)); }
+}}
+%}
+
+%define COSIM_TIME_TYPEMAPS(TYPE)
 %typemap(ctype) TYPE, const TYPE& "int64_t"
-%typemap(in) TYPE "$1 = FROM_NS;"
-%typemap(in) const TYPE& (TYPE temp) "temp = FROM_NS; $1 = &temp;"
-%typemap(out) TYPE "$result = TO_NS;"
+%typemap(in) TYPE "$1 = cosim::swig::from_ns<TYPE>($input);"
+%typemap(in) const TYPE& (TYPE temp) "temp = cosim::swig::from_ns<TYPE>($input); $1 = &temp;"
+%typemap(out) TYPE "$result = cosim::swig::to_ns($1);"
+%typemap(out) const TYPE& "$result = cosim::swig::to_ns(*$1);"
 %enddef
 
 // Fixed-width integers keep their names in the C header (portable across LP64/LLP64).
 %typemap(ctype) std::int64_t, int64_t, const std::int64_t&, const int64_t& "int64_t"
 
-COSIM_TIME_TYPEMAPS(cosim::time_point, cosim::time_point(cosim::duration($input)), ($1).time_since_epoch().count())
-COSIM_TIME_TYPEMAPS(cosim::duration, cosim::duration($input), ($1).count())
+COSIM_TIME_TYPEMAPS(cosim::time_point)
+COSIM_TIME_TYPEMAPS(cosim::duration)
+
+// For struct members of time type (with %naturalvar, see cosim.i) the C
+// backend uses the fully resolved type names rather than the typedefs, so
+// the same conversions are registered for those names too.
+COSIM_TIME_TYPEMAPS(std::chrono::time_point< cosim::detail::clock >)
+%typemap(ctype) std::chrono::duration< cosim::detail::clock::rep, cosim::detail::clock::period >,
+    const std::chrono::duration< cosim::detail::clock::rep, cosim::detail::clock::period >& "int64_t"
+%typemap(in) std::chrono::duration< cosim::detail::clock::rep, cosim::detail::clock::period >
+    "$1 = cosim::swig::from_ns<cosim::duration>($input);"
+%typemap(in) const std::chrono::duration< cosim::detail::clock::rep, cosim::detail::clock::period >& (cosim::duration temp)
+    "temp = cosim::swig::from_ns<cosim::duration>($input); $1 = &temp;"
+%typemap(out) std::chrono::duration< cosim::detail::clock::rep, cosim::detail::clock::period >
+    "$result = cosim::swig::to_ns($1);"
+%typemap(out) const std::chrono::duration< cosim::detail::clock::rep, cosim::detail::clock::period >&
+    "$result = cosim::swig::to_ns(*$1);"
 
 // -----------------------------------------------------------------------------
 // Paths: cosim::filesystem::path <-> UTF-8 const char*. Returned strings are

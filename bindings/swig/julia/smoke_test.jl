@@ -17,7 +17,7 @@ function check()
     error("libcosim error $code: $msg")
 end
 
-ccall((:cosim_set_log_level, lib), Cvoid, (Cint,), 3)  # warning
+ccall((:cosim_set_output_level, lib), Cvoid, (Cint,), 3)  # level_warning
 
 # Error mapping
 try
