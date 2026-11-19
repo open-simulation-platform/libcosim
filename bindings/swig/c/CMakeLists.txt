@@ -61,4 +61,5 @@ if(JULIA_EXECUTABLE)
                 "${CMAKE_CURRENT_SOURCE_DIR}/../julia/smoke_test.jl"
                 "$<TARGET_FILE:cosim_c>"
                 "${LIBCOSIM_SWIG_TEST_DATA_DIR}/msmi/OspSystemStructure.xml")
+    libcosim_swig_test_runtime_path(swig_julia_smoke)
 endif()

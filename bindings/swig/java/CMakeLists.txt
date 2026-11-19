@@ -45,3 +45,4 @@ add_test(
         libcosim.SmokeTest
         "${LIBCOSIM_SWIG_TEST_DATA_DIR}/msmi/OspSystemStructure.xml"
         "${LIBCOSIM_SWIG_TEST_DATA_DIR}/fmi1/identity.fmu")
+libcosim_swig_test_runtime_path(swig_java_smoke)

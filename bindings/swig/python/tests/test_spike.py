@@ -141,11 +141,17 @@ class ExecutionTest(unittest.TestCase):
 
     def test_file_observer(self):
         with tempfile.TemporaryDirectory() as d:
+            # A separate execution, released before the directory is removed:
+            # on Windows, files still open in the observer cannot be deleted.
+            exe = cosim.load_execution_from_osp_config(MSMI).execution
             fo = cosim.file_observer(d)
-            self.exe.add_observer(fo)
-            self.exe.step()
+            exe.add_observer(fo)
+            exe.step()
             self.assertTrue(fo.is_recording())
             self.assertTrue(fo.get_log_path().startswith(d))
+            del exe, fo
+            import gc
+            gc.collect()
 
 
 def wait_until(predicate, timeout=10.0):
