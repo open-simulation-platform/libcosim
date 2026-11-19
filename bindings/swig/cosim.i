@@ -222,6 +222,19 @@ inline void set_log_level(log_level level)
 %}
 
 // =============================================================================
+// Time units. All times in this API are int64 nanoseconds (as in libcosimc
+// and libcosimpy); these helpers convert from and to seconds.
+// =============================================================================
+%inline %{
+namespace cosim { namespace swig {
+/// Converts seconds to nanoseconds, the unit of all times in this API.
+inline std::int64_t to_nanoseconds(double seconds) { return cosim::to_duration(seconds).count(); }
+/// Converts nanoseconds to seconds.
+inline double to_seconds(std::int64_t nanoseconds) { return std::chrono::duration<double>(cosim::duration(nanoseconds)).count(); }
+}}
+%}
+
+// =============================================================================
 // lib_info.hpp
 // =============================================================================
 %ignore cosim::library_short_name;
@@ -308,7 +321,16 @@ inline void set_log_level(log_level level)
         return std::map<std::string, int>($self->entity_maps.functions.begin(), $self->entity_maps.functions.end());
     }
     bool has_end_time() const { return $self->end_time.has_value(); }
-    double end_time_seconds() const { return cosim::to_double_time_point($self->end_time.value()); }
+    cosim::time_point get_end_time() const { return $self->end_time.value(); }
+    double get_end_time_seconds() const { return cosim::to_double_time_point($self->end_time.value()); }
+}
+
+// [ADAPT] execution_load_options: std::optional members get setters.
+%ignore cosim::execution_load_options::start_time;
+%ignore cosim::execution_load_options::worker_thread_count;
+%extend cosim::execution_load_options {
+    void set_start_time(cosim::time_point startTime) { $self->start_time = startTime; }
+    void set_worker_thread_count(unsigned int count) { $self->worker_thread_count = count; }
 }
 
 %include "cosim/execution.hpp"
@@ -370,7 +392,14 @@ COSIM_SINGLE_CONSTRUCTOR(fixed_step_algorithm, (cosim::duration, unsigned int))
 %include "cosim/observer/time_series_observer.hpp"
 
 %extend cosim::time_series_samples {
-    std::vector<double> times_seconds() const
+    std::vector<std::int64_t> get_times() const
+    {
+        std::vector<std::int64_t> t;
+        t.reserve($self->times.size());
+        for (const auto& tp : $self->times) t.push_back(tp.time_since_epoch().count());
+        return t;
+    }
+    std::vector<double> get_times_seconds() const
     {
         std::vector<double> t;
         t.reserve($self->times.size());

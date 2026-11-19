@@ -6,6 +6,7 @@
  */
 #include "cosim_c_wrap.h"
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -61,7 +62,7 @@ int main(int argc, char** argv)
     cosim_set_log_level(cosim_log_level_warning);
 
     /* --- Error path: exceptions become a pending SWIG_CException. */
-    cosim_configured_execution* bad = cosim_load_execution_from_ssp("/nonexistent/system.ssp", NULL, "");
+    cosim_configured_execution* bad = cosim_load_execution_from_ssp("/nonexistent/system.ssp", NULL);
     CHECK(bad == NULL);
     cosim_SWIG_CException* ex = cosim_SWIG_CException_get_pending();
     CHECK(ex != NULL);
@@ -99,11 +100,13 @@ int main(int argc, char** argv)
     cosim_override_manipulator_override_integer_variable(man, sim, integerIn, 42);
 
     /* --- Run. */
-    const double t0 = cosim_execution_current_time(exe);
+    /* Times are int64 nanoseconds, as in libcosimc. */
+    const int64_t t0 = cosim_execution_current_time(exe);
+    CHECK(t0 == cosim_to_nanoseconds(0.01));
     CHECK(cosim_execution_step(exe) > 0.0);
-    CHECK(cosim_execution_simulate_until(exe, t0 + 0.01));
+    CHECK(cosim_execution_simulate_until(exe, t0 + cosim_to_nanoseconds(0.01)));
     if (check_error("simulate")) return 1;
-    printf("time: %g -> %g\n", t0, cosim_execution_current_time(exe));
+    printf("time: %g s -> %g s\n", cosim_to_seconds(t0), cosim_to_seconds(cosim_execution_current_time(exe)));
 
     cosim_ValueReferenceVector* refs = cosim_ValueReferenceVector_new();
     cosim_ValueReferenceVector_push_back(refs, integerOut);
@@ -113,9 +116,9 @@ int main(int argc, char** argv)
     printf("integerOut = %d\n", cosim_IntVector_get(values, 0));
 
     /* --- Factory functions replacing constructors. */
-    cosim_fixed_step_algorithm* algo = cosim_fixed_step_algorithm_create(1e-3, 0);
+    cosim_fixed_step_algorithm* algo = cosim_fixed_step_algorithm_create(cosim_to_nanoseconds(1e-3), 0);
     cosim_execution* exe2 = cosim_execution_new(0.0, (cosim_algorithm*)algo);
-    CHECK(cosim_execution_current_time(exe2) == 0.0);
+    CHECK(cosim_execution_current_time(exe2) == 0);
 
     /* --- Cleanup: every object returned by the API is owned by the caller. */
     cosim_execution_delete(exe2);

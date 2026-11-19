@@ -21,7 +21,7 @@ ccall((:cosim_set_log_level, lib), Cvoid, (Cint,), 3)  # warning
 
 # Error mapping
 try
-    ccall((:cosim_load_execution_from_ssp, lib), Ptr{Cvoid}, (Cstring, Ptr{Cvoid}, Cstring), "/nonexistent/system.ssp", C_NULL, ""); check()
+    ccall((:cosim_load_execution_from_ssp, lib), Ptr{Cvoid}, (Cstring, Ptr{Cvoid}), "/nonexistent/system.ssp", C_NULL); check()
     error("expected an error")
 catch e
     println("expected error: ", e.msg)
@@ -40,9 +40,10 @@ ccall((:cosim_execution_add_manipulator, lib), Cvoid, (Ptr{Cvoid}, Ptr{Cvoid}), 
 ccall((:cosim_override_manipulator_override_integer_variable, lib), Cvoid,
       (Ptr{Cvoid}, Cint, Cuint, Cint), man, sim, 0, 7); check()
 
-t0 = ccall((:cosim_execution_current_time, lib), Cdouble, (Ptr{Cvoid},), exe)
-ok = ccall((:cosim_execution_simulate_until, lib), Bool, (Ptr{Cvoid}, Cdouble), exe, t0 + 0.01); check()
-t1 = ccall((:cosim_execution_current_time, lib), Cdouble, (Ptr{Cvoid},), exe)
+# Times are Int64 nanoseconds, as in libcosimc.
+t0 = ccall((:cosim_execution_current_time, lib), Int64, (Ptr{Cvoid},), exe)
+ok = ccall((:cosim_execution_simulate_until, lib), Bool, (Ptr{Cvoid}, Int64), exe, t0 + 10_000_000); check()
+t1 = ccall((:cosim_execution_current_time, lib), Int64, (Ptr{Cvoid},), exe)
 
 refs = ccall((:cosim_ValueReferenceVector_new, lib), Ptr{Cvoid}, ())
 ccall((:cosim_ValueReferenceVector_push_back, lib), Cvoid, (Ptr{Cvoid}, Cuint), refs, 0)

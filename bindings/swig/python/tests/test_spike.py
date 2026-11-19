@@ -32,7 +32,10 @@ class ExecutionTest(unittest.TestCase):
     def test_load(self):
         self.assertEqual(set(self.sims), {"CraneController", "KnuckleBoomCrane", "TrueIdentity", "OneIdentity"})
         self.assertFalse(self.loaded.has_end_time())
-        self.assertAlmostEqual(self.exe.current_time(), 0.01)
+        # Times are int nanoseconds, as in libcosimc/libcosimpy
+        self.assertEqual(self.exe.current_time(), 10_000_000)
+        self.assertEqual(self.exe.current_time(), cosim.to_nanoseconds(0.01))
+        self.assertAlmostEqual(cosim.to_seconds(self.exe.current_time()), 0.01)
 
     def test_model_description(self):
         md = self.exe.get_model_description(self.sims["TrueIdentity"])
@@ -44,8 +47,14 @@ class ExecutionTest(unittest.TestCase):
     def test_step_and_simulate_until(self):
         dt = self.exe.step()
         self.assertGreater(dt, 0.0)
-        self.assertTrue(self.exe.simulate_until(0.02))
-        self.assertAlmostEqual(self.exe.current_time(), 0.02, places=6)
+        self.assertIsInstance(dt, int)
+        self.assertTrue(self.exe.simulate_until(cosim.to_nanoseconds(0.02)))
+        self.assertEqual(self.exe.current_time(), 20_000_000)
+
+    def test_float_time_rejected(self):
+        with self.assertRaises(TypeError) as ctx:
+            self.exe.simulate_until(0.02)
+        self.assertIn("to_nanoseconds", str(ctx.exception))
 
     def test_override_and_last_value(self):
         sim = self.sims["TrueIdentity"]
@@ -85,9 +94,11 @@ class ExecutionTest(unittest.TestCase):
         s = ts.get_real_samples(sim, refs["realOut"], 1, 100)
         self.assertGreater(len(s.values), 0)
         self.assertEqual(len(s.values), len(s.steps))
-        self.assertEqual(len(s.values), len(s.times_seconds()))
+        self.assertEqual(len(s.values), len(s.get_times()))
+        self.assertEqual(len(s.values), len(s.get_times_seconds()))
+        self.assertTrue(all(isinstance(t, int) for t in s.get_times()))
         self.assertAlmostEqual(s.values[-1], 1.5)
-        self.assertTrue(all(b > a for a, b in zip(s.times_seconds(), list(s.times_seconds())[1:])))
+        self.assertTrue(all(b > a for a, b in zip(s.get_times(), list(s.get_times())[1:])))
 
     def test_real_time_config(self):
         self.assertFalse(self.exe.is_real_time_simulation())
@@ -100,7 +111,17 @@ class ExecutionTest(unittest.TestCase):
         loaded = cosim.load_execution_from_osp_config(
             pathlib.Path(REPO) / "tests" / "data" / "msmi" / "OspSystemStructure_EndTime.xml")
         self.assertTrue(loaded.has_end_time())
-        self.assertAlmostEqual(loaded.end_time_seconds(), 0.001)
+        self.assertEqual(loaded.get_end_time(), 1_000_000)
+        self.assertAlmostEqual(loaded.get_end_time_seconds(), 0.001)
+
+    def test_load_options(self):
+        options = cosim.execution_load_options()
+        options.set_start_time(cosim.to_nanoseconds(1.0))
+        options.set_worker_thread_count(2)
+        options.algorithm = cosim.fixed_step_algorithm(cosim.to_nanoseconds(1e-4))
+        loaded = cosim.load_execution_from_osp_config(MSMI, options)
+        self.assertEqual(loaded.execution.current_time(), 1_000_000_000)
+        self.assertTrue(loaded.execution.simulate_until(cosim.to_nanoseconds(1.001)))
 
     def test_file_observer(self):
         with tempfile.TemporaryDirectory() as d:
@@ -124,9 +145,9 @@ class ErrorTest(unittest.TestCase):
         self.assertIsInstance(code, int)
 
     def test_algorithm_construction(self):
-        algo = cosim.fixed_step_algorithm(1e-3)
-        exe = cosim.execution(0.0, algo)
-        self.assertEqual(exe.current_time(), 0.0)
+        algo = cosim.fixed_step_algorithm(cosim.to_nanoseconds(1e-3))
+        exe = cosim.execution(0, algo)
+        self.assertEqual(exe.current_time(), 0)
 
 
 if __name__ == "__main__":

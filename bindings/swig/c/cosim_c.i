@@ -26,28 +26,29 @@
 }
 
 // -----------------------------------------------------------------------------
-// Time: cosim::time_point and cosim::duration <-> double seconds.
+// Time: cosim::time_point and cosim::duration <-> int64_t nanoseconds, as
+// cosim_time_point / cosim_duration in libcosimc. Seconds helpers:
+// cosim_to_nanoseconds() and cosim_to_seconds().
 // -----------------------------------------------------------------------------
 %{
 #include <cosim/time.hpp>
-#include <chrono>
-namespace cosim { namespace swig {
-inline double duration_to_double(cosim::duration d)
-{
-    return std::chrono::duration<double>(d).count();
-}
-}}
+%}
+%insert("cheader") %{
+#include <stdint.h>
 %}
 
-%define COSIM_TIME_TYPEMAPS(TYPE, TO_CPP, TO_DOUBLE)
-%typemap(ctype) TYPE, const TYPE& "double"
-%typemap(in) TYPE "$1 = TO_CPP($input);"
-%typemap(in) const TYPE& (TYPE temp) "temp = TO_CPP($input); $1 = &temp;"
-%typemap(out) TYPE "$result = TO_DOUBLE($1);"
+%define COSIM_TIME_TYPEMAPS(TYPE, FROM_NS, TO_NS)
+%typemap(ctype) TYPE, const TYPE& "int64_t"
+%typemap(in) TYPE "$1 = FROM_NS;"
+%typemap(in) const TYPE& (TYPE temp) "temp = FROM_NS; $1 = &temp;"
+%typemap(out) TYPE "$result = TO_NS;"
 %enddef
 
-COSIM_TIME_TYPEMAPS(cosim::time_point, cosim::to_time_point, cosim::to_double_time_point)
-COSIM_TIME_TYPEMAPS(cosim::duration, cosim::to_duration, cosim::swig::duration_to_double)
+// Fixed-width integers keep their names in the C header (portable across LP64/LLP64).
+%typemap(ctype) std::int64_t, int64_t, const std::int64_t&, const int64_t& "int64_t"
+
+COSIM_TIME_TYPEMAPS(cosim::time_point, cosim::time_point(cosim::duration($input)), ($1).time_since_epoch().count())
+COSIM_TIME_TYPEMAPS(cosim::duration, cosim::duration($input), ($1).count())
 
 // -----------------------------------------------------------------------------
 // Paths: cosim::filesystem::path <-> UTF-8 const char*. Returned strings are
@@ -62,5 +63,11 @@ COSIM_TIME_TYPEMAPS(cosim::duration, cosim::to_duration, cosim::swig::duration_t
 %typemap(in) const cosim::filesystem::path& (cosim::filesystem::path temp)
     "temp = cosim::filesystem::u8path($input ? $input : \"\"); $1 = &temp;"
 %typemap(out) cosim::filesystem::path "$result = strdup(reinterpret_cast<const char*>($1.u8string().c_str()));"
+
+// -----------------------------------------------------------------------------
+// Loader options: NULL means default options.
+// -----------------------------------------------------------------------------
+%typemap(in) const cosim::execution_load_options& (cosim::execution_load_options defaults)
+    "$1 = $input ? (cosim::execution_load_options*)$input : &defaults;"
 
 %include "../cosim.i"

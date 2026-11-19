@@ -31,41 +31,52 @@ static PyObject* g_cosimErrorType = nullptr;
 }
 
 // -----------------------------------------------------------------------------
-// Time: cosim::time_point and cosim::duration <-> float seconds.
+// Time: cosim::time_point and cosim::duration <-> int nanoseconds, as in
+// libcosimc and libcosimpy. Floats are rejected rather than truncated, since
+// a float is almost always meant as seconds: use libcosim.to_nanoseconds().
 // -----------------------------------------------------------------------------
-%define COSIM_TIME_TYPEMAPS(TYPE, TO_CPP, TO_DOUBLE)
-%typemap(in) TYPE {
-    const double d = PyFloat_AsDouble($input);
-    if (d == -1.0 && PyErr_Occurred()) SWIG_fail;
-    $1 = TO_CPP(d);
-}
-%typemap(in) const TYPE& (TYPE temp) {
-    const double d = PyFloat_AsDouble($input);
-    if (d == -1.0 && PyErr_Occurred()) SWIG_fail;
-    temp = TO_CPP(d);
-    $1 = &temp;
-}
-%typemap(out) TYPE {
-    $result = PyFloat_FromDouble(TO_DOUBLE($1));
-}
-%typemap(typecheck, precedence=SWIG_TYPECHECK_DOUBLE) TYPE, const TYPE& {
-    $1 = (PyFloat_Check($input) || PyLong_Check($input)) ? 1 : 0;
-}
-%enddef
-
 %{
 #include <cosim/time.hpp>
-#include <chrono>
 namespace cosim { namespace swig {
-inline double duration_to_double(cosim::duration d)
+inline bool py_to_nanoseconds(PyObject* obj, long long& out)
 {
-    return std::chrono::duration<double>(d).count();
+    if (PyFloat_Check(obj)) {
+        PyErr_SetString(PyExc_TypeError,
+            "times are integer nanoseconds; use libcosim.to_nanoseconds(seconds) to convert from seconds");
+        return false;
+    }
+    if (!PyIndex_Check(obj)) {
+        PyErr_SetString(PyExc_TypeError, "expected an int (nanoseconds)");
+        return false;
+    }
+    out = PyLong_AsLongLong(obj);
+    return !(out == -1 && PyErr_Occurred());
 }
 }}
 %}
 
-COSIM_TIME_TYPEMAPS(cosim::time_point, cosim::to_time_point, cosim::to_double_time_point)
-COSIM_TIME_TYPEMAPS(cosim::duration, cosim::to_duration, cosim::swig::duration_to_double)
+%define COSIM_TIME_TYPEMAPS(TYPE, FROM_NS, TO_NS)
+%typemap(in) TYPE {
+    long long ns = 0;
+    if (!cosim::swig::py_to_nanoseconds($input, ns)) SWIG_fail;
+    $1 = FROM_NS;
+}
+%typemap(in) const TYPE& (TYPE temp) {
+    long long ns = 0;
+    if (!cosim::swig::py_to_nanoseconds($input, ns)) SWIG_fail;
+    temp = FROM_NS;
+    $1 = &temp;
+}
+%typemap(out) TYPE {
+    $result = PyLong_FromLongLong(TO_NS);
+}
+%typemap(typecheck, precedence=SWIG_TYPECHECK_INT64) TYPE, const TYPE& {
+    $1 = (PyIndex_Check($input) && !PyFloat_Check($input)) ? 1 : 0;
+}
+%enddef
+
+COSIM_TIME_TYPEMAPS(cosim::time_point, cosim::time_point(cosim::duration(ns)), ($1).time_since_epoch().count())
+COSIM_TIME_TYPEMAPS(cosim::duration, cosim::duration(ns), ($1).count())
 
 // -----------------------------------------------------------------------------
 // Paths: cosim::filesystem::path <-> str (accepts str or any os.PathLike).
