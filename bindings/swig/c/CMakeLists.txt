@@ -23,9 +23,42 @@ add_custom_command(
 add_library(cosim_c SHARED "${wrapSrc}")
 target_include_directories(cosim_c PUBLIC "${genDir}")
 target_link_libraries(cosim_c PRIVATE cosim)
-set_target_properties(cosim_c PROPERTIES COMPILE_OPTIONS "-Wno-error;-w")
+set_target_properties(cosim_c PROPERTIES COMPILE_OPTIONS "${LIBCOSIM_SWIG_GENERATED_CODE_OPTIONS}")
 
 # Smoke test: a plain C program that uses only the generated header.
 add_executable(cosim_c_smoke smoke_test.c)
 target_link_libraries(cosim_c_smoke PRIVATE cosim_c)
 set_target_properties(cosim_c_smoke PROPERTIES LINKER_LANGUAGE C C_STANDARD 11)
+if(MSVC)
+    target_compile_options(cosim_c_smoke PRIVATE "/WX-")
+endif()
+
+add_test(
+    NAME swig_c_smoke
+    COMMAND cosim_c_smoke "${LIBCOSIM_SWIG_TEST_DATA_DIR}/msmi/OspSystemStructure.xml")
+set_tests_properties(swig_c_smoke PROPERTIES
+    ENVIRONMENT "IDENTITY_FMU=${LIBCOSIM_SWIG_TEST_DATA_DIR}/fmi1/identity.fmu")
+
+# C API drift check: the generated header must match the committed reference,
+# so any change to the C API (from libcosim, the interface files, or a SWIG
+# upgrade) is a deliberate, reviewed change. After an intended change, run
+# the update_swig_c_api_reference target and commit the result.
+set(referenceHdr "${CMAKE_CURRENT_SOURCE_DIR}/reference/cosim_c_wrap.h")
+add_test(
+    NAME swig_c_api_reference
+    COMMAND "${CMAKE_COMMAND}" -E compare_files --ignore-eol "${wrapHdr}" "${referenceHdr}")
+add_custom_target(update_swig_c_api_reference
+    COMMAND "${CMAKE_COMMAND}" -E copy "${wrapHdr}" "${referenceHdr}"
+    DEPENDS "${wrapHdr}"
+    COMMENT "Updating the reference C API header")
+
+# Julia on the C library (only if Julia is installed).
+find_program(JULIA_EXECUTABLE julia)
+if(JULIA_EXECUTABLE)
+    add_test(
+        NAME swig_julia_smoke
+        COMMAND "${JULIA_EXECUTABLE}" --startup-file=no
+                "${CMAKE_CURRENT_SOURCE_DIR}/../julia/smoke_test.jl"
+                "$<TARGET_FILE:cosim_c>"
+                "${LIBCOSIM_SWIG_TEST_DATA_DIR}/msmi/OspSystemStructure.xml")
+endif()

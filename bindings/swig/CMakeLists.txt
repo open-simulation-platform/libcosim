@@ -3,7 +3,9 @@
 # The language-independent interface lives in cosim.i. Each target language
 # has its own subdirectory with a thin language-specific .i file.
 
-find_package(SWIG 4.4 REQUIRED)
+# Pinned exactly: SWIG's C backend is experimental and its generated API may
+# change between versions (see the swig_c_api_reference test).
+find_package(SWIG 4.4.1 EXACT REQUIRED)
 include(UseSWIG)
 message(STATUS "SWIG ${SWIG_VERSION}: ${SWIG_EXECUTABLE}")
 
@@ -15,6 +17,16 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_SIZEOF_VOID_P EQUAL 8)
 endif()
 
 set(LIBCOSIM_SWIG_COMMON_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
+
+# Generated wrapper code is not held to libcosim's warning standards.
+if(MSVC)
+    set(LIBCOSIM_SWIG_GENERATED_CODE_OPTIONS "/W0;/WX-")
+else()
+    set(LIBCOSIM_SWIG_GENERATED_CODE_OPTIONS "-w;-Wno-error")
+endif()
+
+enable_testing()
+set(LIBCOSIM_SWIG_TEST_DATA_DIR "${CMAKE_SOURCE_DIR}/tests/data")
 
 option(LIBCOSIM_SWIG_PYTHON "Build the SWIG Python bindings" ON)
 option(LIBCOSIM_SWIG_C "Build the SWIG C bindings (SWIG's experimental C backend)" ON)

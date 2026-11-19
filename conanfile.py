@@ -57,7 +57,7 @@ class LibcosimConan(ConanFile):
 
     def build_requirements(self):
         if self.options.swig_bindings:
-            self.tool_requires("swig/[>=4.4 <5]")
+            self.tool_requires("swig/4.4.1")  # pinned: the C backend is experimental
 
     # Exports
     exports = "version.txt"

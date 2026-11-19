@@ -1,0 +1,68 @@
+name: SWIG bindings
+
+# Builds libcosim with the SWIG bindings (Python, and C via SWIG's
+# experimental C backend; Julia on top of the C library) and runs the full
+# test suite, including the binding tests and the C API drift check
+# (swig_c_api_reference), on Linux and Windows.
+
+on:
+  push:
+    paths:
+      - "bindings/**"
+      - "include/**"
+      - "src/**"
+      - "tests/**"
+      - "CMakeLists.txt"
+      - "conanfile.py"
+      - ".github/workflows/ci-swig-bindings.yml"
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  bindings:
+    name: ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2025]
+    env:
+      # Makes conanfile.py build the tests and run them (in Conan's run
+      # environment, so dependency DLLs are found on Windows).
+      LIBCOSIM_RUN_TESTS_ON_CONAN_BUILD: "1"
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: "1"
+
+      - name: Install Conan
+        run: pip install conan
+
+      - name: Configure Conan
+        run: |
+          conan profile detect -f
+          conan remote add osp https://osp.jfrog.io/artifactory/api/conan/conan-local --force
+
+      - name: Build and test
+        shell: bash
+        run: |
+          # Make CMake's FindPython3 use the interpreter from setup-python.
+          export Python3_ROOT_DIR="${pythonLocation}"
+          conan build . \
+            --settings=build_type=Release \
+            --options="&:swig_bindings=True" \
+            --build=missing
+
+      - name: Upload generated C header on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cosim_c_wrap-${{ matrix.os }}
+          path: build/**/bindings/swig/c/gen/cosim_c_wrap.h
+          if-no-files-found: ignore

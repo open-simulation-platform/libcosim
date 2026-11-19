@@ -18,8 +18,7 @@ swig_add_library(cosim_python
 set_target_properties(cosim_python PROPERTIES
     OUTPUT_NAME "cosim"   # UseSWIG adds the "_" prefix -> _cosim.so
     LIBRARY_OUTPUT_DIRECTORY "${outDir}"
-    # Generated code is not held to libcosim's warning standards.
-    COMPILE_OPTIONS "-Wno-error;-w"
+    COMPILE_OPTIONS "${LIBCOSIM_SWIG_GENERATED_CODE_OPTIONS}"
     INSTALL_RPATH "$ORIGIN")
 target_include_directories(cosim_python PRIVATE "${CMAKE_SOURCE_DIR}/include")
 target_link_libraries(cosim_python PRIVATE cosim Python3::Module)
@@ -32,3 +31,9 @@ endforeach()
 
 # Package files
 configure_file(package_init.py "${outDir}/__init__.py" COPYONLY)
+
+add_test(
+    NAME swig_python
+    COMMAND Python3::Interpreter "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_spike.py")
+set_tests_properties(swig_python PROPERTIES
+    ENVIRONMENT "PYTHONPATH=${CMAKE_BINARY_DIR}/bindings/python;LIBCOSIM_DLL_DIRS=$<TARGET_FILE_DIR:cosim>")

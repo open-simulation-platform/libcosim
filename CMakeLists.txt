@@ -131,6 +131,7 @@ endif()
 
 add_subdirectory("src")
 if(LIBCOSIM_BUILD_SWIG_BINDINGS)
+    enable_testing()
     add_subdirectory("bindings/swig")
 endif()
 if(LIBCOSIM_BUILD_TESTS)

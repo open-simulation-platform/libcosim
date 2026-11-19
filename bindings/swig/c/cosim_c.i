@@ -72,6 +72,14 @@ template<> inline cosim::time_point from_ns<cosim::time_point>(long long ns) { r
 
 // Fixed-width integers keep their names in the C header (portable across LP64/LLP64).
 %typemap(ctype) std::int64_t, int64_t, const std::int64_t&, const int64_t& "int64_t"
+// Inside containers SWIG sees the underlying type (long on LP64 Linux, long
+// long elsewhere). Map that to int64_t too, so the header is the same on all
+// platforms.
+#ifdef SWIGWORDSIZE64
+%typemap(ctype) long, const long& "int64_t"
+#else
+%typemap(ctype) long long, const long long& "int64_t"
+#endif
 
 COSIM_TIME_TYPEMAPS(cosim::time_point)
 COSIM_TIME_TYPEMAPS(cosim::duration)
