@@ -44,7 +44,9 @@ function check()
     code == 0 && return
     msgptr = ccall((:cosim_last_error_message, lib), Ptr{Cchar}, ())
     msg = unsafe_string(msgptr)
-    Libc.free(msgptr)  # strings returned by the C API are owned copies
+    # Owned copy: release with the library's own C runtime, not Libc.free
+    # (on Windows, Julia's C runtime differs from libcosim's).
+    ccall((:cosim_free_string, lib), Cvoid, (Ptr{Cchar},), msgptr)
     ccall((:cosim_clear_last_error, lib), Cvoid, ())
     error("libcosim error $code: $msg")
 end

@@ -39,8 +39,9 @@ typedef struct SwigObj SwigObj;
  *    released with the matching cosim_<type>_delete() function. This includes
  *    elements returned by cosim_<Container>_get() and struct members
  *    returned by cosim_<struct>_get_<member>().
- *  - Every string returned (const char *) is a malloc()ed copy that the
- *    caller must free().
+ *  - Every string returned (const char *) is an owned copy that the caller
+ *    must release with cosim_free_string(). Do not use free(): on Windows
+ *    the caller's C runtime may differ from this library's.
  *  - Scalar members (numbers, enums, booleans) are read and written with
  *    cosim_<struct>_<member>_get() / _set().
  *
@@ -838,6 +839,8 @@ SWIGIMPORT int cosim_last_error_code();
 SWIGIMPORT const char * cosim_last_error_message();
 
 SWIGIMPORT void cosim_clear_last_error();
+
+SWIGIMPORT void cosim_free_string(const char * carg1);
 
 #ifdef __cplusplus
 }

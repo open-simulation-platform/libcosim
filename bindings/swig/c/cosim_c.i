@@ -101,10 +101,11 @@ COSIM_TIME_TYPEMAPS(std::chrono::time_point< cosim::detail::clock >)
 
 // -----------------------------------------------------------------------------
 // Paths: cosim::filesystem::path <-> UTF-8 const char*. Returned strings are
-// malloc()ed copies the caller must free(), like all strings from this API.
+// owned copies (release with cosim_free_string()), like all strings here.
 // -----------------------------------------------------------------------------
 %{
 #include <cosim/fs_portability.hpp>
+#include <cstdlib>
 #include <cstring>
 %}
 %typemap(ctype) cosim::filesystem::path, const cosim::filesystem::path& "const char *"
@@ -139,8 +140,9 @@ COSIM_TIME_TYPEMAPS(std::chrono::time_point< cosim::detail::clock >)
  *    released with the matching cosim_<type>_delete() function. This includes
  *    elements returned by cosim_<Container>_get() and struct members
  *    returned by cosim_<struct>_get_<member>().
- *  - Every string returned (const char *) is a malloc()ed copy that the
- *    caller must free().
+ *  - Every string returned (const char *) is an owned copy that the caller
+ *    must release with cosim_free_string(). Do not use free(): on Windows
+ *    the caller's C runtime may differ from this library's.
  *  - Scalar members (numbers, enums, booleans) are read and written with
  *    cosim_<struct>_<member>_get() / _set().
  *
@@ -182,6 +184,14 @@ inline std::string last_error_message()
 inline void clear_last_error()
 {
     ::SWIG_CException::reset_pending();
+}
+/// Frees a string returned by this API. Use this rather than free(): on
+/// Windows the caller may use a different C runtime (e.g. another compiler,
+/// a debug runtime, or Julia), whose free() must not release this library's
+/// memory.
+inline void free_string(const char* s)
+{
+    std::free(const_cast<char*>(s));
 }
 }}
 %}

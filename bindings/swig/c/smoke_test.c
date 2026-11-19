@@ -44,7 +44,7 @@ static int check_error(const char* where)
     if (code == 0) return 0;
     const char* msg = cosim_last_error_message();
     fprintf(stderr, "%s: error %d: %s\n", where, code, msg);
-    free((void*)msg);
+    cosim_free_string(msg);
     cosim_clear_last_error();
     return 1;
 }
@@ -56,13 +56,12 @@ static unsigned int find_ref(cosim_execution* exe, int sim, const char* name)
     unsigned int ref = (unsigned int)-1;
     for (size_t i = 0; i < cosim_VariableDescriptionVector_size(vars); ++i) {
         cosim_variable_description* v = cosim_VariableDescriptionVector_get(vars, (int)i); /* owned copy */
-        /* Ownership trap: string getters return a strdup()ed copy that the
-         * caller must free(), despite the `const char*` return type. */
+        /* String getters return owned copies: release with cosim_free_string(). */
         const char* vname = cosim_variable_description_name_get(v);
         if (strcmp(vname, name) == 0) {
             ref = cosim_variable_description_reference_get(v);
         }
-        free((void*)vname);
+        cosim_free_string(vname);
         cosim_variable_description_delete(v);
     }
 
@@ -92,7 +91,7 @@ int main(int argc, char** argv)
     {
         const char* msg = cosim_last_error_message();
         printf("expected error: code=%d msg=%s\n", cosim_last_error_code(), msg);
-        free((void*)msg);
+        cosim_free_string(msg);
     }
     cosim_clear_last_error();
     CHECK(cosim_last_error_code() == 0);
@@ -158,7 +157,7 @@ int main(int argc, char** argv)
             cosim_simulator_info* info = cosim_SimulatorInfoVector_get(infos, 0); /* owned copy */
             const char* name = cosim_simulator_info_name_get(info);
             CHECK(strcmp(name, "a") == 0);
-            free((void*)name);
+            cosim_free_string(name);
             cosim_simulator_info_delete(info);
             cosim_SimulatorInfoVector_delete(infos);
 
