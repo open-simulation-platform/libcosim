@@ -90,13 +90,16 @@ class LibcosimConan(ConanFile):
 
     def generate(self):
         # Copy dependencies to the folder where executables (tests, mainly)
-        # will be placed, so it's easier to run them.
+        # will be placed, so it's easier to run them. Only host (library)
+        # dependencies: build tools may ship their own runtime DLLs (the JDK
+        # used for the Java bindings bundles an older ucrtbase.dll), which
+        # would shadow the system's and break every executable.
         outputdir = os.path.join(
             self.build_folder, "output", str(self.settings.build_type).lower()
         )
         bindir = os.path.join(outputdir, "bin")
         libdir = os.path.join(outputdir, "lib")
-        for dep in self.dependencies.values():
+        for dep in self.dependencies.host.values():
             for depdir in dep.cpp_info.bindirs:
                 copy(self, "*.dll", depdir, bindir, keep_path=False)
                 copy(self, "*.pdb", depdir, bindir, keep_path=False)
