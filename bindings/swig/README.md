@@ -33,7 +33,7 @@ handled once in the interface and documented for C users.
 
 ```
 bindings/swig/
-  cosim.i               shared, language-independent interface (468 lines)
+  cosim.i               shared, language-independent interface (444 lines)
   python/cosim_python.i Python: time and path typemaps, CosimError (102 lines)
   c/cosim_c.i           C: time and path typemaps, catch-all exception handler (66 lines)
   python/tests/         Python tests (unittest, no extra dependencies)
@@ -193,6 +193,7 @@ commits that can be cherry-picked:
 | Add vector-returning getters to last_value_observer | replaces getter `[ADAPT]`s | additive |
 | Add sample-returning getters to time_series_observer | replaces sample `[ADAPT]`s | additive |
 | Add one-call loaders for OSP and SSP executions | replaces all `[GLUE]` | additive |
+| Make extension-API overrides private in concrete classes | removes 20 `%ignore`s | **breaking** (minor) |
 
 The bindings were then switched to the native API, and `cosim::filesystem::path`
 got a typemap per language (Python: `str` / `os.PathLike`; C: `const char*`),
@@ -204,8 +205,8 @@ which removed the remaining path adapters.
 |---|---|---|
 | `[ADAPT]` helpers in `cosim.i` | 13 | **7** |
 | `[GLUE]` helpers | 2 loaders | **0** |
-| `[HIDE]` tags / `%ignore` lines | 38 / 74 | 38 / 79 |
-| `cosim.i` lines | 604 | **468** |
+| `[HIDE]` tags / `%ignore` lines | 38 / 74 | 36 / **59** |
+| `cosim.i` lines | 604 | **444** |
 | language files (Python + C) | 122 | 168 |
 | Python tests / C / Julia | pass / pass / pass | pass / pass / pass |
 | valgrind, C smoke test, definitely lost | 960 B (Xerces) | **0 B** |
@@ -231,11 +232,21 @@ natural C representation. They are reasonable to keep binding-side:
 The C-only factory functions (`*_create`) for classes with several
 constructors also remain, because the C backend cannot express overloads.
 
-**The hide-list did not shrink**, as predicted: it consists of extension-API
-methods (observer/algorithm/manipulator interfaces), lower-level functions
-superseded by the new loaders, and the span-based overloads. It disappears
-only with the user-API / extension-API header split (proposal §6.6), which
-is the next decision point.
+**The hide-list and the header split.** The proposal (§6.6) assumed that
+splitting the headers into a user-API and an extension-API directory would
+remove the hide-list. Categorising the 79 `%ignore`s showed it would not:
+`cosim.i` already includes only selected headers, and the entries came from
+
+| Source | `%ignore`s | Fix |
+|---|---|---|
+| Extension-API overrides declared **public** in user-facing classes (`last_value_observer::step_complete`, `fixed_step_algorithm::do_step`, ...) | 20 | **Done:** made private (virtual dispatch through the base class is unaffected) |
+| Extension or lower-level members of `execution` (`add_slave`, `add_function`, state export, ...) | 13 | Would need `execution` split into user and extension parts |
+| Span-based getter overloads (also provider-interface overrides that C++ users call) | 8 | Keep |
+| Lower-level loaders, time helpers, exception internals | 16 | Keep (intentional) |
+| Idiomatic C++ (optional, variant, operators, move constructors, ...) | 22 | Keep |
+
+So the directory move was not done; making the overrides private gave the
+measurable gain (79 → 59) without moving any files.
 
 ### New findings in round 2
 

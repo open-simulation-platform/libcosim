@@ -201,20 +201,8 @@ class manipulator { };
 class model_uri_resolver { };
 }
 
-// -----------------------------------------------------------------------------
-// [HIDE] Observer and manipulator interface methods. These are overrides of
-// the extension API, called by the execution, never by users. Ignoring them
-// by name works for every class that %includes them.
-// -----------------------------------------------------------------------------
-%ignore simulator_added;
-%ignore simulator_removed;
-%ignore variables_connected;
-%ignore variable_disconnected;
-%ignore simulation_initialized;
-%ignore step_complete;
-%ignore simulator_step_complete;
-%ignore state_restored;
-%ignore step_commencing;
+// (Observer, manipulator and algorithm interface overrides are private in the
+// concrete classes, so SWIG does not see them.)
 
 // =============================================================================
 // log/simple.hpp — [ADAPT] Boost.Log is inline in the header; expose a plain
@@ -341,18 +329,6 @@ inline void set_log_level(log_level level)
 COSIM_SINGLE_CONSTRUCTOR(fixed_step_algorithm, (cosim::duration, unsigned int))
 %ignore cosim::fixed_step_algorithm_params; // [HIDE] contains std::unordered_map
 %ignore cosim::fixed_step_algorithm::operator=;
-// [HIDE] algorithm interface (extension API)
-%ignore cosim::fixed_step_algorithm::add_simulator;
-%ignore cosim::fixed_step_algorithm::remove_simulator;
-%ignore cosim::fixed_step_algorithm::add_function;
-%ignore cosim::fixed_step_algorithm::connect_variables;
-%ignore cosim::fixed_step_algorithm::disconnect_variable;
-%ignore cosim::fixed_step_algorithm::setup;
-%ignore cosim::fixed_step_algorithm::initialize;
-%ignore cosim::fixed_step_algorithm::do_step;
-%ignore cosim::fixed_step_algorithm::set_stepsize_decimation_factor;
-%ignore cosim::fixed_step_algorithm::export_current_state;
-%ignore cosim::fixed_step_algorithm::import_state;
 %include "cosim/algorithm/fixed_step_algorithm.hpp"
 
 %extend cosim::fixed_step_algorithm {
