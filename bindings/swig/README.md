@@ -23,7 +23,9 @@ on top of `feature/binding-friendly-api` (libcosim changes). Nothing pushed.
 | Java | SWIG Java backend | ✅ smoke test |
 
 All of these run under CTest (`ctest -R swig_`) and in the
-`ci-swig-bindings` workflow (Linux verified locally; Windows not yet run).
+`ci-swig-bindings` workflow. **Verified on Linux (GCC) and Windows (MSVC
+19.4, Visual Studio 2022): 42/42 tests each** (36 libcosim + 6 binding tests).
+See [Round 4](#round-4-windows) for what Windows needed.
 
 **Verdict:** "everything through SWIG" works for Python, C, Julia and Java
 from one shared interface. The experimental C backend needs care (exception
@@ -169,7 +171,7 @@ for this route.
 
 ## Not covered yet
 
-- Running on Windows and macOS (the CI workflow exists; not run yet).
+- macOS (Linux and Windows are verified).
 - Packaging: Python wheels (stable ABI), Maven artifacts, a Julia package
   (Clang.jl-generated layer + JLL binaries), C# (not tried).
 - Callbacks from guest languages (user-written slaves/observers).
@@ -178,7 +180,9 @@ for this route.
 
 ## Suggested next steps
 
-1. Run the CI workflow on GitHub (Linux and Windows) once pushing is decided.
+1. Run the CI workflow on GitHub once pushing is decided (verified locally on
+   Linux and Windows). Upload the Windows SWIG package to a Conan remote, so
+   CI does not rebuild SWIG with MSYS2 each time.
 2. Decide libcosimc's future (a thin hand-written layer over the new libcosim
    API, or the SWIG C API under its own prefix) and libcosimpy's (the
    compatibility layer as a migration path).
@@ -336,3 +340,47 @@ algorithm now gives an error instead of a segmentation fault.
 8. **ECCO units differ within libcosimpy**: `EccoParams` durations are in
    seconds, everything else in nanoseconds.
 9. **Java**: the enumerator `variable_type::boolean` becomes `_boolean`.
+
+## Round 4: Windows
+
+Built and tested natively with MSVC 19.4 (Visual Studio 2022, C++20, Conan
+profile `msvc`/`194`), driven from WSL through `cmd.exe`. Result: **42/42
+tests pass** (36 libcosim + Python, libcosimpy suite, C, C API drift check,
+Julia, Java). The generated C header is identical to the Linux reference.
+
+What it took, in the order found (each a separate commit):
+
+1. **SWIG for Windows is built from source by Conan** (no prebuilt
+   `swig/4.4.1` binary for this profile on Conan Center). SWIG's recipe uses
+   autotools, so Conan fetches MSYS2, winflexbison and pcre2 as build tools,
+   for building `swig.exe` only. Nothing of it is linked or shipped.
+2. **Python module import library clashed with libcosim's** (`LNK1149`): with
+   `OUTPUT_NAME cosim`, MSVC writes `cosim.lib` next to libcosim's `cosim.lib`.
+   Moved to a separate directory.
+3. **A libcosim test did not compile with MSVC in C++20 mode**
+   (`ecco_algorithm_from_system_structure_test`, from master): streaming
+   `path::c_str()`, a `const wchar_t*` on Windows, is a deleted operator since
+   C++20. Fixed on `fix/libcosim-api-fixes`.
+4. **All executables failed with `0xc0000139`**: `conanfile.py` copied the
+   DLLs of *all* dependencies next to the executables, including tool
+   requirements; the JDK's older `ucrtbase.dll` shadowed the system's. Now
+   only host dependencies are copied.
+5. **Python test:** Windows cannot delete files the file observer still has
+   open; the test now releases its execution before cleaning up.
+6. **Java and Julia could not find `cosim.dll`**: when `java.exe` or
+   `julia.exe` loads `cosim_java.dll` / `cosim_c.dll`, Windows does not search
+   that DLL's directory for its dependencies. The tests put libcosim's
+   directory on `PATH`; packaging must handle this for users.
+7. **libcosim could not be loaded into a JVM at all** ("The specified
+   procedure could not be found"): libzip's DLL is called `zip.dll`, like the
+   JVM's own `zip.dll`, which the JVM loads first; `cosim.dll` was then bound
+   to the JVM's module. libzip is now linked statically (it is only used
+   internally). This affects any Java binding of libcosim on Windows, not just
+   SWIG's. Fixed on `fix/libcosim-api-fixes`.
+8. **Julia crashed with heap corruption** (`0xc0000374`): the C API said to
+   `free()` returned strings, but on Windows memory must be freed by the C
+   runtime that allocated it, and Julia's differs. New `cosim_free_string()`;
+   the header rules say to use it.
+
+Findings 2, 4, 6, 7 and 8 would have hit Windows users of libcosim's
+bindings in practice; 3, 4 and 7 are libcosim issues independent of SWIG.
