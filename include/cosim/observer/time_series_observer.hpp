@@ -63,31 +63,6 @@ public:
      */
     explicit time_series_observer(size_t bufferSize);
 
-    void simulator_added(simulator_index, observable*, time_point) override;
-
-    void simulator_removed(simulator_index, time_point) override;
-
-    void variables_connected(variable_id output, variable_id input, time_point) override;
-
-    void variable_disconnected(variable_id input, time_point) override;
-
-    void simulation_initialized(
-        step_number firstStep,
-        time_point startTime) override;
-
-    void step_complete(
-        step_number lastStep,
-        duration lastStepSize,
-        time_point currentTime) override;
-
-    void simulator_step_complete(
-        simulator_index index,
-        step_number lastStep,
-        duration lastStepSize,
-        time_point currentTime) override;
-
-    void state_restored(step_number currentStep, time_point currentTime) override;
-
     /**
      * Start observing a variable.
      *
@@ -162,6 +137,27 @@ public:
     ///@}
 
     ~time_series_observer() noexcept override;
+
+private:
+    // `observer` interface. Called by the execution through an `observer` pointer,
+    // not part of this class's user API.
+    void simulator_added(simulator_index, observable*, time_point) override;
+    void simulator_removed(simulator_index, time_point) override;
+    void variables_connected(variable_id output, variable_id input, time_point) override;
+    void variable_disconnected(variable_id input, time_point) override;
+    void simulation_initialized(
+        step_number firstStep,
+        time_point startTime) override;
+    void step_complete(
+        step_number lastStep,
+        duration lastStepSize,
+        time_point currentTime) override;
+    void simulator_step_complete(
+        simulator_index index,
+        step_number lastStep,
+        duration lastStepSize,
+        time_point currentTime) override;
+    void state_restored(step_number currentStep, time_point currentTime) override;
 
 private:
     class single_slave_observer;

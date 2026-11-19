@@ -25,12 +25,6 @@ namespace cosim
 class override_manipulator : public manipulator
 {
 public:
-    void simulator_added(simulator_index, manipulable*, time_point) override;
-
-    void simulator_removed(simulator_index, time_point) override;
-
-    void step_commencing(time_point currentTime) override;
-
     /// Override the value of a variable with type `real`
     void override_real_variable(simulator_index, value_reference, double value);
     /// Override the value of a variable with type `integer`
@@ -43,6 +37,13 @@ public:
     void reset_variable(simulator_index, variable_type, value_reference);
 
     ~override_manipulator() noexcept override;
+
+private:
+    // `manipulator` interface. Called by the execution through a `manipulator` pointer,
+    // not part of this class's user API.
+    void simulator_added(simulator_index, manipulable*, time_point) override;
+    void simulator_removed(simulator_index, time_point) override;
+    void step_commencing(time_point currentTime) override;
 
 private:
     void add_action(

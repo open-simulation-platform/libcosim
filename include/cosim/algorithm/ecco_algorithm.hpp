@@ -58,21 +58,6 @@ public:
     ecco_algorithm(ecco_algorithm&&) noexcept;
     ecco_algorithm& operator=(ecco_algorithm&&) noexcept;
 
-    // `algorithm` methods
-    void add_simulator(simulator_index i, simulator* s, duration stepSizeHint) override;
-    void remove_simulator(simulator_index i) override;
-    void add_function(function_index i, function* f) override;
-    void connect_variables(variable_id output, variable_id input) override;
-    void connect_variables(variable_id output, function_io_id input) override;
-    void connect_variables(function_io_id output, variable_id input) override;
-    void disconnect_variable(variable_id input) override;
-    void disconnect_variable(function_io_id input) override;
-    void setup(time_point startTime, std::optional<time_point> stopTime) override;
-    void initialize() override;
-    std::pair<duration, std::unordered_set<simulator_index>> do_step(time_point currentT) override;
-    serialization::node export_current_state() const override;
-    void import_state(const serialization::node& exportedState) override;
-
     /**
      * Adds a variable pair for the power residual calculation.
      * \param uVec
@@ -86,6 +71,23 @@ public:
      *      The index of the simulator. 
      */
     std::vector<double> get_powerbond_energies(cosim::simulator_index simulator_index);
+
+private:
+    // `algorithm` interface. Called by the execution through an `algorithm` pointer,
+    // not part of this class's user API.
+    void add_simulator(simulator_index i, simulator* s, duration stepSizeHint) override;
+    void remove_simulator(simulator_index i) override;
+    void add_function(function_index i, function* f) override;
+    void connect_variables(variable_id output, variable_id input) override;
+    void connect_variables(variable_id output, function_io_id input) override;
+    void connect_variables(function_io_id output, variable_id input) override;
+    void disconnect_variable(variable_id input) override;
+    void disconnect_variable(function_io_id input) override;
+    void setup(time_point startTime, std::optional<time_point> stopTime) override;
+    void initialize() override;
+    std::pair<duration, std::unordered_set<simulator_index>> do_step(time_point currentT) override;
+    serialization::node export_current_state() const override;
+    void import_state(const serialization::node& exportedState) override;
 
 private:
     class impl;
