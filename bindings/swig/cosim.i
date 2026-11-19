@@ -172,6 +172,49 @@ inline cosim::file_observer* file_observer(const std::string& logDir, const std:
 %naturalvar cosim::time_point;
 
 // -----------------------------------------------------------------------------
+// Ownership of struct members. Members of class type (vectors, shared_ptrs,
+// nested structs) are returned BY VALUE, never as a reference into the
+// parent object:
+//  - Python: %naturalvar returns a copy. Without it, `a.b().member` would
+//    return a proxy into a temporary that is already destroyed.
+//  - C: the backend ignores %naturalvar and would return a pointer into the
+//    parent, so the member is replaced by a get_<member>() function that
+//    returns an owned copy (and set_<member>() for writable members).
+// Must precede the %include of the class.
+// -----------------------------------------------------------------------------
+%define COSIM_MEMBER_BY_VALUE(CLASS, NAME, TYPE)
+#ifdef SWIGC
+%ignore CLASS::NAME;
+%extend CLASS {
+    TYPE get_ ## NAME() const { return $self->NAME; }
+}
+#else
+%naturalvar CLASS::NAME;
+%immutable CLASS::NAME;
+#endif
+%enddef
+
+%define COSIM_MEMBER_BY_VALUE_RW(CLASS, NAME, TYPE)
+#ifdef SWIGC
+%ignore CLASS::NAME;
+%extend CLASS {
+    TYPE get_ ## NAME() const { return $self->NAME; }
+    void set_ ## NAME(TYPE value) { $self->NAME = value; }
+}
+#else
+%naturalvar CLASS::NAME;
+#endif
+%enddef
+
+// Types returned as owned copies wherever a reference to them is returned
+// (COSIM_RETURN_COPIES is defined per language).
+COSIM_RETURN_COPIES(cosim::variable_description)
+COSIM_RETURN_COPIES(cosim::variable_id)
+COSIM_RETURN_COPIES(cosim::simulator_info)
+COSIM_RETURN_COPIES(cosim::simulator_capabilities)
+COSIM_RETURN_COPIES(std::vector<cosim::variable_description>)
+
+// -----------------------------------------------------------------------------
 // Ownership: everything handed to or returned from an execution is held by
 // shared_ptr. Must come before any declaration of these classes.
 // -----------------------------------------------------------------------------
@@ -281,6 +324,8 @@ inline double to_seconds(std::int64_t nanoseconds) { return std::chrono::duratio
 %ignore cosim::find_variable;               // [HIDE] returns std::optional
 %ignore cosim::to_text;                     // [HIDE] returns std::string_view
 %ignore cosim::operator<<;
+COSIM_MEMBER_BY_VALUE(cosim::model_description, variables, std::vector<cosim::variable_description>)
+COSIM_MEMBER_BY_VALUE(cosim::model_description, capabilities, cosim::simulator_capabilities)
 %include "cosim/model_description.hpp"
 
 // [ADAPT] typed access to the optional variant start value
@@ -317,7 +362,9 @@ inline double to_seconds(std::int64_t nanoseconds) { return std::chrono::duratio
 
 // [ADAPT] configured_execution::entity_maps holds std::unordered_maps (no C
 // support) and end_time is a std::optional.
-%immutable cosim::configured_execution::execution;
+COSIM_MEMBER_BY_VALUE(cosim::configured_execution, execution, std::shared_ptr<cosim::execution>)
+COSIM_MEMBER_BY_VALUE_RW(cosim::execution_load_options, model_resolver, std::shared_ptr<cosim::model_uri_resolver>)
+COSIM_MEMBER_BY_VALUE_RW(cosim::execution_load_options, algorithm, std::shared_ptr<cosim::algorithm>)
 %ignore cosim::configured_execution::entity_maps;
 %ignore cosim::configured_execution::end_time;
 %extend cosim::configured_execution {
@@ -415,6 +462,17 @@ COSIM_SINGLE_CONSTRUCTOR(ecco_algorithm, (cosim::ecco_algorithm_params, unsigned
 // [ADAPT] `times` is a std::vector<time_point>; element types inside
 // containers do not go through the time_point typemaps, so expose seconds.
 %ignore cosim::time_series_samples::times;
+#ifdef SWIGC
+%ignore cosim::time_series_samples::values;
+%ignore cosim::time_series_samples::steps;
+%extend cosim::time_series_samples {
+    std::vector<T> get_values() const { return $self->values; }
+    std::vector<std::int64_t> get_steps() const { return $self->steps; }
+}
+#else
+%naturalvar cosim::time_series_samples::values;
+%naturalvar cosim::time_series_samples::steps;
+#endif
 %include "cosim/observer/time_series_observer.hpp"
 
 %extend cosim::time_series_samples {

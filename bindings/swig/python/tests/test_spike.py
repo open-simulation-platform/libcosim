@@ -46,6 +46,20 @@ class ExecutionTest(unittest.TestCase):
         self.assertEqual(names["realIn"].type, cosim.variable_type_real)
         self.assertEqual(names["realIn"].causality, cosim.variable_causality_input)
 
+    def test_member_of_temporary_is_a_copy(self):
+        # Struct members of class type are returned by value. Without that,
+        # .variables would point into the temporary model description and
+        # iterating it would read freed memory.
+        sim = self.sims["TrueIdentity"]
+        names = [v.name for v in self.exe.get_model_description(sim).variables]
+        self.assertIn("realIn", names)
+        first = self.exe.get_model_description(sim).variables[0]
+        self.assertTrue(first.name)
+        loaded = cosim.load_execution_from_osp_config(MSMI)
+        exe = loaded.execution
+        del loaded
+        self.assertGreater(exe.step(), 0)
+
     def test_step_and_simulate_until(self):
         dt = self.exe.step()
         self.assertGreater(dt, 0.0)

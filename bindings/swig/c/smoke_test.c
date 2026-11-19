@@ -37,24 +37,25 @@ static void pause_briefly(void)
         }                                                               \
     } while (0)
 
-/* Returns nonzero (and prints/clears it) if a C++ exception is pending. */
+/* Returns nonzero (and prints/clears it) if an error is pending. */
 static int check_error(const char* where)
 {
-    cosim_SWIG_CException* ex = cosim_SWIG_CException_get_pending();
-    if (!ex) return 0;
-    fprintf(stderr, "%s: error %d: %s\n", where,
-        cosim_SWIG_CException_code_get(ex), cosim_SWIG_CException_msg_get(ex));
-    cosim_SWIG_CException_reset_pending();
+    const int code = cosim_last_error_code();
+    if (code == 0) return 0;
+    const char* msg = cosim_last_error_message();
+    fprintf(stderr, "%s: error %d: %s\n", where, code, msg);
+    free((void*)msg);
+    cosim_clear_last_error();
     return 1;
 }
 
 static unsigned int find_ref(cosim_execution* exe, int sim, const char* name)
 {
     cosim_model_description* md = cosim_execution_get_model_description(exe, sim);
-    cosim_VariableDescriptionVector* vars = cosim_model_description_variables_get(md);
+    cosim_VariableDescriptionVector* vars = cosim_model_description_get_variables(md); /* owned copy */
     unsigned int ref = (unsigned int)-1;
     for (size_t i = 0; i < cosim_VariableDescriptionVector_size(vars); ++i) {
-        cosim_variable_description* v = cosim_VariableDescriptionVector_get(vars, (int)i);
+        cosim_variable_description* v = cosim_VariableDescriptionVector_get(vars, (int)i); /* owned copy */
         /* Ownership trap: string getters return a strdup()ed copy that the
          * caller must free(), despite the `const char*` return type. */
         const char* vname = cosim_variable_description_name_get(v);
@@ -62,8 +63,16 @@ static unsigned int find_ref(cosim_execution* exe, int sim, const char* name)
             ref = cosim_variable_description_reference_get(v);
         }
         free((void*)vname);
+        cosim_variable_description_delete(v);
     }
-    /* Note: `vars` and `v` are borrowed (owned by `md`), only `md` is ours. */
+
+    /* Out-of-range access is an error, not a crash. */
+    CHECK(cosim_VariableDescriptionVector_get(vars, 100000) == NULL);
+    CHECK(cosim_last_error_code() != 0);
+    cosim_clear_last_error();
+
+    cosim_VariableDescriptionVector_delete(vars);
+    /* Every returned object is owned: `vars` and each `v` were deleted above. */
     cosim_model_description_delete(md);
     return ref;
 }
@@ -76,23 +85,23 @@ int main(int argc, char** argv)
     }
     cosim_set_output_level(cosim_level_warning);
 
-    /* --- Error path: exceptions become a pending SWIG_CException. */
+    /* --- Error path: a failing call returns NULL and leaves a pending error. */
     cosim_configured_execution* bad = cosim_load_execution_from_ssp("/nonexistent/system.ssp", NULL);
     CHECK(bad == NULL);
-    cosim_SWIG_CException* ex = cosim_SWIG_CException_get_pending();
-    CHECK(ex != NULL);
-    if (ex) {
-        printf("expected error: code=%d msg=%s\n",
-            cosim_SWIG_CException_code_get(ex), cosim_SWIG_CException_msg_get(ex));
-        cosim_SWIG_CException_reset_pending();
+    CHECK(cosim_last_error_code() == cosim_errc_zip_error);
+    {
+        const char* msg = cosim_last_error_message();
+        printf("expected error: code=%d msg=%s\n", cosim_last_error_code(), msg);
+        free((void*)msg);
     }
+    cosim_clear_last_error();
+    CHECK(cosim_last_error_code() == 0);
 
     /* --- Load an OSP configuration. */
     cosim_configured_execution* le = cosim_load_execution_from_osp_config(argv[1], NULL);
     if (check_error("load_osp_config")) return 1;
-    /* Borrowed: a member getter returns a pointer into `le`, which owns it.
-     * Do NOT call cosim_execution_delete() on it (that would double free). */
-    cosim_execution* exe = cosim_configured_execution_execution_get(le);
+    /* Owned: a new reference to the execution; delete it when done. */
+    cosim_execution* exe = cosim_configured_execution_get_execution(le);
 
     cosim_StringIntMap* sims = cosim_configured_execution_simulators(le);
     CHECK(cosim_StringIntMap_size(sims) == 4);
@@ -146,10 +155,11 @@ int main(int argc, char** argv)
             if (check_error("add_fmu")) return 1;
             cosim_SimulatorInfoVector* infos = cosim_execution_get_simulators(exe3);
             CHECK(cosim_SimulatorInfoVector_size(infos) == 1);
-            cosim_simulator_info* info = cosim_SimulatorInfoVector_get(infos, 0); /* borrowed */
+            cosim_simulator_info* info = cosim_SimulatorInfoVector_get(infos, 0); /* owned copy */
             const char* name = cosim_simulator_info_name_get(info);
             CHECK(strcmp(name, "a") == 0);
             free((void*)name);
+            cosim_simulator_info_delete(info);
             cosim_SimulatorInfoVector_delete(infos);
 
             cosim_execution_start_simulation(exe3);
@@ -181,7 +191,8 @@ int main(int argc, char** argv)
     cosim_ValueReferenceVector_delete(refs);
     cosim_override_manipulator_delete(man);
     cosim_last_value_observer_delete(obs);
-    cosim_configured_execution_delete(le); /* also releases `exe` */
+    cosim_execution_delete(exe);
+    cosim_configured_execution_delete(le);
 
     if (failures) {
         fprintf(stderr, "%d check(s) failed\n", failures);

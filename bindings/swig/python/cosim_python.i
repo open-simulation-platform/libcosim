@@ -120,4 +120,16 @@ inline bool to_path(PyObject* obj, cosim::filesystem::path& out)
     $1 = (PyUnicode_Check($input) || PyObject_HasAttrString($input, "__fspath__")) ? 1 : 0;
 }
 
+// -----------------------------------------------------------------------------
+// Ownership: references to objects of these types (struct members accessed
+// via %naturalvar, container elements) are returned as owned copies, so a
+// Python object never points into another object that may already be gone
+// (e.g. `exe.get_model_description(i).variables`). The list of types is in
+// cosim.i.
+// -----------------------------------------------------------------------------
+%define COSIM_RETURN_COPIES(TYPE)
+%typemap(out) const TYPE&, TYPE&
+    "$result = SWIG_NewPointerObj(new TYPE(*$1), $descriptor(TYPE*), SWIG_POINTER_OWN);"
+%enddef
+
 %include "../cosim.i"
