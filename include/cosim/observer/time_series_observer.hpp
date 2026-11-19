@@ -15,8 +15,10 @@
 #include <cosim/observer/time_series_provider.hpp>
 #include <cosim/time.hpp>
 
+#include <cstddef>
 #include <memory>
 #include <unordered_map>
+#include <vector>
 
 
 namespace cosim
@@ -24,6 +26,25 @@ namespace cosim
 
 
 class slave_value_provider;
+
+
+/**
+ *  Samples of one variable, as returned by the convenience overloads of
+ *  `time_series_observer::get_real_samples()` and `get_integer_samples()`.
+ *
+ *  The three vectors have equal length, and element `i` of each belongs to
+ *  the same sample.
+ */
+template<typename T>
+struct time_series_samples
+{
+    /// The sampled values.
+    std::vector<T> values;
+    /// The step number of each sample.
+    std::vector<step_number> steps;
+    /// The simulation time of each sample.
+    std::vector<time_point> times;
+};
 
 
 /**
@@ -117,6 +138,28 @@ public:
         step_number fromStep,
         gsl::span<double> values1,
         gsl::span<double> values2) override;
+
+    /**
+     *  \name Convenience getters returning the samples
+     *
+     *  Same as the span-based overloads, but return up to `maxSamples`
+     *  samples starting at step `fromStep` in a new `time_series_samples`
+     *  object. These need no pre-sized output buffers, and are what language
+     *  bindings use.
+     */
+    ///@{
+    time_series_samples<double> get_real_samples(
+        simulator_index sim,
+        value_reference valueReference,
+        step_number fromStep,
+        std::size_t maxSamples);
+
+    time_series_samples<int> get_integer_samples(
+        simulator_index sim,
+        value_reference valueReference,
+        step_number fromStep,
+        std::size_t maxSamples);
+    ///@}
 
     ~time_series_observer() noexcept override;
 

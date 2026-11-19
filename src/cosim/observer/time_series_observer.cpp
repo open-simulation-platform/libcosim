@@ -292,6 +292,48 @@ void time_series_observer::stop_observing(variable_id id)
     slaveObservers_.at(id.simulator)->stop_observing(id.type, id.reference);
 }
 
+namespace
+{
+template<typename T, typename GetSamples>
+time_series_samples<T> collect_samples(std::size_t maxSamples, GetSamples getSamples)
+{
+    time_series_samples<T> samples;
+    samples.values.resize(maxSamples);
+    samples.steps.resize(maxSamples);
+    samples.times.resize(maxSamples);
+    const auto count = getSamples(
+        gsl::make_span(samples.values),
+        gsl::make_span(samples.steps),
+        gsl::make_span(samples.times));
+    samples.values.resize(count);
+    samples.steps.resize(count);
+    samples.times.resize(count);
+    return samples;
+}
+} // namespace
+
+time_series_samples<double> time_series_observer::get_real_samples(
+    simulator_index sim,
+    value_reference valueReference,
+    step_number fromStep,
+    std::size_t maxSamples)
+{
+    return collect_samples<double>(maxSamples, [&](auto values, auto steps, auto times) {
+        return get_real_samples(sim, valueReference, fromStep, values, steps, times);
+    });
+}
+
+time_series_samples<int> time_series_observer::get_integer_samples(
+    simulator_index sim,
+    value_reference valueReference,
+    step_number fromStep,
+    std::size_t maxSamples)
+{
+    return collect_samples<int>(maxSamples, [&](auto values, auto steps, auto times) {
+        return get_integer_samples(sim, valueReference, fromStep, values, steps, times);
+    });
+}
+
 std::size_t time_series_observer::get_real_samples(
     simulator_index sim,
     value_reference valueReference,
