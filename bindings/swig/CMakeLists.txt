@@ -39,7 +39,9 @@ message(STATUS "libcosim bindings ${LIBCOSIM_SWIG_VERSION} (standalone: ${LIBCOS
 
 # Pinned exactly: SWIG's C backend is experimental and its generated API may
 # change between versions (see the swig_c_api_reference test).
-find_package(SWIG 4.4.1 EXACT REQUIRED)
+# MODULE: Conan's toolchain prefers config packages, and a failed config
+# search would reset SWIG_DIR (set by the bindings' conanfile.py).
+find_package(SWIG 4.4.1 EXACT REQUIRED MODULE)
 include(UseSWIG)
 message(STATUS "SWIG ${SWIG_VERSION}: ${SWIG_EXECUTABLE}")
 

@@ -62,6 +62,12 @@ class LibcosimCConan(ConanFile):
         tc.cache_variables["LIBCOSIM_SWIG_JAVA"] = False
         tc.cache_variables["LIBCOSIM_SWIG_CSHARP"] = False
         tc.cache_variables["LIBCOSIM_SWIG_INSTALL"] = True
+        # SWIG from Conan, also for builds outside Conan's environment
+        # (e.g. the Python wheel built by cibuildwheel with this toolchain).
+        swig_bin = self.dependencies.build["swig"].cpp_info.bindirs[0]
+        exe = "swig.exe" if self.settings_build.os == "Windows" else "swig"
+        tc.variables["SWIG_EXECUTABLE"] = os.path.join(swig_bin, exe).replace("\\", "/")
+        tc.variables["SWIG_DIR"] = os.path.join(swig_bin, "swiglib").replace("\\", "/")
         tc.generate()
         CMakeDeps(self).generate()
 

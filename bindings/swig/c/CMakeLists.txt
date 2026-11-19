@@ -11,7 +11,7 @@ file(MAKE_DIRECTORY "${genDir}")
 
 add_custom_command(
     OUTPUT "${wrapSrc}" "${wrapHdr}"
-    COMMAND "${SWIG_EXECUTABLE}" -c -c++ -nocxx -namespace cosim ${LIBCOSIM_SWIG_FLAGS}
+    COMMAND "${CMAKE_COMMAND}" -E env "SWIG_LIB=${SWIG_DIR}" "${SWIG_EXECUTABLE}" -c -c++ -nocxx -namespace cosim ${LIBCOSIM_SWIG_FLAGS}
             "-I${LIBCOSIM_INCLUDE_DIR}"
             -outdir "${genDir}"
             -o "${wrapSrc}"

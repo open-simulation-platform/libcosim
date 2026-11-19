@@ -16,7 +16,7 @@
 | Python | wheel `libcosim` | scikit-build-core (`pyproject.toml`) | bundled in the wheel, `RPATH=$ORIGIN` |
 | Java | `libcosim-<v>.jar` | CMake install component `java` | bundled in the JAR under `libcosim/native/<os>-<arch>/`, extracted to a temporary directory by `NativeLoader` on first use |
 | C# | NuGet `Libcosim.<v>.nupkg` (net8.0) | CMake install component `csharp` + `dotnet pack` | `runtimes/<rid>/native/` (standard NuGet layout) |
-| Julia | package directory `Libcosim/` | CMake install component `julia` | bundled in `Libcosim/lib/`; `LIBCOSIM_C_LIBRARY` overrides |
+| Julia | package `Libcosim` | CMake install component `julia` + `julia/make_artifact.jl` | the `libcosim_c` artifact (tarball per platform, listed in `Artifacts.toml`, downloaded by Pkg on install); `LIBCOSIM_C_LIBRARY` overrides |
 
 All five are built from the same SWIG interface (`cosim.i`). The Julia
 package calls the C library; its `ccall` layer (`generated.jl`) is
@@ -47,7 +47,9 @@ nothing but the package itself on the search paths:
 - Python: installs the wheel in a fresh venv, runs `python/tests/test_spike.py`
 - Java: compiles and runs `java/test/libcosim/SmokeTest.java` against the JAR only
 - C#: builds `csharp/consumer` from the `.nupkg` (private NuGet cache) and runs it
-- Julia: runs `julia/test/runtests.jl` with `--project=dist/julia/Libcosim`
+- Julia: installs the package with `Pkg.develop` in a fresh depot, Pkg
+  downloading the artifact from the local tarball (`file://` URL), and runs
+  `julia/test/runtests.jl`
 
 Output goes to `build-packages/dist/`. `--languages` selects a subset.
 Needs Python with `build`, the .NET SDK and Julia for the respective
@@ -55,20 +57,22 @@ languages. The libcosim package is `libcosim/0.11.3@spike/testing` (export it
 with `conan create` in the libcosim root, user/channel `spike/testing`), or
 set `LIBCOSIM_REF`.
 
-## Multi-platform packages
+## Multi-platform packages and distribution
 
-Each build produces packages for its own platform. For the release, a CI
-matrix (Linux, Windows, macOS) would build them and
+Each build produces packages for its own platform. The release workflow
+(`.github/workflows/release-bindings.yml`, on a `v*` tag) builds all
+platforms and publishes:
 
-- Python: upload one wheel per platform and Python version (or use the
-  stable ABI); cibuildwheel can drive this.
-- Java: merge the `libcosim/native/<platform>/` trees into one JAR (the
-  classes are identical); `NativeLoader` picks the right one at runtime.
-- C#: copy the `runtimes/<rid>/` trees into one staging directory
-  (`dist/csharp/stage`) and run `dotnet pack` once.
-- Julia: either one package with `lib/<platform>/`, or (the Julia way) a
-  JLL package built with BinaryBuilder.
-- C: Conan builds per configuration anyway.
+| Binding | Built by | Published to |
+|---|---|---|
+| Python | cibuildwheel (`packaging/cibw_before_all.py` provides libcosim and SWIG through Conan; manylinux on Linux) | PyPI, OSP organization (trusted publishing) |
+| C | `conan create .` per platform | OSP Conan remote |
+| Julia | `build_packages.py` per platform; `merge_packages.py` writes one `Artifacts.toml` | artifact tarballs on the GitHub release; `Libcosim.jl.zip` (package source) to commit to the Julia package repository and register in General |
+| Java | `build_packages.py` per platform; `merge_packages.py` merges the `libcosim/native/<platform>/` trees into one JAR | GitHub release |
+| C# | `build_packages.py` per platform; `merge_packages.py` merges the `runtimes/<rid>/` trees into one `.nupkg` | GitHub release (use as a local NuGet source) |
+
+The Julia artifact URLs point to the GitHub release of the version
+(`--julia-url` overrides). macOS joins the matrices when libcosim supports it.
 
 ## Moving the bindings to their own repository
 

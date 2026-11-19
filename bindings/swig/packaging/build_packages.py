@@ -139,7 +139,7 @@ def main():
              # Visual Studio generates all configurations; the Conan
              # dependencies exist only for Release.
              "-Ccmake.define.CMAKE_CONFIGURATION_TYPES=Release",
-             f"-Cbuild-dir={os.path.join(out, 'wheel-build')}"], conan_env=conan_env)
+             f"-Cbuild-dir={os.path.join(out, 'wheel-build')}"])  # the toolchain is enough
 
     if not args.test:
         return

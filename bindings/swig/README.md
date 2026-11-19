@@ -399,7 +399,7 @@ package; see [packaging/README.md](packaging/README.md).
 | Python | wheel (scikit-build-core) | 7.4 / 3.4 MB |
 | Java | JAR with native libraries, loaded by `NativeLoader` | 7.2 / 3.3 MB |
 | C# | NuGet package with `runtimes/<rid>/native` | 7.4 / 3.4 MB |
-| Julia | package directory, `ccall` layer generated from the C header | 23 MB unpacked (Linux) |
+| Julia | package (`ccall` layer generated from the C header) + `libcosim_c` artifact per platform, downloaded by Pkg | 7.0 MB artifact (Linux) |
 
 All packages built and tested on Linux (GCC) and Windows (MSVC 19.4).
 
@@ -410,3 +410,9 @@ dependencies, which make up almost all of the size.
 `bindings/swig` now builds in two modes: in-tree (as before) and standalone
 (`find_package(libcosim)`), so it can move to its own repository that
 depends on the libcosim Conan package; a git submodule is not needed.
+
+Distribution (decided): Python on PyPI (OSP organization), C on the OSP Conan
+remote, Julia in the General registry with its binaries as artifacts on the
+GitHub release; Java and C# packages on the GitHub release only. The release
+workflow `release-bindings.yml` builds all platforms and publishes (not run
+yet: it needs a push).

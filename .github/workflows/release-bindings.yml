@@ -1,0 +1,211 @@
+name: Release bindings
+
+# Builds the multi-platform binding packages and, for a version tag (or a
+# manual run with `publish`), publishes them:
+#
+#   Python  wheels (cibuildwheel)        -> PyPI (OSP organization, trusted publishing)
+#   C       Conan package libcosim-c     -> OSP Conan remote
+#   Julia   artifact tarballs + Artifacts.toml -> GitHub release; the package
+#           itself is registered in Julia's General registry (manual step, see
+#           the job summary)
+#   Java    one JAR, natives of all platforms -> GitHub release
+#   C#      one NuGet package, all platforms  -> GitHub release
+#
+# The binding version is libcosim's version (bindings/swig/conanfile.py); the
+# tag must match it. macOS joins the matrices once libcosim supports it.
+#
+# Spike note: libcosim is built from this repository (LIBCOSIM_FROM_SOURCE,
+# libcosim/<v>@spike/testing). A real release uses the released libcosim from
+# the OSP remote (LIBCOSIM_REF=libcosim/<v>@osp/stable), and uploads of
+# libcosim-c then refer to a package the remote has.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Publish (PyPI, OSP Conan remote, GitHub release)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+env:
+  PUBLISH: ${{ startsWith(github.ref, 'refs/tags/v') || inputs.publish }}
+  LIBCOSIM_FROM_SOURCE: "1"
+
+jobs:
+  version:
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+    steps:
+      - uses: actions/checkout@v6
+      - id: v
+        shell: bash
+        run: |
+          v=$(sed -n 's/^ *version = "\(.*\)".*/\1/p' bindings/swig/conanfile.py)
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          if [[ "$GITHUB_REF" == refs/tags/v* && "$GITHUB_REF_NAME" != "v$v" ]]; then
+            echo "::error::tag $GITHUB_REF_NAME does not match the bindings version $v"
+            exit 1
+          fi
+
+  wheels:
+    # One wheel per platform and Python version. On Linux, cibuildwheel builds
+    # in a manylinux container (libcosim is built there too) and auditwheel
+    # checks the bundled libraries.
+    name: wheels ${{ matrix.os }}
+    needs: version
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2025]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pypa/cibuildwheel@v3.1.4
+        with:
+          package-dir: bindings/swig
+          output-dir: wheelhouse
+        env:
+          CIBW_BUILD: "cp310-* cp311-* cp312-* cp313-* cp314-*"
+          CIBW_SKIP: "*-musllinux_*"
+          CIBW_ARCHS: auto64
+          CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
+          CIBW_ENVIRONMENT_PASS_LINUX: LIBCOSIM_FROM_SOURCE
+          CIBW_BEFORE_ALL_LINUX: >-
+            /opt/python/cp312-cp312/bin/python {project}/bindings/swig/packaging/cibw_before_all.py {project}
+          CIBW_BEFORE_ALL_WINDOWS: >-
+            python {project}/bindings/swig/packaging/cibw_before_all.py {project}
+          CIBW_CONFIG_SETTINGS_LINUX: >-
+            cmake.define.CMAKE_TOOLCHAIN_FILE=/project/build-conan/build/Release/generators/conan_toolchain.cmake
+          CIBW_CONFIG_SETTINGS_WINDOWS: >-
+            cmake.define.CMAKE_TOOLCHAIN_FILE=${{ github.workspace }}/build-conan/build/generators/conan_toolchain.cmake
+            cmake.define.CMAKE_CONFIGURATION_TYPES=Release
+          # The tests find libcosim's test data relative to the test file.
+          CIBW_TEST_COMMAND: >-
+            python -m unittest discover -s {project}/bindings/swig/python/tests -p test_spike.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.os }}
+          path: wheelhouse/*.whl
+
+  packages:
+    # C, Java, C# and Julia for one platform each, tested as users would use
+    # them; merged into multi-platform packages by the release job. Linux
+    # builds on the oldest supported Ubuntu, for an older glibc baseline.
+    name: packages ${{ matrix.os }}
+    needs: version
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-2025]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: "1"
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Install tools
+        shell: bash
+        run: |
+          pip install conan build
+          if [ "$RUNNER_OS" = Linux ]; then sudo apt-get install -y patchelf; fi
+          conan profile detect -f
+          conan remote add osp https://osp.jfrog.io/artifactory/api/conan/conan-local --force
+
+      - name: Create the libcosim package
+        if: env.LIBCOSIM_FROM_SOURCE == '1'
+        run: conan create . --user spike --channel testing --settings=build_type=Release --build=missing
+
+      - name: Build and test the packages
+        working-directory: bindings/swig
+        run: python packaging/build_packages.py --test --languages c java csharp julia
+
+      - name: Create and test the C package
+        working-directory: bindings/swig
+        run: conan create . --settings=build_type=Release --build=missing
+
+      - name: Upload the C package to the OSP Conan remote
+        if: env.PUBLISH == 'true'
+        working-directory: bindings/swig
+        env:
+          CONAN_LOGIN_USERNAME_OSP: ${{ secrets.OSP_CONAN_USER }}
+          CONAN_PASSWORD_OSP: ${{ secrets.OSP_CONAN_PASSWORD }}
+        run: conan upload "libcosim-c/${{ needs.version.outputs.version }}" -r osp --confirm
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: packages-${{ matrix.os }}
+          path: |
+            bindings/swig/build-packages/dist/java/*.jar
+            bindings/swig/build-packages/dist/csharp/*.nupkg
+            bindings/swig/build-packages/dist/julia/libcosim_c-*.tar.gz
+            bindings/swig/build-packages/dist/julia/Artifacts-*.toml
+            bindings/swig/build-packages/dist/julia/Libcosim/
+            bindings/swig/build-packages/dist/c/
+
+  pypi:
+    needs: [version, wheels, packages]
+    if: startsWith(github.ref, 'refs/tags/v') || inputs.publish
+    runs-on: ubuntu-24.04
+    environment: pypi
+    permissions:
+      id-token: write  # trusted publishing
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: wheels-*
+          path: dist
+          merge-multiple: true
+      - uses: pypa/gh-action-pypi-publish@release/v1
+
+  github-release:
+    needs: [version, wheels, packages]
+    if: startsWith(github.ref, 'refs/tags/v') || inputs.publish
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    env:
+      V: ${{ needs.version.outputs.version }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Merge the platform packages
+        run: |
+          python bindings/swig/packaging/merge_packages.py release artifacts/packages-*
+          for d in artifacts/packages-*; do
+            (cd "$d/c" && zip -qr "$GITHUB_WORKSPACE/release/libcosim-c-$V-${d#artifacts/packages-}.zip" .)
+          done
+          cp artifacts/wheels-*/*.whl release/
+          ls -l release
+
+      - name: Create or update the release
+        run: |
+          tag="v$V"
+          gh release view "$tag" >/dev/null 2>&1 || gh release create "$tag" --title "libcosim $V" --notes ""
+          gh release upload "$tag" release/* --clobber
+
+      - name: Julia registration instructions
+        run: |
+          cat >> "$GITHUB_STEP_SUMMARY" <<EOF
+          ## Julia package
+          The release has the \`libcosim_c\` artifacts and \`Libcosim.jl.zip\`, the package source
+          with the generated ccall layer and the \`Artifacts.toml\` pointing to the artifacts.
+          To release Libcosim.jl $V, commit its contents to the Julia package repository and
+          register that commit in the General registry (JuliaRegistrator).
+          EOF
