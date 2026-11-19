@@ -71,6 +71,12 @@ class LibcosimConan(ConanFile):
         if self.options.shared:
             self.options.rm_safe("fPIC")
         self.options["*"].shared = self.options.shared
+        # libzip is only used internally (src/cosim/utility/zip.cpp), so link
+        # it statically. As a DLL it is named zip.dll, which clashes with the
+        # JVM's own zip.dll on Windows: a JVM loads its zip.dll first, and
+        # cosim.dll then gets bound to it ("The specified procedure could not
+        # be found"), so libcosim could not be used from Java at all.
+        self.options["libzip"].shared = False
 
     def generate(self):
         # Copy dependencies to the folder where executables (tests, mainly)
