@@ -88,25 +88,23 @@ private:
 /**
  *  Creates a ready-to-run execution from an SSP archive or directory.
  *
- *  This loads the configuration with a default `ssp_loader`, creates an
+ *  This loads the configuration with an `ssp_loader`, creates an
  *  execution starting at the configured start time, and adds the system
  *  structure and the chosen parameter set with `inject_system_structure()`.
  *
  *  \param configPath
  *      Path to an `.ssp` archive, an `.ssd` file, or a directory that
  *      contains `SystemStructure.ssd`.
- *  \param algorithm
- *      The co-simulation algorithm. If null, the algorithm given in the
- *      SSP's default experiment is used; if that is absent too, a
- *      `cosim::error` with `errc::bad_file` is thrown.
- *  \param parameterSet
- *      The name of the parameter set to apply. The empty string (default)
- *      selects the default parameter values.
+ *  \param options
+ *      Overrides for start time, model resolver, algorithm and parameter
+ *      set. Without `options.algorithm`, the algorithm given in the SSP's
+ *      default experiment is used; if that is absent too, a
+ *      `cosim::error` with `errc::bad_file` is thrown. An unknown
+ *      parameter set also gives `errc::bad_file`.
  */
 configured_execution load_execution_from_ssp(
     const cosim::filesystem::path& configPath,
-    std::shared_ptr<cosim::algorithm> algorithm = nullptr,
-    const std::string& parameterSet = "");
+    const execution_load_options& options = {});
 
 
 } // namespace cosim

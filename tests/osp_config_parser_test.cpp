@@ -1,3 +1,4 @@
+#include <cosim/algorithm/ecco_algorithm.hpp>
 #include <cosim/algorithm/fixed_step_algorithm.hpp>
 #include <cosim/exception.hpp>
 #include <cosim/fs_portability.hpp>
@@ -110,6 +111,28 @@ void test_load_execution(const cosim::filesystem::path& testDataDir)
     const auto withEnd = cosim::load_execution_from_osp_config(testDataDir / "msmi" / "OspSystemStructure_EndTime.xml");
     REQUIRE(withEnd.end_time);
     REQUIRE(std::fabs(cosim::to_double_time_point(*withEnd.end_time) - 0.001) < 1e-9);
+
+    // Options: start time override, worker threads, resolver, algorithm override
+    cosim::execution_load_options options;
+    options.start_time = cosim::to_time_point(1.0);
+    options.worker_thread_count = 2;
+    options.model_resolver = cosim::default_model_uri_resolver();
+    auto overridden = cosim::load_execution_from_osp_config(testDataDir / "msmi", options);
+    REQUIRE(std::fabs(cosim::to_double_time_point(overridden.execution->current_time()) - 1.0) < 1e-9);
+    REQUIRE(overridden.execution->simulate_until(cosim::to_time_point(1.001)));
+
+    const auto customAlgorithm = std::make_shared<cosim::fixed_step_algorithm>(cosim::to_duration(1e-4));
+    options.algorithm = customAlgorithm;
+    auto withAlgorithm = cosim::load_execution_from_osp_config(testDataDir / "msmi", options);
+    REQUIRE(withAlgorithm.execution->get_algorithm() == customAlgorithm);
+
+    // An ECCO algorithm from the configuration gets the worker threads too
+    cosim::execution_load_options eccoOptions;
+    eccoOptions.worker_thread_count = 2;
+    auto ecco = cosim::load_execution_from_osp_config(
+        testDataDir / "fmi2" / "quarter_truck" / "OspSystemStructure.xml", eccoOptions);
+    REQUIRE(std::dynamic_pointer_cast<cosim::ecco_algorithm>(ecco.execution->get_algorithm()));
+    REQUIRE(ecco.execution->step() > cosim::duration::zero());
 }
 
 int main()

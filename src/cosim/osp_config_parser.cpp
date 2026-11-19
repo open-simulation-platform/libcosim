@@ -1255,24 +1255,29 @@ osp_config load_osp_config(
 
 configured_execution load_execution_from_osp_config(
     const cosim::filesystem::path& configPath,
-    std::shared_ptr<cosim::model_uri_resolver> resolver)
+    const execution_load_options& options)
 {
-    if (!resolver) resolver = default_model_uri_resolver();
+    const auto resolver = options.model_resolver ? options.model_resolver : default_model_uri_resolver();
     const auto config = load_osp_config(configPath, *resolver);
 
-    const auto algorithm = std::visit(
-        [](const auto& params) -> std::shared_ptr<cosim::algorithm> {
-            using params_type = std::decay_t<decltype(params)>;
-            if constexpr (std::is_same_v<params_type, fixed_step_algorithm_params>) {
-                return std::make_shared<fixed_step_algorithm>(params);
-            } else {
-                return std::make_shared<ecco_algorithm>(params);
-            }
-        },
-        config.algorithm_configuration);
+    auto algorithm = options.algorithm;
+    if (!algorithm) {
+        algorithm = std::visit(
+            [&options](const auto& params) -> std::shared_ptr<cosim::algorithm> {
+                using params_type = std::decay_t<decltype(params)>;
+                if constexpr (std::is_same_v<params_type, fixed_step_algorithm_params>) {
+                    return std::make_shared<fixed_step_algorithm>(params, options.worker_thread_count);
+                } else {
+                    return std::make_shared<ecco_algorithm>(params, options.worker_thread_count);
+                }
+            },
+            config.algorithm_configuration);
+    }
 
     configured_execution result;
-    result.execution = std::make_shared<execution>(config.start_time, algorithm);
+    result.execution = std::make_shared<execution>(
+        options.start_time.value_or(config.start_time),
+        algorithm);
     result.entity_maps = inject_system_structure(
         *result.execution, config.system_structure, config.initial_values);
     result.end_time = config.end_time;

@@ -433,6 +433,44 @@ struct entity_index_maps
 };
 
 
+class model_uri_resolver;
+
+
+/**
+ *  Options for `load_execution_from_osp_config()` and
+ *  `load_execution_from_ssp()`.
+ *
+ *  All members are optional; a default-constructed object gives the
+ *  behaviour defined by the configuration file.
+ */
+struct execution_load_options
+{
+    /// Start time of the execution. If not set, the configured start time is used.
+    std::optional<time_point> start_time;
+
+    /**
+     *  Number of worker threads for an algorithm created by the loader
+     *  (the OSP loader creates the configured fixed-step or ECCO
+     *  algorithm). If not set, the algorithm's default is used. Ignored
+     *  when `algorithm` is given, and for algorithms defined in an SSP.
+     */
+    std::optional<unsigned int> worker_thread_count;
+
+    /// Resolver used to look up models. If null, `default_model_uri_resolver()` is used.
+    std::shared_ptr<model_uri_resolver> model_resolver;
+
+    /**
+     *  The co-simulation algorithm. If null, the algorithm from the
+     *  configuration is used (for an SSP: from its default experiment;
+     *  if that is absent too, loading fails with `errc::bad_file`).
+     */
+    std::shared_ptr<cosim::algorithm> algorithm;
+
+    /// (SSP only) Name of the parameter set to apply. Empty selects the default values.
+    std::string parameter_set;
+};
+
+
 /**
  *  An execution created from a configuration file, ready to run.
  *

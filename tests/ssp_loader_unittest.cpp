@@ -252,17 +252,25 @@ BOOST_AUTO_TEST_CASE(load_execution_from_ssp_algorithm_test)
         [](const cosim::error& e) { return e.code() == cosim::errc::bad_file; });
 
     // An explicitly given algorithm is used
-    auto configured = cosim::load_execution_from_ssp(
-        sspDir, std::make_shared<cosim::fixed_step_algorithm>(cosim::to_duration(1e-4)));
+    cosim::execution_load_options options;
+    options.algorithm = std::make_shared<cosim::fixed_step_algorithm>(cosim::to_duration(1e-4));
+    auto configured = cosim::load_execution_from_ssp(sspDir, options);
     BOOST_CHECK_CLOSE(cosim::to_double_time_point(configured.execution->current_time()), 5.0, tolerance);
     BOOST_REQUIRE(configured.execution->simulate_until(cosim::to_time_point(5.001)));
 
+    // Start time override and a custom model resolver
+    options.algorithm = std::make_shared<cosim::fixed_step_algorithm>(cosim::to_duration(1e-4));
+    options.start_time = cosim::to_time_point(2.0);
+    options.model_resolver = cosim::default_model_uri_resolver();
+    auto restarted = cosim::load_execution_from_ssp(sspDir, options);
+    BOOST_CHECK_CLOSE(cosim::to_double_time_point(restarted.execution->current_time()), 2.0, tolerance);
+    BOOST_REQUIRE(restarted.execution->simulate_until(cosim::to_time_point(2.001)));
+
     // Unknown parameter set
+    options.algorithm = std::make_shared<cosim::fixed_step_algorithm>(cosim::to_duration(1e-4));
+    options.parameter_set = "no_such_parameter_set";
     BOOST_CHECK_EXCEPTION(
-        cosim::load_execution_from_ssp(
-            sspDir,
-            std::make_shared<cosim::fixed_step_algorithm>(cosim::to_duration(1e-4)),
-            "no_such_parameter_set"),
+        cosim::load_execution_from_ssp(sspDir, options),
         cosim::error,
         [](const cosim::error& e) { return e.code() == cosim::errc::bad_file; });
 }

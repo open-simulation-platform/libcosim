@@ -61,13 +61,13 @@ osp_config load_osp_config(
  *  \param configPath
  *      Path to an OSP-IS configuration file, or to a directory that
  *      contains a file named `OspSystemStructure.xml`.
- *  \param resolver
- *      The URI resolver used to look up models. If null,
- *      `default_model_uri_resolver()` is used.
+ *  \param options
+ *      Overrides for start time, worker threads, model resolver and
+ *      algorithm. `parameter_set` is ignored.
  */
 configured_execution load_execution_from_osp_config(
     const cosim::filesystem::path& configPath,
-    std::shared_ptr<cosim::model_uri_resolver> resolver = nullptr);
+    const execution_load_options& options = {});
 
 
 } // namespace cosim
