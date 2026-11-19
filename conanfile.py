@@ -31,6 +31,7 @@ class LibcosimConan(ConanFile):
         "proxyfmu": [True, False],
         "no_fmi_logging": [True, False],
         "swig_bindings": [True, False],
+        "swig_java": [True, False],
     }
     default_options = {
         "shared": True,
@@ -38,6 +39,7 @@ class LibcosimConan(ConanFile):
         "proxyfmu": False,
         "no_fmi_logging": False,
         "swig_bindings": False,
+        "swig_java": False,
     }
 
     # Dependencies/requirements
@@ -58,6 +60,8 @@ class LibcosimConan(ConanFile):
     def build_requirements(self):
         if self.options.swig_bindings:
             self.tool_requires("swig/4.4.1")  # pinned: the C backend is experimental
+            if self.options.swig_java:
+                self.tool_requires("zulu-openjdk/21.0.11")  # javac and JNI headers
 
     # Exports
     exports = "version.txt"
@@ -111,6 +115,7 @@ class LibcosimConan(ConanFile):
         tc.cache_variables["LIBCOSIM_NO_FMI_LOGGING"] = self.options.no_fmi_logging
         tc.cache_variables["LIBCOSIM_WITH_PROXYFMU"] = self.options.proxyfmu
         tc.cache_variables["LIBCOSIM_BUILD_SWIG_BINDINGS"] = self.options.swig_bindings
+        tc.cache_variables["LIBCOSIM_SWIG_JAVA"] = self.options.swig_bindings and self.options.swig_java
         tc.generate()
         CMakeDeps(self).generate()
 

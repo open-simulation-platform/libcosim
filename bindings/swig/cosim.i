@@ -69,10 +69,15 @@ template<class T> struct hash;
 template<class T> struct is_error_condition_enum;
 }
 
-// C has no operator overloading; other languages map these to equality.
+// C has no operator overloading; Python maps these to ==/!=. Java proxies
+// compare by identity unless equals() is overridden, so it is left out there.
 #ifdef SWIGC
 %ignore cosim::operator==(const function_io_id&, const function_io_id&);
 %rename(equals) cosim::operator==;
+%ignore cosim::operator!=;
+#endif
+#ifdef SWIGJAVA
+%ignore cosim::operator==;
 %ignore cosim::operator!=;
 #endif
 

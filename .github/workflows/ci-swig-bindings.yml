@@ -1,6 +1,6 @@
 name: SWIG bindings
 
-# Builds libcosim with the SWIG bindings (Python, and C via SWIG's
+# Builds libcosim with the SWIG bindings (Python, Java, and C via SWIG's
 # experimental C backend; Julia on top of the C library) and runs the full
 # test suite, including the binding tests and the C API drift check
 # (swig_c_api_reference), on Linux and Windows.
@@ -57,6 +57,7 @@ jobs:
           conan build . \
             --settings=build_type=Release \
             --options="&:swig_bindings=True" \
+            --options="&:swig_java=True" \
             --build=missing
 
       - name: Upload generated C header on failure
