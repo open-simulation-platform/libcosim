@@ -24,9 +24,15 @@ target_include_directories(cosim_python PRIVATE "${CMAKE_SOURCE_DIR}/include")
 target_link_libraries(cosim_python PRIVATE cosim Python3::Module)
 
 # libcosim sets per-configuration output directories globally; override them.
+# On Windows the module is a DLL (_cosim.pyd) whose import library would be
+# named cosim.lib and clash with libcosim's own cosim.lib, so it goes to a
+# separate directory (it is never used).
 foreach(cfg IN ITEMS Debug Release RelWithDebInfo MinSizeRel)
     string(TOUPPER "${cfg}" cfgU)
-    set_target_properties(cosim_python PROPERTIES LIBRARY_OUTPUT_DIRECTORY_${cfgU} "${outDir}")
+    set_target_properties(cosim_python PROPERTIES
+        LIBRARY_OUTPUT_DIRECTORY_${cfgU} "${outDir}"
+        RUNTIME_OUTPUT_DIRECTORY_${cfgU} "${outDir}"
+        ARCHIVE_OUTPUT_DIRECTORY_${cfgU} "${CMAKE_CURRENT_BINARY_DIR}/importlib")
 endforeach()
 
 # Package files
