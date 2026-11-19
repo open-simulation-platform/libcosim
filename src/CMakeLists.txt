@@ -25,6 +25,7 @@ set(publicHeaders
     "cosim/function/utility.hpp"
     "cosim/function/vector_sum.hpp"
     "cosim/lib_info.hpp"
+    "cosim/log/level.hpp"
     "cosim/log/logger.hpp"
     "cosim/log/simple.hpp"
     "cosim/manipulator.hpp"

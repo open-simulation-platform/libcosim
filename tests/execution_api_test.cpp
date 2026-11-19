@@ -5,6 +5,8 @@
 #include <cosim/exception.hpp>
 #include <cosim/execution.hpp>
 #include <cosim/fs_portability.hpp>
+#include <cosim/log/level.hpp>
+#include <cosim/log/logger.hpp>
 #include <cosim/log/simple.hpp>
 #include <cosim/manipulator/override_manipulator.hpp>
 #include <cosim/observer/last_value_observer.hpp>
@@ -176,14 +178,32 @@ void test_destroy_while_running()
 }
 
 
+void test_log_level()
+{
+    // A record at a given severity is only opened if it passes the filter
+    const auto accepted = [](cosim::log::severity_level severity) {
+        return static_cast<bool>(cosim::log::logger().open_record(boost::log::keywords::severity = severity));
+    };
+    cosim::log::setup_console_logging();
+    cosim::log::setup_console_logging(); // second call has no effect
+
+    cosim::log::set_output_level(cosim::log::level::error);
+    REQUIRE(!accepted(cosim::log::warning));
+    REQUIRE(accepted(cosim::log::error));
+    cosim::log::set_output_level(cosim::log::level::trace);
+    REQUIRE(accepted(cosim::log::trace));
+    cosim::log::set_output_level(cosim::log::level::warning);
+    REQUIRE(!accepted(cosim::log::info));
+    REQUIRE(accepted(cosim::log::warning));
+}
+
 } // namespace
 
 
 int main()
 {
     try {
-        cosim::log::setup_simple_console_logging();
-        cosim::log::set_global_output_level(cosim::log::warning);
+        test_log_level(); // leaves the level at "warning"
 
         const auto testDataDir = std::getenv("TEST_DATA_DIR");
         REQUIRE(testDataDir);
