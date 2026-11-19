@@ -6,6 +6,7 @@ Run with the built package on PYTHONPATH, from the repository root:
 """
 
 import os
+import pathlib
 import tempfile
 import unittest
 
@@ -24,13 +25,13 @@ def refs_by_name(exe, sim):
 
 class ExecutionTest(unittest.TestCase):
     def setUp(self):
-        self.loaded = cosim.load_osp_config(MSMI)
-        self.exe = self.loaded.execution()
+        self.loaded = cosim.load_execution_from_osp_config(MSMI)
+        self.exe = self.loaded.execution
         self.sims = dict(self.loaded.simulators())
 
     def test_load(self):
         self.assertEqual(set(self.sims), {"CraneController", "KnuckleBoomCrane", "TrueIdentity", "OneIdentity"})
-        self.assertAlmostEqual(self.loaded.start_time(), 0.01)
+        self.assertFalse(self.loaded.has_end_time())
         self.assertAlmostEqual(self.exe.current_time(), 0.01)
 
     def test_model_description(self):
@@ -38,8 +39,7 @@ class ExecutionTest(unittest.TestCase):
         names = {v.name: v for v in md.variables}
         self.assertIn("realIn", names)
         self.assertEqual(names["realIn"].type, cosim.variable_type_real)
-        # variable_causality is an unscoped enum, so SWIG exports bare names.
-        self.assertEqual(names["realIn"].causality, cosim.input)
+        self.assertEqual(names["realIn"].causality, cosim.variable_causality_input)
 
     def test_step_and_simulate_until(self):
         dt = self.exe.step()
@@ -61,9 +61,9 @@ class ExecutionTest(unittest.TestCase):
         self.exe.step()
         self.exe.step()
 
-        self.assertEqual(list(obs.get_integers(sim, [refs["integerOut"]])), [42])
-        self.assertEqual(list(obs.get_strings(sim, [refs["stringOut"]])), ["hello"])
-        self.assertEqual(list(obs.get_booleans(sim, [refs["booleanOut"]])), [0])
+        self.assertEqual(list(obs.get_integer(sim, [refs["integerOut"]])), [42])
+        self.assertEqual(list(obs.get_string(sim, [refs["stringOut"]])), ["hello"])
+        self.assertEqual(list(obs.get_boolean(sim, [refs["booleanOut"]])), [False])
 
     def test_time_series(self):
         sim = self.sims["TrueIdentity"]
@@ -85,14 +85,22 @@ class ExecutionTest(unittest.TestCase):
         s = ts.get_real_samples(sim, refs["realOut"], 1, 100)
         self.assertGreater(len(s.values), 0)
         self.assertEqual(len(s.values), len(s.steps))
-        self.assertEqual(len(s.values), len(s.times))
+        self.assertEqual(len(s.values), len(s.times_seconds()))
         self.assertAlmostEqual(s.values[-1], 1.5)
-        self.assertTrue(all(b > a for a, b in zip(s.times, list(s.times)[1:])))
+        self.assertTrue(all(b > a for a, b in zip(s.times_seconds(), list(s.times_seconds())[1:])))
 
     def test_real_time_config(self):
         self.assertFalse(self.exe.is_real_time_simulation())
         self.exe.set_real_time_factor_target(2.0)
         self.assertAlmostEqual(self.exe.get_real_time_factor_target(), 2.0)
+        with self.assertRaises(RuntimeError):
+            self.exe.set_real_time_factor_target(0.0)
+
+    def test_pathlike_and_end_time(self):
+        loaded = cosim.load_execution_from_osp_config(
+            pathlib.Path(REPO) / "tests" / "data" / "msmi" / "OspSystemStructure_EndTime.xml")
+        self.assertTrue(loaded.has_end_time())
+        self.assertAlmostEqual(loaded.end_time_seconds(), 0.001)
 
     def test_file_observer(self):
         with tempfile.TemporaryDirectory() as d:
@@ -100,17 +108,17 @@ class ExecutionTest(unittest.TestCase):
             self.exe.add_observer(fo)
             self.exe.step()
             self.assertTrue(fo.is_recording())
-            self.assertTrue(fo.log_path().startswith(d))
+            self.assertTrue(fo.get_log_path().startswith(d))
 
 
 class ErrorTest(unittest.TestCase):
     def test_missing_config_raises(self):
         with self.assertRaises(RuntimeError):
-            cosim.load_osp_config("/nonexistent/OspSystemStructure.xml")
+            cosim.load_execution_from_osp_config("/nonexistent/OspSystemStructure.xml")
 
     def test_cosim_error_has_code(self):
         with self.assertRaises(cosim.CosimError) as ctx:
-            cosim.load_ssp("/nonexistent/system.ssp")
+            cosim.load_execution_from_ssp("/nonexistent/system.ssp")
         message, code = ctx.exception.args
         self.assertIsInstance(message, str)
         self.assertIsInstance(code, int)

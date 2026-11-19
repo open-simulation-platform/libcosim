@@ -21,15 +21,15 @@ ccall((:cosim_set_log_level, lib), Cvoid, (Cint,), 3)  # warning
 
 # Error mapping
 try
-    ccall((:cosim_load_ssp, lib), Ptr{Cvoid}, (Cstring,), "/nonexistent/system.ssp"); check()
+    ccall((:cosim_load_execution_from_ssp, lib), Ptr{Cvoid}, (Cstring, Ptr{Cvoid}, Cstring), "/nonexistent/system.ssp", C_NULL, ""); check()
     error("expected an error")
 catch e
     println("expected error: ", e.msg)
 end
 
-le = ccall((:cosim_load_osp_config, lib), Ptr{Cvoid}, (Cstring,), config); check()
-exe = ccall((:cosim_loaded_execution_execution, lib), Ptr{Cvoid}, (Ptr{Cvoid},), le)
-sims = ccall((:cosim_loaded_execution_simulators, lib), Ptr{Cvoid}, (Ptr{Cvoid},), le)
+le = ccall((:cosim_load_execution_from_osp_config, lib), Ptr{Cvoid}, (Cstring, Ptr{Cvoid}), config, C_NULL); check()
+exe = ccall((:cosim_configured_execution_execution_get, lib), Ptr{Cvoid}, (Ptr{Cvoid},), le)
+sims = ccall((:cosim_configured_execution_simulators, lib), Ptr{Cvoid}, (Ptr{Cvoid},), le)
 sim = ccall((:cosim_StringIntMap_get, lib), Cint, (Ptr{Cvoid}, Cstring), sims, "TrueIdentity"); check()
 
 # identity.fmu: integerIn / integerOut both have value reference 0
@@ -46,7 +46,7 @@ t1 = ccall((:cosim_execution_current_time, lib), Cdouble, (Ptr{Cvoid},), exe)
 
 refs = ccall((:cosim_ValueReferenceVector_new, lib), Ptr{Cvoid}, ())
 ccall((:cosim_ValueReferenceVector_push_back, lib), Cvoid, (Ptr{Cvoid}, Cuint), refs, 0)
-vals = ccall((:cosim_last_value_observer_get_integers, lib), Ptr{Cvoid},
+vals = ccall((:cosim_last_value_observer_get_integer, lib), Ptr{Cvoid},
              (Ptr{Cvoid}, Cint, Ptr{Cvoid}), obs, sim, refs); check()
 v = ccall((:cosim_IntVector_get, lib), Cint, (Ptr{Cvoid}, Cint), vals, 0)
 
@@ -59,6 +59,6 @@ ccall((:cosim_ValueReferenceVector_delete, lib), Cvoid, (Ptr{Cvoid},), refs)
 ccall((:cosim_override_manipulator_delete, lib), Cvoid, (Ptr{Cvoid},), man)
 ccall((:cosim_last_value_observer_delete, lib), Cvoid, (Ptr{Cvoid},), obs)
 ccall((:cosim_StringIntMap_delete, lib), Cvoid, (Ptr{Cvoid},), sims)
-ccall((:cosim_execution_delete, lib), Cvoid, (Ptr{Cvoid},), exe)
-ccall((:cosim_loaded_execution_delete, lib), Cvoid, (Ptr{Cvoid},), le)
+# `exe` is borrowed from `le` (member getter), so it is not deleted here.
+ccall((:cosim_configured_execution_delete, lib), Cvoid, (Ptr{Cvoid},), le)
 println("Julia smoke test OK")

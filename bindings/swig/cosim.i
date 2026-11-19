@@ -81,6 +81,11 @@ typedef ::uint64_t uint64_t;
 }
 
 // -----------------------------------------------------------------------------
+// cosim::filesystem::path is mapped to strings by language-specific typemaps.
+// -----------------------------------------------------------------------------
+namespace cosim { namespace filesystem { class path; } }
+
+// -----------------------------------------------------------------------------
 // Plain typedefs used throughout the API
 // -----------------------------------------------------------------------------
 namespace cosim
@@ -100,6 +105,7 @@ typedef std::int64_t step_number;
 %template(IntVector) std::vector<int>;
 %template(Int64Vector) std::vector<std::int64_t>;
 %template(StringVector) std::vector<std::string>;
+%template(BoolVector) std::vector<bool>;
 %template(StringIntMap) std::map<std::string, int>;
 
 // -----------------------------------------------------------------------------
@@ -161,6 +167,7 @@ inline cosim::file_observer* file_observer(const std::string& logDir, const std:
 %shared_ptr(cosim::manipulator)
 %shared_ptr(cosim::override_manipulator)
 %shared_ptr(cosim::scenario_manager)
+%shared_ptr(cosim::model_uri_resolver)
 
 // -----------------------------------------------------------------------------
 // [REDECL] Opaque base classes. Their headers are the C++ extension API
@@ -188,6 +195,10 @@ class time_series_provider : public observer { };
 %nodefaultctor manipulator;
 %nodefaultdtor manipulator;
 class manipulator { };
+
+%nodefaultctor model_uri_resolver;
+%nodefaultdtor model_uri_resolver;
+class model_uri_resolver { };
 }
 
 // -----------------------------------------------------------------------------
@@ -277,7 +288,7 @@ inline void set_log_level(log_level level)
 // execution.hpp
 // =============================================================================
 %ignore cosim::function_io_id;              // [HIDE] functions not in spike scope
-%ignore cosim::entity_index_maps;           // [HIDE] unordered_map; see [GLUE] loader
+%ignore cosim::entity_index_maps;           // [HIDE] unordered_map; see configured_execution
 %ignore cosim::inject_system_structure;     // [HIDE] needs system_structure
 %ignore std::hash;                          // [HIDE] std specialisations (boost::hash_combine)
 
@@ -289,10 +300,28 @@ inline void set_log_level(log_level level)
 %ignore cosim::execution::connect_variables(function_io_id, variable_id);
 %ignore cosim::execution::simulate_until(std::optional<time_point>); // [HIDE] std::optional
 %ignore cosim::execution::simulate_until_async; // [HIDE] std::future
-%ignore cosim::execution::get_real_time_config;  // [HIDE] struct of std::atomic
-%ignore cosim::execution::get_real_time_metrics; // [HIDE] struct of std::atomic
+%ignore cosim::execution::get_real_time_config;  // [HIDE] struct of std::atomic (plain accessors exist)
+%ignore cosim::execution::get_real_time_metrics; // [HIDE] struct of std::atomic (plain accessors exist)
 %ignore cosim::execution::export_current_state;  // [HIDE] serialization::node
 %ignore cosim::execution::import_state;          // [HIDE] serialization::node
+
+// [ADAPT] configured_execution::entity_maps holds std::unordered_maps (no C
+// support) and end_time is a std::optional.
+%immutable cosim::configured_execution::execution;
+%ignore cosim::configured_execution::entity_maps;
+%ignore cosim::configured_execution::end_time;
+%extend cosim::configured_execution {
+    std::map<std::string, int> simulators() const
+    {
+        return std::map<std::string, int>($self->entity_maps.simulators.begin(), $self->entity_maps.simulators.end());
+    }
+    std::map<std::string, int> functions() const
+    {
+        return std::map<std::string, int>($self->entity_maps.functions.begin(), $self->entity_maps.functions.end());
+    }
+    bool has_end_time() const { return $self->end_time.has_value(); }
+    double end_time_seconds() const { return cosim::to_double_time_point($self->end_time.value()); }
+}
 
 %include "cosim/execution.hpp"
 
@@ -304,23 +333,11 @@ inline void set_log_level(log_level level)
     {
         return $self->simulate_until(targetTime);
     }
-
-    // [ADAPT] replaces get_real_time_config() (struct of std::atomic)
-    void enable_real_time_simulation() { $self->get_real_time_config()->real_time_simulation = true; }
-    void disable_real_time_simulation() { $self->get_real_time_config()->real_time_simulation = false; }
-    bool is_real_time_simulation() const { return $self->get_real_time_config()->real_time_simulation; }
-    void set_real_time_factor_target(double factor) { $self->get_real_time_config()->real_time_factor_target = factor; }
-    double get_real_time_factor_target() const { return $self->get_real_time_config()->real_time_factor_target; }
-
-    // [ADAPT] replaces get_real_time_metrics() (struct of std::atomic)
-    double rolling_average_real_time_factor() const { return $self->get_real_time_metrics()->rolling_average_real_time_factor; }
-    double total_average_real_time_factor() const { return $self->get_real_time_metrics()->total_average_real_time_factor; }
 }
 
 // =============================================================================
 // algorithm/fixed_step_algorithm.hpp
 // =============================================================================
-%ignore cosim::fixed_step_algorithm_params; // [HIDE] contains std::unordered_map
 COSIM_SINGLE_CONSTRUCTOR(fixed_step_algorithm, (cosim::duration, unsigned int))
 %ignore cosim::fixed_step_algorithm_params; // [HIDE] contains std::unordered_map
 %ignore cosim::fixed_step_algorithm::operator=;
@@ -350,85 +367,18 @@ COSIM_SINGLE_CONSTRUCTOR(fixed_step_algorithm, (cosim::duration, unsigned int))
 // =============================================================================
 // observer/last_value_observer.hpp
 // =============================================================================
-%ignore cosim::last_value_observer::get_real;    // [HIDE] gsl::span out-params
-%ignore cosim::last_value_observer::get_integer; // [HIDE] (the vector versions
-%ignore cosim::last_value_observer::get_boolean; // [HIDE]  below use different
-%ignore cosim::last_value_observer::get_string;  // [HIDE]  names, so by-name is OK)
+// [HIDE] span-based overloads; the native std::vector overloads are wrapped.
+%ignore cosim::last_value_observer::get_real(simulator_index, gsl::span<const value_reference>, gsl::span<double>);
+%ignore cosim::last_value_observer::get_integer(simulator_index, gsl::span<const value_reference>, gsl::span<int>);
+%ignore cosim::last_value_observer::get_boolean(simulator_index, gsl::span<const value_reference>, gsl::span<bool>);
+%ignore cosim::last_value_observer::get_string(simulator_index, gsl::span<const value_reference>, gsl::span<std::string>);
 %include "cosim/observer/last_value_observer.hpp"
-
-
-%extend cosim::last_value_observer {
-    // [ADAPT] vector-returning replacements for the span-based getters.
-    std::vector<double> get_reals(cosim::simulator_index sim, const std::vector<cosim::value_reference>& refs)
-    {
-        std::vector<double> values(refs.size());
-        $self->get_real(sim, refs, values);
-        return values;
-    }
-    std::vector<int> get_integers(cosim::simulator_index sim, const std::vector<cosim::value_reference>& refs)
-    {
-        std::vector<int> values(refs.size());
-        $self->get_integer(sim, refs, values);
-        return values;
-    }
-    // std::vector<bool> is not contiguous, so we cannot hand it to gsl::span.
-    std::vector<int> get_booleans(cosim::simulator_index sim, const std::vector<cosim::value_reference>& refs)
-    {
-        auto values = std::make_unique<bool[]>(refs.size());
-        $self->get_boolean(sim, refs, gsl::span<bool>(values.get(), refs.size()));
-        return std::vector<int>(values.get(), values.get() + refs.size());
-    }
-    std::vector<std::string> get_strings(cosim::simulator_index sim, const std::vector<cosim::value_reference>& refs)
-    {
-        std::vector<std::string> values(refs.size());
-        $self->get_string(sim, refs, values);
-        return values;
-    }
-}
 
 // =============================================================================
 // observer/time_series_observer.hpp
 // =============================================================================
-// [ADAPT] result struct replacing three output spans
-%inline %{
-namespace cosim { namespace swig {
-struct real_samples
-{
-    std::vector<double> values;
-    std::vector<std::int64_t> steps;
-    std::vector<double> times;
-};
-struct integer_samples
-{
-    std::vector<int> values;
-    std::vector<std::int64_t> steps;
-    std::vector<double> times;
-};
-}}
-%}
-
-// Helper used by the %extend bodies below. %extend code is emitted where the
-// class is declared, so helpers must precede the class header %include.
-%{
-namespace cosim { namespace swig {
-template<typename T, typename GetFn>
-void fetch_samples(GetFn get, std::size_t maxSamples, std::vector<T>& values,
-    std::vector<std::int64_t>& steps, std::vector<double>& times)
-{
-    values.resize(maxSamples);
-    steps.resize(maxSamples);
-    std::vector<cosim::time_point> tps(maxSamples);
-    const auto n = get(gsl::span<T>(values), gsl::span<cosim::step_number>(steps), gsl::span<cosim::time_point>(tps));
-    values.resize(n);
-    steps.resize(n);
-    times.resize(n);
-    for (std::size_t i = 0; i < n; ++i) times[i] = cosim::to_double_time_point(tps[i]);
-}
-}}
-%}
-
-// [HIDE] 3 span out-params. By signature, because the [ADAPT] replacements
-// below reuse the names (a by-name %ignore would hide them too).
+// [HIDE] span-based overloads; the native overloads returning
+// time_series_samples<T> are wrapped.
 %ignore cosim::time_series_observer::get_real_samples(simulator_index, value_reference, step_number, gsl::span<double>, gsl::span<step_number>, gsl::span<time_point>);
 %ignore cosim::time_series_observer::get_integer_samples(simulator_index, value_reference, step_number, gsl::span<int>, gsl::span<step_number>, gsl::span<time_point>);
 %ignore cosim::time_series_observer::get_step_numbers;     // [HIDE] span out-param
@@ -438,30 +388,22 @@ void fetch_samples(GetFn get, std::size_t maxSamples, std::vector<T>& values,
 #ifdef SWIGC
 %ignore cosim::time_series_observer::time_series_observer;
 #endif
+// [ADAPT] `times` is a std::vector<time_point>; element types inside
+// containers do not go through the time_point typemaps, so expose seconds.
+%ignore cosim::time_series_samples::times;
 %include "cosim/observer/time_series_observer.hpp"
 
-%extend cosim::time_series_observer {
-    // [ADAPT]
-    cosim::swig::real_samples get_real_samples(cosim::simulator_index sim,
-        cosim::value_reference ref, cosim::step_number fromStep, std::size_t maxSamples)
+%extend cosim::time_series_samples {
+    std::vector<double> times_seconds() const
     {
-        cosim::swig::real_samples s;
-        cosim::swig::fetch_samples<double>(
-            [&](auto v, auto st, auto t) { return $self->get_real_samples(sim, ref, fromStep, v, st, t); },
-            maxSamples, s.values, s.steps, s.times);
-        return s;
-    }
-    // [ADAPT]
-    cosim::swig::integer_samples get_integer_samples(cosim::simulator_index sim,
-        cosim::value_reference ref, cosim::step_number fromStep, std::size_t maxSamples)
-    {
-        cosim::swig::integer_samples s;
-        cosim::swig::fetch_samples<int>(
-            [&](auto v, auto st, auto t) { return $self->get_integer_samples(sim, ref, fromStep, v, st, t); },
-            maxSamples, s.values, s.steps, s.times);
-        return s;
+        std::vector<double> t;
+        t.reserve($self->times.size());
+        for (const auto& tp : $self->times) t.push_back(cosim::to_double_time_point(tp));
+        return t;
     }
 }
+%template(RealSamples) cosim::time_series_samples<double>;
+%template(IntegerSamples) cosim::time_series_samples<int>;
 
 // =============================================================================
 // observer/file_observer.hpp
@@ -477,7 +419,6 @@ COSIM_SINGLE_CONSTRUCTOR(file_observer, (const std::string&, const std::string&)
     {
         return cosim::swig::create::file_observer(logDir, configPath);
     }
-    std::string log_path() { return $self->get_log_path().string(); }
 }
 
 // =============================================================================
@@ -490,96 +431,19 @@ COSIM_SINGLE_CONSTRUCTOR(file_observer, (const std::string&, const std::string&)
 // =============================================================================
 %ignore cosim::scenario_manager::scenario_manager(scenario_manager&&);
 %ignore cosim::scenario_manager::operator=;
-// [HIDE] scenario struct / filesystem::path (by signature; see above)
-%ignore cosim::scenario_manager::load_scenario(const scenario::scenario&, time_point);
-%ignore cosim::scenario_manager::load_scenario(const cosim::filesystem::path&, time_point);
+%ignore cosim::scenario_manager::load_scenario(const scenario::scenario&, time_point); // [HIDE] in-memory scenario
 %include "cosim/manipulator/scenario_manager.hpp"
 
-%extend cosim::scenario_manager {
-    // [ADAPT] string path instead of cosim::filesystem::path
-    void load_scenario(const std::string& scenarioFile, cosim::time_point currentTime)
-    {
-        $self->load_scenario(cosim::filesystem::path(scenarioFile), currentTime);
-    }
-}
-
 // =============================================================================
-// [GLUE] One-call loaders (proposal §6.3). Today this logic is duplicated in
-// libcosimc and in every C++ client; it belongs in libcosim.
+// Loaders: osp_config_parser.hpp, ssp/ssp_loader.hpp
+// load_execution_from_osp_config() and load_execution_from_ssp() are native.
 // =============================================================================
-
-%inline %{
-namespace cosim { namespace swig {
-
-class loaded_execution
-{
-public:
-    std::shared_ptr<cosim::execution> execution() const { return execution_; }
-    std::map<std::string, int> simulators() const { return simulators_; }
-    double start_time() const { return startTime_; }
-    bool has_end_time() const { return hasEndTime_; }
-    double end_time() const { return endTime_; }
-
-#ifndef SWIG
-    std::shared_ptr<cosim::execution> execution_;
-    std::map<std::string, int> simulators_;
-    double startTime_ = 0.0;
-    bool hasEndTime_ = false;
-    double endTime_ = 0.0;
-#endif
-};
-
-#ifndef SWIG
-inline loaded_execution make_loaded(
-    std::shared_ptr<cosim::execution> exe,
-    const cosim::system_structure& sys,
-    const cosim::variable_value_map& initialValues,
-    cosim::time_point start)
-{
-    loaded_execution le;
-    const auto maps = cosim::inject_system_structure(*exe, sys, initialValues);
-    le.execution_ = std::move(exe);
-    le.simulators_.insert(maps.simulators.begin(), maps.simulators.end());
-    le.startTime_ = cosim::to_double_time_point(start);
-    return le;
-}
-#endif
-
-/// Loads an OSP system structure file and returns a ready-to-run execution.
-inline loaded_execution load_osp_config(const std::string& configPath)
-{
-    auto resolver = cosim::default_model_uri_resolver();
-    const auto config = cosim::load_osp_config(cosim::filesystem::path(configPath), *resolver);
-    std::shared_ptr<cosim::algorithm> algo = std::visit(
-        [](const auto& params) -> std::shared_ptr<cosim::algorithm> {
-            using P = std::decay_t<decltype(params)>;
-            if constexpr (std::is_same_v<P, cosim::fixed_step_algorithm_params>) {
-                return std::make_shared<cosim::fixed_step_algorithm>(params);
-            } else {
-                return std::make_shared<cosim::ecco_algorithm>(params);
-            }
-        },
-        config.algorithm_configuration);
-    auto exe = std::make_shared<cosim::execution>(config.start_time, algo);
-    auto le = make_loaded(exe, config.system_structure, config.initial_values, config.start_time);
-    if (config.end_time) {
-        le.hasEndTime_ = true;
-        le.endTime_ = cosim::to_double_time_point(*config.end_time);
-    }
-    return le;
-}
-
-/// Loads an SSP archive or directory using its own algorithm.
-inline loaded_execution load_ssp(const std::string& configPath)
-{
-    cosim::ssp_loader loader;
-    const auto config = loader.load(cosim::filesystem::path(configPath));
-    auto exe = std::make_shared<cosim::execution>(config.start_time, config.algorithm);
-    return make_loaded(exe, config.system_structure, config.parameter_sets.at(""), config.start_time);
-}
-
-}} // namespace cosim::swig
-%}
+%ignore cosim::osp_config;                  // [HIDE] system_structure, std::variant
+%ignore cosim::load_osp_config;             // [HIDE] lower-level; use load_execution_from_osp_config
+%ignore cosim::ssp_configuration;           // [HIDE] system_structure, unordered_map
+%ignore cosim::ssp_loader;                  // [HIDE] lower-level; use load_execution_from_ssp
+%include "cosim/osp_config_parser.hpp"
+%include "cosim/ssp/ssp_loader.hpp"
 
 // =============================================================================
 // C only: factory functions replacing constructors (see COSIM_SINGLE_CONSTRUCTOR)

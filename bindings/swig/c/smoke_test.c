@@ -61,7 +61,7 @@ int main(int argc, char** argv)
     cosim_set_log_level(cosim_log_level_warning);
 
     /* --- Error path: exceptions become a pending SWIG_CException. */
-    cosim_loaded_execution* bad = cosim_load_ssp("/nonexistent/system.ssp");
+    cosim_configured_execution* bad = cosim_load_execution_from_ssp("/nonexistent/system.ssp", NULL, "");
     CHECK(bad == NULL);
     cosim_SWIG_CException* ex = cosim_SWIG_CException_get_pending();
     CHECK(ex != NULL);
@@ -72,11 +72,13 @@ int main(int argc, char** argv)
     }
 
     /* --- Load an OSP configuration. */
-    cosim_loaded_execution* le = cosim_load_osp_config(argv[1]);
+    cosim_configured_execution* le = cosim_load_execution_from_osp_config(argv[1], NULL);
     if (check_error("load_osp_config")) return 1;
-    cosim_execution* exe = cosim_loaded_execution_execution(le);
+    /* Borrowed: a member getter returns a pointer into `le`, which owns it.
+     * Do NOT call cosim_execution_delete() on it (that would double free). */
+    cosim_execution* exe = cosim_configured_execution_execution_get(le);
 
-    cosim_StringIntMap* sims = cosim_loaded_execution_simulators(le);
+    cosim_StringIntMap* sims = cosim_configured_execution_simulators(le);
     CHECK(cosim_StringIntMap_size(sims) == 4);
     const int sim = cosim_StringIntMap_get(sims, "TrueIdentity");
     cosim_StringIntMap_delete(sims);
@@ -105,7 +107,7 @@ int main(int argc, char** argv)
 
     cosim_ValueReferenceVector* refs = cosim_ValueReferenceVector_new();
     cosim_ValueReferenceVector_push_back(refs, integerOut);
-    cosim_IntVector* values = cosim_last_value_observer_get_integers(obs, sim, refs);
+    cosim_IntVector* values = cosim_last_value_observer_get_integer(obs, sim, refs);
     CHECK(cosim_IntVector_size(values) == 1);
     CHECK(cosim_IntVector_get(values, 0) == 42);
     printf("integerOut = %d\n", cosim_IntVector_get(values, 0));
@@ -122,8 +124,7 @@ int main(int argc, char** argv)
     cosim_ValueReferenceVector_delete(refs);
     cosim_override_manipulator_delete(man);
     cosim_last_value_observer_delete(obs);
-    cosim_execution_delete(exe);
-    cosim_loaded_execution_delete(le);
+    cosim_configured_execution_delete(le); /* also releases `exe` */
 
     if (failures) {
         fprintf(stderr, "%d check(s) failed\n", failures);

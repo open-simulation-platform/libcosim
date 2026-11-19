@@ -49,4 +49,18 @@ inline double duration_to_double(cosim::duration d)
 COSIM_TIME_TYPEMAPS(cosim::time_point, cosim::to_time_point, cosim::to_double_time_point)
 COSIM_TIME_TYPEMAPS(cosim::duration, cosim::to_duration, cosim::swig::duration_to_double)
 
+// -----------------------------------------------------------------------------
+// Paths: cosim::filesystem::path <-> UTF-8 const char*. Returned strings are
+// malloc()ed copies the caller must free(), like all strings from this API.
+// -----------------------------------------------------------------------------
+%{
+#include <cosim/fs_portability.hpp>
+#include <cstring>
+%}
+%typemap(ctype) cosim::filesystem::path, const cosim::filesystem::path& "const char *"
+%typemap(in) cosim::filesystem::path "$1 = cosim::filesystem::u8path($input ? $input : \"\");"
+%typemap(in) const cosim::filesystem::path& (cosim::filesystem::path temp)
+    "temp = cosim::filesystem::u8path($input ? $input : \"\"); $1 = &temp;"
+%typemap(out) cosim::filesystem::path "$result = strdup(reinterpret_cast<const char*>($1.u8string().c_str()));"
+
 %include "../cosim.i"
