@@ -46,6 +46,11 @@ if(LIBCOSIM_SWIG_TESTS)
     add_executable(cosim_c_smoke smoke_test.c)
     target_link_libraries(cosim_c_smoke PRIVATE cosim_c)
     set_target_properties(cosim_c_smoke PROPERTIES LINKER_LANGUAGE C C_STANDARD 11)
+    if(NOT WIN32)
+        # libcosim's own dependencies live in other (Conan) directories; the
+        # linker resolves them through the RPATH.
+        set_property(TARGET cosim_c_smoke APPEND PROPERTY BUILD_RPATH ${LIBCOSIM_SWIG_RUNTIME_DIRS})
+    endif()
     if(MSVC)
         target_compile_options(cosim_c_smoke PRIVATE "/WX-")
     endif()

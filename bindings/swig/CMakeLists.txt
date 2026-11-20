@@ -69,18 +69,56 @@ else()
     set(LIBCOSIM_SWIG_TESTS OFF)
 endif()
 
-# Adds libcosim's runtime directory to PATH for a test. On Windows, when
-# java.exe or julia.exe loads cosim_java.dll / cosim_c.dll, the libraries
-# those depend on (cosim.dll, ...) are not searched for in the DLL's own
-# directory, only in the executable's directory, the system directories and
-# PATH. On Linux, .NET's DllImport finds the bindings via LD_LIBRARY_PATH.
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/LibcosimSwigPackaging.cmake")
+
+# Adds the bindings' output directory and libcosim's runtime directories
+# (with Conan: those of all its dependencies) to PATH and LD_LIBRARY_PATH for
+# a test. On Windows, when java.exe or julia.exe loads cosim_java.dll /
+# cosim_c.dll, the libraries those depend on (cosim.dll, ...) are not
+# searched for in the DLL's own directory, only in the executable's
+# directory, the system directories and PATH. On Linux, .NET's DllImport
+# finds the bindings via LD_LIBRARY_PATH. Python on Windows ignores PATH; the
+# package registers the directories in LIBCOSIM_DLL_DIRS instead.
 function(libcosim_swig_test_runtime_path testName)
-    set_property(TEST ${testName} APPEND PROPERTY ENVIRONMENT_MODIFICATION
-        "PATH=path_list_prepend:$<TARGET_FILE_DIR:${LIBCOSIM_TARGET}>"
-        "LD_LIBRARY_PATH=path_list_prepend:$<TARGET_FILE_DIR:${LIBCOSIM_TARGET}>")
+    foreach(dir IN ITEMS "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}"
+                         ${LIBCOSIM_SWIG_RUNTIME_DIRS})
+        if(dir)
+            set_property(TEST ${testName} APPEND PROPERTY ENVIRONMENT_MODIFICATION
+                "PATH=path_list_prepend:${dir}"
+                "LD_LIBRARY_PATH=path_list_prepend:${dir}"
+                "LIBCOSIM_DLL_DIRS=path_list_prepend:${dir}")
+        endif()
+    endforeach()
 endfunction()
 
-include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/LibcosimSwigPackaging.cmake")
+# Keyword check: SWIG renames identifiers that are keywords in a target
+# language (warning 314), which would give that binding a different name.
+# Checked for every SWIG language, whether or not it is built.
+set(keywordArgs_python -python)
+set(keywordArgs_java -java -package libcosim)
+set(keywordArgs_csharp -csharp -namespace Libcosim)
+set(keywordArgs_c -c -nocxx -namespace cosim)
+set(keywordStamps "")
+foreach(lang IN ITEMS python java csharp c)
+    set(iface "${lang}/cosim_${lang}.i")
+    set(langArgs ${keywordArgs_${lang}})
+    set(stamp "${CMAKE_CURRENT_BINARY_DIR}/keyword-check/${lang}.stamp")
+    set(args -c++ ${langArgs} ${LIBCOSIM_SWIG_FLAGS} "-I${LIBCOSIM_INCLUDE_DIR}")
+    add_custom_command(
+        OUTPUT "${stamp}"
+        COMMAND "${CMAKE_COMMAND}"
+            "-DSWIG_EXECUTABLE=${SWIG_EXECUTABLE}" "-DSWIG_DIR=${SWIG_DIR}"
+            "-DINTERFACE=${CMAKE_CURRENT_SOURCE_DIR}/${iface}"
+            "-DOUTDIR=${CMAKE_CURRENT_BINARY_DIR}/keyword-check/${lang}"
+            "-DSTAMP=${stamp}" "-DARGS=${args}"
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/CheckSwigKeywords.cmake"
+        DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/${iface}" "${CMAKE_CURRENT_SOURCE_DIR}/cosim.i"
+                "${CMAKE_CURRENT_SOURCE_DIR}/cmake/CheckSwigKeywords.cmake"
+        COMMENT "Checking ${lang} names for keyword renames (SWIG warning 314)"
+        VERBATIM)
+    list(APPEND keywordStamps "${stamp}")
+endforeach()
+add_custom_target(swig_keyword_check ALL DEPENDS ${keywordStamps})
 
 option(LIBCOSIM_SWIG_PYTHON "Build the SWIG Python bindings" ON)
 option(LIBCOSIM_SWIG_C "Build the SWIG C bindings (SWIG's experimental C backend)" ON)
