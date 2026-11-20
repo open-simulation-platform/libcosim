@@ -16,3 +16,8 @@ cmake-build-*/
 .clj-kondo
 
 CMakeUserPresets.json
+
+# Conan home of the CI jobs (CONAN_HOME is inside the checkout). It must be
+# ignored, as Conan refuses to export from a dirty repository with
+# revision_mode = "scm".
+.conan2/

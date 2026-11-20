@@ -31,6 +31,10 @@ jobs:
           apt-get install -y pipx doxygen cmake
           pipx install conan
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: Trust the checkout
+        # The recipe revision comes from git (revision_mode = "scm"), and git
+        # refuses a repository owned by another user, as in this container.
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
       - name: Configure Conan
         run: |
           conan profile detect -f

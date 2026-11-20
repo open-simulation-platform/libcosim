@@ -22,6 +22,11 @@ class LibcosimConan(ConanFile):
     url = "https://github.com/open-simulation-platform/libcosim.git"
     description = "A co-simulation library for C++"
 
+    # Use the git commit as the recipe revision, so that it is the same on
+    # every platform. With the default, a hash of the exported files, the
+    # Windows checkout (CRLF line endings) gives a different revision.
+    revision_mode = "scm"
+
     # Binary configuration
     package_type = "library"
     settings = "os", "compiler", "build_type", "arch"
