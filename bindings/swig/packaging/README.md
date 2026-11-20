@@ -37,9 +37,11 @@ The packages support proxy FMUs (FMUs run in separate processes, e.g. for
 isolation or other bitness): libcosim is built with proxyfmu, and every
 package contains the `proxyfmu` executable (and its libraries) next to the
 binding's libraries. The proxyfmu client finds it there, whatever program
-loads the bindings. This needs a proxyfmu release whose client searches next
-to its client library (proxy-fmu PR #110, stacked on #108 and #109), and
-libcosim's recipe requiring it; with proxyfmu 0.4.3 the executable is not
+loads the bindings. This needs a proxyfmu whose client searches next to its
+client library (proxy-fmu #108-#110): `proxyfmu/0.4.3@osp/testing` as
+published on 2026-11-20, which libcosim's recipe requires. The version was
+not bumped, so a Conan cache with an older 0.4.3 revision needs
+`conan install --update`; with an older revision the executable is not
 found. `-o "&:proxyfmu=False"` (via `--conan-arg`) builds packages without
 it. The package tests run a proxy-FMU configuration when the package
 contains the executable.
