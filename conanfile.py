@@ -89,6 +89,10 @@ class LibcosimConan(ConanFile):
         # cosim.dll then gets bound to it ("The specified procedure could not
         # be found"), so libcosim could not be used from Java at all.
         self.options["libzip"].shared = False
+        # A static libzip links zstd::libzstd_static, which a shared zstd
+        # package does not provide, so zstd (used only by libzip) is static
+        # too.
+        self.options["zstd"].shared = False
 
     def generate(self):
         # Copy dependencies to the folder where executables (tests, mainly)
