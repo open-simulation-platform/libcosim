@@ -156,6 +156,17 @@ private:
                         sim->expose_for_getting(variable_type::string, a.variable);
                         sim->set_string_output_modifier(a.variable, m.f);
                     }
+                },
+                [=](scenario::variable_modifier m) {
+                   if (a.is_input) {
+                       sim->expose_for_setting(m.type, a.variable);
+                       sim->set_variable_input_modifier(
+                           m.type, a.variable, m.f);
+                   } else {
+                       sim->expose_for_getting(m.type, a.variable);
+                       sim->set_variable_output_modifier(
+                           m.type, a.variable, m.f);
+                   }
                 }),
             a.modifier);
     }
@@ -207,6 +218,15 @@ private:
                     } else {
                         sim->set_string_output_modifier(a.variable, nullptr);
                     }
+                },
+                [=](scenario::variable_modifier m) {
+                   if (a.is_input) {
+                       sim->set_variable_input_modifier(
+                           m.type, a.variable, nullptr);
+                   } else {
+                       sim->set_variable_output_modifier(
+                           m.type, a.variable, nullptr);
+                   }
                 }),
             a.modifier);
     }

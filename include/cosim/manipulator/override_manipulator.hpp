@@ -39,6 +39,12 @@ public:
     void override_boolean_variable(simulator_index, value_reference, bool value);
     /// Override the value of a variable with type `string`
     void override_string_variable(simulator_index, value_reference, const std::string& value);
+    /// Override one complete scalar or array value.
+    void override_variable(
+        simulator_index,
+        variable_type,
+        value_reference,
+        variable_value value);
     /// Reset override of a variable
     void reset_variable(simulator_index, variable_type, value_reference);
 
@@ -53,7 +59,8 @@ private:
             scenario::real_modifier,
             scenario::integer_modifier,
             scenario::boolean_modifier,
-            scenario::string_modifier>& m);
+            scenario::string_modifier,
+            scenario::variable_modifier>& m);
 
     std::unordered_map<simulator_index, manipulable*> simulators_;
     std::vector<scenario::variable_action> actions_;

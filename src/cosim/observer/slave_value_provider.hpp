@@ -34,12 +34,14 @@ public:
     void get_int(gsl::span<const value_reference> variables, gsl::span<int> values);
     void get_boolean(gsl::span<const value_reference> variables, gsl::span<bool> values);
     void get_string(gsl::span<const value_reference> variables, gsl::span<std::string> values);
+    variable_value get_variable_value(variable_type type, value_reference reference);
 
 private:
     std::unordered_map<value_reference, double> realSamples_;
     std::unordered_map<value_reference, int> intSamples_;
     std::unordered_map<value_reference, bool> boolSamples_;
     std::unordered_map<value_reference, std::string> stringSamples_;
+    std::unordered_map<value_reference, std::optional<variable_value>> enumerationSamples_;
     observable* observable_;
     std::mutex lock_;
 };
