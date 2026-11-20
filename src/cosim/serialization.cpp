@@ -2,6 +2,7 @@
 #include <cosim/serialization.hpp>
 
 #include <cbor.h>
+#include <exception>
 
 #include <ios>
 #include <iostream>
@@ -249,6 +250,31 @@ namespace
 
         // Indicates current level when parsing maps recursively
         int level = -1;
+
+        // The first error raised in a callback. Callbacks are called from
+        // libcbor's C code, so they must not throw; the error is rethrown
+        // after decoding.
+        std::exception_ptr error{};
+    };
+
+    // Wraps a reader callback so that it records exceptions instead of
+    // letting them propagate through libcbor, and does nothing after an error.
+    template<typename Sig, Sig F>
+    struct guarded;
+
+    template<typename... Args, void (*F)(void*, Args...)>
+    struct guarded<void (*)(void*, Args...), F>
+    {
+        static void call(void* ctx, Args... args)
+        {
+            auto c = reinterpret_cast<cbor_reader_ctx*>(ctx);
+            if (c->error) return;
+            try {
+                F(ctx, args...);
+            } catch (...) {
+                c->error = std::current_exception();
+            }
+        }
     };
 
     namespace serialization
@@ -287,6 +313,14 @@ namespace
     {
     public:
         using STATE = cbor_reader_ctx::STATE;
+
+        static STATE top_state(const cbor_reader_ctx* ctx)
+        {
+            if (ctx->states.empty()) {
+                throw std::runtime_error("[Cbor reader] Invalid input: unexpected item outside a map or array");
+            }
+            return ctx->states.back();
+        }
 
         static cosim::serialization::node& current_node(cbor_reader_ctx* ctx)
         {
@@ -330,7 +364,7 @@ namespace
 
         inline static void check_map_end(cbor_reader_ctx* ctx)
         {
-            if (ctx->states.back() == cbor_reader_ctx::READING_MAP) {
+            if (top_state(ctx) == cbor_reader_ctx::READING_MAP) {
                 if (ctx->map_current_indexes.size() != ctx->map_sizes.size() ||
                     !ctx->map_current_indexes.size() || !ctx->map_sizes.size()) {
                     throw std::runtime_error("[Cbor reader] Invalid state while parsing a map - invalid map sizes");
@@ -347,7 +381,7 @@ namespace
                         throw std::runtime_error("[Cbor reader] Invalid state while parsing a map - empty state vector");
                     }
 
-                    if (ctx->states.back() == STATE::READING_MAP) {
+                    if (top_state(ctx) == STATE::READING_MAP) {
                         check_map_end(ctx);
                     }
                 }
@@ -387,14 +421,14 @@ namespace
         static void cbor_indef_break(void* _ctx)
         {
             auto ctx = reinterpret_cast<cbor_reader_ctx*>(_ctx);
-            if (ctx->states.back() == STATE::READING_INDEF_MAP) {
+            if (top_state(ctx) == STATE::READING_INDEF_MAP) {
                 append_map_child(ctx);
-            } else if (ctx->states.back() == STATE::READING_INDEF_ARRAY) {
+            } else if (top_state(ctx) == STATE::READING_INDEF_ARRAY) {
                 add_value(ctx, ctx->byte_array);
             } else {
                 std::stringstream ss;
                 ss << "[Cbor reader] Unexpected parsing state at indefinite item break point: "
-                   << ctx->states.back();
+                   << top_state(ctx);
                 throw std::runtime_error(ss.str());
             }
             ctx->states.pop_back();
@@ -488,10 +522,10 @@ namespace
             if (ctx->tag) {
                 add_value(ctx, static_cast<int8_t>(value));
                 ctx->tag = std::nullopt;
-            } else if (ctx->states.back() == STATE::READING_INDEF_ARRAY) {
+            } else if (top_state(ctx) == STATE::READING_INDEF_ARRAY) {
                 ctx->byte_array.push_back(static_cast<std::byte>(value));
                 return;
-            } else if (ctx->states.back() == STATE::READING_ARRAY) {
+            } else if (top_state(ctx) == STATE::READING_ARRAY) {
                 ctx->byte_array.push_back(static_cast<std::byte>(value));
                 if (ctx->byte_array.size() == ctx->byte_array_length) {
                     add_value(ctx, ctx->byte_array);
@@ -541,29 +575,32 @@ namespace
         size_t bytes_read = 0;
 
         // Callback functions for reading the input node recursively
-        cbs.string = cbor_reader::cbor_read_string;
-        cbs.uint8 = cbor_reader::cbor_read_int;
-        cbs.uint16 = cbor_reader::cbor_read_int;
-        cbs.uint32 = cbor_reader::cbor_read_int;
-        cbs.uint64 = cbor_reader::cbor_read_int;
-        cbs.negint8 = cbor_reader::cbor_read_int;
-        cbs.negint16 = cbor_reader::cbor_read_int;
-        cbs.negint32 = cbor_reader::cbor_read_int;
-        cbs.negint64 = cbor_reader::cbor_read_int;
-        cbs.boolean = cbor_reader::cbor_read_boolean;
-        cbs.float4 = cbor_reader::cbor_read_half_float;
-        cbs.float8 = cbor_reader::cbor_read_double_float;
-        cbs.indef_map_start = cbor_reader::cbor_indef_map_start;
-        cbs.map_start = cbor_reader::cbor_map_start;
-        cbs.indef_break = cbor_reader::cbor_indef_break;
-        cbs.undefined = cbor_reader::cbor_read_null_undefined;
-        cbs.null = cbor_reader::cbor_read_null_undefined;
-        cbs.tag = cbor_reader::cbor_read_tag;
-        cbs.byte_string = cbor_reader::cbor_read_byte_string;
-        cbs.indef_array_start = cbor_reader::cbor_indef_array_start;
-        cbs.array_start = cbor_reader::cbor_array_start;
+        cbs.string = guarded<decltype(cbs.string), &cbor_reader::cbor_read_string>::call;
+        cbs.uint8 = guarded<decltype(cbs.uint8), &cbor_reader::cbor_read_int>::call;
+        cbs.uint16 = guarded<decltype(cbs.uint16), &cbor_reader::cbor_read_int>::call;
+        cbs.uint32 = guarded<decltype(cbs.uint32), &cbor_reader::cbor_read_int>::call;
+        cbs.uint64 = guarded<decltype(cbs.uint64), &cbor_reader::cbor_read_int>::call;
+        cbs.negint8 = guarded<decltype(cbs.negint8), &cbor_reader::cbor_read_int>::call;
+        cbs.negint16 = guarded<decltype(cbs.negint16), &cbor_reader::cbor_read_int>::call;
+        cbs.negint32 = guarded<decltype(cbs.negint32), &cbor_reader::cbor_read_int>::call;
+        cbs.negint64 = guarded<decltype(cbs.negint64), &cbor_reader::cbor_read_int>::call;
+        cbs.boolean = guarded<decltype(cbs.boolean), &cbor_reader::cbor_read_boolean>::call;
+        cbs.float4 = guarded<decltype(cbs.float4), &cbor_reader::cbor_read_half_float>::call;
+        cbs.float8 = guarded<decltype(cbs.float8), &cbor_reader::cbor_read_double_float>::call;
+        cbs.indef_map_start = guarded<decltype(cbs.indef_map_start), &cbor_reader::cbor_indef_map_start>::call;
+        cbs.map_start = guarded<decltype(cbs.map_start), &cbor_reader::cbor_map_start>::call;
+        cbs.indef_break = guarded<decltype(cbs.indef_break), &cbor_reader::cbor_indef_break>::call;
+        cbs.undefined = guarded<decltype(cbs.undefined), &cbor_reader::cbor_read_null_undefined>::call;
+        cbs.null = guarded<decltype(cbs.null), &cbor_reader::cbor_read_null_undefined>::call;
+        cbs.tag = guarded<decltype(cbs.tag), &cbor_reader::cbor_read_tag>::call;
+        cbs.byte_string = guarded<decltype(cbs.byte_string), &cbor_reader::cbor_read_byte_string>::call;
+        cbs.indef_array_start = guarded<decltype(cbs.indef_array_start), &cbor_reader::cbor_indef_array_start>::call;
+        cbs.array_start = guarded<decltype(cbs.array_start), &cbor_reader::cbor_array_start>::call;
 
-        while(bytes_read < len) {
+        if (length <= 0) {
+            throw std::runtime_error("[Cbor reader] No data");
+        }
+        while(bytes_read < len && !ctx.error) {
             decode_result = cbor_stream_decode(buf.data() + bytes_read, len - bytes_read, &cbs, &ctx);
             if (decode_result.status != cbor_decoder_status::CBOR_DECODER_FINISHED) {
                 const auto err_msg = "[Cbor reader] Decoding error. CBOR decoder status:  " + std::to_string(decode_result.status);
@@ -571,6 +608,10 @@ namespace
                 throw std::runtime_error(err_msg);
             }
             bytes_read += decode_result.read;
+        }
+        if (ctx.error) std::rethrow_exception(ctx.error);
+        if (!ctx.states.empty()) {
+            throw std::runtime_error("[Cbor reader] Invalid input: incomplete data");
         }
 
         return in;
