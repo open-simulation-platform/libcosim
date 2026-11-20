@@ -324,11 +324,23 @@ namespace
             return ctx->children.back();
         }
 
+        // The child of `parent` with exactly this key, added if missing.
+        // put() and put_child() would parse the key as a path, splitting it
+        // at '.' and asserting on empty paths, and invalid input can contain
+        // any key.
+        static cosim::serialization::node& child_at(
+            cosim::serialization::node& parent, const std::string& key)
+        {
+            const auto it = parent.find(key);
+            if (it != parent.not_found()) return it->second;
+            return parent.push_back({key, cosim::serialization::node()})->second;
+        }
+
         template<typename T>
         static void add_value(cbor_reader_ctx* ctx, T&& value)
         {
             if (ctx->children.size() == ctx->keys.size() - 1) {
-                current_node(ctx).put(ctx->keys.back(), value);
+                child_at(current_node(ctx), ctx->keys.back()).put_value(value);
                 ctx->keys.pop_back();
             } else {
                 std::stringstream ss;
@@ -350,7 +362,7 @@ namespace
                 if(!ctx->children.empty()) {
                     ctx->children.pop_back();
                 }
-                current_node(ctx).put_child(key, map);
+                child_at(current_node(ctx), key) = map;
                 ctx->keys.pop_back();
                 ctx->level--;
             }
