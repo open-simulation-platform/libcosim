@@ -13,6 +13,7 @@
 #include <cosim/file_cache.hpp>
 #include <cosim/fs_portability.hpp>
 
+#include <atomic>
 #include <map>
 #include <memory>
 #include <string>
@@ -20,13 +21,11 @@
 
 // Forward declarations to avoid external dependency on FMI Library.
 struct fmi_xml_context_t;
-typedef fmi_xml_context_t fmi_import_context_t;
+using fmi_import_context_t = fmi_xml_context_t;
 struct jm_callbacks;
 
 
-namespace cosim
-{
-namespace fmi
+namespace cosim::fmi
 {
 
 class fmu;
@@ -35,9 +34,14 @@ class fmu;
 /**
  *  Imports and caches FMUs.
  *
- *  The main purpose of this class is to read FMU files and create
- *  `cosim::fmi::fmu` objects to represent them.  This is done with the
- *  `import()` function.
+ *  The main purpose of this class is to read FMU files, probe their FMI
+ *  version, and create `cosim::fmi::fmu` objects to represent them. This is
+ *  done with the `import()` function. The FMI 3.0 instantiation token is
+ *  preserved as model metadata, not used as an archive identity.
+ *
+ *  Concurrent or reentrant import operations on the same importer are not
+ *  supported and fail with `std::logic_error`. This guard does not make
+ *  the importer, its cache, FMUs, or FMI Library handles generally thread-safe.
  */
 class importer : public std::enable_shared_from_this<importer>
 {
@@ -66,8 +70,8 @@ public:
      *  Loaded FMUs are managed using reference counting.  If an FMU is loaded,
      *  and then the same FMU is loaded again before the first one has been
      *  destroyed, the second call will return a reference to the first one.
-     *  (Two FMUs are deemed to be the same if they have the same path *or* the
-     *  same GUID.)
+     *  Packed FMI 3.0 FMUs are identified by their path or archive contents;
+     *  FMI 1.0/2.0 FMUs are identified by their path or version and GUID.
      *
      *  \param [in] fmuPath
      *      The path to the FMU file.
@@ -82,6 +86,11 @@ public:
      *  This is more or less equivalent to `import()`, but since the FMU is
      *  already unpacked its contents will be read from the specified directory
      *  rather than the cache.  (The contents will not be copied to the cache.)
+     *  The directory is never modified. Unpacked FMI 3.0 FMUs are cached by
+     *  canonical path. If an FMI 3.0 model description
+     *  has a '+' sign in front of a ModelStructure dependency reference, which
+     *  FMI Library cannot parse, the FMU is instead read from a private
+     *  temporary copy that has the sign removed.
      *
      *  \param [in] unpackedFMUPath
      *      The path to a directory that holds the unpacked contents of an FMU.
@@ -91,10 +100,10 @@ public:
     std::shared_ptr<fmu> import_unpacked(
         const cosim::filesystem::path& unpackedFMUPath);
 
-    /// Returns the last FMI Library error message.
+    /// Returns the last FMI Library error message for this importer.
     std::string last_error_message();
 
-    /// Returns a pointer to the underlying FMI Library import context.
+    /// Returns the underlying FMI Library import context used for dispatch.
     fmi_import_context_t* fmilib_handle() const;
 
 private:
@@ -106,10 +115,10 @@ private:
     std::unique_ptr<fmi_import_context_t, void (*)(fmi_import_context_t*)> handle_;
 
     std::map<cosim::filesystem::path, std::weak_ptr<fmu>> pathCache_;
-    std::map<std::string, std::weak_ptr<fmu>> guidCache_;
+    std::map<std::string, std::weak_ptr<fmu>> identityCache_;
+    std::atomic_flag importInProgress_ = ATOMIC_FLAG_INIT;
 };
 
 
-} // namespace fmi
-} // namespace cosim
+} // namespace cosim::fmi
 #endif // header guard

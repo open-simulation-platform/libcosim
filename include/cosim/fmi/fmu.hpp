@@ -34,6 +34,9 @@ enum class fmi_version
 
     /// FMI 2.0
     v2_0 = 20000,
+
+    /// FMI 3.0
+    v3_0 = 30000,
 };
 
 

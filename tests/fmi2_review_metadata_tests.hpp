@@ -1,36 +1,43 @@
 #include "cosim/fmi/enumeration.hpp"
 #include "cosim/fmi/glue.hpp"
+#include "warning_capture.hpp"
 
-// Malformed optional metadata must not prevent an FMU accepted by FMI Library
-// from loading; valid unit and Enumeration restrictions still survive.
 BOOST_AUTO_TEST_CASE(v2_secondary_metadata_recovery)
 {
     utility::temp_dir directory;
     const auto path = directory.path() / "modelDescription.xml";
+    warning_capture warnings;
     const auto write = [&path](const std::string& xml) {
         std::ofstream output(path);
         BOOST_REQUIRE(output);
         output << xml;
     };
-    const auto malformed = [&](const std::string& xml) {
+    const auto malformed = [&](const std::string& xml, const std::string& message) {
+        const auto previousSize = warnings.messages().size();
         write(xml);
         std::vector<unit_definition> units;
         fmi::fmi2_enumeration_restrictions restrictions;
         BOOST_CHECK_NO_THROW(fmi::read_xml_metadata(units, path, &restrictions));
         BOOST_TEST(restrictions.empty());
+        const auto logged = warnings.messages().substr(previousSize);
+        BOOST_TEST(logged.find(message) != std::string::npos);
+        BOOST_TEST(logged.find(path.string()) != std::string::npos);
     };
-    malformed("<fmiModelDescription><broken>");
-    malformed(
-        "<fmiModelDescription><UnitDefinitions><Unit/>"
-        "</UnitDefinitions></fmiModelDescription>");
-    malformed(
-        "<fmiModelDescription><UnitDefinitions><Unit name=\"\"/></UnitDefinitions></fmiModelDescription>");
-    malformed(
-        "<fmiModelDescription><UnitDefinitions><Unit name=\"u\"/><Unit name=\"u\"/>"
-        "</UnitDefinitions></fmiModelDescription>");
-    malformed(
-        "<fmiModelDescription><ModelVariables><ScalarVariable name=\"x\">"
-        "<Enumeration min=\"bad\"/></ScalarVariable></ModelVariables></fmiModelDescription>");
+    malformed("<fmiModelDescription><broken>", "Cannot read optional FMI XML metadata");
+    malformed("<fmiModelDescription><UnitDefinitions><Unit/></UnitDefinitions></fmiModelDescription>",
+        "Skipping FMI unit definition without a name");
+    malformed("<fmiModelDescription><UnitDefinitions><Unit name=\"\"/></UnitDefinitions></fmiModelDescription>",
+        "Skipping FMI unit definition without a name");
+    malformed("<fmiModelDescription><UnitDefinitions><Unit name=\"u\"/><Unit name=\"u\"/></UnitDefinitions></fmiModelDescription>",
+        "Skipping duplicate FMI unit definition 'u'");
+    malformed("<fmiModelDescription><ModelVariables><ScalarVariable><Enumeration/></ScalarVariable></ModelVariables></fmiModelDescription>",
+        "Enumeration restriction without a variable name");
+    malformed("<fmiModelDescription><ModelVariables><ScalarVariable name=\"\"><Enumeration/></ScalarVariable></ModelVariables></fmiModelDescription>",
+        "Enumeration restriction without a variable name");
+    malformed("<fmiModelDescription><ModelVariables><ScalarVariable name=\"x\"><Enumeration min=\"bad\"/></ScalarVariable></ModelVariables></fmiModelDescription>",
+        "invalid <xmlattr>.min value 'bad'");
+    malformed("<fmiModelDescription><ModelVariables><ScalarVariable name=\"x\"><Enumeration max=\"bad\"/></ScalarVariable></ModelVariables></fmiModelDescription>",
+        "invalid <xmlattr>.max value 'bad'");
 
     write("<fmiModelDescription><UnitDefinitions><Unit name=\"u\"><BaseUnit/></Unit><Unit name=\"opaque\"/></UnitDefinitions>"
           "<ModelVariables><ScalarVariable name=\"x\"><Enumeration min=\"1\" max=\"2\"/></ScalarVariable></ModelVariables></fmiModelDescription>");
@@ -46,6 +53,7 @@ BOOST_AUTO_TEST_CASE(v2_secondary_metadata_recovery)
     BOOST_TEST(*restrictions.at("x").min == 1);
     BOOST_TEST(*restrictions.at("x").max == 2);
 
+    const auto previousSize = warnings.messages().size();
     write(
         "<fmiModelDescription><UnitDefinitions><Unit/><Unit name=\"u\"><BaseUnit/></Unit>"
         "<Unit name=\"u\"/></UnitDefinitions><ModelVariables><ScalarVariable>"
@@ -63,6 +71,16 @@ BOOST_AUTO_TEST_CASE(v2_secondary_metadata_recovery)
     BOOST_REQUIRE(restrictions.at("x").max);
     BOOST_TEST(*restrictions.at("x").min == 1);
     BOOST_TEST(*restrictions.at("x").max == 2);
+    const auto logged = warnings.messages().substr(previousSize);
+    BOOST_TEST(logged.find("Skipping FMI unit definition without a name") != std::string::npos);
+    BOOST_TEST(logged.find("Skipping duplicate FMI unit definition 'u'") != std::string::npos);
+    BOOST_TEST(logged.find("Enumeration restriction without a variable name") != std::string::npos);
+    BOOST_TEST(logged.find("invalid <xmlattr>.min value 'bad'") != std::string::npos);
+    BOOST_TEST(logged.find("Skipping duplicate FMI 2.0 Enumeration restriction for variable 'x'") != std::string::npos);
+
+    units[0].has_si_base_unit = false;
+    BOOST_CHECK_NO_THROW(fmi::read_xml_metadata(units, path));
+    BOOST_TEST(units[0].has_si_base_unit);
 
     // Models without Enumeration variables still retain their unit metadata.
     write("<fmiModelDescription><UnitDefinitions><Unit name=\"u\"><BaseUnit/></Unit></UnitDefinitions></fmiModelDescription>");

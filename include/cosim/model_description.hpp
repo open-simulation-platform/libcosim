@@ -116,6 +116,22 @@ struct simulator_capabilities
 
     /// Whether saved states can be serialized and imported.
     bool can_export_state = false;
+
+    /**
+     *  Whether the simulator might return from a step before the requested
+     *  communication point.
+     *
+     *  This is the simulator's advertised capability. Callers must still use
+     *  the returned step result to determine whether a step ended early.
+     */
+    bool might_return_early = false;
+
+    /**
+     * Whether successive communication steps may use different sizes.
+     * Custom simulators retain the historical permissive default; FMI importers
+     * populate this from the FMU's declared capability.
+     */
+    bool can_handle_variable_step = true;
 };
 
 
@@ -207,6 +223,53 @@ struct typed_value_reference
 
     /// FMI value reference within that exact type.
     value_reference reference = 0;
+};
+
+/// Structure of a declared output dependency. [FMI 1, 2, 3]
+enum class dependency_kind
+{
+    dependent,
+    constant,
+    fixed,
+    tunable,
+    discrete
+};
+
+/// One declared dependency of an output.
+struct variable_dependency
+{
+    typed_value_reference variable;
+    dependency_kind kind = dependency_kind::dependent;
+};
+
+/// An unknown listed in the ModelStructure, with its declared dependencies. [FMI 3]
+struct model_structure_unknown
+{
+    /// The unknown variable.
+    typed_value_reference variable;
+
+    /**
+     *  Its declared dependencies. Absent means unknown/all; an empty vector
+     *  means no declared dependencies.
+     */
+    std::optional<std::vector<variable_dependency>> dependencies;
+};
+
+/**
+ *  The FMI 3 ModelStructure, in declaration order. [FMI 3]
+ *
+ *  All lists are empty for FMI 1 and 2 models. The declared dependencies of
+ *  the `outputs` are also available through
+ *  `variable_description::output_dependencies`. These are declared metadata,
+ *  not runtime dependency queries or an execution order.
+ */
+struct model_structure
+{
+    std::vector<model_structure_unknown> outputs;
+    std::vector<model_structure_unknown> continuous_state_derivatives;
+    std::vector<model_structure_unknown> clocked_states;
+    std::vector<model_structure_unknown> initial_unknowns;
+    std::vector<model_structure_unknown> event_indicators;
 };
 
 
@@ -805,6 +868,13 @@ struct variable_description
 
     /// Alias relationship; reference-only access remains untransformed. [FMI 1]
     std::optional<variable_alias_kind> alias_kind;
+
+    /**
+     * Declared direct dependencies of an output. [FMI 3]
+     * Absent means unknown/all; an empty vector means no declared dependencies.
+     * These describe algebraic dependencies, not all state or time effects.
+     */
+    std::optional<std::vector<variable_dependency>> output_dependencies;
 };
 
 
@@ -843,6 +913,8 @@ struct model_description
     /// FMI unit definitions.
     std::vector<unit_definition> unit_definitions;
 
+    /// The declared ModelStructure. Empty for FMI 1 and 2. [FMI 3]
+    model_structure structure;
 };
 
 /// Returns a variable or nested alias description by name, if found.
@@ -871,6 +943,43 @@ enum class step_result
     canceled
 };
 
+
+/**
+ *  Detailed information about a completed co-simulation step for one
+ *  simulator.
+ *
+ *  `last_successful_time` is the simulator's internal time. On a completed
+ *  step without early return it can differ from the requested communication
+ *  point. A terminated step is otherwise successful, but no subsequent
+ *  steps may be requested.
+ */
+struct step_result_info
+{
+    /// Coarse legacy result for callers that do not need FMI control flags.
+    step_result result = step_result::complete;
+
+    /// Internal time reached by the simulator.
+    time_point last_successful_time{};
+
+    /// The FMU returned before the requested communication point.
+    bool early_return = false;
+
+    /// Event Mode processing is required before the next step.
+    bool event_handling_needed = false;
+
+    /// The FMU requested termination; no later step is valid.
+    bool termination_requested = false;
+
+    /// The failed step may be retried with a shorter interval.
+    bool retryable = false;
+};
+
+/// Termination and scheduling information from the latest event iteration.
+struct event_handling_status
+{
+    bool termination_requested = false;
+    std::optional<time_point> next_event_time;
+};
 
 } // namespace cosim
 #endif // COSIM_MODEL_HPP

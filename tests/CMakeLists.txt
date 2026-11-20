@@ -190,6 +190,7 @@ set(unittests
     "function_unittest"
     "fmi_v1_fmu_unittest"
     "fmi_v2_fmu_unittest"
+    "fmi3_standalone_unittest"
     "orchestration_unittest"
     "scenario_parser_unittest"
     "slave_simulator_unittest"
