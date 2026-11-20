@@ -6,12 +6,13 @@ on: [push]
 jobs:
   linux:
     name: Linux
-    runs-on: ubuntu-24.04
+    runs-on: ${{ matrix.runner }}
     container:
       image: debian:trixie
     strategy:
       fail-fast: false
       matrix:
+        runner: [ubuntu-24.04, ubuntu-24.04-arm]
         build_type: [Debug, Release]
         shared_libs: [SHARED_LIBS=ON, SHARED_LIBS=OFF]
     timeout-minutes: 35
@@ -49,6 +50,10 @@ jobs:
             -O "fmi-library-${FMILIB_VERSION}.tar.gz" \
             "https://github.com/modelon-community/fmi-library/archive/refs/tags/${FMILIB_VERSION}.tar.gz"
           tar xaf "fmi-library-${FMILIB_VERSION}.tar.gz"
+          # On 64-bit ARM, look for FMI 2 binaries in aarch64-linux (FMI 2.0.4),
+          # like the fmilibrary Conan package does.
+          FMI2_PLATFORM=unknown
+          if [ "$(uname -m)" = aarch64 ]; then FMI2_PLATFORM=aarch64-linux; fi
           cmake \
             -S "fmi-library-${FMILIB_VERSION}" \
             -B fmi-library-build \
@@ -58,7 +63,8 @@ jobs:
             -DFMILIB_BUILD_STATIC_LIB=ON \
             -DFMILIB_BUILD_SHARED_LIB=ON \
             -DFMILIB_BUILD_TESTS=OFF \
-            -DFMILIB_GENERATE_DOXYGEN_DOC=OFF
+            -DFMILIB_GENERATE_DOXYGEN_DOC=OFF \
+            -DFMILIB_FMI2_PLATFORM="${FMI2_PLATFORM}"
           cmake --build fmi-library-build
           cmake --install fmi-library-build
           wget \
