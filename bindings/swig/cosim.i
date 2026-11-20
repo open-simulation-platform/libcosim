@@ -1,21 +1,23 @@
 // =============================================================================
-// Language-independent SWIG interface for libcosim (spike).
+// Language-independent SWIG interface for libcosim.
 //
 // This file is %included by each language-specific module file
-// (python/cosim_python.i, c/cosim_c.i). Those files provide:
+// (python/cosim_python.i, c/cosim_c.i, java/cosim_java.i,
+// csharp/cosim_csharp.i). Those files provide:
 //
-//   - typemaps for cosim::time_point and cosim::duration (as double seconds),
-//   - the %exception handler,
+//   - typemaps for cosim::time_point and cosim::duration (int64 nanoseconds)
+//     and cosim::filesystem::path (strings),
+//   - the %exception handler (errors become the language's exceptions, or a
+//     pending error in C),
 //
-// and then %include this file. Everything else is shared.
+// and then %include this file. Everything else, including the names, is
+// shared by all languages.
 //
-// Spike policy: the libcosim headers are NOT modified. Every adaptation is
-// done here and tagged with one of these markers, so we can count how much
-// of it should move into libcosim as in-place changes (proposal §6):
+// What the bindings do not expose, or expose differently, is tagged:
 //
 //   [HIDE]    hides an extension-API or binding-hostile declaration
 //   [ADAPT]   %extend / %inline helper that replaces a hostile signature
-//   [GLUE]    convenience logic that belongs in libcosim (proposal §6.3)
+//   [GLUE]    convenience logic that could move into libcosim (proposal §6.3)
 //   [REDECL]  re-declaration of a type SWIG must know about but that we do
 //             not want to %include (opaque base classes)
 // =============================================================================
@@ -354,7 +356,7 @@ COSIM_MEMBER_BY_VALUE(cosim::model_description, capabilities, cosim::simulator_c
 // =============================================================================
 // execution.hpp
 // =============================================================================
-%ignore cosim::function_io_id;              // [HIDE] functions not in spike scope
+%ignore cosim::function_io_id;              // [HIDE] functions: not bound yet
 %ignore cosim::entity_index_maps;           // [HIDE] unordered_map; see configured_execution
 %ignore cosim::inject_system_structure;     // [HIDE] needs system_structure
 %ignore std::hash;                          // [HIDE] std specialisations (boost::hash_combine)
@@ -362,7 +364,7 @@ COSIM_MEMBER_BY_VALUE(cosim::model_description, capabilities, cosim::simulator_c
 %ignore cosim::execution::execution(execution&&);
 %ignore cosim::execution::operator=;
 %ignore cosim::execution::add_slave;        // [HIDE] needs cosim::slave (extension API)
-%ignore cosim::execution::add_function;     // [HIDE] functions not in spike scope
+%ignore cosim::execution::add_function;     // [HIDE] functions: not bound yet
 %ignore cosim::execution::connect_variables(variable_id, function_io_id);
 %ignore cosim::execution::connect_variables(function_io_id, variable_id);
 %ignore cosim::execution::simulate_until(std::optional<time_point>); // [HIDE] std::optional

@@ -110,7 +110,12 @@ jobs:
           conan remote add osp https://osp.jfrog.io/artifactory/api/conan/conan-local --force
 
       - name: Create the libcosim package
-        run: conan create . --user spike --channel testing --settings=build_type=Release --build=missing
+        # From this commit, as libcosim/<v>@local/testing; the bindings build
+        # against it (LIBCOSIM_REF, see bindings/swig/conanfile.py).
+        shell: bash
+        run: |
+          conan create . --user local --channel testing --settings=build_type=Release --build=missing
+          echo "LIBCOSIM_REF=libcosim/$(cat version.txt)@local/testing" >> "$GITHUB_ENV"
 
       - name: Build and test the packages
         working-directory: bindings/swig

@@ -1,4 +1,4 @@
-// C-specific part of the libcosim SWIG bindings (spike), using SWIG's
+// C-specific part of the libcosim SWIG bindings, using SWIG's
 // experimental C backend (SWIG >= 4.3).
 //
 %module cosim

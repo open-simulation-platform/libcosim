@@ -1,4 +1,4 @@
-// C#-specific part of the libcosim SWIG bindings (spike).
+// C#-specific part of the libcosim SWIG bindings.
 // Generated classes go in namespace `Libcosim`; the native library is
 // `cosim_csharp` (DllImport).
 %module cosim

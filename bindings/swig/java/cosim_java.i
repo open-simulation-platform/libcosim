@@ -1,4 +1,4 @@
-// Java-specific part of the libcosim SWIG bindings (spike).
+// Java-specific part of the libcosim SWIG bindings.
 // Generated classes go in package `libcosim`; the native library is
 // `cosim_java` (System.loadLibrary("cosim_java")).
 %module cosim

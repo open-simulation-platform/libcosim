@@ -1,4 +1,4 @@
-"""libcosim Python bindings (SWIG spike)."""
+"""libcosim Python bindings, generated with SWIG."""
 
 import os as _os
 import sys as _sys

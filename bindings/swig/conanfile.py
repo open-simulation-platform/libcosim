@@ -16,9 +16,11 @@ class LibcosimCConan(ConanFile):
     `-o "&:java=True"`, a JDK for building the other packages (Python wheel,
     Java JAR, NuGet package, Julia package); see packaging/README.md.
 
-    The libcosim package to build against is given by the environment
-    variable LIBCOSIM_REF (default below). Released bindings would require a
-    released libcosim, e.g. "libcosim/[>=0.12 <0.13]@osp/stable".
+    The bindings are built against the released libcosim of the same version
+    (libcosim/<version>@osp/stable). To build against another libcosim
+    package, e.g. one created from a libcosim checkout with
+    `conan create <libcosim> --user local --channel testing`, set the
+    environment variable LIBCOSIM_REF (libcosim/<version>@local/testing).
     """
 
     name = "libcosim-c"
@@ -41,8 +43,8 @@ class LibcosimCConan(ConanFile):
         # which needs the CMake configs of all of libcosim's dependencies
         # (including header-only ones such as Microsoft.GSL); Conan only
         # generates those for consumers that see libcosim's headers.
-        self.requires(os.environ.get("LIBCOSIM_REF", "libcosim/0.11.3@spike/testing"),
-                      transitive_headers=True)
+        ref = os.environ.get("LIBCOSIM_REF") or f"libcosim/{self.version}@osp/stable"
+        self.requires(ref, transitive_headers=True)
 
     def build_requirements(self):
         self.tool_requires("swig/4.4.1")  # pinned: the C backend is experimental

@@ -56,7 +56,7 @@ endif()
 
 add_test(
     NAME swig_python
-    COMMAND Python3::Interpreter "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_spike.py")
+    COMMAND Python3::Interpreter "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_bindings.py")
 set_tests_properties(swig_python PROPERTIES
     ENVIRONMENT "PYTHONPATH=${CMAKE_BINARY_DIR}/bindings/python")
 libcosim_swig_test_runtime_path(swig_python)

@@ -44,7 +44,7 @@ Conan), configures and builds the standalone project, installs each package
 component, builds the wheel, and with `--test` tests every package with
 nothing but the package itself on the search paths:
 
-- Python: installs the wheel in a fresh venv, runs `python/tests/test_spike.py`
+- Python: installs the wheel in a fresh venv, runs `python/tests/test_bindings.py`
 - Java: compiles and runs `java/test/libcosim/SmokeTest.java` against the JAR only
 - C#: builds `csharp/consumer` from the `.nupkg` (private NuGet cache) and runs it
 - Julia: installs the package with `Pkg.develop` in a fresh depot, Pkg
@@ -53,15 +53,24 @@ nothing but the package itself on the search paths:
 
 Output goes to `build-packages/dist/`. `--languages` selects a subset.
 Needs Python with `build`, the .NET SDK and Julia for the respective
-languages. The libcosim package is `libcosim/0.11.3@spike/testing` (export it
-with `conan create` in the libcosim root, user/channel `spike/testing`), or
-set `LIBCOSIM_REF`.
+languages.
+
+The bindings build against the released libcosim of the same version,
+`libcosim/<version>@osp/stable` from the OSP remote. Before that release
+exists, create the package from the libcosim checkout and point
+`LIBCOSIM_REF` at it:
+
+```sh
+conan create <libcosim> --user local --channel testing --build=missing
+export LIBCOSIM_REF=libcosim/<version>@local/testing
+```
 
 ## Multi-platform packages and distribution
 
 Each build produces packages for its own platform. The release workflow
-(`.github/workflows/release-bindings.yml`, on a `v*` tag) builds all
-platforms and publishes:
+(`.github/workflows/release-bindings.yml`) runs when libcosim's Conan
+workflow has published `libcosim/<v>@osp/stable` for a `v*` tag; it builds
+all platforms against that package and publishes:
 
 | Binding | Built by | Published to |
 |---|---|---|
@@ -87,8 +96,9 @@ so `bindings/swig` can become its own repository (e.g. `libcosim-bindings`):
   libcosim from source), but couples the two histories, makes every binding
   build compile libcosim, and duplicates what the Conan package already
   provides. It is mainly useful if the bindings must be built against
-  unreleased libcosim commits; a Conan package from a branch (as done in the
-  spike, `@spike/testing`) covers that too.
+  unreleased libcosim commits; a Conan package from a branch
+  (`@local/testing`, or libcosim's own `@osp/testing-<branch>` builds)
+  covers that too.
 
 What the separate repository needs from libcosim:
 

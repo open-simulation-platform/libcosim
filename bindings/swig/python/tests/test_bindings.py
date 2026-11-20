@@ -1,8 +1,8 @@
-"""End-to-end smoke tests for the SWIG Python bindings (spike).
+"""End-to-end tests for the libcosim Python bindings.
 
 Run with the built package on PYTHONPATH (or the wheel installed):
 
-    PYTHONPATH=<build>/bindings/python python -m unittest bindings/swig/python/tests/test_spike.py
+    PYTHONPATH=<build>/bindings/python python -m unittest bindings/swig/python/tests/test_bindings.py
 
 The test data is taken from libcosim's tests/data, or LIBCOSIM_TEST_DATA.
 """

@@ -158,7 +158,7 @@ def main():
         wheel = glob.glob(os.path.join(dist, "python", "*.whl"))[0]
         run([py, "-m", "pip", "install", "-q", wheel], env=env)
         run([py, "-m", "unittest", "discover", "-s", os.path.join(SWIG_DIR, "python", "tests"),
-             "-p", "test_spike.py"], env=dict(env, LIBCOSIM_TEST_DATA=data), cwd=tests)
+             "-p", "test_bindings.py"], env=dict(env, LIBCOSIM_TEST_DATA=data), cwd=tests)
 
     if "java" in langs:
         log("test java")

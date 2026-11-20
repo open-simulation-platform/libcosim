@@ -1,4 +1,4 @@
-// Python-specific part of the libcosim SWIG bindings (spike).
+// Python-specific part of the libcosim SWIG bindings.
 %module(package="libcosim") cosim
 
 %include <exception.i>
