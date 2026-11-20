@@ -18,9 +18,18 @@
 #include <boost/property_tree/xml_parser.hpp>
 #include <gsl/util>
 
+#include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <fstream>
 #include <new>
+#include <string_view>
+#include <system_error>
+
+#ifdef __APPLE__
+#    include <mach-o/fat.h>
+#    include <mach-o/loader.h>
+#endif
 
 
 namespace cosim
@@ -104,9 +113,11 @@ struct minimal_model_description
 {
     fmi_version fmiVersion;
     std::string guid;
+    std::string coSimulationModelIdentifier; // FMI 2 only
 };
 
-// Reads the 'fmiVersion' and 'guid' attributes from the XML file.
+// Reads the 'fmiVersion' and 'guid' attributes from the XML file, and for
+// FMI 2, the co-simulation model identifier.
 minimal_model_description peek_model_description(
     const cosim::filesystem::path& fmuUnpackDir)
 {
@@ -144,6 +155,12 @@ minimal_model_description peek_model_description(
                 "Invalid modelDescription.xml; guid attribute missing or empty");
         }
     }
+    if (md.fmiVersion == fmi_version::v2_0) {
+        md.coSimulationModelIdentifier = xml.get(
+            "fmiModelDescription.CoSimulation.<xmlattr>.modelIdentifier",
+            std::string());
+        boost::trim(md.coSimulationModelIdentifier);
+    }
     return md;
 }
 
@@ -153,6 +170,95 @@ bool is_outdated(
 {
     return !cosim::filesystem::exists(file) ||
         cosim::filesystem::last_write_time(comparator) > cosim::filesystem::last_write_time(file);
+}
+
+#ifdef __APPLE__
+// Returns whether the Mach-O file at `path` contains arm64 code, i.e., is
+// either an arm64 library or a universal library with an arm64 slice.
+bool contains_arm64_code(const cosim::filesystem::path& path)
+{
+    std::ifstream file(path, std::ios::binary);
+    const auto read_uint32 = [&file](bool bigEndian) {
+        unsigned char b[4] = {};
+        file.read(reinterpret_cast<char*>(b), sizeof b);
+        return bigEndian
+            ? std::uint32_t{b[0]} << 24 | std::uint32_t{b[1]} << 16 | std::uint32_t{b[2]} << 8 | b[3]
+            : std::uint32_t{b[3]} << 24 | std::uint32_t{b[2]} << 16 | std::uint32_t{b[1]} << 8 | b[0];
+    };
+
+    const auto magic = read_uint32(true);
+    if (magic == FAT_MAGIC || magic == FAT_MAGIC_64) {
+        // Universal binary; the headers are big-endian.
+        const auto archCount = read_uint32(true);
+        const auto archSize = magic == FAT_MAGIC ? sizeof(fat_arch) : sizeof(fat_arch_64);
+        for (std::uint32_t i = 0; file && i < archCount; ++i) {
+            const auto archStart = file.tellg();
+            if (read_uint32(true) == static_cast<std::uint32_t>(CPU_TYPE_ARM64)) return true;
+            file.seekg(archStart + static_cast<std::streamoff>(archSize));
+        }
+        return false;
+    }
+    if (magic == MH_CIGAM_64) {
+        // Thin 64-bit binary, little-endian.
+        return read_uint32(false) == static_cast<std::uint32_t>(CPU_TYPE_ARM64) && !!file;
+    }
+    return false;
+}
+#endif
+
+// FMI 2.0.4 reserves "darwin64" for 64-bit x86, so FMI 2 FMUs keep their
+// Apple silicon binaries in "aarch64-darwin", which is where FMI Library
+// looks for them on such machines. Many FMUs only have a universal (or even
+// arm64) library in "darwin64", though, so if "aarch64-darwin" is missing
+// and "darwin64" contains arm64 code, we make "aarch64-darwin" a link to
+// "darwin64" in the unpacked FMU.
+void link_darwin64_if_aarch64_darwin_missing(
+    [[maybe_unused]] const cosim::filesystem::path& fmuPath,
+    [[maybe_unused]] const cosim::filesystem::path& fmuUnpackDir,
+    [[maybe_unused]] const std::string& modelIdentifier)
+{
+#ifdef __APPLE__
+    constexpr auto platform = std::string_view(FMI2_PLATFORM);
+    if (platform != "aarch64-darwin") return;
+
+    const auto binariesDir = fmuUnpackDir / "binaries";
+    const auto platformDir = binariesDir / platform;
+    const auto platformDirStatus = cosim::filesystem::symlink_status(platformDir);
+    if (!cosim::filesystem::exists(platformDirStatus)) {
+        const auto library = binariesDir / "darwin64" / (modelIdentifier + ".dylib");
+        if (!cosim::filesystem::exists(library)) return;
+        if (!contains_arm64_code(library)) {
+            BOOST_LOG_SEV(log::logger(), log::warning)
+                << "FMU '" << fmuPath.string() << "' has no binaries/aarch64-darwin, "
+                << "and its darwin64 library contains no arm64 code";
+            return;
+        }
+        std::error_code linkError;
+        cosim::filesystem::create_directory_symlink("darwin64", platformDir, linkError);
+        if (linkError) {
+            BOOST_LOG_SEV(log::logger(), log::warning)
+                << "FMU '" << fmuPath.string() << "' has no binaries/aarch64-darwin, "
+                << "and linking it to darwin64 failed: " << linkError.message();
+            return;
+        }
+    } else if (!cosim::filesystem::is_symlink(platformDirStatus)) {
+        return;
+    }
+    BOOST_LOG_SEV(log::logger(), log::warning)
+        << "FMU '" << fmuPath.string() << "' has no binaries/aarch64-darwin; "
+        << "using darwin64, which FMI 2.0.4 reserves for x86_64";
+#endif
+}
+
+// Removes a platform folder link that we have made in an unpacked FMU, so
+// that unpacking a new version of the FMU does not write through it.
+void remove_platform_folder_link(const cosim::filesystem::path& fmuUnpackDir)
+{
+    const auto platformDir = fmuUnpackDir / "binaries" / FMI2_PLATFORM;
+    std::error_code ignoredError;
+    if (cosim::filesystem::is_symlink(cosim::filesystem::symlink_status(platformDir, ignoredError))) {
+        cosim::filesystem::remove(platformDir, ignoredError);
+    }
 }
 
 } // namespace
@@ -198,6 +304,7 @@ std::shared_ptr<fmu> importer::import(const cosim::filesystem::path& fmuPath)
     // Unzip the entire FMU if necessary.
     const auto modelDescriptionPath = fmuUnpackDir->path() / "modelDescription.xml";
     if (is_outdated(modelDescriptionPath, fmuPath)) {
+        remove_platform_folder_link(fmuUnpackDir->path());
         try {
             zip.extract_all(fmuUnpackDir->path());
         } catch (...) {
@@ -207,6 +314,12 @@ std::shared_ptr<fmu> importer::import(const cosim::filesystem::path& fmuPath)
             cosim::filesystem::remove(modelDescriptionPath, ignoredError);
             throw;
         }
+    }
+    if (minModelDesc.fmiVersion == fmi_version::v2_0) {
+        link_darwin64_if_aarch64_darwin_missing(
+            fmuPath,
+            fmuUnpackDir->path(),
+            minModelDesc.coSimulationModelIdentifier);
     }
 
     // Drop R/W privileges and acquire read-only access to FMU cache directory

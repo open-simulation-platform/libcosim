@@ -4,7 +4,7 @@ set(REFERENCE_FMUS_REPOSITORY
     "https://github.com/open-simulation-platform/Reference-FMUs.git"
     CACHE STRING "Reference-FMUs repository used by FMI 2 derivative tests")
 set(REFERENCE_FMUS_VERSION
-    "v0.0.41"
+    "v0.0.42"
     CACHE STRING "Reference-FMUs release tag used by FMI 2 derivative tests")
 find_package(Git REQUIRED)
 
@@ -38,6 +38,27 @@ set(REFERENCE_FMUS_V2_BINARY_DIR
     "${CMAKE_CURRENT_BINARY_DIR}/reference-fmus-v2-build")
 set(REFERENCE_FMUS_V2_STAMP_DIR
     "${CMAKE_CURRENT_BINARY_DIR}/reference-fmus-v2-stamp-${REFERENCE_FMUS_VERSION}")
+set(reference_fmus_v2_extra_args)
+set(reference_fmus_architecture "${CMAKE_SYSTEM_PROCESSOR}")
+if(APPLE)
+    # Reference-FMUs picks the architecture of the host, so tell it which
+    # one we build for, e.g. x86_64 on an Apple silicon host.
+    if(CMAKE_OSX_ARCHITECTURES)
+        set(reference_fmus_architecture "${CMAKE_OSX_ARCHITECTURES}")
+    endif()
+    if(reference_fmus_architecture MATCHES "^(arm64|aarch64)$")
+        list(APPEND reference_fmus_v2_extra_args
+            "-DFMI_ARCHITECTURE=aarch64"
+            "-DCMAKE_OSX_ARCHITECTURES=arm64")
+    elseif(reference_fmus_architecture STREQUAL "x86_64")
+        list(APPEND reference_fmus_v2_extra_args
+            "-DFMI_ARCHITECTURE=x86_64"
+            "-DCMAKE_OSX_ARCHITECTURES=x86_64")
+    else()
+        message(FATAL_ERROR
+            "No Reference FMUs for macOS on ${reference_fmus_architecture}")
+    endif()
+endif()
 ExternalProject_Add(
     reference_fmus_v2_build
     SOURCE_DIR "${REFERENCE_FMUS_SOURCE_DIR}"
@@ -46,6 +67,7 @@ ExternalProject_Add(
     CMAKE_ARGS
         "-DFMI_VERSION=2"
         "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}"
+        ${reference_fmus_v2_extra_args}
     INSTALL_COMMAND ""
     TEST_COMMAND "")
 
@@ -58,18 +80,19 @@ endif()
 include(PrepareDahlquistTestData)
 prepare_dahlquist_test_data()
 
-if(WIN32 AND CMAKE_SIZEOF_VOID_P EQUAL 8)
-    set(FMI2_TEST_PLATFORM "win64")
-elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND
-       CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|AMD64)$")
-    set(FMI2_TEST_PLATFORM "linux64")
-elseif(APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|AMD64)$")
-    set(FMI2_TEST_PLATFORM "darwin64")
-else()
+# Package the FMI 2 test FMUs that we build ourselves for the platform that
+# FMI Library looks for binaries for. This is the x86 platform name (e.g.
+# "linux64") or, on other platforms, the FMI 3 platform tuple (e.g.
+# "aarch64-darwin") if FMI Library was built accordingly.
+file(STRINGS "${FMILibrary_INCLUDE_DIRS}/fmilib_config.h" fmi2_platform_define
+    REGEX "^#define FMI2_PLATFORM ")
+string(REGEX REPLACE "^#define FMI2_PLATFORM \"([^\"]*)\".*$" "\\1"
+    FMI2_TEST_PLATFORM "${fmi2_platform_define}")
+if(NOT FMI2_TEST_PLATFORM)
     message(FATAL_ERROR
-        "No FMI 2 test platform tuple for ${CMAKE_SYSTEM_NAME} "
-        "${CMAKE_SYSTEM_PROCESSOR}")
+        "Could not read FMI2_PLATFORM from ${FMILibrary_INCLUDE_DIRS}/fmilib_config.h")
 endif()
+message(STATUS "FMI 2 test platform: ${FMI2_TEST_PLATFORM}")
 
 set(fmi2_derivative_binary_directory
     "${CMAKE_CURRENT_BINARY_DIR}/fmi2-derivative-binary")
@@ -159,6 +182,65 @@ set(unittests
     "utility_zip_unittest"
 )
 
+# Many FMI 2 FMUs keep the binaries for other architectures in an x86
+# platform folder, e.g. a universal library in darwin64, and the importer
+# falls back to those. To test this, build the Reference FMUs once more with
+# such binaries. (This is keyed on FMI Library's platform, not on the
+# processor, as a stock FMI Library build looks in darwin64 on Apple silicon
+# too.)
+set(reference_fmus_v2_x86_folder_args)
+if(FMI2_TEST_PLATFORM STREQUAL "aarch64-darwin")
+    set(reference_fmus_v2_x86_folder_args
+        "-DFMI_ARCHITECTURE=x86_64"
+        "-DCMAKE_OSX_ARCHITECTURES=arm64|x86_64")
+endif()
+if(reference_fmus_v2_x86_folder_args)
+    set(REFERENCE_FMUS_V2_X86_FOLDER_BINARY_DIR
+        "${CMAKE_CURRENT_BINARY_DIR}/reference-fmus-v2-x86-folder-build")
+    ExternalProject_Add(
+        reference_fmus_v2_x86_folder_build
+        SOURCE_DIR "${REFERENCE_FMUS_SOURCE_DIR}"
+        BINARY_DIR "${REFERENCE_FMUS_V2_X86_FOLDER_BINARY_DIR}"
+        STAMP_DIR "${CMAKE_CURRENT_BINARY_DIR}/reference-fmus-v2-x86-folder-stamp-${REFERENCE_FMUS_VERSION}"
+        LIST_SEPARATOR "|"
+        CMAKE_ARGS
+            "-DFMI_VERSION=2"
+            "-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}"
+            ${reference_fmus_v2_x86_folder_args}
+        INSTALL_COMMAND ""
+        TEST_COMMAND "")
+    set(dahlquist_x86_folder_fmu
+        "${REFERENCE_FMUS_V2_X86_FOLDER_BINARY_DIR}/fmus/Dahlquist.fmu")
+endif()
+
+if(FMI2_TEST_PLATFORM STREQUAL "aarch64-darwin")
+    # Test the fallback with the universal Dahlquist FMU, and with a copy that
+    # only has x86_64 code.
+    set(dahlquist_x86_64_fmu "${REFERENCE_FMUS_V2_X86_FOLDER_BINARY_DIR}/fmus/Dahlquist_x86_64.fmu")
+    set(dahlquist_x86_64_dir "${CMAKE_CURRENT_BINARY_DIR}/dahlquist-x86_64")
+    set(dahlquist_x86_64_library "${dahlquist_x86_64_dir}/binaries/darwin64/Dahlquist.dylib")
+    add_custom_command(
+        OUTPUT "${dahlquist_x86_64_fmu}"
+        COMMAND "${CMAKE_COMMAND}" -E rm -rf "${dahlquist_x86_64_dir}"
+        COMMAND "${CMAKE_COMMAND}" -E make_directory "${dahlquist_x86_64_dir}"
+        COMMAND "${CMAKE_COMMAND}" -E chdir "${dahlquist_x86_64_dir}"
+            "${CMAKE_COMMAND}" -E tar xf "${dahlquist_x86_folder_fmu}"
+        COMMAND lipo "${dahlquist_x86_64_library}" -thin x86_64
+            -output "${dahlquist_x86_64_library}.thin"
+        COMMAND "${CMAKE_COMMAND}" -E rename
+            "${dahlquist_x86_64_library}.thin" "${dahlquist_x86_64_library}"
+        COMMAND "${CMAKE_COMMAND}" -E chdir "${dahlquist_x86_64_dir}"
+            "${CMAKE_COMMAND}" -E tar cf "${dahlquist_x86_64_fmu}" --format=zip
+            modelDescription.xml binaries
+        DEPENDS reference_fmus_v2_x86_folder_build "${dahlquist_x86_folder_fmu}"
+        VERBATIM)
+    add_custom_target(dahlquist_x86_64_fmu DEPENDS "${dahlquist_x86_64_fmu}")
+    set(fmi2_fallback_test_fmus
+        "${dahlquist_x86_folder_fmu}"
+        "${dahlquist_x86_64_fmu}")
+    list(APPEND unittests "fmi2_platform_fallback_unittest")
+endif()
+
 if(LIBCOSIM_WITH_PROXYFMU)
     list(APPEND unittests
             "proxyfmu_integration_unittest"
@@ -213,6 +295,59 @@ if(LIBCOSIM_WITH_PROXYFMU)
     list(APPEND reference_fmu_test_targets cpp_proxyfmu_save_state_test)
 endif()
 
+if(TARGET cpp_fmi2_platform_fallback_unittest)
+    # The first FMU has native code in the x86 platform folder, the second
+    # has not.
+    list(GET fmi2_fallback_test_fmus 0 fmu_with_native_code)
+    list(GET fmi2_fallback_test_fmus 1 fmu_without_native_code)
+    target_compile_definitions(cpp_fmi2_platform_fallback_unittest PRIVATE
+        "FMI2_TEST_PLATFORM=\"${FMI2_TEST_PLATFORM}\""
+        "FMU_WITH_NATIVE_CODE=\"${fmu_with_native_code}\""
+        "FMU_WITHOUT_NATIVE_CODE=\"${fmu_without_native_code}\"")
+    add_dependencies(cpp_fmi2_platform_fallback_unittest reference_fmus_v2_x86_folder_build)
+    if(TARGET dahlquist_x86_64_fmu)
+        add_dependencies(cpp_fmi2_platform_fallback_unittest dahlquist_x86_64_fmu)
+    endif()
+    list(APPEND reference_fmu_test_targets cpp_fmi2_platform_fallback_unittest)
+endif()
+
 foreach(reference_fmu_test IN LISTS reference_fmu_test_targets)
     add_dependencies("${reference_fmu_test}" reference_fmus_v2_build)
 endforeach()
+
+# Some tests use FMUs from the test data directory which do not contain macOS
+# binaries. Those cannot run there, so we disable the tests which consist
+# entirely of such cases and skip the individual cases in the others.
+set(tests_requiring_bundled_fmu_binaries
+    cpp_config_end_time_test
+    cpp_ecco_algorithm_from_system_structure_test
+    cpp_ecco_algorithm_multi_bond_test
+    cpp_ecco_algorithm_powerbond_logconfig_test
+    cpp_ecco_algorithm_two_bond_test
+    cpp_fmi_v1_fmu_unittest
+    cpp_osp_config_parser_test
+    cpp_state_init_test)
+if(LIBCOSIM_WITH_PROXYFMU)
+    list(APPEND tests_requiring_bundled_fmu_binaries
+        cpp_proxyfmu_integration_unittest
+        cpp_proxyfmu_library_unittest
+        cpp_proxyfmu_osp_config_parser_test)
+endif()
+set(cpp_fmi_v2_fmu_unittest_cases_requiring_bundled_fmu_binaries
+    v2_fmu)
+set(cpp_ssp_loader_unittest_cases_requiring_bundled_fmu_binaries
+    basic_test
+    no_algorithm_test
+    ssp_archive
+    ssp_linear_transformation_test
+    ssp_multiple_parameter_sets_test)
+
+if(APPLE)
+    set_tests_properties(${tests_requiring_bundled_fmu_binaries}
+        PROPERTIES DISABLED TRUE)
+    foreach(test IN ITEMS cpp_fmi_v2_fmu_unittest cpp_ssp_loader_unittest)
+        list(JOIN ${test}_cases_requiring_bundled_fmu_binaries "," excludedCases)
+        set_property(TEST "${test}" APPEND PROPERTY
+            ENVIRONMENT "BOOST_TEST_RUN_FILTERS=!${excludedCases}")
+    endforeach()
+endif()
