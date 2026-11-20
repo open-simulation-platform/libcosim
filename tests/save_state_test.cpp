@@ -80,6 +80,49 @@ int main()
 
         const auto state_bb = execution.export_current_state();
 
+        // Truncated, corrupted and random state data: reading it, and
+        // importing whatever still decodes, is an error, never a crash.
+        {
+            std::ostringstream out(std::ios::binary);
+            out << cosim::serialization::format::cbor << state_bb;
+            const auto bytes = out.str();
+            REQUIRE(!bytes.empty());
+
+            const auto try_import = [&](const std::string& data) {
+                try {
+                    std::istringstream in(data, std::ios::binary);
+                    cosim::serialization::node node;
+                    in >> cosim::serialization::format::cbor >> node;
+                    execution.import_state(node);
+                } catch (const std::exception&) {
+                }
+            };
+            for (std::size_t n = 0; n < bytes.size(); ++n) {
+                try_import(bytes.substr(0, n));
+            }
+            for (std::size_t i = 0; i < bytes.size(); ++i) {
+                auto corrupted = bytes;
+                corrupted[i] = static_cast<char>(corrupted[i] ^ 0xA5);
+                try_import(corrupted);
+            }
+            std::uint32_t seed = 12345;
+            for (int k = 0; k < 500; ++k) {
+                std::string random(1 + k % 64, '\0');
+                for (auto& c : random) {
+                    seed = seed * 1664525u + 1013904223u;
+                    c = static_cast<char>(seed >> 24);
+                }
+                try_import(random);
+            }
+
+            // The execution still accepts the valid state
+            std::istringstream in(bytes, std::ios::binary);
+            cosim::serialization::node node;
+            in >> cosim::serialization::format::cbor >> node;
+            execution.import_state(node);
+            REQUIRE(execution.export_current_state() == state_bb);
+        }
+
         // Export state
         std::ofstream outFile("state_bb.bin", std::ios::binary);
         outFile << cosim::serialization::format::cbor << state_bb;
