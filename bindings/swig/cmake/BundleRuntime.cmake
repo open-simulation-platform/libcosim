@@ -10,7 +10,8 @@
 # come before DIRECTORIES), even when the binding was built against a copy
 # from a dependency directory (Conan). So every resolved library is checked:
 # if a library with the same file name exists in BUNDLE_DIRS, that copy is
-# bundled; other system libraries (C/C++ runtime, ...) are left out.
+# bundled; other system libraries (C/C++ runtime, ...) are left out. The same
+# goes for a library found in more than one place.
 
 set(executablesArgument "")
 if(BUNDLE_EXECUTABLES)
@@ -21,8 +22,17 @@ file(GET_RUNTIME_DEPENDENCIES
     ${executablesArgument}
     RESOLVED_DEPENDENCIES_VAR resolved
     UNRESOLVED_DEPENDENCIES_VAR unresolved
+    CONFLICTING_DEPENDENCIES_PREFIX conflicting
     DIRECTORIES ${BUNDLE_DIRS}
     PRE_EXCLUDE_REGEXES "^api-ms-" "^ext-ms-" "^python[0-9]+\\.dll$" "^libpython")
+
+# A library found in several places, e.g. libcrypto.so.3 from Conan and from
+# the system: take it like any other resolved library, so that the copy in
+# BUNDLE_DIRS is chosen below.
+foreach(name IN LISTS conflicting_FILENAMES)
+    list(GET conflicting_${name} 0 first)
+    list(APPEND resolved "${first}")
+endforeach()
 
 set(bundled "")
 foreach(lib IN LISTS resolved)
