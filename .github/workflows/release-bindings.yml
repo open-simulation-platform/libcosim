@@ -74,9 +74,11 @@ jobs:
           fi
 
   wheels:
-    # One wheel per platform and Python version. On Linux, cibuildwheel builds
-    # in a manylinux container (libcosim is built there too) and auditwheel
-    # checks the bundled libraries.
+    # One abi3 wheel per platform (Python's stable ABI, CPython >= 3.10):
+    # cibuildwheel builds it with the first Python of CIBW_BUILD and only tests
+    # it with the others. On Linux it builds in a manylinux container
+    # (libcosim is built there too) and auditwheel checks the bundled
+    # libraries.
     name: wheels ${{ matrix.os }}
     needs: version
     runs-on: ${{ matrix.os }}

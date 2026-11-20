@@ -2,7 +2,27 @@
 if(SKBUILD)
     set(Python3_EXECUTABLE "${PYTHON_EXECUTABLE}")
 endif()
-find_package(Python3 REQUIRED COMPONENTS Interpreter Development.Module)
+
+# Stable ABI: build the module against Python's limited API, so that one
+# module (an abi3 wheel) works with this Python version and all later ones.
+# A wheel build with `wheel.py-api = "cp3X"` (pyproject.toml) sets it.
+set(LIBCOSIM_SWIG_PYTHON_SABI "" CACHE STRING
+    "Build the Python module for the stable ABI of this and later Python versions (e.g. 3.10); empty: for the building Python only")
+if(SKBUILD_SABI_VERSION)
+    set(LIBCOSIM_SWIG_PYTHON_SABI "${SKBUILD_SABI_VERSION}")
+endif()
+if(LIBCOSIM_SWIG_PYTHON_SABI)
+    find_package(Python3 REQUIRED COMPONENTS Interpreter Development.SABIModule)
+    set(pythonModuleTarget Python3::SABIModule)
+    string(REPLACE "." ";" sabi "${LIBCOSIM_SWIG_PYTHON_SABI}")
+    list(GET sabi 0 sabiMajor)
+    list(GET sabi 1 sabiMinor)
+    math(EXPR pyLimitedApi "(${sabiMajor} << 24) | (${sabiMinor} << 16)" OUTPUT_FORMAT HEXADECIMAL)
+    message(STATUS "Python bindings: stable ABI, Python >= ${LIBCOSIM_SWIG_PYTHON_SABI} (Py_LIMITED_API=${pyLimitedApi})")
+else()
+    find_package(Python3 REQUIRED COMPONENTS Interpreter Development.Module)
+    set(pythonModuleTarget Python3::Module)
+endif()
 
 set(outDir "${CMAKE_BINARY_DIR}/bindings/python/libcosim")
 
@@ -25,7 +45,10 @@ set_target_properties(cosim_python PROPERTIES
     COMPILE_OPTIONS "${LIBCOSIM_SWIG_GENERATED_CODE_OPTIONS}"
     INSTALL_RPATH "$ORIGIN")
 target_include_directories(cosim_python PRIVATE "${LIBCOSIM_INCLUDE_DIR}")
-target_link_libraries(cosim_python PRIVATE ${LIBCOSIM_TARGET} Python3::Module)
+target_link_libraries(cosim_python PRIVATE ${LIBCOSIM_TARGET} ${pythonModuleTarget})
+if(LIBCOSIM_SWIG_PYTHON_SABI)
+    target_compile_definitions(cosim_python PRIVATE "Py_LIMITED_API=${pyLimitedApi}")
+endif()
 
 # libcosim sets per-configuration output directories globally; override them.
 # On Windows the module is a DLL (_cosim.pyd) whose import library would be

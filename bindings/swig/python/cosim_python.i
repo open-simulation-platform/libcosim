@@ -98,7 +98,7 @@ inline bool to_path(PyObject* obj, cosim::filesystem::path& out)
 {
     PyObject* fs = PyOS_FSPath(obj);
     if (!fs) return false;
-    const char* utf8 = PyUnicode_Check(fs) ? PyUnicode_AsUTF8(fs) : nullptr;
+    const char* utf8 = PyUnicode_Check(fs) ? PyUnicode_AsUTF8AndSize(fs, nullptr) : nullptr; // limited API (>= 3.10)
     if (utf8) out = cosim::filesystem::u8path(utf8);
     Py_DECREF(fs);
     if (!utf8 && !PyErr_Occurred()) PyErr_SetString(PyExc_TypeError, "expected str or os.PathLike");

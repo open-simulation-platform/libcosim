@@ -31,6 +31,9 @@ cmake.build-type = "Release"
 # Build and install only the Python bindings.
 install.components = ["python"]
 wheel.packages = []
+# One abi3 wheel per platform for CPython >= 3.10 (Python's stable ABI);
+# SWIG's generated code compiles against the limited API.
+wheel.py-api = "cp310"
 sdist.include = ["cosim.i", "cmake/", "python/", "c/"]
 
 [tool.scikit-build.cmake.define]

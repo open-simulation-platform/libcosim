@@ -13,7 +13,7 @@
 | Language | Package | How | Native libraries |
 |---|---|---|---|
 | C | Conan package `libcosim-c` (`cosim_c` + `cosim_c.h`, CMake target `libcosim-c::cosim_c`) | `conan create .` (runs `test_package/`) | from Conan (libcosim and its dependencies are Conan requirements) |
-| Python | wheel `libcosim` | scikit-build-core (`pyproject.toml`) | bundled in the wheel, `RPATH=$ORIGIN` |
+| Python | wheel `libcosim`, one per platform for CPython ≥ 3.10 (stable ABI, `abi3`) | scikit-build-core (`pyproject.toml`) | bundled in the wheel, `RPATH=$ORIGIN` |
 | Java | `libcosim-<v>.jar` | CMake install component `java` | bundled in the JAR under `libcosim/native/<os>-<arch>/`, extracted to a temporary directory by `NativeLoader` on first use |
 | C# | NuGet `Libcosim.<v>.nupkg` (net8.0) | CMake install component `csharp` + `dotnet pack` | `runtimes/<rid>/native/` (standard NuGet layout) |
 | Julia | package `Libcosim` | CMake install component `julia` + `julia/make_artifact.jl` | the `libcosim_c` artifact (tarball per platform, listed in `Artifacts.toml`, downloaded by Pkg on install); `LIBCOSIM_C_LIBRARY` overrides |
