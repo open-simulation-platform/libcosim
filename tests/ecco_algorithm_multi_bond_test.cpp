@@ -58,11 +58,14 @@ int main()
         auto chassisIndex = entityMaps.simulators.at("chassis");
         auto wheelIndex = entityMaps.simulators.at("wheel");
 
-        auto chassisForce = cosim::variable_id{chassisIndex, cosim::variable_type::real, 23};
-        auto chassisVel = cosim::variable_id{chassisIndex, cosim::variable_type::real, 4};
-        auto wheelOutForce = cosim::variable_id{wheelIndex, cosim::variable_type::real, 15};
+        // Value references from the FMUs:
+        //   Chassis: force (input) = 4, velocity (output) = 23
+        //   Wheel:   in_vel (input) = 7, out_spring_damper_f (output) = 15
+        auto chassisForce = cosim::variable_id{chassisIndex, cosim::variable_type::real, 4};
+        auto chassisVel = cosim::variable_id{chassisIndex, cosim::variable_type::real, 23};
         auto wheelInVel = cosim::variable_id{wheelIndex, cosim::variable_type::real, 7};
-        ecco_algo->add_power_bond("chassis-wheel", chassisVel, chassisForce, wheelOutForce, wheelInVel);
+        auto wheelOutForce = cosim::variable_id{wheelIndex, cosim::variable_type::real, 15};
+        ecco_algo->add_power_bond("chassis-wheel", chassisForce, chassisVel, wheelInVel, wheelOutForce);
 
         auto file_obs = std::make_unique<cosim::file_observer>("./logDir", logXmlPath);
         execution.add_observer(std::move(file_obs));

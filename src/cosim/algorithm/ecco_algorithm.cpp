@@ -130,6 +130,7 @@ public:
 
     void initialize()
     {
+        initialized_ = true;
         for (auto& s : simulators_) {
             pool_.submit([&] {
                 s.second.sim->setup(startTime_, stopTime_, std::nullopt);
@@ -274,7 +275,9 @@ public:
             power_residuals.push_back(power_residual);
 
             auto& state = powerBondStates_.at(i);
-            state.time = currentTime;
+
+            // This is called after simulator->do_step(), so the variable values are the outputs at time t + dt.
+            state.time = currentTime + stepSize;
             state.input_a_value = input_a_value;
             state.output_a_value = output_a_value;
             state.input_b_value = input_b_value;
@@ -328,10 +331,22 @@ public:
     }
 
     void add_power_bond(std::string name, cosim::variable_id input_a, cosim::variable_id output_a, cosim::variable_id input_b, cosim::variable_id output_b)
-    {        
+    {
+        if (initialized_) {
+            throw std::logic_error("Power bonds can not be added after a simulation has been initialized.");
+        }
+
+        const auto duplicate = std::any_of(powerBonds_.begin(), powerBonds_.end(),
+            [&name](const power_bond_info& bond) { return bond.name == name; });
+
+        if (duplicate) {
+            throw std::invalid_argument("A power bond named '" + name + "' already exists");
+        }
+
         for (const auto& var : {input_a, output_a, input_b, output_b}) {
             simulators_.at(var.simulator).sim->expose_for_getting(var.type, var.reference);
         }
+
         powerBonds_.push_back({std::move(name), input_a, output_a, input_b, output_b});
         powerBondStates_.emplace_back();
     }
@@ -367,6 +382,7 @@ public:
     }
 
 private:
+    bool initialized_ = false;
     std::vector<power_bond_info> powerBonds_{};
     std::vector<power_bond_state> powerBondStates_{};
 

@@ -89,6 +89,18 @@ int main()
         execution.connect_variables(output2, input1);
 
         ecco_algo->add_power_bond("bond", input1, output1, input2, output2);
+
+        // Adding a power bond with a duplicate name must throw and leave the existing bonds untouched.
+        bool duplicateThrew = false;
+        try {
+            ecco_algo->add_power_bond("bond", input2, output2, input1, output1);
+        } catch (const std::invalid_argument&) {
+            duplicateThrew = true;
+        }
+        REQUIRE(duplicateThrew);
+        REQUIRE(ecco_algo->get_power_bond_names().size() == 1);
+        REQUIRE(ecco_algo->get_power_bond("bond").input_a == input1);
+
         execution.set_real_initial_value(slaves[0], realInRef, 0.5);
 
         constexpr std::size_t bufferSize = 8;
@@ -100,10 +112,20 @@ int main()
         const auto firstState = ecco_algo->get_power_bond_state("bond");
         const auto firstStepDuration = cosim::to_double_duration(firstStepSize, startTime);
         REQUIRE(firstState.valid);
-        REQUIRE(firstState.time == startTime);
+        REQUIRE(firstState.time == startTime + firstStepSize);
         REQUIRE(std::abs(firstState.energy_a - firstState.power_a * firstStepDuration) < 1e-12);
         REQUIRE(std::abs(firstState.energy_b - firstState.power_b * firstStepDuration) < 1e-12);
         REQUIRE(std::abs(firstState.energy_residual - firstState.power_residual * firstStepDuration) < 1e-12);
+
+        // Adding a power bond once the simulation is running must throw
+        bool runningThrew = false;
+        try {
+            ecco_algo->add_power_bond("late_bond", input2, output2, input1, output1);
+        } catch (const std::logic_error&) {
+            runningThrew = true;
+        }
+        REQUIRE(runningThrew);
+        REQUIRE(ecco_algo->get_power_bond_names().size() == 1);
 
         const auto firstBuffer = eccoObserver->get_power_bond_state_buffer("bond");
         REQUIRE(firstBuffer.size() == 1);

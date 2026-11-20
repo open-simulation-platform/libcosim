@@ -122,8 +122,14 @@ public:
 
     /**
      * Adds a variable pair for the power residual calculation.
+     *
+     * Power bonds are part of the simulation configuration and must be added
+     * before the simulation is initialized.
+     *
      * \param name
      *     The unique name identifying the power bond.
+     * \throws std::logic_error if the simulation has already been initialized.
+     * \throws std::invalid_argument if a power bond with the given name already exists.
      */
     void add_power_bond(std::string name, cosim::variable_id input_a, cosim::variable_id output_a, cosim::variable_id input_b, cosim::variable_id output_b);
 
