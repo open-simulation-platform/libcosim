@@ -72,6 +72,16 @@ catch e
 end
 ```
 
+## Checkpoints
+
+```julia
+state = L.bytes(L.cosim_execution_export_current_state_bytes(exe))   # Vector{UInt8}
+L.cosim_execution_import_state_bytes(exe, L.byte_vector(state))
+```
+
+The execution must be initialized (e.g. one step), and every FMU must support
+state export.
+
 ## Notes
 
 - The functions are generated from the C header, one per C function; see

@@ -83,6 +83,20 @@ end
 
 include("generated.jl")
 
+"""The contents of a `cosim_ByteVector` (e.g. an exported execution state) as bytes."""
+function bytes(v)
+    return UInt8[cosim_ByteVector_get(v, i) for i in 0:Int(cosim_ByteVector_size(v))-1]
+end
+
+"""A `cosim_ByteVector` with the given bytes (e.g. to import an execution state)."""
+function byte_vector(data::AbstractVector{UInt8})
+    v = cosim_ByteVector_new()
+    for b in data
+        cosim_ByteVector_push_back(v, b)
+    end
+    return v
+end
+
 function __init__()
     if Sys.iswindows()
         # Windows does not search a DLL's own directory for the DLLs it

@@ -121,6 +121,32 @@ inline bool to_path(PyObject* obj, cosim::filesystem::path& out)
 }
 
 // -----------------------------------------------------------------------------
+// Bytes (exported execution states): Python `bytes` out, `bytes` or
+// `bytearray` in.
+// -----------------------------------------------------------------------------
+%typemap(out) std::vector<std::uint8_t> {
+    $result = PyBytes_FromStringAndSize(reinterpret_cast<const char*>($1.data()), static_cast<Py_ssize_t>($1.size()));
+}
+%typemap(in) const std::vector<std::uint8_t>& (std::vector<std::uint8_t> temp) {
+    char* data = nullptr;
+    Py_ssize_t size = 0;
+    if (PyBytes_Check($input)) {
+        if (PyBytes_AsStringAndSize($input, &data, &size) < 0) SWIG_fail;
+    } else if (PyByteArray_Check($input)) {
+        data = PyByteArray_AsString($input);
+        size = PyByteArray_Size($input);
+    } else {
+        PyErr_SetString(PyExc_TypeError, "expected bytes or bytearray");
+        SWIG_fail;
+    }
+    temp.assign(reinterpret_cast<const std::uint8_t*>(data), reinterpret_cast<const std::uint8_t*>(data) + size);
+    $1 = &temp;
+}
+%typemap(typecheck, precedence=SWIG_TYPECHECK_STRING) const std::vector<std::uint8_t>& {
+    $1 = (PyBytes_Check($input) || PyByteArray_Check($input)) ? 1 : 0;
+}
+
+// -----------------------------------------------------------------------------
 // Ownership: references to objects of these types (struct members accessed
 // via %naturalvar, container elements) are returned as owned copies, so a
 // Python object never points into another object that may already be gone

@@ -149,5 +149,35 @@ end
     @test L.cosim_execution_status_current_time_get(status) >= L.cosim_to_nanoseconds(2.0)
 end
 
+# CF-53 state export and import as bytes (needs an FMU with state export
+# and an output "x", e.g. the Dahlquist reference FMU)
+if haskey(ENV, "LIBCOSIM_STATE_FMU")
+    @testset "Libcosim state" begin
+        exe = L.cosim_execution_new(0, L.cosim_fixed_step_algorithm_create(L.cosim_to_nanoseconds(0.01), 0))
+        sim = L.cosim_add_fmu(exe, ENV["LIBCOSIM_STATE_FMU"], "dq", 0, C_NULL)
+        x = find_ref(exe, sim, "x")
+        err = try L.cosim_execution_export_current_state_bytes(exe); nothing catch e; e end
+        @test err isa L.CosimError && err.code == L.cosim_errc_invalid_operation
+
+        obs = L.cosim_last_value_observer_new()
+        L.cosim_execution_add_observer(exe, obs)
+        L.cosim_execution_simulate_until(exe, L.cosim_to_nanoseconds(0.5))
+        state = L.bytes(L.cosim_execution_export_current_state_bytes(exe))
+        @test state isa Vector{UInt8} && !isempty(state)
+        L.cosim_execution_simulate_until(exe, L.cosim_to_nanoseconds(1.0))
+        expected = L.cosim_DoubleVector_get(read_one(L.cosim_last_value_observer_get_real, obs, sim, x), 0)
+
+        L.cosim_execution_import_state_bytes(exe, L.byte_vector(state))
+        @test L.cosim_execution_current_time(exe) == L.cosim_to_nanoseconds(0.5)
+        L.cosim_execution_simulate_until(exe, L.cosim_to_nanoseconds(1.0))
+        @test L.cosim_DoubleVector_get(read_one(L.cosim_last_value_observer_get_real, obs, sim, x), 0) == expected
+
+        err = try L.cosim_execution_import_state_bytes(exe, L.byte_vector(UInt8[0xff, 0x00, 0x13])); nothing catch e; e end
+        @test err isa L.CosimError && err.code == L.cosim_errc_bad_file
+    end
+else
+    println("state export/import: skipped (LIBCOSIM_STATE_FMU not set)")
+end
+
 GC.gc(); GC.gc()  # finalizers release all handles
 println("Libcosim Julia package test OK")

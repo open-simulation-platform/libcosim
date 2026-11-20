@@ -236,6 +236,61 @@ static void more_conformance(const char* data, const char* fmu)
     cosim_fixed_step_algorithm_delete(algo);
 }
 
+/* CF-53 State export and import as bytes (needs an FMU with state export
+ * and an output "x", e.g. the Dahlquist reference FMU). */
+static void state_conformance(const char* fmu)
+{
+    cosim_fixed_step_algorithm* algo = cosim_fixed_step_algorithm_create(cosim_to_nanoseconds(0.01), 0);
+    cosim_execution* exe = cosim_execution_new(0, (cosim_algorithm*)algo);
+    const int sim = cosim_add_fmu(exe, fmu, "dq", 0, NULL);
+    const unsigned int x = find_ref(exe, sim, "x");
+
+    /* Not initialized yet: an error */
+    cosim_ByteVector* none = cosim_execution_export_current_state_bytes(exe);
+    CHECK(none == NULL);
+    CHECK(cosim_last_error_code() == cosim_errc_invalid_operation);
+    cosim_clear_last_error();
+
+    cosim_last_value_observer* obs = cosim_last_value_observer_new();
+    cosim_execution_add_observer(exe, (cosim_observer*)obs);
+    cosim_ValueReferenceVector* refs = cosim_ValueReferenceVector_new();
+    cosim_ValueReferenceVector_push_back(refs, x);
+
+    cosim_execution_simulate_until(exe, cosim_to_nanoseconds(0.5));
+    cosim_ByteVector* state = cosim_execution_export_current_state_bytes(exe);
+    CHECK(state != NULL && cosim_ByteVector_size(state) > 0);
+    cosim_execution_simulate_until(exe, cosim_to_nanoseconds(1.0));
+    cosim_DoubleVector* values = cosim_last_value_observer_get_real(obs, sim, refs);
+    const double expected = cosim_DoubleVector_get(values, 0);
+    cosim_DoubleVector_delete(values);
+
+    if (state) {
+        cosim_execution_import_state_bytes(exe, state);
+        CHECK(cosim_last_error_code() == 0);
+        CHECK(cosim_execution_current_time(exe) == cosim_to_nanoseconds(0.5));
+        cosim_execution_simulate_until(exe, cosim_to_nanoseconds(1.0));
+        values = cosim_last_value_observer_get_real(obs, sim, refs);
+        CHECK(cosim_DoubleVector_get(values, 0) == expected);
+        cosim_DoubleVector_delete(values);
+        cosim_ByteVector_delete(state);
+    }
+
+    /* Invalid state data: an error */
+    cosim_ByteVector* garbage = cosim_ByteVector_new();
+    cosim_ByteVector_push_back(garbage, 0xff);
+    cosim_ByteVector_push_back(garbage, 0x00);
+    cosim_ByteVector_push_back(garbage, 0x13);
+    cosim_execution_import_state_bytes(exe, garbage);
+    CHECK(cosim_last_error_code() == cosim_errc_bad_file);
+    cosim_clear_last_error();
+    cosim_ByteVector_delete(garbage);
+
+    cosim_ValueReferenceVector_delete(refs);
+    cosim_last_value_observer_delete(obs);
+    cosim_execution_delete(exe);
+    cosim_fixed_step_algorithm_delete(algo);
+}
+
 int main(int argc, char** argv)
 {
     if (argc != 2) {
@@ -349,6 +404,14 @@ int main(int argc, char** argv)
         const char* fmu = getenv("IDENTITY_FMU");
         CHECK(data != NULL && fmu != NULL);
         if (data && fmu) more_conformance(data, fmu);
+    }
+    {
+        const char* stateFmu = getenv("LIBCOSIM_STATE_FMU");
+        if (stateFmu) {
+            state_conformance(stateFmu);
+        } else {
+            printf("state export/import: skipped (LIBCOSIM_STATE_FMU not set)\n");
+        }
     }
 
     /* --- Cleanup: every object returned by the API is owned by the caller. */

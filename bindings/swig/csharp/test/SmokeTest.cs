@@ -96,6 +96,34 @@ static class SmokeTest
         var exe3 = new execution(0, new ecco_algorithm(p, 0));
         Check(exe3.step() > 0, "ECCO step");
 
+        // State export and import as bytes (needs an FMU with state export
+        // and an output "x", e.g. the Dahlquist reference FMU)
+        var stateFmu = Environment.GetEnvironmentVariable("LIBCOSIM_STATE_FMU");
+        if (!string.IsNullOrEmpty(stateFmu)) {
+            var exe4 = new execution(0, new fixed_step_algorithm(cosim.to_nanoseconds(0.01), 0));
+            int dq = cosim.add_fmu(exe4, stateFmu, "dq", 0, null);
+            var x = new ValueReferenceVector(new[] { Ref(exe4, dq, "x") });
+            var obs4 = new last_value_observer();
+            exe4.add_observer(obs4);
+            exe4.simulate_until(cosim.to_nanoseconds(0.5));
+            byte[] state = exe4.export_current_state_bytes().ToArray();
+            Check(state.Length > 0, "state exported");
+            exe4.simulate_until(cosim.to_nanoseconds(1.0));
+            double expected = obs4.get_real(dq, x)[0];
+            exe4.import_state_bytes(new ByteVector(state));
+            Check(exe4.current_time() == cosim.to_nanoseconds(0.5), "time restored");
+            exe4.simulate_until(cosim.to_nanoseconds(1.0));
+            Check(obs4.get_real(dq, x)[0] == expected, "same result after import");
+            try {
+                exe4.import_state_bytes(new ByteVector(new byte[] { 0xff, 0x00, 0x13 }));
+                Check(false, "expected CosimException for invalid state");
+            } catch (CosimException e) {
+                Check(e.Code == (int)errc.bad_file, "invalid state is bad_file");
+            }
+        } else {
+            Console.WriteLine("state export/import: skipped (LIBCOSIM_STATE_FMU not set)");
+        }
+
         if (failures > 0) {
             Console.Error.WriteLine($"{failures} check(s) failed");
             return 1;

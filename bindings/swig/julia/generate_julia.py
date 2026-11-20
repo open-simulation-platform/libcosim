@@ -33,6 +33,8 @@ SCALARS = {
     "double": "Cdouble",
     "float": "Cfloat",
     "char": "Cchar",
+    "unsigned char": "Cuchar",
+    "uint8_t": "UInt8",
 }
 
 # Functions that manage the error state themselves (no automatic check), and

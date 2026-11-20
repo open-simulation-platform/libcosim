@@ -121,6 +121,14 @@ int main(void)
 - The complete API is the header; the functions follow libcosim's C++ API
   (`cosim_<class>_<method>`).
 
+## Checkpoints
+
+`cosim_execution_export_current_state_bytes(exe)` returns the execution state
+as a `cosim_ByteVector*` (after initialization, e.g. one step);
+`cosim_execution_import_state_bytes(exe, bytes)` restores it. Read and build
+the bytes with `cosim_ByteVector_size/get/push_back`. Every FMU must support
+state export; invalid data is a pending error (`cosim_errc_bad_file`).
+
 ## Coming from libcosimc
 
 libcosim-c is a different API: one function per C++ method, owned results,

@@ -92,6 +92,34 @@ public class SmokeTest {
         execution exe3 = new execution(0, ecco);
         check(exe3.step() > 0, "ECCO step");
 
+        // State export and import as bytes (needs an FMU with state export
+        // and an output "x", e.g. the Dahlquist reference FMU)
+        String stateFmu = System.getenv("LIBCOSIM_STATE_FMU");
+        if (stateFmu != null && !stateFmu.isEmpty()) {
+            execution exe4 = new execution(0, new fixed_step_algorithm(cosim.to_nanoseconds(0.01), 0));
+            int dq = cosim.add_fmu(exe4, stateFmu, "dq", 0, null);
+            ValueReferenceVector x = new ValueReferenceVector(new long[] {ref(exe4, dq, "x")});
+            last_value_observer obs4 = new last_value_observer();
+            exe4.add_observer(obs4);
+            exe4.simulate_until(cosim.to_nanoseconds(0.5));
+            ByteVector state = exe4.export_current_state_bytes();
+            check(state.size() > 0, "state exported");
+            exe4.simulate_until(cosim.to_nanoseconds(1.0));
+            double expected = obs4.get_real(dq, x).get(0);
+            exe4.import_state_bytes(state);
+            check(exe4.current_time() == cosim.to_nanoseconds(0.5), "time restored");
+            exe4.simulate_until(cosim.to_nanoseconds(1.0));
+            check(obs4.get_real(dq, x).get(0) == expected, "same result after import");
+            try {
+                exe4.import_state_bytes(new ByteVector(new short[] {0xff, 0x00, 0x13}));
+                check(false, "expected CosimException for invalid state");
+            } catch (CosimException e) {
+                check(e.getCode() == errc.bad_file.swigValue(), "invalid state is bad_file");
+            }
+        } else {
+            System.out.println("state export/import: skipped (LIBCOSIM_STATE_FMU not set)");
+        }
+
         if (failures > 0) {
             System.err.println(failures + " check(s) failed");
             System.exit(1);

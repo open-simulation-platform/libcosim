@@ -71,6 +71,18 @@ endif()
 
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/LibcosimSwigPackaging.cmake")
 
+# An FMU that supports state export/import, for the state tests (passed as
+# LIBCOSIM_STATE_FMU; the tests skip state export without it). In libcosim's
+# build with tests, the Dahlquist reference FMU that libcosim's tests build.
+# (The quarter-truck FMUs in the test data advertise state serialization,
+# but crash when deserializing a state.)
+set(defaultStateFmu "")
+if(NOT LIBCOSIM_SWIG_STANDALONE AND LIBCOSIM_BUILD_TESTS)
+    set(defaultStateFmu "${CMAKE_BINARY_DIR}/tests/reference-fmus-v2-build/fmus/Dahlquist.fmu")
+endif()
+set(LIBCOSIM_SWIG_STATE_FMU "${defaultStateFmu}" CACHE FILEPATH
+    "An FMU that supports state export/import, for the binding state tests")
+
 # Adds the bindings' output directory and libcosim's runtime directories
 # (with Conan: those of all its dependencies) to PATH and LD_LIBRARY_PATH for
 # a test. On Windows, when java.exe or julia.exe loads cosim_java.dll /
@@ -90,6 +102,10 @@ function(libcosim_swig_test_runtime_path testName)
             list(APPEND outputDirs "${dir}")
         endif()
     endforeach()
+    if(LIBCOSIM_SWIG_STATE_FMU)
+        set_property(TEST ${testName} APPEND PROPERTY ENVIRONMENT_MODIFICATION
+            "LIBCOSIM_STATE_FMU=set:${LIBCOSIM_SWIG_STATE_FMU}")
+    endif()
     foreach(dir IN ITEMS ${outputDirs} ${LIBCOSIM_SWIG_RUNTIME_DIRS})
         if(dir)
             set_property(TEST ${testName} APPEND PROPERTY ENVIRONMENT_MODIFICATION

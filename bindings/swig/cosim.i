@@ -89,6 +89,7 @@ template<class T> struct is_error_condition_enum;
 // -----------------------------------------------------------------------------
 namespace std
 {
+typedef ::uint8_t uint8_t;
 typedef ::int32_t int32_t;
 typedef ::uint32_t uint32_t;
 typedef ::int64_t int64_t;
@@ -122,6 +123,11 @@ typedef std::int64_t step_number;
 %template(StringVector) std::vector<std::string>;
 %template(BoolVector) std::vector<bool>;
 %template(StringIntMap) std::map<std::string, int>;
+// Bytes (exported execution states). Python maps them to `bytes` with its
+// own typemaps (python/cosim_python.i) instead of a container class.
+#ifndef SWIGPYTHON
+%template(ByteVector) std::vector<std::uint8_t>;
+#endif
 
 // -----------------------------------------------------------------------------
 // Constructors: every class exposes exactly ONE constructor, an %extend
@@ -371,8 +377,8 @@ COSIM_MEMBER_BY_VALUE(cosim::model_description, capabilities, cosim::simulator_c
 %ignore cosim::execution::simulate_until_async; // [HIDE] std::future
 %ignore cosim::execution::get_real_time_config;  // [HIDE] struct of std::atomic (plain accessors exist)
 %ignore cosim::execution::get_real_time_metrics; // [HIDE] struct of std::atomic (plain accessors exist)
-%ignore cosim::execution::export_current_state;  // [HIDE] serialization::node
-%ignore cosim::execution::import_state;          // [HIDE] serialization::node
+%ignore cosim::execution::export_current_state;  // [HIDE] serialization::node; see export_current_state_bytes
+%ignore cosim::execution::import_state;          // [HIDE] serialization::node; see import_state_bytes
 
 // [ADAPT] configured_execution::entity_maps holds std::unordered_maps (no C
 // support) and end_time is a std::optional.

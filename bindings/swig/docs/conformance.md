@@ -68,6 +68,10 @@ in C.
   `stop_simulation` stops it; starting a running execution is an error.
 - **CF-52 Real-time.** Real-time mode and the real-time factor target can be
   set and read; an invalid factor is an error.
+- **CF-53 State export and import.** The execution state can be exported as
+  bytes (the language's byte type) after initialization and imported again;
+  the execution continues from the imported time with the same results.
+  Exporting before initialization, and importing invalid data, are errors.
 
 **Observing and manipulating**
 
@@ -116,6 +120,7 @@ in C.
 | CF-50 Stepping | ✅ | ✅ | ✅ | ✅ | ✅ |
 | CF-51 Asynchronous run | ✅ | ✅ | ✅ | ✅ | ✅ |
 | CF-52 Real-time | ✅ | ✅ | ✅ | — | — |
+| CF-53 State export and import | ✅ | ✅ valgrind | ✅ | ✅ | ✅ |
 | CF-60 Last values | ✅ | ✅ | ✅ | 🟡 | 🟡 |
 | CF-61 Overrides | ✅ | ✅ | 🟡 | 🟡 | 🟡 |
 | CF-62 Time series | ✅ | ✅ | ✅ | — | — |
@@ -130,6 +135,10 @@ left to the garbage collector without a targeted test.
 
 Remaining gaps in the priority bindings (Python, C, Julia): invalid access
 (CF-4) in Julia, ECCO (CF-22) and the file observer (CF-63) in C and Julia.
+
+CF-53 needs an FMU that supports state export (`LIBCOSIM_SWIG_STATE_FMU`;
+in libcosim's build with tests, the Dahlquist reference FMU); without it the
+state tests report themselves as skipped.
 
 Tests: `python/tests/test_bindings.py`, `c/smoke_test.c` (with the C API
 drift check `swig_c_api_reference`), `julia/test/runtests.jl`,

@@ -74,6 +74,8 @@ typedef struct SwigObj_cosim_BoolVector cosim_BoolVector;
 
 typedef struct SwigObj_cosim_StringIntMap cosim_StringIntMap;
 
+typedef struct SwigObj_cosim_ByteVector cosim_ByteVector;
+
 typedef struct SwigObj_cosim_algorithm cosim_algorithm;
 
 typedef struct SwigObj_cosim_observer cosim_observer;
@@ -360,6 +362,28 @@ SWIGIMPORT bool cosim_StringIntMap_has_key(cosim_StringIntMap* carg1, const char
 
 SWIGIMPORT void cosim_StringIntMap_delete(cosim_StringIntMap* carg1);
 
+SWIGIMPORT cosim_ByteVector* cosim_ByteVector_new();
+
+SWIGIMPORT cosim_ByteVector* cosim_ByteVector_copy(cosim_ByteVector* carg1);
+
+SWIGIMPORT size_t cosim_ByteVector_size(cosim_ByteVector* carg1);
+
+SWIGIMPORT size_t cosim_ByteVector_capacity(cosim_ByteVector* carg1);
+
+SWIGIMPORT void cosim_ByteVector_reserve(cosim_ByteVector* carg1, size_t carg2);
+
+SWIGIMPORT bool cosim_ByteVector_empty(cosim_ByteVector* carg1);
+
+SWIGIMPORT void cosim_ByteVector_clear(cosim_ByteVector* carg1);
+
+SWIGIMPORT void cosim_ByteVector_push_back(cosim_ByteVector* carg1, unsigned char carg2);
+
+SWIGIMPORT unsigned char cosim_ByteVector_get(cosim_ByteVector* carg1, int carg2);
+
+SWIGIMPORT void cosim_ByteVector_set(cosim_ByteVector* carg1, int carg2, unsigned char carg3);
+
+SWIGIMPORT void cosim_ByteVector_delete(cosim_ByteVector* carg1);
+
 SWIGIMPORT void cosim_set_output_level(enum cosim_level carg1);
 
 SWIGIMPORT void cosim_setup_console_logging();
@@ -603,6 +627,10 @@ SWIGIMPORT void cosim_execution_set_integer_initial_value(cosim_execution* carg1
 SWIGIMPORT void cosim_execution_set_boolean_initial_value(cosim_execution* carg1, int carg2, unsigned int carg3, bool carg4);
 
 SWIGIMPORT void cosim_execution_set_string_initial_value(cosim_execution* carg1, int carg2, unsigned int carg3, const char * carg4);
+
+SWIGIMPORT cosim_ByteVector* cosim_execution_export_current_state_bytes(cosim_execution* carg1);
+
+SWIGIMPORT void cosim_execution_import_state_bytes(cosim_execution* carg1, cosim_ByteVector* carg2);
 
 SWIGIMPORT bool cosim_execution_simulate_until(cosim_execution* carg1, int64_t carg2);
 

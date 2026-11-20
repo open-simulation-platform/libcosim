@@ -328,6 +328,58 @@ class LoadingTest(unittest.TestCase):
         self.assertGreater(loaded.execution.step(), 0)
 
 
+STATE_FMU = os.environ.get("LIBCOSIM_STATE_FMU")
+
+
+@unittest.skipUnless(STATE_FMU, "needs an FMU with state export (LIBCOSIM_STATE_FMU)")
+class StateTest(unittest.TestCase):
+    """Exporting and importing the execution state as bytes (checkpoints).
+
+    Uses the Dahlquist reference FMU (variable x), or any FMU with an output
+    x that supports state export, given by LIBCOSIM_STATE_FMU.
+    """
+
+    def new_execution(self):
+        exe = cosim.execution(0, cosim.fixed_step_algorithm(cosim.to_nanoseconds(0.01)))
+        cosim.add_fmu(exe, STATE_FMU, "dq")
+        return exe
+
+    def test_round_trip(self):
+        exe = self.new_execution()
+        caps = exe.get_model_description(0).capabilities
+        self.assertTrue(caps.can_save_state and caps.can_export_state)
+        obs = cosim.last_value_observer()
+        exe.add_observer(obs)
+        x = exe.variable("dq", "x")
+
+        exe.simulate_until(cosim.to_nanoseconds(0.5))
+        state = exe.export_current_state_bytes()
+        self.assertIsInstance(state, bytes)
+        self.assertGreater(len(state), 0)
+        exe.simulate_until(cosim.to_nanoseconds(1.0))
+        expected = obs.value(x)
+
+        exe.import_state_bytes(state)
+        self.assertEqual(exe.current_time(), cosim.to_nanoseconds(0.5))
+        exe.simulate_until(cosim.to_nanoseconds(1.0))
+        self.assertEqual(obs.value(x), expected)
+
+        exe.import_state_bytes(bytearray(state))  # bytearray works too
+        self.assertEqual(exe.current_time(), cosim.to_nanoseconds(0.5))
+
+    def test_errors(self):
+        exe = self.new_execution()
+        with self.assertRaises(cosim.CosimError) as ctx:
+            exe.export_current_state_bytes()  # not initialized
+        self.assertEqual(ctx.exception.args[1], cosim.errc_invalid_operation)
+        exe.step()
+        with self.assertRaises(cosim.CosimError) as ctx:
+            exe.import_state_bytes(b"\xff\x00\x13")
+        self.assertEqual(ctx.exception.args[1], cosim.errc_bad_file)
+        with self.assertRaises(TypeError):
+            exe.import_state_bytes("not bytes")
+
+
 class ErrorTest(unittest.TestCase):
     def test_missing_config_raises(self):
         with self.assertRaises(RuntimeError):

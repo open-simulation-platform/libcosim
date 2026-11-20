@@ -90,6 +90,20 @@ The simulation runs in a background thread; `with exe.running()` stops it
 and waits for it at the end of the block. For real time,
 `exe.set_real_time_simulation(True)` and `exe.set_real_time_factor_target(1.0)`.
 
+## Checkpoints: saving and restoring the state
+
+```python
+exe.step()                                    # the execution must be initialized
+state = exe.export_current_state_bytes()      # bytes
+...
+exe.import_state_bytes(state)                 # back to the saved time and state
+```
+
+The bytes can be kept in memory or written to a file. Every FMU must support
+state export (`exe.get_model_description(i).capabilities.can_export_state`).
+The state does not include the system structure: import it into an execution
+set up the same way. Not possible while a simulation runs in the background.
+
 ## Errors
 
 libcosim errors raise `cosim.CosimError` (a `RuntimeError`), with the
