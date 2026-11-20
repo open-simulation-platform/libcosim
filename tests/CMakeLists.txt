@@ -351,6 +351,8 @@ set(cpp_fmi_v2_fmu_unittest_cases_requiring_bundled_fmu_binaries
     v2_fmu)
 set(cpp_ssp_loader_unittest_cases_requiring_bundled_fmu_binaries
     basic_test
+    load_execution_from_ssp_algorithm_test
+    load_execution_from_ssp_test
     no_algorithm_test
     ssp_archive
     ssp_linear_transformation_test
