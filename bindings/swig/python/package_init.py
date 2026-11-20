@@ -14,3 +14,4 @@ if _sys.platform == "win32":
 
 from .cosim import *  # noqa: E402,F401,F403
 from ._cosim import CosimError  # noqa: E402,F401
+from . import _pythonic  # noqa: E402,F401  (adds conveniences to the classes above)

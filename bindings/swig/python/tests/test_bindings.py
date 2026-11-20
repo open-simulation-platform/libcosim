@@ -248,6 +248,75 @@ class ApiAdditionsTest(unittest.TestCase):
         self.assertGreater(len(algo.get_powerbond_energies(chassis)), 0)
 
 
+class PythonicTest(unittest.TestCase):
+    """The thin Pythonic layer (python/pythonic.py)."""
+
+    def setUp(self):
+        self.exe = cosim.load_execution_from_osp_config(MSMI).execution
+
+    def test_names(self):
+        sim = self.exe.simulator_index("TrueIdentity")
+        self.assertEqual(self.exe.variables(sim).keys(), self.exe.variables("TrueIdentity").keys())
+        self.assertIn("realIn", self.exe.variables("TrueIdentity"))
+        var = self.exe.variable("TrueIdentity", "realOut")
+        self.assertEqual((var.simulator, var.type), (sim, cosim.variable_type_real))
+        with self.assertRaises(KeyError):
+            self.exe.simulator_index("NoSuchSimulator")
+        with self.assertRaises(KeyError):
+            self.exe.variable("TrueIdentity", "noSuchVariable")
+
+    def test_values_of_any_type(self):
+        obs = cosim.last_value_observer()
+        man = cosim.override_manipulator()
+        self.exe.add_observer(obs)
+        self.exe.add_manipulator(man)
+        values = {"real": 1.5, "integer": 42, "boolean": False, "string": "hello"}
+        for kind, value in values.items():
+            man.override(self.exe.variable("TrueIdentity", f"{kind}In"), value)
+        self.exe.step()
+        self.exe.step()
+        for kind, value in values.items():
+            self.assertEqual(obs.value(self.exe.variable("TrueIdentity", f"{kind}Out")), value)
+
+        real_in = self.exe.variable("TrueIdentity", "realIn")
+        man.reset(real_in)
+        self.exe.step()
+        self.exe.step()
+        self.assertNotEqual(obs.value(real_in), 1.5)
+
+    def test_initial_value_and_samples(self):
+        exe = cosim.execution(0, cosim.fixed_step_algorithm(cosim.to_nanoseconds(0.1)))
+        cosim.add_fmu(exe, IDENTITY, "id")
+        exe.set_initial_value(exe.variable("id", "integerIn"), 7)
+        ts = cosim.time_series_observer()
+        exe.add_observer(ts)
+        out = exe.variable("id", "integerOut")
+        ts.start_observing(out)
+        exe.simulate_until(cosim.to_nanoseconds(0.5))
+        samples = ts.samples(out, 1, 10)
+        self.assertGreater(len(samples.values), 0)
+        self.assertEqual(set(samples.values), {7})
+        with self.assertRaises(TypeError):
+            ts.samples(exe.variable("id", "stringOut"), 1, 10)
+
+    def test_running(self):
+        exe = cosim.execution(0, cosim.fixed_step_algorithm(cosim.to_nanoseconds(0.1)))
+        cosim.add_fmu(exe, IDENTITY, "id")
+        with exe.running():
+            self.assertTrue(wait_until(lambda: exe.current_time() > cosim.to_nanoseconds(1.0)))
+        self.assertEqual(exe.get_status().state, cosim.execution_state_stopped)
+        self.assertFalse(exe.is_running())
+
+    def test_repr(self):
+        var = self.exe.variable("TrueIdentity", "realOut")
+        self.assertIn("type=real", repr(var))
+        desc = self.exe.variables("TrueIdentity")["realIn"]
+        self.assertIn("name='realIn'", repr(desc))
+        self.assertIn("causality=input", repr(desc))
+        self.assertIn("state=stopped", repr(self.exe.get_status()))
+        self.assertIn("simulator_info(name=", repr(self.exe.get_simulators()[0]))
+
+
 class ErrorTest(unittest.TestCase):
     def test_missing_config_raises(self):
         with self.assertRaises(RuntimeError):

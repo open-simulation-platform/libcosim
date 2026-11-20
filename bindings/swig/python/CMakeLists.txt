@@ -64,6 +64,7 @@ endforeach()
 
 # Package files
 configure_file(package_init.py "${outDir}/__init__.py" COPYONLY)
+configure_file(pythonic.py "${outDir}/_pythonic.py" COPYONLY)
 
 if(LIBCOSIM_SWIG_INSTALL)
     # Python package `libcosim` (installed into the wheel's site-packages by
@@ -71,6 +72,7 @@ if(LIBCOSIM_SWIG_INSTALL)
     libcosim_swig_install_with_runtime(cosim_python DESTINATION libcosim COMPONENT python)
     install(FILES "${outDir}/cosim.py" DESTINATION libcosim COMPONENT python)
     install(FILES package_init.py DESTINATION libcosim RENAME __init__.py COMPONENT python)
+    install(FILES pythonic.py DESTINATION libcosim RENAME _pythonic.py COMPONENT python)
 endif()
 
 if(NOT LIBCOSIM_SWIG_TESTS)
