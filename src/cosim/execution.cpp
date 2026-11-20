@@ -9,6 +9,7 @@
 #include "cosim/error.hpp"
 #include "cosim/exception.hpp"
 #include "cosim/orchestration.hpp"
+#include "cosim/serialization.hpp"
 #include "cosim/slave_simulator.hpp"
 #include "cosim/utility/utility.hpp"
 
@@ -360,6 +361,21 @@ public:
         exportedState.put_child("algorithm_state", algorithm_->export_current_state());
         exportedState.put_child("simulator_state", simulatorState);
         return exportedState;
+    }
+
+    // Throws instead of violating the preconditions of export/import_state.
+    void check_state_transfer_allowed(const char* what) const
+    {
+        if (!initialized_) {
+            throw error(
+                make_error_code(errc::invalid_operation),
+                std::string(what) + " requires an initialized execution (call initialize() or step first)");
+        }
+        if (is_running()) {
+            throw error(
+                make_error_code(errc::invalid_operation),
+                std::string(what) + " is not possible while a simulation is running");
+        }
     }
 
     void import_state(const serialization::node& exportedState)
@@ -718,6 +734,34 @@ serialization::node execution::export_current_state() const
 void execution::import_state(const serialization::node& exportedState)
 {
     pimpl_->import_state(exportedState);
+}
+
+std::vector<std::uint8_t> execution::export_current_state_bytes() const
+{
+    pimpl_->check_state_transfer_allowed("Exporting the state");
+    std::ostringstream out(std::ios::binary);
+    // The serialization operators are declared in the global namespace.
+    out << serialization::format::cbor;
+    ::operator<<(out, pimpl_->export_current_state());
+    const auto data = out.str();
+    return std::vector<std::uint8_t>(data.begin(), data.end());
+}
+
+void execution::import_state_bytes(const std::vector<std::uint8_t>& state)
+{
+    pimpl_->check_state_transfer_allowed("Importing a state");
+    serialization::node node;
+    try {
+        std::istringstream in(std::string(state.begin(), state.end()), std::ios::binary);
+        in >> serialization::format::cbor;
+        ::operator>>(in, node);
+        if (in.bad()) throw std::runtime_error("read error");
+    } catch (const std::exception& e) {
+        throw error(
+            make_error_code(errc::bad_file),
+            std::string("Invalid co-simulation state: ") + e.what());
+    }
+    pimpl_->import_state(node);
 }
 
 

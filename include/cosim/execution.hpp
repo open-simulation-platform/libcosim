@@ -488,6 +488,34 @@ public:
      */
     void import_state(const serialization::node& exportedState);
 
+    /**
+     *  Exports the current state of the co-simulation as bytes, e.g. to
+     *  keep it as a checkpoint or save it to a file.
+     *
+     *  The result is `export_current_state()` serialized as CBOR (the format
+     *  of `serialization::format::cbor`), and can be imported with
+     *  `import_state_bytes()`. All simulators must support state export.
+     *
+     *  Unlike `export_current_state()`, this function checks its
+     *  preconditions and throws `cosim::error` with
+     *  `errc::invalid_operation` if `initialize()` has not been called or a
+     *  simulation is running.
+     */
+    std::vector<std::uint8_t> export_current_state_bytes() const;
+
+    /**
+     *  Imports a co-simulation state exported with
+     *  `export_current_state_bytes()`.
+     *
+     *  The caveats of `import_state()` apply: the state describes the state
+     *  of the system, not its structure. Throws `cosim::error` with
+     *  `errc::invalid_operation` if `initialize()` has not been called or a
+     *  simulation is running, and with `errc::bad_file` if the bytes are not
+     *  a valid state. If an import fails, the execution may have been
+     *  partly restored: import a valid state before continuing.
+     */
+    void import_state_bytes(const std::vector<std::uint8_t>& state);
+
 private:
     class impl;
     std::unique_ptr<impl> pimpl_;
