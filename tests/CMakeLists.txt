@@ -301,6 +301,7 @@ add_dependencies(
     fmi2_derivative_fixture)
 
 set(reference_fmu_test_targets
+    cpp_execution_api_test
     cpp_save_state_test
     cpp_slave_simulator_unittest)
 if(LIBCOSIM_WITH_PROXYFMU)

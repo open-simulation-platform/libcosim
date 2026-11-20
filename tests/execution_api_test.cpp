@@ -42,14 +42,15 @@ cosim::value_reference find_reference(
 }
 
 
-void test_add_fmu_and_get_simulators(const cosim::filesystem::path& testDataDir)
+void test_add_fmu_and_get_simulators(const cosim::filesystem::path& referenceFmuDir)
 {
     auto exe = cosim::execution(
         cosim::time_point(),
         std::make_shared<cosim::fixed_step_algorithm>(cosim::to_duration(0.1)));
     REQUIRE(exe.get_simulators().empty());
 
-    const auto fmu = testDataDir / "fmi1" / "identity.fmu";
+    // A Reference FMU, built for the platform the tests run on
+    const auto fmu = referenceFmuDir / "Feedthrough.fmu";
     const auto a = cosim::add_fmu(exe, fmu, "a");
     const auto b = cosim::add_fmu(exe, fmu, "b", cosim::to_duration(0.2));
     REQUIRE(a == 0);
@@ -65,14 +66,14 @@ void test_add_fmu_and_get_simulators(const cosim::filesystem::path& testDataDir)
     auto man = std::make_shared<cosim::override_manipulator>();
     exe.add_observer(obs);
     exe.add_manipulator(man);
-    man->override_integer_variable(a, find_reference(exe, a, "integerIn"), 42);
+    man->override_integer_variable(a, find_reference(exe, a, "Int32_input"), 42);
     REQUIRE(exe.simulate_until(cosim::to_time_point(0.5)));
-    REQUIRE(obs->get_integer(a, {find_reference(exe, a, "integerOut")}).at(0) == 42);
+    REQUIRE(obs->get_integer(a, {find_reference(exe, a, "Int32_output")}).at(0) == 42);
 
     // A missing FMU is reported as an error, and does not add a simulator
     bool threw = false;
     try {
-        cosim::add_fmu(exe, testDataDir / "no_such.fmu", "c");
+        cosim::add_fmu(exe, referenceFmuDir / "no_such.fmu", "c");
     } catch (const std::exception&) {
         threw = true;
     }
@@ -205,9 +206,9 @@ int main()
     try {
         test_log_level(); // leaves the level at "warning"
 
-        const auto testDataDir = std::getenv("TEST_DATA_DIR");
-        REQUIRE(testDataDir);
-        test_add_fmu_and_get_simulators(testDataDir);
+        const auto referenceFmuDir = std::getenv("REFERENCE_FMU_V2_DIR");
+        REQUIRE(referenceFmuDir);
+        test_add_fmu_and_get_simulators(referenceFmuDir);
         test_start_stop_status();
         test_stop_immediately_after_start();
         test_error_in_background_run();
