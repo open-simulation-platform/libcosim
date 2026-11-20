@@ -257,25 +257,19 @@ namespace
         std::exception_ptr error{};
     };
 
-    // Wraps a reader callback so that it records exceptions instead of
+    // Runs a reader callback so that it records exceptions instead of
     // letting them propagate through libcbor, and does nothing after an error.
-    template<typename Sig, Sig F>
-    struct guarded;
-
-    template<typename... Args, void (*F)(void*, Args...)>
-    struct guarded<void (*)(void*, Args...), F>
+    template<typename F>
+    void guarded(void* ctx, F&& f)
     {
-        static void call(void* ctx, Args... args)
-        {
-            auto c = reinterpret_cast<cbor_reader_ctx*>(ctx);
-            if (c->error) return;
-            try {
-                F(ctx, args...);
-            } catch (...) {
-                c->error = std::current_exception();
-            }
+        auto c = reinterpret_cast<cbor_reader_ctx*>(ctx);
+        if (c->error) return;
+        try {
+            f();
+        } catch (...) {
+            c->error = std::current_exception();
         }
-    };
+    }
 
     namespace serialization
     {
@@ -575,27 +569,31 @@ namespace
         size_t bytes_read = 0;
 
         // Callback functions for reading the input node recursively
-        cbs.string = guarded<decltype(cbs.string), &cbor_reader::cbor_read_string>::call;
-        cbs.uint8 = guarded<decltype(cbs.uint8), &cbor_reader::cbor_read_int>::call;
-        cbs.uint16 = guarded<decltype(cbs.uint16), &cbor_reader::cbor_read_int>::call;
-        cbs.uint32 = guarded<decltype(cbs.uint32), &cbor_reader::cbor_read_int>::call;
-        cbs.uint64 = guarded<decltype(cbs.uint64), &cbor_reader::cbor_read_int>::call;
-        cbs.negint8 = guarded<decltype(cbs.negint8), &cbor_reader::cbor_read_int>::call;
-        cbs.negint16 = guarded<decltype(cbs.negint16), &cbor_reader::cbor_read_int>::call;
-        cbs.negint32 = guarded<decltype(cbs.negint32), &cbor_reader::cbor_read_int>::call;
-        cbs.negint64 = guarded<decltype(cbs.negint64), &cbor_reader::cbor_read_int>::call;
-        cbs.boolean = guarded<decltype(cbs.boolean), &cbor_reader::cbor_read_boolean>::call;
-        cbs.float4 = guarded<decltype(cbs.float4), &cbor_reader::cbor_read_half_float>::call;
-        cbs.float8 = guarded<decltype(cbs.float8), &cbor_reader::cbor_read_double_float>::call;
-        cbs.indef_map_start = guarded<decltype(cbs.indef_map_start), &cbor_reader::cbor_indef_map_start>::call;
-        cbs.map_start = guarded<decltype(cbs.map_start), &cbor_reader::cbor_map_start>::call;
-        cbs.indef_break = guarded<decltype(cbs.indef_break), &cbor_reader::cbor_indef_break>::call;
-        cbs.undefined = guarded<decltype(cbs.undefined), &cbor_reader::cbor_read_null_undefined>::call;
-        cbs.null = guarded<decltype(cbs.null), &cbor_reader::cbor_read_null_undefined>::call;
-        cbs.tag = guarded<decltype(cbs.tag), &cbor_reader::cbor_read_tag>::call;
-        cbs.byte_string = guarded<decltype(cbs.byte_string), &cbor_reader::cbor_read_byte_string>::call;
-        cbs.indef_array_start = guarded<decltype(cbs.indef_array_start), &cbor_reader::cbor_indef_array_start>::call;
-        cbs.array_start = guarded<decltype(cbs.array_start), &cbor_reader::cbor_array_start>::call;
+        cbs.string = [](void* c, cbor_data data, uint64_t len) {
+            guarded(c, [&] { cbor_reader::cbor_read_string(c, data, len); });
+        };
+        cbs.uint8 = [](void* c, uint8_t v) { guarded(c, [&] { cbor_reader::cbor_read_int(c, v); }); };
+        cbs.uint16 = [](void* c, uint16_t v) { guarded(c, [&] { cbor_reader::cbor_read_int(c, v); }); };
+        cbs.uint32 = [](void* c, uint32_t v) { guarded(c, [&] { cbor_reader::cbor_read_int(c, v); }); };
+        cbs.uint64 = [](void* c, uint64_t v) { guarded(c, [&] { cbor_reader::cbor_read_int(c, v); }); };
+        cbs.negint8 = [](void* c, uint8_t v) { guarded(c, [&] { cbor_reader::cbor_read_int(c, v); }); };
+        cbs.negint16 = [](void* c, uint16_t v) { guarded(c, [&] { cbor_reader::cbor_read_int(c, v); }); };
+        cbs.negint32 = [](void* c, uint32_t v) { guarded(c, [&] { cbor_reader::cbor_read_int(c, v); }); };
+        cbs.negint64 = [](void* c, uint64_t v) { guarded(c, [&] { cbor_reader::cbor_read_int(c, v); }); };
+        cbs.boolean = [](void* c, bool v) { guarded(c, [&] { cbor_reader::cbor_read_boolean(c, v); }); };
+        cbs.float4 = [](void* c, float v) { guarded(c, [&] { cbor_reader::cbor_read_half_float(c, v); }); };
+        cbs.float8 = [](void* c, double v) { guarded(c, [&] { cbor_reader::cbor_read_double_float(c, v); }); };
+        cbs.indef_map_start = [](void* c) { guarded(c, [&] { cbor_reader::cbor_indef_map_start(c); }); };
+        cbs.map_start = [](void* c, uint64_t size) { guarded(c, [&] { cbor_reader::cbor_map_start(c, size); }); };
+        cbs.indef_break = [](void* c) { guarded(c, [&] { cbor_reader::cbor_indef_break(c); }); };
+        cbs.undefined = [](void* c) { guarded(c, [&] { cbor_reader::cbor_read_null_undefined(c); }); };
+        cbs.null = [](void* c) { guarded(c, [&] { cbor_reader::cbor_read_null_undefined(c); }); };
+        cbs.tag = [](void* c, uint64_t tag) { guarded(c, [&] { cbor_reader::cbor_read_tag(c, tag); }); };
+        cbs.byte_string = [](void* c, cbor_data data, uint64_t len) {
+            guarded(c, [&] { cbor_reader::cbor_read_byte_string(c, data, len); });
+        };
+        cbs.indef_array_start = [](void* c) { guarded(c, [&] { cbor_reader::cbor_indef_array_start(c); }); };
+        cbs.array_start = [](void* c, uint64_t len) { guarded(c, [&] { cbor_reader::cbor_array_start(c, len); }); };
 
         if (length <= 0) {
             throw std::runtime_error("[Cbor reader] No data");
