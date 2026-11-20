@@ -31,6 +31,15 @@ Xerces-C, FMI Library, libzip, …). They are found with CMake's
 unpacked on Linux; the wheel, JAR and NuGet package are about 7 MB on Linux
 and 3.4 MB on Windows).
 
+### Proxy FMUs
+
+With `-o "&:proxyfmu=True"` (via `--conan-arg`), libcosim is built with
+proxyfmu, and every package also contains the `proxyfmu` executable (and its
+libraries) next to the binding's libraries. The proxyfmu client finds it
+there, whatever program loads the bindings; this needs a proxy-fmu that
+searches next to its client library (proxy-fmu PR #110). Off by default:
+whether the published packages include proxy-FMU support is not decided yet.
+
 ## Building
 
 ```sh

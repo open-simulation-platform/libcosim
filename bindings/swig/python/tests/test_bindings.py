@@ -380,6 +380,28 @@ class StateTest(unittest.TestCase):
             exe.import_state_bytes("not bytes")
 
 
+@unittest.skipUnless(os.environ.get("LIBCOSIM_TEST_PROXYFMU"), "libcosim built without proxyfmu")
+class ProxyFmuTest(unittest.TestCase):
+    """FMUs run in separate proxyfmu processes (libcosim built with proxyfmu).
+
+    Runs in a directory without the proxyfmu executable: the proxyfmu client
+    must find it next to its library (bundled in the packages)."""
+
+    def test_proxy_fmus(self):
+        cwd = os.getcwd()
+        with tempfile.TemporaryDirectory() as empty:
+            os.chdir(empty)
+            try:
+                loaded = cosim.load_execution_from_osp_config(
+                    os.path.join(DATA, "msmi", "OspSystemStructure_proxyfmu.xml"))
+                exe = loaded.execution
+                self.assertEqual(len(dict(loaded.simulators())), 4)
+                self.assertTrue(exe.simulate_until(cosim.to_nanoseconds(0.02)))
+                del exe, loaded
+            finally:
+                os.chdir(cwd)
+
+
 class ErrorTest(unittest.TestCase):
     def test_missing_config_raises(self):
         with self.assertRaises(RuntimeError):

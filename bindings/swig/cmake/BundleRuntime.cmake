@@ -2,7 +2,9 @@
 # install directory, so the package is self-contained.
 #
 # Input variables: BUNDLE_TARGET_FILE, BUNDLE_DESTINATION, BUNDLE_DIRS (list),
-# BUNDLE_PATCHELF (Linux; may be empty).
+# BUNDLE_PATCHELF (Linux; may be empty), BUNDLE_EXECUTABLES (programs
+# installed next to the libraries, e.g. proxyfmu; their libraries are
+# bundled too).
 #
 # CMake resolves a library to the system copy if one exists (ldconfig paths
 # come before DIRECTORIES), even when the binding was built against a copy
@@ -10,8 +12,13 @@
 # if a library with the same file name exists in BUNDLE_DIRS, that copy is
 # bundled; other system libraries (C/C++ runtime, ...) are left out.
 
+set(executablesArgument "")
+if(BUNDLE_EXECUTABLES)
+    set(executablesArgument EXECUTABLES ${BUNDLE_EXECUTABLES})
+endif()
 file(GET_RUNTIME_DEPENDENCIES
     LIBRARIES "${BUNDLE_TARGET_FILE}"
+    ${executablesArgument}
     RESOLVED_DEPENDENCIES_VAR resolved
     UNRESOLVED_DEPENDENCIES_VAR unresolved
     DIRECTORIES ${BUNDLE_DIRS}
@@ -51,6 +58,10 @@ message(STATUS "Bundled with ${BUNDLE_TARGET_FILE}: ${bundled}")
 
 if(BUNDLE_PATCHELF AND EXISTS "${BUNDLE_PATCHELF}")
     file(GLOB libs "${BUNDLE_DESTINATION}/*.so*")
+    foreach(exe IN LISTS BUNDLE_EXECUTABLES)
+        get_filename_component(name "${exe}" NAME)
+        list(APPEND libs "${BUNDLE_DESTINATION}/${name}")
+    endforeach()
     foreach(lib IN LISTS libs)
         if(NOT IS_SYMLINK "${lib}")
             execute_process(COMMAND "${BUNDLE_PATCHELF}" --set-rpath "$ORIGIN" "${lib}"

@@ -84,6 +84,10 @@ add_test(
     COMMAND Python3::Interpreter "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_bindings.py")
 set_tests_properties(swig_python PROPERTIES
     ENVIRONMENT "PYTHONPATH=${CMAKE_BINARY_DIR}/bindings/python")
+if(TARGET proxyfmu::proxyfmu-client)
+    # libcosim is built with proxyfmu: also test proxy FMUs.
+    set_property(TEST swig_python APPEND PROPERTY ENVIRONMENT_MODIFICATION "LIBCOSIM_TEST_PROXYFMU=set:1")
+endif()
 libcosim_swig_test_runtime_path(swig_python)
 
 # Optional: run libcosimpy's test suite against these bindings. libcosimpy

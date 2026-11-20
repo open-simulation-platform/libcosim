@@ -33,6 +33,9 @@ in C.
 - **CF-13 End time.** A configured end time is available.
 - **CF-14 Paths.** Configuration and FMU paths are accepted as strings, and
   as the language's path type where it has one (Python `os.PathLike`).
+- **CF-15 Proxy FMUs** (only with libcosim built with proxyfmu). A
+  configuration with `proxyfmu://` sources runs, from any working directory:
+  the package ships the `proxyfmu` executable next to its libraries.
 
 **Building an execution in code**
 
@@ -109,6 +112,7 @@ in C.
 | CF-12 Load options | ✅ | 🟡 | 🟡 | — | — |
 | CF-13 End time | ✅ | ✅ | ✅ | — | — |
 | CF-14 Paths | ✅ | ✅ | ✅ | ✅ | ✅ |
+| CF-15 Proxy FMUs (optional) | ✅ | — | — | — | — |
 | CF-20 Execution with an algorithm | ✅ | ✅ | ✅ | ✅ | ✅ |
 | CF-21 Adding FMUs | ✅ | ✅ | ✅ | ✅ | ✅ |
 | CF-22 ECCO | ✅ | — | — | 🟡 | 🟡 |

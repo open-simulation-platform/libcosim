@@ -30,8 +30,8 @@ class LibcosimCConan(ConanFile):
     description = "C API for libcosim, generated with SWIG"
     package_type = "shared-library"
     settings = "os", "compiler", "build_type", "arch"
-    options = {"java": [True, False]}
-    default_options = {"java": False}
+    options = {"java": [True, False], "proxyfmu": [True, False]}
+    default_options = {"java": False, "proxyfmu": False}
 
     exports_sources = (
         "CMakeLists.txt", "cosim.i", "cmake/*", "c/*",
@@ -45,6 +45,11 @@ class LibcosimCConan(ConanFile):
         # generates those for consumers that see libcosim's headers.
         ref = os.environ.get("LIBCOSIM_REF") or f"libcosim/{self.version}@osp/stable"
         self.requires(ref, transitive_headers=True)
+
+    def configure(self):
+        # Proxy FMUs (FMUs run in separate processes): libcosim built with
+        # proxyfmu; the packages then include the proxyfmu executable.
+        self.options["libcosim"].proxyfmu = bool(self.options.proxyfmu)
 
     def build_requirements(self):
         self.tool_requires("swig/4.4.1")  # pinned: the C backend is experimental

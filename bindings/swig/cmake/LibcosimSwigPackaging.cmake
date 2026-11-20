@@ -18,6 +18,30 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     find_program(LIBCOSIM_SWIG_PATCHELF patchelf)
 endif()
 
+# libcosim built with proxyfmu runs proxy FMUs in a separate `proxyfmu`
+# process. Packages ship that executable next to the libraries, where the
+# proxyfmu client looks for it (proxy-fmu >= the version that searches next
+# to the client library). It is installed beside the client library (Windows)
+# or in the bin directory beside it.
+set(LIBCOSIM_SWIG_PROXYFMU_EXECUTABLE "")
+if(TARGET proxyfmu::proxyfmu-client)
+    set(proxyfmuHints "")
+    foreach(property IN ITEMS IMPORTED_LOCATION_RELEASE IMPORTED_LOCATION)
+        get_target_property(clientLibrary proxyfmu::proxyfmu-client ${property})
+        if(clientLibrary)
+            get_filename_component(clientDir "${clientLibrary}" DIRECTORY)
+            list(APPEND proxyfmuHints "${clientDir}" "${clientDir}/../bin")
+        endif()
+    endforeach()
+    find_program(LIBCOSIM_SWIG_PROXYFMU_EXECUTABLE_PATH proxyfmu HINTS ${proxyfmuHints} NO_DEFAULT_PATH)
+    if(LIBCOSIM_SWIG_PROXYFMU_EXECUTABLE_PATH)
+        set(LIBCOSIM_SWIG_PROXYFMU_EXECUTABLE "${LIBCOSIM_SWIG_PROXYFMU_EXECUTABLE_PATH}")
+        message(STATUS "proxyfmu executable (bundled in packages): ${LIBCOSIM_SWIG_PROXYFMU_EXECUTABLE}")
+    else()
+        message(WARNING "libcosim uses proxyfmu, but its proxyfmu executable was not found; packages cannot run proxy FMUs")
+    endif()
+endif()
+
 # Platform name used in package layouts.
 if(WIN32)
     set(LIBCOSIM_SWIG_OS "windows")
@@ -48,8 +72,13 @@ function(libcosim_swig_install_with_runtime target)
     install(TARGETS ${target}
         RUNTIME DESTINATION "${ARG_DESTINATION}" COMPONENT ${ARG_COMPONENT}
         LIBRARY DESTINATION "${ARG_DESTINATION}" COMPONENT ${ARG_COMPONENT})
+    if(LIBCOSIM_SWIG_PROXYFMU_EXECUTABLE)
+        install(PROGRAMS "${LIBCOSIM_SWIG_PROXYFMU_EXECUTABLE}"
+            DESTINATION "${ARG_DESTINATION}" COMPONENT ${ARG_COMPONENT})
+    endif()
     install(CODE "
         set(BUNDLE_TARGET_FILE \"$<TARGET_FILE:${target}>\")
+        set(BUNDLE_EXECUTABLES \"${LIBCOSIM_SWIG_PROXYFMU_EXECUTABLE}\")
         set(BUNDLE_DESTINATION \"\${CMAKE_INSTALL_PREFIX}/${ARG_DESTINATION}\")
         set(BUNDLE_DIRS \"$<JOIN:${LIBCOSIM_SWIG_RUNTIME_DIRS},;>\")
         set(BUNDLE_PATCHELF \"${LIBCOSIM_SWIG_PATCHELF}\")
