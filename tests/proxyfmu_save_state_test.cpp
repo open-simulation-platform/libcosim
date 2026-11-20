@@ -47,8 +47,6 @@ int main()
         // ================================================================
         // == Reference FMU test - Dahlquist (for byte vectors)
         // ================================================================
-        constexpr cosim::duration stepSize = cosim::to_duration(0.05);
-
         const auto dahlquistTestDataDir = std::getenv("GEN_TEST_DATA_DIR");
         REQUIRE(dahlquistTestDataDir);
         auto configPath = cosim::filesystem::path(dahlquistTestDataDir) /

@@ -52,7 +52,7 @@ endforeach()
 
 # Use the highest warning levels and treat all warnings as errors,
 # but ignore a few selected warnings.
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     add_compile_options("-Wall" "-Wextra" "-Wpedantic")
     add_compile_options("-Wno-parentheses")
     if(LIBCOSIM_TREAT_WARNINGS_AS_ERRORS)

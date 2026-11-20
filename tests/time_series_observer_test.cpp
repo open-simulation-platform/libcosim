@@ -79,10 +79,8 @@ int main()
         REQUIRE(samplesRead == 5); // Don't expect values beyond fromStep + values.size()
 
         double expectedReals[] = {1.234, 1.234, 1.234, 1.234, 1.234};
-        int counter = 0;
         for (size_t i = 0; i < samplesRead; i++) {
             REQUIRE(std::fabs(expectedReals[i] - realValues[i]) < 1.0e-9);
-            counter++;
         }
         for (size_t i = 0; i < samplesRead; i++) {
             if (i > 0) {

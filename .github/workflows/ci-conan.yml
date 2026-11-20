@@ -13,7 +13,7 @@ jobs:
         compiler_version: [14]
         option_proxyfmu: ['proxyfmu=True', 'proxyfmu=False']
         option_shared: ['shared=True', 'shared=False']
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     container:
       image: gcc:${{ matrix.compiler_version }}
     env:
