@@ -12,6 +12,11 @@
 
 #include <cosim/algorithm/algorithm.hpp>
 
+#include <string>
+#include <string_view>
+#include <unordered_map>
+#include <vector>
+
 namespace cosim
 {
 
@@ -27,6 +32,48 @@ struct ecco_algorithm_params
     double rel_tolerance;
     double p_gain;
     double i_gain;
+};
+
+/// Description of a power bond for runtime lookup.
+struct power_bond_info
+{
+    std::string name;
+    variable_id input_a;
+    variable_id output_a;
+    variable_id input_b;
+    variable_id output_b;
+};
+
+/// Snapshot of a power bond's variable values and energies at a simulation step.
+struct power_bond_state
+{
+    time_point time;
+    double input_a_value;
+    double output_a_value;
+    double input_b_value;
+    double output_b_value;
+
+    /// Instantaneous power on each side of the bond [W].
+    double power_a;
+    double power_b;
+
+    /// Absolute power residual across the bond, |power_a - power_b| [W].
+    double power_residual;
+
+    /// Energy accumulated on each side of the bond since the start [J].
+    double energy_a;
+    double energy_b;
+
+    /// Accumulated absolute energy residual across the bond since the start [J].
+    double energy_residual;
+
+    /// This bond's term in the last step's error estimate: (e_i / (atol + rtol * E_max))^2,
+    /// where e_i is the bond's energy residual over the step. The estimate itself is
+    /// sqrt(sum of all terms / number of bonds). Larger values mean the bond drives step-size reduction more.
+    double error_contribution;
+
+    /// False until the first completed step has populated this state.
+    bool valid = false;
 };
 
 /**
@@ -75,17 +122,34 @@ public:
 
     /**
      * Adds a variable pair for the power residual calculation.
-     * \param uVec
-     *     The index of the variable.
+     *
+     * Power bonds are part of the simulation configuration and must be added
+     * before the simulation is initialized.
+     *
+     * \param name
+     *     The unique name identifying the power bond.
+     * \throws std::logic_error if the simulation has already been initialized.
+     * \throws std::invalid_argument if a power bond with the given name already exists.
      */
-    void add_power_bond(cosim::variable_id input_a, cosim::variable_id output_a, cosim::variable_id input_b, cosim::variable_id output_b);
+    void add_power_bond(std::string name, cosim::variable_id input_a, cosim::variable_id output_a, cosim::variable_id input_b, cosim::variable_id output_b);
+
+    /// Returns the names of all configured power bonds.
+    std::vector<std::string> get_power_bond_names() const;
 
     /**
-     * Retrieves the energies in the power bond for the given simulator index.add_variable_value
-     * \param simulator_index 
-     *      The index of the simulator. 
+     * Returns the information for the given power bond. 
+     * \throws std::out_of_range if no power bond with the given name exists.
      */
-    std::vector<double> get_powerbond_energies(cosim::simulator_index simulator_index);
+    power_bond_info get_power_bond(std::string_view name) const;
+
+    /**
+     * Returns the most recently computed state (from the last completed step) of a given power bond.
+     * \throws std::out_of_range if no power bond with the given name exists.
+     */
+    power_bond_state get_power_bond_state(std::string_view name) const;
+
+    /// Returns the most recently computed states of all power bonds as an unordered map, keyed by the name.
+    std::unordered_map<std::string, power_bond_state> get_power_bond_states() const;
 
 private:
     class impl;

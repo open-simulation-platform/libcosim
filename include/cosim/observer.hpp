@@ -12,6 +12,7 @@
 #define COSIM_OBSERVER_HPP
 
 #include <cosim/observer/file_observer.hpp>
+#include <cosim/observer/ecco_observer.hpp>
 #include <cosim/observer/last_value_observer.hpp>
 #include <cosim/observer/observer.hpp>
 #include <cosim/observer/time_series_observer.hpp>

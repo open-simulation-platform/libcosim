@@ -5,7 +5,7 @@
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified"
            targetNamespace="http://opensimulationplatform.com/MSMI/OSPSystemStructure"
            xmlns:osp="http://opensimulationplatform.com/MSMI/OSPSystemStructure"
-           version="0.1.1">
+           version="0.1.2">
     <xs:element name="OspSystemStructure">
         <xs:complexType>
             <xs:sequence>
@@ -78,7 +78,6 @@
     <xs:complexType name="variableEndpoint">
         <xs:attribute name="simulator" use="required" type="xs:string"/>
         <xs:attribute name="name" use="required" type="xs:string"/>
-        <xs:attribute name="causality" type="xs:string"/>
     </xs:complexType>
     <xs:complexType name="signalEndpoint">
         <xs:attribute name="function" use="required" type="xs:string"/>
