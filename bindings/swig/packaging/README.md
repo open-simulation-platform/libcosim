@@ -96,7 +96,9 @@ all platforms against that package and publishes:
 | C# | `build_packages.py` per platform; `merge_packages.py` merges the `runtimes/<rid>/` trees into one `.nupkg` | GitHub release (use as a local NuGet source) |
 
 The Julia artifact URLs point to the GitHub release of the version
-(`--julia-url` overrides). macOS joins the matrices when libcosim supports it.
+(`--julia-url` overrides). macOS (arm64, x86_64) and 64-bit ARM Linux are not
+in the matrices yet. This branch is on top of the libcosim PRs that add them
+(#812–#814), so they can be added next.
 
 ## Moving the bindings to their own repository
 
@@ -119,8 +121,8 @@ What the separate repository needs from libcosim:
 
 - the binding-friendly API (branch `feature/binding-friendly-api`) in a
   released libcosim;
-- `find_dependency(libcbor)` in libcosim's CMake config (commit e60910e on
-  `fix/libcosim-api-fixes`);
+- `find_dependency(libcbor)` in libcosim's CMake config (commit "Find
+  libcbor in the installed CMake package config" on `fix/libcosim-api-fixes`);
 - test data: a few FMUs and OSP/SSP configurations, copied or fetched from
   libcosim's `tests/data` (the tests take the directory as
   `LIBCOSIM_SWIG_TEST_DATA_DIR`, `--test-data` or `LIBCOSIM_TEST_DATA`).

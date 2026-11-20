@@ -6,6 +6,10 @@
 
 **Status:** experimental spike, 2026-11-19. Branch `spike/swig-bindings-v2`,
 on top of `feature/binding-friendly-api` (libcosim changes). Nothing pushed.
+Since 2026-11-20 the branches form a PR stack: `fix/libcosim-api-fixes`
+(fixes, from `master`) → `feature/binding-friendly-api` (API changes) →
+`spike/swig-bindings-v2` (bindings, on top of the macOS and ARM Linux PRs
+#811–#814). The commit lists below show where each change was first made.
 
 - Round 1: SWIG on the unmodified libcosim API.
 - Round 2: on top of the first binding-friendly libcosim changes.
@@ -383,7 +387,7 @@ What it took, in the order found (each a separate commit):
    JVM's own `zip.dll`, which the JVM loads first; `cosim.dll` was then bound
    to the JVM's module. libzip is now linked statically (it is only used
    internally). This affects any Java binding of libcosim on Windows, not just
-   SWIG's. Fixed on `fix/libcosim-api-fixes`.
+   SWIG's. Fixed on `feature/binding-friendly-api`.
 8. **Julia crashed with heap corruption** (`0xc0000374`): the C API said to
    `free()` returned strings, but on Windows memory must be freed by the C
    runtime that allocated it, and Julia's differs. New `cosim_free_string()`;
