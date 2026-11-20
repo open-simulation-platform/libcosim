@@ -613,15 +613,22 @@ public:
             const auto stateIndex =
                 slave_->import_state(exportedState.get_child("state"));
             assert(savedStates_.count(stateIndex) == 0);
-            auto& savedState = savedStates_.try_emplace(stateIndex).first->second;
-            savedState.realGetCache.import_state(exportedState.get_child("real_get_cache"));
-            savedState.integerGetCache.import_state(exportedState.get_child("integer_get_cache"));
-            savedState.booleanGetCache.import_state(exportedState.get_child("boolean_get_cache"));
-            savedState.stringGetCache.import_state(exportedState.get_child("string_get_cache"));
-            savedState.realSetCache.import_state(exportedState.get_child("real_set_cache"));
-            savedState.integerSetCache.import_state(exportedState.get_child("integer_set_cache"));
-            savedState.booleanSetCache.import_state(exportedState.get_child("boolean_set_cache"));
-            savedState.stringSetCache.import_state(exportedState.get_child("string_set_cache"));
+            try {
+                auto& savedState = savedStates_.try_emplace(stateIndex).first->second;
+                savedState.realGetCache.import_state(exportedState.get_child("real_get_cache"));
+                savedState.integerGetCache.import_state(exportedState.get_child("integer_get_cache"));
+                savedState.booleanGetCache.import_state(exportedState.get_child("boolean_get_cache"));
+                savedState.stringGetCache.import_state(exportedState.get_child("string_get_cache"));
+                savedState.realSetCache.import_state(exportedState.get_child("real_set_cache"));
+                savedState.integerSetCache.import_state(exportedState.get_child("integer_set_cache"));
+                savedState.booleanSetCache.import_state(exportedState.get_child("boolean_set_cache"));
+                savedState.stringSetCache.import_state(exportedState.get_child("string_set_cache"));
+            } catch (...) {
+                // Don't keep the imported slave state if the rest is invalid.
+                savedStates_.erase(stateIndex);
+                slave_->release_state(stateIndex);
+                throw;
+            }
             return stateIndex;
         } catch (const boost::property_tree::ptree_bad_path&) {
             throw error(
