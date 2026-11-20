@@ -80,8 +80,17 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/LibcosimSwigPackaging.cmake")
 # finds the bindings via LD_LIBRARY_PATH. Python on Windows ignores PATH; the
 # package registers the directories in LIBCOSIM_DLL_DIRS instead.
 function(libcosim_swig_test_runtime_path testName)
-    foreach(dir IN ITEMS "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}"
-                         ${LIBCOSIM_SWIG_RUNTIME_DIRS})
+    # Multi-config generators (Visual Studio) add a per-configuration directory.
+    get_property(multiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+    set(outputDirs "")
+    foreach(dir IN ITEMS "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+        if(dir AND multiConfig)
+            list(APPEND outputDirs "${dir}/$<CONFIG>")
+        elseif(dir)
+            list(APPEND outputDirs "${dir}")
+        endif()
+    endforeach()
+    foreach(dir IN ITEMS ${outputDirs} ${LIBCOSIM_SWIG_RUNTIME_DIRS})
         if(dir)
             set_property(TEST ${testName} APPEND PROPERTY ENVIRONMENT_MODIFICATION
                 "PATH=path_list_prepend:${dir}"
