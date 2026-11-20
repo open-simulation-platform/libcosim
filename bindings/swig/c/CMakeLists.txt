@@ -58,7 +58,7 @@ if(LIBCOSIM_SWIG_TESTS)
         NAME swig_c_smoke
         COMMAND cosim_c_smoke "${LIBCOSIM_SWIG_TEST_DATA_DIR}/msmi/OspSystemStructure.xml")
     set_tests_properties(swig_c_smoke PROPERTIES
-        ENVIRONMENT "IDENTITY_FMU=${LIBCOSIM_SWIG_TEST_DATA_DIR}/fmi1/identity.fmu")
+        ENVIRONMENT "IDENTITY_FMU=${LIBCOSIM_SWIG_TEST_DATA_DIR}/fmi1/identity.fmu;LIBCOSIM_TEST_DATA=${LIBCOSIM_SWIG_TEST_DATA_DIR}")
     libcosim_swig_test_runtime_path(swig_c_smoke)
 
     # C API drift check: the generated header must match the committed

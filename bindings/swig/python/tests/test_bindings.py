@@ -317,6 +317,17 @@ class PythonicTest(unittest.TestCase):
         self.assertIn("simulator_info(name=", repr(self.exe.get_simulators()[0]))
 
 
+class LoadingTest(unittest.TestCase):
+    def test_version(self):
+        v = cosim.library_version()
+        self.assertGreaterEqual((v.major, v.minor, v.patch), (0, 0, 0))
+
+    def test_ssp(self):
+        loaded = cosim.load_execution_from_ssp(os.path.join(DATA, "ssp", "demo"))
+        self.assertGreater(len(dict(loaded.simulators())), 0)
+        self.assertGreater(loaded.execution.step(), 0)
+
+
 class ErrorTest(unittest.TestCase):
     def test_missing_config_raises(self):
         with self.assertRaises(RuntimeError):

@@ -6,6 +6,7 @@
  */
 #include "cosim_c_wrap.h"
 
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -74,6 +75,165 @@ static unsigned int find_ref(cosim_execution* exe, int sim, const char* name)
     /* Every returned object is owned: `vars` and each `v` were deleted above. */
     cosim_model_description_delete(md);
     return ref;
+}
+
+/* Conformance items beyond the basic smoke test (see docs/conformance.md). */
+static void more_conformance(const char* data, const char* fmu)
+{
+    char path[4096];
+
+    /* CF-1 Version */
+    cosim_version* version = cosim_library_version();
+    CHECK(cosim_version_major_get(version) >= 0);
+    cosim_version_delete(version);
+
+    /* CF-11 SSP */
+    snprintf(path, sizeof path, "%s/ssp/demo", data);
+    cosim_configured_execution* ssp = cosim_load_execution_from_ssp(path, NULL);
+    CHECK(ssp != NULL);
+    if (ssp) {
+        cosim_StringIntMap* sims = cosim_configured_execution_simulators(ssp);
+        CHECK(cosim_StringIntMap_size(sims) > 0);
+        cosim_StringIntMap_delete(sims);
+        cosim_configured_execution_delete(ssp);
+    }
+    cosim_clear_last_error();
+
+    /* CF-12 Load options (start time) */
+    cosim_execution_load_options* options = cosim_execution_load_options_new();
+    cosim_execution_load_options_set_start_time(options, cosim_to_nanoseconds(1.0));
+    snprintf(path, sizeof path, "%s/msmi/OspSystemStructure.xml", data);
+    cosim_configured_execution* started = cosim_load_execution_from_osp_config(path, options);
+    CHECK(started != NULL);
+    if (started) {
+        cosim_execution* exe = cosim_configured_execution_get_execution(started);
+        CHECK(cosim_execution_current_time(exe) == cosim_to_nanoseconds(1.0));
+        cosim_execution_delete(exe);
+        cosim_configured_execution_delete(started);
+    }
+    cosim_execution_load_options_delete(options);
+
+    /* CF-13 End time */
+    snprintf(path, sizeof path, "%s/msmi/OspSystemStructure_EndTime.xml", data);
+    cosim_configured_execution* ended = cosim_load_execution_from_osp_config(path, NULL);
+    CHECK(ended != NULL);
+    if (ended) {
+        CHECK(cosim_configured_execution_has_end_time(ended));
+        CHECK(cosim_configured_execution_get_end_time(ended) == cosim_to_nanoseconds(0.001));
+        cosim_configured_execution_delete(ended);
+    }
+
+    /* An execution with one identity FMU (inputs copied to outputs). */
+    cosim_fixed_step_algorithm* algo = cosim_fixed_step_algorithm_create(cosim_to_nanoseconds(0.1), 0);
+    cosim_execution* exe = cosim_execution_new(0, (cosim_algorithm*)algo);
+    const int sim = cosim_add_fmu(exe, fmu, "id", 0, NULL);
+    CHECK(sim == 0);
+    const unsigned int realIn = find_ref(exe, sim, "realIn"), realOut = find_ref(exe, sim, "realOut");
+    const unsigned int integerIn = find_ref(exe, sim, "integerIn"), integerOut = find_ref(exe, sim, "integerOut");
+    const unsigned int booleanIn = find_ref(exe, sim, "booleanIn"), booleanOut = find_ref(exe, sim, "booleanOut");
+    const unsigned int stringIn = find_ref(exe, sim, "stringIn"), stringOut = find_ref(exe, sim, "stringOut");
+
+    cosim_last_value_observer* obs = cosim_last_value_observer_new();
+    cosim_override_manipulator* man = cosim_override_manipulator_new();
+    cosim_time_series_observer* series = cosim_time_series_observer_create(100);
+    cosim_execution_add_observer(exe, (cosim_observer*)obs);
+    cosim_execution_add_observer(exe, (cosim_observer*)series);
+    cosim_execution_add_manipulator(exe, (cosim_manipulator*)man);
+    cosim_variable_id* observed = cosim_variable_id_new();
+    cosim_variable_id_simulator_set(observed, sim);
+    cosim_variable_id_type_set(observed, cosim_variable_type_integer);
+    cosim_variable_id_reference_set(observed, integerOut);
+    cosim_time_series_observer_start_observing(series, observed);
+
+    /* CF-23 Initial values, all four types */
+    cosim_execution_set_real_initial_value(exe, sim, realIn, 2.5);
+    cosim_execution_set_integer_initial_value(exe, sim, integerIn, 7);
+    cosim_execution_set_boolean_initial_value(exe, sim, booleanIn, true);
+    cosim_execution_set_string_initial_value(exe, sim, stringIn, "initial");
+    cosim_execution_step(exe);
+    cosim_execution_step(exe);
+
+    cosim_ValueReferenceVector* refs = cosim_ValueReferenceVector_new();
+    cosim_DoubleVector* reals;
+    cosim_IntVector* ints;
+    cosim_BoolVector* bools;
+    cosim_StringVector* strings;
+    const char* text;
+#define READ_ONE(getter, ref, out)                         \
+    cosim_ValueReferenceVector_clear(refs);                \
+    cosim_ValueReferenceVector_push_back(refs, ref);       \
+    out = getter(obs, sim, refs)
+
+    /* CF-60 Last values, all four types */
+    READ_ONE(cosim_last_value_observer_get_real, realOut, reals);
+    CHECK(cosim_DoubleVector_get(reals, 0) == 2.5);
+    cosim_DoubleVector_delete(reals);
+    READ_ONE(cosim_last_value_observer_get_integer, integerOut, ints);
+    CHECK(cosim_IntVector_get(ints, 0) == 7);
+    cosim_IntVector_delete(ints);
+    READ_ONE(cosim_last_value_observer_get_boolean, booleanOut, bools);
+    CHECK(cosim_BoolVector_get(bools, 0));
+    cosim_BoolVector_delete(bools);
+    READ_ONE(cosim_last_value_observer_get_string, stringOut, strings);
+    text = cosim_StringVector_get(strings, 0);
+    CHECK(text != NULL && strcmp(text, "initial") == 0);
+    cosim_free_string(text);
+    cosim_StringVector_delete(strings);
+
+    /* CF-61 Overrides, all four types, and reset */
+    cosim_override_manipulator_override_real_variable(man, sim, realIn, 1.5);
+    cosim_override_manipulator_override_boolean_variable(man, sim, booleanIn, false);
+    cosim_override_manipulator_override_string_variable(man, sim, stringIn, "hello");
+    cosim_execution_step(exe);
+    cosim_execution_step(exe);
+    READ_ONE(cosim_last_value_observer_get_real, realOut, reals);
+    CHECK(cosim_DoubleVector_get(reals, 0) == 1.5);
+    cosim_DoubleVector_delete(reals);
+    READ_ONE(cosim_last_value_observer_get_boolean, booleanOut, bools);
+    CHECK(!cosim_BoolVector_get(bools, 0));
+    cosim_BoolVector_delete(bools);
+    READ_ONE(cosim_last_value_observer_get_string, stringOut, strings);
+    text = cosim_StringVector_get(strings, 0);
+    CHECK(text != NULL && strcmp(text, "hello") == 0);
+    cosim_free_string(text);
+    cosim_StringVector_delete(strings);
+    cosim_override_manipulator_reset_variable(man, sim, cosim_variable_type_real, realIn);
+    cosim_execution_step(exe);
+    cosim_execution_step(exe);
+    READ_ONE(cosim_last_value_observer_get_real, realOut, reals);
+    CHECK(cosim_DoubleVector_get(reals, 0) != 1.5);
+    cosim_DoubleVector_delete(reals);
+#undef READ_ONE
+
+    /* CF-62 Time series */
+    cosim_IntegerSamples* samples = cosim_time_series_observer_get_integer_samples(series, sim, integerOut, 1, 10);
+    CHECK(samples != NULL);
+    if (samples) {
+        cosim_IntVector* values = cosim_IntegerSamples_get_values(samples);
+        cosim_Int64Vector* times = cosim_IntegerSamples_get_times(samples);
+        CHECK(cosim_IntVector_size(values) > 0);
+        CHECK(cosim_IntVector_size(values) == cosim_Int64Vector_size(times));
+        if (cosim_IntVector_size(values) > 0) CHECK(cosim_IntVector_get(values, 0) == 7);
+        cosim_IntVector_delete(values);
+        cosim_Int64Vector_delete(times);
+        cosim_IntegerSamples_delete(samples);
+    }
+
+    /* CF-52 Real-time configuration; an invalid factor is an error */
+    cosim_execution_set_real_time_factor_target(exe, 2.0);
+    CHECK(cosim_execution_get_real_time_factor_target(exe) == 2.0);
+    CHECK(cosim_last_error_code() == 0);
+    cosim_execution_set_real_time_factor_target(exe, 0.0);
+    CHECK(cosim_last_error_code() != 0);
+    cosim_clear_last_error();
+
+    cosim_ValueReferenceVector_delete(refs);
+    cosim_variable_id_delete(observed);
+    cosim_time_series_observer_delete(series);
+    cosim_override_manipulator_delete(man);
+    cosim_last_value_observer_delete(obs);
+    cosim_execution_delete(exe);
+    cosim_fixed_step_algorithm_delete(algo);
 }
 
 int main(int argc, char** argv)
@@ -181,6 +341,14 @@ int main(int argc, char** argv)
         }
         cosim_execution_delete(exe3);
         cosim_fixed_step_algorithm_delete(algo3);
+    }
+
+    /* --- More conformance items (needs the test data directory). */
+    {
+        const char* data = getenv("LIBCOSIM_TEST_DATA");
+        const char* fmu = getenv("IDENTITY_FMU");
+        CHECK(data != NULL && fmu != NULL);
+        if (data && fmu) more_conformance(data, fmu);
     }
 
     /* --- Cleanup: every object returned by the API is owned by the caller. */
