@@ -127,7 +127,7 @@ namespace
         {
             auto* array = cbor_new_definite_array(blob.size());
             for (const auto& b : blob) {
-                wrap_cbor_call(cbor_array_push, "appending a byte to an array", array, cbor_build_uint8(static_cast<uint8_t>(b)));
+                wrap_cbor_call(cbor_array_push, "appending a byte to an array", array, cbor_move(cbor_build_uint8(static_cast<uint8_t>(b))));
             }
             wrap_cbor_call(cbor_map_add, "adding a byte array to a map", data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(array)});
         }
@@ -145,7 +145,7 @@ namespace
         void operator()(int8_t v)
         {
             auto value = v < 0 ? cbor_build_negint8(v) : cbor_build_uint8(v);
-            value = cbor_build_tag(TYPE_INT, value);
+            value = cbor_build_tag(TYPE_INT, cbor_move(value));
             wrap_cbor_call(cbor_map_add, "adding an int8 to a map", data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(value)});
         }
 
@@ -157,7 +157,7 @@ namespace
         void operator()(int16_t v)
         {
             auto value = v < 0 ? cbor_build_negint16(v) : cbor_build_uint16(v);
-            value = cbor_build_tag(TYPE_INT, value);
+            value = cbor_build_tag(TYPE_INT, cbor_move(value));
             wrap_cbor_call(cbor_map_add, "adding an int16 to a map", data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(value)});
         }
 
@@ -169,7 +169,7 @@ namespace
         void operator()(int32_t v)
         {
             auto value = v < 0 ? cbor_build_negint32(v) : cbor_build_uint32(v);
-            value = cbor_build_tag(TYPE_INT, value);
+            value = cbor_build_tag(TYPE_INT, cbor_move(value));
             wrap_cbor_call(cbor_map_add, "adding an int32 to a map", data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(value)});
         }
 
@@ -181,7 +181,7 @@ namespace
         void operator()(int64_t v)
         {
             auto value = v < 0 ? cbor_build_negint64(v) : cbor_build_uint64(v);
-            value = cbor_build_tag(TYPE_INT, value);
+            value = cbor_build_tag(TYPE_INT, cbor_move(value));
             wrap_cbor_call(cbor_map_add, "adding an int64 to a map", data_, cbor_pair{cbor_move(cbor_build_string(key_)), cbor_move(value)});
         }
 
