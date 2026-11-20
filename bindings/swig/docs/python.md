@@ -125,4 +125,7 @@ except cosim.CosimError as e:
   `variable_variability_fixed_value`).
 - Objects returned by the API are independent copies or shared references;
   they stay valid as long as you hold them.
+- Proxy FMUs (`proxyfmu://` sources in OSP configurations, FMUs run in
+  separate processes) work out of the box: the package includes the
+  `proxyfmu` executable.
 - Coming from libcosimpy: see [migrating from libcosimpy](libcosimpy-migration.md).

@@ -31,7 +31,10 @@ class LibcosimCConan(ConanFile):
     package_type = "shared-library"
     settings = "os", "compiler", "build_type", "arch"
     options = {"java": [True, False], "proxyfmu": [True, False]}
-    default_options = {"java": False, "proxyfmu": False}
+    # proxyfmu: the published packages support proxy FMUs (decided); this
+    # needs a proxyfmu whose client finds its executable next to the client
+    # library (proxy-fmu PR #110), required by libcosim's recipe.
+    default_options = {"java": False, "proxyfmu": True}
 
     exports_sources = (
         "CMakeLists.txt", "cosim.i", "cmake/*", "c/*",

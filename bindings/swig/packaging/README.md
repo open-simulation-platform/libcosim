@@ -33,12 +33,16 @@ and 3.4 MB on Windows).
 
 ### Proxy FMUs
 
-With `-o "&:proxyfmu=True"` (via `--conan-arg`), libcosim is built with
-proxyfmu, and every package also contains the `proxyfmu` executable (and its
-libraries) next to the binding's libraries. The proxyfmu client finds it
-there, whatever program loads the bindings; this needs a proxy-fmu that
-searches next to its client library (proxy-fmu PR #110). Off by default:
-whether the published packages include proxy-FMU support is not decided yet.
+The packages support proxy FMUs (FMUs run in separate processes, e.g. for
+isolation or other bitness): libcosim is built with proxyfmu, and every
+package contains the `proxyfmu` executable (and its libraries) next to the
+binding's libraries. The proxyfmu client finds it there, whatever program
+loads the bindings. This needs a proxyfmu release whose client searches next
+to its client library (proxy-fmu PR #110, stacked on #108 and #109), and
+libcosim's recipe requiring it; with proxyfmu 0.4.3 the executable is not
+found. `-o "&:proxyfmu=False"` (via `--conan-arg`) builds packages without
+it. The package tests run a proxy-FMU configuration when the package
+contains the executable.
 
 ## Building
 

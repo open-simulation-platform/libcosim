@@ -26,6 +26,7 @@ import re
 import shutil
 import subprocess
 import sys
+import zipfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SWIG_DIR = os.path.dirname(HERE)
@@ -157,8 +158,14 @@ def main():
         py = os.path.join(venv, "Scripts" if WINDOWS else "bin", "python")
         wheel = glob.glob(os.path.join(dist, "python", "*.whl"))[0]
         run([py, "-m", "pip", "install", "-q", wheel], env=env)
+        py_env = dict(env, LIBCOSIM_TEST_DATA=data)
+        # A package with proxy-FMU support (the proxyfmu executable) is
+        # tested with proxy FMUs too.
+        with zipfile.ZipFile(wheel) as z:
+            if any(os.path.basename(n) in ("proxyfmu", "proxyfmu.exe") for n in z.namelist()):
+                py_env["LIBCOSIM_TEST_PROXYFMU"] = "1"
         run([py, "-m", "unittest", "discover", "-s", os.path.join(SWIG_DIR, "python", "tests"),
-             "-p", "test_bindings.py"], env=dict(env, LIBCOSIM_TEST_DATA=data), cwd=tests)
+             "-p", "test_bindings.py"], env=py_env, cwd=tests)
 
     if "java" in langs:
         log("test java")
