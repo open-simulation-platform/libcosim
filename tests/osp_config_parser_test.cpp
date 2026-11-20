@@ -1,4 +1,6 @@
+#include <cosim/algorithm/ecco_algorithm.hpp>
 #include <cosim/algorithm/fixed_step_algorithm.hpp>
+#include <cosim/exception.hpp>
 #include <cosim/fs_portability.hpp>
 #include <cosim/log/simple.hpp>
 #include <cosim/observer/last_value_observer.hpp>
@@ -7,6 +9,7 @@
 
 #include <cstdlib>
 #include <exception>
+#include <fstream>
 
 
 #define REQUIRE(test) \
@@ -44,6 +47,94 @@ void test(const cosim::filesystem::path& configPath, size_t expectedNumConnectio
     REQUIRE(std::fabs(realValue - magicNumberFromConf) < 1e-9);
 }
 
+// Invalid or missing configuration files must be reported as cosim::error
+// with errc::bad_file, so that callers (and language bindings) get an
+// error code rather than a plain std::runtime_error.
+void require_bad_file(const cosim::filesystem::path& configPath)
+{
+    auto resolver = cosim::default_model_uri_resolver();
+    try {
+        cosim::load_osp_config(configPath, *resolver);
+    } catch (const cosim::error& e) {
+        REQUIRE(e.code() == cosim::errc::bad_file);
+        return;
+    }
+    throw std::runtime_error("Expected cosim::error for " + configPath.string());
+}
+
+void test_invalid_configs()
+{
+    const auto dir = cosim::filesystem::temp_directory_path() / "libcosim_osp_config_parser_test";
+    cosim::filesystem::create_directories(dir);
+
+    const auto invalid = dir / "OspSystemStructure.xml";
+    {
+        std::ofstream f(invalid);
+        f << "<?xml version=\"1.0\"?>\n"
+          << "<OspSystemStructure xmlns=\"http://opensimulationplatform.com/MSMI/OSPSystemStructure\">"
+          << "<NotAValidElement/></OspSystemStructure>\n";
+    }
+    require_bad_file(invalid);
+    require_bad_file(dir / "does_not_exist.xml");
+
+    cosim::filesystem::remove_all(dir);
+}
+
+void test_load_execution(const cosim::filesystem::path& testDataDir)
+{
+    auto configured = cosim::load_execution_from_osp_config(testDataDir / "msmi");
+    REQUIRE(configured.execution);
+    REQUIRE(configured.entity_maps.simulators.size() == 4);
+    REQUIRE(!configured.end_time);
+
+    auto& exe = *configured.execution;
+    REQUIRE(std::fabs(cosim::to_double_time_point(exe.current_time()) - 0.01) < 1e-9);
+
+    auto obs = std::make_shared<cosim::last_value_observer>();
+    exe.add_observer(obs);
+    REQUIRE(exe.simulate_until(cosim::to_time_point(0.02)));
+
+    // Initial value from the configuration file has been applied
+    const auto sim = configured.entity_maps.simulators.at("CraneController");
+    cosim::value_reference ref = 0;
+    bool found = false;
+    for (const auto& v : exe.get_model_description(sim).variables) {
+        if (v.name == "cl1_min") {
+            ref = v.reference;
+            found = true;
+        }
+    }
+    REQUIRE(found);
+    REQUIRE(std::fabs(obs->get_real(sim, {ref}).at(0) - 2.2) < 1e-9);
+
+    // End time is passed through
+    const auto withEnd = cosim::load_execution_from_osp_config(testDataDir / "msmi" / "OspSystemStructure_EndTime.xml");
+    REQUIRE(withEnd.end_time);
+    REQUIRE(std::fabs(cosim::to_double_time_point(*withEnd.end_time) - 0.001) < 1e-9);
+
+    // Options: start time override, worker threads, resolver, algorithm override
+    cosim::execution_load_options options;
+    options.start_time = cosim::to_time_point(1.0);
+    options.worker_thread_count = 2;
+    options.model_resolver = cosim::default_model_uri_resolver();
+    auto overridden = cosim::load_execution_from_osp_config(testDataDir / "msmi", options);
+    REQUIRE(std::fabs(cosim::to_double_time_point(overridden.execution->current_time()) - 1.0) < 1e-9);
+    REQUIRE(overridden.execution->simulate_until(cosim::to_time_point(1.001)));
+
+    const auto customAlgorithm = std::make_shared<cosim::fixed_step_algorithm>(cosim::to_duration(1e-4));
+    options.algorithm = customAlgorithm;
+    auto withAlgorithm = cosim::load_execution_from_osp_config(testDataDir / "msmi", options);
+    REQUIRE(withAlgorithm.execution->get_algorithm() == customAlgorithm);
+
+    // An ECCO algorithm from the configuration gets the worker threads too
+    cosim::execution_load_options eccoOptions;
+    eccoOptions.worker_thread_count = 2;
+    auto ecco = cosim::load_execution_from_osp_config(
+        testDataDir / "fmi2" / "quarter_truck" / "OspSystemStructure.xml", eccoOptions);
+    REQUIRE(std::dynamic_pointer_cast<cosim::ecco_algorithm>(ecco.execution->get_algorithm()));
+    REQUIRE(ecco.execution->step() > cosim::duration::zero());
+}
+
 int main()
 {
     try {
@@ -54,6 +145,8 @@ int main()
         REQUIRE(testDataDir);
         test(cosim::filesystem::path(testDataDir) / "msmi", 7);
         test(cosim::filesystem::path(testDataDir) / "msmi" / "OspSystemStructure_Bond.xml", 9);
+        test_invalid_configs();
+        test_load_execution(cosim::filesystem::path(testDataDir));
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what();
         return 1;

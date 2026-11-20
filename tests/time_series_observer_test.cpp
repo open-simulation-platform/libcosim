@@ -88,6 +88,20 @@ int main()
             }
         }
 
+        // The convenience overload returns the same samples
+        const auto samples = observer->get_real_samples(simIndex, varIndex, 1, numSamples);
+        REQUIRE(samples.values.size() == samplesRead);
+        REQUIRE(samples.steps.size() == samplesRead);
+        REQUIRE(samples.times.size() == samplesRead);
+        for (size_t i = 0; i < samplesRead; i++) {
+            REQUIRE(samples.values[i] == realValues[i]);
+            REQUIRE(samples.steps[i] == steps[i]);
+            REQUIRE(samples.times[i] == times[i]);
+        }
+        const auto intSamples = observer->get_integer_samples(simIndex, varIndex, 1, 2);
+        REQUIRE(intSamples.values.size() <= 2);
+        REQUIRE(intSamples.values.size() == intSamples.times.size());
+
         observer->stop_observing(variableId);
 
         bufferedObserver->start_observing(variableId);

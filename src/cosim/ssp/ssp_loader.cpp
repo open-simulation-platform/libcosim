@@ -5,6 +5,7 @@
  */
 #include "cosim/ssp/ssp_loader.hpp"
 
+#include "cosim/exception.hpp"
 #include "cosim/function/linear_transformation.hpp"
 #include "cosim/log/logger.hpp"
 #include "cosim/ssp/ssp_parser.hpp"
@@ -146,6 +147,36 @@ ssp_configuration ssp_loader::load(const cosim::filesystem::path& configPath)
         }
     }
     return configuration;
+}
+
+configured_execution load_execution_from_ssp(
+    const cosim::filesystem::path& configPath,
+    const execution_load_options& options)
+{
+    ssp_loader loader;
+    if (options.model_resolver) loader.set_model_uri_resolver(options.model_resolver);
+    const auto config = loader.load(configPath);
+
+    const auto algorithm = options.algorithm ? options.algorithm : config.algorithm;
+    if (!algorithm) {
+        throw error(
+            make_error_code(errc::bad_file),
+            "No co-simulation algorithm given, and none specified in " + configPath.string());
+    }
+    const auto parameters = config.parameter_sets.find(options.parameter_set);
+    if (parameters == config.parameter_sets.end()) {
+        throw error(
+            make_error_code(errc::bad_file),
+            "No parameter set named '" + options.parameter_set + "' in " + configPath.string());
+    }
+
+    configured_execution result;
+    result.execution = std::make_shared<execution>(
+        options.start_time.value_or(config.start_time),
+        algorithm);
+    result.entity_maps = inject_system_structure(
+        *result.execution, config.system_structure, parameters->second);
+    return result;
 }
 
 } // namespace cosim

@@ -22,13 +22,6 @@ namespace cosim
 class scenario_manager : public manipulator
 {
 public:
-    void simulator_added(simulator_index, manipulable*, time_point) override;
-
-    void simulator_removed(simulator_index, time_point) override;
-
-    void step_commencing(
-        time_point currentTime) override;
-
     /// Constructor.
     scenario_manager();
 
@@ -73,6 +66,14 @@ public:
 
     /// Abort the execution of a running scenario.
     void abort_scenario();
+
+private:
+    // `manipulator` interface. Called by the execution through a `manipulator` pointer,
+    // not part of this class's user API.
+    void simulator_added(simulator_index, manipulable*, time_point) override;
+    void simulator_removed(simulator_index, time_point) override;
+    void step_commencing(
+        time_point currentTime) override;
 
 private:
     class impl;

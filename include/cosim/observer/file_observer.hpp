@@ -162,34 +162,30 @@ public:
      */
     void stop_recording();
 
+    cosim::filesystem::path get_log_path();
+
+    ~file_observer() override;
+
+private:
+    // `observer` interface. Called by the execution through an `observer` pointer,
+    // not part of this class's user API.
     void simulator_added(simulator_index, observable*, time_point) override;
-
     void simulator_removed(simulator_index, time_point) override;
-
     void variables_connected(variable_id output, variable_id input, time_point) override;
-
     void variable_disconnected(variable_id input, time_point) override;
-
     void simulation_initialized(
         step_number firstStep,
         time_point startTime) override;
-
     void step_complete(
         step_number lastStep,
         duration lastStepSize,
         time_point currentTime) override;
-
     void simulator_step_complete(
         simulator_index index,
         step_number lastStep,
         duration lastStepSize,
         time_point currentTime) override;
-
     void state_restored(step_number currentStep, time_point currentTime) override;
-
-    cosim::filesystem::path get_log_path();
-
-    ~file_observer() override;
 
 private:
     struct simulator_logging_config

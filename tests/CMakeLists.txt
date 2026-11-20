@@ -143,6 +143,7 @@ add_custom_target(
 
 set(tests        
     "ecco_algorithm_from_system_structure_test"
+    "execution_api_test"
     "ecco_algorithm_multi_bond_test"
     "ecco_algorithm_powerbond_logconfig_test"
     "ecco_algorithm_test"
@@ -300,6 +301,7 @@ add_dependencies(
     fmi2_derivative_fixture)
 
 set(reference_fmu_test_targets
+    cpp_execution_api_test
     cpp_save_state_test
     cpp_slave_simulator_unittest)
 if(LIBCOSIM_WITH_PROXYFMU)
@@ -349,6 +351,8 @@ set(cpp_fmi_v2_fmu_unittest_cases_requiring_bundled_fmu_binaries
     v2_fmu)
 set(cpp_ssp_loader_unittest_cases_requiring_bundled_fmu_binaries
     basic_test
+    load_execution_from_ssp_algorithm_test
+    load_execution_from_ssp_test
     no_algorithm_test
     ssp_archive
     ssp_linear_transformation_test

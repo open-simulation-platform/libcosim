@@ -1,0 +1,11 @@
+name = "Libcosim"
+uuid = "5b0e6f43-8d2a-4c6e-9a51-3f7e2d1c8b90"
+authors = ["Open Simulation Platform"]
+version = "0.11.3"
+
+[deps]
+Artifacts = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"
+
+[compat]
+Artifacts = "1"
+julia = "1.9"

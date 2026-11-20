@@ -10,10 +10,13 @@
 #define LIBCOSIM_OSP_CONFIG_PARSER_HPP
 
 #include <cosim/algorithm.hpp>
+#include <cosim/execution.hpp>
 #include <cosim/model_description.hpp>
 #include <cosim/orchestration.hpp>
 #include <cosim/system_structure.hpp>
 #include <cosim/time.hpp>
+
+#include <memory>
 
 namespace cosim
 {
@@ -45,6 +48,26 @@ struct osp_config
 osp_config load_osp_config(
     const cosim::filesystem::path& configPath,
     cosim::model_uri_resolver& resolver);
+
+
+/**
+ *  Creates a ready-to-run execution from an OSP-IS system structure file.
+ *
+ *  This loads the configuration with `load_osp_config()`, creates the
+ *  algorithm it specifies (fixed-step or ECCO), creates an execution
+ *  starting at the configured start time, and adds the system structure
+ *  and initial values with `inject_system_structure()`.
+ *
+ *  \param configPath
+ *      Path to an OSP-IS configuration file, or to a directory that
+ *      contains a file named `OspSystemStructure.xml`.
+ *  \param options
+ *      Overrides for start time, worker threads, model resolver and
+ *      algorithm. `parameter_set` is ignored.
+ */
+configured_execution load_execution_from_osp_config(
+    const cosim::filesystem::path& configPath,
+    const execution_load_options& options = {});
 
 
 } // namespace cosim

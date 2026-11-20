@@ -48,11 +48,11 @@ std::pair<cosim::simulator_index, cosim::manipulable*> find_simulator(
 bool is_input(cosim::variable_causality causality)
 {
     switch (causality) {
-        case input:
-        case parameter:
+        case variable_causality::input:
+        case variable_causality::parameter:
             return true;
-        case calculated_parameter:
-        case output:
+        case variable_causality::calculated_parameter:
+        case variable_causality::output:
             return false;
         default:
             std::ostringstream oss;

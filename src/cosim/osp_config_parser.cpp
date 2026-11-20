@@ -10,13 +10,13 @@
 #include "cosim/algorithm.hpp"
 #include "cosim/function/linear_transformation.hpp"
 #include "cosim/function/vector_sum.hpp"
+#include "cosim/exception.hpp"
 #include "cosim/log/logger.hpp"
 #include "cosim/uri.hpp"
 
 #include <boost/lexical_cast.hpp>
 #include <xercesc/dom/DOM.hpp>
 #include <xercesc/framework/MemBufInputSource.hpp>
-#include <xercesc/framework/StdOutFormatTarget.hpp>
 #include <xercesc/framework/Wrapper4InputSource.hpp>
 #include <xercesc/framework/XMLFormatter.hpp>
 #include <xercesc/util/PlatformUtils.hpp>
@@ -33,6 +33,8 @@
 #include <stdexcept>
 #include <string>
 #include <typeinfo>
+#include <variant>
+#include <type_traits>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -313,10 +315,11 @@ osp_config_parser::osp_config_parser(
     const auto parser = static_cast<xercesc::DOMImplementationLS*>(domImpl)->createLSParser(
         xercesc::DOMImplementationLS::MODE_SYNCHRONOUS,
         tc("http://www.w3.org/2001/XMLSchema").get());
-
-    auto outputTarget = ((xercesc::DOMImplementationLS*)domImpl)->createLSOutput();
-    auto outputFormat = new xercesc::StdOutFormatTarget();
-    outputTarget->setByteStream(outputFormat);
+    // Releases the parser and the document it owns. Declared after
+    // xerces_cleanup, so it runs before XMLPlatformUtils::Terminate().
+    const auto parser_cleanup = final_action([parser]() {
+        parser->release();
+    });
 
     error_handler errorHandler;
 
@@ -348,7 +351,7 @@ osp_config_parser::osp_config_parser(
         std::ostringstream oss;
         oss << "Validation of " << configPath.string() << " failed.";
         BOOST_LOG_SEV(log::logger(), log::error) << oss.str();
-        throw std::runtime_error(oss.str());
+        throw error(make_error_code(errc::bad_file), oss.str());
     }
 
     const auto rootElement = doc->getDocumentElement();
@@ -461,7 +464,7 @@ osp_config_parser::osp_config_parser(
             } else {
                 std::ostringstream oss;
                 oss << "Found unknown function type " << functionNodeName << " with name " << functionName;
-                throw std::runtime_error(oss.str());
+                throw error(make_error_code(errc::bad_file), oss.str());
             }
         }
     }
@@ -685,7 +688,7 @@ variable_type osp_config_parser::parse_variable_type(const std::string& str)
     if ("Enumeration" == str) {
         return cosim::variable_type::enumeration;
     }
-    throw std::runtime_error("Failed to parse variable type: " + str);
+    throw error(make_error_code(errc::bad_file), "Failed to parse variable type: " + str);
 }
 
 bool osp_config_parser::parse_boolean_value(const std::string& s)
@@ -698,7 +701,7 @@ bool osp_config_parser::parse_boolean_value(const std::string& s)
         iss.clear();
         iss >> std::boolalpha >> bool_value;
         if (iss.fail()) {
-            throw std::runtime_error("Value: '" + s + "' is not convertable to bool");
+            throw error(make_error_code(errc::bad_file), "Value: '" + s + "' is not convertable to bool");
         }
     }
 
@@ -724,6 +727,11 @@ struct extended_model_description
 
         const auto domImpl = xercesc::DOMImplementationRegistry::getDOMImplementation(tc("LS").get());
         const auto parser = static_cast<xercesc::DOMImplementationLS*>(domImpl)->createLSParser(xercesc::DOMImplementationLS::MODE_SYNCHRONOUS, tc("http://www.w3.org/2001/XMLSchema").get());
+        // Releases the parser and the document it owns. Declared after
+        // xerces_cleanup, so it runs before XMLPlatformUtils::Terminate().
+        const auto parser_cleanup = final_action([parser]() {
+            parser->release();
+        });
 
         const auto doc = parser->parseURI(ospModelDescription.string().c_str());
 
@@ -731,7 +739,7 @@ struct extended_model_description
             std::ostringstream oss;
             oss << "Validation of " << ospModelDescription.string() << " failed.";
             BOOST_LOG_SEV(log::logger(), log::error) << oss.str();
-            throw std::runtime_error(oss.str());
+            throw error(make_error_code(errc::bad_file), oss.str());
         }
 
         const auto rootElement = doc->getDocumentElement();
@@ -782,7 +790,7 @@ osp_config_parser::SignalConnection find_signal_connection(
     if (it == signalConnections.end()) {
         std::ostringstream oss;
         oss << "Missing expected connection to " << functionName << ":" << signalName;
-        throw std::runtime_error(oss.str());
+        throw error(make_error_code(errc::invalid_system_structure), oss.str());
     }
     return *it;
 }
@@ -821,7 +829,7 @@ void add_power_bonds(const std::vector<osp_config_parser::PowerBondConnection>& 
         if (aPowerBond.size() != 2) {
             std::ostringstream oss;
             oss << "The powerbond " << pbName << " does not have 2 connections! Number of connections found was " << aPowerBond.size();
-            throw std::runtime_error(oss.str());
+            throw error(make_error_code(errc::invalid_system_structure), oss.str());
         }
 
         const auto& connectionA = aPowerBond[0];
@@ -845,13 +853,13 @@ void add_power_bonds(const std::vector<osp_config_parser::PowerBondConnection>& 
         if ((varA.has_value() && !varB.has_value()) || (!varA.has_value() && varB.has_value())) {
             std::ostringstream oss;
             oss << "Missing causality for powerbond connection " << connectionA.connection.variableA.name << " <-> " << connectionA.connection.variableB.name << ". Both variables in a powerbond must have an input and output causality specified as attribute.";
-            throw std::runtime_error(oss.str());
+            throw error(make_error_code(errc::invalid_system_structure), oss.str());
         }
 
         if ((varC.has_value() && !varD.has_value()) || (!varC.has_value() && varD.has_value())) {
             std::ostringstream oss;
             oss << "Missing causality for powerbond connection " << connectionB.connection.variableA.name << " <-> " << connectionB.connection.variableB.name << ". Both variables in a powerbond must have an input and output causality specified as attribute.";
-            throw std::runtime_error(oss.str());
+            throw error(make_error_code(errc::invalid_system_structure), oss.str());
         }
 
         auto powerbond = cosim::system_structure::power_bond{};
@@ -868,7 +876,7 @@ void add_power_bonds(const std::vector<osp_config_parser::PowerBondConnection>& 
                 default:
                     std::ostringstream oss;
                     oss << "Invalid causality value for variable " << var.name << ": " << var.causality.value() << ". Accepted values are input, output.";
-                    throw std::runtime_error(oss.str());
+                    throw error(make_error_code(errc::bad_file), oss.str());
                     break;
             }
         }
@@ -885,7 +893,7 @@ void add_power_bonds(const std::vector<osp_config_parser::PowerBondConnection>& 
                 default:
                     std::ostringstream oss;
                     oss << "Invalid causality value for variable " << var.name << ": " << var.causality.value() << ". Accepted values are input, output.";
-                    throw std::runtime_error(oss.str());
+                    throw error(make_error_code(errc::bad_file), oss.str());
                     break;
             }
         }
@@ -904,7 +912,7 @@ void add_power_bonds(const std::vector<osp_config_parser::PowerBondConnection>& 
     if (uniqueCount != numPowerBonds) {
         std::ostringstream oss;
         oss << "The number of powerbonds (" << numPowerBonds << ") is not equal to the number of unique power bond names (" << uniqueCount << ") found in the configured system. Power bond names must be unique pr. bond, that is found on only and exactly the two VariableConnections that form the bond.";
-        throw std::runtime_error(oss.str());
+        throw error(make_error_code(errc::invalid_system_structure), oss.str());
     }
 }
 
@@ -940,7 +948,7 @@ extended_model_description get_emd(
     if (emdIt == emds.end()) {
         std::ostringstream oss;
         oss << "Cannot find extended model description for " << element;
-        throw std::runtime_error(oss.str());
+        throw error(make_error_code(errc::bad_file), oss.str());
     }
     return emdIt->second;
 }
@@ -1003,7 +1011,7 @@ void connect_variable_groups(
                 << " has different size [" << variableGroupsA.size() << "] than variable group "
                 << connection.variableB.simulator << ":" << connection.variableB.name
                 << " size [" << variableGroupsB.size() << "]";
-            throw std::runtime_error(oss.str());
+            throw error(make_error_code(errc::invalid_system_structure), oss.str());
         }
 
         std::vector<osp_config_parser::VariableConnection> nestedVariableGroupConnections;
@@ -1023,7 +1031,7 @@ void connect_variable_groups(
                 << " has different size [" << variablesA.size() << "] than variable group "
                 << connection.variableB.simulator << ":" << connection.variableB.name
                 << " size [" << variablesB.size() << "]";
-            throw std::runtime_error(oss.str());
+            throw error(make_error_code(errc::invalid_system_structure), oss.str());
         }
 
         std::vector<osp_config_parser::VariableConnection> variableConnections;
@@ -1166,14 +1174,14 @@ osp_config load_osp_config(
         std::ostringstream oss;
         oss << "Configured base step size [" << simInfo.stepSize << "] must be nonzero and positive";
         BOOST_LOG_SEV(log::logger(), log::error) << oss.str();
-        throw std::runtime_error(oss.str());
+        throw error(make_error_code(errc::bad_file), oss.str());
     }
 
     if (simInfo.endTime.has_value() && simInfo.startTime > simInfo.endTime.value()) {
         std::ostringstream oss;
         oss << "Configured start time [" << simInfo.startTime << "] is larger than configured end time [" << simInfo.endTime.value() << "]";
         BOOST_LOG_SEV(log::logger(), log::error) << oss.str();
-        throw std::runtime_error(oss.str());
+        throw error(make_error_code(errc::bad_file), oss.str());
     }
 
     osp_config config;
@@ -1191,13 +1199,13 @@ osp_config load_osp_config(
             BOOST_LOG_SEV(log::logger(), log::info) << "Configuring algorithm: ecco";
             config.algorithm_configuration = simInfo.eccoConfiguration.value();
         } else {
-            throw std::runtime_error("No configuration parameters found for ecco algorithm.");
+            throw error(make_error_code(errc::bad_file), "No configuration parameters found for ecco algorithm.");
         }
     } else if (algorithm == "fixedstep") {
         BOOST_LOG_SEV(log::logger(), log::info) << "Configuring algorithm: fixedStep";
         config.algorithm_configuration = cosim::fixed_step_algorithm_params{to_duration(simInfo.stepSize)};
     } else {
-        throw std::runtime_error("Invalid algorithm choice. Allowed values are fixedStep, ecco.");
+        throw error(make_error_code(errc::bad_file), "Invalid algorithm choice. Allowed values are fixedStep, ecco.");
     }
 
     auto simulators = parser.get_elements();
@@ -1243,6 +1251,37 @@ osp_config load_osp_config(
     add_power_bonds(parser.get_power_bond_connections(), config.system_structure);
 
     return config;
+}
+
+configured_execution load_execution_from_osp_config(
+    const cosim::filesystem::path& configPath,
+    const execution_load_options& options)
+{
+    const auto resolver = options.model_resolver ? options.model_resolver : default_model_uri_resolver();
+    const auto config = load_osp_config(configPath, *resolver);
+
+    auto algorithm = options.algorithm;
+    if (!algorithm) {
+        algorithm = std::visit(
+            [&options](const auto& params) -> std::shared_ptr<cosim::algorithm> {
+                using params_type = std::decay_t<decltype(params)>;
+                if constexpr (std::is_same_v<params_type, fixed_step_algorithm_params>) {
+                    return std::make_shared<fixed_step_algorithm>(params, options.worker_thread_count);
+                } else {
+                    return std::make_shared<ecco_algorithm>(params, options.worker_thread_count);
+                }
+            },
+            config.algorithm_configuration);
+    }
+
+    configured_execution result;
+    result.execution = std::make_shared<execution>(
+        options.start_time.value_or(config.start_time),
+        algorithm);
+    result.entity_maps = inject_system_structure(
+        *result.execution, config.system_structure, config.initial_values);
+    result.end_time = config.end_time;
+    return result;
 }
 
 } // namespace cosim

@@ -15,6 +15,7 @@ option(LIBCOSIM_BUILD_PRIVATE_APIDOC "Build private API documentation (only used
 option(LIBCOSIM_STANDALONE_INSTALLATION "Whether to build for a standalone installation (Linux only; sets a relative RPATH)" OFF)
 option(LIBCOSIM_WITH_PROXYFMU "Whether or not to build with proxy-fmu integration" OFF)
 option(LIBCOSIM_NO_FMI_LOGGING "Disable FMI logging during simulation" OFF)
+option(LIBCOSIM_BUILD_SWIG_BINDINGS "Build SWIG language bindings (experimental)" OFF)
 
 # ==============================================================================
 # Global internal configuration
@@ -129,6 +130,10 @@ endif()
 # ==============================================================================
 
 add_subdirectory("src")
+if(LIBCOSIM_BUILD_SWIG_BINDINGS)
+    enable_testing()
+    add_subdirectory("bindings/swig")
+endif()
 if(LIBCOSIM_BUILD_TESTS)
     enable_testing()
     add_subdirectory("tests")

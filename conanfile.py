@@ -30,12 +30,18 @@ class LibcosimConan(ConanFile):
         "fPIC": [True, False],
         "proxyfmu": [True, False],
         "no_fmi_logging": [True, False],
+        "swig_bindings": [True, False],
+        "swig_java": [True, False],
+        "swig_csharp": [True, False],
     }
     default_options = {
         "shared": True,
         "fPIC": True,
         "proxyfmu": False,
         "no_fmi_logging": False,
+        "swig_bindings": False,
+        "swig_java": False,
+        "swig_csharp": False,
     }
 
     # Dependencies/requirements
@@ -53,9 +59,15 @@ class LibcosimConan(ConanFile):
         self.requires("yaml-cpp/[~0.9]")
         self.requires("xerces-c/[~3.2]")
 
+    def build_requirements(self):
+        if self.options.swig_bindings:
+            self.tool_requires("swig/4.4.1")  # pinned: the C backend is experimental
+            if self.options.swig_java:
+                self.tool_requires("zulu-openjdk/21.0.11")  # javac and JNI headers
+
     # Exports
     exports = "version.txt"
-    exports_sources = ("src/*", "include/*", "cmake/*", "data/*", "docs/*", "tests/*", "CHANGELOG.md", "CMakeLists.txt",
+    exports_sources = ("src/*", "include/*", "cmake/*", "data/*", "docs/*", "tests/*", "bindings/*", "CHANGELOG.md", "CMakeLists.txt",
                        "CONTRIBUTING.md", "LICENSE", "README.md", "version.txt")
 
     # Build steps
@@ -71,16 +83,29 @@ class LibcosimConan(ConanFile):
         if self.options.shared:
             self.options.rm_safe("fPIC")
         self.options["*"].shared = self.options.shared
+        # libzip is only used internally (src/cosim/utility/zip.cpp), so link
+        # it statically. As a DLL it is named zip.dll, which clashes with the
+        # JVM's own zip.dll on Windows: a JVM loads its zip.dll first, and
+        # cosim.dll then gets bound to it ("The specified procedure could not
+        # be found"), so libcosim could not be used from Java at all.
+        self.options["libzip"].shared = False
+        # A static libzip links zstd::libzstd_static, which a shared zstd
+        # package does not provide, so zstd (used only by libzip) is static
+        # too.
+        self.options["zstd"].shared = False
 
     def generate(self):
         # Copy dependencies to the folder where executables (tests, mainly)
-        # will be placed, so it's easier to run them.
+        # will be placed, so it's easier to run them. Only host (library)
+        # dependencies: build tools may ship their own runtime DLLs (the JDK
+        # used for the Java bindings bundles an older ucrtbase.dll), which
+        # would shadow the system's and break every executable.
         outputdir = os.path.join(
             self.build_folder, "output", str(self.settings.build_type).lower()
         )
         bindir = os.path.join(outputdir, "bin")
         libdir = os.path.join(outputdir, "lib")
-        for dep in self.dependencies.values():
+        for dep in self.dependencies.host.values():
             for depdir in dep.cpp_info.bindirs:
                 copy(self, "*.dll", depdir, bindir, keep_path=False)
                 copy(self, "*.pdb", depdir, bindir, keep_path=False)
@@ -98,6 +123,10 @@ class LibcosimConan(ConanFile):
         tc.cache_variables["LIBCOSIM_BUILD_TESTS"] = self._is_tests_enabled()
         tc.cache_variables["LIBCOSIM_NO_FMI_LOGGING"] = self.options.no_fmi_logging
         tc.cache_variables["LIBCOSIM_WITH_PROXYFMU"] = self.options.proxyfmu
+        tc.cache_variables["LIBCOSIM_BUILD_SWIG_BINDINGS"] = self.options.swig_bindings
+        tc.cache_variables["LIBCOSIM_SWIG_JAVA"] = self.options.swig_bindings and self.options.swig_java
+        # C#: the .NET SDK (dotnet) must be installed; there is no Conan package.
+        tc.cache_variables["LIBCOSIM_SWIG_CSHARP"] = self.options.swig_bindings and self.options.swig_csharp
         tc.generate()
         CMakeDeps(self).generate()
 

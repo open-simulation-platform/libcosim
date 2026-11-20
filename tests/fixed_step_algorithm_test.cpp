@@ -35,6 +35,26 @@ int main()
         const auto realTimeConfig = execution.get_real_time_config();
         REQUIRE(!realTimeConfig->real_time_simulation);
 
+        // Plain-value accessors reflect and update the same configuration
+        REQUIRE(!execution.is_real_time_simulation());
+        execution.set_real_time_factor_target(2.5);
+        REQUIRE(execution.get_real_time_factor_target() == 2.5);
+        REQUIRE(realTimeConfig->real_time_factor_target == 2.5);
+        execution.set_steps_to_monitor(7);
+        REQUIRE(execution.get_steps_to_monitor() == 7);
+        execution.set_real_time_simulation(true);
+        REQUIRE(realTimeConfig->real_time_simulation);
+        execution.set_real_time_simulation(false);
+        execution.set_real_time_factor_target(1.0);
+        execution.set_steps_to_monitor(5);
+        bool rejected = false;
+        try {
+            execution.set_real_time_factor_target(0.0);
+        } catch (const std::invalid_argument&) {
+            rejected = true;
+        }
+        REQUIRE(rejected);
+
         auto observer = std::make_shared<cosim::last_value_observer>();
         execution.add_observer(observer);
 
@@ -76,6 +96,8 @@ int main()
         const auto realTimeMetrics = execution.get_real_time_metrics();
         REQUIRE(realTimeMetrics->rolling_average_real_time_factor > 0.0);
         REQUIRE(realTimeMetrics->total_average_real_time_factor > 0.0);
+        REQUIRE(execution.get_rolling_average_real_time_factor() > 0.0);
+        REQUIRE(execution.get_total_average_real_time_factor() > 0.0);
 
         simResult = execution.simulate_until(endTime);
         REQUIRE(simResult);

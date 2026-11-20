@@ -81,6 +81,16 @@ int main()
         REQUIRE(stringInValue == "");
         REQUIRE(stringOutValue == "bar");
 
+        // Vector-returning convenience getters give the same values
+        const auto reals = observer->get_real(sim, std::vector<cosim::value_reference>{realInRef, realOutRef});
+        REQUIRE(reals.size() == 2);
+        REQUIRE(std::fabs(reals[0] - 0.0) < 1.0e-9);
+        REQUIRE(std::fabs(reals[1] - 1.234) < 1.0e-9);
+        REQUIRE((observer->get_integer(sim, {intInRef, intOutRef}) == std::vector<int>{0, 1}));
+        REQUIRE((observer->get_boolean(sim, {boolInRef, boolOutRef}) == std::vector<bool>{false, true}));
+        REQUIRE((observer->get_string(sim, {stringInRef, stringOutRef}) == std::vector<std::string>{"", "bar"}));
+        REQUIRE(observer->get_real(sim, std::vector<cosim::value_reference>{}).empty());
+
         auto manipulator = std::make_shared<cosim::override_manipulator>();
         execution.add_manipulator(manipulator);
 

@@ -16,7 +16,9 @@
 #include <cosim/time.hpp>
 
 #include <memory>
+#include <string>
 #include <unordered_map>
+#include <vector>
 
 
 namespace cosim
@@ -32,31 +34,6 @@ class last_value_observer : public last_value_provider
 {
 public:
     last_value_observer();
-
-    void simulator_added(simulator_index, observable*, time_point) override;
-
-    void simulator_removed(simulator_index, time_point) override;
-
-    void variables_connected(variable_id output, variable_id input, time_point) override;
-
-    void variable_disconnected(variable_id input, time_point) override;
-
-    void simulation_initialized(
-        step_number firstStep,
-        time_point startTime) override;
-
-    void step_complete(
-        step_number lastStep,
-        duration lastStepSize,
-        time_point currentTime) override;
-
-    void simulator_step_complete(
-        simulator_index index,
-        step_number lastStep,
-        duration lastStepSize,
-        time_point currentTime) override;
-
-    void state_restored(step_number currentStep, time_point currentTime) override;
 
     void get_real(
         simulator_index sim,
@@ -78,7 +55,42 @@ public:
         gsl::span<const value_reference> variables,
         gsl::span<std::string> values) override;
 
+    /**
+     *  \name Convenience getters returning the values
+     *
+     *  Same as the span-based overloads, but return the latest observed
+     *  values in a new vector, ordered like `variables`. These need no
+     *  pre-sized output buffers, and are what language bindings use.
+     */
+    ///@{
+    std::vector<double> get_real(simulator_index sim, const std::vector<value_reference>& variables);
+    std::vector<int> get_integer(simulator_index sim, const std::vector<value_reference>& variables);
+    std::vector<bool> get_boolean(simulator_index sim, const std::vector<value_reference>& variables);
+    std::vector<std::string> get_string(simulator_index sim, const std::vector<value_reference>& variables);
+    ///@}
+
     ~last_value_observer() noexcept override;
+
+private:
+    // `observer` interface. Called by the execution through an `observer` pointer,
+    // not part of this class's user API.
+    void simulator_added(simulator_index, observable*, time_point) override;
+    void simulator_removed(simulator_index, time_point) override;
+    void variables_connected(variable_id output, variable_id input, time_point) override;
+    void variable_disconnected(variable_id input, time_point) override;
+    void simulation_initialized(
+        step_number firstStep,
+        time_point startTime) override;
+    void step_complete(
+        step_number lastStep,
+        duration lastStepSize,
+        time_point currentTime) override;
+    void simulator_step_complete(
+        simulator_index index,
+        step_number lastStep,
+        duration lastStepSize,
+        time_point currentTime) override;
+    void state_restored(step_number currentStep, time_point currentTime) override;
 
 private:
     std::unordered_map<simulator_index, std::unique_ptr<slave_value_provider>> valueProviders_;

@@ -80,6 +80,49 @@ int main()
 
         const auto state_bb = execution.export_current_state();
 
+        // Truncated, corrupted and random state data: reading it, and
+        // importing whatever still decodes, is an error, never a crash.
+        {
+            std::ostringstream out(std::ios::binary);
+            out << cosim::serialization::format::cbor << state_bb;
+            const auto bytes = out.str();
+            REQUIRE(!bytes.empty());
+
+            const auto try_import = [&](const std::string& data) {
+                try {
+                    std::istringstream in(data, std::ios::binary);
+                    cosim::serialization::node node;
+                    in >> cosim::serialization::format::cbor >> node;
+                    execution.import_state(node);
+                } catch (const std::exception&) {
+                }
+            };
+            for (std::size_t n = 0; n < bytes.size(); ++n) {
+                try_import(bytes.substr(0, n));
+            }
+            for (std::size_t i = 0; i < bytes.size(); ++i) {
+                auto corrupted = bytes;
+                corrupted[i] = static_cast<char>(corrupted[i] ^ 0xA5);
+                try_import(corrupted);
+            }
+            std::uint32_t seed = 12345;
+            for (int k = 0; k < 500; ++k) {
+                std::string random(1 + k % 64, '\0');
+                for (auto& c : random) {
+                    seed = seed * 1664525u + 1013904223u;
+                    c = static_cast<char>(seed >> 24);
+                }
+                try_import(random);
+            }
+
+            // The execution still accepts the valid state
+            std::istringstream in(bytes, std::ios::binary);
+            cosim::serialization::node node;
+            in >> cosim::serialization::format::cbor >> node;
+            execution.import_state(node);
+            REQUIRE(execution.export_current_state() == state_bb);
+        }
+
         // Export state
         std::ofstream outFile("state_bb.bin", std::ios::binary);
         outFile << cosim::serialization::format::cbor << state_bb;
@@ -106,6 +149,71 @@ int main()
 
         REQUIRE(state_bb_2 == state_bb_imported);
         REQUIRE(state_bb == state_bb_imported);
+
+        // Export and import as bytes (export_current_state_bytes)
+        {
+            const auto bytes = execution.export_current_state_bytes();
+            REQUIRE(!bytes.empty());
+            const auto timeBefore = execution.current_time();
+            const auto xBefore = get_reals(*obs, {0}, xRef);
+            execution.simulate_until(cosim::to_time_point(1.0));
+            REQUIRE(execution.current_time() != timeBefore);
+            execution.import_state_bytes(bytes);
+            REQUIRE(execution.current_time() == timeBefore);
+            REQUIRE(execution.export_current_state() == state_bb);
+            execution.step();
+            execution.import_state_bytes(bytes);
+            REQUIRE(get_reals(*obs, {0}, xRef) == xBefore);
+
+            // Invalid bytes are an error, not a crash
+            bool threw = false;
+            try {
+                execution.import_state_bytes({0xff, 0x00, 0x13});
+            } catch (const cosim::error& e) {
+                threw = (e.code() == cosim::errc::bad_file);
+            }
+            REQUIRE(threw);
+
+            // Truncated, corrupted or random data: an error (or, for a
+            // corruption that still decodes, a successful import), never
+            // a crash.
+            const auto import_does_not_crash = [&](const std::vector<std::uint8_t>& data) {
+                try {
+                    execution.import_state_bytes(data);
+                } catch (const cosim::error&) {
+                }
+            };
+            for (std::size_t n = 0; n < bytes.size(); ++n) {
+                import_does_not_crash(std::vector<std::uint8_t>(bytes.begin(), bytes.begin() + n));
+            }
+            for (std::size_t i = 0; i < bytes.size(); ++i) {
+                auto corrupted = bytes;
+                corrupted[i] ^= 0xA5;
+                import_does_not_crash(corrupted);
+            }
+            std::uint32_t seed = 12345;
+            for (int k = 0; k < 500; ++k) {
+                std::vector<std::uint8_t> random(1 + k % 64);
+                for (auto& b : random) {
+                    seed = seed * 1664525u + 1013904223u;
+                    b = static_cast<std::uint8_t>(seed >> 24);
+                }
+                import_does_not_crash(random);
+            }
+            execution.import_state_bytes(bytes);
+            REQUIRE(execution.current_time() == timeBefore);
+
+            // So is exporting from an execution that is not initialized
+            auto fresh = cosim::execution(
+                cosim::time_point(), std::make_shared<cosim::fixed_step_algorithm>(stepSize));
+            threw = false;
+            try {
+                fresh.export_current_state_bytes();
+            } catch (const cosim::error& e) {
+                threw = (e.code() == cosim::errc::invalid_operation);
+            }
+            REQUIRE(threw);
+        }
 
 
         // ================================================================

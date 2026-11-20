@@ -6,6 +6,7 @@
 #include "cosim/ssp/ssp_parser.hpp"
 
 #include "cosim/error.hpp"
+#include "cosim/exception.hpp"
 
 #include <boost/property_tree/xml_parser.hpp>
 
@@ -14,6 +15,20 @@ namespace cosim
 
 namespace
 {
+
+// Reads an XML file, reporting I/O and syntax errors as cosim::error with
+// errc::bad_file instead of boost::property_tree::xml_parser_error.
+boost::property_tree::ptree read_xml_file(const cosim::filesystem::path& path)
+{
+    boost::property_tree::ptree tree;
+    try {
+        boost::property_tree::read_xml(path.string(), tree,
+            boost::property_tree::xml_parser::no_comments | boost::property_tree::xml_parser::trim_whitespace);
+    } catch (const boost::property_tree::xml_parser_error& e) {
+        throw error(make_error_code(errc::bad_file), e.what());
+    }
+    return tree;
+}
 
 template<typename T>
 T get_attribute(const boost::property_tree::ptree& tree, const std::string& key, const std::optional<T> defaultValue = {})
@@ -79,7 +94,7 @@ inline ssp_parser::Component check_component(const std::string& name, std::unord
     } else {
         std::ostringstream oss;
         oss << "No component named: '" << name << "'!";
-        throw std::runtime_error(oss.str());
+        throw error(make_error_code(errc::invalid_system_structure), oss.str());
     }
 }
 
@@ -90,7 +105,7 @@ inline ssp_parser::Connector check_connector(const std::string& name, ssp_parser
     } else {
         std::ostringstream oss;
         oss << "No connector named: '" << name << "' in Component '" << component.name << "'!";
-        throw std::runtime_error(oss.str());
+        throw error(make_error_code(errc::invalid_system_structure), oss.str());
     }
 }
 
@@ -98,9 +113,7 @@ inline ssp_parser::Connector check_connector(const std::string& name, ssp_parser
 
 ssp_parser::ssp_parser(const cosim::filesystem::path& ssdPath)
 {
-    boost::property_tree::ptree root;
-    boost::property_tree::read_xml(ssdPath.string(), root,
-        boost::property_tree::xml_parser::no_comments | boost::property_tree::xml_parser::trim_whitespace);
+    const boost::property_tree::ptree root = read_xml_file(ssdPath);
 
     boost::property_tree::ptree ssd = root.get_child("ssd:SystemStructureDescription");
     systemDescription_.name = get_attribute<std::string>(ssd, "name");
@@ -120,7 +133,7 @@ ssp_parser::ssp_parser(const cosim::filesystem::path& ssdPath)
                             auto numWorkerThreads = get_optional_attribute<unsigned int>(algorithm.second, "numWorkerThreads");
                             defaultExperiment_.algorithm = std::make_unique<cosim::fixed_step_algorithm>(cosim::to_duration(baseStepSize), numWorkerThreads);
                         } else {
-                            throw std::runtime_error("Unknown algorithm: " + algorithm.first);
+                            throw error(make_error_code(errc::bad_file), "Unknown algorithm: " + algorithm.first);
                         }
                     }
                 }
@@ -153,15 +166,13 @@ ssp_parser::ssp_parser(const cosim::filesystem::path& ssdPath)
         if (const auto parameterBindings = component.second.get_child_optional("ssd:ParameterBindings")) {
             for (const auto& parameterBinding : *parameterBindings) {
                 if (const auto& source = get_optional_attribute<std::string>(parameterBinding.second, "source")) {
-                    boost::property_tree::ptree binding;
                     cosim::filesystem::path ssvPath = ssdPath.parent_path() / *source;
                     if (!cosim::filesystem::exists(ssvPath)) {
                         std::ostringstream oss;
                         oss << "File '" << ssvPath << "' does not exists!";
-                        throw std::runtime_error(oss.str());
+                        throw error(make_error_code(errc::bad_file), oss.str());
                     }
-                    boost::property_tree::read_xml(ssvPath.string(), binding,
-                        boost::property_tree::xml_parser::no_comments | boost::property_tree::xml_parser::trim_whitespace);
+                    const boost::property_tree::ptree binding = read_xml_file(ssvPath);
                     const auto parameterSet = parse_parameter_set(binding.get_child("ssv:ParameterSet"));
                     comp.parameterSets.push_back(parameterSet);
                 } else {

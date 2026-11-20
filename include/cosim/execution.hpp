@@ -10,6 +10,8 @@
 #ifndef COSIM_EXECUTION_HPP
 #define COSIM_EXECUTION_HPP
 
+#include <cosim/exception.hpp>
+#include <cosim/fs_portability.hpp>
 #include <cosim/function/function.hpp>
 #include <cosim/model_description.hpp>
 #include <cosim/slave.hpp>
@@ -24,7 +26,9 @@
 #include <memory>
 #include <optional>
 #include <sstream>
+#include <string>
 #include <unordered_map>
+#include <vector>
 
 
 namespace cosim
@@ -138,6 +142,50 @@ class algorithm;
 class observer;
 class manipulator;
 class simulator;
+
+
+/// The state of an `execution`, as reported by `execution::get_status()`.
+enum class execution_state
+{
+    /// Not running.
+    stopped,
+    /// A simulation is running (e.g. started with `start_simulation()`).
+    running,
+    /// A simulation started with `start_simulation()` ended with an error.
+    error
+};
+
+
+/// A snapshot of an execution's state, returned by `execution::get_status()`.
+struct execution_status
+{
+    /// The current logical time.
+    time_point current_time;
+    /// Whether the execution is running, stopped, or has failed.
+    execution_state state = execution_state::stopped;
+    /// The error code if `state == execution_state::error`, else `errc::success`.
+    errc error_code = errc::success;
+    /// The error message if `state == execution_state::error`.
+    std::string error_message;
+    /// Whether real-time-synchronized simulation is enabled.
+    bool real_time_simulation = false;
+    /// The target real-time factor.
+    double real_time_factor_target = 1.0;
+    /// The current rolling average real-time factor.
+    double rolling_average_real_time_factor = 1.0;
+    /// The total average real-time factor since the simulation was started.
+    double total_average_real_time_factor = 1.0;
+};
+
+
+/// Name and index of a simulator in an `execution`.
+struct simulator_info
+{
+    /// The simulator (instance) name.
+    std::string name;
+    /// The simulator's index in the execution.
+    simulator_index index;
+};
 
 
 /**
@@ -324,8 +372,29 @@ public:
      */
     duration step();
 
+    /**
+     *  Starts the co-simulation on a background thread, without blocking.
+     *
+     *  The simulation runs until `stop_simulation()` is called. Use
+     *  `get_status()` to follow its progress and to see whether it ended
+     *  with an error. Destroying the execution stops and waits for it.
+     *
+     *  \throws cosim::error
+     *      with `errc::invalid_operation` if a simulation is already running.
+     */
+    void start_simulation();
+
     /// Stops the co-simulation temporarily (thread-safe operation).
     void stop_simulation();
+
+    /**
+     *  Returns a snapshot of the execution's state (thread-safe operation).
+     *
+     *  An error in a simulation started with `start_simulation()` is
+     *  reported here (state `execution_state::error`) until the next
+     *  `start_simulation()`.
+     */
+    execution_status get_status() const;
 
     /// Is the simulation loop currently running
     bool is_running() const noexcept;
@@ -336,8 +405,47 @@ public:
     /// Returns a pointer to an object containing real time metrics
     std::shared_ptr<const real_time_metrics> get_real_time_metrics() const;
 
+    /**
+     *  \name Real-time settings and metrics as plain values
+     *
+     *  Convenience accessors for the settings in `get_real_time_config()`
+     *  and the measurements in `get_real_time_metrics()`. They are
+     *  thread-safe, and use plain types so that they can be used from C and
+     *  from other languages through bindings.
+     */
+    ///@{
+
+    /// Enables or disables real-time-synchronized simulation.
+    void set_real_time_simulation(bool enable);
+
+    /// Returns whether real-time-synchronized simulation is enabled.
+    bool is_real_time_simulation() const;
+
+    /// Sets the target real-time factor (1.0 = real time). Must be positive.
+    void set_real_time_factor_target(double factor);
+
+    /// Returns the target real-time factor.
+    double get_real_time_factor_target() const;
+
+    /// Sets the number of steps used for the rolling average real-time factor. Must be positive.
+    void set_steps_to_monitor(int steps);
+
+    /// Returns the number of steps used for the rolling average real-time factor.
+    int get_steps_to_monitor() const;
+
+    /// Returns the current rolling average real-time factor.
+    double get_rolling_average_real_time_factor() const;
+
+    /// Returns the total average real-time factor since the simulation was started.
+    double get_total_average_real_time_factor() const;
+
+    ///@}
+
     /// Returns the model description for a simulator with the given index
     model_description get_model_description(simulator_index index) const;
+
+    /// Returns the names and indexes of all simulators, ordered by index.
+    std::vector<simulator_info> get_simulators() const;
 
     /// Returns a map of currently modified variables
     std::vector<variable_id> get_modified_variables() const;
@@ -380,6 +488,34 @@ public:
      */
     void import_state(const serialization::node& exportedState);
 
+    /**
+     *  Exports the current state of the co-simulation as bytes, e.g. to
+     *  keep it as a checkpoint or save it to a file.
+     *
+     *  The result is `export_current_state()` serialized as CBOR (the format
+     *  of `serialization::format::cbor`), and can be imported with
+     *  `import_state_bytes()`. All simulators must support state export.
+     *
+     *  Unlike `export_current_state()`, this function checks its
+     *  preconditions and throws `cosim::error` with
+     *  `errc::invalid_operation` if `initialize()` has not been called or a
+     *  simulation is running.
+     */
+    std::vector<std::uint8_t> export_current_state_bytes() const;
+
+    /**
+     *  Imports a co-simulation state exported with
+     *  `export_current_state_bytes()`.
+     *
+     *  The caveats of `import_state()` apply: the state describes the state
+     *  of the system, not its structure. Throws `cosim::error` with
+     *  `errc::invalid_operation` if `initialize()` has not been called or a
+     *  simulation is running, and with `errc::bad_file` if the bytes are not
+     *  a valid state. If an import fails, the execution may have been
+     *  partly restored: import a valid state before continuing.
+     */
+    void import_state_bytes(const std::vector<std::uint8_t>& state);
+
 private:
     class impl;
     std::unique_ptr<impl> pimpl_;
@@ -394,6 +530,63 @@ struct entity_index_maps
 
     /// Mapping of function names to function indices.
     std::unordered_map<std::string, function_index> functions;
+};
+
+
+class model_uri_resolver;
+
+
+/**
+ *  Options for `load_execution_from_osp_config()` and
+ *  `load_execution_from_ssp()`.
+ *
+ *  All members are optional; a default-constructed object gives the
+ *  behaviour defined by the configuration file.
+ */
+struct execution_load_options
+{
+    /// Start time of the execution. If not set, the configured start time is used.
+    std::optional<time_point> start_time;
+
+    /**
+     *  Number of worker threads for an algorithm created by the loader
+     *  (the OSP loader creates the configured fixed-step or ECCO
+     *  algorithm). If not set, the algorithm's default is used. Ignored
+     *  when `algorithm` is given, and for algorithms defined in an SSP.
+     */
+    std::optional<unsigned int> worker_thread_count;
+
+    /// Resolver used to look up models. If null, `default_model_uri_resolver()` is used.
+    std::shared_ptr<model_uri_resolver> model_resolver;
+
+    /**
+     *  The co-simulation algorithm. If null, the algorithm from the
+     *  configuration is used (for an SSP: from its default experiment;
+     *  if that is absent too, loading fails with `errc::bad_file`).
+     */
+    std::shared_ptr<cosim::algorithm> algorithm;
+
+    /// (SSP only) Name of the parameter set to apply. Empty selects the default values.
+    std::string parameter_set;
+};
+
+
+/**
+ *  An execution created from a configuration file, ready to run.
+ *
+ *  Returned by `load_execution_from_osp_config()` and
+ *  `load_execution_from_ssp()`.
+ */
+struct configured_execution
+{
+    /// The execution, with all simulators, functions and connections added.
+    std::shared_ptr<cosim::execution> execution;
+
+    /// Mappings between entity names and their indexes in `execution`.
+    entity_index_maps entity_maps;
+
+    /// The end time given by the configuration, if any.
+    std::optional<time_point> end_time;
 };
 
 
@@ -412,6 +605,33 @@ entity_index_maps inject_system_structure(
     execution& exe,
     const system_structure& sys,
     const variable_value_map& initialValues);
+
+
+/**
+ *  Loads an FMU and adds an instance of it to an execution.
+ *
+ *  \param exe
+ *      The execution. Its `initialize()` must not have been called.
+ *  \param fmuPath
+ *      Path to an FMU file (or an unpacked FMU directory).
+ *  \param instanceName
+ *      The name of the new simulator instance.
+ *  \param stepSizeHint
+ *      The recommended step size for the simulator (see
+ *      `execution::add_slave()`). Zero lets the algorithm choose.
+ *  \param resolver
+ *      The URI resolver used to load the model. If null,
+ *      `default_model_uri_resolver()` is used.
+ *
+ *  \returns
+ *      The index of the new simulator.
+ */
+simulator_index add_fmu(
+    execution& exe,
+    const cosim::filesystem::path& fmuPath,
+    const std::string& instanceName,
+    duration stepSizeHint = duration::zero(),
+    std::shared_ptr<model_uri_resolver> resolver = nullptr);
 
 } // namespace cosim
 #endif // header guard

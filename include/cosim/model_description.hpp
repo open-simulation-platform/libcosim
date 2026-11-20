@@ -39,7 +39,7 @@ enum class variable_type
 
 
 /// Variable causalities.  These correspond to FMI causality definitions.
-enum variable_causality
+enum class variable_causality
 {
     parameter,
     calculated_parameter,
@@ -50,7 +50,7 @@ enum variable_causality
 
 
 /// Variable variabilities.  These correspond to FMI variability definitions.
-enum variable_variability
+enum class variable_variability
 {
     constant,
     fixed,
