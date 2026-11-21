@@ -51,11 +51,11 @@ BOOST_AUTO_TEST_CASE(zip_archive)
     BOOST_TEST(archive.entry_name(dirIndex) == dirName);
     BOOST_TEST(archive.entry_name(binIndex) == binName);
     BOOST_TEST(archive.entry_name(txtIndex) == txtName);
-    BOOST_CHECK_THROW(archive.entry_name(invIndex), uz::error);
+    BOOST_CHECK_THROW(static_cast<void>(archive.entry_name(invIndex)), uz::error);
     BOOST_TEST(archive.is_dir_entry(dirIndex));
     BOOST_TEST(!archive.is_dir_entry(binIndex));
     BOOST_TEST(!archive.is_dir_entry(txtIndex));
-    BOOST_CHECK_THROW(archive.is_dir_entry(invIndex), uz::error);
+    BOOST_CHECK_THROW(static_cast<void>(archive.is_dir_entry(invIndex)), uz::error);
 
     // Extract entire archive
     {

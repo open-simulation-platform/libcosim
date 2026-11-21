@@ -76,14 +76,30 @@ public:
         cosim::model_description md;
         md.name = "mock_slave";
         md.uuid = "09b7ee06-fc07-4ad0-86f1-cd183fbae519";
-        md.variables.push_back(cosim::variable_description{"realOut", real_out_reference, cosim::variable_type::real, cosim::variable_causality::output, cosim::variable_variability::discrete, std::nullopt});
-        md.variables.push_back(cosim::variable_description{"realIn", real_in_reference, cosim::variable_type::real, cosim::variable_causality::input, cosim::variable_variability::discrete, 0.0});
-        md.variables.push_back(cosim::variable_description{"intOut", integer_out_reference, cosim::variable_type::integer, cosim::variable_causality::output, cosim::variable_variability::discrete, std::nullopt});
-        md.variables.push_back(cosim::variable_description{"intIn", integer_in_reference, cosim::variable_type::integer, cosim::variable_causality::input, cosim::variable_variability::discrete, 0});
-        md.variables.push_back(cosim::variable_description{"stringOut", string_out_reference, cosim::variable_type::string, cosim::variable_causality::output, cosim::variable_variability::discrete, std::nullopt});
-        md.variables.push_back(cosim::variable_description{"stringIn", string_in_reference, cosim::variable_type::string, cosim::variable_causality::input, cosim::variable_variability::discrete, std::string()});
-        md.variables.push_back(cosim::variable_description{"booleanOut", boolean_out_reference, cosim::variable_type::boolean, cosim::variable_causality::output, cosim::variable_variability::discrete, std::nullopt});
-        md.variables.push_back(cosim::variable_description{"booleanIn", boolean_in_reference, cosim::variable_type::boolean, cosim::variable_causality::input, cosim::variable_variability::discrete, false});
+        const auto add_variable =
+            [&md](const char* name,
+                cosim::value_reference reference,
+                cosim::variable_type type,
+                cosim::variable_causality causality,
+                cosim::variable_variability variability,
+                auto start) {
+                cosim::variable_description description{};
+                description.name = name;
+                description.reference = reference;
+                description.type = type;
+                description.causality = causality;
+                description.variability = variability;
+                description.start = std::move(start);
+                md.variables.push_back(std::move(description));
+            };
+        add_variable("realOut", real_out_reference, cosim::variable_type::real, cosim::variable_causality::output, cosim::variable_variability::discrete, std::nullopt);
+        add_variable("realIn", real_in_reference, cosim::variable_type::real, cosim::variable_causality::input, cosim::variable_variability::discrete, 0.0);
+        add_variable("intOut", integer_out_reference, cosim::variable_type::integer, cosim::variable_causality::output, cosim::variable_variability::discrete, std::nullopt);
+        add_variable("intIn", integer_in_reference, cosim::variable_type::integer, cosim::variable_causality::input, cosim::variable_variability::discrete, 0);
+        add_variable("stringOut", string_out_reference, cosim::variable_type::string, cosim::variable_causality::output, cosim::variable_variability::discrete, std::nullopt);
+        add_variable("stringIn", string_in_reference, cosim::variable_type::string, cosim::variable_causality::input, cosim::variable_variability::discrete, std::string());
+        add_variable("booleanOut", boolean_out_reference, cosim::variable_type::boolean, cosim::variable_causality::output, cosim::variable_variability::discrete, std::nullopt);
+        add_variable("booleanIn", boolean_in_reference, cosim::variable_type::boolean, cosim::variable_causality::input, cosim::variable_variability::discrete, false);
         return md;
     }
 
@@ -289,6 +305,168 @@ private:
     };
     state state_;
     std::vector<state> savedStates_;
+};
+
+
+class whole_value_mock_slave final : public mock_slave
+{
+public:
+    static constexpr cosim::value_reference output_reference = 10;
+    static constexpr cosim::value_reference input_reference = 11;
+
+    explicit whole_value_mock_slave(cosim::variable_value output)
+        : output_(std::move(output))
+        , input_(
+              cosim::uint64_values{
+                  std::vector<std::uint64_t>(output_.size(), 0)},
+              output_.dimensions())
+    {
+        if (output_.type() != cosim::variable_type::uint64) {
+            throw std::invalid_argument(
+                "whole_value_mock_slave requires UInt64 values");
+        }
+    }
+
+    cosim::model_description model_description() const override
+    {
+        cosim::model_description result;
+        result.name = "whole_value_mock_slave";
+        result.uuid = "baee524a-c541-4e07-9798-70ba879cd28a";
+        result.variables.push_back(variable(
+            "output",
+            output_reference,
+            cosim::variable_causality::output,
+            std::nullopt));
+        result.variables.push_back(variable(
+            "input",
+            input_reference,
+            cosim::variable_causality::input,
+            input_));
+        return result;
+    }
+
+    std::vector<cosim::variable_value> get_variable_values(
+        gsl::span<const cosim::typed_value_reference> variables) const override
+    {
+        std::vector<cosim::variable_value> result;
+        result.reserve(variables.size());
+        for (const auto variable : variables) {
+            validate_type(variable);
+            if (variable.reference == output_reference) {
+                result.push_back(output_);
+            } else if (variable.reference == input_reference) {
+                result.push_back(input_);
+            } else {
+                throw std::out_of_range("Invalid whole-value reference");
+            }
+        }
+        return result;
+    }
+
+    void set_variable_values(
+        gsl::span<const cosim::typed_value_reference> variables,
+        gsl::span<const cosim::variable_value> values) override
+    {
+        if (variables.size() != values.size()) {
+            throw std::invalid_argument(
+                "Variable and value counts must match");
+        }
+        for (std::size_t i = 0; i < variables.size(); ++i) {
+            validate_type(variables[i]);
+            if (variables[i].reference != input_reference) {
+                throw std::out_of_range("Invalid whole-value input reference");
+            }
+            if (values[i].type() != cosim::variable_type::uint64 ||
+                values[i].dimensions() != input_.dimensions()) {
+                throw std::invalid_argument(
+                    "Whole-value input type or shape mismatch");
+            }
+            input_ = values[i];
+        }
+    }
+
+    const cosim::variable_value& input_value() const noexcept
+    {
+        return input_;
+    }
+
+private:
+    cosim::variable_description variable(
+        std::string name,
+        cosim::value_reference reference,
+        cosim::variable_causality causality,
+        std::optional<cosim::variable_value> start) const
+    {
+        cosim::variable_description result;
+        result.name = std::move(name);
+        result.reference = reference;
+        result.type = cosim::variable_type::uint64;
+        result.causality = causality;
+        result.variability = cosim::variable_variability::discrete;
+        for (const auto dimension : output_.dimensions()) {
+            result.dimensions.emplace_back(cosim::fixed_dimension{dimension});
+        }
+        result.array_start = std::move(start);
+        return result;
+    }
+
+    static void validate_type(const cosim::typed_value_reference& variable)
+    {
+        if (variable.type != cosim::variable_type::uint64) {
+            throw std::invalid_argument("Invalid whole-value type");
+        }
+    }
+
+    cosim::variable_value output_;
+    cosim::variable_value input_;
+};
+
+
+class detailed_step_mock_slave : public mock_slave
+{
+public:
+    explicit detailed_step_mock_slave(
+        std::function<cosim::step_result_info(
+            cosim::time_point,
+            cosim::duration)>
+            stepOperation,
+        std::function<void()> eventOperation = {},
+        std::function<cosim::event_handling_status()> eventStatus = {})
+        : stepOperation_(std::move(stepOperation))
+        , eventOperation_(std::move(eventOperation))
+        , eventStatus_(std::move(eventStatus))
+    {
+    }
+
+    cosim::step_result_info do_step_with_info(
+        cosim::time_point currentT,
+        cosim::duration deltaT) override
+    {
+        const auto result = stepOperation_(currentT, deltaT);
+        if (result.result == cosim::step_result::complete) {
+            mock_slave::do_step(
+                currentT, result.last_successful_time - currentT);
+        }
+        return result;
+    }
+
+    void handle_events() override
+    {
+        if (eventOperation_) eventOperation_();
+    }
+
+    cosim::event_handling_status get_event_handling_status() const noexcept override
+    {
+        return eventStatus_ ? eventStatus_() : cosim::event_handling_status{};
+    }
+
+private:
+    std::function<cosim::step_result_info(
+        cosim::time_point,
+        cosim::duration)>
+        stepOperation_;
+    std::function<void()> eventOperation_;
+    std::function<cosim::event_handling_status()> eventStatus_;
 };
 
 

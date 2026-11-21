@@ -17,20 +17,19 @@
 #include <cosim/model_description.hpp>
 #include <cosim/time.hpp>
 
+#include <atomic>
 #include <memory>
+#include <queue>
 #include <string>
 #include <string_view>
 #include <vector>
-#include <queue>
 
 
 struct fmi2_import_t;
 using fmi2_FMU_state_t = void*;
 
 
-namespace cosim
-{
-namespace fmi
+namespace cosim::fmi
 {
 
 #ifdef _WIN32
@@ -68,7 +67,7 @@ public:
     fmu(fmu&&) = delete;
     fmu& operator=(fmu&&) = delete;
 
-    ~fmu();
+    ~fmu() override;
 
     // fmi::fmu methods
     fmi::fmi_version fmi_version() const override;
@@ -101,12 +100,14 @@ public:
     fmi2_import_t* fmilib_handle() const;
 
 private:
+    friend class slave_instance;
     std::shared_ptr<fmi::importer> importer_;
     std::unique_ptr<file_cache::directory_ro> dir_;
 
     fmi2_import_t* handle_;
     cosim::model_description modelDescription_;
     std::vector<std::weak_ptr<slave_instance>> instances_;
+    std::atomic_bool fatal_{false};
 
 #ifdef _WIN32
     // Workaround for VIPROMA-67 (FMU DLL search paths on Windows).
@@ -120,7 +121,7 @@ class slave_instance : public fmi::slave_instance
 {
 private:
     // Only fmu is allowed to instantiate this class.
-    friend std::shared_ptr<slave_instance> fmu::instantiate_v2_slave(std::string_view);
+    friend std::shared_ptr<slave_instance> fmu::instantiate_v2_slave(std::string_view /*instanceName*/);
     slave_instance(std::shared_ptr<v2::fmu> fmu, std::string_view instanceName);
 
 public:
@@ -130,7 +131,7 @@ public:
     slave_instance(slave_instance&&) = delete;
     slave_instance& operator=(slave_instance&&) = delete;
 
-    ~slave_instance() noexcept;
+    ~slave_instance() noexcept override;
 
     // cosim::slave methods
     void setup(
@@ -147,6 +148,10 @@ public:
     void get_integer_variables(
         gsl::span<const value_reference> variables,
         gsl::span<int> values) const override;
+    /// Gets FMI 2 Enumeration values using the signed Integer transport.
+    void get_enumeration_variables(
+        gsl::span<const value_reference> variables,
+        gsl::span<enumeration_value> values) const;
     void get_boolean_variables(
         gsl::span<const value_reference> variables,
         gsl::span<bool> values) const override;
@@ -160,12 +165,23 @@ public:
     void set_integer_variables(
         gsl::span<const value_reference> variables,
         gsl::span<const int> values) override;
+    /// Sets FMI 2 Enumeration values after declared-item and bound validation.
+    void set_enumeration_variables(
+        gsl::span<const value_reference> variables,
+        gsl::span<const enumeration_value> values);
     void set_boolean_variables(
         gsl::span<const value_reference> variables,
         gsl::span<const bool> values) override;
     void set_string_variables(
         gsl::span<const value_reference> variables,
         gsl::span<const std::string> values) override;
+    std::vector<variable_value> get_variable_values(
+        gsl::span<const typed_value_reference> variables) const override;
+    /// Validates the complete batch before dispatch; an FMU failure can still
+    /// leave earlier successful assignments applied.
+    void set_variable_values(
+        gsl::span<const typed_value_reference> variables,
+        gsl::span<const variable_value> values) override;
 
     state_index save_state() override;
     void save_state(state_index stateIndex) override;
@@ -200,12 +216,12 @@ public:
         gsl::span<double> sensitivity) const;
 
 private:
-    enum class lifecycle_state : std::int32_t
+    enum class lifecycle_state : std::int32_t // NOLINT(performance-enum-size): Preserve the class layout.
     {
         instantiated = 0,
         initialization = 1,
         step = 2,
-        terminated = 3
+        terminated = 3,
     };
 
     struct saved_state
@@ -213,14 +229,27 @@ private:
         fmi2_FMU_state_t fmuState = nullptr;
         lifecycle_state lifecycleState = lifecycle_state::instantiated;
     };
+    template<typename Status>
+    bool accept_status(Status status) const noexcept;
+    const saved_state& checked_saved_state(state_index stateIndex) const;
     void copy_current_state(saved_state& state);
     state_index store_new_state(saved_state state);
     void cache_directional_derivative_metadata();
+    void validate_derivative_unknowns(gsl::span<const value_reference> unknowns) const;
+    void validate_derivative_knowns(gsl::span<const value_reference> knowns) const;
 
     std::shared_ptr<v2::fmu> fmu_;
     fmi2_import_t* handle_;
 
     lifecycle_state lifecycleState_ = lifecycle_state::instantiated;
+    enum class cleanup_state // NOLINT(performance-enum-size): Preserve the class layout.
+    {
+        normal,
+        error,
+        step_interrupted,
+        step_pending,
+    };
+    mutable cleanup_state cleanupState_ = cleanup_state::normal;
     bool providesDirectionalDerivatives_ = false;
     std::vector<value_reference> outputReferences_;
     std::vector<value_reference> derivativeReferences_;
@@ -235,6 +264,5 @@ private:
 
 
 } // namespace v2
-} // namespace fmi
-} // namespace cosim
+} // namespace cosim::fmi
 #endif // header guard

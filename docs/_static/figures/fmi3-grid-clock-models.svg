@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 285" role="img" aria-labelledby="title desc">
+  <title id="title">Connected models for the grid and Clock traces</title>
+  <desc id="desc">The first system connects an ordinary factor-two source to a factor-three target with a one-second base step. The second connects an ordinary factor-four source to a factor-one target with a Clock-associated input, with a half-second base step and independently scheduled target Clock ticks at one and two seconds.</desc>
+  <style>
+    .background { fill: #fff; } .box { fill: #eaf3fa; stroke: #315b77; stroke-width: 2; }
+    .clock { fill: #fff6e3; stroke: #9a6a18; stroke-width: 2; }
+    .arrow { fill: none; stroke: #315b77; stroke-width: 3; marker-end: url(#arrow); }
+    .label { font: bold 17px sans-serif; fill: #142b3a; } .text { font: 15px sans-serif; fill: #243d4e; }
+  </style>
+  <defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#315b77"/></marker></defs>
+  <rect class="background" width="1000" height="285"/>
+  <text class="label" x="35" y="30">Ordinary connection: base step 1 s</text>
+  <rect class="box" x="35" y="45" width="290" height="70" rx="8"/>
+  <text class="label" x="55" y="75">Ordinary source</text><text class="text" x="55" y="99">Factor 2</text>
+  <rect class="box" x="675" y="45" width="290" height="70" rx="8"/>
+  <text class="label" x="695" y="75">Ordinary target</text><text class="text" x="695" y="99">Factor 3</text>
+  <path class="arrow" d="M325 80 H673"/><text class="text" x="405" y="66">output -&gt; input</text>
+  <text class="label" x="35" y="160">Clock sampling: base step 0.5 s</text>
+  <rect class="box" x="35" y="175" width="290" height="80" rx="8"/>
+  <text class="label" x="55" y="205">Ordinary source</text><text class="text" x="55" y="231">Factor 4</text>
+  <rect class="clock" x="675" y="175" width="290" height="80" rx="8"/>
+  <text class="label" x="695" y="205">Clock target: factor 1</text>
+  <text class="text" x="695" y="231">Own Clock ticks at 1 and 2 s</text>
+  <path class="arrow" d="M325 215 H673"/><text class="text" x="363" y="201">output -&gt; Clock-associated input</text>
+</svg>

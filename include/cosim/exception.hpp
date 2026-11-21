@@ -18,7 +18,7 @@ namespace cosim
 
 
 /// Error conditions specific to this library.
-enum class errc
+enum class errc // NOLINT(performance-enum-size): Preserve the public ABI.
 {
     success = 0,
 
@@ -54,7 +54,7 @@ enum class errc
     zip_error,
 
     /// Invalid operation (e.g. calling a function at the invalid time in the simulation lifecycle)
-    invalid_operation
+    invalid_operation,
 };
 
 
@@ -63,11 +63,11 @@ const std::error_category& error_category() noexcept;
 
 
 /// Constructs a library-specific error condition.
-std::error_condition make_error_condition(errc e) noexcept;
+std::error_condition make_error_condition(errc condition) noexcept;
 
 
 /// Constructs an error code for a library-specific error condition.
-std::error_code make_error_code(errc e) noexcept;
+std::error_code make_error_code(errc condition) noexcept;
 
 
 /**
@@ -86,9 +86,9 @@ class error : public std::runtime_error
 {
 public:
     /// Constructs an exception with the given error code.
-    explicit error(std::error_code ec)
-        : std::runtime_error(ec.message())
-        , code_(ec)
+    explicit error(std::error_code errorCode)
+        : std::runtime_error(errorCode.message())
+        , code_(errorCode)
     { }
 
     /**
@@ -97,15 +97,15 @@ public:
      *
      *  The `what()` function is guaranteed to return a string which contains
      *  the text in `msg` in addition to the standard message associated with
-     *  `ec`.
+     *  `errorCode`.
      */
-    error(std::error_code ec, const std::string& msg)
-        : std::runtime_error(ec.message() + ": " + msg)
-        , code_(ec)
+    error(std::error_code errorCode, const std::string& msg)
+        : std::runtime_error(errorCode.message() + ": " + msg)
+        , code_(errorCode)
     { }
 
     /// Returns an error code.
-    const std::error_code& code() const noexcept { return code_; }
+    const std::error_code& code() const noexcept { return code_; } // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
 
 private:
     std::error_code code_;

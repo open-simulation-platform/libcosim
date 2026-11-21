@@ -20,6 +20,7 @@
 #include <boost/functional/hash.hpp>
 
 #include <cstdint>
+#include <functional>
 #include <future>
 #include <memory>
 #include <optional>
@@ -53,15 +54,15 @@ struct variable_id
 };
 
 /// Equality operator for `variable_id`.
-inline bool operator==(const variable_id& a, const variable_id& b) noexcept
+inline bool operator==(const variable_id& lhs, const variable_id& rhs) noexcept
 {
-    return a.simulator == b.simulator && a.type == b.type && a.reference == b.reference;
+    return lhs.simulator == rhs.simulator && lhs.type == rhs.type && lhs.reference == rhs.reference;
 }
 
 /// Inequality operator for `variable_id`.
-inline bool operator!=(const variable_id& a, const variable_id& b) noexcept
+inline bool operator!=(const variable_id& lhs, const variable_id& rhs) noexcept
 {
-    return !operator==(a, b);
+    return !operator==(lhs, rhs);
 }
 
 /// An object which uniquely identifies a function variable in a simulation.
@@ -73,23 +74,23 @@ struct function_io_id
 };
 
 /// Equality operator for `function_io_id`.
-inline bool operator==(const function_io_id& a, const function_io_id& b) noexcept
+inline bool operator==(const function_io_id& lhs, const function_io_id& rhs) noexcept
 {
-    return a.function == b.function && a.type == b.type && a.reference == b.reference;
+    return lhs.function == rhs.function && lhs.type == rhs.type && lhs.reference == rhs.reference;
 }
 
 /// Inequality operator for `function_io_id`.
-inline bool operator!=(const function_io_id& a, const function_io_id& b) noexcept
+inline bool operator!=(const function_io_id& lhs, const function_io_id& rhs) noexcept
 {
-    return !operator==(a, b);
+    return !operator==(lhs, rhs);
 }
 
-/// Writes a textual representation of `v` to `stream`.
-inline std::ostream& operator<<(std::ostream& stream, variable_id v)
+/// Writes a textual representation of `variable` to `stream`.
+inline std::ostream& operator<<(std::ostream& stream, variable_id variable)
 {
-    return stream << "(simulator " << v.simulator
-                  << ", type " << v.type
-                  << ", variable " << v.reference << ")";
+    return stream << "(simulator " << variable.simulator
+                  << ", type " << variable.type
+                  << ", variable " << variable.reference << ")";
 }
 
 } // namespace cosim
@@ -101,12 +102,12 @@ template<>
 class hash<cosim::variable_id>
 {
 public:
-    std::size_t operator()(const cosim::variable_id& v) const noexcept
+    std::size_t operator()(const cosim::variable_id& variable) const noexcept
     {
         std::size_t seed = 0;
-        boost::hash_combine(seed, v.simulator);
-        boost::hash_combine(seed, v.type);
-        boost::hash_combine(seed, v.reference);
+        boost::hash_combine(seed, variable.simulator);
+        boost::hash_combine(seed, variable.type);
+        boost::hash_combine(seed, variable.reference);
         return seed;
     }
 };
@@ -115,15 +116,15 @@ template<>
 class hash<cosim::function_io_id>
 {
 public:
-    std::size_t operator()(const cosim::function_io_id& v) const noexcept
+    std::size_t operator()(const cosim::function_io_id& variable) const noexcept
     {
         std::size_t seed = 0;
-        boost::hash_combine(seed, v.function);
-        boost::hash_combine(seed, v.type);
-        boost::hash_combine(seed, v.reference.group);
-        boost::hash_combine(seed, v.reference.group_instance);
-        boost::hash_combine(seed, v.reference.io);
-        boost::hash_combine(seed, v.reference.io_instance);
+        boost::hash_combine(seed, variable.function);
+        boost::hash_combine(seed, variable.type);
+        boost::hash_combine(seed, variable.reference.group);
+        boost::hash_combine(seed, variable.reference.group_instance);
+        boost::hash_combine(seed, variable.reference.io);
+        boost::hash_combine(seed, variable.reference.io_instance);
         return seed;
     }
 };
@@ -146,6 +147,10 @@ class simulator;
  *  The `execution` class manages all the entities involved in an execution
  *  and provides a high-level API for driving the co-simulation algorithm
  *  forward.
+ *
+ *  Connected variables must have matching types. Enumeration and Integer
+ *  are distinct types, even when assigning an Integer to a scalar
+ *  Enumeration variable is supported.
  *
  *  \warning
  *      In general, the member functions of this class are not exception safe.
@@ -189,6 +194,7 @@ public:
      *      If zero, the algorithm will attempt to choose a sensible default.
      *
      *  \pre `initialize()` has not been called.
+     *  \throws std::logic_error if the execution is already initialized.
      */
     simulator_index add_slave(
         std::shared_ptr<slave> slave,
@@ -196,9 +202,21 @@ public:
         duration stepSizeHint = duration::zero());
 
     /**
+     *  Returns the slave owned by this execution, including a slave added by
+     *  `inject_system_structure()`. The returned pointer extends its lifetime.
+     *  Configure instance-specific options before initialization. Do not
+     *  independently drive the slave lifecycle or change values behind the
+     *  execution's cached simulator interface.
+     *
+     *  \throws std::out_of_range if the simulator index is invalid.
+     */
+    std::shared_ptr<slave> get_slave(simulator_index index) const; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
+
+    /**
      *  Adds a function to the execution.
      *
      *  \pre `initialize()` has not been called.
+     *  \throws std::logic_error if the execution is already initialized.
      */
     function_index add_function(std::shared_ptr<function> fun);
 
@@ -253,8 +271,11 @@ public:
      */
     void connect_variables(function_io_id output, variable_id input);
 
+    /// Connects a function output variable to a function input variable.
+    void connect_variables(function_io_id output, function_io_id input);
+
     /// Returns the current logical time.
-    time_point current_time() const noexcept;
+    time_point current_time() const noexcept; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
 
     /**
      *  Initialize the co-simulation (in an algorithm-dependent manner).
@@ -263,6 +284,9 @@ public:
      *  subsimulators or functions.
      */
     void initialize();
+
+    /// Returns whether initialization completed successfully.
+    bool is_initialized() const noexcept; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
 
     /**
      *  Advance the co-simulation forward to the given logical time (blocks the current thread).
@@ -305,6 +329,9 @@ public:
      *      `initialize()` if this hasn't already been done. However, new code
      *      should always call `initialize()` before any of the
      *      simulation/stepping functions.
+     *      The execution must remain alive until the returned future finishes.
+     *      A stop requested after this function returns is not lost during
+     *      worker startup.
      */
     std::future<bool> simulate_until_async(std::optional<time_point> targetTime);
 
@@ -327,23 +354,23 @@ public:
     /// Stops the co-simulation temporarily (thread-safe operation).
     void stop_simulation();
 
-    /// Is the simulation loop currently running
-    bool is_running() const noexcept;
+    /// True until the simulation loop has finished, including after a stop request.
+    bool is_running() const noexcept; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
 
     /// Returns a pointer to an object containing real time configuration
-    const std::shared_ptr<real_time_config> get_real_time_config() const;
+    const std::shared_ptr<real_time_config> get_real_time_config() const; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
 
     /// Returns a pointer to an object containing real time metrics
-    std::shared_ptr<const real_time_metrics> get_real_time_metrics() const;
+    std::shared_ptr<const real_time_metrics> get_real_time_metrics() const; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
 
     /// Returns the model description for a simulator with the given index
-    model_description get_model_description(simulator_index index) const;
+    model_description get_model_description(simulator_index index) const; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
 
     /// Returns a map of currently modified variables
-    std::vector<variable_id> get_modified_variables() const;
+    std::vector<variable_id> get_modified_variables() const; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
 
     /// Returns the algorithm used in this execution
-    std::shared_ptr<cosim::algorithm> get_algorithm() const;
+    std::shared_ptr<cosim::algorithm> get_algorithm() const; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
 
     /// Set initial value for a variable of type real. Must be called before simulation is started.
     void set_real_initial_value(simulator_index sim, value_reference var, double value);
@@ -357,13 +384,17 @@ public:
     /// Set initial value for a variable of type string. Must be called before simulation is started.
     void set_string_initial_value(simulator_index sim, value_reference var, const std::string& value);
 
+    /// Set an initial whole-variable value before simulation is started.
+    void set_variable_initial_value(variable_id variable, const variable_value& value);
+
     /**
      *  Exports the current state of the co-simulation.
      *
      *  \pre `initialize()` has been called.
      *  \pre `!is_running()`
+     *  \throws std::logic_error if either precondition is not met.
      */
-    serialization::node export_current_state() const;
+    serialization::node export_current_state() const; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
 
     /**
      *  Imports a previously-exported co-simulation state.
@@ -377,6 +408,7 @@ public:
      *
      *  \pre `initialize()` has been called.
      *  \pre `!is_running()`
+     *  \throws std::logic_error if either precondition is not met.
      */
     void import_state(const serialization::node& exportedState);
 
@@ -387,7 +419,7 @@ private:
 
 
 /// Maps entity names to simulator/function indices in an `execution`.
-struct entity_index_maps
+struct entity_index_maps // NOLINT(bugprone-exception-escape): MSVC unordered-container moves may allocate.
 {
     /// Mapping of simulator names to simulator indices.
     std::unordered_map<std::string, simulator_index> simulators;
@@ -395,6 +427,14 @@ struct entity_index_maps
     /// Mapping of function names to function indices.
     std::unordered_map<std::string, function_index> functions;
 };
+
+/**
+ * Creates a slave for a named system entity during structure injection.
+ * The hook may call `model::instantiate()` for entities that need no
+ * customization. It must return a non-null, not-yet-initialized slave.
+ */
+using model_instantiator = std::function<std::shared_ptr<slave>(
+    const std::shared_ptr<model>&, std::string_view)>;
 
 
 /**
@@ -412,6 +452,22 @@ entity_index_maps inject_system_structure(
     execution& exe,
     const system_structure& sys,
     const variable_value_map& initialValues);
+
+/**
+ * Injects a structure using a custom model instantiation hook.
+ *
+ * The hook is called once per simulator entity, before that slave is added;
+ * an empty hook uses `model::instantiate()`. Functions, connections and
+ * initial values are handled as in the three-argument overload. As with that
+ * overload, an exception can leave the execution partially modified.
+ *
+ * \throws std::invalid_argument if the hook returns a null slave.
+ */
+entity_index_maps inject_system_structure(
+    execution& exe,
+    const system_structure& sys,
+    const variable_value_map& initialValues,
+    const model_instantiator& instantiate);
 
 } // namespace cosim
 #endif // header guard

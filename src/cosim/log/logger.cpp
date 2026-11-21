@@ -6,9 +6,7 @@
 #include "cosim/log/logger.hpp"
 
 
-namespace cosim
-{
-namespace log
+namespace cosim::log
 {
 
 
@@ -19,5 +17,4 @@ logger_type& logger()
 }
 
 
-} // namespace log
-} // namespace cosim
+} // namespace cosim::log

@@ -22,13 +22,8 @@ struct zip;
 struct zip_file;
 
 
-namespace cosim
-{
-namespace utility
-{
-
 /// Utilities for dealing with ZIP archives.
-namespace zip
+namespace cosim::utility::zip
 {
 
 /**
@@ -43,7 +38,7 @@ using entry_index = std::uint64_t;
  *  An index value that represents an invalid/unknown zip entry.
  *  \see archive
  */
-constexpr entry_index invalid_entry_index = 0xFFFFFFFFFFFFFFFFull;
+constexpr entry_index invalid_entry_index = 0xFFFFFFFFFFFFFFFFULL;
 
 
 /**
@@ -89,9 +84,9 @@ public:
     archive& operator=(const archive&) = delete;
 
     /// Move constructor.
-    archive(archive&&) noexcept;
+    archive(archive&& /*other*/) noexcept;
     /// Move assignment operator.
-    archive& operator=(archive&&) noexcept;
+    archive& operator=(archive&& /*other*/) noexcept;
 
     /// Destructor; calls discard().
     ~archive() noexcept;
@@ -116,7 +111,7 @@ public:
     void discard() noexcept;
 
     /// Returns whether this object refers to an open ZIP archive.
-    bool is_open() const noexcept;
+    [[nodiscard]] bool is_open() const noexcept;
 
     /**
      *  Returns the number of entries in the archive.
@@ -125,7 +120,7 @@ public:
      *
      *  \pre `is_open() == true`
      */
-    std::uint64_t entry_count() const;
+    [[nodiscard]] std::uint64_t entry_count() const;
 
     /**
      *  Finds an entry by name.
@@ -141,7 +136,7 @@ public:
      *  \pre
      *      `is_open() == true`
      */
-    entry_index find_entry(const std::string& name) const;
+    [[nodiscard]] entry_index find_entry(const std::string& name) const;
 
     /**
      *  Returns the name of an archive entry.
@@ -155,7 +150,7 @@ public:
      *  \pre
      *      `is_open() == true`
      */
-    std::string entry_name(entry_index index) const;
+    [[nodiscard]] std::string entry_name(entry_index index) const;
 
     /**
      *  Returns whether an archive entry is a directory.
@@ -172,7 +167,7 @@ public:
      *  \pre
      *      `is_open() == true`
      */
-    bool is_dir_entry(entry_index index) const;
+    [[nodiscard]] bool is_dir_entry(entry_index index) const;
 
     /**
      *  Extracts the entire contents of the archive.
@@ -213,7 +208,7 @@ public:
      *  \pre
      *      `is_open() == true`
      */
-    cosim::filesystem::path extract_file_to(
+    cosim::filesystem::path extract_file_to( // NOLINT(modernize-use-nodiscard)
         entry_index index,
         const cosim::filesystem::path& targetDir) const;
 
@@ -246,7 +241,7 @@ public:
 };
 
 
-} // namespace zip
-} // namespace utility
-} // namespace cosim
+} // namespace cosim::utility::zip
+
+
 #endif // header guard

@@ -1,9 +1,14 @@
 #define BOOST_TEST_MODULE cosim::utility unittests
+#include "cosim/utility/thread_pool.hpp"
+
 #include <cosim/utility/concurrency.hpp>
 #include <cosim/utility/filesystem.hpp>
 
 #include <boost/test/unit_test.hpp>
 
+#include <atomic>
+#include <future>
+#include <stdexcept>
 #include <thread>
 
 /*
@@ -24,7 +29,9 @@ void test_locking(F1&& getMutex1, F2&& getMutex2, F3&& getMutex3)
     mutex1.lock();
     mutex2.lock_shared();
 
-    auto t = std::thread([&getMutex1, &getMutex2, &getMutex3] {
+    std::promise<void> step2Complete;
+    auto step2 = step2Complete.get_future();
+    auto t = std::thread([&getMutex1, &getMutex2, &getMutex3, &step2Complete] {
         auto&& mutex1 = getMutex1();
         auto&& mutex2 = getMutex2();
         auto&& mutex3 = getMutex3();
@@ -36,6 +43,7 @@ void test_locking(F1&& getMutex1, F2&& getMutex2, F3&& getMutex3)
         BOOST_TEST_REQUIRE(!mutex2.try_lock());
         BOOST_TEST_REQUIRE(mutex2.try_lock_shared());
         mutex3.unlock();
+        step2Complete.set_value();
 
         // Wait for step 3 to complete
         mutex1.lock();
@@ -44,9 +52,8 @@ void test_locking(F1&& getMutex1, F2&& getMutex2, F3&& getMutex3)
         mutex1.unlock();
         mutex2.unlock_shared();
     });
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
-
     // Wait for step 2 to complete
+    step2.wait();
     mutex3.lock();
 
     // Step 3
@@ -69,4 +76,26 @@ BOOST_AUTO_TEST_CASE(file_lock)
         [&] { return cosim::utility::file_lock(workDir.path() / "lockfile1"); },
         [&] { return cosim::utility::file_lock(workDir.path() / "lockfile2"); },
         [&] { return cosim::utility::file_lock(workDir.path() / "lockfile3"); });
+}
+
+
+BOOST_AUTO_TEST_CASE(thread_pool_propagates_task_exceptions_and_remains_usable)
+{
+    cosim::utility::thread_pool pool(2);
+    std::atomic_int completed{0};
+
+    pool.submit([] { throw std::runtime_error("worker failure"); });
+    pool.submit([&completed] { ++completed; });
+
+    BOOST_CHECK_EXCEPTION(
+        pool.wait_for_tasks_to_finish(),
+        std::runtime_error,
+        [](const std::runtime_error& error) {
+            return std::string(error.what()) == "worker failure";
+        });
+    BOOST_TEST(completed.load() == 1);
+
+    pool.submit([&completed] { ++completed; });
+    BOOST_CHECK_NO_THROW(pool.wait_for_tasks_to_finish());
+    BOOST_TEST(completed.load() == 2);
 }

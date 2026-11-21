@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OspSystemStructure
+        xmlns="http://opensimulationplatform.com/MSMI/OSPSystemStructure"
+        version="0.1">
+    <StartTime>0.0</StartTime>
+    <BaseStepSize>0.15</BaseStepSize>
+    <Algorithm>ecco</Algorithm>
+    <Simulators>
+        <Simulator name="componentA" source="../../fmus/PowerBond.fmu">
+            <InitialValues>
+                <InitialValue variable="gain"><Real value="0.2"/></InitialValue>
+                <InitialValue variable="bias"><Real value="1.0"/></InitialValue>
+            </InitialValues>
+        </Simulator>
+        <Simulator name="componentB" source="../../fmus/PowerBond.fmu">
+            <InitialValues>
+                <InitialValue variable="gain"><Real value="0.3"/></InitialValue>
+                <InitialValue variable="bias"><Real value="-0.5"/></InitialValue>
+            </InitialValues>
+        </Simulator>
+    </Simulators>
+    <Connections>
+        <VariableConnection powerBond="mechanicalBond">
+            <Variable simulator="componentA" name="input" causality="input"/>
+            <Variable simulator="componentB" name="output" causality="output"/>
+        </VariableConnection>
+        <VariableConnection powerBond="mechanicalBond">
+            <Variable simulator="componentB" name="input" causality="input"/>
+            <Variable simulator="componentA" name="output" causality="output"/>
+        </VariableConnection>
+    </Connections>
+    <EccoConfiguration>
+        <SafetyFactor>0.9</SafetyFactor>
+        <StepSize>0.15</StepSize>
+        <MinimumStepSize>0.01</MinimumStepSize>
+        <MaximumStepSize>0.3</MaximumStepSize>
+        <MinimumChangeRate>0.5</MinimumChangeRate>
+        <MaximumChangeRate>1.5</MaximumChangeRate>
+        <ProportionalGain>0.2</ProportionalGain>
+        <IntegralGain>0.15</IntegralGain>
+        <RelativeTolerance>1e-6</RelativeTolerance>
+        <AbsoluteTolerance>1e-6</AbsoluteTolerance>
+    </EccoConfiguration>
+</OspSystemStructure>

@@ -17,14 +17,12 @@
 #include <string_view>
 
 
-namespace cosim
-{
-namespace fmi
+namespace cosim::fmi
 {
 
 
 /// Constants that refer to FMI version numbers.
-enum class fmi_version
+enum class fmi_version // NOLINT(performance-enum-size): Preserve the public ABI.
 {
     /// Unknown (or possibly unsupported)
     unknown = 0,
@@ -34,6 +32,9 @@ enum class fmi_version
 
     /// FMI 2.0
     v2_0 = 20000,
+
+    /// FMI 3.0
+    v3_0 = 30000,
 };
 
 
@@ -48,14 +49,14 @@ class slave_instance;
  *  between different FMI versions.  Use `fmi::importer::import()` to  import
  *  an FMU and create an `fmu` object.
  */
-class fmu
+class fmu // NOLINT(cppcoreguidelines-special-member-functions): Preserve existing interface copy and move behavior.
 {
 public:
     /// Which FMI standard version is used in this FMU.
-    virtual fmi::fmi_version fmi_version() const = 0;
+    virtual fmi::fmi_version fmi_version() const = 0; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
 
     /// A description of this FMU.
-    virtual std::shared_ptr<const cosim::model_description>
+    virtual std::shared_ptr<const cosim::model_description> // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
     model_description() const = 0;
 
     /// Creates a co-simulation slave instance of this FMU.
@@ -63,28 +64,27 @@ public:
         std::string_view instanceName) = 0;
 
     /// The `fmi::importer` which was used to import this FMU.
-    virtual std::shared_ptr<fmi::importer> importer() const = 0;
+    virtual std::shared_ptr<fmi::importer> importer() const = 0; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
 
-    virtual ~fmu() { }
+    virtual ~fmu() = default;
 };
 
 
 /// An FMI co-simulation slave instance.
-class slave_instance : public cosim::slave
+class slave_instance : public cosim::slave // NOLINT(cppcoreguidelines-special-member-functions): Preserve existing interface copy and move behavior.
 {
 public:
     /// Returns a reference to the FMU of which this is an instance.
-    virtual std::shared_ptr<fmi::fmu> fmu() const = 0;
+    virtual std::shared_ptr<fmi::fmu> fmu() const = 0; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
 
-    cosim::model_description model_description() const final override
+    cosim::model_description model_description() const final // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
     {
         return *(fmu()->model_description());
     }
 
-    virtual ~slave_instance() { }
+    ~slave_instance() override = default;
 };
 
 
-} // namespace fmi
-} // namespace cosim
+} // namespace cosim::fmi
 #endif // header guard

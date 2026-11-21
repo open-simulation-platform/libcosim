@@ -11,20 +11,23 @@
 
 #include "cosim/algorithm.hpp"
 
-#include <boost/property_tree/ptree.hpp>
-
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 namespace cosim
 {
 
-class ssp_parser
+/**
+ * Parses the supported SSP system-description subset into components,
+ * connectors and connections. Returned references belong to this parser.
+ */
+class ssp_parser // NOLINT(cppcoreguidelines-special-member-functions): Preserve the implicit copy and move behavior of this parser.
 {
 
 public:
-    explicit ssp_parser(const cosim::filesystem::path& xmlPath);
+    explicit ssp_parser(const cosim::filesystem::path& ssdPath);
     ~ssp_parser() noexcept;
 
     struct DefaultExperiment
@@ -34,7 +37,8 @@ public:
         std::shared_ptr<cosim::algorithm> algorithm;
     };
 
-    const DefaultExperiment& get_default_experiment() const;
+    /// Returns the parsed default time range and algorithm.
+    [[nodiscard]] const DefaultExperiment& get_default_experiment() const;
 
     struct System
     {
@@ -49,18 +53,26 @@ public:
         System system;
     };
 
-    struct Connector
+    struct Connector // NOLINT(bugprone-exception-escape): MSVC unordered-container moves may allocate.
     {
         std::string name;
         std::string kind;
-        cosim::variable_type type;
+        std::optional<cosim::variable_type> type;
+        std::vector<std::uint64_t> shape;
+        std::unordered_map<std::string, std::string> clockAttributes;
+    };
+
+    struct EnumerationParameter
+    {
+        std::optional<std::string> attribute;
+        std::vector<std::string> items;
+        std::vector<std::uint64_t> shape;
     };
 
     struct Parameter
     {
         std::string name;
-        cosim::variable_type type;
-        scalar_value value;
+        std::variant<variable_value, EnumerationParameter> value;
     };
 
     struct ParameterSet
@@ -69,7 +81,7 @@ public:
         std::vector<Parameter> parameters;
     };
 
-    struct Component
+    struct Component // NOLINT(bugprone-exception-escape): MSVC unordered-container moves may allocate.
     {
         std::string name;
         std::string source;
@@ -78,6 +90,7 @@ public:
         std::unordered_map<std::string, Connector> connectors;
     };
 
+    /// Returns parsed components keyed by element name.
     [[nodiscard]] const std::unordered_map<std::string, Component>& get_elements() const;
 
     struct LinearTransformation
@@ -86,16 +99,22 @@ public:
         double factor;
     };
 
+    struct Endpoint
+    {
+        std::string component;
+        std::string connector;
+    };
+
     struct Connection
     {
-        Component startElement;
-        Connector startConnector;
-        Component endElement;
-        Connector endConnector;
+        Endpoint start;
+        Endpoint end;
         std::optional<LinearTransformation> linearTransformation;
     };
 
+    /// Returns parsed connections in their stored order.
     [[nodiscard]] const std::vector<Connection>& get_connections() const;
+    [[nodiscard]] bool has_exact_types() const noexcept { return systemDescription_.version == "2.0"; }
 
 private:
     SystemDescription systemDescription_;
@@ -105,24 +124,7 @@ private:
     std::unordered_map<std::string, Component> elements_;
 };
 
-struct slave_info
-{
-    cosim::simulator_index index;
-    std::map<std::string, cosim::variable_description> variables;
-};
-
 cosim::time_point get_default_start_time(const ssp_parser& parser);
-
-cosim::variable_id get_variable(
-    const std::map<std::string,
-        slave_info>& slaves,
-    const std::string& element,
-    const std::string& connector);
-
-
-std::optional<ssp_parser::ParameterSet> get_parameter_set(
-    const ssp_parser::Component& component,
-    std::optional<std::string> parameterSetName);
 
 } // namespace cosim
 

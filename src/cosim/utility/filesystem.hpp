@@ -13,9 +13,7 @@
 #include <cosim/fs_portability.hpp>
 
 
-namespace cosim
-{
-namespace utility
+namespace cosim::utility
 {
 
 
@@ -57,13 +55,13 @@ public:
     temp_dir(temp_dir&& other) noexcept;
 
     /// Move assignment operator. See temp_dir(temp_dir&&) for semantics.
-    temp_dir& operator=(temp_dir&&) noexcept;
+    temp_dir& operator=(temp_dir&& /*other*/) noexcept;
 
     /// Destructor.  Recursively deletes the directory.
     ~temp_dir() noexcept;
 
     /// Returns the path to the directory.
-    const cosim::filesystem::path& path() const;
+    [[nodiscard]] const cosim::filesystem::path& path() const;
 
 private:
     void delete_noexcept() noexcept;
@@ -72,6 +70,6 @@ private:
 };
 
 
-} // namespace utility
-} // namespace cosim
+} // namespace cosim::utility
+
 #endif // header guard

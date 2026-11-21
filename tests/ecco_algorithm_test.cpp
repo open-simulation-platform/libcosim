@@ -1,6 +1,7 @@
 #include "mock_slave.hpp"
 
 #include <cosim/algorithm.hpp>
+#include <cosim/exception.hpp>
 #include <cosim/log/simple.hpp>
 #include <cosim/observer/last_value_observer.hpp>
 #include <cosim/observer/time_series_observer.hpp>
@@ -8,12 +9,13 @@
 
 #include <exception>
 #include <memory>
+#include <sstream>
 #include <stdexcept>
+#include <vector>
 
 
 // A helper macro to test various assertions
-#define REQUIRE(test) \
-    if (!(test)) throw std::runtime_error("Requirement not satisfied: " #test)
+#include "test_require.hpp"
 
 int main()
 {
@@ -35,6 +37,189 @@ int main()
             1e-6,
             0.2,
             0.15};
+
+        {
+            auto algorithm = std::make_shared<cosim::ecco_algorithm>(ecco_params, 1);
+            cosim::execution execution(startTime, algorithm);
+            const auto first = execution.add_slave(
+                std::make_unique<mock_slave>([](double value) { return value * 2.0; }),
+                "first");
+            const auto second = execution.add_slave(
+                std::make_unique<mock_slave>([](double value) { return value + 1.0; }),
+                "second");
+            const cosim::variable_id firstIn{
+                first, cosim::variable_type::real, mock_slave::real_in_reference};
+            const cosim::variable_id firstOut{
+                first, cosim::variable_type::real, mock_slave::real_out_reference};
+            const cosim::variable_id secondIn{
+                second, cosim::variable_type::real, mock_slave::real_in_reference};
+            const cosim::variable_id secondOut{
+                second, cosim::variable_type::real, mock_slave::real_out_reference};
+            execution.connect_variables(firstOut, secondIn);
+            execution.connect_variables(secondOut, firstIn);
+            algorithm->add_power_bond(firstIn, firstOut, secondIn, secondOut);
+            execution.set_real_initial_value(first, mock_slave::real_in_reference, 1.0);
+            execution.set_real_initial_value(second, mock_slave::real_in_reference, 2.0);
+            for (int i = 0; i < 4; ++i) execution.step();
+            const auto checkpoint = execution.export_current_state();
+            REQUIRE(!algorithm->get_powerbond_energies(0).empty());
+            std::stringstream stream;
+            stream << cosim::serialization::format::cbor << checkpoint;
+            cosim::serialization::node decoded;
+            stream >> cosim::serialization::format::cbor >> decoded;
+            REQUIRE(decoded == checkpoint);
+
+            std::vector<cosim::duration> expectedSteps;
+            for (int i = 0; i < 4; ++i) expectedSteps.push_back(execution.step());
+            const auto expected = execution.export_current_state();
+            const auto expectedEnergies = algorithm->get_powerbond_energies(0);
+            execution.import_state(decoded);
+            for (const auto step : expectedSteps) REQUIRE(execution.step() == step);
+            const auto replayed = execution.export_current_state();
+            REQUIRE(replayed.get_child("algorithm_state") == expected.get_child("algorithm_state"));
+            REQUIRE(replayed.get_child("simulator_state") == expected.get_child("simulator_state"));
+            REQUIRE(replayed == expected);
+            REQUIRE(algorithm->get_powerbond_energies(0) == expectedEnergies);
+
+            auto legacy = algorithm->export_current_state();
+            legacy.put<std::uint32_t>("version", 1);
+            algorithm->import_state(legacy);
+            const auto afterLegacy = execution.export_current_state();
+            REQUIRE(afterLegacy.get_child("algorithm_state") == expected.get_child("algorithm_state"));
+            REQUIRE(afterLegacy == expected);
+
+            auto invalid = algorithm->export_current_state();
+            invalid.put("previous_error", -1.0);
+            bool rejected = false;
+            try {
+                algorithm->import_state(invalid);
+            } catch (const cosim::error& e) {
+                rejected = e.code() == cosim::make_error_code(cosim::errc::bad_file);
+            }
+            REQUIRE(rejected);
+            REQUIRE(execution.export_current_state() == expected);
+
+            const auto nextStep = execution.step();
+            const auto nextState = execution.export_current_state();
+            execution.import_state(expected);
+            legacy.erase("coordination");
+            algorithm->import_state(legacy);
+            REQUIRE(execution.step() == nextStep);
+            REQUIRE(execution.export_current_state() == nextState);
+        }
+
+        {
+            int events = 0;
+            auto execution = cosim::execution(
+                startTime, std::make_shared<cosim::ecco_algorithm>(ecco_params));
+            execution.add_slave(
+                std::make_unique<detailed_step_mock_slave>(
+                    [](cosim::time_point currentT, cosim::duration deltaT) {
+                        return cosim::step_result_info{
+                            cosim::step_result::complete, currentT + deltaT / 2,
+                            true, true, false, false};
+                    },
+                    [&events] { ++events; }),
+                "event-slave");
+            REQUIRE(execution.step() == ecco_params.step_size / 2);
+            REQUIRE(execution.current_time() == startTime + ecco_params.step_size / 2);
+            REQUIRE(events == 1);
+        }
+
+        {
+            auto algorithm =
+                std::make_shared<cosim::ecco_algorithm>(ecco_params);
+            auto execution = cosim::execution(startTime, algorithm);
+            execution.add_slave(
+                std::make_unique<detailed_step_mock_slave>(
+                    [](cosim::time_point currentT, cosim::duration deltaT) {
+                        return cosim::step_result_info{
+                            cosim::step_result::complete,
+                            currentT + deltaT / 2,
+                            true,
+                            false,
+                            false,
+                            false};
+                    }),
+                "early-return");
+            execution.add_slave(
+                std::make_unique<detailed_step_mock_slave>(
+                    [](cosim::time_point currentT, cosim::duration deltaT) {
+                        return cosim::step_result_info{
+                            cosim::step_result::complete,
+                            currentT + deltaT,
+                            false,
+                            false,
+                            false,
+                            false};
+                    }),
+                "full-step");
+            bool rejected = false;
+            try {
+                execution.step();
+            } catch (const cosim::error& e) {
+                rejected =
+                    e.code() == cosim::make_error_code(cosim::errc::simulation_error);
+            }
+            REQUIRE(rejected);
+        }
+
+        {
+            std::vector<cosim::duration> requestedStepSizes;
+            auto algorithm =
+                std::make_shared<cosim::ecco_algorithm>(ecco_params);
+            auto execution = cosim::execution(startTime, algorithm);
+            execution.add_slave(
+                std::make_unique<detailed_step_mock_slave>(
+                    [&requestedStepSizes](
+                        cosim::time_point currentT,
+                        cosim::duration deltaT) {
+                        requestedStepSizes.push_back(deltaT);
+                        return cosim::step_result_info{
+                            cosim::step_result::complete,
+                            currentT + deltaT / 2,
+                            true,
+                            false,
+                            false,
+                            false};
+                    }),
+                "early-return");
+            execution.step();
+            execution.step();
+            execution.step();
+            REQUIRE(requestedStepSizes.size() == 3);
+            REQUIRE(requestedStepSizes[0] == ecco_params.step_size);
+            REQUIRE(requestedStepSizes[1] == ecco_params.step_size / 2);
+            REQUIRE(requestedStepSizes[2] == ecco_params.step_size / 4);
+        }
+
+        {
+            const cosim::variable_value expected(
+                cosim::uint64_values{{7, 11}}, {2});
+            auto source =
+                std::make_shared<whole_value_mock_slave>(expected);
+            auto target = std::make_shared<whole_value_mock_slave>(
+                cosim::variable_value(
+                    cosim::uint64_values{{0, 0}}, {2}));
+            auto execution = cosim::execution(
+                startTime,
+                std::make_shared<cosim::ecco_algorithm>(ecco_params));
+            const auto sourceIndex =
+                execution.add_slave(source, "whole-source");
+            const auto targetIndex =
+                execution.add_slave(target, "whole-target");
+            execution.connect_variables(
+                cosim::variable_id{
+                    sourceIndex,
+                    cosim::variable_type::uint64,
+                    whole_value_mock_slave::output_reference},
+                cosim::variable_id{
+                    targetIndex,
+                    cosim::variable_type::uint64,
+                    whole_value_mock_slave::input_reference});
+            execution.initialize();
+            REQUIRE(target->input_value() == expected);
+        }
 
         // Set up an ecco algo
         auto ecco_algo = std::make_shared<cosim::ecco_algorithm>(ecco_params);

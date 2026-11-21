@@ -1,0 +1,79 @@
+.figure-scroll {
+    margin: 1em 0;
+}
+
+.figure-scroll > .figure-viewport {
+    overflow-x: auto;
+}
+
+.figure-scroll > figcaption {
+    margin-top: 0.5em;
+}
+
+.stack-figure {
+    display: block;
+    width: 100%;
+    min-width: 760px;
+    height: auto;
+}
+
+.figure-layers {
+    aspect-ratio: 1000 / 850;
+}
+
+.figure-workflow {
+    aspect-ratio: 1000 / 870;
+}
+
+.figure-fmi3 {
+    aspect-ratio: 1000 / 1180;
+}
+
+.figure-event-timeline {
+    aspect-ratio: 1000 / 560;
+}
+
+.figure-grid-timeline {
+    aspect-ratio: 1000 / 520;
+}
+
+.figure-ordering-timeline {
+    aspect-ratio: 1000 / 500;
+}
+
+.figure-ecco-flow {
+    aspect-ratio: 1000 / 470;
+}
+
+.figure-ecco-bond {
+    aspect-ratio: 1000 / 430;
+}
+
+.figure-fixed-step {
+    aspect-ratio: 1000 / 340;
+}
+
+.figure-event-coordination {
+    aspect-ratio: 1000 / 360;
+}
+
+.figure-clock-routing {
+    aspect-ratio: 1000 / 400;
+}
+
+.figure-fixed-step-model,
+.figure-coupled-event-models {
+    aspect-ratio: 1000 / 185;
+}
+
+.figure-event-replay-models {
+    aspect-ratio: 1000 / 190;
+}
+
+.figure-event-ordering-models {
+    aspect-ratio: 1000 / 370;
+}
+
+.figure-grid-clock-models {
+    aspect-ratio: 1000 / 285;
+}

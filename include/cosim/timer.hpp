@@ -35,7 +35,7 @@ struct real_time_config
      * The number of steps used in the rolling average real time factor calculation.
      * This value is used for monitoring purposes only.
      */
-    std::atomic<int> steps_to_monitor = 5;
+    std::atomic<int> steps_to_monitor = 5; // NOLINT(cppcoreguidelines-avoid-magic-numbers,readability-magic-numbers): Existing default monitoring window.
 
     /**
      *  A sampling period in real time (wall clock) in milliseconds used in the rolling average real time factor calculation.
@@ -57,13 +57,13 @@ template<>
 class hash<cosim::real_time_config>
 {
 public:
-    std::size_t operator()(const cosim::real_time_config& v) const noexcept
+    std::size_t operator()(const cosim::real_time_config& config) const noexcept
     {
         std::size_t seed = 0;
-        boost::hash_combine(seed, v.real_time_simulation.load());
-        boost::hash_combine(seed, v.real_time_factor_target.load());
-        boost::hash_combine(seed, v.steps_to_monitor.load());
-        boost::hash_combine(seed, v.sampling_period_to_monitor.load().count());
+        boost::hash_combine(seed, config.real_time_simulation.load());
+        boost::hash_combine(seed, config.real_time_factor_target.load());
+        boost::hash_combine(seed, config.steps_to_monitor.load());
+        boost::hash_combine(seed, config.sampling_period_to_monitor.load().count());
         return seed;
     }
 };
@@ -85,7 +85,7 @@ struct real_time_metrics
 /**
  *  A class for controlling real-time execution.
  */
-class real_time_timer
+class real_time_timer // NOLINT(cppcoreguidelines-special-member-functions): Preserve existing copy and move behavior.
 {
 public:
     /**
@@ -108,10 +108,10 @@ public:
      */
     void sleep(time_point currentTime);
 
-    std::shared_ptr<real_time_config> get_real_time_config() const;
+    std::shared_ptr<real_time_config> get_real_time_config() const; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
 
     /// Returns a pointer to an object containing real time metrics
-    std::shared_ptr<const real_time_metrics> get_real_time_metrics() const;
+    std::shared_ptr<const real_time_metrics> get_real_time_metrics() const; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
 
     /// Constructor
     real_time_timer();

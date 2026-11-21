@@ -1,6 +1,7 @@
 #include "mock_slave.hpp"
 
 #include <cosim/algorithm.hpp>
+#include <cosim/exception.hpp>
 #include <cosim/log/simple.hpp>
 #include <cosim/observer/last_value_observer.hpp>
 #include <cosim/observer/time_series_observer.hpp>
@@ -8,11 +9,16 @@
 #include <exception>
 #include <memory>
 #include <stdexcept>
+#include <type_traits>
+#include <utility>
 
+static_assert(std::is_same_v<
+              decltype(std::declval<cosim::algorithm&>().do_step_with_info(
+                  cosim::time_point{})),
+              cosim::algorithm::macro_step_result>);
 
 // A helper macro to test various assertions
-#define REQUIRE(test) \
-    if (!(test)) throw std::runtime_error("Requirement not satisfied: " #test)
+#include "test_require.hpp"
 
 int main()
 {
@@ -25,6 +31,158 @@ int main()
         constexpr cosim::time_point midTime = cosim::to_time_point(0.6);
         constexpr cosim::time_point endTime = cosim::to_time_point(1.0);
         constexpr cosim::duration stepSize = cosim::to_duration(0.05);
+
+        {
+            int events = 0;
+            auto algorithm = std::make_shared<cosim::fixed_step_algorithm>(stepSize);
+            auto execution = cosim::execution(startTime, algorithm);
+            execution.add_slave(
+                std::make_unique<detailed_step_mock_slave>(
+                    [](cosim::time_point currentT, cosim::duration deltaT) {
+                        return cosim::step_result_info{
+                            cosim::step_result::complete, currentT + deltaT,
+                            false, true, false, false};
+                    },
+                    [&events] { ++events; }),
+                "event-at-endpoint");
+            REQUIRE(execution.step() == stepSize);
+            REQUIRE(events == 1);
+            REQUIRE(execution.step() == stepSize);
+            REQUIRE(events == 2);
+        }
+
+        {
+            int events = 0;
+            auto algorithm = std::make_shared<cosim::fixed_step_algorithm>(stepSize);
+            auto execution = cosim::execution(startTime, algorithm);
+            const auto simulator = execution.add_slave(
+                std::make_unique<detailed_step_mock_slave>(
+                    [](cosim::time_point currentT, cosim::duration deltaT) {
+                        return cosim::step_result_info{
+                            cosim::step_result::complete, currentT + deltaT,
+                            false, true, false, false};
+                    },
+                    [&events] { ++events; }),
+                "decimated-event-at-endpoint");
+            algorithm->set_stepsize_decimation_factor(simulator, 2);
+            bool rejected = false;
+            try {
+                execution.step();
+            } catch (const cosim::error& e) {
+                rejected = e.code() == cosim::make_error_code(cosim::errc::unsupported_feature);
+            }
+            REQUIRE(rejected);
+            REQUIRE(events == 0);
+        }
+
+        {
+            int events = 0;
+            auto algorithm = std::make_shared<cosim::fixed_step_algorithm>(stepSize);
+            auto execution = cosim::execution(startTime, algorithm);
+            execution.add_slave(
+                std::make_unique<detailed_step_mock_slave>(
+                    [](cosim::time_point currentT, cosim::duration deltaT) {
+                        return cosim::step_result_info{
+                            cosim::step_result::complete, currentT + deltaT / 2,
+                            true, true, false, false};
+                    },
+                    [&events] { ++events; }),
+                "event-slave");
+            REQUIRE(execution.step() == stepSize / 2);
+            REQUIRE(execution.current_time() == startTime + stepSize / 2);
+            REQUIRE(events == 1);
+        }
+
+        {
+            auto algorithm =
+                std::make_shared<cosim::fixed_step_algorithm>(stepSize);
+            auto execution = cosim::execution(startTime, algorithm);
+            const auto simulator = execution.add_slave(
+                std::make_unique<detailed_step_mock_slave>(
+                    [](cosim::time_point currentT, cosim::duration deltaT) {
+                        return cosim::step_result_info{
+                            cosim::step_result::complete,
+                            currentT + deltaT / 2,
+                            true,
+                            false,
+                            false,
+                            false};
+                    }),
+                "early-return");
+            algorithm->set_stepsize_decimation_factor(simulator, 2);
+            bool rejected = false;
+            try {
+                execution.step();
+            } catch (const cosim::error& e) {
+                rejected =
+                    e.code() == cosim::make_error_code(
+                                    cosim::errc::unsupported_feature);
+            }
+            REQUIRE(rejected);
+        }
+
+        {
+            auto algorithm =
+                std::make_shared<cosim::fixed_step_algorithm>(stepSize);
+            auto execution = cosim::execution(startTime, algorithm);
+            const auto earlyReturn =
+                [](cosim::time_point currentT, cosim::duration deltaT) {
+                    return cosim::step_result_info{
+                        cosim::step_result::complete,
+                        currentT + deltaT / 2,
+                        true,
+                        false,
+                        false,
+                        false};
+                };
+            execution.add_slave(
+                std::make_unique<detailed_step_mock_slave>(earlyReturn),
+                "early-return-1");
+            execution.add_slave(
+                std::make_unique<detailed_step_mock_slave>(earlyReturn),
+                "early-return-2");
+            execution.step();
+            REQUIRE(execution.current_time() == startTime + stepSize / 2);
+        }
+
+        {
+            auto algorithm =
+                std::make_shared<cosim::fixed_step_algorithm>(stepSize);
+            auto execution = cosim::execution(startTime, algorithm);
+            execution.add_slave(
+                std::make_unique<detailed_step_mock_slave>(
+                    [](cosim::time_point currentT, cosim::duration deltaT) {
+                        return cosim::step_result_info{
+                            cosim::step_result::complete,
+                            currentT + deltaT / 2,
+                            true,
+                            false,
+                            false,
+                            false};
+                    }),
+                "early-return");
+            execution.add_slave(
+                std::make_unique<detailed_step_mock_slave>(
+                    [](cosim::time_point currentT, cosim::duration deltaT) {
+                        return cosim::step_result_info{
+                            cosim::step_result::complete,
+                            currentT + deltaT,
+                            false,
+                            false,
+                            false,
+                            false};
+                    }),
+                "full-step");
+            bool rejected = false;
+            try {
+                execution.step();
+            } catch (const cosim::error& e) {
+                rejected =
+                    e.code() ==
+                    cosim::make_error_code(cosim::errc::simulation_error);
+            }
+            REQUIRE(rejected);
+        }
 
         // Set up execution
         auto execution = cosim::execution(

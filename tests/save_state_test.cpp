@@ -19,8 +19,7 @@
 
 
 // A helper macro to test various assertions
-#define REQUIRE(test) \
-    if (!(test)) throw std::runtime_error("Requirement not satisfied: " #test)
+#include "test_require.hpp"
 
 // Helper function to get observed values from multiple simulators.
 std::vector<double> get_reals(

@@ -15,6 +15,7 @@
 
 #include <atomic>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <unordered_map>
 
@@ -28,7 +29,7 @@ class file_observer;
 /**
  * Configuration options for file_observer.
  */
-class file_observer_config
+class file_observer_config // NOLINT(bugprone-exception-escape): MSVC unordered-container moves may allocate.
 {
 public:
     file_observer_config() = default;
@@ -52,12 +53,16 @@ public:
      * \param variableNames a list of variable names to log (empty list means log all variables)
      * \param decimationFactor optional decimation factor, where 1 (default) means log every step
      * \return self
+     * \throws std::invalid_argument if the decimation factor is zero.
      */
     file_observer_config& log_simulator_variables(
         const std::string& simulatorName,
         const std::vector<std::string>& variableNames,
         std::optional<size_t> decimationFactor = std::nullopt)
     {
+        if (decimationFactor && *decimationFactor == 0) {
+            throw std::invalid_argument("File observer decimation factor must be positive");
+        }
         variablesToLog_[simulatorName].first = decimationFactor.value_or(defaultDecimationFactor_);
         for (const auto& variableName : variableNames) {
             variablesToLog_[simulatorName].second.emplace_back(variableName);
@@ -69,14 +74,17 @@ public:
      * Specify that we want to log all variables for a given simulator
      *
      * \param simulatorName name of simulator to log
-     * \param variableNames a list of variable names to log (empty list means log all variables)
      * \param decimationFactor optional decimation factor, where 1 (default) means log every step
      * \return self
+     * \throws std::invalid_argument if the decimation factor is zero.
      */
     file_observer_config& log_all_simulator_variables(
         const std::string& simulatorName,
         std::optional<size_t> decimationFactor = std::nullopt)
     {
+        if (decimationFactor && *decimationFactor == 0) {
+            throw std::invalid_argument("File observer decimation factor must be positive");
+        }
         variablesToLog_[simulatorName].first = decimationFactor.value_or(defaultDecimationFactor_);
         variablesToLog_[simulatorName].second = {}; // empty variable means log all
         return *this;
@@ -110,7 +118,7 @@ private:
 
     [[nodiscard]] bool should_log_simulator(const std::string& name) const
     {
-        return variablesToLog_.count(name);
+        return variablesToLog_.count(name) != 0U;
     }
 
     friend class file_observer;
@@ -122,7 +130,7 @@ private:
  *
  * Recording may be toggled on or off mid simulation. This functionality is thread safe.
  */
-class file_observer : public observer
+class file_observer : public observer // NOLINT(cppcoreguidelines-special-member-functions): Preserve existing interface copy and move behavior.
 {
 public:
     /**
@@ -162,13 +170,13 @@ public:
      */
     void stop_recording();
 
-    void simulator_added(simulator_index, observable*, time_point) override;
+    void simulator_added(simulator_index /*index*/, observable* /*simulator*/, time_point /*unused*/) override;
 
-    void simulator_removed(simulator_index, time_point) override;
+    void simulator_removed(simulator_index /*index*/, time_point /*unused*/) override;
 
-    void variables_connected(variable_id output, variable_id input, time_point) override;
+    void variables_connected(variable_id output, variable_id input, time_point /*unused*/) override;
 
-    void variable_disconnected(variable_id input, time_point) override;
+    void variable_disconnected(variable_id input, time_point /*unused*/) override;
 
     void simulation_initialized(
         step_number firstStep,
@@ -192,7 +200,7 @@ public:
     ~file_observer() override;
 
 private:
-    struct simulator_logging_config
+    struct simulator_logging_config // NOLINT(cppcoreguidelines-pro-type-member-init): Preserve existing default-initialization behavior.
     {
         std::vector<variable_description> variables;
         size_t decimationFactor;

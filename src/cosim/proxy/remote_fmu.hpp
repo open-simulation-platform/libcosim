@@ -19,10 +19,7 @@
 
 #include <memory>
 
-namespace cosim
-{
-
-namespace proxy
+namespace cosim::proxy
 {
 
 class remote_fmu : public cosim::model
@@ -31,7 +28,7 @@ class remote_fmu : public cosim::model
 public:
     explicit remote_fmu(const cosim::filesystem::path& fmuPath, const std::optional<proxyfmu::remote_info>& remote = std::nullopt);
 
-    std::shared_ptr<const cosim::model_description> description() const noexcept override;
+    [[nodiscard]] std::shared_ptr<const cosim::model_description> description() const noexcept override;
 
     std::shared_ptr<cosim::slave> instantiate(std::string_view name) override;
 
@@ -40,8 +37,6 @@ private:
     std::shared_ptr<const cosim::model_description> modelDescription_;
 };
 
-} // namespace proxy
-
-} // namespace cosim
+} // namespace cosim::proxy
 
 #endif

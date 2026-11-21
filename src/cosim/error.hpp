@@ -67,8 +67,9 @@
  *
  *  \param[in] test An expression which can be implicitly converted to `bool`.
  */
+// The do-while wrapper makes each macro a single statement in all contexts.
 #define COSIM_INPUT_CHECK(test)                                                           \
-    do {                                                                                  \
+    do { /* NOLINT(cppcoreguidelines-avoid-do-while) */                                   \
         if (!(test)) {                                                                    \
             throw std::invalid_argument(                                                  \
                 std::string(__FUNCTION__) + ": Input requirement not satisfied: " #test); \
@@ -86,7 +87,7 @@
  *  `std::terminate()`.
  */
 #define COSIM_PRECONDITION(condition)                                         \
-    do {                                                                      \
+    do { /* NOLINT(cppcoreguidelines-avoid-do-while) */                       \
         if (!(condition)) {                                                   \
             ::cosim::detail::precondition_violated(__FUNCTION__, #condition); \
         }                                                                     \
@@ -102,9 +103,9 @@
  *  the macro is invoked.  The program is terminated by calling
  *  `std::terminate()`.
  */
-#define COSIM_PANIC()                                        \
-    do {                                                     \
-        ::cosim::detail::panic(__FILE__, __LINE__, nullptr); \
+#define COSIM_PANIC() /* NOLINT(cppcoreguidelines-macro-usage): Capture the caller's file and line. */ \
+    do { /* NOLINT(cppcoreguidelines-avoid-do-while) */                                                \
+        ::cosim::detail::panic(__FILE__, __LINE__, nullptr);                                           \
     } while (false)
 
 /**
@@ -116,9 +117,9 @@
  *  the macro is invoked, in addition to the text provided in `message`.
  *  The program is terminated by calling `std::terminate()`.
  */
-#define COSIM_PANIC_M(message)                               \
-    do {                                                     \
-        ::cosim::detail::panic(__FILE__, __LINE__, message); \
+#define COSIM_PANIC_M(message) /* NOLINT(cppcoreguidelines-macro-usage): Capture the caller's file and line. */ \
+    do { /* NOLINT(cppcoreguidelines-avoid-do-while) */                                                         \
+        ::cosim::detail::panic(__FILE__, __LINE__, message);                                                    \
     } while (false)
 
 
@@ -139,9 +140,9 @@ namespace detail
  *      A custom error message which will be forwarded to the
  *      `std::system_error` constructor.
  */
-inline std::system_error make_system_error(const std::string& msg) noexcept
+inline std::system_error make_system_error(const std::string& msg) noexcept // NOLINT(bugprone-exception-escape): Preserve the existing noexcept contract.
 {
-    return std::system_error(errno, std::generic_category(), msg);
+    return {errno, std::generic_category(), msg};
 }
 
 

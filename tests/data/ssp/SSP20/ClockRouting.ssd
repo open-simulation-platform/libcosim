@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ssd:SystemStructureDescription xmlns:ssd="http://ssp-standard.org/SSP1/SystemStructureDescription"
+    xmlns:ssc="http://ssp-standard.org/SSP1/SystemStructureCommon"
+    name="Clock routing" version="2.0">
+    <ssd:System name="root">
+        <ssd:Elements>
+            <ssd:Component name="source" source="../../fmi3/ClockedCoSimulation.fmu">
+                <ssd:Connectors>
+                    <ssd:Connector name="outClock" kind="output"><ssc:Clock intervalVariability="triggered"/></ssd:Connector>
+                </ssd:Connectors>
+            </ssd:Component>
+            <ssd:Component name="target" source="../../fmi3/ClockedCoSimulation.fmu">
+                <ssd:Connectors>
+                    <ssd:Connector name="inClock2" kind="input"><ssc:Clock intervalVariability="triggered" priority="1"/></ssd:Connector>
+                </ssd:Connectors>
+            </ssd:Component>
+        </ssd:Elements>
+        <ssd:Connections>
+            <ssd:Connection startElement="source" startConnector="outClock" endElement="target" endConnector="inClock2"/>
+        </ssd:Connections>
+    </ssd:System>
+</ssd:SystemStructureDescription>

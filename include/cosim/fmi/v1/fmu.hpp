@@ -26,9 +26,7 @@
 struct fmi1_import_t;
 
 
-namespace cosim
-{
-namespace fmi
+namespace cosim::fmi
 {
 
 #ifdef _WIN32
@@ -66,7 +64,7 @@ public:
     fmu(fmu&&) = delete;
     fmu& operator=(fmu&&) = delete;
 
-    ~fmu();
+    ~fmu() override;
 
     // fmi::fmu methods
     fmi::fmi_version fmi_version() const override;
@@ -118,7 +116,7 @@ class slave_instance : public fmi::slave_instance
 {
 private:
     // Only FMU1 is allowed to instantiate this class.
-    friend std::shared_ptr<slave_instance> fmu::instantiate_v1_slave(std::string_view);
+    friend std::shared_ptr<slave_instance> fmu::instantiate_v1_slave(std::string_view /*instanceName*/);
     slave_instance(std::shared_ptr<v1::fmu> fmu, std::string_view instanceName);
 
 public:
@@ -128,7 +126,7 @@ public:
     slave_instance(slave_instance&&) = delete;
     slave_instance& operator=(slave_instance&&) = delete;
 
-    ~slave_instance() noexcept;
+    ~slave_instance() noexcept override;
 
     // cosim::slave methods
     void setup(
@@ -145,6 +143,10 @@ public:
     void get_integer_variables(
         gsl::span<const value_reference> variables,
         gsl::span<int> values) const override;
+    /// Gets Enumeration values using FMI 1 Integer transport.
+    void get_enumeration_variables(
+        gsl::span<const value_reference> variables,
+        gsl::span<enumeration_value> values) const;
     void get_boolean_variables(
         gsl::span<const value_reference> variables,
         gsl::span<bool> values) const override;
@@ -158,6 +160,10 @@ public:
     void set_integer_variables(
         gsl::span<const value_reference> variables,
         gsl::span<const int> values) override;
+    /// Sets Enumeration values after declared-item and bound validation.
+    void set_enumeration_variables(
+        gsl::span<const value_reference> variables,
+        gsl::span<const enumeration_value> values);
     void set_boolean_variables(
         gsl::span<const value_reference> variables,
         gsl::span<const bool> values) override;
@@ -165,24 +171,32 @@ public:
         gsl::span<const value_reference> variables,
         gsl::span<const std::string> values) override;
 
+    std::vector<variable_value> get_variable_values( // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
+        gsl::span<const typed_value_reference> variables) const override;
+    /// Validates the complete batch before dispatch; an FMU failure can still
+    /// leave earlier successful assignments applied.
+    void set_variable_values(
+        gsl::span<const typed_value_reference> variables,
+        gsl::span<const variable_value> values) override;
+
     state_index save_state() override;
     void save_state(state_index overwriteState) override;
     void restore_state(state_index state) override;
     void release_state(state_index state) override;
-    serialization::node export_state(state_index stateIndex) const override;
+    serialization::node export_state(state_index stateIndex) const override; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
     state_index import_state(const serialization::node& exportedState) override;
 
     // fmi::slave_instance methods
-    std::shared_ptr<fmi::fmu> fmu() const override
+    std::shared_ptr<fmi::fmu> fmu() const override // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
     {
         return std::static_pointer_cast<fmi::fmu>(v1_fmu());
     }
 
     /// Returns the same object as `fmu()`, only statically typed as a `v1::fmu`.
-    std::shared_ptr<v1::fmu> v1_fmu() const;
+    std::shared_ptr<v1::fmu> v1_fmu() const; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
 
     /// Returns the underlying C API handle (for FMI Library)
-    fmi1_import_t* fmilib_handle() const;
+    fmi1_import_t* fmilib_handle() const; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
 
 private:
     std::shared_ptr<v1::fmu> fmu_;
@@ -197,6 +211,5 @@ private:
 
 
 } // namespace v1
-} // namespace fmi
-} // namespace cosim
+} // namespace cosim::fmi
 #endif // header guard

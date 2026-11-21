@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OspSystemStructure
+        xmlns="http://opensimulationplatform.com/MSMI/OSPSystemStructure"
+        version="0.1">
+    <StartTime>0.0</StartTime>
+    <BaseStepSize>0.1</BaseStepSize>
+    <Algorithm>fixedStep</Algorithm>
+    <Simulators>
+        <Simulator name="fmi2" source="../../fmus/MixedTypes.fmu"/>
+        <Simulator name="fmi3" source="../../fmus/Feedthrough.fmu"/>
+    </Simulators>
+    <Connections>
+        <VariableConnection>
+            <Variable simulator="fmi2" name="real_output"/>
+            <Variable simulator="fmi3" name="Float64_discrete_input"/>
+        </VariableConnection>
+        <VariableConnection>
+            <Variable simulator="fmi3" name="Float64_continuous_output"/>
+            <Variable simulator="fmi2" name="real_input"/>
+        </VariableConnection>
+        <VariableConnection>
+            <Variable simulator="fmi2" name="integer_output"/>
+            <Variable simulator="fmi3" name="Int32_input"/>
+        </VariableConnection>
+        <VariableConnection>
+            <Variable simulator="fmi3" name="Int32_output"/>
+            <Variable simulator="fmi2" name="integer_input"/>
+        </VariableConnection>
+        <VariableConnection>
+            <Variable simulator="fmi2" name="boolean_output"/>
+            <Variable simulator="fmi3" name="Boolean_input"/>
+        </VariableConnection>
+        <VariableConnection>
+            <Variable simulator="fmi3" name="Boolean_output"/>
+            <Variable simulator="fmi2" name="boolean_input"/>
+        </VariableConnection>
+        <VariableConnection>
+            <Variable simulator="fmi2" name="enumeration_output"/>
+            <Variable simulator="fmi3" name="Enumeration_input"/>
+        </VariableConnection>
+        <VariableConnection>
+            <Variable simulator="fmi3" name="Enumeration_output"/>
+            <Variable simulator="fmi2" name="enumeration_input"/>
+        </VariableConnection>
+    </Connections>
+</OspSystemStructure>

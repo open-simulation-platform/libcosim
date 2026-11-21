@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OspSystemStructure
+        xmlns="http://opensimulationplatform.com/MSMI/OSPSystemStructure"
+        version="0.1">
+    <BaseStepSize>1.0</BaseStepSize>
+    <Algorithm>fixedStep</Algorithm>
+    <Simulators>
+        <Simulator name="source" source="../fmus/ClockedCoSimulation.fmu"/>
+        <Simulator name="target" source="../fmus/ClockedCoSimulation.fmu"/>
+    </Simulators>
+    <Connections>
+        <VariableConnection>
+            <Variable simulator="source" name="inClock2"/>
+            <Variable simulator="target" name="inClock2"/>
+        </VariableConnection>
+    </Connections>
+</OspSystemStructure>

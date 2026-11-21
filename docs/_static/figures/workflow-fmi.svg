@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 870" role="img" aria-labelledby="title desc">
+  <title id="title">FMI 1, 2 and 3 Co-Simulation workflow</title>
+  <desc id="desc">The shared path imports and instantiates a local FMU, initializes, advances, and releases it. FMI 1 exchanges initial values before initialization. FMI 2 and 3 exchange values in Initialization Mode. FMI 3 can also configure structural parameters and coordinate supported events and Clocks.</desc>
+  <style>
+    .bg { fill: #fff; } .box { fill: #eaf3fa; stroke: #315b77; stroke-width: 2; }
+    .tag { fill: #fff6e3; stroke: #9a6a18; stroke-width: 1.5; }
+    .line { fill: none; stroke: #315b77; stroke-width: 3; marker-end: url(#arrow); }
+    .heading { font: bold 20px sans-serif; fill: #142b3a; }
+    .text { font: 16px sans-serif; fill: #243d4e; }
+    .small { font: 15px sans-serif; fill: #243d4e; }
+    .tag-text { font: bold 14px sans-serif; fill: #67410b; }
+    a:hover > .box, a:focus > .box { stroke: #005fcc; stroke-width: 4; }
+  </style>
+  <defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#315b77"/></marker></defs>
+  <rect class="bg" width="1000" height="870"/>
+  <text class="heading" x="30" y="34">Local Co-Simulation · FMI 1, 2 and 3</text>
+
+  <a href="../../design/models-and-fmi.html" target="_top">
+    <rect class="box" x="30" y="50" width="940" height="90" rx="8"/>
+    <text class="heading" x="48" y="78">1  Import</text>
+    <text class="text" x="48" y="108">Application → libcosim importer: probe the version, extract the FMU and parse its description.</text>
+  </a>
+  <path class="line" d="M500 140 V163"/>
+
+  <a href="../../design/models-and-fmi.html" target="_top">
+    <rect class="box" x="30" y="165" width="940" height="110" rx="8"/>
+    <text class="heading" x="48" y="193">2  Instantiate</text>
+    <text class="text" x="48" y="220">libcosim FMI instance → FMI Library → FMU shared library.</text>
+    <rect class="tag" x="48" y="237" width="65" height="24" rx="5"/>
+    <text class="tag-text" x="59" y="254">FMI 3</text>
+    <text class="small" x="126" y="254">Optional Configuration Mode for structural parameters.</text>
+  </a>
+  <path class="line" d="M500 275 V298"/>
+
+  <a href="../../design/execution.html" target="_top">
+    <rect class="box" x="30" y="300" width="940" height="180" rx="8"/>
+    <text class="heading" x="48" y="328">3  Initialize</text>
+    <rect class="tag" x="48" y="342" width="65" height="24" rx="5"/>
+    <text class="tag-text" x="59" y="359">FMI 1</text>
+    <text class="small" x="126" y="359">Record times → exchange initial values → initialize; no Initialization Mode.</text>
+    <rect class="tag" x="48" y="374" width="65" height="24" rx="5"/>
+    <text class="tag-text" x="59" y="391">FMI 2</text>
+    <text class="small" x="126" y="391">Set up experiment → enter Initialization Mode → exchange values → exit.</text>
+    <rect class="tag" x="48" y="406" width="65" height="24" rx="5"/>
+    <text class="tag-text" x="59" y="423">FMI 3</text>
+    <text class="small" x="126" y="423">Enter Initialization Mode with times → exchange values → exit.</text>
+    <text class="small" x="126" y="451">If enabled, process initial events; clocked FMUs initially remain in Event Mode.</text>
+  </a>
+  <path class="line" d="M500 480 V503"/>
+
+  <a href="../../design/execution.html" target="_top">
+    <rect class="box" x="30" y="505" width="940" height="140" rx="8"/>
+    <text class="heading" x="48" y="533">4  Advance and observe</text>
+    <text class="text" x="48" y="560">Execution → algorithm → simulator adapter → FMI instance → FMU; exchange values and observe.</text>
+    <rect class="tag" x="48" y="577" width="65" height="24" rx="5"/>
+    <text class="tag-text" x="59" y="594">FMI 3</text>
+    <text class="small" x="126" y="594">Handle supported events and Clocks, step outcomes and optional callbacks.</text>
+    <text class="small" x="126" y="620">Early return and termination can affect how far the simulation advances.</text>
+  </a>
+  <path class="line" d="M500 645 V668"/>
+
+  <a href="../../design/models-and-fmi.html" target="_top">
+    <rect class="box" x="30" y="670" width="940" height="90" rx="8"/>
+    <text class="heading" x="48" y="698">5  Finish and release</text>
+    <text class="text" x="48" y="728">Terminate when permitted; release the FMI instance and its resources.</text>
+  </a>
+  <text class="small" x="30" y="795">FMI 2 and 3 state operations require the corresponding FMU capabilities.</text>
+  <text class="small" x="30" y="820">Select a phase for its guide. Values and callbacks can flow back against the call direction.</text>
+  <text class="small" x="30" y="845">FMI 3 Event Mode and Clock handling are subject to the supported Co-Simulation subset.</text>
+</svg>

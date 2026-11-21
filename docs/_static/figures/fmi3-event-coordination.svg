@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 360" role="img" aria-labelledby="title desc">
+  <title id="title">FMI 3 coupled input-event coordination</title>
+  <desc id="desc">For a non-clocked event, affected FMUs enter Event Mode. The importer settles connections, then updates each participating FMU once. If work remains, a new super-dense instant starts at the same physical time; otherwise the participants return to Step Mode. A peer without Event Mode receives staged changes at its next valid step.</desc>
+  <style>
+    .background { fill: #fff; } .box { fill: #eaf3fa; stroke: #315b77; stroke-width: 2; }
+    .event { fill: #fff6e3; stroke: #9a6a18; stroke-width: 2; }
+    .arrow { fill: none; stroke: #315b77; stroke-width: 3; marker-end: url(#arrow); }
+    .heading { font: bold 21px sans-serif; fill: #142b3a; }
+    .label { font: bold 16px sans-serif; fill: #142b3a; }
+    .text { font: 15px sans-serif; fill: #243d4e; }
+  </style>
+  <defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#315b77"/></marker></defs>
+  <rect class="background" width="1000" height="360"/>
+  <text class="heading" x="30" y="35">FMI 3 Event Mode: coupled work at one physical time</text>
+  <rect class="box" x="30" y="75" width="190" height="95" rx="8"/>
+  <text class="label" x="45" y="105">Event boundary</text><text class="text" x="45" y="132">Time, early return</text><text class="text" x="45" y="153">or changed input</text>
+  <rect class="event" x="270" y="75" width="200" height="95" rx="8"/>
+  <text class="label" x="285" y="105">Enter Event Mode</text><text class="text" x="285" y="132">Keep affected FMUs</text><text class="text" x="285" y="153">in Event Mode</text>
+  <rect class="event" x="520" y="75" width="200" height="95" rx="8"/>
+  <text class="label" x="535" y="105">Settle connections</text><text class="text" x="535" y="132">Propagate and recheck</text><text class="text" x="535" y="153">before the update</text>
+  <rect class="box" x="770" y="75" width="200" height="95" rx="8"/>
+  <text class="label" x="785" y="105">Update all once</text><text class="text" x="785" y="132">Stage resulting outputs;</text><text class="text" x="785" y="153">leave if no work remains</text>
+  <path class="arrow" d="M220 122 H268"/><path class="arrow" d="M470 122 H518"/><path class="arrow" d="M720 122 H768"/>
+  <path class="arrow" d="M870 170 V205 H620 V172"/>
+  <text class="text" x="490" y="228">Work remains: next super-dense instant at the same physical time</text>
+  <text class="text" x="30" y="270">The shared per-time budget defaults to 1000; coupled exhaustion warns and can defer pending work.</text>
+  <text class="text" x="30" y="296">An FMU-local iteration that fails to converge is an error, not a successful step.</text>
+  <text class="text" x="30" y="322">A peer without Event Mode receives staged inputs at its next valid normal step and may be late.</text>
+</svg>

@@ -1,0 +1,313 @@
+diff --git a/Feedthrough/FMI3.xml b/Feedthrough/FMI3.xml
+--- a/Feedthrough/FMI3.xml
++++ b/Feedthrough/FMI3.xml
+@@ -4,7 +4,7 @@
+   modelName="Feedthrough"
+   description="A model to test different variable types, causalities, and variabilities"
+   generationTool="Reference FMUs (development build)"
+-  instantiationToken="{37B954F1-CC86-4D8F-B97F-C7C36F6670D2}">
++  instantiationToken="{37B954F1-CC86-4D8F-B97F-C7C36F6670A3}">
+ 
+   <ModelExchange
+     modelIdentifier="Feedthrough"
+@@ -90,6 +90,19 @@
+ 
+     <Enumeration name="Enumeration_input" declaredType="Option" valueReference="33" causality="input" start="1"/>
+     <Enumeration name="Enumeration_output" declaredType="Option" valueReference="34" causality="output"/>
++    <String name="String_array" valueReference="35" causality="input">
++        <Dimension start="2"/>
++        <Start value="first"/>
++        <Start value="second"/>
++    </String>
++    <Binary name="Binary_array" valueReference="36" causality="input">
++        <Dimension start="2"/>
++        <Start value="0102"/>
++        <Start value="a0ff"/>
++    </Binary>
++    <Enumeration name="Enumeration_array" declaredType="Option" valueReference="37" causality="input" start="1 2">
++        <Dimension start="2"/>
++    </Enumeration>
+ 
+   </ModelVariables>
+ 
+diff --git a/Feedthrough/config.h b/Feedthrough/config.h
+--- a/Feedthrough/config.h
++++ b/Feedthrough/config.h
+@@ -7,7 +7,7 @@
+ 
+ // define class name and unique id
+ #define MODEL_IDENTIFIER Feedthrough
+-#define INSTANTIATION_TOKEN "{37B954F1-CC86-4D8F-B97F-C7C36F6670D2}"
++#define INSTANTIATION_TOKEN "{37B954F1-CC86-4D8F-B97F-C7C36F6670A3}"
+ 
+ #define CO_SIMULATION
+ #define MODEL_EXCHANGE
+@@ -98,7 +98,11 @@ typedef enum {
+     vr_Binary_output,
+ 
+     vr_Enumeration_input,
+-    vr_Enumeration_output
++    vr_Enumeration_output,
++
++    vr_String_array,
++    vr_Binary_array,
++    vr_Enumeration_array
+ 
+ } ValueReference;
+ 
+@@ -159,6 +163,11 @@ typedef struct {
+     Option Enumeration_input;
+     Option Enumeration_output;
+ 
++    char String_array[2][STRING_MAX_LEN];
++    size_t Binary_array_size[2];
++    char Binary_array[2][BINARY_MAX_LEN];
++    Option Enumeration_array[2];
++
+ } ModelData;
+ 
+ extern const char* STRING_START;
+diff --git a/Feedthrough/model.c b/Feedthrough/model.c
+--- a/Feedthrough/model.c
++++ b/Feedthrough/model.c
+@@ -63,6 +63,19 @@ Status setStartValues(ModelInstance *comp) {
+     M(Enumeration_input)  = Option1;
+     M(Enumeration_output) = Option1;
+ 
++    strncpy(M(String_array)[0], "first", STRING_MAX_LEN);
++    strncpy(M(String_array)[1], "second", STRING_MAX_LEN);
++
++    M(Binary_array_size)[0] = 2;
++    M(Binary_array_size)[1] = 2;
++    M(Binary_array)[0][0] = 0x01;
++    M(Binary_array)[0][1] = 0x02;
++    M(Binary_array)[1][0] = (char)-96;
++    M(Binary_array)[1][1] = (char)-1;
++
++    M(Enumeration_array)[0] = Option1;
++    M(Enumeration_array)[1] = Option2;
++
+     comp->isDirtyValues = true;
+ 
+     return OK;
+@@ -361,6 +374,12 @@ Status getInt64(ModelInstance* comp, ValueReference vr, int64_t values[], size_t
+             ASSERT_NVALUES(1);
+             values[(*index)++] = M(Enumeration_output);
+             break;
++        case vr_Enumeration_array:
++            ASSERT_NVALUES(2);
++            for (size_t i = 0; i < 2; i++) {
++                values[(*index)++] = M(Enumeration_array)[i];
++            }
++            break;
+ #endif
+         default:
+             logError(comp, "Get Int64 is not allowed for value reference %u.", vr);
+@@ -436,6 +455,13 @@ Status getBinary(ModelInstance* comp, ValueReference vr, size_t sizes[], const c
+             values[*index]    = M(Binary_output);
+             sizes[(*index)++] = M(Binary_output_size);
+             break;
++        case vr_Binary_array:
++            ASSERT_NVALUES(2);
++            for (size_t i = 0; i < 2; i++) {
++                values[*index] = M(Binary_array)[i];
++                sizes[(*index)++] = M(Binary_array_size)[i];
++            }
++            break;
+         default:
+             logError(comp, "Get Binary is not allowed for value reference %u.", vr);
+             return Error;
+@@ -456,6 +482,12 @@ Status getString(ModelInstance* comp, ValueReference vr, const char* values[], s
+             ASSERT_NVALUES(1);
+             values[(*index)++] = M(String_input);
+             break;
++        case vr_String_array:
++            ASSERT_NVALUES(2);
++            for (size_t i = 0; i < 2; i++) {
++                values[(*index)++] = M(String_array)[i];
++            }
++            break;
+         case vr_String_output:
+             ASSERT_NVALUES(1);
+             values[(*index)++] = M(String_output);
+@@ -705,6 +737,18 @@ Status setInt64(ModelInstance* comp, ValueReference vr, const int64_t values[],
+             ASSERT_NVALUES(1);
+             M(Enumeration_input) = values[(*index)++];
+             break;
++        case vr_Enumeration_array:
++            ASSERT_NVALUES(2);
++            for (size_t i = 0; i < 2; i++) {
++                if (values[*index + i] != Option1 && values[*index + i] != Option2) {
++                    logError(comp, "%llu is not a legal value for Enumeration_array.", values[*index + i]);
++                    return Error;
++                }
++            }
++            for (size_t i = 0; i < 2; i++) {
++                M(Enumeration_array)[i] = values[(*index)++];
++            }
++            break;
+ #endif
+         default:
+             logError(comp, "Set Int64 is not allowed for value reference %u.", vr);
+@@ -774,6 +818,18 @@ Status setString(ModelInstance* comp, ValueReference vr, const char *const value
+             ASSERT_NVALUES(1);
+             strcpy(M(String_input), values[(*index)++]);
+             break;
++        case vr_String_array:
++            ASSERT_NVALUES(2);
++            for (size_t i = 0; i < 2; i++) {
++                if (strlen(values[*index + i]) >= STRING_MAX_LEN) {
++                    logError(comp, "Max. string length is %d bytes.", STRING_MAX_LEN);
++                    return Error;
++                }
++            }
++            for (size_t i = 0; i < 2; i++) {
++                strcpy(M(String_array)[i], values[(*index)++]);
++            }
++            break;
+         default:
+             logError(comp, "Set String is not allowed for value reference %u.", vr);
+             return Error;
+@@ -799,6 +855,23 @@ Status setBinary(ModelInstance* comp, ValueReference vr, const size_t size[], co
+             M(Binary_input_size) = size[*index];
+             memcpy((void *)M(Binary_input), values[(*index)++], M(Binary_input_size));
+             break;
++        case vr_Binary_array:
++            ASSERT_NVALUES(2);
++            for (size_t i = 0; i < 2; i++) {
++                if (size[*index + i] > BINARY_MAX_LEN) {
++                    logError(comp, "Max. binary size is %d bytes.", BINARY_MAX_LEN);
++                    return Error;
++                }
++            }
++            for (size_t i = 0; i < 2; i++) {
++                M(Binary_array_size)[i] = size[*index + i];
++                memcpy(
++                    (void *)M(Binary_array)[i],
++                    values[*index + i],
++                    M(Binary_array_size)[i]);
++            }
++            *index += 2;
++            break;
+         default:
+             logError(comp, "Set Binary is not allowed for value reference %u.", vr);
+             return Error;
+diff --git a/StateSpace/FMI3.xml b/StateSpace/FMI3.xml
+--- a/StateSpace/FMI3.xml
++++ b/StateSpace/FMI3.xml
+@@ -4,7 +4,7 @@
+   modelName="StateSpace"
+   description="This model implements a linear time-invariant (LTI) system"
+   generationTool="Reference FMUs (development build)"
+-  instantiationToken="{D773325B-AB94-4630-BF85-643EB24FCB78}">
++  instantiationToken="{D773325B-AB94-4630-BF85-643EB24FCBA3}">
+ 
+     <ModelExchange
+       modelIdentifier="StateSpace"
+@@ -64,6 +64,10 @@
+         <Float64 name="der(x)" valueReference="12" description="Derivative of the state vector" causality="local" derivative="11">
+             <Dimension valueReference="2"/>
+         </Float64>
++        <Float64 name="fixed" valueReference="13" description="Fixed-size matrix" causality="parameter" variability="tunable" start="1 0 0 1">
++            <Dimension start="2"/>
++            <Dimension start="2"/>
++        </Float64>
+     </ModelVariables>
+ 
+     <ModelStructure>
+diff --git a/StateSpace/config.h b/StateSpace/config.h
+--- a/StateSpace/config.h
++++ b/StateSpace/config.h
+@@ -5,7 +5,7 @@
+ 
+ // define class name and unique id
+ #define MODEL_IDENTIFIER StateSpace
+-#define INSTANTIATION_TOKEN "{D773325B-AB94-4630-BF85-643EB24FCB78}"
++#define INSTANTIATION_TOKEN "{D773325B-AB94-4630-BF85-643EB24FCBA3}"
+ 
+ #define MAX_CONTINUOUS_STATES 5
+ 
+@@ -37,7 +37,8 @@ typedef enum {
+     vr_u,
+     vr_y,
+     vr_x,
+-    vr_der_x
++    vr_der_x,
++    vr_fixed
+ } ValueReference;
+ 
+ typedef struct {
+@@ -53,6 +54,7 @@ typedef struct {
+     double y[N_MAX];
+     double x[N_MAX];
+     double der_x[N_MAX];
++    double fixed[2][2];
+ } ModelData;
+ 
+ #endif /* config_h */
+diff --git a/StateSpace/model.c b/StateSpace/model.c
+--- a/StateSpace/model.c
++++ b/StateSpace/model.c
+@@ -17,6 +17,10 @@ Status setStartValues(ModelInstance *comp) {
+         M(C)[i][j] = i == j ? 1 : 0;
+         M(D)[i][j] = i == j ? 1 : 0;
+     }
++    for (int i = 0; i < 2; i++)
++    for (int j = 0; j < 2; j++) {
++        M(fixed)[i][j] = i == j ? 1 : 0;
++    }
+ 
+     for (int i = 0; i < M_MAX; i++) {
+         M(u)[i] = i + 1;
+@@ -80,7 +84,9 @@ Status calculateValues(ModelInstance *comp) {
+ 
+ Status getFloat64(ModelInstance* comp, ValueReference vr, double values[], size_t nValues, size_t* index) {
+     ASSERT_NOT_NULL2(comp);
+-    ASSERT_NOT_NULL2(values);
++    if (nValues > 0) {
++        ASSERT_NOT_NULL2(values);
++    }
+     ASSERT_NOT_NULL2(index);
+ 
+     calculateValues(comp);
+@@ -152,6 +158,14 @@ Status getFloat64(ModelInstance* comp, ValueReference vr, double values[], size_
+                 values[(*index)++] = M(der_x)[i];
+             }
+             return OK;
++        case vr_fixed:
++            ASSERT_NVALUES(4);
++            for (size_t i = 0; i < 2; i++) {
++                for (size_t j = 0; j < 2; j++) {
++                    values[(*index)++] = M(fixed)[i][j];
++                }
++            }
++            return OK;
+         default:
+             logError(comp, "Get Float64 is not allowed for value reference %u.", vr);
+             return Error;
+@@ -160,7 +174,9 @@ Status getFloat64(ModelInstance* comp, ValueReference vr, double values[], size_
+ 
+ Status setFloat64(ModelInstance* comp, ValueReference vr, const double values[], size_t nValues, size_t* index) {
+     ASSERT_NOT_NULL2(comp);
+-    ASSERT_NOT_NULL2(values);
++    if (nValues > 0) {
++        ASSERT_NOT_NULL2(values);
++    }
+     ASSERT_NOT_NULL2(index);
+ 
+     switch (vr) {
+@@ -218,6 +234,14 @@ Status setFloat64(ModelInstance* comp, ValueReference vr, const double values[],
+             M(x)[i] = values[(*index)++];
+         }
+         break;
++    case vr_fixed:
++        ASSERT_NVALUES(4);
++        for (size_t i = 0; i < 2; i++) {
++            for (size_t j = 0; j < 2; j++) {
++                M(fixed)[i][j] = values[(*index)++];
++            }
++        }
++        break;
+     default:
+         logError(comp, "Set Float64 is not allowed for value reference %u.", vr);
+         return Error;

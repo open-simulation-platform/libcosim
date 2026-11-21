@@ -1,0 +1,9 @@
+---
+defaults:
+  model: fmi3
+  variable: Float64_continuous_output
+  action: override
+events:
+  - time: 0
+    value: -4.25
+end: 1

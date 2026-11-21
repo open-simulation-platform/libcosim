@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 400" role="img" aria-labelledby="title desc">
+  <title id="title">FMI 3 Clock and associated data connections</title>
+  <desc id="desc">At a scheduled or triggered Clock event, a source output Clock connects to a target input Clock. A separate data connection stages a source value for the target Clock. The target activates its input Clock, receives its associated data and updates discrete states; the staged value is held until an activation.</desc>
+  <style>
+    .background { fill: #fff; } .box { fill: #eaf3fa; stroke: #315b77; stroke-width: 2; }
+    .clock { fill: #fff6e3; stroke: #9a6a18; stroke-width: 2; }
+    .arrow { fill: none; stroke: #315b77; stroke-width: 3; marker-end: url(#arrow); }
+    .tick { fill: none; stroke: #9a6a18; stroke-width: 3; marker-end: url(#tick); }
+    .heading { font: bold 21px sans-serif; fill: #142b3a; }
+    .label { font: bold 17px sans-serif; fill: #142b3a; }
+    .text { font: 15px sans-serif; fill: #243d4e; }
+  </style>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#315b77"/></marker>
+    <marker id="tick" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#9a6a18"/></marker>
+  </defs>
+  <rect class="background" width="1000" height="400"/>
+  <text class="heading" x="30" y="35">FMI 3 Clock activation and associated data</text>
+  <text class="text" x="30" y="62">Clock connections carry activation; associated values use their own data connections.</text>
+  <rect class="box" x="40" y="100" width="270" height="155" rx="8"/>
+  <text class="label" x="58" y="132">Source model</text>
+  <text class="text" x="58" y="176">output Clock</text>
+  <text class="text" x="58" y="224">output value</text>
+  <rect class="clock" x="690" y="100" width="270" height="155" rx="8"/>
+  <text class="label" x="708" y="132">Target model</text>
+  <text class="text" x="708" y="176">input Clock</text>
+  <text class="text" x="708" y="224">Clock-associated input</text>
+  <path class="tick" d="M310 171 H688"/><path class="arrow" d="M310 219 H688"/>
+  <text class="text" x="388" y="155">Clock tick / activation</text>
+  <text class="text" x="364" y="247">stage value for that Clock</text>
+  <text class="text" x="30" y="300">At the boundary: enter Event Mode, route the tick and associated data, then update discrete states.</text>
+  <text class="text" x="30" y="326">Repeat when needed at the same time; hold the last sample until the target Clock activates.</text>
+  <text class="text" x="30" y="352">Clock-capable participants use factor one and must be at the Clock time. Ahead ordinary sources are not sampled as current.</text>
+</svg>

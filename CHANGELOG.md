@@ -3,6 +3,74 @@ All notable changes to libcosim will be documented in this file. This includes n
 
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
+### Unreleased
+##### Added
+- Added configurable floating-point event tolerances to fixed-step and ECCO
+  (absolute and relative defaults: `1e-10` each).
+- Coordinate connected non-clocked FMI 3 runtime events in lockstep across
+  super-dense instants. Peers can now receive intermediate outputs while
+  the source is still in Event Mode, which may change feedback results.
+- Added exact scalar and fixed-shape array values in OSP 0.2.0 and SSP 2.0,
+  plus standalone OSP Clock sources for triggered FMI 3 Co-Simulation inputs.
+  Configuration value maps now store `variable_value` instead of `scalar_value`.
+- Added a capability-gated FMI 2.0.5 Co-Simulation directional-derivative API
+  with lifecycle, Real-variable, ModelStructure, count, status, and
+  transactional-output validation.
+- Added a bounded FMI 3.0.2 compatibility layer with importer dispatch,
+  `instantiationToken` identity, every exact FMI 3 data type, fixed and
+  variable-size arrays, extended metadata, and capability-gated FMU state
+  serialization.
+- Added FMI 3 Co-Simulation lifecycle support including Event Mode, Intermediate Update callbacks, early return, termination requests, status recovery, and detailed step-result propagation through fixed-step and ECCO algorithms.
+- Added bounded clocked Co-Simulation support with dedicated input/output Clock
+  access, active-clock validation for clocked scalar and array values, and
+  explicit initial Event Mode iteration.
+- Added bounded fixed-step FMI 3 Clock routing for OSP system structures,
+  including periodic scheduling, triggered Clock propagation, associated-data
+  transfer before activation, Clock-boundary step capping, and synchronized
+  multi-simulator early return.
+- Extended FMI 3 Intermediate Update callbacks to exact typed continuous
+  inputs and outputs, including whole arrays, with direction and shape
+  validation.
+- Added capability-gated FMI 3 Co-Simulation output, directional, and adjoint
+  derivatives with scalar/array products, mode-specific ModelStructure
+  validation, zero-sized-array handling, and transactional status semantics,
+  plus stricter Event Mode convergence, pending-event, and termination
+  state-machine handling.
+- Added reference-FMU integration tests and explicit rejection coverage for
+  unsupported interfaces (including Model Exchange-only and Scheduled
+  Execution-only FMUs), invalid types/counts/shapes, lifecycle calls, clock
+  operations, and early-return synchronization.
+- Added a generated FMI 3 status fixture and a separate conformance suite
+  covering lifecycle/value/state/event statuses, Co-Simulation state round
+  trips, recovery restrictions, Fatal poisoning, and prohibited
+  public lifecycle transitions.
+- Added configure-time retrieval of a pinned Reference-FMUs revision and a
+  build-stage dependency that generates the FMU archives before FMI 3 tests
+  execute.
+- Added whole-value simulator caches, connections, function endpoints,
+  fixed-step/ECCO transport, observers, modifiers, scenario overrides, and
+  lossless versioned state serialization.
+
+##### Changed
+- Upgraded FMI Library to 3.0.4 while preserving existing FMI 1.0 and FMI 2.0 behavior.
+- Extended common model and algorithm metadata additively with FMI 3 instantiation tokens, Intermediate Update flags, actual step endpoints, event-handling requests, early return, termination, and retryability.
+- Extended generic value and metadata APIs with exact-width values, Binary,
+  Enumeration, dimensions, declared types, units, aliases, and complete
+  `variable_value` transport. This is ABI-affecting while retaining legacy
+  four-scalar source compatibility bridges.
+- Public variant alternatives and metadata fields change the ABI; rebuild
+  downstream binaries and update exhaustive `variable_type` switches for the
+  added enumerators.
+- FMI 1/2/3 generic setters prevalidate complete batches before dispatch;
+  FMU-reported failures can still leave earlier assignments applied.
+- The default scalar slave bridge also prevalidates each batch against model
+  metadata. Custom slaves using it must describe all referenced scalar values.
+- Modified-variable reporting includes Enumeration and FMI 3 whole-value and
+  clock-associated modifiers, and retains entries until both directions are
+  removed. Ambiguous secondary XML units and incompatible retained FMI 2
+  Enumeration aliases are rejected.
+- Documented the supported FMI 3 subset and its limitations in the FMI 3 guides.
+
 ### [v0.11.2] - 2026-05-18
 ##### New
 - Expose file observer functionality through logger config file [\#776](https://github.com/open-simulation-platform/libcosim/issues/776)

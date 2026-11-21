@@ -17,6 +17,7 @@
 
 #include <gsl/span>
 
+#include <stdexcept>
 
 namespace cosim
 {
@@ -31,6 +32,22 @@ namespace cosim
 class time_series_provider : public observer
 {
 public:
+    /**
+     * Retrieves a series of observed complete scalar or array values.
+     */
+    virtual std::size_t get_variable_samples(
+        simulator_index /*unused*/,
+        variable_type /*unused*/,
+        value_reference /*unused*/,
+        step_number /*unused*/,
+        gsl::span<variable_value> /*unused*/,
+        gsl::span<step_number> /*unused*/,
+        gsl::span<time_point> /*unused*/)
+    {
+        throw std::logic_error(
+            "This time-series provider does not support whole values");
+    }
+
     /**
      * Retrieves a series of observed values, step numbers and times for a real variable.
      *

@@ -8,8 +8,7 @@
 #include <memory>
 #include <stdexcept>
 
-#define REQUIRE(test) \
-    if (!(test)) throw std::runtime_error("Requirement not satisfied: " #test)
+#include "test_require.hpp"
 
 int main()
 {
@@ -33,8 +32,27 @@ int main()
 
         auto simIndex = execution.add_slave(
             std::make_unique<mock_slave>([](double x) { return x + 1.234; }), "slave uno");
+        const auto arrayValue = cosim::variable_value(
+            cosim::uint64_values{{11, 12}}, {2});
+        const auto arraySim = execution.add_slave(
+            std::make_unique<whole_value_mock_slave>(arrayValue),
+            "whole value slave");
+
+        bool clockRejected = false;
+        try {
+            observer->start_observing(
+                cosim::variable_id{simIndex, cosim::variable_type::clock, 0});
+        } catch (const std::invalid_argument&) {
+            clockRejected = true;
+        }
+        REQUIRE(clockRejected);
 
         auto variableId = cosim::variable_id{simIndex, cosim::variable_type::real, 0};
+        const auto arrayVariableId = cosim::variable_id{
+            arraySim,
+            cosim::variable_type::uint64,
+            whole_value_mock_slave::output_reference};
+        observer->start_observing(arrayVariableId);
 
         cosim::step_number stepNumbers[2];
         try {
@@ -60,6 +78,20 @@ int main()
 
         size_t samplesRead = observer->get_real_samples(simIndex, varIndex, 0, gsl::make_span(realValues, numSamples), gsl::make_span(steps, numSamples), gsl::make_span(times, numSamples));
         REQUIRE(samplesRead == 0);
+
+        cosim::variable_value arrayValues[numSamples];
+        samplesRead = observer->get_variable_samples(
+            arraySim,
+            cosim::variable_type::uint64,
+            whole_value_mock_slave::output_reference,
+            0,
+            gsl::make_span(arrayValues, numSamples),
+            gsl::make_span(steps, numSamples),
+            gsl::make_span(times, numSamples));
+        REQUIRE(samplesRead > 0);
+        for (std::size_t i = 0; i < samplesRead; ++i) {
+            REQUIRE(arrayValues[i] == arrayValue);
+        }
 
         observer->start_observing(cosim::variable_id{simIndex, cosim::variable_type::integer, 0});
         int intValues[numSamples];

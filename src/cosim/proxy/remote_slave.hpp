@@ -17,20 +17,17 @@
 
 #include <string>
 
-namespace cosim
+namespace cosim::proxy
 {
 
-namespace proxy
-{
-
-class remote_slave : public slave
+class remote_slave : public slave // NOLINT(cppcoreguidelines-special-member-functions): Preserve existing copy and move behavior.
 {
 
 public:
     remote_slave(std::unique_ptr<proxyfmu::fmi::slave> slave,
         std::shared_ptr<const cosim::model_description> modelDescription);
 
-    cosim::model_description model_description() const override;
+    [[nodiscard]] cosim::model_description model_description() const override;
 
     void setup(time_point startTime, std::optional<time_point> stopTime,
         std::optional<double> relativeTolerance) override;
@@ -67,21 +64,19 @@ public:
 
     void release_state(state_index stateIndex) override;
 
-    serialization::node export_state(state_index stateIndex) const override;
+    [[nodiscard]] serialization::node export_state(state_index stateIndex) const override;
 
     state_index import_state(const serialization::node& exportedState) override;
 
     ~remote_slave() override;
 
 private:
-    bool terminated_;
+    bool terminated_ = false;
     cosim::time_point startTime_;
     std::unique_ptr<proxyfmu::fmi::slave> slave_;
     std::shared_ptr<const cosim::model_description> modelDescription_;
 };
 
-} // namespace proxy
-
-} // namespace cosim
+} // namespace cosim::proxy
 
 #endif

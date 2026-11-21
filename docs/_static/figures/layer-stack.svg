@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 850" role="img" aria-labelledby="title desc">
+  <title id="title">libcosim software layers and simulation call path</title>
+  <desc id="desc">A C++ application sets up a system, creates an execution and algorithm, and reaches a participant through a simulator adapter. FMI participants use the version-specific importer, FMI Library and the FMU shared library. Configuration, interaction and infrastructure are related modules, and Proxy-FMU is an optional remote participant path.</desc>
+  <style>
+    .bg { fill: #fff; }
+    .box { fill: #eaf3fa; stroke: #315b77; stroke-width: 2; }
+    .side { fill: #f3f5f7; stroke: #5e6d79; stroke-width: 2; }
+    .remote { fill: #fff6e3; stroke: #9a6a18; stroke-width: 2; stroke-dasharray: 6 4; }
+    .line { fill: none; stroke: #315b77; stroke-width: 3; marker-end: url(#arrow); }
+    .branch { fill: none; stroke: #667580; stroke-width: 2; stroke-dasharray: 6 4; }
+    .heading { font: bold 19px sans-serif; fill: #142b3a; }
+    .detail { font: 15px sans-serif; fill: #243d4e; }
+    .small { font: 14px sans-serif; fill: #243d4e; }
+    a:hover rect, a:focus rect { stroke: #005fcc; stroke-width: 4; }
+  </style>
+  <defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#315b77"/></marker></defs>
+  <rect class="bg" width="1000" height="850"/>
+  <text class="heading" x="30" y="34">Primary simulation path</text>
+  <text class="heading" x="650" y="34">Related modules / optional path</text>
+
+  <a href="../../getting_started.html" target="_top"><rect class="box" x="30" y="50" width="565" height="72" rx="8"/><text class="heading" x="48" y="78">Application</text><text class="detail" x="48" y="103">C++17 · libcosim::cosim</text></a>
+  <path class="line" d="M312 122 V144"/>
+  <a href="../../design/system-setup.html" target="_top"><rect class="box" x="30" y="145" width="565" height="72" rx="8"/><text class="heading" x="48" y="173">System setup</text><text class="detail" x="48" y="198">models, connections and initial values</text></a>
+  <path class="line" d="M312 217 V239"/>
+  <a href="../../design/execution.html" target="_top"><rect class="box" x="30" y="240" width="565" height="82" rx="8"/><text class="heading" x="48" y="268">Execution and algorithm</text><text class="detail" x="48" y="293">fixed-step / ECCO · coupled events and Clocks · snapshots</text></a>
+  <path class="line" d="M312 322 V344"/>
+  <a href="../../design/models-and-fmi.html" target="_top"><rect class="box" x="30" y="345" width="565" height="75" rx="8"/><text class="heading" x="48" y="373">Simulator adapter and slave interface</text><text class="detail" x="48" y="399">cached values · GSL spans · custom slaves or FMUs</text></a>
+  <path class="line" d="M312 420 V442"/>
+  <a href="../../design/models-and-fmi.html" target="_top"><rect class="box" x="30" y="443" width="565" height="90" rx="8"/><text class="heading" x="48" y="471">FMI importer and version-specific instance</text><text class="detail" x="48" y="496">FMI 1 | FMI 2 | FMI 3 · archive identity and file cache</text><text class="detail" x="48" y="519">Co-Simulation lifecycle and capability negotiation</text></a>
+  <path class="line" d="M312 533 V555"/>
+  <a href="../../design/models-and-fmi.html" target="_top"><rect class="box" x="30" y="556" width="565" height="72" rx="8"/><text class="heading" x="48" y="584">FMI Library</text><text class="detail" x="48" y="609">fmi1_import_* | fmi2_import_* | fmi3_import_*</text></a>
+  <path class="line" d="M312 628 V650"/>
+  <rect class="box" x="30" y="651" width="565" height="72" rx="8"/><text class="heading" x="48" y="679">FMU shared library</text><text class="detail" x="48" y="704">version-specific FMI Co-Simulation C API</text>
+
+  <path class="branch" d="M595 181 H645"/>
+  <a href="../../design/configuration.html" target="_top"><rect class="side" x="650" y="145" width="320" height="90" rx="8"/><text class="heading" x="666" y="174">Configuration</text><text class="small" x="666" y="198">OSP 0.2.0 / SSP 2.0: exact FMI values</text><text class="small" x="666" y="219">Xerces-C · libzip · Boost.PropertyTree · YAML</text></a>
+  <path class="branch" d="M595 280 H645"/>
+  <a href="../../design/connections.html" target="_top"><rect class="side" x="650" y="250" width="320" height="65" rx="8"/><text class="heading" x="666" y="278">Connections and functions</text><text class="small" x="666" y="300">value validation and routing</text></a>
+  <a href="../../design/interaction.html" target="_top"><rect class="side" x="650" y="330" width="320" height="65" rx="8"/><text class="heading" x="666" y="358">Interaction</text><text class="small" x="666" y="380">observers, modifiers, scenarios</text></a>
+  <a href="../../design/infrastructure.html" target="_top"><rect class="side" x="650" y="410" width="320" height="73" rx="8"/><text class="heading" x="666" y="438">Infrastructure</text><text class="small" x="666" y="462">time · logging and FMU filters · state</text></a>
+  <path class="branch" d="M595 383 H620 V535 H645"/>
+  <a href="../../design/models-and-fmi.html" target="_top"><rect class="remote" x="650" y="500" width="320" height="90" rx="8"/><text class="heading" x="666" y="528">Optional Proxy-FMU path</text><text class="small" x="666" y="552">remote slave · proxyfmu client</text><text class="small" x="666" y="573">legacy scalar interface</text></a>
+  <a href="../../fmi3/overview.html" target="_top"><rect class="side" x="650" y="610" width="320" height="73" rx="8"/><text class="heading" x="666" y="638">FMI 3 overview</text><text class="small" x="666" y="661">lifecycle and feature map</text></a>
+  <text class="small" x="30" y="765">Solid arrows show calls toward the participant; values and callbacks may flow back.</text>
+  <text class="small" x="30" y="788">Dashed lines denote related modules or an alternative path, not calls through every layer.</text>
+  <text class="small" x="30" y="811">Select a box for the corresponding guide. Proxy-FMU is optional and is not the local FMI 3 importer.</text>
+</svg>

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 185" role="img" aria-labelledby="title desc">
+  <title id="title">Example event-connected models</title>
+  <desc id="desc">An event-capable FMI 3 source sends an output to an event-capable FMI 3 target. The target's output connects to an ordinary peer without Event Mode. Changes can trigger same-time input events in the target; the ordinary peer receives staged changes at its next valid normal step.</desc>
+  <style>
+    .background { fill: #fff; } .box { fill: #eaf3fa; stroke: #315b77; stroke-width: 2; }
+    .event { fill: #fff6e3; stroke: #9a6a18; stroke-width: 2; }
+    .arrow { fill: none; stroke: #315b77; stroke-width: 3; marker-end: url(#arrow); }
+    .label { font: bold 17px sans-serif; fill: #142b3a; } .text { font: 15px sans-serif; fill: #243d4e; }
+  </style>
+  <defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#315b77"/></marker></defs>
+  <rect class="background" width="1000" height="185"/>
+  <rect class="event" x="25" y="45" width="245" height="100" rx="8"/>
+  <text class="label" x="45" y="80">FMI 3 source A</text><text class="text" x="45" y="110">Event-capable</text>
+  <rect class="event" x="378" y="45" width="245" height="100" rx="8"/>
+  <text class="label" x="398" y="80">FMI 3 target B</text><text class="text" x="398" y="110">Event-capable</text>
+  <rect class="box" x="730" y="45" width="245" height="100" rx="8"/>
+  <text class="label" x="750" y="80">Ordinary peer C</text><text class="text" x="750" y="110">No Event Mode</text>
+  <path class="arrow" d="M270 95 H376"/><path class="arrow" d="M623 95 H728"/>
+  <text class="text" x="283" y="78">data</text><text class="text" x="640" y="78">data</text>
+</svg>

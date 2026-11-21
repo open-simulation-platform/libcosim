@@ -6,16 +6,17 @@
 #include <cosim/log/simple.hpp>
 #include <cosim/observer/file_observer.hpp>
 
+#include <chrono>
+#include <condition_variable>
 #include <exception>
 #include <iostream>
 #include <memory>
+#include <mutex>
 #include <stdexcept>
-#include <thread>
 
 
 // A helper macro to test various assertions
-#define REQUIRE(test) \
-    if (!(test)) throw std::runtime_error("Requirement not satisfied: " #test)
+#include "test_require.hpp"
 
 int64_t filecount(const cosim::filesystem::path& path)
 {
@@ -31,6 +32,37 @@ void remove_directory_contents(const cosim::filesystem::path& path)
         cosim::filesystem::remove_all(it->path());
     }
 }
+
+class progress_file_observer final : public cosim::file_observer
+{
+public:
+    using cosim::file_observer::file_observer;
+
+    void step_complete(cosim::step_number step, cosim::duration size, cosim::time_point time) override
+    {
+        cosim::file_observer::step_complete(step, size, time);
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            ++completedSteps_;
+        }
+        progressed_.notify_one();
+    }
+
+    bool wait_for_complete_step()
+    {
+        std::unique_lock<std::mutex> lock(mutex_);
+        // A step may already be in progress when recording is toggled.
+        const auto target = completedSteps_ + 2;
+        return progressed_.wait_for(lock, std::chrono::seconds(10), [&] {
+            return completedSteps_ >= target;
+        });
+    }
+
+private:
+    std::mutex mutex_;
+    std::condition_variable progressed_;
+    std::size_t completedSteps_ = 0;
+};
 
 int main()
 {
@@ -49,7 +81,7 @@ int main()
         auto execution = cosim::execution(startTime, std::make_unique<cosim::fixed_step_algorithm>(stepSize));
 
         // Set up and add file observer to the execution
-        auto observer = std::make_shared<cosim::file_observer>(logPath);
+        auto observer = std::make_shared<progress_file_observer>(logPath);
         execution.add_observer(observer);
 
         // Add slaves to the execution
@@ -67,28 +99,33 @@ int main()
         // Run the simulation
         auto t = execution.simulate_until_async(std::nullopt);
 
-        constexpr std::chrono::duration sleepTime = std::chrono::milliseconds(500);
+        try {
+            REQUIRE(observer->wait_for_complete_step());
+            REQUIRE(observer->is_recording());
+            observer->stop_recording();
+            REQUIRE(!observer->is_recording());
 
-        std::this_thread::sleep_for(sleepTime);
+            REQUIRE(filecount(logPath) == 4);
 
-        REQUIRE(observer->is_recording());
-        observer->stop_recording();
-        REQUIRE(!observer->is_recording());
+            remove_directory_contents(logPath);
+            REQUIRE(filecount(logPath) == 0);
 
-        REQUIRE(filecount(logPath) == 4);
+            observer->start_recording();
+            REQUIRE(observer->wait_for_complete_step());
+            observer->stop_recording();
+            REQUIRE(filecount(logPath) == 4);
 
-        remove_directory_contents(logPath);
-        REQUIRE(filecount(logPath) == 0);
+            REQUIRE(observer->wait_for_complete_step());
+            REQUIRE(filecount(logPath) == 4);
 
-        observer->start_recording();
-        std::this_thread::sleep_for(sleepTime);
-        observer->stop_recording();
-
-        std::this_thread::sleep_for(sleepTime);
-
-        observer->start_recording();
-        std::this_thread::sleep_for(sleepTime);
-        observer->stop_recording();
+            observer->start_recording();
+            REQUIRE(observer->wait_for_complete_step());
+            observer->stop_recording();
+        } catch (...) {
+            execution.stop_simulation();
+            t.wait();
+            throw;
+        }
 
         execution.stop_simulation();
         t.get();

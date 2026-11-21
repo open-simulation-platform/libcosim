@@ -20,7 +20,7 @@ namespace cosim
 
 
 /// The information contained in an OSP-IS system structure file.
-struct osp_config
+struct osp_config // NOLINT(bugprone-exception-escape): MSVC unordered-container moves may allocate.
 {
     /// The system structure
     cosim::system_structure system_structure;

@@ -1,0 +1,61 @@
+--- a/src/cosimulation.c
++++ b/src/cosimulation.c
+@@ -9,5 +9,15 @@
+ #define CALL(f) do { const Status status = f; if (status != OK) return status; } while (false)
+ 
++// Libcosim UPDATE: Keep the requested communication step in thread-local
++// storage because ECCO can advance the two connected FMU instances
++// concurrently. The reference driver uses a fixed compile-time step, while
++// this fixture must consume the communication interval selected by ECCO.
++#ifdef _MSC_VER
++__declspec(thread) double variableSolverStepSize;
++#else
++_Thread_local double variableSolverStepSize;
++#endif
++
+ Status doFixedStep(ModelInstance *comp, bool* stateEvent, bool* timeEvent) {
+ 
+ #if MAX_CONTINUOUS_STATES > 0
+@@ -17,7 +27,9 @@
+ 
+         // forward Euler step
+         for (size_t i = 0; i < comp->nx; i++) {
+-            comp->x[i] += FIXED_SOLVER_STEP * comp->dx[i];
++            // Libcosim UPDATE: Integrate over the current ECCO-selected
++            // communication interval instead of the reference fixed step.
++            comp->x[i] += variableSolverStepSize * comp->dx[i];
+         }
+ 
+         CALL(setContinuousStates(comp, comp->x, comp->nx));
+@@ -26,7 +38,9 @@
+ 
+     comp->nSteps++;
+ 
+-    comp->time = comp->startTime + comp->nSteps * FIXED_SOLVER_STEP;
++    // Libcosim UPDATE: Advance from the current time by the same interval
++    // used for the state update so the FMU reaches the requested endpoint.
++    comp->time += variableSolverStepSize;
+ 
+     // state event
+     *stateEvent = false;
+--- a/src/fmi3Functions.c
++++ b/src/fmi3Functions.c
+@@ -1230,9 +1230,15 @@
+ 
+     while (true) {
+ 
+-        const fmi3Float64 nextSolverStepTime = S->time + FIXED_SOLVER_STEP;
+-
+-        nextCommunicationPointReached = nextSolverStepTime > nextCommunicationPoint && !isClose(nextSolverStepTime, nextCommunicationPoint);
++        // Libcosim UPDATE: The fixture has no independent fixed solver clock.
++        // Pass the complete remaining communication interval to the local
++        // driver so ECCO's requested step size is honored exactly.
++        variableSolverStepSize = nextCommunicationPoint - S->time;
++
++        // Libcosim UPDATE: The local driver advances by the interval above,
++        // so the endpoint is reached when the current time is already close
++        // to the requested communication point.
++        nextCommunicationPointReached = isClose(S->time, nextCommunicationPoint);
+ 
+         if (nextCommunicationPointReached || (*eventHandlingNeeded && S->earlyReturnAllowed)) {
+             break;

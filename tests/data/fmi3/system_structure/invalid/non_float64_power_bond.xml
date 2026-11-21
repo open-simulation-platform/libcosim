@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OspSystemStructure
+        xmlns="http://opensimulationplatform.com/MSMI/OSPSystemStructure"
+        version="0.1">
+    <BaseStepSize>0.1</BaseStepSize>
+    <Algorithm>ecco</Algorithm>
+    <Simulators>
+        <Simulator name="componentA" source="../fmus/Feedthrough.fmu"/>
+        <Simulator name="componentB" source="../fmus/Feedthrough.fmu"/>
+    </Simulators>
+    <Connections>
+        <VariableConnection powerBond="invalidBond">
+            <Variable simulator="componentA" name="Float32_continuous_input"
+                      causality="input"/>
+            <Variable simulator="componentB" name="Float32_continuous_output"
+                      causality="output"/>
+        </VariableConnection>
+        <VariableConnection powerBond="invalidBond">
+            <Variable simulator="componentB" name="Float32_continuous_input"
+                      causality="input"/>
+            <Variable simulator="componentA" name="Float32_continuous_output"
+                      causality="output"/>
+        </VariableConnection>
+    </Connections>
+    <EccoConfiguration>
+        <SafetyFactor>0.9</SafetyFactor>
+        <StepSize>0.1</StepSize>
+        <MinimumStepSize>0.01</MinimumStepSize>
+        <MaximumStepSize>0.2</MaximumStepSize>
+        <MinimumChangeRate>0.5</MinimumChangeRate>
+        <MaximumChangeRate>1.5</MaximumChangeRate>
+        <ProportionalGain>0.2</ProportionalGain>
+        <IntegralGain>0.15</IntegralGain>
+        <RelativeTolerance>1e-6</RelativeTolerance>
+        <AbsoluteTolerance>1e-6</AbsoluteTolerance>
+    </EccoConfiguration>
+</OspSystemStructure>

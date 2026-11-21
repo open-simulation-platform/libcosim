@@ -19,7 +19,6 @@ jobs:
     env:
       CONAN_LOGIN_USERNAME_OSP: ${{ secrets.osp_artifactory_usr }}
       CONAN_PASSWORD_OSP: ${{ secrets.osp_artifactory_pwd }}
-      CONAN_HOME: ${{ github.workspace }}/.conan2
       LIBCOSIM_RUN_TESTS_ON_CONAN_BUILD: 1
     timeout-minutes: 35
 
@@ -28,7 +27,7 @@ jobs:
       - name: Install prerequisites
         run: |
           apt-get update
-          apt-get install -y pipx doxygen cmake
+          apt-get install -y pipx cmake
           pipx install conan
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - name: Configure Conan
@@ -66,7 +65,6 @@ jobs:
     env:
       CONAN_LOGIN_USERNAME_OSP: ${{ secrets.osp_artifactory_usr }}
       CONAN_PASSWORD_OSP: ${{ secrets.osp_artifactory_pwd }}
-      CONAN_HOME: ${{ github.workspace }}/.conan2
       LIBCOSIM_RUN_TESTS_ON_CONAN_BUILD: 1
     strategy:
       fail-fast: false

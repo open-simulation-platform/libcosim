@@ -11,10 +11,7 @@
 
 #include <cosim/orchestration.hpp>
 
-namespace cosim
-{
-
-namespace proxy
+namespace cosim::proxy
 {
 
 /**
@@ -30,8 +27,6 @@ public:
     std::shared_ptr<model> lookup_model(const cosim::uri& uri) override;
 };
 
-} // namespace proxy
-
-} // namespace cosim
+} // namespace cosim::proxy
 
 #endif

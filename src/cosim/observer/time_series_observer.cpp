@@ -6,10 +6,22 @@
 #include "cosim/observer/time_series_observer.hpp"
 
 #include "cosim/error.hpp"
+#include "cosim/execution.hpp"
+#include "cosim/model_description.hpp"
+#include "cosim/observer/observer.hpp"
+#include "cosim/time.hpp"
 
+#include <boost/range/adaptor/reversed.hpp>
+#include <boost/range/algorithm/find_if.hpp>
+#include <gsl/span>
+
+#include <cstddef>
 #include <map>
+#include <memory>
 #include <mutex>
 #include <sstream>
+#include <stdexcept>
+#include <vector>
 
 
 namespace cosim
@@ -17,6 +29,8 @@ namespace cosim
 
 namespace
 {
+constexpr std::size_t default_buffer_size = 10000;
+
 template<typename T>
 size_t get_samples(
     value_reference valueReference,
@@ -41,11 +55,14 @@ size_t get_samples(
                 sampleIt = samples.upper_bound(fromStep);
             }
         }
+        auto valueOutput = values.begin();
+        auto stepOutput = steps.begin();
+        auto timeOutput = times.begin();
         for (samplesRead = 0; samplesRead < values.size(); samplesRead++) {
             if ((sampleIt != samples.end()) && (sampleIt->first < fromStep + static_cast<step_number>(values.size()))) {
-                steps[samplesRead] = sampleIt->first;
-                values[samplesRead] = sampleIt->second;
-                times[samplesRead] = timeSamples[sampleIt->first];
+                *stepOutput++ = sampleIt->first;
+                *valueOutput++ = sampleIt->second;
+                *timeOutput++ = timeSamples.try_emplace(sampleIt->first).first->second;
                 sampleIt++;
             } else {
                 break;
@@ -77,17 +94,20 @@ public:
     }
 
     ~single_slave_observer() noexcept = default;
+    single_slave_observer(const single_slave_observer&) = delete;
+    single_slave_observer& operator=(const single_slave_observer&) = delete;
+    single_slave_observer(single_slave_observer&&) = delete;
+    single_slave_observer& operator=(single_slave_observer&&) = delete;
 
     void observe(step_number timeStep, time_point currentTime)
     {
-        std::lock_guard<std::mutex> lock(lock_);
-        for (auto& [idx, samples] : realSamples_) {
-            samples[timeStep] = observable_->get_real(idx);
-            adjustIfFull(samples, bufSize_);
-        }
-        for (auto& [idx, samples] : intSamples_) {
-            samples[timeStep] = observable_->get_integer(idx);
-            adjustIfFull(samples, bufSize_);
+        std::scoped_lock const lock(lock_);
+        for (auto& [type, typedSamples] : samples_) {
+            for (auto& [reference, samples] : typedSamples) {
+                samples[timeStep] =
+                    observable_->get_variable_value(type, reference);
+                adjustIfFull(samples, bufSize_);
+            }
         }
         timeSamples_[timeStep] = currentTime;
         adjustIfFull(timeSamples_, bufSize_);
@@ -96,118 +116,186 @@ public:
     void reset()
     {
         timeSamples_.clear();
-        for (auto& [_, step_numbers] : realSamples_) {
-            step_numbers.clear();
-        }
-        for (auto& [_, step_numbers] : intSamples_) {
-            step_numbers.clear();
+        for (auto& sampleGroup : samples_) {
+            for (auto& entry : sampleGroup.second) {
+                entry.second.clear();
+            }
         }
     }
 
     void start_observing(variable_type type, value_reference reference)
     {
-        std::lock_guard<std::mutex> lock(lock_);
-        switch (type) {
-            case variable_type::real:
-                realSamples_[reference] = std::map<step_number, double>();
-                observable_->expose_for_getting(type, reference);
-                break;
-            case variable_type::integer:
-                intSamples_[reference] = std::map<step_number, int>();
-                observable_->expose_for_getting(type, reference);
-                break;
-            default:
-                std::ostringstream oss;
-                oss << "No support for observing variable with type " << type
-                    << " and reference " << reference;
-                throw std::invalid_argument(oss.str());
+        std::scoped_lock const lock(lock_);
+        if (type == variable_type::clock) {
+            throw std::invalid_argument(
+                "Clock variables cannot be sampled as data values");
         }
+        samples_[type][reference] = {};
+        observable_->expose_for_getting(type, reference);
     }
 
     void stop_observing(variable_type type, value_reference reference)
     {
-        std::lock_guard<std::mutex> lock(lock_);
-        switch (type) {
-            case variable_type::real:
-                realSamples_.erase(reference);
-                break;
-            case variable_type::integer:
-                intSamples_.erase(reference);
-                break;
-            default:
-                std::ostringstream oss;
-                oss << "Could not stop observing variable with type " << type
-                    << " and reference " << reference;
-                throw std::invalid_argument(oss.str());
+        std::scoped_lock const lock(lock_);
+        samples_.at(type).erase(reference);
+    }
+
+    size_t get_variable_samples(
+        variable_type type,
+        value_reference valueReference,
+        step_number fromStep,
+        gsl::span<variable_value> values,
+        gsl::span<step_number> steps,
+        gsl::span<time_point> times)
+    {
+        std::scoped_lock const lock(lock_);
+        const auto typedSamples = samples_.find(type);
+        if (typedSamples == samples_.end()) {
+            return 0;
         }
+        return get_samples<variable_value>(
+            valueReference,
+            typedSamples->second,
+            timeSamples_,
+            fromStep,
+            values,
+            steps,
+            times);
     }
 
     size_t get_real_samples(value_reference valueReference, step_number fromStep, gsl::span<double> values, gsl::span<step_number> steps, gsl::span<time_point> times)
     {
-        std::lock_guard<std::mutex> lock(lock_);
-        return get_samples<double>(valueReference, realSamples_, timeSamples_, fromStep, values, steps, times);
+        std::scoped_lock const lock(lock_);
+        const auto typedSamples = samples_.find(variable_type::real);
+        if (typedSamples == samples_.end()) {
+            return 0;
+        }
+        std::vector<variable_value> wholeValues(values.size());
+        const auto count = get_samples<variable_value>(
+            valueReference,
+            typedSamples->second,
+            timeSamples_,
+            fromStep,
+            wholeValues,
+            steps,
+            times);
+        auto output = values.begin();
+        for (std::size_t i = 0; i < count; ++i) {
+            const auto& wholeValue = wholeValues.at(i);
+            if (!wholeValue.is_scalar()) {
+                throw std::invalid_argument(
+                    "Legacy scalar access does not support arrays");
+            }
+            *output++ =
+                std::get<real_values>(wholeValue.values()).values.at(0);
+        }
+        return count;
     }
 
     size_t get_int_samples(value_reference valueReference, step_number fromStep, gsl::span<int> values, gsl::span<step_number> steps, gsl::span<time_point> times)
     {
-        std::lock_guard<std::mutex> lock(lock_);
-        return get_samples<int>(valueReference, intSamples_, timeSamples_, fromStep, values, steps, times);
+        std::scoped_lock const lock(lock_);
+        const auto typedSamples = samples_.find(variable_type::integer);
+        if (typedSamples == samples_.end()) {
+            return 0;
+        }
+        std::vector<variable_value> wholeValues(values.size());
+        const auto count = get_samples<variable_value>(
+            valueReference,
+            typedSamples->second,
+            timeSamples_,
+            fromStep,
+            wholeValues,
+            steps,
+            times);
+        auto output = values.begin();
+        for (std::size_t i = 0; i < count; ++i) {
+            const auto& wholeValue = wholeValues.at(i);
+            if (!wholeValue.is_scalar()) {
+                throw std::invalid_argument(
+                    "Legacy scalar access does not support arrays");
+            }
+            *output++ = std::get<integer_values>(
+                wholeValue.values())
+                            .values.at(0);
+        }
+        return count;
     }
 
-    void get_step_numbers(time_point tBegin, time_point tEnd, gsl::span<step_number> steps)
+    void get_step_numbers(time_point tBegin, time_point tEnd, gsl::span<step_number> steps) // NOLINT(bugprone-easily-swappable-parameters): The arguments describe the begin and end of the requested range.
     {
-        std::lock_guard<std::mutex> lock(lock_);
+        std::scoped_lock const lock(lock_);
+        COSIM_INPUT_CHECK(steps.size() >= 2);
+        if (timeSamples_.empty()) {
+            throw std::out_of_range("No time samples recorded yet!");
+        }
         step_number lastStep = timeSamples_.rbegin()->first;
-        auto lastEntry = std::find_if(
-            timeSamples_.begin(),
-            timeSamples_.end(),
+        auto const lastEntry = boost::range::find_if(
+            timeSamples_,
             [tEnd](const auto& entry) { return entry.second >= tEnd; });
         if (lastEntry != timeSamples_.end()) {
             lastStep = lastEntry->first;
         }
 
         step_number firstStep = timeSamples_.begin()->first;
-        auto firstEntry = std::find_if(
-            timeSamples_.rbegin(),
-            timeSamples_.rend(),
+        auto const firstEntry = boost::range::find_if(
+            boost::adaptors::reverse(timeSamples_),
             [tBegin](const auto& entry) { return entry.second <= tBegin; });
-        if (firstEntry != timeSamples_.rend()) {
+        if (firstEntry.base() != timeSamples_.begin()) {
             firstStep = firstEntry->first;
         }
 
-        steps[0] = firstStep;
-        steps[1] = lastStep;
+        auto output = steps.begin();
+        *output++ = firstStep;
+        *output = lastStep;
     }
 
     void get_step_numbers(duration duration, gsl::span<step_number> steps)
     {
-        std::lock_guard<std::mutex> lock(lock_);
-        auto lastEntry = timeSamples_.rbegin();
-        step_number lastStep = lastEntry->first;
+        std::scoped_lock const lock(lock_);
+        COSIM_INPUT_CHECK(steps.size() >= 2);
+        if (timeSamples_.empty()) {
+            throw std::out_of_range("No time samples recorded yet!");
+        }
+        auto const lastEntry = timeSamples_.rbegin();
+        const step_number lastStep = lastEntry->first;
 
         step_number firstStep = timeSamples_.begin()->first;
         const time_point tBegin = lastEntry->second - duration;
-        auto firstIt = std::find_if(
-            timeSamples_.rbegin(),
-            timeSamples_.rend(),
+        auto const firstIt = boost::range::find_if(
+            boost::adaptors::reverse(timeSamples_),
             [tBegin](const auto& entry) { return entry.second <= tBegin; });
-        if (firstIt != timeSamples_.rend()) {
+        if (firstIt.base() != timeSamples_.begin()) {
             firstStep = firstIt->first;
         }
 
-        steps[0] = firstStep;
-        steps[1] = lastStep;
+        auto output = steps.begin();
+        *output++ = firstStep;
+        *output = lastStep;
     }
 
     std::map<step_number, double> get_real_samples_map(value_reference idx)
     {
-        std::lock_guard<std::mutex> lock(lock_);
-        return realSamples_.at(idx);
+        std::scoped_lock const lock(lock_);
+        std::map<step_number, double> result;
+        for (const auto& [step, value] :
+            samples_.at(variable_type::real).at(idx)) {
+            if (!value.is_scalar()) {
+                throw std::invalid_argument(
+                    "Synchronized real series do not support arrays");
+            }
+            result.emplace(
+                step,
+                std::get<real_values>(value.values()).values.at(0));
+        }
+        return result;
     }
 
 private:
-    std::map<value_reference, std::map<step_number, double>> realSamples_;
-    std::map<value_reference, std::map<step_number, int>> intSamples_;
+    std::map<
+        variable_type,
+        std::map<value_reference, std::map<step_number, variable_value>>>
+        samples_;
     std::map<step_number, time_point> timeSamples_;
     observable* observable_;
     size_t bufSize_;
@@ -215,7 +303,7 @@ private:
 };
 
 time_series_observer::time_series_observer()
-    : bufSize_(10000)
+    : bufSize_(default_buffer_size)
 {
 }
 
@@ -282,14 +370,29 @@ void time_series_observer::state_restored(
     }
 }
 
-void time_series_observer::start_observing(variable_id id)
+void time_series_observer::start_observing(variable_id variable)
 {
-    slaveObservers_.at(id.simulator)->start_observing(id.type, id.reference);
+    slaveObservers_.at(variable.simulator)->start_observing(variable.type, variable.reference);
 }
 
-void time_series_observer::stop_observing(variable_id id)
+void time_series_observer::stop_observing(variable_id variable)
 {
-    slaveObservers_.at(id.simulator)->stop_observing(id.type, id.reference);
+    slaveObservers_.at(variable.simulator)->stop_observing(variable.type, variable.reference);
+}
+
+std::size_t time_series_observer::get_variable_samples(
+    simulator_index sim,
+    variable_type type,
+    value_reference valueReference,
+    step_number fromStep,
+    gsl::span<variable_value> values,
+    gsl::span<step_number> steps,
+    gsl::span<time_point> times)
+{
+    COSIM_INPUT_CHECK(values.size() == steps.size());
+    COSIM_INPUT_CHECK(times.size() == values.size());
+    return slaveObservers_.at(sim)->get_variable_samples(
+        type, valueReference, fromStep, values, steps, times);
 }
 
 std::size_t time_series_observer::get_real_samples(
@@ -337,9 +440,9 @@ void time_series_observer::get_step_numbers(
 
 std::size_t time_series_observer::get_synchronized_real_series(
     simulator_index sim1,
-    value_reference valueReference1,
+    value_reference valueReference1, // NOLINT(bugprone-easily-swappable-parameters): Preserve the public paired-variable interface.
     simulator_index sim2,
-    value_reference valueReference2,
+    value_reference valueReference2, // NOLINT(bugprone-easily-swappable-parameters): Preserve the public paired-variable interface.
     step_number fromStep,
     gsl::span<double> values1,
     gsl::span<double> values2)
@@ -352,16 +455,18 @@ std::size_t time_series_observer::get_synchronized_real_series(
     if (realSamples1.empty() || realSamples2.empty()) {
         throw std::out_of_range("Samples for both variables not recorded yet!");
     }
-    auto lastStep1 = realSamples1.rbegin()->first;
-    auto lastStep2 = realSamples2.rbegin()->first;
+    auto const lastStep1 = realSamples1.rbegin()->first;
+    auto const lastStep2 = realSamples2.rbegin()->first;
 
     size_t samplesRead = 0;
+    auto output1 = values1.begin();
+    auto output2 = values2.begin();
     for (auto step = fromStep; step < fromStep + static_cast<step_number>(values1.size()); step++) {
-        auto sample1 = realSamples1.find(step);
-        auto sample2 = realSamples2.find(step);
+        auto const sample1 = realSamples1.find(step);
+        auto const sample2 = realSamples2.find(step);
         if (sample1 != realSamples1.end() && sample2 != realSamples2.end()) {
-            values1[samplesRead] = sample1->second;
-            values2[samplesRead] = sample2->second;
+            *output1++ = sample1->second;
+            *output2++ = sample2->second;
             samplesRead++;
         } else if (lastStep1 < step || lastStep2 < step) {
             break;

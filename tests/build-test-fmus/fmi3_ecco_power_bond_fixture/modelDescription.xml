@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fmiModelDescription
+        fmiVersion="3.0"
+        modelName="PowerBond"
+        description="Deterministic variable-step fixture for ECCO power-bond tests"
+        generationTool="libcosim tests"
+        instantiationToken="{0CE2A5F4-5EE2-48B4-89F0-F6A09BB6D7B8}">
+    <CoSimulation
+            modelIdentifier="PowerBond"
+            canHandleVariableCommunicationStepSize="true"/>
+    <DefaultExperiment startTime="0" stopTime="10" stepSize="0.15"/>
+    <ModelVariables>
+        <Float64 name="time" valueReference="0" causality="independent"
+                 variability="continuous"/>
+        <Float64 name="input" valueReference="1" causality="input"
+                 variability="continuous" start="0"/>
+        <Float64 name="output" valueReference="2" causality="output"
+                 variability="continuous" initial="calculated"/>
+        <Float64 name="gain" valueReference="3" causality="parameter"
+                 variability="fixed" initial="exact" start="1"/>
+        <Float64 name="bias" valueReference="4" causality="parameter"
+                 variability="fixed" initial="exact" start="0"/>
+    </ModelVariables>
+    <ModelStructure>
+        <Output valueReference="2" dependencies="1 3 4"/>
+    </ModelStructure>
+</fmiModelDescription>

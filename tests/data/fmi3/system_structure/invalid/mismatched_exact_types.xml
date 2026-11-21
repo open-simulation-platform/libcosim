@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OspSystemStructure
+        xmlns="http://opensimulationplatform.com/MSMI/OSPSystemStructure"
+        version="0.1">
+    <BaseStepSize>0.1</BaseStepSize>
+    <Algorithm>fixedStep</Algorithm>
+    <Simulators>
+        <Simulator name="source" source="../fmus/Feedthrough.fmu"/>
+        <Simulator name="target" source="../fmus/Feedthrough.fmu"/>
+    </Simulators>
+    <Connections>
+        <VariableConnection>
+            <Variable simulator="source" name="Int8_output"/>
+            <Variable simulator="target" name="UInt8_input"/>
+        </VariableConnection>
+    </Connections>
+</OspSystemStructure>

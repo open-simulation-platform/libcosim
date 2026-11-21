@@ -1,0 +1,32 @@
+name: Documentation
+
+on: [push, workflow_dispatch]
+
+jobs:
+  documentation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v6
+      - name: Install documentation tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends doxygen
+          uv venv .venv
+          uv pip install --python .venv -r docs/requirements.txt
+          echo "$GITHUB_WORKSPACE/.venv/bin" >> "$GITHUB_PATH"
+      - name: Configure and build documentation
+        run: |
+          cmake -S docs -B build/docs-ci
+          cmake --build build/docs-ci --target doc --parallel
+          test -s build/docs-ci/output/doc/html/index.html
+          test -s build/docs-ci/output/doc/xml/index.xml
+          test -s build/docs-ci/output/sphinx/index.html
+          test -s build/docs-ci/output/sphinx/api/internal.html
+      - uses: actions/upload-artifact@v4
+        with:
+          name: libcosim-documentation
+          path: |
+            build/docs-ci/output/doc
+            build/docs-ci/output/sphinx
+          if-no-files-found: error

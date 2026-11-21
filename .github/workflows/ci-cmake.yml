@@ -27,7 +27,6 @@ jobs:
             build-essential \
             ca-certificates \
             cmake \
-            doxygen \
             git \
             libboost-all-dev \
             libmsgsl-dev \

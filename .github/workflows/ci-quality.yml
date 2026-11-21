@@ -1,0 +1,84 @@
+name: libcosim quality checks
+
+on: [pull_request, workflow_dispatch]
+
+jobs:
+  quality:
+    # Fork pull requests do not receive the Conan remote credentials.
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    permissions:
+      contents: read
+      pull-requests: write
+    env:
+      LIBCOSIM_RUN_TESTS_ON_CONAN_BUILD: 1
+      ASAN_SYMBOLIZER_PATH: /usr/bin/llvm-symbolizer-18
+      UBSAN_OPTIONS: print_stacktrace=1
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Install tooling
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            clang-18 libclang-rt-18-dev llvm-18 pipx
+          pipx install conan
+          pipx install 'cmake>=4'
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: Install dependencies
+        env:
+          CONAN_LOGIN_USERNAME_OSP: ${{ secrets.osp_artifactory_usr }}
+          CONAN_PASSWORD_OSP: ${{ secrets.osp_artifactory_pwd }}
+        run: |
+          conan profile detect -f
+          conan remote add osp https://osp.jfrog.io/artifactory/api/conan/conan-local --force
+          conan install . --output-folder=build/Release --build=missing \
+            -s build_type=Release -o '&:proxyfmu=True'
+      - name: Build with ASan and UBSan
+        id: build
+        env:
+          CC: clang-18
+          CXX: clang++-18
+        run: |
+          cmake --preset conan-release \
+            -DCMAKE_CXX_FLAGS_RELEASE='-O1 -g1 -DNDEBUG' \
+            -DLIBCOSIM_ENABLE_SANITIZERS=ON \
+            -DLIBCOSIM_TREAT_WARNINGS_AS_ERRORS=OFF \
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          cmake --build --preset conan-release --parallel 2
+      - name: Run all configured tests with sanitizers
+        env:
+          ASAN_OPTIONS: detect_leaks=1
+        run: |
+          ctest --preset conan-release --output-on-failure --parallel 2 \
+            --no-tests=error
+      - name: Read lint exclusions
+        id: lint_exclusions
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: |
+          set -o pipefail
+          for tool in format tidy; do
+            patterns=$(sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' \
+              -e '/^#/d' -e '/^$/d' ".clang-${tool}-ignore" | paste -sd '|' -)
+            echo "${tool}=${patterns}" >> "$GITHUB_OUTPUT"
+          done
+      - name: Check C++ source and header files
+        if: ${{ !cancelled() && steps.lint_exclusions.outcome == 'success' }}
+        uses: cpp-linter/cpp-linter-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          version: '18'
+          database: build/Release/build/Release
+          style: 'file'
+          tidy-checks: ''
+          thread-comments: ${{ github.event_name == 'pull_request' && 'update' || 'false' }}
+          extensions: cpp,h,hpp
+          files-changed-only: 'false'
+          lines-changed-only: 'false'
+          ignore: '*|!src|!include'
+          ignore-format: ${{ steps.lint_exclusions.outputs.format }}
+          ignore-tidy: ${{ steps.lint_exclusions.outputs.tidy }}
+          jobs: '2'

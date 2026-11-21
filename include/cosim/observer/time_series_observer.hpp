@@ -29,7 +29,7 @@ class slave_value_provider;
 /**
  *  An observer implementation, storing all observed variable values for a user-specified set of variables in memory.
  */
-class time_series_observer : public time_series_provider
+class time_series_observer : public time_series_provider // NOLINT(cppcoreguidelines-special-member-functions): Preserve existing interface copy and move behavior.
 {
 public:
     /**
@@ -42,13 +42,13 @@ public:
      */
     explicit time_series_observer(size_t bufferSize);
 
-    void simulator_added(simulator_index, observable*, time_point) override;
+    void simulator_added(simulator_index /*index*/, observable* /*simulator*/, time_point /*currentTime*/) override;
 
-    void simulator_removed(simulator_index, time_point) override;
+    void simulator_removed(simulator_index /*index*/, time_point /*unused*/) override;
 
-    void variables_connected(variable_id output, variable_id input, time_point) override;
+    void variables_connected(variable_id output, variable_id input, time_point /*unused*/) override;
 
-    void variable_disconnected(variable_id input, time_point) override;
+    void variable_disconnected(variable_id input, time_point /*unused*/) override;
 
     void simulation_initialized(
         step_number firstStep,
@@ -71,16 +71,26 @@ public:
      * Start observing a variable.
      *
      * After calling this method, it will then be possible to extract observed values for this variable
-     * with `get_real_samples()` or `get_integer_samples()`.
+     * with `get_real_samples()`, `get_integer_samples()`, or
+     * `get_variable_samples()`.
      */
-    void start_observing(variable_id id);
+    void start_observing(variable_id variable);
 
     /**
      * Stop observing a variable.
      *
      * After calling this method, it will no longer be possible to extract observed values for this variable.
      */
-    void stop_observing(variable_id id);
+    void stop_observing(variable_id variable);
+
+    std::size_t get_variable_samples(
+        simulator_index sim,
+        variable_type type,
+        value_reference valueReference,
+        step_number fromStep,
+        gsl::span<variable_value> values,
+        gsl::span<step_number> steps,
+        gsl::span<time_point> times) override;
 
     std::size_t get_real_samples(
         simulator_index sim,

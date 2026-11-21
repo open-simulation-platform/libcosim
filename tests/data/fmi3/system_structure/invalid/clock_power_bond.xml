@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OspSystemStructure
+        xmlns="http://opensimulationplatform.com/MSMI/OSPSystemStructure"
+        version="0.1">
+    <BaseStepSize>1.0</BaseStepSize>
+    <Algorithm>ecco</Algorithm>
+    <Simulators>
+        <Simulator name="componentA" source="../fmus/ClockedCoSimulation.fmu"/>
+        <Simulator name="componentB" source="../fmus/ClockedCoSimulation.fmu"/>
+    </Simulators>
+    <Connections>
+        <VariableConnection powerBond="invalidBond">
+            <Variable simulator="componentA" name="inClock2" causality="input"/>
+            <Variable simulator="componentB" name="outClock" causality="output"/>
+        </VariableConnection>
+        <VariableConnection powerBond="invalidBond">
+            <Variable simulator="componentB" name="inClock2" causality="input"/>
+            <Variable simulator="componentA" name="outClock" causality="output"/>
+        </VariableConnection>
+    </Connections>
+    <EccoConfiguration>
+        <SafetyFactor>0.9</SafetyFactor>
+        <StepSize>1.0</StepSize>
+        <MinimumStepSize>0.1</MinimumStepSize>
+        <MaximumStepSize>2.0</MaximumStepSize>
+        <MinimumChangeRate>0.5</MinimumChangeRate>
+        <MaximumChangeRate>1.5</MaximumChangeRate>
+        <ProportionalGain>0.2</ProportionalGain>
+        <IntegralGain>0.15</IntegralGain>
+        <RelativeTolerance>1e-6</RelativeTolerance>
+        <AbsoluteTolerance>1e-6</AbsoluteTolerance>
+    </EccoConfiguration>
+</OspSystemStructure>

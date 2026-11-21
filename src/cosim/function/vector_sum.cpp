@@ -5,10 +5,16 @@
  */
 #include "cosim/function/vector_sum.hpp"
 
+#include "cosim/function/description.hpp"
+#include "cosim/function/function.hpp"
 #include "cosim/function/utility.hpp"
+#include "cosim/model_description.hpp"
 
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <variant>
 
-using namespace std::literals;
 
 namespace cosim
 {
@@ -21,59 +27,63 @@ function_type_description vector_sum_description(
     std::variant<variable_type, function_parameter_placeholder> numericType,
     std::variant<int, function_parameter_placeholder> dimension)
 {
-    function_type_description f;
-    f.parameters = {
+    function_type_description description;
+    description.parameters = {
         // parameters (in the same order as the enum in vector_sum_function_type!)
         function_parameter_description{
-            "inputCount"s, // name
+            std::string{"inputCount"}, // name
             function_parameter_type::integer, // type
             1, // default_value
             1, // min_value
-            {} // max_value
+            {}, // max_value
         },
         function_parameter_description{
-            "numericType"s, // name
+            std::string{"numericType"}, // name
             function_parameter_type::type, // type
             variable_type::real, // default_value
             {}, // min_value
-            {} // max_value
+            {}, // max_value
         },
         function_parameter_description{
-            "dimension"s, // name
+            std::string{"dimension"}, // name
             function_parameter_type::integer, // type
             1, // default_value
             1, // min_value
-            {} // max_value
+            {}, // max_value
         },
     };
-    f.io_groups = {
+    description.io_groups = {
         // io_groups
         function_io_group_description{
-            "in"s, // name
+            std::string{"in"}, // name
             inputCount, // count
             {
                 // ios
                 function_io_description{
-                    ""s, // name (inherited from group)
+                    std::string{}, // name (inherited from group)
                     numericType, // type
                     variable_causality::input, // causality
                     dimension, // count
+                    {}, // dimensions
                 },
-            }},
+            },
+        },
         function_io_group_description{
-            "out"s, // name
+            std::string{"out"}, // name
             1, // count
             {
                 // ios
                 function_io_description{
-                    ""s, // name = (inherited from group)
+                    std::string{}, // name = (inherited from group)
                     numericType, // type
                     variable_causality::output, // causality
                     dimension, // count
+                    {}, // dimensions
                 },
-            }},
+            },
+        },
     };
-    return f;
+    return description;
 }
 } // namespace detail
 

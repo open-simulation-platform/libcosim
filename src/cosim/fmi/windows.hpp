@@ -16,9 +16,7 @@
 #    include <string>
 
 
-namespace cosim
-{
-namespace fmi
+namespace cosim::fmi
 {
 namespace detail
 {
@@ -49,11 +47,16 @@ namespace detail
 class additional_path
 {
 public:
-    /// Constructor. Adds `p` to `PATH`.
-    additional_path(const cosim::filesystem::path& p);
+    /// Constructor. Adds `path` to `PATH`.
+    explicit additional_path(const cosim::filesystem::path& path);
 
     /// Destructor.  Removes the path from `PATH` again.
     ~additional_path();
+
+    additional_path(const additional_path&) = delete;
+    additional_path& operator=(const additional_path&) = delete;
+    additional_path(additional_path&&) = delete;
+    additional_path& operator=(additional_path&&) = delete;
 
 private:
     std::wstring addedPath_;
@@ -67,8 +70,8 @@ private:
 cosim::filesystem::path fmu_binaries_dir(const cosim::filesystem::path& baseDir);
 
 
-} // namespace fmi
-} // namespace cosim
+} // namespace cosim::fmi
+
 
 #endif // _WIN32
 #endif // header guard

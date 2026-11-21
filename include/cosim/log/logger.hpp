@@ -20,9 +20,7 @@
 #include <boost/log/trivial.hpp>
 
 
-namespace cosim
-{
-namespace log
+namespace cosim::log
 {
 
 
@@ -35,7 +33,7 @@ namespace log
  *  treated and used as if it were a separate `enum` whose enumerators are
  *  `trace`, `debug`, `info`, `warning`, `error`, and `fatal`.
  */
-using severity_level = boost::log::trivial::severity_level;
+using boost::log::trivial::severity_level;
 
 constexpr severity_level trace = boost::log::trivial::trace;
 constexpr severity_level debug = boost::log::trivial::debug;
@@ -62,6 +60,5 @@ using logger_type = boost::log::sources::severity_logger_mt<severity_level>;
 logger_type& logger();
 
 
-} // namespace log
-} // namespace cosim
+} // namespace cosim::log
 #endif // header guard

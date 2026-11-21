@@ -21,6 +21,7 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <stdexcept>
 #include <unordered_set>
 #include <utility>
 
@@ -34,6 +35,10 @@ namespace cosim
  *  transferring output values to the right input variables) and stepping
  *  simulators.
  *
+ *  Connection endpoint types must match. In particular, Enumeration and
+ *  Integer are distinct types even when scalar assignment accepts an Integer
+ *  for an Enumeration variable.
+ *
  *  Some of the functions in this interface are guaranteed to be called in
  *  a fixed order:
  *
@@ -42,9 +47,18 @@ namespace cosim
  *    3. `do_step()` (possibly repeatedly)
  */
 
-class algorithm
+class algorithm // NOLINT(cppcoreguidelines-special-member-functions): Preserve existing interface copy and move behavior.
 {
 public:
+    /// Detailed result of an algorithm macro step.
+    struct macro_step_result // NOLINT(bugprone-exception-escape): MSVC unordered-container moves may allocate.
+    {
+        duration step_size{};
+        std::unordered_set<simulator_index> finished;
+        bool early_return = false;
+        bool termination_requested = false;
+    };
+
     /**
      *  Adds a simulator to the co-simulation.
      *
@@ -130,6 +144,20 @@ public:
      */
     virtual void connect_variables(function_io_id output, variable_id input) = 0;
 
+    /**
+     *  Connects a function output variable to a function input variable.
+     *
+     *  Algorithms predating whole-value function connections may retain the
+     *  default unsupported operation.
+     */
+    virtual void connect_variables(
+        function_io_id /*unused*/,
+        function_io_id /*unused*/)
+    {
+        throw std::logic_error(
+            "Function-to-function connections are not supported");
+    }
+
     /// Breaks any previously established connection to input variable `input`.
     virtual void disconnect_variable(variable_id input) = 0;
 
@@ -185,6 +213,18 @@ public:
     virtual std::pair<duration, std::unordered_set<simulator_index>> do_step(time_point currentT) = 0;
 
     /**
+     *  Performs a macro step and reports its aggregate result, including early
+     *  return or termination.
+     *
+     *  The default delegates to the legacy interface.
+     */
+    virtual macro_step_result do_step_with_info(time_point currentT)
+    {
+        const auto [stepSize, finished] = do_step(currentT);
+        return {stepSize, finished, false, false};
+    }
+
+    /**
      *  Exports the current state of the algorithm.
      *
      *  Note that system-structural information should not be included in the
@@ -193,7 +233,7 @@ public:
      *  unchanged or has already been restored when the state is imported
      *  again, as explained in the `import_state()` function documentation.
      */
-    virtual serialization::node export_current_state() const = 0;
+    virtual serialization::node export_current_state() const = 0; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
 
     /**
      *  Imports a previously-exported algorithm state.

@@ -5,10 +5,18 @@
  */
 #include "cosim/function/utility.hpp"
 
+#include "cosim/function/description.hpp"
+#include "cosim/model_description.hpp"
+
 #include <boost/lexical_cast.hpp>
 
+#include <cstddef>
+#include <cstdint>
 #include <stdexcept>
+#include <string>
 #include <type_traits>
+#include <variant>
+#include <vector>
 
 
 namespace cosim
@@ -37,9 +45,9 @@ public:
                 "Invalid parameter index in placeholder: " +
                 std::to_string(index));
         }
-        const auto& descr = parameterDescriptions_[index];
+        const auto& descr = parameterDescriptions_.at(static_cast<std::size_t>(index));
 
-        auto valueIt = parameterValues_.find(placeholder.parameter_index);
+        auto const valueIt = parameterValues_.find(placeholder.parameter_index);
         if (valueIt == parameterValues_.end()) {
             return get_value(descr.default_value, descr);
         }
@@ -52,7 +60,7 @@ public:
             }
             if (descr.max_value && value > std::get<T>(*descr.max_value)) {
                 throw std::domain_error(
-                    "Value of parameter '" + descr.name + "' too small: " +
+                    "Value of parameter '" + descr.name + "' too large: " +
                     boost::lexical_cast<std::string>(value));
             }
         }
@@ -61,17 +69,38 @@ public:
 
 private:
     static T get_value(
-        const function_parameter_value& v,
-        const function_parameter_description& d)
+        const function_parameter_value& value,
+        const function_parameter_description& description)
     {
-        if (const auto p = std::get_if<T>(&v)) return *p;
+        if (const auto* const result = std::get_if<T>(&value)) {
+            return *result;
+        }
         throw std::logic_error(
-            "Parameter '" + d.name + "': Illegal value type");
+            "Parameter '" + description.name + "': Illegal value type");
     }
 
-    const function_parameter_value_map& parameterValues_;
-    const std::vector<function_parameter_description>& parameterDescriptions_;
+    const function_parameter_value_map& parameterValues_; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members): The visitor borrows parameter values.
+    const std::vector<function_parameter_description>& parameterDescriptions_; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members): The visitor borrows parameter descriptions.
 };
+
+
+std::uint64_t replace_dimension_placeholder(
+    const function_io_dimension& dimension,
+    const function_parameter_value_map& parameterValues,
+    const std::vector<function_parameter_description>& parameterDescriptions)
+{
+    if (const auto* const concrete = std::get_if<std::uint64_t>(&dimension)) {
+        return *concrete;
+    }
+    const auto value = replace_placeholder<int>(
+        parameterValues,
+        parameterDescriptions)(
+        std::get<function_parameter_placeholder>(dimension));
+    if (value < 0) {
+        throw std::domain_error("Function I/O dimensions cannot be negative");
+    }
+    return static_cast<std::uint64_t>(value);
+}
 } // namespace
 
 
@@ -79,19 +108,25 @@ function_description substitute_function_parameters(
     const function_type_description& functionTypeDescription,
     const function_parameter_value_map& parameterValues)
 {
-    auto functionDescription = function_description(functionTypeDescription);
+    auto functionDescription = function_description(functionTypeDescription); // NOLINT(cppcoreguidelines-slicing): Instantiate the base description without type parameters.
     for (auto& group : functionDescription.io_groups) {
         group.count = std::visit(
             replace_placeholder<int>(parameterValues, functionTypeDescription.parameters),
             group.count);
 
-        for (auto& io : group.ios) {
-            io.count = std::visit(
+        for (auto& connection : group.ios) {
+            connection.count = std::visit(
                 replace_placeholder<int>(parameterValues, functionTypeDescription.parameters),
-                io.count);
-            io.type = std::visit(
+                connection.count);
+            connection.type = std::visit(
                 replace_placeholder<variable_type>(parameterValues, functionTypeDescription.parameters),
-                io.type);
+                connection.type);
+            for (auto& dimension : connection.dimensions) {
+                dimension = replace_dimension_placeholder(
+                    dimension,
+                    parameterValues,
+                    functionTypeDescription.parameters);
+            }
         }
     }
     return functionDescription;

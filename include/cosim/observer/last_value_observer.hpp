@@ -27,19 +27,20 @@ class slave_value_provider;
 
 /**
  *  An observer implementation, storing the last observed variable values in memory.
+ *  Whole-value reads preserve exact scalar types and array dimensions.
  */
-class last_value_observer : public last_value_provider
+class last_value_observer : public last_value_provider // NOLINT(cppcoreguidelines-special-member-functions): Preserve existing interface copy and move behavior.
 {
 public:
     last_value_observer();
 
-    void simulator_added(simulator_index, observable*, time_point) override;
+    void simulator_added(simulator_index /*index*/, observable* /*simulator*/, time_point /*unused*/) override;
 
-    void simulator_removed(simulator_index, time_point) override;
+    void simulator_removed(simulator_index /*index*/, time_point /*unused*/) override;
 
-    void variables_connected(variable_id output, variable_id input, time_point) override;
+    void variables_connected(variable_id output, variable_id input, time_point /*unused*/) override;
 
-    void variable_disconnected(variable_id input, time_point) override;
+    void variable_disconnected(variable_id input, time_point /*unused*/) override;
 
     void simulation_initialized(
         step_number firstStep,
@@ -57,6 +58,11 @@ public:
         time_point currentTime) override;
 
     void state_restored(step_number currentStep, time_point currentTime) override;
+
+    variable_value get_variable_value(
+        simulator_index sim,
+        variable_type type,
+        value_reference reference) override;
 
     void get_real(
         simulator_index sim,

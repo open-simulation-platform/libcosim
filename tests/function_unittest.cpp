@@ -1,17 +1,21 @@
 #define BOOST_TEST_MODULE function unittests
+#include "exact_array_function.hpp"
 #include "mock_slave.hpp"
 
 #include <cosim/algorithm/fixed_step_algorithm.hpp>
 #include <cosim/function/linear_transformation.hpp>
+#include <cosim/function/utility.hpp>
 #include <cosim/function/vector_sum.hpp>
 #include <cosim/manipulator/scenario_manager.hpp>
 #include <cosim/observer/time_series_observer.hpp>
 
 #include <boost/test/unit_test.hpp>
 
+#include <array>
 #include <iostream>
 #include <stdexcept>
 #include <utility>
+
 
 int find_param(const cosim::function_type_description& ftd, const std::string& name)
 {
@@ -66,6 +70,19 @@ BOOST_AUTO_TEST_CASE(linear_transformation_standalone)
     fun->set_real({inGID, 0, inVID, 0}, -1.0);
     fun->calculate();
     BOOST_TEST(fun->get_real({outGID, 0, outVID, 0}) == -2.0);
+
+    fun->set_variable_value(
+        {inGID, 0, inVID, 0},
+        cosim::variable_value(cosim::real_values{{4.0}}));
+    fun->calculate();
+    BOOST_CHECK(
+        fun->get_variable_value({outGID, 0, outVID, 0}) ==
+        cosim::variable_value(cosim::real_values{{23.0}}));
+    BOOST_CHECK_THROW(
+        fun->set_variable_value(
+            {inGID, 0, inVID, 0},
+            cosim::variable_value(cosim::real_values{{4.0}}, {1})),
+        std::invalid_argument);
 }
 
 
@@ -106,6 +123,222 @@ BOOST_AUTO_TEST_CASE(vector_sum_standalone)
     fun->calculate();
     BOOST_TEST(fun->get_integer({outGID, 0, outVID, 0}) == 11);
     BOOST_TEST(fun->get_integer({outGID, 0, outVID, 1}) == 18);
+}
+
+
+BOOST_AUTO_TEST_CASE(parameter_bounds_diagnostics)
+{
+    cosim::function_type_description description;
+    description.parameters = {
+        {"count", cosim::function_parameter_type::integer, 2, 0, 4}};
+    description.io_groups = {
+        {"values", cosim::function_parameter_placeholder{0}, {}}};
+
+    for (const int value : {0, 4}) {
+        const auto result = cosim::substitute_function_parameters(description, {{0, value}});
+        BOOST_TEST(std::get<int>(result.io_groups[0].count) == value);
+    }
+    BOOST_CHECK_EXCEPTION(
+        cosim::substitute_function_parameters(description, {{0, -1}}),
+        std::domain_error,
+        [](const std::domain_error& error) {
+            return std::string(error.what()).find("too small") != std::string::npos;
+        });
+    BOOST_CHECK_EXCEPTION(
+        cosim::substitute_function_parameters(description, {{0, 5}}),
+        std::domain_error,
+        [](const std::domain_error& error) {
+            return std::string(error.what()).find("too large") != std::string::npos;
+        });
+}
+
+BOOST_AUTO_TEST_CASE(parameterized_function_dimensions)
+{
+    cosim::function_type_description typeDescription;
+    typeDescription.parameters = {
+        {"dimension",
+            cosim::function_parameter_type::integer,
+            2,
+            0,
+            {}}};
+    typeDescription.io_groups = {
+        {"values",
+            1,
+            {{"",
+                cosim::variable_type::uint64,
+                cosim::variable_causality::input,
+                3,
+                {cosim::function_parameter_placeholder{0}}}}}};
+
+    const auto defaultDescription =
+        cosim::substitute_function_parameters(typeDescription, {});
+    const auto& defaultIo = defaultDescription.io_groups[0].ios[0];
+    BOOST_TEST(std::get<int>(defaultIo.count) == 3);
+    BOOST_TEST(std::get<std::uint64_t>(defaultIo.dimensions[0]) == 2);
+
+    const auto configuredDescription = cosim::substitute_function_parameters(
+        typeDescription,
+        {{0, 4}});
+    const auto& configuredIo = configuredDescription.io_groups[0].ios[0];
+    BOOST_TEST(std::get<int>(configuredIo.count) == 3);
+    BOOST_TEST(std::get<std::uint64_t>(configuredIo.dimensions[0]) == 4);
+    BOOST_CHECK_THROW(
+        cosim::substitute_function_parameters(
+            typeDescription,
+            {{0, -1}}),
+        std::domain_error);
+}
+
+
+BOOST_AUTO_TEST_CASE(exact_array_function_endpoints)
+{
+    exact_array_function function;
+    const auto description = function.description();
+    const auto& input = description.io_groups[0].ios[0];
+    BOOST_TEST(std::get<int>(description.io_groups[0].count) == 2);
+    BOOST_TEST(std::get<int>(input.count) == 1);
+    BOOST_TEST(std::get<std::uint64_t>(input.dimensions[0]) == 2);
+
+    function.set_variable_value(
+        exact_array_function::input_reference(0),
+        cosim::variable_value(cosim::uint64_values{{1, 2}}, {2}));
+    function.set_variable_value(
+        exact_array_function::input_reference(1),
+        cosim::variable_value(cosim::uint64_values{{3, 5}}, {2}));
+    function.calculate();
+    BOOST_CHECK(
+        function.get_variable_value(exact_array_function::output_reference) ==
+        cosim::variable_value(cosim::uint64_values{{4, 7}}, {2}));
+    BOOST_CHECK_THROW(
+        function.set_variable_value(
+            exact_array_function::input_reference(0),
+            cosim::variable_value(cosim::uint64_values{{1}}, {1})),
+        std::invalid_argument);
+}
+
+
+BOOST_AUTO_TEST_CASE(exact_array_connections_in_fixed_step_algorithm)
+{
+    const cosim::variable_value first(
+        cosim::uint64_values{{10, 20}}, {2});
+    const cosim::variable_value second(
+        cosim::uint64_values{{1, 2}}, {2});
+    const cosim::variable_value third(
+        cosim::uint64_values{{100, 200}}, {2});
+    const cosim::variable_value expected(
+        cosim::uint64_values{{111, 222}}, {2});
+
+    auto firstSource = std::make_shared<whole_value_mock_slave>(first);
+    auto secondSource = std::make_shared<whole_value_mock_slave>(second);
+    auto thirdSource = std::make_shared<whole_value_mock_slave>(third);
+    auto target = std::make_shared<whole_value_mock_slave>(
+        cosim::variable_value(cosim::uint64_values{{0, 0}}, {2}));
+    auto firstFunction = std::make_shared<exact_array_function>();
+    auto secondFunction = std::make_shared<exact_array_function>();
+
+    cosim::execution execution(
+        cosim::time_point(),
+        std::make_shared<cosim::fixed_step_algorithm>(
+            std::chrono::milliseconds(10)));
+    const auto firstSourceIndex =
+        execution.add_slave(firstSource, "first-source");
+    const auto secondSourceIndex =
+        execution.add_slave(secondSource, "second-source");
+    const auto thirdSourceIndex =
+        execution.add_slave(thirdSource, "third-source");
+    const auto targetIndex = execution.add_slave(target, "target");
+    const auto firstFunctionIndex = execution.add_function(firstFunction);
+    const auto secondFunctionIndex = execution.add_function(secondFunction);
+
+    const auto source = [](cosim::simulator_index index) {
+        return cosim::variable_id{
+            index,
+            cosim::variable_type::uint64,
+            whole_value_mock_slave::output_reference};
+    };
+    const auto functionInput = [](cosim::function_index index, int instance) {
+        return cosim::function_io_id{
+            index,
+            cosim::variable_type::uint64,
+            exact_array_function::input_reference(instance)};
+    };
+    const auto functionOutput = [](cosim::function_index index) {
+        return cosim::function_io_id{
+            index,
+            cosim::variable_type::uint64,
+            exact_array_function::output_reference};
+    };
+
+    execution.connect_variables(
+        source(firstSourceIndex), functionInput(firstFunctionIndex, 0));
+    execution.connect_variables(
+        source(secondSourceIndex), functionInput(firstFunctionIndex, 1));
+    execution.connect_variables(
+        functionOutput(firstFunctionIndex),
+        functionInput(secondFunctionIndex, 0));
+    execution.connect_variables(
+        source(thirdSourceIndex), functionInput(secondFunctionIndex, 1));
+    execution.connect_variables(
+        functionOutput(secondFunctionIndex),
+        cosim::variable_id{
+            targetIndex,
+            cosim::variable_type::uint64,
+            whole_value_mock_slave::input_reference});
+
+    execution.initialize();
+    execution.step();
+    BOOST_CHECK(target->input_value() == expected);
+}
+
+
+BOOST_AUTO_TEST_CASE(connection_shape_and_reference_validation)
+{
+    auto source = std::make_shared<whole_value_mock_slave>(
+        cosim::variable_value(cosim::uint64_values{{1, 2}}, {2}));
+    auto wrongShape = std::make_shared<whole_value_mock_slave>(
+        cosim::variable_value(cosim::uint64_values{{0, 0, 0}}, {3}));
+    auto function = std::make_shared<exact_array_function>();
+    cosim::execution execution(
+        cosim::time_point(),
+        std::make_shared<cosim::fixed_step_algorithm>(
+            std::chrono::milliseconds(10)));
+    const auto sourceIndex = execution.add_slave(source, "source");
+    const auto targetIndex = execution.add_slave(wrongShape, "wrong-shape");
+    const auto functionIndex = execution.add_function(function);
+
+    BOOST_CHECK_THROW(
+        execution.connect_variables(
+            cosim::variable_id{
+                sourceIndex,
+                cosim::variable_type::uint64,
+                whole_value_mock_slave::output_reference},
+            cosim::variable_id{
+                targetIndex,
+                cosim::variable_type::uint64,
+                whole_value_mock_slave::input_reference}),
+        std::invalid_argument);
+    BOOST_CHECK_THROW(
+        execution.connect_variables(
+            cosim::variable_id{
+                sourceIndex,
+                cosim::variable_type::uint64,
+                whole_value_mock_slave::output_reference},
+            cosim::function_io_id{
+                functionIndex,
+                cosim::variable_type::uint64,
+                {0, 2, 0, 0}}),
+        std::out_of_range);
+    BOOST_CHECK_THROW(
+        execution.connect_variables(
+            cosim::variable_id{
+                sourceIndex,
+                cosim::variable_type::uint64,
+                whole_value_mock_slave::output_reference},
+            cosim::function_io_id{
+                functionIndex,
+                cosim::variable_type::int64,
+                exact_array_function::input_reference(0)}),
+        std::logic_error);
 }
 
 

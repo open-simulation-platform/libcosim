@@ -10,6 +10,8 @@
 #ifndef COSIM_SLAVE_HPP
 #define COSIM_SLAVE_HPP
 
+#include <cosim/event_iteration.hpp>
+#include <cosim/exception.hpp>
 #include <cosim/model_description.hpp>
 #include <cosim/serialization.hpp>
 #include <cosim/time.hpp>
@@ -23,6 +25,142 @@
 
 namespace cosim
 {
+
+
+/**
+ * Result of one FMI-style discrete-state update during a Clock event.
+ */
+struct clock_update_result
+{
+    bool discrete_states_need_update = false;
+    bool terminate_simulation = false;
+    std::optional<time_point> next_event_time;
+};
+
+enum class clock_interval_qualifier // NOLINT(performance-enum-size): Preserve the public ABI.
+{
+    not_yet_known,
+    unchanged,
+    changed,
+};
+
+struct clock_interval_update // NOLINT(cppcoreguidelines-pro-type-member-init): Preserve existing default-initialization behavior.
+{
+    clock_interval_qualifier qualifier;
+    double interval = 0.0;
+    std::optional<std::uint64_t> counter;
+    std::optional<std::uint64_t> resolution;
+};
+
+struct event_update_result
+{
+    /// Another discrete-state update is required at the current time.
+    bool discrete_states_need_update = false;
+    /// The FMU requested that simulation stop immediately.
+    bool terminate_simulation = false;
+    /// The next scheduled event time, when specified by the FMU.
+    std::optional<time_point> next_event_time;
+};
+
+/**
+ * Optional control surface for a simulator with discrete Event Mode.
+ *
+ * An importer can coordinate input changes and repeated updates before
+ * returning participants to Step Mode.
+ */
+class event_controller // NOLINT(cppcoreguidelines-special-member-functions): Preserve existing interface copy and move behavior.
+{
+public:
+    virtual ~event_controller() = default;
+
+    virtual bool is_in_event_mode() const noexcept = 0; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
+    virtual void enter_event_mode() = 0;
+    /// Commits one super-dense instant. An orchestrator can call this again
+    /// before Step Mode if this participant or a connected peer needs another instant.
+    virtual event_update_result update_event_state() = 0;
+    virtual void enter_step_mode() = 0;
+};
+
+
+/**
+ * Optional control surface for routing FMI Clock events.
+ *
+ * Clock values are scheduling events and are intentionally kept separate from
+ * ordinary scalar and whole-variable transport.
+ */
+class clock_controller : public event_controller // NOLINT(cppcoreguidelines-special-member-functions): Preserve existing interface copy and move behavior.
+{
+public:
+    ~clock_controller() override = default;
+
+    /// Returns an input Clock schedule resolved during initialization, if any.
+    virtual std::optional<clock_description> resolved_input_clock_schedule( // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
+        value_reference /*unused*/) const
+    {
+        return std::nullopt;
+    }
+
+    /// Reads an FMU-controlled input Clock interval in Initialization or Event Mode.
+    virtual clock_interval_update get_input_clock_interval(value_reference /*unused*/)
+    {
+        throw error(make_error_code(errc::unsupported_feature),
+            "This Clock controller does not provide runtime intervals");
+    }
+
+    /// Indicates whether a host-requested Clock interval needs Event Mode.
+    virtual bool has_pending_clock_intervals() const { return false; } // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
+
+    /// Returns a queued interval without applying it to the FMU.
+    virtual std::optional<clock_interval_update> pending_input_clock_interval( // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
+        value_reference /*unused*/) const
+    {
+        if (has_pending_clock_intervals()) {
+            throw error(make_error_code(errc::unsupported_feature),
+                "This Clock controller cannot inspect pending intervals");
+        }
+        return std::nullopt;
+    }
+
+    /// Applies pending host interval changes after entering Event Mode.
+    virtual void apply_pending_clock_intervals() { }
+
+    virtual bool get_output_clock(value_reference reference) = 0;
+    /**
+     * Reads Clock status without sampling associated values. The default uses
+     * get_output_clock; controllers that sample values there must override it.
+     */
+    virtual bool probe_output_clock(value_reference reference)
+    {
+        return get_output_clock(reference);
+    }
+    virtual void set_input_clock(value_reference reference, bool active) = 0;
+    virtual variable_value get_clocked_variable(
+        variable_type type,
+        value_reference reference) = 0;
+    /**
+     * Reads a Clock-associated value without applying output modifiers.
+     * Modifier-aware controllers must override the default implementation.
+     */
+    virtual variable_value probe_clocked_variable(
+        variable_type type, value_reference reference)
+    {
+        return get_clocked_variable(type, reference);
+    }
+    virtual void set_clocked_variable(
+        variable_type type,
+        value_reference reference,
+        const variable_value& value) = 0;
+    virtual clock_update_result update_clock_state() = 0;
+    event_update_result update_event_state() override
+    {
+        const auto result = update_clock_state();
+        return {
+            result.discrete_states_need_update,
+            result.terminate_simulation,
+            result.next_event_time,
+        };
+    }
+};
 
 
 /**
@@ -51,13 +189,42 @@ namespace cosim
  *  that the slave has either ignored or accepted these values and is able
  *  to proceed.
  */
-class slave
+class slave // NOLINT(cppcoreguidelines-special-member-functions): Preserve existing interface copy and move behavior.
 {
 public:
     virtual ~slave() = default;
 
     /// Returns a model description.
-    virtual cosim::model_description model_description() const = 0;
+    virtual cosim::model_description model_description() const = 0; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
+
+    /**
+     * Returns the optional Clock-routing capability.
+     *
+     * The default keeps legacy and non-clocked slaves unchanged.
+     */
+    virtual cosim::clock_controller* get_clock_controller() noexcept
+    {
+        return nullptr;
+    }
+
+    /// Returns the optional Event Mode capability.
+    virtual cosim::event_controller* get_event_controller() noexcept
+    {
+        return nullptr;
+    }
+
+    /**
+     * Configures local event iteration before simulation starts. The default
+     * implementation does nothing for slaves without internal event loops.
+     */
+    virtual void set_max_event_iterations(std::size_t /*unused*/) { }
+
+    /**
+     * Whether an algorithm may automatically replay a step after restoring
+     * state. Return false when callbacks can have non-replayable side effects.
+     * This does not disable explicit state saving or restoration.
+     */
+    virtual bool supports_automatic_step_replay() const noexcept { return true; } // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
 
     /**
      *  Instructs the slave to perform pre-simulation setup and enter
@@ -111,6 +278,43 @@ public:
      *      planned for a future version.
      */
     virtual step_result do_step(time_point currentT, duration deltaT) = 0;
+
+    /**
+     *  Performs a step and reports FMI-style endpoint and control flags.
+     *
+     *  Implementations with richer step semantics should override this
+     *  function. The default preserves the legacy contract.
+     */
+    virtual step_result_info do_step_with_info(
+        time_point currentT,
+        duration deltaT)
+    {
+        const auto result = do_step(currentT, deltaT);
+        return {
+            result,
+            currentT + deltaT,
+            false,
+            false,
+            false,
+            result == step_result::failed,
+        };
+    }
+
+    /**
+     *  Completes pending event handling after a step requested it.
+     *
+     *  Standalone callers can use this to finish an instance's local iteration.
+     *  Built-in algorithms drive instances with an event controller through
+     *  that controller instead. For instances without one, this is the
+     *  fallback when the instance reports an event. The default is a no-op.
+     */
+    virtual void handle_events() { }
+
+    /// Returns the outcome of the latest event iteration, if supported.
+    virtual event_handling_status get_event_handling_status() const noexcept // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
+    {
+        return {};
+    }
 
     /**
      *  Retrieves the values of real variables.
@@ -224,6 +428,33 @@ public:
         gsl::span<const value_reference> variables,
         gsl::span<const std::string> values) = 0;
 
+    /**
+     *  Retrieves complete scalar or array variable values.
+     *
+     *  The default implementation bridges scalar Real, Integer, Boolean, and
+     *  String variables to the legacy typed methods. Implementations that
+     *  support arrays or additional exact types must override this method.
+     */
+    virtual std::vector<variable_value> get_variable_values( // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
+        gsl::span<const typed_value_reference> variables) const;
+
+    /**
+     *  Sets complete scalar or array variable values.
+     *
+     *  The default implementation bridges scalar Real, Integer, Boolean, and
+     *  String variables to the legacy typed methods. Before calling any typed
+     *  setter, it checks the complete batch's counts, supported types, value
+     *  types and scalar shapes and verifies scalar metadata for every typed
+     *  reference in `model_description()`. Custom slaves using this bridge
+     *  must describe those variables. Numeric bounds are left to typed setters.
+     *  Overrides may provide different validation guarantees. A typed setter
+     *  failure can leave earlier assignments applied; batch writes are not
+     *  generally transactional.
+     */
+    virtual void set_variable_values(
+        gsl::span<const typed_value_reference> variables,
+        gsl::span<const variable_value> values);
+
     /// Result type for `get_variables()`.
     struct variable_values
     {
@@ -247,14 +478,18 @@ public:
         gsl::span<const value_reference> boolean_variables,
         gsl::span<const value_reference> string_variables) const
     {
-        if (static_cast<size_t>(values->real.size()) != static_cast<size_t>(real_variables.size()))
+        if (static_cast<size_t>(values->real.size()) != static_cast<size_t>(real_variables.size())) {
             values->real.resize(real_variables.size());
-        if (static_cast<size_t>(values->integer.size()) != static_cast<size_t>(integer_variables.size()))
+        }
+        if (static_cast<size_t>(values->integer.size()) != static_cast<size_t>(integer_variables.size())) {
             values->integer.resize(integer_variables.size());
-        if (static_cast<size_t>(values->boolean.size()) != static_cast<size_t>(boolean_variables.size()))
+        }
+        if (static_cast<size_t>(values->boolean.size()) != static_cast<size_t>(boolean_variables.size())) {
             values->boolean.resize(boolean_variables.size());
-        if (static_cast<size_t>(values->string.size()) != static_cast<size_t>(string_variables.size()))
+        }
+        if (static_cast<size_t>(values->string.size()) != static_cast<size_t>(string_variables.size())) {
             values->string.resize(string_variables.size());
+        }
 
         get_real_variables(real_variables, values->real);
         get_integer_variables(integer_variables, values->integer);
@@ -334,7 +569,7 @@ public:
      *  This returns a previously-saved state in a generic format so it can be
      *  serialized, e.g. to write it to disk and use it in a later simulation.
      */
-    virtual serialization::node export_state(state_index stateIndex) const = 0;
+    virtual serialization::node export_state(state_index stateIndex) const = 0; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
 
     /**
      *  Imports an exported state.

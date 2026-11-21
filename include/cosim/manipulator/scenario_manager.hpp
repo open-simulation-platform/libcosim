@@ -22,9 +22,9 @@ namespace cosim
 class scenario_manager : public manipulator
 {
 public:
-    void simulator_added(simulator_index, manipulable*, time_point) override;
+    void simulator_added(simulator_index /*index*/ /*unused*/, manipulable* /*sim*/ /*unused*/, time_point /*unused*/) override;
 
-    void simulator_removed(simulator_index, time_point) override;
+    void simulator_removed(simulator_index /*index*/ /*unused*/, time_point /*unused*/) override;
 
     void step_commencing(
         time_point currentTime) override;
@@ -45,20 +45,24 @@ public:
      *
      * This function may only be called after the object has been added to an
      * execution with `execution::add_manipulator()`.
+     * Loading a new scenario removes modifiers installed by the previous one.
      *
-     * \param s
+     * \param scenarioData
      *  The in-memory constructed scenario.
      * \param currentTime
      *  The time point at which the scenario will start. The scenario's events
      *  will be executed relative to this time point.
+     * \throws std::invalid_argument if an event references a simulator that
+     *  is not registered with this manager.
      */
-    void load_scenario(const scenario::scenario& s, time_point currentTime);
+    void load_scenario(const scenario::scenario& scenarioData, time_point currentTime);
 
     /**
      * Load a scenario for execution.
      *
      * This function may only be called after the object has been added to an
      * execution with `execution::add_manipulator()`.
+     * Loading a new scenario removes modifiers installed by the previous one.
      *
      * \param scenarioFile
      *  The path to a proprietary `json` file defining the scenario.

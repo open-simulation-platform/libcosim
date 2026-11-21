@@ -66,20 +66,20 @@
     </Simulators>
     <Connections>
         <VariableConnection powerBond="bond1">
-            <Variable simulator="chassis1" name="velocity" causality="input"/>
-            <Variable simulator="wheel1" name="in_vel" causality="output"/>
+            <Variable simulator="chassis1" name="velocity" causality="output"/>
+            <Variable simulator="wheel1" name="in_vel" causality="input"/>
         </VariableConnection>
         <VariableConnection powerBond="bond1">
-            <Variable simulator="wheel1" name="out_spring_damper_f" causality="input"/>
-            <Variable simulator="chassis1" name="force" causality="output"/>
+            <Variable simulator="wheel1" name="out_spring_damper_f" causality="output"/>
+            <Variable simulator="chassis1" name="force" causality="input"/>
         </VariableConnection>
         <VariableConnection powerBond="bond2">
-            <Variable simulator="chassis2" name="velocity" causality="input"/>
-            <Variable simulator="wheel2" name="in_vel" causality="output"/>
+            <Variable simulator="chassis2" name="velocity" causality="output"/>
+            <Variable simulator="wheel2" name="in_vel" causality="input"/>
         </VariableConnection>
         <VariableConnection powerBond="bond2">
-            <Variable simulator="wheel2" name="out_spring_damper_f" causality="input"/>
-            <Variable simulator="chassis2" name="force" causality="output"/>
+            <Variable simulator="wheel2" name="out_spring_damper_f" causality="output"/>
+            <Variable simulator="chassis2" name="force" causality="input"/>
         </VariableConnection>
     </Connections>
     <EccoConfiguration>

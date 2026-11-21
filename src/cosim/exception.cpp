@@ -8,6 +8,9 @@
 #include "cosim/error.hpp"
 #include "cosim/lib_info.hpp"
 
+#include <string>
+#include <system_error>
+
 
 namespace cosim
 {
@@ -18,14 +21,14 @@ namespace
 class my_error_category : public std::error_category
 {
 public:
-    const char* name() const noexcept final override
+    [[nodiscard]] const char* name() const noexcept final
     {
         return library_short_name;
     }
 
-    std::string message(int ev) const final override
+    [[nodiscard]] std::string message(int errorValue) const final
     {
-        switch (static_cast<errc>(ev)) {
+        switch (static_cast<errc>(errorValue)) {
             case errc::success:
                 return "Success";
             case errc::bad_file:
@@ -46,9 +49,8 @@ public:
                 return "ZIP file error";
             case errc::invalid_operation:
                 return "Invalid operation";
-            default:
-                COSIM_PANIC();
         }
+        COSIM_PANIC();
     }
 };
 } // namespace
@@ -56,20 +58,20 @@ public:
 
 const std::error_category& error_category() noexcept
 {
-    static my_error_category instance;
+    static const my_error_category instance;
     return instance;
 }
 
 
-std::error_condition make_error_condition(errc e) noexcept
+std::error_condition make_error_condition(errc condition) noexcept
 {
-    return std::error_condition(static_cast<int>(e), error_category());
+    return {static_cast<int>(condition), error_category()};
 }
 
 
-std::error_code make_error_code(errc e) noexcept
+std::error_code make_error_code(errc condition) noexcept
 {
-    return std::error_code(static_cast<int>(e), error_category());
+    return {static_cast<int>(condition), error_category()};
 }
 
 

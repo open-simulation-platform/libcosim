@@ -24,7 +24,7 @@ namespace cosim
 {
 
 /// A configuration loaded from an SSP file.
-struct ssp_configuration
+struct ssp_configuration // NOLINT(bugprone-exception-escape): MSVC unordered-container moves may allocate.
 {
     /// The system structure.
     cosim::system_structure system_structure;
@@ -47,7 +47,11 @@ struct ssp_configuration
 };
 
 
-/// Class for loading an execution from a SSP configuration.
+/**
+ * Class for loading an execution from an SSP configuration.
+ * Each load uses the resolver and SSD filename selected at its start.
+ * Concurrent access requires external synchronization.
+ */
 class ssp_loader
 {
 
@@ -77,6 +81,14 @@ public:
      *      Path to the .ssp archive, or a directory holding one or more .ssd files.
      */
     ssp_configuration load(const cosim::filesystem::path& configPath);
+
+    /**
+     *  Loads an SSP configuration and returns its optional default-experiment
+     *  stop time in `endTime`. A missing stop time resets `endTime`.
+     */
+    ssp_configuration load(
+        const cosim::filesystem::path& configPath,
+        std::optional<time_point>& endTime);
 
 private:
     std::optional<std::string> ssdFileName_;

@@ -22,25 +22,31 @@ namespace cosim
 /**
  *  A manipulator implementation handling overrides of variable values.
  */
-class override_manipulator : public manipulator
+class override_manipulator : public manipulator // NOLINT(cppcoreguidelines-special-member-functions): Preserve existing interface copy and move behavior.
 {
 public:
-    void simulator_added(simulator_index, manipulable*, time_point) override;
+    void simulator_added(simulator_index /*index*/, manipulable* /*sim*/, time_point /*unused*/) override;
 
-    void simulator_removed(simulator_index, time_point) override;
+    void simulator_removed(simulator_index /*index*/, time_point /*unused*/) override;
 
     void step_commencing(time_point currentTime) override;
 
     /// Override the value of a variable with type `real`
-    void override_real_variable(simulator_index, value_reference, double value);
+    void override_real_variable(simulator_index /*index*/, value_reference /*variable*/, double value);
     /// Override the value of a variable with type `integer`
-    void override_integer_variable(simulator_index, value_reference, int value);
+    void override_integer_variable(simulator_index /*index*/, value_reference /*variable*/, int value);
     /// Override the value of a variable with type `boolean`
-    void override_boolean_variable(simulator_index, value_reference, bool value);
+    void override_boolean_variable(simulator_index /*index*/, value_reference /*variable*/, bool value);
     /// Override the value of a variable with type `string`
-    void override_string_variable(simulator_index, value_reference, const std::string& value);
+    void override_string_variable(simulator_index /*index*/, value_reference /*variable*/, const std::string& value);
+    /// Override one complete scalar or array value.
+    void override_variable(
+        simulator_index /*index*/,
+        variable_type /*type*/,
+        value_reference /*variable*/,
+        variable_value value);
     /// Reset override of a variable
-    void reset_variable(simulator_index, variable_type, value_reference);
+    void reset_variable(simulator_index /*index*/, variable_type /*type*/, value_reference /*variable*/);
 
     ~override_manipulator() noexcept override;
 
@@ -53,7 +59,8 @@ private:
             scenario::real_modifier,
             scenario::integer_modifier,
             scenario::boolean_modifier,
-            scenario::string_modifier>& m);
+            scenario::string_modifier,
+            scenario::variable_modifier>& modifier);
 
     std::unordered_map<simulator_index, manipulable*> simulators_;
     std::vector<scenario::variable_action> actions_;

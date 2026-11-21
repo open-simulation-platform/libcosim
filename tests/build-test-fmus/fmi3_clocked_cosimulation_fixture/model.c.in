@@ -1,0 +1,101 @@
+#include "config.h"
+#define setStartValues referenceSetStartValues
+#define eventUpdate referenceEventUpdate
+#define activateClock referenceActivateClock
+#define getInt32 referenceGetInt32
+#define getClock referenceGetClock
+#include "@REFERENCE_FMUS_SOURCE_DIR@/Clocks/model.c"
+#undef setStartValues
+#undef eventUpdate
+#undef activateClock
+#undef getInt32
+#undef getClock
+
+
+#define vr_result2Snapshot 2008
+
+
+static void ignoreClockUpdate(void* instanceEnvironment)
+{
+    UNUSED(instanceEnvironment);
+}
+
+Status setStartValues(ModelInstance* comp)
+{
+    const Status status = referenceSetStartValues(comp);
+    M(input2Active) = 0;
+    return status;
+}
+
+
+Status eventUpdate(ModelInstance* comp)
+{
+    if (M(input2Active)) {
+        M(result2) += M(input2);
+        M(input2) = 0;
+    }
+    M(input2Active) = 0;
+    M(outClock) = 0;
+    return OK;
+}
+
+Status getClock(ModelInstance* comp, ValueReference vr, _Bool* value)
+{
+    if (vr != vr_outClock) {
+        logError(comp, "Cannot get Clock %u.", vr);
+        return Error;
+    }
+    *value = M(outClock) != 0;
+    return OK;
+}
+
+
+Status activateClock(ModelInstance* comp, ValueReference vr)
+{
+    // Co-Simulation exposes output Clocks through GetClock and has no
+    // Scheduled Execution clockUpdate callback.
+    if (!comp->clockUpdate) {
+        comp->clockUpdate = ignoreClockUpdate;
+    }
+
+    switch (vr) {
+    case vr_inClock1:
+        activateModelPartition1(comp, comp->time);
+        return OK;
+    case vr_inClock2:
+        if (!M(input2Active)) {
+            ++M(inClock2Ticks);
+            ++M(totalInClockTicks);
+            if (M(totalInClockTicks) % 5 == 0) M(outClock) = 1;
+        }
+        M(input2Active) = 1;
+        return OK;
+    case vr_inClock3:
+        activateModelPartition3(comp, comp->time);
+        return OK;
+    default:
+        logError(comp, "Clock activation is not allowed for value reference %u.", vr);
+        return Error;
+    }
+}
+
+
+Status getInt32(
+    ModelInstance* comp,
+    ValueReference vr,
+    int32_t values[],
+    size_t nValues,
+    size_t* index)
+{
+    if (vr == vr_result2Snapshot) {
+        ASSERT_NVALUES(1);
+        values[(*index)++] = M(result2);
+        return OK;
+    }
+    if (vr == vr_result2 && M(input2Active)) {
+        ASSERT_NVALUES(1);
+        values[(*index)++] = M(result2) + M(input2);
+        return OK;
+    }
+    return referenceGetInt32(comp, vr, values, nValues, index);
+}

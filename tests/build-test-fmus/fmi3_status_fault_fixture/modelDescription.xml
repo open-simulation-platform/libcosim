@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fmiModelDescription
+  fmiVersion="3.0"
+  modelName="StatusFault"
+  description="A test FMU that returns controlled FMI statuses"
+  generationTool="libcosim tests"
+  instantiationToken="{610F836A-58B3-4D2D-BB8C-9D60A80F6453}">
+
+  <CoSimulation
+    modelIdentifier="StatusFault"
+    hasEventMode="true"
+    canGetAndSetFMUState="true"
+    canSerializeFMUState="true"
+    mightReturnEarlyFromDoStep="true"
+    canHandleVariableCommunicationStepSize="true"/>
+
+  <DefaultExperiment startTime="0" stopTime="10"/>
+
+  <ModelVariables>
+    <Int32
+      name="faultStatus"
+      valueReference="1"
+      description="0=OK, 1=Warning, 2=Discard, 3=Error, 4=Fatal"
+      causality="input"
+      variability="discrete"
+      start="0"/>
+    <Int32
+      name="faultOperation"
+      valueReference="2"
+      description="Selects the FMI operation that returns faultStatus; 17 requests termination, 18 returns an invalid next event, 19 and 20 return early at the endpoint without and with an event, and 21 returns beyond the endpoint"
+      causality="input"
+      variability="discrete"
+      start="0"/>
+    <Int32
+      name="value"
+      valueReference="3"
+      description="Stateful value used by value and FMU-state tests"
+      causality="input"
+      variability="discrete"
+      start="0"/>
+    <Clock
+      name="inputClock"
+      valueReference="1001"
+      causality="input"
+      intervalVariability="triggered"/>
+  </ModelVariables>
+
+  <ModelStructure/>
+</fmiModelDescription>

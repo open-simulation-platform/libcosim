@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<OspSystemStructure xmlns="http://opensimulationplatform.com/MSMI/OSPSystemStructure" version="0.1">
+    <Simulators>
+        <Simulator name="Crane" source="KnuckleBoomCrane.fmu">
+            <InitialValues>
+                <InitialValue variable="value">
+                    <Float32 value="1.25"/>
+                </InitialValue>
+            </InitialValues>
+        </Simulator>
+    </Simulators>
+</OspSystemStructure>

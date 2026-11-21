@@ -12,7 +12,13 @@
                 <xs:element name="StartTime" minOccurs="0" maxOccurs="1" default="0.0" type="xs:double"/>
                 <xs:element name="EndTime" minOccurs="0" maxOccurs="1" type="xs:double"/>
                 <xs:element name="BaseStepSize" minOccurs="0" maxOccurs="1" type="xs:double"/>
-                <xs:element name="Algorithm" minOccurs="0" maxOccurs="1" default="fixedStep" type="xs:string"/>
+                <xs:element name="Algorithm" minOccurs="0" maxOccurs="1" default="fixedStep" type="xs:string">
+                    <xs:annotation>
+                        <xs:documentation>
+                            Optional co-simulation algorithm. If omitted, fixedStep is used.
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:element>
                 <xs:element name="Simulators" type="osp:simulators"/>
                 <xs:element name="Functions" type="osp:functions" minOccurs="0"/>
                 <xs:element name="Connections" type="osp:connections" minOccurs="0"/>

@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fmiModelDescription
+  fmiVersion="3.0"
+  modelName="Enumeration"
+  description="FMI 3 Co-Simulation Enumeration array and status fixture"
+  generationTool="libcosim tests"
+  instantiationToken="{4D8C2B8A-2D7F-4D43-9C6D-8A0B4F2C7E91}">
+
+  <CoSimulation
+    modelIdentifier="Enumeration"
+    hasEventMode="true"
+    canHandleVariableCommunicationStepSize="true"/>
+
+  <TypeDefinitions>
+    <EnumerationType name="SignedOption" quantity="mode">
+      <Item name="Negative" value="-1" description="Negative option"/>
+      <Item name="Low" value="1" description="Low option"/>
+      <Item name="High" value="2" description="High option"/>
+      <Item name="Maximum" value="4" description="Maximum option"/>
+    </EnumerationType>
+  </TypeDefinitions>
+
+  <DefaultExperiment startTime="0" stopTime="10"/>
+
+  <ModelVariables>
+    <Int32
+      name="status"
+      valueReference="1"
+      causality="input"
+      variability="discrete"
+      start="0"/>
+
+    <Enumeration
+      name="scalarInput"
+      valueReference="2"
+      declaredType="SignedOption"
+      causality="input"
+      variability="discrete"
+      start="1"
+      min="-1"
+      max="4"/>
+    <Enumeration
+      name="arrayInput"
+      valueReference="3"
+      declaredType="SignedOption"
+      causality="input"
+      variability="discrete"
+      start="1 2"
+      min="-1"
+      max="4">
+      <Dimension start="2"/>
+    </Enumeration>
+    <Enumeration
+      name="scalarOutput"
+      valueReference="12"
+      declaredType="SignedOption"
+      causality="output"
+      variability="discrete"
+      min="-1"
+      max="4"/>
+    <Enumeration
+      name="arrayOutput"
+      valueReference="13"
+      declaredType="SignedOption"
+      causality="output"
+      variability="discrete"
+      min="-1"
+      max="4">
+      <Dimension start="2"/>
+    </Enumeration>
+    <Enumeration
+      name="emptyOutput"
+      valueReference="14"
+      declaredType="SignedOption"
+      causality="output"
+      variability="discrete"
+      min="-1"
+      max="4">
+      <Dimension start="0"/>
+    </Enumeration>
+
+    <Clock
+      name="inputClock"
+      valueReference="1001"
+      causality="input"
+      intervalVariability="triggered"/>
+    <Clock
+      name="outputClock"
+      valueReference="1002"
+      causality="output"
+      intervalVariability="triggered"/>
+  </ModelVariables>
+
+  <ModelStructure>
+    <Output valueReference="12" dependencies="2" dependenciesKind="constant"/>
+    <Output valueReference="13" dependencies="3" dependenciesKind="constant"/>
+    <Output valueReference="14"/>
+  </ModelStructure>
+</fmiModelDescription>

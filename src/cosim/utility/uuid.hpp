@@ -13,9 +13,7 @@
 #include <string>
 
 
-namespace cosim
-{
-namespace utility
+namespace cosim::utility
 {
 
 
@@ -23,6 +21,6 @@ namespace utility
 std::string random_uuid() noexcept;
 
 
-} // namespace utility
-} // namespace cosim
+} // namespace cosim::utility
+
 #endif // header guard

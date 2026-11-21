@@ -35,6 +35,9 @@ namespace cosim
  *      A mapping from parameter indexes to parameter values.
  *  \param parameterIndex
  *      The index of the parameter whose value should be retrieved.
+ *  \return The supplied value, or the declared default if it was omitted.
+ *  \throws std::domain_error if a supplied numeric value is outside its bounds.
+ *  \throws std::bad_variant_access if the requested type does not match.
  */
 template<typename T>
 T get_function_parameter(
@@ -43,14 +46,14 @@ T get_function_parameter(
     int parameterIndex)
 {
     const auto& description = functionTypeDescription.parameters.at(parameterIndex);
-    const auto it = parameterValues.find(parameterIndex);
-    if (it == parameterValues.end()) {
+    const auto entry = parameterValues.find(parameterIndex);
+    if (entry == parameterValues.end()) {
         return std::get<T>(description.default_value);
     }
-    const auto value = std::get<T>(it->second);
+    const auto value = std::get<T>(entry->second);
     if constexpr (std::is_arithmetic_v<T>) {
-        if ((description.min_value && value < std::get<T>(*description.min_value)) ||
-            (description.max_value && value > std::get<T>(*description.max_value))) {
+        if ((description.min_value && value < std::get<T>(description.min_value.value())) ||
+            (description.max_value && value > std::get<T>(description.max_value.value()))) {
             throw std::domain_error(
                 "Parameter '" + description.name + "' is out of bounds");
         }
@@ -64,8 +67,8 @@ T get_function_parameter(
  *  `function_description` part of `functionTypeDescription`, but with
  *  all placeholders replaced by actual parameter values.
  *
- *  The `parameterValues` map *must* contain values for all placeholders
- *  in `functionTypeDescription`.  Otherwise, an exception is thrown.
+ *  Placeholders use supplied values when present and their declared defaults
+ *  otherwise. Invalid indices, types, or out-of-range values are rejected.
  */
 function_description substitute_function_parameters(
     const function_type_description& functionTypeDescription,

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fmiModelDescription
+        fmiVersion="3.0"
+        modelName="libcosim.fmi3.derivatives"
+        description="Directional and adjoint derivative test fixture"
+        generationTool="libcosim test fixture"
+        instantiationToken="{A57664C8-8AD5-4E8F-BD1D-E27B45E92613}">
+    <CoSimulation
+            modelIdentifier="Fmi3Derivatives"
+            canHandleVariableCommunicationStepSize="true"
+            hasEventMode="true"
+            providesDirectionalDerivatives="true"
+            providesAdjointDerivatives="true"
+            providesPerElementDependencies="true"/>
+    <LogCategories>
+        <Category name="logFixtureA"/>
+        <Category name="logFixtureB"/>
+    </LogCategories>
+    <DefaultExperiment startTime="0" stopTime="10" stepSize="0.1"/>
+    <ModelVariables>
+        <Float64 name="knownFloat64" valueReference="1"
+                causality="input" variability="continuous" start="0"/>
+        <Float32 name="knownFloat32" valueReference="2"
+                causality="input" variability="continuous" start="0"/>
+        <Float64 name="knownFixed" valueReference="3"
+                causality="input" variability="continuous" start="0 0 0">
+            <Dimension start="3"/>
+        </Float64>
+        <UInt64 name="structuralSize" valueReference="4"
+                causality="structuralParameter" variability="tunable"
+                start="2" min="0" max="3"/>
+        <Float64 name="knownStructural" valueReference="5"
+                causality="input" variability="continuous" start="0 0">
+            <Dimension valueReference="4"/>
+        </Float64>
+        <Float64 name="outputMatrix" valueReference="10"
+                causality="output" variability="continuous"
+                initial="calculated">
+            <Dimension start="2"/>
+            <Dimension start="3"/>
+        </Float64>
+        <Float64 name="outputConstant" valueReference="11"
+                causality="output" variability="continuous"
+                initial="calculated"/>
+        <Float32 name="outputFloat32" valueReference="12"
+                causality="output" variability="continuous"
+                initial="calculated"/>
+        <Float64 name="outputStructural" valueReference="13"
+                causality="output" variability="continuous"
+                initial="calculated">
+            <Dimension valueReference="4"/>
+        </Float64>
+        <Float64 name="state" valueReference="20"
+                causality="local" variability="continuous"
+                initial="exact" start="1"/>
+        <Float64 name="der(state)" valueReference="21"
+                causality="local" variability="continuous"
+                initial="calculated" derivative="20"/>
+        <Int32 name="derivativeStatus" valueReference="100"
+                description="Injected status: 0=OK, 1=Warning, 2=Discard, 3=Error, 4=Fatal"
+                causality="input" variability="discrete"
+                start="0" min="0" max="4"/>
+        <UInt64 name="derivativeCallCount" valueReference="101"
+                causality="output" variability="discrete"
+                initial="calculated"/>
+        <Boolean name="nonFloat" valueReference="102"
+                description="Non-floating-point value reference for rejection tests"
+                causality="input" variability="discrete" start="false"/>
+    </ModelVariables>
+    <ModelStructure>
+        <Output valueReference="10" dependencies="3"
+                dependenciesKind="dependent"/>
+        <Output valueReference="11" dependencies=""/>
+        <Output valueReference="12"/>
+        <Output valueReference="13" dependencies="1 5"
+                dependenciesKind="dependent dependent"/>
+        <Output valueReference="101" dependencies=""/>
+        <ContinuousStateDerivative valueReference="21"
+                dependencies="1 20"
+                dependenciesKind="dependent dependent"/>
+        <InitialUnknown valueReference="10" dependencies="3"
+                dependenciesKind="dependent"/>
+        <InitialUnknown valueReference="11" dependencies=""/>
+        <InitialUnknown valueReference="12"/>
+        <InitialUnknown valueReference="13" dependencies="1 5"
+                dependenciesKind="dependent dependent"/>
+        <InitialUnknown valueReference="21" dependencies="1 20"
+                dependenciesKind="dependent dependent"/>
+        <InitialUnknown valueReference="101" dependencies=""/>
+    </ModelStructure>
+</fmiModelDescription>

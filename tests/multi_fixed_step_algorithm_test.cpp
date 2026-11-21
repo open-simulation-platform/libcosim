@@ -15,8 +15,7 @@
 
 
 // A helper macro to test various assertions
-#define REQUIRE(test) \
-    if (!(test)) throw std::runtime_error("Requirement not satisfied: " #test)
+#include "test_require.hpp"
 
 
 // A slave that logs the time points when its set_real_variables() and
