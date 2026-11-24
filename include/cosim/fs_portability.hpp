@@ -10,16 +10,16 @@
 #define LIBCOSIM_FS_PORTABILITY_HPP
 
 #if __has_include(<filesystem>)
-#    include <filesystem>
+#    include <filesystem> // IWYU pragma: export
 namespace cosim
 {
-namespace filesystem = std::filesystem;
+namespace filesystem = std::filesystem; // NOLINT(misc-unused-alias-decls): Public portability alias.
 }
 #else
-#    include <experimental/filesystem>
+#    include <experimental/filesystem> // IWYU pragma: export
 namespace cosim
 {
-namespace filesystem = std::experimental::filesystem;
+namespace filesystem = std::experimental::filesystem; // NOLINT(misc-unused-alias-decls): Public portability alias.
 }
 #endif
 

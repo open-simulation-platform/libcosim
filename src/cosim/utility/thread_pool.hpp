@@ -10,14 +10,15 @@
 #ifndef COSIM_UTILITY_THREAD_POOL_HPP
 #define COSIM_UTILITY_THREAD_POOL_HPP
 
-#include <atomic>
 #include <condition_variable>
+#include <cstddef>
 #include <exception>
 #include <functional>
 #include <mutex>
 #include <queue>
 #include <thread>
 #include <utility>
+#include <vector>
 
 
 namespace cosim::utility

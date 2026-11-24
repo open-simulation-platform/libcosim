@@ -11,10 +11,15 @@
 
 #include "cosim/algorithm/simulator.hpp"
 #include "cosim/error.hpp"
+#include "cosim/event_iteration.hpp"
 #include "cosim/exception.hpp"
 #include "cosim/execution.hpp"
+#include "cosim/function/function.hpp"
 #include "cosim/log/logger.hpp"
+#include "cosim/model_description.hpp"
+#include "cosim/serialization.hpp"
 #include "cosim/slave.hpp"
+#include "cosim/time.hpp"
 
 #include <boost/algorithm/cxx11/any_of.hpp>
 #include <boost/algorithm/cxx11/none_of.hpp>
@@ -24,6 +29,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstddef>
 #include <deque>
 #include <functional>
 #include <map>
@@ -31,9 +37,12 @@
 #include <optional>
 #include <set>
 #include <sstream>
+#include <string>
+#include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
+#include <variant>
 #include <vector>
 
 namespace cosim

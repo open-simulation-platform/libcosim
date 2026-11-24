@@ -6,6 +6,7 @@
 #ifndef COSIM_SCALAR_VALUE_DISPATCH_HPP
 #define COSIM_SCALAR_VALUE_DISPATCH_HPP
 
+#include "cosim/model_description.hpp"
 #include <cosim/slave.hpp>
 
 

@@ -12,6 +12,7 @@
 
 #include <cosim/model_description.hpp>
 
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <unordered_map>

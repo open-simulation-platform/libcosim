@@ -9,8 +9,12 @@
 #ifndef LIBCOSIM_SCENARIO_PARSER_H
 #define LIBCOSIM_SCENARIO_PARSER_H
 
-#include <cosim/algorithm.hpp>
+#include <cosim/execution.hpp>
+#include <cosim/fs_portability.hpp>
+#include <cosim/manipulator/manipulator.hpp>
 #include <cosim/scenario.hpp>
+
+#include <unordered_map>
 
 namespace cosim
 {

@@ -10,14 +10,21 @@
 #ifndef COSIM_OBSERVER_FILE_OBSERVER_HPP
 #define COSIM_OBSERVER_FILE_OBSERVER_HPP
 
+#include <cosim/execution.hpp>
 #include <cosim/fs_portability.hpp>
+#include <cosim/model_description.hpp>
 #include <cosim/observer/observer.hpp>
+#include <cosim/time.hpp>
 
 #include <atomic>
+#include <cstddef>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
+#include <utility>
+#include <vector>
 
 
 namespace cosim

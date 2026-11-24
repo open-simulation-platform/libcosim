@@ -10,6 +10,7 @@
 #define LIBCOSIM_SSP_LOADER_HPP
 
 #include <cosim/algorithm/algorithm.hpp>
+#include <cosim/fs_portability.hpp>
 #include <cosim/orchestration.hpp>
 #include <cosim/system_structure.hpp>
 #include <cosim/time.hpp>

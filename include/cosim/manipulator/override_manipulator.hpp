@@ -9,12 +9,17 @@
 #ifndef LIBCOSIM_MANIPULATOR_OVERRIDE_MANIPULATOR_HPP
 #define LIBCOSIM_MANIPULATOR_OVERRIDE_MANIPULATOR_HPP
 
+#include <cosim/execution.hpp>
 #include <cosim/manipulator/manipulator.hpp>
+#include <cosim/model_description.hpp>
 #include <cosim/scenario.hpp>
+#include <cosim/time.hpp>
 
 #include <mutex>
+#include <string>
 #include <unordered_map>
 #include <variant>
+#include <vector>
 
 namespace cosim
 {

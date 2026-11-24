@@ -9,15 +9,17 @@
 #ifndef COSIM_PROXY_REMOTE_FMU_HPP
 #define COSIM_PROXY_REMOTE_FMU_HPP
 
+#include <cosim/fs_portability.hpp>
 #include <cosim/model_description.hpp>
 #include <cosim/orchestration.hpp>
 #include <cosim/slave.hpp>
 
 #include <proxyfmu/fmi/fmu.hpp>
-#include <proxyfmu/fs_portability.hpp>
 #include <proxyfmu/remote_info.hpp>
 
 #include <memory>
+#include <optional>
+#include <string_view>
 
 namespace cosim::proxy
 {

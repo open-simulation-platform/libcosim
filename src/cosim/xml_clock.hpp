@@ -6,9 +6,15 @@
 #ifndef COSIM_XML_CLOCK_HPP
 #define COSIM_XML_CLOCK_HPP
 
-#include "cosim/xml_value.hpp"
+#include "cosim/model_description.hpp"
+#include "cosim/xml_value.hpp" // IWYU pragma: keep
 
 #include <array>
+#include <optional>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+#include <utility>
 
 namespace cosim::detail
 {

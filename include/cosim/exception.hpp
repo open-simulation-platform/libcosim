@@ -10,7 +10,10 @@
 #ifndef COSIM_EXCEPTION_HPP
 #define COSIM_EXCEPTION_HPP
 
+#include <stdexcept>
+#include <string>
 #include <system_error>
+#include <type_traits>
 
 
 namespace cosim

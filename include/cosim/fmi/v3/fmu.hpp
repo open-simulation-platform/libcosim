@@ -10,15 +10,20 @@
 #ifndef COSIM_FMI_V3_FMU_HPP
 #define COSIM_FMI_V3_FMU_HPP
 
+#include <cosim/event_iteration.hpp>
 #include <cosim/file_cache.hpp>
 #include <cosim/fmi/fmu.hpp>
 #include <cosim/fmi/importer.hpp>
 #include <cosim/fs_portability.hpp>
 #include <cosim/model_description.hpp>
 #include <cosim/serialization.hpp>
+#include <cosim/slave.hpp>
 #include <cosim/time.hpp>
 
+#include <gsl/span>
+
 #include <atomic>
+#include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <memory>
@@ -29,6 +34,7 @@
 #include <string_view>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 
@@ -36,16 +42,14 @@ struct fmi3_import_t;
 using fmi3_FMU_state_t = void*;
 
 
-namespace cosim::fmi
-{
 #ifdef _WIN32
-namespace detail
+namespace cosim::fmi::detail
 {
 class additional_path;
 }
 #endif
 
-namespace v3
+namespace cosim::fmi::v3
 {
 
 class fmu;
@@ -943,6 +947,5 @@ private:
 };
 
 
-} // namespace v3
-} // namespace cosim::fmi
+} // namespace cosim::fmi::v3
 #endif // COSIM_FMI_V3_FMU_HPP

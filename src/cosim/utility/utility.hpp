@@ -9,6 +9,7 @@
 #ifndef COSIM_UTILITY_UTILITY_HPP
 #define COSIM_UTILITY_UTILITY_HPP
 
+#include <ostream>
 #include <variant>
 
 namespace cosim

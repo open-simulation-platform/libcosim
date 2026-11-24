@@ -1,4 +1,6 @@
 #define BOOST_TEST_MODULE cosim::fmi::v3 conformance unittest
+#include "warning_capture.hpp"
+
 #include <cosim/exception.hpp>
 #include <cosim/fmi/importer.hpp>
 #include <cosim/fmi/v3/fmu.hpp>
@@ -6,8 +8,6 @@
 #include <cosim/time.hpp>
 
 #include <boost/test/unit_test.hpp>
-
-#include "warning_capture.hpp"
 
 #include <atomic>
 #include <cstdlib>
@@ -172,8 +172,7 @@ BOOST_AUTO_TEST_CASE(endpoint_early_return_warns_and_preserves_event_request)
     for (const bool event : {false, true}) {
         warning_capture warnings;
         auto instance = new_slave(import_status_fault());
-        set_fault(*instance, event ? fault_operation::endpoint_early_event :
-            fault_operation::endpoint_early_return, fault_status::ok);
+        set_fault(*instance, event ? fault_operation::endpoint_early_event : fault_operation::endpoint_early_return, fault_status::ok);
         setup_slave_in_step_mode(*instance);
         for (int step = 0; step < 2; ++step) {
             const auto result = instance->do_step_with_info(
@@ -357,7 +356,8 @@ BOOST_AUTO_TEST_CASE(fmi3_remaining_operation_statuses)
              "EnterConfigurationMode", "ExitConfigurationMode", "UpdateDiscreteStates",
              "SetInt32", "GetInt32", "SetFMUState", "GetFMUState", "FreeFMUState",
              "SerializedFMUStateSize", "SerializeFMUState", "DeserializeFMUState"}) {
-        BOOST_TEST_CONTEXT(operation) {
+        BOOST_TEST_CONTEXT(operation)
+        {
             BOOST_CHECK(warnings.messages().find("] " + operation + " returned FMI warning") != std::string::npos);
         }
     }
@@ -449,6 +449,7 @@ BOOST_AUTO_TEST_CASE(fmi3_fatal_lifecycle_status_poisons_fmu)
 {
     auto fmu = import_status_fault();
     auto instance = new_slave(fmu);
+    auto sibling = new_slave(fmu);
     set_fault(
         *instance,
         fault_operation::enter_initialization,
@@ -460,8 +461,11 @@ BOOST_AUTO_TEST_CASE(fmi3_fatal_lifecycle_status_poisons_fmu)
             std::nullopt);
     });
     expect_model_error([&]() { instance->reset(); });
+    expect_model_error([&]() { sibling->reset(); });
     expect_model_error(
         [&]() { fmu->instantiate_v3_slave("fatal-new-instance"); });
+    instance.reset();
+    sibling.reset();
 }
 
 

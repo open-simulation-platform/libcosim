@@ -13,9 +13,13 @@
 #include <cosim/execution.hpp>
 #include <cosim/model_description.hpp>
 #include <cosim/observer/last_value_provider.hpp>
+#include <cosim/observer/observer.hpp>
 #include <cosim/time.hpp>
 
+#include <gsl/span>
+
 #include <memory>
+#include <string>
 #include <unordered_map>
 
 

@@ -10,6 +10,9 @@
 #define COSIM_PROXY_FILE_URI_SUB_RESOLVER_HPP
 
 #include <cosim/orchestration.hpp>
+#include <cosim/uri.hpp>
+
+#include <memory>
 
 namespace cosim::proxy
 {

@@ -7,10 +7,12 @@
 #define COSIM_ALGORITHM_STEP_BATCH_HPP
 
 #include "cosim/algorithm/simulator.hpp"
-#include "cosim/error.hpp"
 #include "cosim/exception.hpp"
+#include "cosim/model_description.hpp"
+#include "cosim/time.hpp"
 #include "cosim/utility/thread_pool.hpp"
 
+#include <exception>
 #include <mutex>
 #include <optional>
 #include <sstream>

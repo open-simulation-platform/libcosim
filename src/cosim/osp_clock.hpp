@@ -6,7 +6,10 @@
 #ifndef COSIM_OSP_CLOCK_HPP
 #define COSIM_OSP_CLOCK_HPP
 
+#include "cosim/model_description.hpp"
 #include "cosim/orchestration.hpp"
+
+#include <memory>
 
 namespace cosim::detail
 {

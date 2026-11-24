@@ -11,9 +11,12 @@
 #define COSIM_SERIALIZATION_HPP
 
 #include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/ptree_fwd.hpp>
 
 #include <cstddef>
 #include <cstdint>
+#include <ios>
+#include <istream>
 #include <ostream>
 #include <string>
 #include <variant>

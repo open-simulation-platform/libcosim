@@ -10,10 +10,21 @@
 #ifndef COSIM_FMI_GLUE_HPP
 #define COSIM_FMI_GLUE_HPP
 
-#include "cosim/fmi/fmilib.h"
+#include "cosim/fmi/fmilib.h" // IWYU pragma: keep
 #include "cosim/model_description.hpp"
-#include "cosim/utility/filesystem.hpp"
+#include <cosim/fs_portability.hpp>
 
+#include <FMI/fmi_import_context.h>
+#include <FMI1/fmi1_enums.h>
+#include <FMI1/fmi1_import_variable.h>
+#include <FMI2/fmi2_enums.h>
+#include <FMI2/fmi2_import_variable.h>
+#include <FMI3/fmi3_enums.h>
+#include <FMI3/fmi3_import_variable.h>
+#include <cstddef>
+#include <cstdint>
+#include <optional>
+#include <string>
 #include <unordered_map>
 #include <vector>
 

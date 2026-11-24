@@ -10,11 +10,15 @@
 #ifndef COSIM_FUNCTION_VECTOR_SUM_HPP
 #define COSIM_FUNCTION_VECTOR_SUM_HPP
 
+#include <cosim/function/description.hpp>
 #include <cosim/function/function.hpp>
+#include <cosim/model_description.hpp>
 
-#include <stdexcept>
+#include <memory>
+#include <stdexcept> // IWYU pragma: keep
+#include <string_view>
 #include <type_traits>
-#include <typeinfo>
+#include <typeinfo> // IWYU pragma: keep
 #include <variant>
 #include <vector>
 

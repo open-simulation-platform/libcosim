@@ -10,9 +10,9 @@
 #ifndef COSIM_ALGORITHM_HPP
 #define COSIM_ALGORITHM_HPP
 
-#include <cosim/algorithm/algorithm.hpp>
-#include <cosim/algorithm/ecco_algorithm.hpp>
-#include <cosim/algorithm/fixed_step_algorithm.hpp>
-#include <cosim/algorithm/simulator.hpp>
+#include <cosim/algorithm/algorithm.hpp> // IWYU pragma: export
+#include <cosim/algorithm/ecco_algorithm.hpp> // IWYU pragma: export
+#include <cosim/algorithm/fixed_step_algorithm.hpp> // IWYU pragma: export
+#include <cosim/algorithm/simulator.hpp> // IWYU pragma: export
 
 #endif

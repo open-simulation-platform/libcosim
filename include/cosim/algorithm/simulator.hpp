@@ -16,7 +16,6 @@
 #include <cosim/time.hpp>
 
 #include <cstddef>
-#include <functional>
 #include <optional>
 #include <string_view>
 #include <unordered_set>

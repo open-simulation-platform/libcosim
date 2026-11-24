@@ -12,9 +12,13 @@
 
 #include <cosim/execution.hpp>
 #include <cosim/model_description.hpp>
+#include <cosim/observer/observer.hpp>
 #include <cosim/observer/time_series_provider.hpp>
 #include <cosim/time.hpp>
 
+#include <gsl/span>
+
+#include <cstddef>
 #include <memory>
 #include <unordered_map>
 

@@ -124,6 +124,21 @@ bool is_success(fmi3_status_t status)
     return status == fmi3_status_ok || status == fmi3_status_warning;
 }
 
+
+void release_instance(fmi3_import_t* handle, bool callFmu)
+{
+    if (callFmu) {
+        fmi3_import_free_instance(handle);
+    }
+    fmi3_import_destroy_dllfmu(handle);
+    if (!callFmu) {
+        // FMILibrary 3.0.4 frees its instance name here; after destroying the
+        // C API, free_instance cannot call into the failed or absent FMU.
+        fmi3_import_free_instance(handle);
+    }
+    fmi3_import_free(handle);
+}
+
 } // namespace
 
 bool adapter_detail::representable_time(double value)
@@ -975,10 +990,10 @@ slave_instance::slave_instance(
             message);
     }
     bool constructionComplete = false;
-    const auto cleanupInstance = gsl::finally([this, &constructionComplete] {
+    bool instanceCreated = false;
+    const auto cleanupInstance = gsl::finally([this, &constructionComplete, &instanceCreated] {
         if (!constructionComplete && handle_ != nullptr) {
-            fmi3_import_destroy_dllfmu(handle_);
-            fmi3_import_free(handle_);
+            release_instance(handle_, instanceCreated && !callbackContext_->fmu_returned_fatal());
             handle_ = nullptr;
         }
     });
@@ -1029,6 +1044,7 @@ slave_instance::slave_instance(
             make_error_code(errc::model_error),
             message.empty() ? "Could not instantiate FMI 3 Co-Simulation FMU" : message);
     }
+    instanceCreated = true;
     static_cast<void>(take_log_message(callbackContext_.get()));
     structuralParameterValues_ =
         initial_structural_parameter_values(*fmu_->model_description());
@@ -1065,11 +1081,7 @@ slave_instance::~slave_instance() noexcept
             }
         }
     }
-    if (!callbackContext_->fmu_returned_fatal()) {
-        fmi3_import_free_instance(handle_);
-    }
-    fmi3_import_destroy_dllfmu(handle_);
-    fmi3_import_free(handle_);
+    release_instance(handle_, !callbackContext_->fmu_returned_fatal());
 }
 
 

@@ -17,6 +17,7 @@
 
 #include <gsl/span>
 
+#include <cstddef>
 #include <stdexcept>
 
 namespace cosim

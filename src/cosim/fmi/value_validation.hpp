@@ -7,14 +7,14 @@
 #define COSIM_FMI_VALUE_VALIDATION_HPP
 
 #include "cosim/error.hpp"
-#include "cosim/fmi/enumeration.hpp"
-#include "cosim/utility/enumeration.hpp"
+#include "cosim/exception.hpp" // IWYU pragma: keep
+#include "cosim/model_description.hpp"
+#include "cosim/utility/enumeration.hpp" // IWYU pragma: keep
 
 #include <gsl/span>
 
-#include <stdexcept>
+#include <stdexcept> // IWYU pragma: keep
 #include <string>
-#include <utility>
 #include <vector>
 
 

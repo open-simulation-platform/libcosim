@@ -14,10 +14,8 @@
 
 #include <boost/interprocess/sync/file_lock.hpp>
 
-#include <condition_variable>
 #include <memory>
 #include <mutex>
-#include <optional>
 #include <shared_mutex>
 #include <variant>
 

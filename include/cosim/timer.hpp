@@ -11,9 +11,13 @@
 
 #include <cosim/time.hpp>
 
+#include <boost/container_hash/hash.hpp>
 #include <boost/functional/hash.hpp>
 
 #include <atomic>
+#include <chrono>
+#include <cstddef>
+#include <functional>
 #include <memory>
 
 namespace cosim

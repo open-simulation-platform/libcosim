@@ -9,10 +9,12 @@
 #ifndef LIBCOSIM_LAST_VALUE_PROVIDER_HPP
 #define LIBCOSIM_LAST_VALUE_PROVIDER_HPP
 
+#include <cosim/execution.hpp>
 #include <cosim/model_description.hpp>
 #include <cosim/observer/observer.hpp>
 
 #include <gsl/span>
+#include <gsl/span_ext>
 
 #include <stdexcept>
 #include <string>

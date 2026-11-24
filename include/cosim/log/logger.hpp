@@ -14,8 +14,8 @@
 #define COSIM_LOG_LOGGER_HPP
 
 #include <boost/log/expressions/keyword.hpp>
-#include <boost/log/sources/record_ostream.hpp> // for convenience
-#include <boost/log/sources/severity_feature.hpp> // for convenience
+#include <boost/log/sources/record_ostream.hpp> // IWYU pragma: export
+#include <boost/log/sources/severity_feature.hpp> // IWYU pragma: export
 #include <boost/log/sources/severity_logger.hpp>
 #include <boost/log/trivial.hpp>
 
@@ -49,7 +49,7 @@ constexpr severity_level fatal = boost::log::trivial::fatal;
  *  This keyword should be used when referring to the "Severity" attribute
  *  in filters and formatters.
  */
-const auto severity = boost::log::trivial::severity;
+const auto severity = boost::log::trivial::severity; // NOLINT(misc-include-cleaner): Provided by Boost's public trivial.hpp.
 
 
 /// The logger type used by this library, a thread-safe severity logger.

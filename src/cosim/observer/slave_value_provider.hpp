@@ -9,7 +9,6 @@
 #ifndef COSIM_OBSERVER_SLAVE_VALUE_PROVIDER_HPP
 #define COSIM_OBSERVER_SLAVE_VALUE_PROVIDER_HPP
 
-#include <cosim/execution.hpp>
 #include <cosim/model_description.hpp>
 #include <cosim/observer/observer.hpp>
 
@@ -18,7 +17,6 @@
 #include <map>
 #include <mutex>
 #include <string>
-#include <vector>
 
 namespace cosim
 {

@@ -10,9 +10,12 @@
 #ifndef COSIM_FUNCTION_LINEAR_TRANSFORMATION_HPP
 #define COSIM_FUNCTION_LINEAR_TRANSFORMATION_HPP
 
+#include <cosim/function/description.hpp>
 #include <cosim/function/function.hpp>
 
-#include <typeinfo>
+#include <memory>
+#include <string_view>
+#include <typeinfo> // IWYU pragma: keep
 
 
 namespace cosim

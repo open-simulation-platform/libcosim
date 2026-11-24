@@ -10,10 +10,16 @@
 #define LIBCOSIM_SSP_PARSER_HPP
 
 #include "cosim/algorithm.hpp"
+#include "cosim/fs_portability.hpp"
+#include "cosim/model_description.hpp"
+#include "cosim/time.hpp"
 
+#include <cstdint>
+#include <memory>
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include <variant>
 #include <vector>
 
 namespace cosim

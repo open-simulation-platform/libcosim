@@ -10,11 +10,15 @@
 #define COSIM_PROXY_REMOTE_SLAVE_HPP
 
 #include <cosim/model_description.hpp>
+#include <cosim/serialization.hpp>
 #include <cosim/slave.hpp>
 #include <cosim/time.hpp>
 
+#include <gsl/span>
 #include <proxyfmu/fmi/slave.hpp>
 
+#include <memory>
+#include <optional>
 #include <string>
 
 namespace cosim::proxy

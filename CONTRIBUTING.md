@@ -152,7 +152,12 @@ the runner can succeed even when no database entries match.
 
 By default, the script checks without modifying files and returns a nonzero
 exit code for tool failures and errors. Clang-tidy warnings do not cause failure
-unless configured as errors. To apply available clang-tidy fixes and then
+unless configured as errors. The final summary counts emitted error, warning,
+and note diagnostics separately for each tool pass and marks failed passes.
+Suppressed diagnostics are not counted, and counts in a fix pass may include
+findings subsequently fixed; check the final tidy pass for remaining findings.
+Clang-format fix mode does not report the number of files it changed.
+To apply available clang-tidy fixes and then
 format the selected files in place, pass `--fix`:
 
 ```powershell
@@ -195,10 +200,10 @@ The script selects C/C++ sources and headers with extensions `.c`, `.cc`,
 For example, `bash ./clang-check.ps1 --build-dir build/Release/build/Release
 src/cosim/fmi/v3 include/cosim/fmi` checks just those directories.
 
-FMI Library 3.0.4 retains FMI 3 instance names after `fmi3Fatal`. Its only
-public API that frees the name also calls `fmi3FreeInstance`, which FMI 3
-forbids after `Fatal`. The FMI 3 integration and conformance suites therefore
-still report these leaks. The workflow runs both suites without suppressions.
+FMI Library 3.0.4 releases its FMI 3 instance-name allocation through
+`fmi3_import_free_instance`. After `fmi3Fatal`, libcosim first destroys the
+library's C API wrapper so that this cleanup cannot call the FMU, as required
+by FMI 3. The workflow runs the FMI 3 suites without leak suppressions.
 
 
 File names

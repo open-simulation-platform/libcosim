@@ -117,25 +117,92 @@ tidy_check() {
     run-clang-tidy -p "$build" -j "$workers" -quiet "-header-filter=$header_filter" "$@" "${tidy_patterns[@]}"
 }
 
+summary_dir=
+cleanup_summary() {
+    if [[ -n $summary_dir ]]; then
+        rm -f -- "$summary_dir/stdout" "$summary_dir/stderr"
+        rmdir -- "$summary_dir"
+    fi
+}
+trap cleanup_summary EXIT
+
+summarize_stream() {
+    awk -v counts="$1" '
+        {
+            print
+            fflush()
+            line = $0
+            gsub(sprintf("%c\\[[0-9;]*m", 27), "", line)
+            if (line ~ /^((.+:[0-9]+(:[0-9]+)?:[[:space:]]*)|(clang(-tidy|-format)?(\.exe)?:[[:space:]]*)?)(fatal error|error|warning|note):/) {
+                if (line ~ /(^|:[[:space:]]*)(fatal error|error):/) errors++
+                else if (line ~ /(^|:[[:space:]]*)warning:/) warnings++
+                else notes++
+            }
+        }
+        END { printf "%d %d %d\n", errors, warnings, notes > counts }
+    '
+}
+
+summaries=()
+run_with_summary() {
+    local label=$1 result out_pid err_pid
+    local out_errors out_warnings out_notes err_errors err_warnings err_notes
+    shift
+    summary_dir="$(mktemp -d "${TMPDIR:-/tmp}/clang-check.XXXXXXXX")" || return 1
+    exec 3> >(summarize_stream "$summary_dir/stdout")
+    out_pid=$!
+    exec 4> >(summarize_stream "$summary_dir/stderr" >&2 3>&-)
+    err_pid=$!
+    "$@" >&3 2>&4
+    result=$?
+    exec 3>&- 4>&-
+    wait "$out_pid" || result=1
+    wait "$err_pid" || result=1
+    if ! read -r out_errors out_warnings out_notes < "$summary_dir/stdout" ||
+       ! read -r err_errors err_warnings err_notes < "$summary_dir/stderr"; then
+        echo 'Could not collect diagnostic counts.' >&2
+        cleanup_summary
+        summary_dir=
+        return 1
+    fi
+    cleanup_summary
+    summary_dir=
+    local suffix=
+    if ((result != 0)); then suffix=' (failed)'; fi
+    summaries+=("$label: $((out_errors + err_errors)) errors, $((out_warnings + err_warnings)) warnings, $((out_notes + err_notes)) notes$suffix")
+    return "$result"
+}
+
+format_check() {
+    local mode=$1
+    if [[ $mode == fix ]]; then
+        echo 'Running clang-format (fix).'
+        find "${paths[@]}" -type f \( "${extensions[@]}" \) \
+            -exec clang-format --style=file -i {} +
+    else
+        echo 'Running clang-format (check).'
+        find "${paths[@]}" -type f \( "${extensions[@]}" \) \
+            -exec clang-format --style=file --dry-run --Werror {} +
+    fi
+}
+
 status=0
 if $fix; then
     if $tidy; then
-        tidy_check -fix || status=1
+        run_with_summary 'clang-tidy (fix)' tidy_check -fix || status=1
     fi
     if $format; then
-        echo 'Running clang-format (fix).'
-        find "${paths[@]}" -type f \( "${extensions[@]}" \) \
-            -exec clang-format --style=file -i {} + || status=1
+        run_with_summary 'clang-format (fix)' format_check fix || status=1
     fi
-    if $tidy; then tidy_check || status=1; fi
+    if $tidy; then run_with_summary 'clang-tidy (check)' tidy_check || status=1; fi
 else
     if $format; then
-        echo 'Running clang-format (check).'
-        find "${paths[@]}" -type f \( "${extensions[@]}" \) \
-            -exec clang-format --style=file --dry-run --Werror {} + || status=1
+        run_with_summary 'clang-format (check)' format_check check || status=1
     fi
-    if $tidy; then tidy_check || status=1; fi
+    if $tidy; then run_with_summary 'clang-tidy (check)' tidy_check || status=1; fi
 fi
+printf '\n%s\n' 'Clang findings summary (emitted diagnostics):'
+printf '  %s\n' "${summaries[@]}"
 exit "$status"
 #>
 
@@ -223,6 +290,35 @@ if ($tidy) {
 }
 
 $status = 0
+$summaries = [System.Collections.Generic.List[object]]::new()
+function Invoke-WithSummary {
+    param([string]$Label, [scriptblock]$Command)
+    $summary = [PSCustomObject]@{ Label = $Label; Errors = 0; Warnings = 0; Notes = 0; Failed = $false }
+    & $Command 2>&1 | ForEach-Object {
+        $line = [string]$_
+        $plainLine = [regex]::Replace($line, '\x1b\[[0-9;]*m', '')
+        if ($plainLine -match '^((.+:\d+(:\d+)?:\s*)|(clang(-tidy|-format)?(\.exe)?:\s*)?)(fatal error|error|warning|note):') {
+            switch ($Matches[7]) {
+                { $_ -in 'fatal error', 'error' } { $summary.Errors++ }
+                'warning' { $summary.Warnings++ }
+                'note' { $summary.Notes++ }
+            }
+        }
+        if ($_ -is [System.Management.Automation.ErrorRecord]) {
+            [Console]::Error.WriteLine($line)
+        } else {
+            Write-Output $_
+        }
+    }
+    $summary.Failed = $script:phaseFailed
+    $summaries.Add($summary)
+}
+
+function Set-PhaseFailed {
+    $script:phaseFailed = $true
+    $script:status = 1
+}
+
 function Invoke-Format {
     param([string[]]$Files, [bool]$Fix)
     if ($Fix) { Write-Host 'Running clang-format (fix).' } else { Write-Host 'Running clang-format (check).' }
@@ -234,7 +330,7 @@ function Invoke-Format {
         # Leave room for cmd.exe wrappers and argument quoting.
         if ($batch.Count -and $length + $cost -gt 7000) {
             & clang-format @formatArgs @batch
-            if ($LASTEXITCODE -ne 0) { $script:status = 1 }
+            if ($LASTEXITCODE -ne 0) { Set-PhaseFailed }
             $batch.Clear()
             $length = 0
         }
@@ -243,7 +339,7 @@ function Invoke-Format {
     }
     if ($batch.Count) {
         & clang-format @formatArgs @batch
-        if ($LASTEXITCODE -ne 0) { $script:status = 1 }
+        if ($LASTEXITCODE -ne 0) { Set-PhaseFailed }
     }
 }
 
@@ -255,21 +351,39 @@ function Invoke-TidyCheck {
     if ($Fix) { $tidyArgs += '-fix' }
     if (!(Get-Command run-clang-tidy -ErrorAction SilentlyContinue)) {
         Write-Error 'run-clang-tidy is required on PATH.' -ErrorAction Continue
-        $script:status = 1
+        Set-PhaseFailed
         return
     }
     & run-clang-tidy @tidyArgs @tidyPatterns
-    if ($LASTEXITCODE -ne 0) { $script:status = 1 }
+    if ($LASTEXITCODE -ne 0) { Set-PhaseFailed }
 }
 
 if ($fix) {
     if ($tidy) {
-        Invoke-TidyCheck $true
+        $phaseFailed = $false
+        Invoke-WithSummary 'clang-tidy (fix)' { Invoke-TidyCheck $true }
     }
-    if ($format) { Invoke-Format $files $true }
-    if ($tidy) { Invoke-TidyCheck }
+    if ($format) {
+        $phaseFailed = $false
+        Invoke-WithSummary 'clang-format (fix)' { Invoke-Format $files $true }
+    }
+    if ($tidy) {
+        $phaseFailed = $false
+        Invoke-WithSummary 'clang-tidy (check)' { Invoke-TidyCheck }
+    }
 } else {
-    if ($format) { Invoke-Format $files $false }
-    if ($tidy) { Invoke-TidyCheck }
+    if ($format) {
+        $phaseFailed = $false
+        Invoke-WithSummary 'clang-format (check)' { Invoke-Format $files $false }
+    }
+    if ($tidy) {
+        $phaseFailed = $false
+        Invoke-WithSummary 'clang-tidy (check)' { Invoke-TidyCheck }
+    }
+}
+Write-Host "`nClang findings summary (emitted diagnostics):"
+foreach ($summary in $summaries) {
+    $suffix = if ($summary.Failed) { ' (failed)' } else { '' }
+    Write-Host "  $($summary.Label): $($summary.Errors) errors, $($summary.Warnings) warnings, $($summary.Notes) notes$suffix"
 }
 exit $status

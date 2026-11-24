@@ -6,11 +6,21 @@
 #ifndef COSIM_FMI_V3_FMU_INTERNAL_HPP
 #define COSIM_FMI_V3_FMU_INTERNAL_HPP
 
-#include "cosim/fmi/fmilib.h"
+#include "cosim/fmi/fmilib.h" // IWYU pragma: keep
 #include "cosim/fmi/v3/fmu.hpp"
+#include "cosim/model_description.hpp"
 
+#include <FMI3/fmi3_function_types.h>
+#include <atomic>
 #include <cassert>
 #include <condition_variable>
+#include <cstddef>
+#include <cstdint>
+#include <exception>
+#include <mutex>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 
 namespace cosim::fmi::v3

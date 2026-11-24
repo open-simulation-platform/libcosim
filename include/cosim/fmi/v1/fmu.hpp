@@ -15,9 +15,13 @@
 #include <cosim/fmi/importer.hpp>
 #include <cosim/fs_portability.hpp>
 #include <cosim/model_description.hpp>
+#include <cosim/serialization.hpp>
 #include <cosim/time.hpp>
 
+#include <gsl/span>
+
 #include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -26,17 +30,14 @@
 struct fmi1_import_t;
 
 
-namespace cosim::fmi
-{
-
 #ifdef _WIN32
-namespace detail
+namespace cosim::fmi::detail
 {
 class additional_path;
 }
 #endif
 
-namespace v1
+namespace cosim::fmi::v1
 {
 
 class slave_instance;
@@ -210,6 +211,5 @@ private:
 };
 
 
-} // namespace v1
-} // namespace cosim::fmi
+} // namespace cosim::fmi::v1
 #endif // header guard

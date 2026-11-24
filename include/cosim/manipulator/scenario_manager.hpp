@@ -9,9 +9,13 @@
 #ifndef LIBCOSIM_MANIPULATOR_SCENARIO_MANAGER_HPP
 #define LIBCOSIM_MANIPULATOR_SCENARIO_MANAGER_HPP
 
+#include <cosim/execution.hpp>
+#include <cosim/fs_portability.hpp>
 #include <cosim/manipulator/manipulator.hpp>
 #include <cosim/scenario.hpp>
+#include <cosim/time.hpp>
 
+#include <memory>
 
 namespace cosim
 {

@@ -12,9 +12,8 @@
 
 #include <cosim/function/description.hpp>
 
-#include <stdexcept>
-#include <type_traits>
-#include <unordered_map>
+#include <stdexcept> // IWYU pragma: keep
+#include <type_traits> // IWYU pragma: keep
 
 
 namespace cosim

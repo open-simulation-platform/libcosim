@@ -10,10 +10,13 @@
 #define LIBCOSIM_OSP_CONFIG_PARSER_HPP
 
 #include <cosim/algorithm.hpp>
-#include <cosim/model_description.hpp>
+#include <cosim/fs_portability.hpp>
 #include <cosim/orchestration.hpp>
 #include <cosim/system_structure.hpp>
 #include <cosim/time.hpp>
+
+#include <optional>
+#include <variant>
 
 namespace cosim
 {

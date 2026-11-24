@@ -11,7 +11,7 @@
 #define COSIM_ERROR_HPP
 
 #include <cerrno>
-#include <stdexcept>
+#include <stdexcept> // IWYU pragma: keep
 #include <string>
 #include <system_error>
 

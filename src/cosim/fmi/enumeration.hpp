@@ -6,13 +6,12 @@
 #ifndef COSIM_FMI_ENUMERATION_HPP
 #define COSIM_FMI_ENUMERATION_HPP
 
-#include "cosim/error.hpp"
+#include "cosim/exception.hpp"
 #include "cosim/model_description.hpp"
 
 #include <boost/range/algorithm/find_if.hpp>
 
-#include <algorithm>
-#include <limits>
+#include <limits> // IWYU pragma: keep
 #include <string>
 
 

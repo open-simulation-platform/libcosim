@@ -15,6 +15,7 @@
 
 #include <boost/property_tree/exceptions.hpp>
 
+#include <cstddef>
 #include <cstdint>
 #include <optional>
 #include <string>

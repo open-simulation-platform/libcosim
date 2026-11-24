@@ -9,6 +9,7 @@
 #include <cosim/model_description.hpp>
 
 #include <optional>
+#include <variant>
 
 namespace cosim
 {

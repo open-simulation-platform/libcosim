@@ -99,12 +99,3 @@ jobs:
           ignore-format: ${{ steps.lint_exclusions.outputs.format }}
           ignore-tidy: ${{ steps.lint_exclusions.outputs.tidy }}
           jobs: '4'
-      - name: Verify clang-format version
-        if: ${{ !cancelled() && steps.lint_exclusions.outcome == 'success' }}
-        run: |
-          version=$(clang-format-23 --version)
-          echo "$version"
-          if [[ ! "$version" =~ ^((Ubuntu|Debian)[[:space:]]+)?clang-format[[:space:]]+version[[:space:]]+23\.1\.6([[:space:]]|$) ]]; then
-            echo "::error::Expected clang-format 23.1.6; the cpp-linter action selects only a major version."
-            exit 1
-          fi

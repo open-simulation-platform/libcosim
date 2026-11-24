@@ -12,8 +12,8 @@
 #ifndef LIBCOSIM_MANIPULATOR_HPP
 #define LIBCOSIM_MANIPULATOR_HPP
 
-#include <cosim/manipulator/manipulator.hpp>
-#include <cosim/manipulator/override_manipulator.hpp>
-#include <cosim/manipulator/scenario_manager.hpp>
+#include <cosim/manipulator/manipulator.hpp> // IWYU pragma: export
+#include <cosim/manipulator/override_manipulator.hpp> // IWYU pragma: export
+#include <cosim/manipulator/scenario_manager.hpp> // IWYU pragma: export
 
 #endif

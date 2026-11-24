@@ -14,6 +14,7 @@
 #include <cosim/time.hpp>
 
 #include <functional>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <variant>

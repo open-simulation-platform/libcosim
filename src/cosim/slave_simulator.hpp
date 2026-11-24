@@ -10,11 +10,20 @@
 #ifndef COSIM_SLAVE_SIMULATOR_HPP
 #define COSIM_SLAVE_SIMULATOR_HPP
 
+#include "cosim/model_description.hpp"
+#include "cosim/serialization.hpp"
+#include "cosim/time.hpp"
 #include <cosim/algorithm.hpp>
 #include <cosim/slave.hpp>
 
+#include <cstddef>
+#include <functional>
 #include <memory>
+#include <optional>
+#include <string>
 #include <string_view>
+#include <unordered_set>
+#include <vector>
 
 
 namespace cosim

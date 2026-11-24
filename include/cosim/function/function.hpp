@@ -11,9 +11,10 @@
 #define COSIM_FUNCTION_FUNCTION_HPP
 
 #include <cosim/function/description.hpp>
+#include <cosim/model_description.hpp>
 
 #include <memory>
-#include <unordered_map>
+#include <string_view>
 
 
 namespace cosim

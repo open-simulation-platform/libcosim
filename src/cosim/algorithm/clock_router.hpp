@@ -6,27 +6,25 @@
 #ifndef LIBCOSIM_ALGORITHM_CLOCK_ROUTER_HPP
 #define LIBCOSIM_ALGORITHM_CLOCK_ROUTER_HPP
 
-#include "../event_value.hpp"
 #include "event_iteration_budget.hpp"
 
 #include "cosim/algorithm/simulator.hpp"
-#include "cosim/error.hpp"
-#include "cosim/exception.hpp"
+#include "cosim/event_iteration.hpp"
 #include "cosim/execution.hpp"
 #include "cosim/model_description.hpp"
+#include "cosim/serialization.hpp"
 #include "cosim/slave.hpp"
 #include "cosim/time.hpp"
 
-#include <boost/multiprecision/cpp_int.hpp>
+#include <boost/multiprecision/cpp_int.hpp> // IWYU pragma: keep
+#include <boost/multiprecision/fwd.hpp>
 
-#include <algorithm>
-#include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <functional>
-#include <limits>
 #include <memory>
 #include <optional>
-#include <sstream>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
@@ -220,8 +218,8 @@ private:
 
     struct periodic_clock
     {
-        variable_id id;
-        duration interval;
+        variable_id id{};
+        duration interval{};
         time_point next;
         std::optional<fractional_schedule> fraction;
         std::optional<decimal_schedule> decimal;

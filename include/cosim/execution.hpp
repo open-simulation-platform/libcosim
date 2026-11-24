@@ -10,22 +10,30 @@
 #ifndef COSIM_EXECUTION_HPP
 #define COSIM_EXECUTION_HPP
 
+#include <cosim/function/description.hpp>
 #include <cosim/function/function.hpp>
 #include <cosim/model_description.hpp>
+#include <cosim/orchestration.hpp>
+#include <cosim/serialization.hpp>
 #include <cosim/slave.hpp>
 #include <cosim/system_structure.hpp>
 #include <cosim/time.hpp>
 #include <cosim/timer.hpp>
 
+#include <boost/container_hash/hash.hpp>
 #include <boost/functional/hash.hpp>
 
+#include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <future>
 #include <memory>
 #include <optional>
-#include <sstream>
+#include <ostream>
+#include <string>
+#include <string_view>
 #include <unordered_map>
+#include <vector>
 
 
 namespace cosim

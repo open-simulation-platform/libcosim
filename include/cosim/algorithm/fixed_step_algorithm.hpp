@@ -11,9 +11,18 @@
 #define LIBCOSIM_ALGORITHM_FIXED_STEP_ALGORITHM_HPP
 
 #include <cosim/algorithm/algorithm.hpp>
+#include <cosim/algorithm/simulator.hpp>
 #include <cosim/event_iteration.hpp>
+#include <cosim/execution.hpp>
+#include <cosim/function/function.hpp>
+#include <cosim/serialization.hpp>
+#include <cosim/time.hpp>
 
 #include <cstddef>
+#include <memory>
+#include <optional>
+#include <unordered_set>
+#include <utility>
 
 namespace cosim
 {

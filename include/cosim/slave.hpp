@@ -10,7 +10,6 @@
 #ifndef COSIM_SLAVE_HPP
 #define COSIM_SLAVE_HPP
 
-#include <cosim/event_iteration.hpp>
 #include <cosim/exception.hpp>
 #include <cosim/model_description.hpp>
 #include <cosim/serialization.hpp>
@@ -19,8 +18,11 @@
 #include <boost/container/vector.hpp>
 #include <gsl/span>
 
+#include <cstddef>
+#include <cstdint>
 #include <optional>
 #include <string>
+#include <vector>
 
 
 namespace cosim
