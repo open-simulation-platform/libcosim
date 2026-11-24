@@ -24,6 +24,15 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             clang-18 libclang-rt-18-dev llvm-18 pipx
+          curl -fsSL https://apt.llvm.org/llvm-snapshot.gpg.key \
+            | sudo gpg --batch --yes --dearmor -o /usr/share/keyrings/llvm-snapshot.gpg
+          codename=$(lsb_release -cs)
+          echo "deb [signed-by=/usr/share/keyrings/llvm-snapshot.gpg] https://apt.llvm.org/$codename/ llvm-toolchain-$codename-23 main" \
+            | sudo tee /etc/apt/sources.list.d/llvm-23.list > /dev/null
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            'clang-format-23=1:23.1.6*' clang-tidy-23
+          sudo apt-mark hold clang-format-23
           pipx install conan
           pipx install 'cmake>=4'
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
@@ -70,7 +79,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          version: '18'
+          version: '23'
           database: build/Release/build/Release
           style: 'file'
           tidy-checks: ''
@@ -81,4 +90,13 @@ jobs:
           ignore: '*|!src|!include'
           ignore-format: ${{ steps.lint_exclusions.outputs.format }}
           ignore-tidy: ${{ steps.lint_exclusions.outputs.tidy }}
-          jobs: '2'
+          jobs: '4'
+      - name: Verify clang-format version
+        if: ${{ !cancelled() && steps.lint_exclusions.outcome == 'success' }}
+        run: |
+          version=$(clang-format-23 --version)
+          echo "$version"
+          if [[ ! "$version" =~ ^(Ubuntu[[:space:]]+)?clang-format[[:space:]]+version[[:space:]]+23\.1\.6([[:space:]]|$) ]]; then
+            echo "::error::Expected clang-format 23.1.6; the cpp-linter action selects only a major version."
+            exit 1
+          fi

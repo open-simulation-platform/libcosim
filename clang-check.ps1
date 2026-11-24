@@ -107,7 +107,12 @@ fi
 
 tidy_check() {
     local header_filter workers=$jobs
-    if (($#)); then workers=1; fi
+    if (($#)); then
+        workers=1
+        echo 'Running clang-tidy (fix).'
+    else
+        echo 'Running clang-tidy (check).'
+    fi
     header_filter="$(IFS='|'; printf '%s' "${tidy_patterns[*]}")"
     run-clang-tidy -p "$build" -j "$workers" -quiet "-header-filter=$header_filter" "$@" "${tidy_patterns[@]}"
 }
@@ -118,12 +123,14 @@ if $fix; then
         tidy_check -fix || status=1
     fi
     if $format; then
+        echo 'Running clang-format (fix).'
         find "${paths[@]}" -type f \( "${extensions[@]}" \) \
             -exec clang-format --style=file -i {} + || status=1
     fi
     if $tidy; then tidy_check || status=1; fi
 else
     if $format; then
+        echo 'Running clang-format (check).'
         find "${paths[@]}" -type f \( "${extensions[@]}" \) \
             -exec clang-format --style=file --dry-run --Werror {} + || status=1
     fi
@@ -218,6 +225,7 @@ if ($tidy) {
 $status = 0
 function Invoke-Format {
     param([string[]]$Files, [bool]$Fix)
+    if ($Fix) { Write-Host 'Running clang-format (fix).' } else { Write-Host 'Running clang-format (check).' }
     $formatArgs = if ($Fix) { @('--style=file', '-i') } else { @('--style=file', '--dry-run', '--Werror') }
     $batch = [System.Collections.Generic.List[string]]::new()
     $length = 0
@@ -241,6 +249,7 @@ function Invoke-Format {
 
 function Invoke-TidyCheck {
     param([bool]$Fix = $false)
+    if ($Fix) { Write-Host 'Running clang-tidy (fix).' } else { Write-Host 'Running clang-tidy (check).' }
     $workerCount = if ($Fix) { 1 } else { $jobs }
     $tidyArgs = @('-p', $build, '-j', $workerCount, '-quiet', "-header-filter=$($tidyPatterns -join '|')")
     if ($Fix) { $tidyArgs += '-fix' }
