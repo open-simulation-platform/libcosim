@@ -1,0 +1,31 @@
+{
+  "fmu": "Feedthrough.fmu",
+  "start": 0.0,
+  "stop": 3.0,
+  "step": 1.0,
+  "event_mode": false,
+  "stimuli": [
+    {
+      "variable": "Boolean_input",
+      "type": "Boolean",
+      "changes": [
+        {"time": 0.0, "value": false},
+        {"time": 1.0, "value": true},
+        {"time": 2.0, "value": false}
+      ]
+    },
+    {
+      "variable": "Enumeration_input",
+      "type": "Enumeration",
+      "changes": [
+        {"time": 0.0, "value": 1},
+        {"time": 1.0, "value": 2},
+        {"time": 2.0, "value": 1}
+      ]
+    }
+  ],
+  "outputs": [
+    {"name": "Boolean_output", "type": "Boolean"},
+    {"name": "Enumeration_output", "type": "Enumeration"}
+  ]
+}

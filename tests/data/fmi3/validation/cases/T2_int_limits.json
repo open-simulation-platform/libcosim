@@ -1,0 +1,99 @@
+{
+  "fmu": "Feedthrough.fmu",
+  "start": 0.0,
+  "stop": 4.0,
+  "step": 0.5,
+  "event_mode": false,
+  "stimuli": [
+    {
+      "variable": "Int8_input",
+      "type": "Int8",
+      "changes": [
+        {"time": 0.0, "value": -128},
+        {"time": 1.0, "value": 127},
+        {"time": 2.0, "value": 0},
+        {"time": 3.0, "value": -1}
+      ]
+    },
+    {
+      "variable": "UInt8_input",
+      "type": "UInt8",
+      "changes": [
+        {"time": 0.0, "value": 0},
+        {"time": 1.0, "value": 255},
+        {"time": 2.0, "value": 0},
+        {"time": 3.0, "value": 1}
+      ]
+    },
+    {
+      "variable": "Int16_input",
+      "type": "Int16",
+      "changes": [
+        {"time": 0.0, "value": -32768},
+        {"time": 1.0, "value": 32767},
+        {"time": 2.0, "value": 0},
+        {"time": 3.0, "value": -1}
+      ]
+    },
+    {
+      "variable": "UInt16_input",
+      "type": "UInt16",
+      "changes": [
+        {"time": 0.0, "value": 0},
+        {"time": 1.0, "value": 65535},
+        {"time": 2.0, "value": 0},
+        {"time": 3.0, "value": 1}
+      ]
+    },
+    {
+      "variable": "Int32_input",
+      "type": "Int32",
+      "changes": [
+        {"time": 0.0, "value": -2147483648},
+        {"time": 1.0, "value": 2147483647},
+        {"time": 2.0, "value": 0},
+        {"time": 3.0, "value": -1}
+      ]
+    },
+    {
+      "variable": "UInt32_input",
+      "type": "UInt32",
+      "changes": [
+        {"time": 0.0, "value": 0},
+        {"time": 1.0, "value": 4294967295},
+        {"time": 2.0, "value": 0},
+        {"time": 3.0, "value": 1}
+      ]
+    },
+    {
+      "variable": "Int64_input",
+      "type": "Int64",
+      "changes": [
+        {"time": 0.0, "value": "-9223372036854775808"},
+        {"time": 1.0, "value": "9223372036854775807"},
+        {"time": 2.0, "value": "0"},
+        {"time": 3.0, "value": "-1"}
+      ]
+    },
+    {
+      "variable": "UInt64_input",
+      "type": "UInt64",
+      "changes": [
+        {"time": 0.0, "value": "0"},
+        {"time": 1.0, "value": "18446744073709551615"},
+        {"time": 2.0, "value": "0"},
+        {"time": 3.0, "value": "1"}
+      ]
+    }
+  ],
+  "outputs": [
+    {"name": "Int8_output", "type": "Int8"},
+    {"name": "UInt8_output", "type": "UInt8"},
+    {"name": "Int16_output", "type": "Int16"},
+    {"name": "UInt16_output", "type": "UInt16"},
+    {"name": "Int32_output", "type": "Int32"},
+    {"name": "UInt32_output", "type": "UInt32"},
+    {"name": "Int64_output", "type": "Int64"},
+    {"name": "UInt64_output", "type": "UInt64"}
+  ]
+}

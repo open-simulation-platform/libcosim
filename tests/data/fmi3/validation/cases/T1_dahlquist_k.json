@@ -1,0 +1,16 @@
+{
+  "fmu": "Dahlquist.fmu",
+  "start": 0.0,
+  "stop": 10.0,
+  "step": 0.1,
+  "event_mode": false,
+  "start_values": {
+    "k": {
+      "type": "Float64",
+      "value": 2.5
+    }
+  },
+  "outputs": [
+    {"name": "x", "type": "Float64"}
+  ]
+}

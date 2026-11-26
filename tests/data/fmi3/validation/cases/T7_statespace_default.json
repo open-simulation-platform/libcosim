@@ -1,0 +1,20 @@
+{
+  "fmu": "StateSpace.fmu",
+  "start": 0.0,
+  "stop": 10.0,
+  "step": 1.0,
+  "event_mode": false,
+  "stimuli": [
+    {
+      "variable": "u",
+      "type": "Float64",
+      "changes": [
+        {"time": 5.0, "value": [0.0, 0.0, 0.0]}
+      ]
+    }
+  ],
+  "outputs": [
+    {"name": "y", "type": "Float64"},
+    {"name": "x", "type": "Float64"}
+  ]
+}

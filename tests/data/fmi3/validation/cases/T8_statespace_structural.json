@@ -1,0 +1,39 @@
+{
+  "fmu": "StateSpace.fmu",
+  "description": "Reference-FMUs StateSpace ignores x0 (setStartValues overwrites x with 0), so the state starts at 0: x = [t, t], y = 2t with the FMU's internal Euler step of 1.",
+  "start": 0.0,
+  "stop": 3.0,
+  "step": 1.0,
+  "event_mode": false,
+  "structural": {
+    "m": 2,
+    "n": 2,
+    "r": 1
+  },
+  "start_values": {
+    "A": {
+      "type": "Float64",
+      "value": [0.0, 0.0, 0.0, 0.0]
+    },
+    "B": {
+      "type": "Float64",
+      "value": [1.0, 0.0, 0.0, 1.0]
+    },
+    "C": {
+      "type": "Float64",
+      "value": [1.0, 1.0]
+    },
+    "D": {
+      "type": "Float64",
+      "value": [0.0, 0.0]
+    },
+    "u": {
+      "type": "Float64",
+      "value": [1.0, 1.0]
+    }
+  },
+  "outputs": [
+    {"name": "y", "type": "Float64"},
+    {"name": "x", "type": "Float64"}
+  ]
+}

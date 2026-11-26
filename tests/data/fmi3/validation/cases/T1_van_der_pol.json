@@ -1,0 +1,17 @@
+{
+  "fmu": "VanDerPol.fmu",
+  "start": 0.0,
+  "stop": 20.0,
+  "step": 0.01,
+  "event_mode": false,
+  "start_values": {
+    "mu": {
+      "type": "Float64",
+      "value": 2.0
+    }
+  },
+  "outputs": [
+    {"name": "x0", "type": "Float64"},
+    {"name": "x1", "type": "Float64"}
+  ]
+}
