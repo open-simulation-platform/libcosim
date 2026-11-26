@@ -29,7 +29,7 @@ Both importers and all FMUs must also satisfy these assumptions, or the results 
 
 - Inputs are zero-order hold. This trivially holds for both importers.
 - A value applied at `t_k` first appears in the sample at `t_k + h`.
-- When the FMU requests termination from `DoStep`, the sample for that step is still recorded. FMPy reads it in Step Mode before `Terminate`; libcosim requires `Terminate` first and the harness reads it in the Terminated state. Both are spec-legal and the values are identical.
+- When the FMU requests termination from `DoStep`, the sample for that step is still recorded. FMPy reads it in Step Mode before `Terminate`; libcosim requires `Terminate` first and then allows the sample do be read in the Terminated state. Both are valid implementations and the values should be identical.
 - Event Mode is **off**.
 - Validation data is generated through FMPy's Python API directly, and not with the CLI. the CLI parses all inputs as `float64`, doesn't support `String` or `Binary`at all, and has some other limitations that hampers full validation testing. 
 
