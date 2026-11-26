@@ -19,6 +19,7 @@
 #else
 #    include <cerrno>
 #    include <fcntl.h>
+#    include <unistd.h>
 #endif
 
 
@@ -137,6 +138,7 @@ file_lock::boost_wrapper::boost_wrapper(const cosim::filesystem::path& path)
     // NOLINTEND(misc-include-cleaner)
     fileLock_ = boost::interprocess::file_lock(path.string().c_str());
 #else
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg): POSIX open requires a mode when creating a file.
     const auto fileDescriptor = open(path.c_str(), O_CREAT | O_WRONLY, 0666);
     if (fileDescriptor == -1) {
         throw std::system_error(

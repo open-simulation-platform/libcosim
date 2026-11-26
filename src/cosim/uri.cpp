@@ -21,13 +21,13 @@
 #include <stdexcept>
 #include <string>
 #include <string_view>
-#include <system_error>
 #include <utility>
 
 #ifdef _WIN32
 #    include <Windows.h> // IWYU pragma: keep
 #    include <array>
 #    include <shlwapi.h>
+#    include <system_error>
 #    include <wininet.h>
 #endif
 
@@ -560,7 +560,7 @@ uri path_to_file_uri(const cosim::filesystem::path& path)
 
 #else
     if (path.empty()) {
-        return uri("file:");
+        return {"file:"};
     } else {
         return percent_encode_uri("file", std::string_view(), path.string());
     }
@@ -597,7 +597,7 @@ cosim::filesystem::path file_uri_to_path(const uri& fileUri)
 #else
     COSIM_INPUT_CHECK(fileUri.authority() &&
         (fileUri.authority()->empty() || *fileUri.authority() == "localhost"));
-    return cosim::filesystem::path(percent_decode(fileUri.path()));
+    return {percent_decode(fileUri.path())};
 #endif
 }
 

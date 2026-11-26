@@ -99,15 +99,16 @@ ProxyFMU and runs every C++ test suite under ASan and UBSan with leak detection
 enabled. CI uses [cpp-linter-action](https://github.com/cpp-linter/cpp-linter-action)
 to run clang-tidy 23 and clang-format 23.1.6 on C++ sources and headers in
 `src/` and `include/`, not just changed files. CI installs clang-format 23.1.6
-from the LLVM package repository and verifies its version after the action.
+from the LLVM package repository.
 Both tools use the repository's
 `.clang-tidy` and `.clang-format` configurations. CI reads additional per-tool
 exclusions from `.clang-tidy-ignore` and `.clang-format-ignore`, one path or
 glob per line; clang-format also reads its ignore file when invoked locally.
-Findings are advisory and are posted in a single updatable comment on
-same-repository pull requests. The workflow
-also runs on pushes and manual dispatch, but not on fork pull requests, which
-lack the Conan remote credentials.
+Clang-tidy warnings are treated as errors, and any clang-tidy or clang-format
+finding fails the quality job. Findings are also posted in a single updatable
+comment on same-repository pull requests. The workflow
+also runs on manual dispatch, but not on fork pull requests, which lack the
+Conan remote credentials.
 
 For a local check, install the Clang tools you intend to run. For clang-tidy,
 install Python 3, `run-clang-tidy`, and `clang-tidy` on `PATH`, and configure a
@@ -151,9 +152,10 @@ one corresponding source file or directory in the selection. Check the
 the runner can succeed even when no database entries match.
 
 By default, the script checks without modifying files and returns a nonzero
-exit code for tool failures and errors. Clang-tidy warnings do not cause failure
-unless configured as errors. The final summary counts emitted error, warning,
-and note diagnostics separately for each tool pass and marks failed passes.
+exit code for tool failures and errors, including clang-tidy warnings promoted
+to errors by the repository configuration. The final summary counts emitted
+error, warning, and note diagnostics separately for each tool pass and marks
+failed passes.
 Suppressed diagnostics are not counted, and counts in a fix pass may include
 findings subsequently fixed; check the final tidy pass for remaining findings.
 Clang-format fix mode does not report the number of files it changed.

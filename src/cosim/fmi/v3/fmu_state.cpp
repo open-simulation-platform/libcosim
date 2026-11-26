@@ -717,7 +717,7 @@ void slave_instance::parse_state_pending_clock_intervals(
             resolved == state.resolvedInputClockSchedules.end() ||
             fractional != resolved->second.interval_counter.has_value() ||
             !std::isfinite(interval) ||
-            static_cast<long double>(interval) * duration::period::den < 1.0L) {
+            static_cast<long double>(interval) * duration::period::den < duration{1}.count()) {
             throw error(make_error_code(errc::bad_file),
                 "The serialized state contains an incompatible pending "
                 "Clock interval");

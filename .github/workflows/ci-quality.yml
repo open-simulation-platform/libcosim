@@ -82,6 +82,7 @@ jobs:
             echo "${tool}=${patterns}" >> "$GITHUB_OUTPUT"
           done
       - name: Check C++ source and header files
+        id: linter
         if: ${{ !cancelled() && steps.lint_exclusions.outcome == 'success' }}
         uses: cpp-linter/cpp-linter-action@v2
         env:
@@ -99,3 +100,6 @@ jobs:
           ignore-format: ${{ steps.lint_exclusions.outputs.format }}
           ignore-tidy: ${{ steps.lint_exclusions.outputs.tidy }}
           jobs: '4'
+      - name: Fail on lint findings
+        if: ${{ steps.linter.outputs.checks-failed > 0 }}
+        run: exit 1

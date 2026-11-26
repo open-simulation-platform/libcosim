@@ -14,13 +14,16 @@
 #include "cosim/fmi/glue.hpp"
 #include "cosim/fmi/importer.hpp"
 #include "cosim/fmi/value_validation.hpp"
-#include "cosim/fmi/windows.hpp"
 #include "cosim/log/logger.hpp"
 #include "cosim/model_description.hpp"
 #include "cosim/scalar_value_dispatch.hpp"
 #include "cosim/serialization.hpp"
 #include "cosim/slave.hpp"
 #include "cosim/time.hpp"
+
+#ifdef _WIN32
+#    include "cosim/fmi/windows.hpp"
+#endif
 
 #include <boost/log/sources/severity_feature.hpp>
 #include <boost/property_tree/exceptions.hpp>
@@ -366,17 +369,21 @@ try {
     }
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg): FMI 2 supplies a variadic format.
     std::va_list args{};
+    // NOLINTBEGIN(cppcoreguidelines-pro-bounds-array-to-pointer-decay): va_list is an array on some platforms.
     va_start(args, message);
     const auto msgLength = std::vsnprintf(nullptr, 0, message, args);
     va_end(args);
+    // NOLINTEND(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
     if (msgLength < 0) {
         BOOST_LOG_SEV(log::logger(), log::error) << "Could not format FMI 2.0 log message";
         return;
     }
     auto msgBuffer = std::vector<char>(static_cast<std::size_t>(msgLength) + 1);
+    // NOLINTBEGIN(cppcoreguidelines-pro-bounds-array-to-pointer-decay): va_list is an array on some platforms.
     va_start(args, message);
     const auto written = std::vsnprintf(msgBuffer.data(), msgBuffer.size(), message, args);
     va_end(args);
+    // NOLINTEND(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
     if (written != msgLength) {
         BOOST_LOG_SEV(log::logger(), log::error) << "Could not format FMI 2.0 log message";
         return;

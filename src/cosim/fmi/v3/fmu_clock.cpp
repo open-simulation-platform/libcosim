@@ -589,7 +589,7 @@ void slave_instance::configure_tunable_clock_decimal(value_reference reference,
     auto schedule = tunable_clock_for_configuration(
         reference, "ConfigureTunableClockDecimal");
     if (!std::isfinite(interval) ||
-        static_cast<long double>(interval) * duration::period::den < 1.0L ||
+        static_cast<long double>(interval) * duration::period::den < duration{1}.count() ||
         !std::isfinite(shift) || shift < 0.0) {
         throw std::invalid_argument(
             "Tunable Clock interval must be at least one nanosecond and shift must "
@@ -664,7 +664,7 @@ void slave_instance::set_tunable_clock_interval_decimal(
     const auto schedule =
         tunable_clock_for_update(reference, "SetTunableClockIntervalDecimal");
     if (!std::isfinite(interval) ||
-        static_cast<long double>(interval) * duration::period::den < 1.0L) {
+        static_cast<long double>(interval) * duration::period::den < duration{1}.count()) {
         throw std::invalid_argument(
             "Tunable Clock interval must be at least one nanosecond");
     }

@@ -8,6 +8,7 @@
 
 #include "cosim/error.hpp"
 #include "cosim/exception.hpp" // IWYU pragma: keep
+#include "cosim/fmi/enumeration.hpp"
 #include "cosim/model_description.hpp"
 #include "cosim/utility/enumeration.hpp" // IWYU pragma: keep
 

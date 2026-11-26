@@ -243,7 +243,7 @@ std::size_t normalize_attribute_value(
     const char quote = xml.at(valuePosition);
     const auto valueEnd = xml.find(quote, valuePosition + 1);
     if (valueEnd == std::string::npos) {
-        result.append(xml, position, std::string::npos);
+        result.append(xml, position);
         return size;
     }
     result.append(xml, position, valuePosition + 1 - position);
@@ -315,7 +315,7 @@ std::optional<std::string> normalize_dependency_lists(const std::string& xml)
     while (position < size) {
         const auto tagStart = xml.find('<', position);
         if (tagStart == std::string::npos) {
-            result.append(xml, position, std::string::npos);
+            result.append(xml, position);
             break;
         }
         result.append(xml, position, tagStart - position);

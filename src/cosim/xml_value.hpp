@@ -20,6 +20,7 @@
 #include <system_error>
 #include <type_traits>
 #include <utility>
+#include <variant>
 #include <vector>
 
 namespace cosim::detail
@@ -170,10 +171,11 @@ inline binary_value parse_xml_hex_binary(std::string_view text)
     }
     binary_value value;
     value.data.reserve(text.size() / 2);
-    auto character = text.begin();
-    while (character != text.end()) {
-        const auto high = digit(*character++);
-        const auto low = digit(*character++);
+    while (!text.empty()) {
+        const auto high = digit(text.front());
+        text.remove_prefix(1);
+        const auto low = digit(text.front());
+        text.remove_prefix(1);
         value.data.push_back(static_cast<std::uint8_t>((hex_base * high) + low));
     }
     return value;

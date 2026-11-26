@@ -14,10 +14,13 @@
 #include "cosim/fmi/glue.hpp"
 #include "cosim/fmi/importer.hpp"
 #include "cosim/fmi/v3/fmu.hpp"
-#include "cosim/fmi/windows.hpp"
 #include "cosim/log/logger.hpp"
 #include "cosim/model_description.hpp"
 #include "cosim/time.hpp"
+
+#ifdef _WIN32
+#    include "cosim/fmi/windows.hpp"
+#endif
 
 #include <boost/algorithm/cxx11/any_of.hpp>
 #include <boost/log/sources/severity_feature.hpp>
