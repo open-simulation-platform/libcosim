@@ -91,6 +91,7 @@ public:
                 if (!intVars_.empty()) intSamples_[timeStep].reserve(intVars_.size());
                 if (!boolVars_.empty()) boolSamples_[timeStep].reserve(boolVars_.size());
                 if (!stringVars_.empty()) stringSamples_[timeStep].reserve(stringVars_.size());
+                if (!enumerationVars_.empty()) enumerationSamples_[timeStep].reserve(enumerationVars_.size());
 
                 for (const auto& vd : realVars_) {
                     realSamples_[timeStep].push_back(observable_->get_real(vd.reference));
@@ -102,7 +103,12 @@ public:
                     boolSamples_[timeStep].push_back(observable_->get_boolean(vd.reference));
                 }
                 for (const auto& vd : stringVars_) {
-                    stringSamples_[timeStep].push_back(observable_->get_string(vd.reference));
+                    stringSamples_[timeStep].emplace_back(observable_->get_string(vd.reference));
+                }
+                for (const auto& vd : enumerationVars_) {
+                    const auto value = observable_->get_variable_value(vd.type, vd.reference);
+                    enumerationSamples_[timeStep].push_back(
+                        std::get<enumeration_values>(value.values()).values.at(0).value);
                 }
                 timeSamples_[timeStep] = to_double_time_point(currentTime);
 
@@ -127,6 +133,7 @@ public:
         intSamples_.clear();
         boolSamples_.clear();
         stringSamples_.clear();
+        enumerationSamples_.clear();
         timeSamples_.clear();
     }
 
@@ -155,19 +162,32 @@ private:
         switch (vd.type) {
             case variable_type::real:
                 realVars_.push_back(vd);
-                break;
+                return;
             case variable_type::integer:
                 intVars_.push_back(vd);
-                break;
+                return;
             case variable_type::string:
                 stringVars_.push_back(vd);
-                break;
+                return;
             case variable_type::boolean:
                 boolVars_.push_back(vd);
-                break;
+                return;
             case variable_type::enumeration:
+                enumerationVars_.push_back(vd);
+                return;
+            case variable_type::float32:
+            case variable_type::int8:
+            case variable_type::uint8:
+            case variable_type::int16:
+            case variable_type::uint16:
+            case variable_type::uint32:
+            case variable_type::int64:
+            case variable_type::uint64:
+            case variable_type::binary:
+            case variable_type::clock:
                 COSIM_PANIC();
         }
+        COSIM_PANIC();
     }
 
     /** Default constructor initialization, all variables - except those with causality local - are logged. */
@@ -236,6 +256,9 @@ private:
         for (const auto& vd : stringVars_) {
             ss << "," << vd.name;
         }
+        for (const auto& vd : enumerationVars_) {
+            ss << "," << vd.name;
+        }
 
         ss << std::endl;
 
@@ -256,8 +279,8 @@ private:
                << "    " << std::setw(keyWidth_) << "variability:" << v.variability << std::endl;
 
             if (v.start.has_value()) {
-                ss << "    " << std::setw(keyWidth_) << "start value:";
-                std::visit([&](const auto& val) { ss << val << std::endl; }, v.start.value());
+                ss << "    " << std::setw(keyWidth_) << "start value:"
+                   << *v.start << std::endl;
             }
         }
     }
@@ -298,6 +321,7 @@ private:
         write_variable_metadata(ss, intVars_);
         write_variable_metadata(ss, boolVars_);
         write_variable_metadata(ss, stringVars_);
+        write_variable_metadata(ss, enumerationVars_);
 
         if (metadata_fw.is_open()) {
             metadata_fw << ss.rdbuf();
@@ -325,7 +349,8 @@ private:
                 if (realSamples_.count(stepCount)) write<double>(realSamples_[stepCount], ss);
                 if (intSamples_.count(stepCount)) write<int>(intSamples_[stepCount], ss);
                 if (boolSamples_.count(stepCount)) write<bool>(boolSamples_[stepCount], ss);
-                if (stringSamples_.count(stepCount)) write<std::string_view>(stringSamples_[stepCount], ss);
+                if (stringSamples_.count(stepCount)) write<std::string>(stringSamples_[stepCount], ss);
+                if (enumerationSamples_.count(stepCount)) write<std::int64_t>(enumerationSamples_[stepCount], ss);
 
                 ss << std::endl;
             }
@@ -337,18 +362,21 @@ private:
         intSamples_.clear();
         boolSamples_.clear();
         stringSamples_.clear();
+        enumerationSamples_.clear();
         timeSamples_.clear();
     }
 
     std::map<step_number, std::vector<double>> realSamples_;
     std::map<step_number, std::vector<int>> intSamples_;
     std::map<step_number, std::vector<bool>> boolSamples_;
-    std::map<step_number, std::vector<std::string_view>> stringSamples_;
+    std::map<step_number, std::vector<std::string>> stringSamples_;
+    std::map<step_number, std::vector<std::int64_t>> enumerationSamples_;
     std::map<step_number, double> timeSamples_;
     std::vector<variable_description> realVars_;
     std::vector<variable_description> intVars_;
     std::vector<variable_description> boolVars_;
     std::vector<variable_description> stringVars_;
+    std::vector<variable_description> enumerationVars_;
     observable* observable_;
     cosim::filesystem::path logDir_;
     size_t decimationFactor_ = 1;
@@ -521,9 +549,19 @@ file_observer::simulator_logging_config file_observer::parse_config(const std::s
                         case variable_type::integer:
                         case variable_type::boolean:
                         case variable_type::string:
+                        case variable_type::enumeration:
                             config.variables.push_back(vd);
                             break;
-                        default:
+                        case variable_type::float32:
+                        case variable_type::int8:
+                        case variable_type::uint8:
+                        case variable_type::int16:
+                        case variable_type::uint16:
+                        case variable_type::uint32:
+                        case variable_type::int64:
+                        case variable_type::uint64:
+                        case variable_type::binary:
+                        case variable_type::clock:
                             break;
                     }
                 }
@@ -542,12 +580,23 @@ file_observer::simulator_logging_config file_observer::parse_config(const std::s
                         case variable_type::integer:
                         case variable_type::boolean:
                         case variable_type::string:
+                        case variable_type::enumeration:
                             config.variables.push_back(*variableDescription);
                             BOOST_LOG_SEV(log::logger(), log::info) << "Logging variable: " << modelName << ":" << name;
-                            break;
-                        default:
+                            continue;
+                        case variable_type::float32:
+                        case variable_type::int8:
+                        case variable_type::uint8:
+                        case variable_type::int16:
+                        case variable_type::uint16:
+                        case variable_type::uint32:
+                        case variable_type::int64:
+                        case variable_type::uint64:
+                        case variable_type::binary:
+                        case variable_type::clock:
                             COSIM_PANIC_M("Variable type not supported.");
                     }
+                    COSIM_PANIC_M("Variable type not supported.");
                 }
             }
             return config;

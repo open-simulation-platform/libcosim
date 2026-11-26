@@ -71,6 +71,11 @@ public:
      */
     virtual std::string_view get_string(value_reference) const = 0;
 
+    /// Returns an owning value; the default bridges the four legacy scalar types.
+    virtual variable_value get_variable_value(
+        variable_type type,
+        value_reference reference) const;
+
     virtual ~observable() noexcept { }
 };
 

@@ -1,0 +1,5 @@
+"time","Boolean_output","Enumeration_output"
+0.0,False,1
+1.0,False,1
+2.0,True,2
+3.0,False,1

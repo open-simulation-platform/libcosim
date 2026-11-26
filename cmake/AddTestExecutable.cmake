@@ -8,6 +8,7 @@
 #       DEPENDENCIES <targets...>
 #       DATA_DIR <directory>
 #       REFERENCE_FMU_V2_DIR <directory>
+#       REFERENCE_FMU_V3_DIR <directory>
 #       GEN_TEST_DATA_DIR <directory>
 #   )
 #
@@ -21,6 +22,7 @@ function(add_test_executable name)
         "DEPENDENCIES"
         "DATA_DIR"
         "REFERENCE_FMU_V2_DIR"
+        "REFERENCE_FMU_V3_DIR"
         "GEN_TEST_DATA_DIR")
     foreach(p IN LISTS params)
         set(arg_${p})
@@ -52,6 +54,10 @@ function(add_test_executable name)
     if(arg_REFERENCE_FMU_V2_DIR)
         list(APPEND environment
             "REFERENCE_FMU_V2_DIR=${arg_REFERENCE_FMU_V2_DIR}")
+    endif()
+    if(arg_REFERENCE_FMU_V3_DIR)
+        list(APPEND environment
+            "REFERENCE_FMU_V3_DIR=${arg_REFERENCE_FMU_V3_DIR}")
     endif()
     if(arg_GEN_TEST_DATA_DIR)
         list(APPEND environment "GEN_TEST_DATA_DIR=${arg_GEN_TEST_DATA_DIR}")

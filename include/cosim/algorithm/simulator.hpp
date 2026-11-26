@@ -60,6 +60,12 @@ public:
      */
     virtual void set_string(value_reference reference, std::string_view value) = 0;
 
+    /// Sets an owning value; the default bridges the four legacy scalar types.
+    virtual void set_variable_value(
+        variable_type type,
+        value_reference reference,
+        const variable_value& value);
+
     /**
      *  Performs pre-simulation setup, instantiates the FMUs and enters 
      *  initialisation mode. 

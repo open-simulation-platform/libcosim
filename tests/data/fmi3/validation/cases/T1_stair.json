@@ -1,0 +1,10 @@
+{
+  "fmu": "Stair.fmu",
+  "start": 0.0,
+  "stop": 10.0,
+  "step": 0.2,
+  "event_mode": false,
+  "outputs": [
+    {"name": "counter", "type": "Int32"}
+  ]
+}

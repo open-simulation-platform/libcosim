@@ -1,0 +1,10 @@
+{
+  "fmu": "Resource.fmu",
+  "start": 0.0,
+  "stop": 1.0,
+  "step": 1.0,
+  "event_mode": false,
+  "outputs": [
+    {"name": "y", "type": "Int32"}
+  ]
+}

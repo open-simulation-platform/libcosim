@@ -1,0 +1,17 @@
+{
+  "fmu": "BouncingBall.fmu",
+  "start": 0.0,
+  "stop": 3.0,
+  "step": 0.01,
+  "event_mode": false,
+  "start_values": {
+    "e": {
+      "type": "Float64",
+      "value": 0.9
+    }
+  },
+  "outputs": [
+    {"name": "h", "type": "Float64"},
+    {"name": "v", "type": "Float64"}
+  ]
+}

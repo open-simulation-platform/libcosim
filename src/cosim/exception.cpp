@@ -46,9 +46,8 @@ public:
                 return "ZIP file error";
             case errc::invalid_operation:
                 return "Invalid operation";
-            default:
-                COSIM_PANIC();
         }
+        COSIM_PANIC();
     }
 };
 } // namespace

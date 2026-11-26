@@ -42,6 +42,8 @@ public:
     int get_integer(value_reference reference) const override;
     bool get_boolean(value_reference reference) const override;
     std::string_view get_string(value_reference reference) const override;
+    variable_value get_variable_value(
+        variable_type type, value_reference reference) const override;
 
     // `simulator` methods
     void expose_for_setting(variable_type type, value_reference ref) override;
@@ -49,6 +51,10 @@ public:
     void set_integer(value_reference reference, int value) override;
     void set_boolean(value_reference reference, bool value) override;
     void set_string(value_reference reference, std::string_view value) override;
+    void set_variable_value(
+        variable_type type,
+        value_reference reference,
+        const variable_value& value) override;
 
     void set_real_input_modifier(
         value_reference reference,
@@ -74,11 +80,16 @@ public:
     void set_string_output_modifier(
         value_reference reference,
         std::function<std::string(std::string_view, duration)> modifier) override;
+    void set_variable_input_modifier(
+        variable_type type, value_reference reference, variable_modifier modifier) override;
+    void set_variable_output_modifier(
+        variable_type type, value_reference reference, variable_modifier modifier) override;
 
     std::unordered_set<value_reference>& get_modified_real_variables() const override;
     std::unordered_set<value_reference>& get_modified_integer_variables() const override;
     std::unordered_set<value_reference>& get_modified_boolean_variables() const override;
     std::unordered_set<value_reference>& get_modified_string_variables() const override;
+    std::vector<typed_value_reference> get_modified_variables() const;
 
     void setup(
         time_point startTime,

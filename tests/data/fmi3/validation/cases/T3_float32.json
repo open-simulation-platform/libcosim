@@ -1,0 +1,33 @@
+{
+  "fmu": "Feedthrough.fmu",
+  "start": 0.0,
+  "stop": 4.0,
+  "step": 0.5,
+  "event_mode": false,
+  "stimuli": [
+    {
+      "variable": "Float32_continuous_input",
+      "type": "Float32",
+      "changes": [
+        {"time": 0.0, "value": "0.33333334"},
+        {"time": 1.0, "value": "3.4028235e+38"},
+        {"time": 2.0, "value": "-0.0"},
+        {"time": 3.0, "value": "1e-45"}
+      ]
+    },
+    {
+      "variable": "Float32_discrete_input",
+      "type": "Float32",
+      "changes": [
+        {"time": 0.0, "value": "0.33333334"},
+        {"time": 1.0, "value": "3.4028235e+38"},
+        {"time": 2.0, "value": "-0.0"},
+        {"time": 3.0, "value": "1e-45"}
+      ]
+    }
+  ],
+  "outputs": [
+    {"name": "Float32_continuous_output", "type": "Float32"},
+    {"name": "Float32_discrete_output", "type": "Float32"}
+  ]
+}
