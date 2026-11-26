@@ -11,7 +11,7 @@ The scope are the new data types as they behave in import and co-simulation. Add
 | FMUs | Reference-FMUs at version`v0.0.42` built with `-DFMI_VERSION=3`. |
 | Case definitions | `tests/data/fmi3/validation/cases/<case>.json` — FMU, step, stop, structural parameters, start values, stimuli, compared outputs. The single source read by both executors. |
 | Generator | `tests/tools/gen_validation.py` — runs each case through FMPy (`pip install fmpy==0.3.32`) and writes `results/<case>.csv`. |
-| libcosim harness | `tests/fmi3_validation_test.cpp`, one CTest per case, label `fmi3_validation`. Replays the case JSON directly on a `slave_instance` (the level at which FMI 3 exact types are reachable on this branch, and the level FMPy's loop works at): Configuration Mode for structural parameters, `setup()` → `set_variable_values()` → `start_simulation()`, then `set_variable_values()` + `do_step_with_info()` per step, `get_variable_values()` per sample. Writes the CSV and diffs. |
+| libcosim harness | `tests/fmi3_validation_test.cpp`, one CTest per case, labelled with `fmi3_validation`. Parses the same json case definition, runs the case with libcosim, and applies the comparison rules between the libcosim data and the validation data.  |
 
 ### Comparison
 
