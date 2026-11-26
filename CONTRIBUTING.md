@@ -113,8 +113,12 @@ Conan remote credentials.
 For a local check, install the Clang tools you intend to run. For clang-tidy,
 install Python 3, `run-clang-tidy`, and `clang-tidy` on `PATH`, and configure a
 build with `CMAKE_EXPORT_COMPILE_COMMANDS=ON`. Fix mode also needs
-`clang-apply-replacements` on `PATH`. Run the same script with PowerShell 7
-on Windows or Bash on Linux and macOS:
+`clang-apply-replacements` on `PATH`. On Windows, the script invokes an
+extensionless or `.py` `run-clang-tidy` through `python`, or through the
+`py -3` launcher if `python` is unavailable. Native executable and
+command-script wrappers are invoked directly.
+
+Run the same script with PowerShell 7 on Windows or Bash on Linux and macOS:
 
 ```powershell
 pwsh .\clang-check.ps1

@@ -349,12 +349,32 @@ function Invoke-TidyCheck {
     $workerCount = if ($Fix) { 1 } else { $jobs }
     $tidyArgs = @('-p', $build, '-j', $workerCount, '-quiet', "-header-filter=$($tidyPatterns -join '|')")
     if ($Fix) { $tidyArgs += '-fix' }
-    if (!(Get-Command run-clang-tidy -ErrorAction SilentlyContinue)) {
+    $runner = Get-Command run-clang-tidy -ErrorAction SilentlyContinue | Select-Object -First 1
+    if (!$runner) {
+        $runner = Get-Command run-clang-tidy.py -ErrorAction SilentlyContinue | Select-Object -First 1
+    }
+    if (!$runner) {
         Write-Error 'run-clang-tidy is required on PATH.' -ErrorAction Continue
         Set-PhaseFailed
         return
     }
-    & run-clang-tidy @tidyArgs @tidyPatterns
+    $extension = if ($runner.CommandType -eq 'Application') { [IO.Path]::GetExtension($runner.Source) } else { $null }
+    if ($IsWindows -and $runner.CommandType -eq 'Application' -and $extension -in '', '.py') {
+        $python = Get-Command python -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
+        $pythonArgs = @()
+        if (!$python) {
+            $python = Get-Command py -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
+            $pythonArgs = @('-3')
+        }
+        if (!$python) {
+            Write-Error 'Python 3 is required on PATH to run the run-clang-tidy script.' -ErrorAction Continue
+            Set-PhaseFailed
+            return
+        }
+        & $python.Source @pythonArgs $runner.Source @tidyArgs @tidyPatterns
+    } else {
+        & $runner @tidyArgs @tidyPatterns
+    }
     if ($LASTEXITCODE -ne 0) { Set-PhaseFailed }
 }
 
