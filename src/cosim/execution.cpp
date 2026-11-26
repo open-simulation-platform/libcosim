@@ -300,7 +300,12 @@ public:
             for (const auto& sim : simulators_) {
                 const auto savedStateIndex =
                     sim->import_state(simulatorState.get_child(sim->name()));
-                sim->restore_state(savedStateIndex);
+                try {
+                    sim->restore_state(savedStateIndex);
+                } catch (...) {
+                    sim->release_state(savedStateIndex);
+                    throw;
+                }
                 sim->release_state(savedStateIndex);
             }
             algorithm_->import_state(exportedState.get_child("algorithm_state"));

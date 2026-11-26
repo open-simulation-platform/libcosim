@@ -16,7 +16,6 @@
 #include <boost/lexical_cast.hpp>
 #include <xercesc/dom/DOM.hpp>
 #include <xercesc/framework/MemBufInputSource.hpp>
-#include <xercesc/framework/StdOutFormatTarget.hpp>
 #include <xercesc/framework/Wrapper4InputSource.hpp>
 #include <xercesc/framework/XMLFormatter.hpp>
 #include <xercesc/util/PlatformUtils.hpp>
@@ -313,10 +312,11 @@ osp_config_parser::osp_config_parser(
     const auto parser = static_cast<xercesc::DOMImplementationLS*>(domImpl)->createLSParser(
         xercesc::DOMImplementationLS::MODE_SYNCHRONOUS,
         tc("http://www.w3.org/2001/XMLSchema").get());
-
-    auto outputTarget = ((xercesc::DOMImplementationLS*)domImpl)->createLSOutput();
-    auto outputFormat = new xercesc::StdOutFormatTarget();
-    outputTarget->setByteStream(outputFormat);
+    // Releases the parser and the document it owns. Declared after
+    // xerces_cleanup, so it runs before XMLPlatformUtils::Terminate().
+    const auto parser_cleanup = final_action([parser]() {
+        parser->release();
+    });
 
     error_handler errorHandler;
 
@@ -724,6 +724,11 @@ struct extended_model_description
 
         const auto domImpl = xercesc::DOMImplementationRegistry::getDOMImplementation(tc("LS").get());
         const auto parser = static_cast<xercesc::DOMImplementationLS*>(domImpl)->createLSParser(xercesc::DOMImplementationLS::MODE_SYNCHRONOUS, tc("http://www.w3.org/2001/XMLSchema").get());
+        // Releases the parser and the document it owns. Declared after
+        // xerces_cleanup, so it runs before XMLPlatformUtils::Terminate().
+        const auto parser_cleanup = final_action([parser]() {
+            parser->release();
+        });
 
         const auto doc = parser->parseURI(ospModelDescription.string().c_str());
 
