@@ -97,9 +97,9 @@ On Linux, `-DLIBCOSIM_ENABLE_SANITIZERS=ON` enables ASan and UBSan for the
 local build. The [quality workflow](.github/workflows/ci-quality.yml) enables
 ProxyFMU and runs every C++ test suite under ASan and UBSan with leak detection
 enabled. CI uses [cpp-linter-action](https://github.com/cpp-linter/cpp-linter-action)
-to run clang-tidy 23 and clang-format 23.1.6 on C++ sources and headers in
-`src/` and `include/`, not just changed files. CI installs clang-format 23.1.6
-from the LLVM package repository.
+to run clang-tidy 23 and clang-format 23.1.x on C++ sources and headers in
+`src/` and `include/`, not just changed files. CI installs these tools from the
+signed LLVM package repository and verifies the formatter version after the action.
 Both tools use the repository's
 `.clang-tidy` and `.clang-format` configurations. CI reads additional per-tool
 exclusions from `.clang-tidy-ignore` and `.clang-format-ignore`, one path or

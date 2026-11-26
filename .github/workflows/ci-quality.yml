@@ -39,8 +39,9 @@ jobs:
             > /etc/apt/sources.list.d/llvm-23.list
           apt-get update
           apt-get install -y --no-install-recommends \
-            'clang-format-23=1:23.1.6*' clang-tidy-23
+            'clang-format-23=1:23.1.*' clang-tidy-23
           apt-mark hold clang-format-23
+          clang-format-23 --version
           pipx install conan
           pipx install 'cmake>=4'
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
@@ -100,6 +101,15 @@ jobs:
           ignore-format: ${{ steps.lint_exclusions.outputs.format }}
           ignore-tidy: ${{ steps.lint_exclusions.outputs.tidy }}
           jobs: '4'
+      - name: Verify clang-format version
+        if: ${{ !cancelled() && steps.lint_exclusions.outcome == 'success' }}
+        run: |
+          version=$(clang-format-23 --version)
+          echo "$version"
+          if [[ ! "$version" =~ ^((Debian|Ubuntu)[[:space:]]+)?clang-format[[:space:]]+version[[:space:]]+23\.1\.[0-9]+([[:space:]]|$) ]]; then
+            echo "::error::Expected clang-format 23.1.x; the cpp-linter action selects only a major version."
+            exit 1
+          fi
       - name: Fail on lint findings
         if: ${{ steps.linter.outputs.checks-failed > 0 }}
         run: exit 1
