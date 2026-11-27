@@ -10,12 +10,14 @@
 #include <boost/property_tree/json_parser.hpp>
 
 #include <chrono>
+#include <cstddef>
 #include <exception>
 #include <iostream>
 #include <limits>
 #include <memory>
 #include <sstream>
 #include <stdexcept>
+#include <vector>
 
 
 // A helper macro to test various assertions
@@ -43,6 +45,20 @@ int main()
     try {
         cosim::log::setup_simple_console_logging();
         cosim::log::set_global_output_level(cosim::log::debug);
+
+        // CBOR map keys are literal, and empty binary values retain their type.
+        {
+            cosim::serialization::node literalKeys;
+            cosim::serialization::node nested;
+            nested.push_back({"", cosim::serialization::node(std::vector<std::byte>{})});
+            literalKeys.push_back({"simulator.output", nested});
+
+            std::stringstream stream(std::ios::in | std::ios::out | std::ios::binary);
+            stream << cosim::serialization::format::cbor << literalKeys;
+            cosim::serialization::node decoded;
+            stream >> cosim::serialization::format::cbor >> decoded;
+            REQUIRE(decoded == literalKeys);
+        }
 
         // ================================================================
         // == Reference FMU test - Dahlquist (for byte vectors)
@@ -78,6 +94,49 @@ int main()
 
 
         const auto state_bb = execution.export_current_state();
+
+        // Truncated, corrupted and random state data: reading it, and
+        // importing whatever still decodes, is an error, never a crash.
+        {
+            std::ostringstream out(std::ios::binary);
+            out << cosim::serialization::format::cbor << state_bb;
+            const auto bytes = out.str();
+            REQUIRE(!bytes.empty());
+
+            const auto try_import = [&](const std::string& data) {
+                try {
+                    std::istringstream in(data, std::ios::binary);
+                    cosim::serialization::node node;
+                    in >> cosim::serialization::format::cbor >> node;
+                    execution.import_state(node);
+                } catch (const std::exception&) {
+                }
+            };
+            for (std::size_t n = 0; n < bytes.size(); ++n) {
+                try_import(bytes.substr(0, n));
+            }
+            for (std::size_t i = 0; i < bytes.size(); ++i) {
+                auto corrupted = bytes;
+                corrupted[i] = static_cast<char>(corrupted[i] ^ 0xA5);
+                try_import(corrupted);
+            }
+            std::uint32_t seed = 12345;
+            for (int k = 0; k < 500; ++k) {
+                std::string random(1 + k % 64, '\0');
+                for (auto& c : random) {
+                    seed = seed * 1664525u + 1013904223u;
+                    c = static_cast<char>(seed >> 24);
+                }
+                try_import(random);
+            }
+
+            // The execution still accepts the valid state
+            std::istringstream in(bytes, std::ios::binary);
+            cosim::serialization::node node;
+            in >> cosim::serialization::format::cbor >> node;
+            execution.import_state(node);
+            REQUIRE(execution.export_current_state() == state_bb);
+        }
 
         // Export state
         std::ofstream outFile("state_bb.bin", std::ios::binary);

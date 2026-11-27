@@ -72,7 +72,7 @@ int main()
         REQUIRE(!realTimeConfig->real_time_simulation);
 
         const auto logPath = cosim::filesystem::current_path() / "logs";
-        std::cout << "Log path:" << logPath.c_str();
+        std::cout << "Log path:" << logPath.string();
         auto file_obs = std::make_unique<cosim::file_observer>(logPath, logXmlPath);
         execution.add_observer(std::move(file_obs));
 
