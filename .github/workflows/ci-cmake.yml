@@ -8,7 +8,7 @@ jobs:
     name: Linux
     runs-on: ubuntu-latest
     container:
-      image: debian:bookworm
+      image: debian:trixie
     strategy:
       fail-fast: false
       matrix:
@@ -22,14 +22,13 @@ jobs:
         run: |
           set -euxo pipefail
           export DEBIAN_FRONTEND=noninteractive
-          echo 'deb http://deb.debian.org/debian bookworm-backports main' > /etc/apt/sources.list.d/bookworm-backports.list
           apt-get update
           apt-get install -y --no-install-recommends \
             build-essential \
             ca-certificates \
             cmake \
             git \
-            libboost1.83-all-dev \
+            libboost-all-dev \
             libmsgsl-dev \
             libyaml-cpp-dev \
             libxerces-c-dev \
