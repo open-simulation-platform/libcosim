@@ -17,6 +17,7 @@
 #include "cosim/time.hpp"
 
 #include <boost/multiprecision/cpp_int.hpp> // IWYU pragma: keep
+#include <boost/multiprecision/fwd.hpp>
 
 #include <cstddef>
 #include <cstdint>

@@ -149,17 +149,25 @@ The compilation database contains commands for configured source files, not
 separate commands for headers. Tests and optional integrations appear only
 when their build options and dependencies are enabled. `run-clang-tidy` checks
 only selected source files present in the database; it does not infer commands
-for other sources. It checks selected headers only when they are included by
-those source files. A header-only selection is not supported: include at least
-one corresponding source file or directory in the selection. Check the
-`run-clang-tidy` output to confirm which translation units were analyzed;
-the runner can succeed even when no database entries match.
+for other sources. It also checks selected headers included by those source
+files. In a separate pass, the script runs clang-tidy directly on each selected
+header, including for header-only selections. Clang-tidy infers a compilation
+command for each header, so findings can differ from checks through source
+files and can be duplicated. Headers belonging to optional integrations may
+require a compilation database built with those integrations enabled; for
+example, ProxyFMU headers require `LIBCOSIM_WITH_PROXYFMU=ON` and its
+dependencies. Check the `run-clang-tidy` output to confirm which translation
+units were analyzed; the runner can succeed even when no database entries
+match.
 
 By default, the script checks without modifying files and returns a nonzero
 exit code for tool failures and errors, including clang-tidy warnings promoted
 to errors by the repository configuration. The final summary counts emitted
 error, warning, and note diagnostics separately for each tool pass and marks
-failed passes.
+failed passes. Errors and warnings whose reported paths are outside the
+checkout are marked `[external]` and counted in the summary; this is a
+path-based indication, not a determination of where the problem originated.
+These diagnostics still affect the exit code.
 Suppressed diagnostics are not counted, and counts in a fix pass may include
 findings subsequently fixed; check the final tidy pass for remaining findings.
 Clang-format fix mode does not report the number of files it changed.
@@ -175,7 +183,8 @@ bash ./clang-check.ps1 --fix
 ```
 
 When clang-tidy is selected, fix mode uses `run-clang-tidy -fix` to collect
-and apply available fixes; this is not the same as clang-tidy's `--fix-errors`.
+and apply available source fixes, and runs `clang-tidy -fix` on selected
+headers; neither is the same as clang-tidy's `--fix-errors`.
 When both tools are selected, it runs clang-format even if clang-tidy fails.
 It then rechecks with clang-tidy without applying further fixes. Unresolved
 errors still cause a nonzero exit, and not every diagnostic can be fixed
@@ -185,8 +194,8 @@ the changes, resolve remaining compiler errors, and rerun the check.
 Read-only clang-tidy checks use up to four workers by default, limited by the
 available CPU count. Specify a positive worker count with `-Jobs` in
 PowerShell or `--jobs` in Bash; use `1` for serial checks. More workers can
-consume substantial memory. The fix pass itself remains serial to avoid
-concurrent edits to shared headers.
+consume substantial memory. Direct-header checks run serially. Both fix passes
+also run serially to avoid concurrent edits to shared headers.
 
 ```powershell
 pwsh .\clang-check.ps1 -Jobs 2

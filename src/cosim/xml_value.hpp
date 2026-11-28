@@ -20,7 +20,7 @@
 #include <system_error>
 #include <type_traits>
 #include <utility>
-#include <variant>
+#include <variant> // IWYU pragma: keep
 #include <vector>
 
 namespace cosim::detail

@@ -16,6 +16,7 @@ while (($#)); do
                 '' \
                 'Check C/C++ files recursively without modifying them; defaults to src and include.' \
                 'Relative paths are resolved from the current directory.' \
+                'Clang-tidy checks selected sources and also checks selected headers directly.' \
                 '' \
                 'Options:' \
                 '  -h, --help                         Show this help and exit.' \
@@ -23,7 +24,7 @@ while (($#)); do
                 '  --format                           Run clang-format only (unless --tidy is also set).' \
                 '  --tidy                             Run clang-tidy only (unless --format is also set).' \
                 '  -BuildDirectory, --build-dir DIR   Compilation database directory (default: build/Release).' \
-                '  -Jobs, --jobs N                    Read-only run-clang-tidy workers (default: up to 4).' \
+                '  -Jobs, --jobs N                    Read-only source workers (default: up to 4).' \
                 '  --                                 Treat remaining arguments as paths.'
             exit 0 ;;
         --fix)
@@ -82,12 +83,19 @@ first_file="$(find "${paths[@]}" -type f \( "${extensions[@]}" \) -print | head 
 if [[ -z $first_file ]]; then echo 'No C/C++ sources or headers found.' >&2; exit 1; fi
 
 tidy_patterns=()
+headers=()
+has_sources=false
 if $tidy; then
     first_source="$(find "${paths[@]}" -type f \( -name '*.c' -o -name '*.cc' -o -name '*.cpp' -o -name '*.cxx' \) -print | head -n 1)"
-    if [[ -z $first_source ]]; then
-        echo 'run-clang-tidy requires a selected source file with a compilation database entry; headers are checked through selected sources.' >&2
-        exit 1
-    fi
+    if [[ -n $first_source ]]; then has_sources=true; fi
+    while IFS= read -r -d '' header; do
+        absolute="$(cd "$(dirname "$header")" && printf '%s/%s' "$(pwd -P)" "$(basename "$header")")" || exit 1
+        duplicate=false
+        for selected_header in "${headers[@]}"; do
+            if [[ $selected_header == "$absolute" ]]; then duplicate=true; break; fi
+        done
+        if ! $duplicate; then headers+=("$absolute"); fi
+    done < <(find "${paths[@]}" -type f \( -name '*.h' -o -name '*.hh' -o -name '*.hpp' -o -name '*.hxx' \) -print0)
     for path in "${paths[@]}"; do
         if [[ -d $path ]]; then
             absolute="$(cd "$path" && pwd -P)" || exit 1
@@ -117,6 +125,20 @@ tidy_check() {
     run-clang-tidy -p "$build" -j "$workers" -quiet "-header-filter=$header_filter" "$@" "${tidy_patterns[@]}"
 }
 
+tidy_headers() {
+    local header result=0
+    if (($#)); then
+        echo 'Running clang-tidy on headers (fix).'
+    else
+        echo 'Running clang-tidy on headers (check).'
+    fi
+    for header in "${headers[@]}"; do
+        echo "Checking header: $header"
+        clang-tidy -p "$build" -quiet "$@" "$header" || result=1
+    done
+    return "$result"
+}
+
 summary_dir=
 cleanup_summary() {
     if [[ -n $summary_dir ]]; then
@@ -127,26 +149,68 @@ cleanup_summary() {
 trap cleanup_summary EXIT
 
 summarize_stream() {
-    awk -v counts="$1" '
+    awk -v counts="$1" -v root="$root" -v cwd="$(pwd -P)" -v platform="$OSTYPE" '
+        function normalize(path, parts, n, i, count, result, drive) {
+            if (platform ~ /^(msys|cygwin)/) {
+                gsub(/\\/, "/", path)
+                if (path ~ /^[A-Za-z]:\//) {
+                    drive = tolower(substr(path, 1, 1))
+                    path = (root ~ /^\/cygdrive\// ? "/cygdrive/" : "/") drive substr(path, 3)
+                }
+                path = tolower(path)
+            }
+            if (substr(path, 1, 1) != "/") path = cwd "/" path
+            n = split(path, parts, "/")
+            count = 0
+            for (i = 1; i <= n; i++) {
+                if (parts[i] == "" || parts[i] == ".") continue
+                if (parts[i] == "..") {
+                    if (count > 0) count--
+                } else {
+                    stack[++count] = parts[i]
+                }
+            }
+            result = ""
+            for (i = 1; i <= count; i++) result = result "/" stack[i]
+            return result == "" ? "/" : result
+        }
+        BEGIN {
+            if (platform ~ /^(msys|cygwin)/) {
+                root = tolower(root)
+                cwd = tolower(cwd)
+            }
+        }
         {
-            print
-            fflush()
             line = $0
             gsub(sprintf("%c\\[[0-9;]*m", 27), "", line)
+            external = 0
             if (line ~ /^((.+:[0-9]+(:[0-9]+)?:[[:space:]]*)|(clang(-tidy|-format)?(\.exe)?:[[:space:]]*)?)(fatal error|error|warning|note):/) {
                 if (line ~ /(^|:[[:space:]]*)(fatal error|error):/) errors++
                 else if (line ~ /(^|:[[:space:]]*)warning:/) warnings++
                 else notes++
+                if (line ~ /^.+:[0-9]+(:[0-9]+)?:[[:space:]]*(fatal error|error|warning):/) {
+                    path = line
+                    sub(/:[0-9]+(:[0-9]+)?:[[:space:]]*(fatal error|error|warning):.*/, "", path)
+                    if (path !~ /^<.*>$/) {
+                        path = normalize(path)
+                        if (root != "/" && path != root && index(path, root "/") != 1) {
+                            external = 1
+                            externals++
+                        }
+                    }
+                }
             }
+            print $0 (external ? " [external]" : "")
+            fflush()
         }
-        END { printf "%d %d %d\n", errors, warnings, notes > counts }
+        END { printf "%d %d %d %d\n", errors, warnings, notes, externals > counts }
     '
 }
 
 summaries=()
 run_with_summary() {
     local label=$1 result out_pid err_pid
-    local out_errors out_warnings out_notes err_errors err_warnings err_notes
+    local out_errors out_warnings out_notes out_external err_errors err_warnings err_notes err_external
     shift
     summary_dir="$(mktemp -d "${TMPDIR:-/tmp}/clang-check.XXXXXXXX")" || return 1
     exec 3> >(summarize_stream "$summary_dir/stdout")
@@ -158,8 +222,8 @@ run_with_summary() {
     exec 3>&- 4>&-
     wait "$out_pid" || result=1
     wait "$err_pid" || result=1
-    if ! read -r out_errors out_warnings out_notes < "$summary_dir/stdout" ||
-       ! read -r err_errors err_warnings err_notes < "$summary_dir/stderr"; then
+    if ! read -r out_errors out_warnings out_notes out_external < "$summary_dir/stdout" ||
+       ! read -r err_errors err_warnings err_notes err_external < "$summary_dir/stderr"; then
         echo 'Could not collect diagnostic counts.' >&2
         cleanup_summary
         summary_dir=
@@ -168,7 +232,9 @@ run_with_summary() {
     cleanup_summary
     summary_dir=
     local suffix=
-    if ((result != 0)); then suffix=' (failed)'; fi
+    local external=$((out_external + err_external))
+    if ((external)); then suffix=", $external external"; fi
+    if ((result != 0)); then suffix+=' (failed)'; fi
     summaries+=("$label: $((out_errors + err_errors)) errors, $((out_warnings + err_warnings)) warnings, $((out_notes + err_notes)) notes$suffix")
     return "$result"
 }
@@ -189,17 +255,24 @@ format_check() {
 status=0
 if $fix; then
     if $tidy; then
-        run_with_summary 'clang-tidy (fix)' tidy_check -fix || status=1
+        if $has_sources; then run_with_summary 'clang-tidy (fix)' tidy_check -fix || status=1; fi
+        if ((${#headers[@]})); then run_with_summary 'clang-tidy headers (fix)' tidy_headers -fix || status=1; fi
     fi
     if $format; then
         run_with_summary 'clang-format (fix)' format_check fix || status=1
     fi
-    if $tidy; then run_with_summary 'clang-tidy (check)' tidy_check || status=1; fi
+    if $tidy; then
+        if $has_sources; then run_with_summary 'clang-tidy (check)' tidy_check || status=1; fi
+        if ((${#headers[@]})); then run_with_summary 'clang-tidy headers (check)' tidy_headers || status=1; fi
+    fi
 else
     if $format; then
         run_with_summary 'clang-format (check)' format_check check || status=1
     fi
-    if $tidy; then run_with_summary 'clang-tidy (check)' tidy_check || status=1; fi
+    if $tidy; then
+        if $has_sources; then run_with_summary 'clang-tidy (check)' tidy_check || status=1; fi
+        if ((${#headers[@]})); then run_with_summary 'clang-tidy headers (check)' tidy_headers || status=1; fi
+    fi
 fi
 printf '\n%s\n' 'Clang findings summary (emitted diagnostics):'
 printf '  %s\n' "${summaries[@]}"
@@ -221,6 +294,7 @@ Usage: pwsh .\clang-check.ps1 [options] [--] [path ...]
 
 Check C/C++ files recursively without modifying them; defaults to src and include.
 Relative paths are resolved from the current directory.
+Clang-tidy checks selected sources and also checks selected headers directly.
 
 Options:
   -h, --help                         Show this help and exit.
@@ -228,7 +302,7 @@ Options:
   --format                           Run clang-format only (unless --tidy is also set).
   --tidy                             Run clang-tidy only (unless --format is also set).
   -BuildDirectory, --build-dir DIR   Compilation database directory (default: build\Release).
-  -Jobs, --jobs N                    Read-only run-clang-tidy workers (default: up to 4).
+  -Jobs, --jobs N                    Read-only source workers (default: up to 4).
   --                                 Treat remaining arguments as paths.
 '@
         exit 0
@@ -272,10 +346,11 @@ $files = @(Get-ChildItem -LiteralPath $paths -Recurse -File -Force |
 if (!$files.Count) { throw 'No C/C++ sources or headers found.' }
 
 $tidyPatterns = @()
+$headers = @()
+$hasSources = $false
 if ($tidy) {
-    if (!@($files | Where-Object { [IO.Path]::GetExtension($_) -cin '.c', '.cc', '.cpp', '.cxx' }).Count) {
-        throw 'run-clang-tidy requires a selected source file with a compilation database entry; headers are checked through selected sources.'
-    }
+    $hasSources = @($files | Where-Object { [IO.Path]::GetExtension($_) -cin '.c', '.cc', '.cpp', '.cxx' }).Count -gt 0
+    $headers = @($files | Where-Object { [IO.Path]::GetExtension($_) -cin '.h', '.hh', '.hpp', '.hxx' } | Sort-Object -Unique)
     foreach ($path in $paths) {
         $resolved = (Resolve-Path -LiteralPath $path).ProviderPath
         $escaped = [regex]::Escape($resolved)
@@ -291,9 +366,11 @@ if ($tidy) {
 
 $status = 0
 $summaries = [System.Collections.Generic.List[object]]::new()
+$rootPath = [IO.Path]::GetFullPath($PSScriptRoot).TrimEnd([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar)
+$pathComparison = if ($IsWindows) { [StringComparison]::OrdinalIgnoreCase } else { [StringComparison]::Ordinal }
 function Invoke-WithSummary {
     param([string]$Label, [scriptblock]$Command)
-    $summary = [PSCustomObject]@{ Label = $Label; Errors = 0; Warnings = 0; Notes = 0; Failed = $false }
+    $summary = [PSCustomObject]@{ Label = $Label; Errors = 0; Warnings = 0; Notes = 0; External = 0; Failed = $false }
     & $Command 2>&1 | ForEach-Object {
         $line = [string]$_
         $plainLine = [regex]::Replace($line, '\x1b\[[0-9;]*m', '')
@@ -304,10 +381,19 @@ function Invoke-WithSummary {
                 'note' { $summary.Notes++ }
             }
         }
+        if ($plainLine -match '^(?<path>.+?):\d+(?::\d+)?:\s*(?:fatal error|error|warning):' -and
+            $Matches.path -notmatch '^<.*>$') {
+            $diagnosticPath = [IO.Path]::GetFullPath($Matches.path, (Get-Location).ProviderPath)
+            if (!$diagnosticPath.Equals($rootPath, $pathComparison) -and
+                !$diagnosticPath.StartsWith($rootPath + [IO.Path]::DirectorySeparatorChar, $pathComparison)) {
+                $summary.External++
+                $line += ' [external]'
+            }
+        }
         if ($_ -is [System.Management.Automation.ErrorRecord]) {
             [Console]::Error.WriteLine($line)
         } else {
-            Write-Output $_
+            Write-Output $line
         }
     }
     $summary.Failed = $script:phaseFailed
@@ -378,18 +464,42 @@ function Invoke-TidyCheck {
     if ($LASTEXITCODE -ne 0) { Set-PhaseFailed }
 }
 
+function Invoke-TidyHeaders {
+    param([bool]$Fix = $false)
+    if ($Fix) { Write-Host 'Running clang-tidy on headers (fix).' } else { Write-Host 'Running clang-tidy on headers (check).' }
+    $tidyArgs = @('-p', $build, '-quiet')
+    if ($Fix) { $tidyArgs += '-fix' }
+    foreach ($header in $headers) {
+        Write-Host "Checking header: $header"
+        & clang-tidy @tidyArgs $header
+        if ($LASTEXITCODE -ne 0) { Set-PhaseFailed }
+    }
+}
+
 if ($fix) {
     if ($tidy) {
-        $phaseFailed = $false
-        Invoke-WithSummary 'clang-tidy (fix)' { Invoke-TidyCheck $true }
+        if ($hasSources) {
+            $phaseFailed = $false
+            Invoke-WithSummary 'clang-tidy (fix)' { Invoke-TidyCheck $true }
+        }
+        if ($headers.Count) {
+            $phaseFailed = $false
+            Invoke-WithSummary 'clang-tidy headers (fix)' { Invoke-TidyHeaders $true }
+        }
     }
     if ($format) {
         $phaseFailed = $false
         Invoke-WithSummary 'clang-format (fix)' { Invoke-Format $files $true }
     }
     if ($tidy) {
-        $phaseFailed = $false
-        Invoke-WithSummary 'clang-tidy (check)' { Invoke-TidyCheck }
+        if ($hasSources) {
+            $phaseFailed = $false
+            Invoke-WithSummary 'clang-tidy (check)' { Invoke-TidyCheck }
+        }
+        if ($headers.Count) {
+            $phaseFailed = $false
+            Invoke-WithSummary 'clang-tidy headers (check)' { Invoke-TidyHeaders }
+        }
     }
 } else {
     if ($format) {
@@ -397,13 +507,20 @@ if ($fix) {
         Invoke-WithSummary 'clang-format (check)' { Invoke-Format $files $false }
     }
     if ($tidy) {
-        $phaseFailed = $false
-        Invoke-WithSummary 'clang-tidy (check)' { Invoke-TidyCheck }
+        if ($hasSources) {
+            $phaseFailed = $false
+            Invoke-WithSummary 'clang-tidy (check)' { Invoke-TidyCheck }
+        }
+        if ($headers.Count) {
+            $phaseFailed = $false
+            Invoke-WithSummary 'clang-tidy headers (check)' { Invoke-TidyHeaders }
+        }
     }
 }
 Write-Host "`nClang findings summary (emitted diagnostics):"
 foreach ($summary in $summaries) {
-    $suffix = if ($summary.Failed) { ' (failed)' } else { '' }
+    $suffix = if ($summary.External) { ", $($summary.External) external" } else { '' }
+    if ($summary.Failed) { $suffix += ' (failed)' }
     Write-Host "  $($summary.Label): $($summary.Errors) errors, $($summary.Warnings) warnings, $($summary.Notes) notes$suffix"
 }
 exit $status
