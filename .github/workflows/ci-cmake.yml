@@ -22,13 +22,14 @@ jobs:
         run: |
           set -euxo pipefail
           export DEBIAN_FRONTEND=noninteractive
+          echo 'deb http://deb.debian.org/debian bookworm-backports main' > /etc/apt/sources.list.d/bookworm-backports.list
           apt-get update
           apt-get install -y --no-install-recommends \
             build-essential \
             ca-certificates \
             cmake \
             git \
-            libboost-all-dev \
+            libboost1.83-all-dev \
             libmsgsl-dev \
             libyaml-cpp-dev \
             libxerces-c-dev \
@@ -58,7 +59,7 @@ jobs:
             -DFMILIB_BUILD_SHARED_LIB=ON \
             -DFMILIB_BUILD_TESTS=OFF \
             -DFMILIB_GENERATE_DOXYGEN_DOC=OFF
-          cmake --build fmi-library-build
+          cmake --build fmi-library-build --parallel 2
           cmake --install fmi-library-build
           wget \
             --no-check-certificate \
@@ -69,7 +70,7 @@ jobs:
             -B libcbor-0.11.0/build \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_POSITION_INDEPENDENT_CODE=ON
-          cmake --build libcbor-0.11.0/build
+          cmake --build libcbor-0.11.0/build --parallel 2
           cmake --install libcbor-0.11.0/build
       - name: Build cosim
         shell: bash
@@ -80,5 +81,5 @@ jobs:
             -B build \
             -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
             -DBUILD_${{ matrix.shared_libs }}
-          cmake --build build
+          cmake --build build --parallel 2
           ctest --test-dir build --output-on-failure
