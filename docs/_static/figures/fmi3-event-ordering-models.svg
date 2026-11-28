@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 370" role="img" aria-labelledby="title desc">
+  <title id="title">Models for the event-ordering examples</title>
+  <desc id="desc">The known-event trace uses one factor-three Event Mode participant. The simultaneous-input trace connects event-capable source A to event-capable target B, with respective initial inputs two and one. The fixed-communication-step trace concerns a separate peer that cannot change its requested step size.</desc>
+  <style>
+    .background { fill: #fff; } .box { fill: #eaf3fa; stroke: #315b77; stroke-width: 2; }
+    .event { fill: #fff6e3; stroke: #9a6a18; stroke-width: 2; }
+    .arrow { fill: none; stroke: #315b77; stroke-width: 3; marker-end: url(#arrow); }
+    .label { font: bold 17px sans-serif; fill: #142b3a; } .text { font: 15px sans-serif; fill: #243d4e; }
+  </style>
+  <defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#315b77"/></marker></defs>
+  <rect class="background" width="1000" height="370"/>
+  <text class="label" x="35" y="33">Known event</text>
+  <rect class="event" x="35" y="48" width="420" height="70" rx="8"/>
+  <text class="text" x="55" y="77">FMI 3 participant: factor 3, Event Mode</text>
+  <text class="text" x="55" y="100">Advertises event at 1.5 s; base step 1 s</text>
+  <text class="label" x="35" y="155">Simultaneous input events</text>
+  <rect class="event" x="35" y="170" width="310" height="80" rx="8"/>
+  <text class="label" x="55" y="200">Event source A</text>
+  <text class="text" x="55" y="227">Input 2; output becomes 2</text>
+  <rect class="event" x="655" y="170" width="310" height="80" rx="8"/>
+  <text class="label" x="675" y="200">Event target B</text>
+  <text class="text" x="675" y="227">Initial input 1; final output 2</text>
+  <path class="arrow" d="M345 210 H653"/>
+  <text class="text" x="422" y="196">output -&gt; input</text>
+  <text class="label" x="35" y="287">Fixed communication-step peer</text>
+  <rect class="box" x="35" y="302" width="500" height="50" rx="8"/>
+  <text class="text" x="55" y="333">First request 0.4 s; a later 0.3 s request is rejected</text>
+</svg>

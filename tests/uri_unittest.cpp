@@ -189,6 +189,10 @@ BOOST_AUTO_TEST_CASE(percent_encoding)
 
     BOOST_TEST(percent_decode("%20foo%2A%2F123%3Bbar%25") == " foo*/123;bar%");
     BOOST_TEST(percent_decode("%20foo%2a%2f123%3bbar%25") == " foo*/123;bar%");
+    BOOST_TEST(percent_decode("%") == "%");
+    BOOST_TEST(percent_decode("%F") == "%F");
+    BOOST_TEST(percent_decode("ab%") == "ab%");
+    BOOST_TEST(percent_decode("abc%2") == "abc%2");
     BOOST_CHECK_THROW(percent_decode("%G0"), std::domain_error);
     BOOST_CHECK_THROW(percent_decode("%0G"), std::domain_error);
 

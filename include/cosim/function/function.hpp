@@ -11,9 +11,10 @@
 #define COSIM_FUNCTION_FUNCTION_HPP
 
 #include <cosim/function/description.hpp>
+#include <cosim/model_description.hpp>
 
 #include <memory>
-#include <unordered_map>
+#include <string_view>
 
 
 namespace cosim
@@ -23,7 +24,7 @@ namespace cosim
 /**
  *  An interface for function instances.
  *
- *  ### Functions
+ *  \par Functions
  *
  *  In the context of this library, a "function" is some operation that is
  *  performed on variables between co-simulation time steps, i.e., at
@@ -78,7 +79,7 @@ namespace cosim
  *  integer vectors (variable type).  See `vector_sum_function_type` for a
  *  concrete implementation of this.
  *
- *  ### Function types and function instances
+ *  \par Function types and function instances
  *
  *  To be more precise, we need to distinguish between *function types* and
  *  *function instances*.  The distinction is analogue to that between a
@@ -100,7 +101,7 @@ namespace cosim
  *  by the `function` interface, and are typically created with
  *  `function_type::instantiate()`.
  */
-class function
+class function // NOLINT(cppcoreguidelines-special-member-functions): Preserve existing interface copy and move behavior.
 {
 public:
     /**
@@ -110,7 +111,7 @@ public:
      *  values, since all parameters must have a specific value once the
      *  function has been instantiated.
      */
-    virtual function_description description() const = 0;
+    virtual function_description description() const = 0; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
 
     /// Sets the value of a real input variable.
     virtual void set_real(const function_io_reference& reference, double value) = 0;
@@ -125,6 +126,17 @@ public:
     virtual void set_string(const function_io_reference& reference, std::string_view value) = 0;
 
     /**
+     *  Sets the complete value of a scalar or array input variable.
+     *
+     *  The default implementation bridges scalar Real, Integer, Boolean, and
+     *  String values to the legacy typed methods. Implementations supporting
+     *  arrays or additional exact types must override this method.
+     */
+    virtual void set_variable_value(
+        const function_io_reference& reference,
+        const variable_value& value);
+
+    /**
      *  Retrieves the value of a real variable.
      *
      *  If `reference` refers to an output variable, the function is only
@@ -132,7 +144,7 @@ public:
      *  called, and *before* the next call to any of the `set_xxx()`
      *  functions.
      */
-    virtual double get_real(const function_io_reference& reference) const = 0;
+    virtual double get_real(const function_io_reference& reference) const = 0; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
 
     /**
      *  Retrieves the value of an integer variable.
@@ -142,7 +154,7 @@ public:
      *  called, and *before* the next call to any of the `set_xxx()`
      *  functions.
      */
-    virtual int get_integer(const function_io_reference& reference) const = 0;
+    virtual int get_integer(const function_io_reference& reference) const = 0; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
 
     /**
      *  Retrieves the value of a boolean variable.
@@ -152,7 +164,7 @@ public:
      *  called, and *before* the next call to any of the `set_xxx()`
      *  functions.
      */
-    virtual bool get_boolean(const function_io_reference& reference) const = 0;
+    virtual bool get_boolean(const function_io_reference& reference) const = 0; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
 
     /**
      *  Retrieves the value of a real variable.
@@ -165,7 +177,26 @@ public:
      *  The returned string view must remain valid at least until the next
      *  time any of the functions in this interface are called.
      */
-    virtual std::string_view get_string(const function_io_reference& reference) const = 0;
+    virtual std::string_view get_string(const function_io_reference& reference) const = 0; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
+
+    /**
+     *  Retrieves the complete value of a scalar or array variable.
+     *
+     *  The default implementation bridges scalar Real, Integer, Boolean, and
+     *  String values to the legacy typed methods. Implementations supporting
+     *  arrays or additional exact types must override this method.
+     */
+    virtual variable_value get_variable_value( // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
+        const function_io_reference& reference) const;
+
+    /**
+     * Whether repeated calculations at the same physical time are safe.
+     *
+     * Opt in only when setting inputs and calling calculate repeatedly has no
+     * externally visible side effects beyond the resulting output values.
+     * Classes derived from a built-in function must opt in separately.
+     */
+    virtual bool supports_event_iteration() const noexcept { return false; } // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
 
     /// Performs the function calculations.
     virtual void calculate() = 0;
@@ -181,7 +212,7 @@ public:
  *  For more information about function types and instances, see the
  *  documentation for `cosim::function`.
  */
-class function_type
+class function_type // NOLINT(cppcoreguidelines-special-member-functions): Preserve existing interface copy and move behavior.
 {
 public:
     /**
@@ -192,7 +223,7 @@ public:
      *  fields are given a `function_parameter_placeholder` value in the
      *  returned object.
      */
-    virtual function_type_description description() const = 0;
+    virtual function_type_description description() const = 0; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
 
     /**
      *  Instantiates a function of this type.

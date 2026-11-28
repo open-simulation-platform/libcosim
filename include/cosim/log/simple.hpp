@@ -12,10 +12,13 @@
 
 #include <cosim/log/logger.hpp>
 
-#include <boost/date_time/posix_time/posix_time.hpp>
-#include <boost/log/core.hpp>
-#include <boost/log/expressions.hpp>
-#include <boost/log/support/date_time.hpp>
+#include <boost/date_time/posix_time/ptime.hpp>
+#include <boost/log/core.hpp> // IWYU pragma: keep
+#include <boost/log/expressions.hpp> // IWYU pragma: keep
+#include <boost/log/expressions/formatters/date_time.hpp>
+#include <boost/log/expressions/formatters/stream.hpp>
+#include <boost/log/expressions/message.hpp>
+#include <boost/log/support/date_time.hpp> // IWYU pragma: keep
 #include <boost/log/utility/setup/common_attributes.hpp>
 #include <boost/log/utility/setup/console.hpp>
 
@@ -23,9 +26,7 @@
 #include <ios>
 
 
-namespace cosim
-{
-namespace log
+namespace cosim::log
 {
 
 
@@ -46,11 +47,11 @@ inline void set_global_output_level(severity_level lvl)
  */
 inline auto simple_formatter()
 {
-    using namespace boost::log;
-    return expressions::stream
-        << expressions::format_date_time<boost::posix_time::ptime>("TimeStamp", "%H:%M:%S.%f")
-        << " [" << std::left << std::setw(7) << severity << "] "
-        << expressions::smessage;
+    constexpr int severityWidth = 7;
+    return boost::log::expressions::stream
+        << boost::log::expressions::format_date_time<boost::posix_time::ptime>("TimeStamp", "%H:%M:%S.%f")
+        << " [" << std::left << std::setw(severityWidth) << severity << "] "
+        << boost::log::expressions::smessage;
 }
 
 
@@ -71,6 +72,5 @@ inline void setup_simple_console_logging()
 }
 
 
-} // namespace log
-} // namespace cosim
+} // namespace cosim::log
 #endif // header guard

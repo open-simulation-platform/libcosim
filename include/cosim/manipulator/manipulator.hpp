@@ -17,6 +17,7 @@
 
 #include <functional>
 #include <string>
+#include <string_view>
 
 namespace cosim
 {
@@ -25,6 +26,10 @@ namespace cosim
 class manipulable : public observable
 {
 public:
+    using variable_modifier = std::function<variable_value(
+        const variable_value&,
+        duration)>;
+
     /**
      *  Exposes a variable for assignment with `set_xxx()`.
      *
@@ -35,7 +40,37 @@ public:
      *  Calling this function more than once for the same variable has no
      *  effect.
      */
-    virtual void expose_for_setting(variable_type, value_reference) = 0;
+    virtual void expose_for_setting(variable_type, value_reference) = 0; // NOLINT(bugprone-virtual-near-miss): Setting and getting are distinct operations.
+
+    /**
+     * Signals a known discontinuity of a continuous input at the current
+     * communication point. A changed sample alone does not imply a jump.
+     * The variable must have been exposed for setting.
+     */
+    virtual void signal_input_discontinuity(
+        variable_type type,
+        value_reference reference);
+
+    /**
+     * Opts an exposed continuous input into treating each changed effective
+     * sample as a possible discontinuity. This may cause extra events for
+     * smooth inputs and does not locate a jump between communication points.
+     * Configure before simulation starts; the default is false.
+     */
+    virtual void set_input_sample_discontinuity_policy(
+        variable_type type,
+        value_reference reference,
+        bool enabled);
+
+    /**
+     * Declares the current input modifier safe to reevaluate during coupled
+     * event iteration. The modifier must be deterministic and free of
+     * externally visible side effects. Replacing it removes this declaration.
+     */
+    virtual void set_input_modifier_replay_safe(
+        variable_type type,
+        value_reference reference,
+        bool enabled);
 
     /**
      *  Sets a modifier for the value of a real input variable.
@@ -148,6 +183,18 @@ public:
     virtual void set_string_output_modifier(
         value_reference reference,
         std::function<std::string(std::string_view, duration)> modifier) = 0;
+
+    /// Sets a modifier for a complete scalar or array input value.
+    virtual void set_variable_input_modifier(
+        variable_type type,
+        value_reference reference,
+        variable_modifier modifier);
+
+    /// Sets a modifier for a complete scalar or array output value.
+    virtual void set_variable_output_modifier(
+        variable_type type,
+        value_reference reference,
+        variable_modifier modifier);
 };
 
 /**
@@ -157,7 +204,7 @@ public:
  *  may react to in some way. It may modify the slaves' variable values
  *  through the `simulator` interface at any time.
  */
-class manipulator
+class manipulator // NOLINT(cppcoreguidelines-special-member-functions): Preserve existing interface copy and move behavior.
 {
 public:
     /// A simulator was added to the execution.
@@ -170,7 +217,7 @@ public:
     virtual void step_commencing(
         time_point currentTime) = 0;
 
-    virtual ~manipulator() noexcept { }
+    virtual ~manipulator() noexcept = default;
 };
 
 } // namespace cosim

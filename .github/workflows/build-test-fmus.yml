@@ -1,0 +1,171 @@
+name: Build test FMU fixtures
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  REFERENCE_FMUS_COMMIT: 75d16f87da2fba3c552c99cd683128a9591c1fa3
+  FMI_LIBRARY_COMMIT: 4a4b21ec10a632b2768a604c2330c54204919644
+
+jobs:
+  build:
+    name: Build ${{ matrix.platform }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: windows
+            runner: windows-2022
+          - platform: linux
+            runner: ubuntu-24.04
+          - platform: macos-intel
+            runner: macos-15-intel
+          - platform: macos-arm
+            runner: macos-15
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Check out Reference-FMUs
+        id: reference
+        uses: actions/checkout@v4
+        with:
+          repository: open-simulation-platform/Reference-FMUs
+          ref: v0.0.42
+          path: workflow-inputs/reference-fmus
+          persist-credentials: false
+      - name: Check out FMI Library
+        id: fmi-library
+        uses: actions/checkout@v4
+        with:
+          repository: modelon-community/fmi-library
+          ref: 3.0.4
+          path: workflow-inputs/fmi-library
+          persist-credentials: false
+      - name: Verify release commits
+        shell: bash
+        env:
+          REFERENCE_CHECKED_OUT: ${{ steps.reference.outputs.commit }}
+          FMI_LIBRARY_CHECKED_OUT: ${{ steps.fmi-library.outputs.commit }}
+        run: |
+          set -euo pipefail
+          test "$REFERENCE_CHECKED_OUT" = "$REFERENCE_FMUS_COMMIT"
+          test "$FMI_LIBRARY_CHECKED_OUT" = "$FMI_LIBRARY_COMMIT"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Build Windows or macOS fixtures
+        if: matrix.platform != 'linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          workspace="$GITHUB_WORKSPACE"
+          work="$RUNNER_TEMP"
+          patch_path="$(command -v patch)"
+          if [ "$RUNNER_OS" = Windows ]; then
+            workspace="$(cygpath -m "$workspace")"
+            work="$(cygpath -m "$work")"
+            patch_path="$(cygpath -m "$patch_path")"
+          fi
+          cmake -S "$workspace/tests/build-test-fmus" -B "$work/fmu-build" \
+            -DCMAKE_BUILD_TYPE=Release \
+            "-DPatch_EXECUTABLE=$patch_path" \
+            "-DREFERENCE_FMUS_SOURCE_DIR=$workspace/workflow-inputs/reference-fmus" \
+            "-DFMILibrary_INCLUDE_DIRS=$workspace/workflow-inputs/fmi-library/ThirdParty/FMI/default"
+          cmake --build "$work/fmu-build" --config Release --target build-test-fmus --parallel
+      - name: Build Linux fixtures in manylinux2014
+        if: matrix.platform == 'linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE:/workspace:ro" \
+            -v "$RUNNER_TEMP:/work" \
+            -w /workspace quay.io/pypa/manylinux2014_x86_64 \
+            /bin/bash -euxo pipefail -c '
+              python=/opt/python/cp311-cp311/bin/python
+              "$python" -m pip install cmake==3.31.6
+              export PATH=/opt/python/cp311-cp311/bin:$PATH
+              cmake -S tests/build-test-fmus -B /work/fmu-build \
+                -DCMAKE_BUILD_TYPE=Release \
+                -DREFERENCE_FMUS_SOURCE_DIR=/workspace/workflow-inputs/reference-fmus \
+                -DFMILibrary_INCLUDE_DIRS=/workspace/workflow-inputs/fmi-library/ThirdParty/FMI/default
+              cmake --build /work/fmu-build --config Release --target build-test-fmus --parallel
+            '
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.platform }}
+          path: ${{ runner.temp }}/fmu-build/staged-test-fmus
+          if-no-files-found: error
+          retention-days: 7
+
+  package:
+    name: Merge platform binaries
+    needs: build
+    runs-on: macos-15-intel
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Check out Reference-FMUs
+        id: reference
+        uses: actions/checkout@v4
+        with:
+          repository: open-simulation-platform/Reference-FMUs
+          ref: v0.0.42
+          path: workflow-inputs/reference-fmus
+          persist-credentials: false
+      - name: Check out FMI Library
+        id: fmi-library
+        uses: actions/checkout@v4
+        with:
+          repository: modelon-community/fmi-library
+          ref: 3.0.4
+          path: workflow-inputs/fmi-library
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/download-artifact@v4
+        with:
+          path: ${{ runner.temp }}/platforms
+      - name: Verify embedded source revisions
+        shell: bash
+        env:
+          REFERENCE_CHECKED_OUT: ${{ steps.reference.outputs.commit }}
+          FMI_LIBRARY_CHECKED_OUT: ${{ steps.fmi-library.outputs.commit }}
+        run: |
+          set -euo pipefail
+          test "$REFERENCE_CHECKED_OUT" = "$REFERENCE_FMUS_COMMIT"
+          test "$FMI_LIBRARY_CHECKED_OUT" = "$FMI_LIBRARY_COMMIT"
+      - name: Repackage FMUs
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 tests/build-test-fmus/package.py merge \
+            "$RUNNER_TEMP/platforms" "$RUNNER_TEMP/combined" "$GITHUB_WORKSPACE" \
+            "$GITHUB_WORKSPACE/workflow-inputs/reference-fmus" \
+            "$GITHUB_WORKSPACE/workflow-inputs/fmi-library" \
+            "$REFERENCE_FMUS_COMMIT" "$FMI_LIBRARY_COMMIT" "$GITHUB_SHA"
+          python3 tests/build-test-fmus/package.py bundle \
+            "$RUNNER_TEMP/combined" "$RUNNER_TEMP/generated-test-fmus.zip"
+      - name: Describe scope
+        shell: bash
+        run: |
+          cat >> "$GITHUB_STEP_SUMMARY" <<'EOF'
+          This artifact contains the 33 generated Reference-FMU and libcosim
+          fixture archives, with Windows x64, Linux x64 and macOS x64/arm64
+          binaries. Existing checked-in legacy FMUs are outside this workflow.
+          EOF
+      - uses: actions/upload-artifact@v7
+        with:
+          path: ${{ runner.temp }}/generated-test-fmus.zip
+          archive: false
+          if-no-files-found: error
+          retention-days: 14

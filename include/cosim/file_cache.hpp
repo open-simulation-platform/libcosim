@@ -33,24 +33,24 @@ namespace cosim
  *  abuse the API by modifying the contents of a subdirectory after
  *  requesting read-only access.
  */
-class file_cache
+class file_cache // NOLINT(cppcoreguidelines-special-member-functions): Preserve existing interface copy and move behavior.
 {
 public:
     /// A handle that represents read/write access to a cache subdirectory.
-    class directory_rw
+    class directory_rw // NOLINT(cppcoreguidelines-special-member-functions): Preserve existing interface copy and move behavior.
     {
     public:
         /// The filesystem path to the subdirectory.
-        virtual cosim::filesystem::path path() const = 0;
+        virtual cosim::filesystem::path path() const = 0; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
         virtual ~directory_rw() = default;
     };
 
     /// A handle that represents read-only access to a cache subdirectory.
-    class directory_ro
+    class directory_ro // NOLINT(cppcoreguidelines-special-member-functions): Preserve existing interface copy and move behavior.
     {
     public:
         /// The filesystem path to the subdirectory.
-        virtual cosim::filesystem::path path() const = 0;
+        virtual cosim::filesystem::path path() const = 0; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
         virtual ~directory_ro() = default;
     };
 
@@ -77,7 +77,7 @@ public:
      *  The object should therefore be kept around as long as access is needed,
      *  but usually no longer, since it may block others from gaining access.
      *  Once the object expires, the directory may be modified or deleted by
-     *  others.
+     *  others, provided no other read-only handles are still alive.
      *
      *  If the function is unable to take shared ownership of the directory,
      *  it may block until it becomes able to do so, or it may throw.
@@ -105,7 +105,7 @@ public:
     temporary_file_cache& operator=(const temporary_file_cache&) = delete;
     temporary_file_cache(temporary_file_cache&&) noexcept;
     temporary_file_cache& operator=(temporary_file_cache&&) noexcept;
-    ~temporary_file_cache() noexcept;
+    ~temporary_file_cache() noexcept override;
 
     std::unique_ptr<directory_rw> get_directory_rw(std::string_view key) override;
     std::unique_ptr<directory_ro> get_directory_ro(std::string_view key) override;
@@ -135,7 +135,7 @@ public:
     persistent_file_cache& operator=(const persistent_file_cache&) = delete;
     persistent_file_cache(persistent_file_cache&&) noexcept;
     persistent_file_cache& operator=(persistent_file_cache&&) noexcept;
-    ~persistent_file_cache() noexcept;
+    ~persistent_file_cache() noexcept override;
 
     std::unique_ptr<directory_rw> get_directory_rw(std::string_view key) override;
     std::unique_ptr<directory_ro> get_directory_ro(std::string_view key) override;

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OspSystemStructure
+        xmlns="http://opensimulationplatform.com/MSMI/OSPSystemStructure"
+        version="0.1">
+    <StartTime>0.0</StartTime>
+    <BaseStepSize>0.1</BaseStepSize>
+    <Algorithm>fixedStep</Algorithm>
+    <Simulators>
+        <Simulator name="source" source="../../fmus/Feedthrough.fmu"/>
+        <Simulator name="target" source="../../fmus/Feedthrough.fmu"/>
+    </Simulators>
+    <Connections>
+        <VariableConnection>
+            <Variable simulator="source" name="Float32_continuous_output"/>
+            <Variable simulator="target" name="Float32_continuous_input"/>
+        </VariableConnection>
+        <VariableConnection>
+            <Variable simulator="source" name="Float32_discrete_output"/>
+            <Variable simulator="target" name="Float32_discrete_input"/>
+        </VariableConnection>
+        <VariableConnection>
+            <Variable simulator="source" name="Float64_continuous_output"/>
+            <Variable simulator="target" name="Float64_continuous_input"/>
+        </VariableConnection>
+        <VariableConnection>
+            <Variable simulator="source" name="Float64_discrete_output"/>
+            <Variable simulator="target" name="Float64_discrete_input"/>
+        </VariableConnection>
+        <VariableConnection>
+            <Variable simulator="source" name="Int8_output"/>
+            <Variable simulator="target" name="Int8_input"/>
+        </VariableConnection>
+        <VariableConnection>
+            <Variable simulator="source" name="UInt8_output"/>
+            <Variable simulator="target" name="UInt8_input"/>
+        </VariableConnection>
+        <VariableConnection>
+            <Variable simulator="source" name="Int16_output"/>
+            <Variable simulator="target" name="Int16_input"/>
+        </VariableConnection>
+        <VariableConnection>
+            <Variable simulator="source" name="UInt16_output"/>
+            <Variable simulator="target" name="UInt16_input"/>
+        </VariableConnection>
+        <VariableConnection>
+            <Variable simulator="source" name="Int32_output"/>
+            <Variable simulator="target" name="Int32_input"/>
+        </VariableConnection>
+        <VariableConnection>
+            <Variable simulator="source" name="UInt32_output"/>
+            <Variable simulator="target" name="UInt32_input"/>
+        </VariableConnection>
+        <VariableConnection>
+            <Variable simulator="source" name="Int64_output"/>
+            <Variable simulator="target" name="Int64_input"/>
+        </VariableConnection>
+        <VariableConnection>
+            <Variable simulator="source" name="UInt64_output"/>
+            <Variable simulator="target" name="UInt64_input"/>
+        </VariableConnection>
+        <VariableConnection>
+            <Variable simulator="source" name="Boolean_output"/>
+            <Variable simulator="target" name="Boolean_input"/>
+        </VariableConnection>
+        <VariableConnection>
+            <Variable simulator="source" name="String_output"/>
+            <Variable simulator="target" name="String_input"/>
+        </VariableConnection>
+        <VariableConnection>
+            <Variable simulator="source" name="Binary_output"/>
+            <Variable simulator="target" name="Binary_input"/>
+        </VariableConnection>
+        <VariableConnection>
+            <Variable simulator="source" name="Enumeration_output"/>
+            <Variable simulator="target" name="Enumeration_input"/>
+        </VariableConnection>
+    </Connections>
+</OspSystemStructure>

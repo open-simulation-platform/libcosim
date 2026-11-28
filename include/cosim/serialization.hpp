@@ -11,19 +11,20 @@
 #define COSIM_SERIALIZATION_HPP
 
 #include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/ptree_fwd.hpp>
 
 #include <cstddef>
 #include <cstdint>
+#include <ios>
+#include <istream>
 #include <ostream>
 #include <string>
 #include <variant>
 #include <vector>
 
 
-namespace cosim
-{
 /// Supporting functionality for serialization and persistence of simulation state.
-namespace serialization
+namespace cosim::serialization
 {
 
 
@@ -54,8 +55,7 @@ using node_data = std::variant<
     char,
     std::string,
     std::byte,
-    std::vector<std::byte>
->;
+    std::vector<std::byte>>;
 
 
 /**
@@ -100,17 +100,18 @@ struct node_data_translator
 
 namespace format
 {
-const auto format_xalloc = std::ios_base::xalloc();
+const auto format_xalloc = std::ios_base::xalloc(); // NOLINT(bugprone-throwing-static-initialization,cert-err58-cpp): Preserve stream format initialization.
 const int FORMAT_CBOR = 1;
 const int FORMAT_PRETTY_PRINT = 2;
 
-std::ios_base& cbor(std::ios_base& os);
-std::ios_base& pretty_print(std::ios_base& os);
+/// Selects CBOR serialization for subsequent stream operations.
+std::ios_base& cbor(std::ios_base& stream);
+/// Selects human-readable pretty printing for subsequent stream operations.
+std::ios_base& pretty_print(std::ios_base& stream);
 
 } // namespace format
 
-} // namespace serialization
-} // namespace cosim
+} // namespace cosim::serialization
 
 /**
  *  Serializes `data` into a format specified via cosim::serialization::format and writes it to the output stream `out`.
@@ -118,9 +119,9 @@ std::ios_base& pretty_print(std::ios_base& os);
 std::ostream& operator<<(std::ostream& out, const cosim::serialization::node& data);
 
 /**
- *  Reads a stream from `in` and converts it to `data` format specified via cosim::serialization::format.
+ *  Reads a stream from `input` into `root` using the format specified via cosim::serialization::format.
  */
-std::istream& operator>>(std::istream& in, cosim::serialization::node& data);
+std::istream& operator>>(std::istream& input, cosim::serialization::node& root);
 
 /**
  *  Writes the contents of `data` to the output stream `out` in a human-readable
@@ -135,15 +136,13 @@ void print_ptree(std::ostream& out, const cosim::serialization::node& data);
 
 // Make node_translator the default translator for property trees whose data
 // type is node_data.
-namespace boost
-{
-namespace property_tree
+namespace boost::property_tree
 {
 template<typename T>
 struct translator_between<cosim::serialization::node_data, T>
 {
     using type = cosim::serialization::node_data_translator<T>;
 };
-}} // namespace boost::property_tree
+} // namespace boost::property_tree
 
 #endif // COSIM_SERIALIZATION_HPP

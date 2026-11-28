@@ -1,0 +1,10 @@
+# Connect a test to the fixture targets it needs and its runtime paths.
+function(libcosim_use_test_fixtures test)
+    cmake_parse_arguments(PARSE_ARGV 1 arg "" "" "TARGETS;ENVIRONMENT")
+    if(arg_TARGETS)
+        add_dependencies(${test} ${arg_TARGETS})
+    endif()
+    if(arg_ENVIRONMENT)
+        set_property(TEST ${test} APPEND PROPERTY ENVIRONMENT ${arg_ENVIRONMENT})
+    endif()
+endfunction()

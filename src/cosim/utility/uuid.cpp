@@ -8,19 +8,18 @@
 #include <boost/uuid/random_generator.hpp>
 #include <boost/uuid/uuid_io.hpp>
 
+#include <string>
 
-namespace cosim
+
+namespace cosim::utility
 {
-namespace utility
-{
 
 
-std::string random_uuid() noexcept
+std::string random_uuid() noexcept // NOLINT(bugprone-exception-escape): Preserve the existing noexcept contract.
 {
     boost::uuids::random_generator gen;
     return boost::uuids::to_string(gen());
 }
 
 
-} // namespace utility
-} // namespace cosim
+} // namespace cosim::utility

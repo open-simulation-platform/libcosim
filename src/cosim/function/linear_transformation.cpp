@@ -5,12 +5,15 @@
  */
 #include "cosim/function/linear_transformation.hpp"
 
+#include "cosim/function/description.hpp"
+#include "cosim/function/function.hpp"
 #include "cosim/function/utility.hpp"
+#include "cosim/model_description.hpp"
 
+#include <memory>
 #include <stdexcept>
-
-
-using namespace std::literals;
+#include <string>
+#include <string_view>
 
 
 namespace cosim
@@ -20,52 +23,56 @@ namespace
 
 function_type_description linear_transformation_description()
 {
-    function_type_description f;
-    f.parameters = {
+    function_type_description description;
+    description.parameters = {
         // parameters (in the same order as linear_transformation_parameters enum!)
         function_parameter_description{
-            "offset"s, // name
+            std::string{"offset"}, // name
             function_parameter_type::real, // type
             0.0, // default_value
             {}, // min_value
-            {} // max_value
+            {}, // max_value
         },
         function_parameter_description{
-            "factor"s, // name
+            std::string{"factor"}, // name
             function_parameter_type::real, // type
             1.0, // default_value
             {}, // min_value
-            {} // max_value
+            {}, // max_value
         },
     };
-    f.io_groups = {
+    description.io_groups = {
         // io_groups
         function_io_group_description{
-            "in"s, // name
+            std::string{"in"}, // name
             1, // count
             {
                 // ios
                 function_io_description{
-                    ""s, // name (inherited from group)
+                    std::string{}, // name (inherited from group)
                     variable_type::real, // type
                     variable_causality::input, // causality
                     1, // count
+                    {}, // dimensions
                 },
-            }},
+            },
+        },
         function_io_group_description{
-            "out"s, // name
+            std::string{"out"}, // name
             1, // count
             {
                 // ios
                 function_io_description{
-                    ""s, // name = (inherited from group)
+                    std::string{}, // name = (inherited from group)
                     variable_type::real, // type
                     variable_causality::output, // causality
                     1, // count
+                    {}, // dimensions
                 },
-            }},
+            },
+        },
     };
-    return f;
+    return description;
 }
 
 } // namespace
@@ -81,7 +88,7 @@ function_type_description linear_transformation_description()
 }
 
 
-linear_transformation_function::linear_transformation_function(double offset, double factor)
+linear_transformation_function::linear_transformation_function(double offset, double factor) // NOLINT(bugprone-easily-swappable-parameters): Preserve the public constructor signature.
     : offset_(offset)
     , factor_(factor)
 {
@@ -89,7 +96,7 @@ linear_transformation_function::linear_transformation_function(double offset, do
 
 function_description linear_transformation_function::description() const
 {
-    return linear_transformation_description();
+    return linear_transformation_description(); // NOLINT(cppcoreguidelines-slicing): Return the function instance description, not its type parameters.
 }
 
 void linear_transformation_function::set_real(
@@ -104,19 +111,19 @@ void linear_transformation_function::set_real(
 }
 
 void linear_transformation_function::set_integer(
-    const function_io_reference&, int)
+    const function_io_reference& /*reference*/, int /*value*/)
 {
     throw_bad_io_ref();
 }
 
 void linear_transformation_function::set_boolean(
-    const function_io_reference&, bool)
+    const function_io_reference& /*reference*/, bool /*value*/)
 {
     throw_bad_io_ref();
 }
 
 void linear_transformation_function::set_string(
-    const function_io_reference&, std::string_view)
+    const function_io_reference& /*reference*/, std::string_view /*value*/)
 {
     throw_bad_io_ref();
 }
@@ -134,26 +141,26 @@ double linear_transformation_function::get_real(
 }
 
 int linear_transformation_function::get_integer(
-    const function_io_reference&) const
+    const function_io_reference& /*reference*/) const
 {
     throw_bad_io_ref();
 }
 
 bool linear_transformation_function::get_boolean(
-    const function_io_reference&) const
+    const function_io_reference& /*reference*/) const
 {
     throw_bad_io_ref();
 }
 
 std::string_view linear_transformation_function::get_string(
-    const function_io_reference&) const
+    const function_io_reference& /*reference*/) const
 {
     throw_bad_io_ref();
 }
 
 void linear_transformation_function::calculate()
 {
-    output_ = offset_ + factor_ * input_;
+    output_ = offset_ + (factor_ * input_);
 }
 
 

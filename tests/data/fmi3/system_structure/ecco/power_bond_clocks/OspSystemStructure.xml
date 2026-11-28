@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OspSystemStructure
+        xmlns="http://opensimulationplatform.com/MSMI/OSPSystemStructure"
+        version="0.1">
+    <StartTime>0.0</StartTime>
+    <BaseStepSize>1.5</BaseStepSize>
+    <Algorithm>ecco</Algorithm>
+    <Simulators>
+        <Simulator name="componentA" source="../../fmus/PowerBond.fmu">
+            <InitialValues>
+                <InitialValue variable="gain"><Real value="0.2"/></InitialValue>
+                <InitialValue variable="bias"><Real value="1.0"/></InitialValue>
+            </InitialValues>
+        </Simulator>
+        <Simulator name="componentB" source="../../fmus/PowerBond.fmu">
+            <InitialValues>
+                <InitialValue variable="gain"><Real value="0.3"/></InitialValue>
+                <InitialValue variable="bias"><Real value="-0.5"/></InitialValue>
+            </InitialValues>
+        </Simulator>
+        <Simulator name="clockSource" source="../../fmus/ClockedCoSimulation.fmu"/>
+        <Simulator name="clockTarget" source="../../fmus/ClockedCoSimulation.fmu"/>
+        <Simulator name="dataSource" source="../../fmus/Feedthrough.fmu"/>
+        <Simulator name="dataTarget" source="../../fmus/Feedthrough.fmu"/>
+    </Simulators>
+    <Connections>
+        <VariableConnection powerBond="mechanicalBond">
+            <Variable simulator="componentA" name="input" causality="input"/>
+            <Variable simulator="componentB" name="output" causality="output"/>
+        </VariableConnection>
+        <VariableConnection powerBond="mechanicalBond">
+            <Variable simulator="componentB" name="input" causality="input"/>
+            <Variable simulator="componentA" name="output" causality="output"/>
+        </VariableConnection>
+        <VariableConnection>
+            <Variable simulator="clockSource" name="outClock"/>
+            <Variable simulator="clockTarget" name="inClock2"/>
+        </VariableConnection>
+        <VariableConnection>
+            <Variable simulator="clockSource" name="inClock1Ticks"/>
+            <Variable simulator="clockTarget" name="input2"/>
+        </VariableConnection>
+        <VariableConnection>
+            <Variable simulator="dataSource" name="Binary_output"/>
+            <Variable simulator="dataTarget" name="Binary_input"/>
+        </VariableConnection>
+        <VariableConnection>
+            <Variable simulator="dataSource" name="Enumeration_output"/>
+            <Variable simulator="dataTarget" name="Enumeration_input"/>
+        </VariableConnection>
+    </Connections>
+    <EccoConfiguration>
+        <SafetyFactor>0.9</SafetyFactor>
+        <StepSize>1.5</StepSize>
+        <MinimumStepSize>0.1</MinimumStepSize>
+        <MaximumStepSize>2.0</MaximumStepSize>
+        <MinimumChangeRate>1.0</MinimumChangeRate>
+        <MaximumChangeRate>1.0</MaximumChangeRate>
+        <ProportionalGain>0.2</ProportionalGain>
+        <IntegralGain>0.15</IntegralGain>
+        <RelativeTolerance>1e-6</RelativeTolerance>
+        <AbsoluteTolerance>1e-6</AbsoluteTolerance>
+    </EccoConfiguration>
+</OspSystemStructure>

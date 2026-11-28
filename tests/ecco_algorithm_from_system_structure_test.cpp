@@ -30,8 +30,7 @@
  *
  **/
 
-#define REQUIRE(test) \
-    if (!(test)) throw std::runtime_error("Requirement not satisfied: " #test)
+#include "test_require.hpp"
 
 int main()
 {
@@ -47,6 +46,19 @@ int main()
         auto configPath = cosim::filesystem::path(testDataDir) / "fmi2" / "quarter_truck";
         const auto logXmlPath = cosim::filesystem::path(testDataDir) / "fmi2" / "quarter_truck" / "LogConfig.xml";
         const auto config = cosim::load_osp_config(configPath, *resolver);
+        const auto powerBonds = config.system_structure.get_power_bonds();
+        REQUIRE(powerBonds.size() == 1);
+        const auto& powerBond = powerBonds.at("wheelchassis");
+        const auto expectedInputA = cosim::full_variable_name("wheel", "in_vel");
+        const auto expectedOutputA =
+            cosim::full_variable_name("wheel", "out_spring_damper_f");
+        const auto expectedInputB = cosim::full_variable_name("chassis", "force");
+        const auto expectedOutputB =
+            cosim::full_variable_name("chassis", "velocity");
+        REQUIRE(powerBond.input_a == expectedInputA);
+        REQUIRE(powerBond.output_a == expectedOutputA);
+        REQUIRE(powerBond.input_b == expectedInputB);
+        REQUIRE(powerBond.output_b == expectedOutputB);
 
         auto ecco_params = std::get<cosim::ecco_algorithm_params>(config.algorithm_configuration);
         auto ecco_algo = std::make_shared<cosim::ecco_algorithm>(ecco_params);

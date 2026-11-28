@@ -6,15 +6,15 @@
 #include "cosim/fmi/windows.hpp"
 #ifdef _WIN32
 
-#    include <Windows.h>
+#    include <Windows.h> // IWYU pragma: keep
+#    include <array>
 #    include <cassert>
 #    include <cstddef>
+#    include <filesystem>
 #    include <mutex>
 
 
-namespace cosim
-{
-namespace fmi
+namespace cosim::fmi
 {
 
 namespace
@@ -23,46 +23,49 @@ namespace
 constexpr std::size_t max_env_var_size = 32767;
 
 // Mutex to protect against concurrent access to PATH
-std::mutex path_env_var_mutex;
+std::mutex path_env_var_mutex; // NOLINT(cppcoreguidelines-avoid-non-const-global-variables): PATH changes must be synchronized across instances.
 } // namespace
 
 
-detail::additional_path::additional_path(const cosim::filesystem::path& p)
+// Windows SDK declarations are provided through Windows.h.
+// NOLINTBEGIN(misc-include-cleaner)
+detail::additional_path::additional_path(const cosim::filesystem::path& path)
 {
-    std::lock_guard<std::mutex> lock(path_env_var_mutex);
+    std::scoped_lock const lock(path_env_var_mutex);
 
-    WCHAR currentPathZ[max_env_var_size];
+    std::array<WCHAR, max_env_var_size> currentPathZ{};
     const auto currentPathLen =
-        GetEnvironmentVariableW(L"PATH", currentPathZ, max_env_var_size);
-    const auto currentPath = std::wstring(currentPathZ, currentPathLen);
+        GetEnvironmentVariableW(L"PATH", currentPathZ.data(), max_env_var_size);
+    const auto currentPath = std::wstring(currentPathZ.data(), currentPathLen);
 
     if (currentPathLen > 0) {
         addedPath_ = L";";
     }
-    addedPath_ += p.wstring();
+    addedPath_ += path.wstring();
 
     const auto newPath = currentPath + addedPath_;
-    if (!SetEnvironmentVariableW(L"PATH", newPath.c_str())) {
+    if (SetEnvironmentVariableW(L"PATH", newPath.c_str()) == 0) {
         assert(!"Failed to modify PATH environment variable");
     }
 }
 
 
-detail::additional_path::~additional_path()
+detail::additional_path::~additional_path() // NOLINT(bugprone-exception-escape): Preserve the existing noexcept destructor contract.
 {
-    std::lock_guard<std::mutex> lock(path_env_var_mutex);
+    std::scoped_lock const lock(path_env_var_mutex);
 
-    WCHAR currentPathZ[max_env_var_size];
+    std::array<WCHAR, max_env_var_size> currentPathZ{};
     const auto currentPathLen =
-        GetEnvironmentVariableW(L"PATH", currentPathZ, max_env_var_size);
-    const auto currentPath = std::wstring(currentPathZ, currentPathLen);
+        GetEnvironmentVariableW(L"PATH", currentPathZ.data(), max_env_var_size);
+    const auto currentPath = std::wstring(currentPathZ.data(), currentPathLen);
 
     const auto pos = currentPath.find(addedPath_);
     if (pos < std::wstring::npos) {
-        auto newPath = currentPath.substr(0, pos) + currentPath.substr(pos + addedPath_.size());
-        if (!SetEnvironmentVariableW(L"PATH", newPath.c_str())) {
+        const auto newPath = currentPath.substr(0, pos) + currentPath.substr(pos + addedPath_.size());
+        if (SetEnvironmentVariableW(L"PATH", newPath.c_str()) == 0) {
             assert(!"Failed to reset PATH environment variable");
         }
+        // NOLINTEND(misc-include-cleaner)
     }
 }
 
@@ -70,7 +73,7 @@ detail::additional_path::~additional_path()
 cosim::filesystem::path fmu_binaries_dir(const cosim::filesystem::path& baseDir)
 {
 #    ifdef _WIN64
-    const auto platformSubdir = L"win64";
+    const auto* const platformSubdir = L"win64";
 #    else
     const auto platformSubdir = L"win32";
 #    endif // _WIN64
@@ -78,6 +81,6 @@ cosim::filesystem::path fmu_binaries_dir(const cosim::filesystem::path& baseDir)
 }
 
 
-} // namespace fmi
-} // namespace cosim
+} // namespace cosim::fmi
+
 #endif // _WIN32

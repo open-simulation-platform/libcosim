@@ -9,16 +9,14 @@
 #ifndef COSIM_OBSERVER_SLAVE_VALUE_PROVIDER_HPP
 #define COSIM_OBSERVER_SLAVE_VALUE_PROVIDER_HPP
 
-#include <cosim/execution.hpp>
 #include <cosim/model_description.hpp>
 #include <cosim/observer/observer.hpp>
 
 #include <gsl/span>
 
+#include <map>
 #include <mutex>
 #include <string>
-#include <unordered_map>
-#include <vector>
 
 namespace cosim
 {
@@ -27,19 +25,21 @@ class slave_value_provider
 {
 
 public:
-    slave_value_provider(observable* obs);
+    explicit slave_value_provider(observable* obs);
     ~slave_value_provider() noexcept;
+    slave_value_provider(const slave_value_provider&) = delete;
+    slave_value_provider& operator=(const slave_value_provider&) = delete;
+    slave_value_provider(slave_value_provider&&) = delete;
+    slave_value_provider& operator=(slave_value_provider&&) = delete;
     void observe();
+    variable_value get_variable_value(variable_type type, value_reference reference);
     void get_real(gsl::span<const value_reference> variables, gsl::span<double> values);
     void get_int(gsl::span<const value_reference> variables, gsl::span<int> values);
     void get_boolean(gsl::span<const value_reference> variables, gsl::span<bool> values);
     void get_string(gsl::span<const value_reference> variables, gsl::span<std::string> values);
 
 private:
-    std::unordered_map<value_reference, double> realSamples_;
-    std::unordered_map<value_reference, int> intSamples_;
-    std::unordered_map<value_reference, bool> boolSamples_;
-    std::unordered_map<value_reference, std::string> stringSamples_;
+    std::map<variable_type, std::map<value_reference, variable_value>> samples_;
     observable* observable_;
     std::mutex lock_;
 };

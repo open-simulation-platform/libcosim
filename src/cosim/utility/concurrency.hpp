@@ -14,21 +14,17 @@
 
 #include <boost/interprocess/sync/file_lock.hpp>
 
-#include <condition_variable>
 #include <memory>
 #include <mutex>
-#include <optional>
 #include <shared_mutex>
 #include <variant>
 
 
-namespace cosim
-{
-namespace utility
+namespace cosim::utility
 {
 
 /// Whether and how a `file_lock` should acquire a lock on construction.
-enum class file_lock_initial_state
+enum class file_lock_initial_state // NOLINT(performance-enum-size): Preserve the existing enum type.
 {
     /// Do not attempt to acquire a lock, never block.
     not_locked,
@@ -177,7 +173,7 @@ private:
     // Holds the mutex and file lock associated with a particular file.
     struct file_mutex
     {
-        file_mutex(const cosim::filesystem::path& path);
+        explicit file_mutex(const cosim::filesystem::path& path);
         std::shared_mutex mutex;
         boost_wrapper file;
     };
@@ -195,6 +191,6 @@ private:
 };
 
 
-} // namespace utility
-} // namespace cosim
+} // namespace cosim::utility
+
 #endif // header guard

@@ -5,26 +5,30 @@
  */
 #include "cosim/utility/zip.hpp"
 
+#include "cosim/exception.hpp"
+
 #include <zip.h>
 
 #include <cassert>
 #include <cerrno>
-#include <cstring>
+#include <cstddef>
+#include <cstdint>
+#include <filesystem>
 #include <fstream>
+#include <ios>
+#include <ostream>
+#include <string_view>
 #include <system_error>
 #include <vector>
+#include <zipconf.h>
 
-
-namespace cosim
+namespace cosim::utility::zip
 {
-namespace utility
-{
-namespace zip
-{
-
 
 namespace
 {
+constexpr std::size_t extraction_buffer_size = 65536;
+
 // A simple RAII class that manages a zip_file*.
 class auto_zip_file
 {
@@ -45,7 +49,9 @@ public:
 
     ~auto_zip_file() noexcept
     {
-        if (m_file) zip_fclose(m_file);
+        if (m_file != nullptr) {
+            zip_fclose(m_file);
+        }
     }
 
     std::size_t read(void* buffer, std::size_t maxBytes)
@@ -65,12 +71,9 @@ private:
 };
 } // namespace
 
-
 archive::archive() noexcept
     : m_archive{nullptr}
-{
-}
-
+{ }
 
 archive::archive(const cosim::filesystem::path& path)
     : m_archive{nullptr}
@@ -78,13 +81,11 @@ archive::archive(const cosim::filesystem::path& path)
     open(path);
 }
 
-
 archive::archive(archive&& other) noexcept
     : m_archive{other.m_archive}
 {
     other.m_archive = nullptr;
 }
-
 
 archive& archive::operator=(archive&& other) noexcept
 {
@@ -94,28 +95,23 @@ archive& archive::operator=(archive&& other) noexcept
     return *this;
 }
 
-
-archive::~archive() noexcept
-{
-    discard();
-}
-
+archive::~archive() noexcept { discard(); }
 
 void archive::open(const cosim::filesystem::path& path)
 {
     assert(!is_open());
-    int errorCode;
-    auto archive = zip_open(path.string().c_str(), 0, &errorCode);
-    if (!archive) {
+    int errorCode; // NOLINT(cppcoreguidelines-init-variables)
+    auto* archive = zip_open(path.string().c_str(), 0, &errorCode);
+    if (archive == nullptr) {
         zip_error_t zipError;
         zip_error_init_with_code(&zipError, errorCode);
-        std::string errorMsg = zip_error_strerror(&zipError);
+        const std::string errorMsg = zip_error_strerror(&zipError);
         zip_error_fini(&zipError);
-        throw error("Unzipping of file: '" + path.string() + "' failed with error: " + errorMsg);
+        throw error("Unzipping of file: '" + path.string() +
+            "' failed with error: " + errorMsg);
     }
     m_archive = archive;
 }
-
 
 /*
 The reason this function is not called "Close" is that libzip has a separate
@@ -126,18 +122,13 @@ door open for adding this functionality in the future.
 */
 void archive::discard() noexcept
 {
-    if (m_archive) {
+    if (m_archive != nullptr) {
         zip_discard(m_archive);
         m_archive = nullptr;
     }
 }
 
-
-bool archive::is_open() const noexcept
-{
-    return m_archive != nullptr;
-}
-
+bool archive::is_open() const noexcept { return m_archive != nullptr; }
 
 std::uint64_t archive::entry_count() const
 {
@@ -145,70 +136,65 @@ std::uint64_t archive::entry_count() const
     return zip_get_num_entries(m_archive, 0);
 }
 
-
 entry_index archive::find_entry(const std::string& name) const
 {
     assert(is_open());
-    const auto n = zip_name_locate(m_archive, name.c_str(), ZIP_FL_ENC_GUESS);
-    if (n < 0) {
-        int code;
-        auto* err = zip_get_error(m_archive);
-        code = zip_error_code_zip(err);
-        if (code == ZIP_ER_NOENT)
+    const auto index = zip_name_locate(m_archive, name.c_str(), ZIP_FL_ENC_GUESS);
+    if (index < 0) {
+        const auto* err = zip_get_error(m_archive);
+        const auto code = zip_error_code_zip(err);
+        if (code == ZIP_ER_NOENT) {
             return invalid_entry_index;
-        else
+        } else {
             throw error(m_archive);
+        }
     }
-    return static_cast<entry_index>(n);
+    return static_cast<entry_index>(index);
 }
-
 
 std::string archive::entry_name(entry_index index) const
 {
     assert(is_open());
-    const auto name = zip_get_name(m_archive, index, ZIP_FL_ENC_GUESS);
+    const auto* const name = zip_get_name(m_archive, index, ZIP_FL_ENC_GUESS);
     if (name == nullptr) {
         throw error(m_archive);
     }
-    return std::string(name);
+    return {name};
 }
-
 
 bool archive::is_dir_entry(entry_index index) const
 {
     assert(is_open());
-    struct zip_stat zs;
-    if (zip_stat_index(m_archive, index, 0, &zs)) {
+    struct zip_stat zs{};
+    if (zip_stat_index(m_archive, index, 0, &zs) != 0) {
         throw error(m_archive);
     }
-    if ((zs.valid & ZIP_STAT_NAME) && (zs.valid & ZIP_STAT_SIZE) && (zs.valid & ZIP_STAT_CRC)) {
-        const auto nameLen = std::strlen(zs.name);
-        return zs.name[nameLen - 1] == '/' && zs.size == 0 && zs.crc == 0;
+    if (((zs.valid & ZIP_STAT_NAME) != 0U) &&
+        ((zs.valid & ZIP_STAT_SIZE) != 0U) && ((zs.valid & ZIP_STAT_CRC) != 0U)) {
+        const std::string_view name(zs.name);
+        return name.back() == '/' && zs.size == 0 && zs.crc == 0;
     } else {
         throw error("Cannot determine entry type");
     }
 }
 
-
 namespace
 {
-void copy_to_stream(
-    auto_zip_file& source,
-    std::ostream& target,
+void copy_to_stream(auto_zip_file& source, std::ostream& target,
     std::vector<char>& buffer)
 {
     assert(target.good());
     assert(!buffer.empty());
     for (;;) {
-        const auto n = source.read(buffer.data(), buffer.size());
-        if (n == 0) break;
-        target.write(buffer.data(), n);
+        const auto count = source.read(buffer.data(), buffer.size());
+        if (count == 0) {
+            break;
+        }
+        target.write(buffer.data(), static_cast<std::streamsize>(count));
     }
 }
 
-void extract_file_as(
-    ::zip* archive,
-    entry_index index,
+void extract_file_as(::zip* archive, entry_index index,
     const cosim::filesystem::path& targetPath,
     std::vector<char>& buffer)
 {
@@ -217,45 +203,38 @@ void extract_file_as(
     assert(!buffer.empty());
 
     auto_zip_file srcFile(archive, index, 0);
-    std::ofstream tgtFile(
-        targetPath.string(),
-        std::ios_base::binary | std::ios_base::trunc);
+    std::ofstream tgtFile(targetPath.string(),
+        std::ios_base::binary | std::ios_base::trunc); // NOLINT(bugprone-signed-bitwise): Standard stream flags are combined with bitwise OR.
     if (!tgtFile.is_open()) {
-        throw std::system_error(
-            errno,
-            std::generic_category(),
+        throw std::system_error(errno, std::generic_category(),
             targetPath.string());
     }
     copy_to_stream(srcFile, tgtFile, buffer);
     if (tgtFile.fail()) {
-        throw std::system_error(
-            make_error_code(std::errc::io_error),
+        throw std::system_error(make_error_code(std::errc::io_error),
             targetPath.string());
     }
 }
 } // namespace
 
-
-void archive::extract_all(
-    const cosim::filesystem::path& targetDir) const
+void archive::extract_all(const cosim::filesystem::path& targetDir) const
 {
     assert(is_open());
     if (!cosim::filesystem::exists(targetDir) ||
         !cosim::filesystem::is_directory(targetDir)) {
-        throw std::system_error(
-            make_error_code(std::errc::not_a_directory),
+        throw std::system_error(make_error_code(std::errc::not_a_directory),
             targetDir.string());
     }
 
-    auto buffer = std::vector<char>(4096 * 16);
+    auto buffer = std::vector<char>(extraction_buffer_size);
     const auto entryCount = entry_count();
     for (entry_index index = 0; index < entryCount; ++index) {
         const auto entryName = entry_name(index);
         if (!entryName.empty()) {
             const auto entryPath = cosim::filesystem::path(entryName);
             if (entryPath.has_root_path()) {
-                throw error(
-                    "Archive contains an entry with an absolute path: " + entryName);
+                throw error("Archive contains an entry with an absolute path: " +
+                    entryName);
             }
             const auto targetPath = targetDir / entryPath;
             if (entryName.back() == '/') {
@@ -268,40 +247,32 @@ void archive::extract_all(
     }
 }
 
-
-cosim::filesystem::path archive::extract_file_to(
-    entry_index index,
+cosim::filesystem::path
+archive::extract_file_to(entry_index index,
     const cosim::filesystem::path& targetDir) const
 {
     assert(is_open());
     const auto entryPath = cosim::filesystem::path(entry_name(index));
     const auto targetPath = targetDir / entryPath.filename();
-    auto buffer = std::vector<char>(4096 * 16);
+    auto buffer = std::vector<char>(extraction_buffer_size);
     extract_file_as(m_archive, index, targetPath, buffer);
     return targetPath;
 }
-
 
 // =============================================================================
 // error
 // =============================================================================
 
-error::error(const std::string& msg) noexcept
+error::error(const std::string& msg) noexcept // NOLINT(bugprone-exception-escape): Preserve the existing noexcept constructor contract.
     : cosim::error(make_error_code(errc::zip_error), msg)
-{
-}
+{ }
 
-error::error(::zip* archive) noexcept
+error::error(::zip* archive) noexcept // NOLINT(bugprone-exception-escape): Preserve the existing noexcept constructor contract.
     : cosim::error(make_error_code(errc::zip_error), zip_strerror(archive))
-{
-}
+{ }
 
-error::error(zip_file* file) noexcept
+error::error(zip_file* file) noexcept // NOLINT(bugprone-exception-escape): Preserve the existing noexcept constructor contract.
     : cosim::error(make_error_code(errc::zip_error), zip_file_strerror(file))
-{
-}
+{ }
 
-
-} // namespace zip
-} // namespace utility
-} // namespace cosim
+} // namespace cosim::utility::zip

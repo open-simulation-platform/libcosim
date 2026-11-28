@@ -57,13 +57,13 @@ public:
      *  \throws std::invalid_argument
      *      if `string` does not contain a valid URI reference.
      */
-    /*implicit*/ uri(std::string string);
+    /*implicit*/ uri(std::string string); // NOLINT(cppcoreguidelines-explicit-constructor,misc-explicit-constructor): Public implicit conversion.
 
     // Enable indirect implicit conversions from various string types.
-    /*implicit*/ uri(std::string_view string)
+    /*implicit*/ uri(std::string_view string) // NOLINT(cppcoreguidelines-explicit-constructor,misc-explicit-constructor): Public implicit conversion.
         : uri(std::string(string))
     { }
-    /*implicit*/ uri(const char* string)
+    /*implicit*/ uri(const char* string) // NOLINT(cppcoreguidelines-explicit-constructor,misc-explicit-constructor): Public implicit conversion.
         : uri(std::string(string))
     { }
 
@@ -93,7 +93,7 @@ public:
      *  The returned `std::string_view` is only valid as long as the `uri`
      *  object remains alive and unmodified.
      */
-    std::string_view view() const noexcept;
+    std::string_view view() const noexcept; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
 
     /**
      *  Returns the scheme component, or null if there is none.
@@ -101,7 +101,7 @@ public:
      *  The returned `std::string_view` is only valid as long as the `uri`
      *  object remains alive and unmodified.
      */
-    std::optional<std::string_view> scheme() const noexcept;
+    std::optional<std::string_view> scheme() const noexcept; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
 
     /**
      *  Returns the authority component, or null if there is none.
@@ -109,7 +109,7 @@ public:
      *  The returned `std::string_view` is only valid as long as the `uri`
      *  object remains alive and unmodified.
      */
-    std::optional<std::string_view> authority() const noexcept;
+    std::optional<std::string_view> authority() const noexcept; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
 
     /**
      *  Returns the path component.
@@ -117,7 +117,7 @@ public:
      *  The returned `std::string_view` is only valid as long as the `uri`
      *  object remains alive and unmodified.
      */
-    std::string_view path() const noexcept;
+    std::string_view path() const noexcept; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
 
     /**
      *  Returns the query component, or null if there is none.
@@ -125,7 +125,7 @@ public:
      *  The returned `std::string_view` is only valid as long as the `uri`
      *  object remains alive and unmodified.
      */
-    std::optional<std::string_view> query() const noexcept;
+    std::optional<std::string_view> query() const noexcept; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
 
     /**
      *  Returns the fragment component, or null if there is none.
@@ -133,10 +133,10 @@ public:
      *  The returned `std::string_view` is only valid as long as the `uri`
      *  object remains alive and unmodified.
      */
-    std::optional<std::string_view> fragment() const noexcept;
+    std::optional<std::string_view> fragment() const noexcept; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
 
     /// Returns whether the `uri` object is empty.
-    bool empty() const noexcept;
+    bool empty() const noexcept; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
 
 private:
     std::string data_;
@@ -150,23 +150,23 @@ private:
 
 
 /// Compares two URI references for equality.
-inline bool operator==(const uri& a, const uri& b) noexcept
+inline bool operator==(const uri& lhs, const uri& rhs) noexcept
 {
-    return a.view() == b.view();
+    return lhs.view() == rhs.view();
 }
 
 
 /// Compares two URI references for inequality.
-inline bool operator!=(const uri& a, const uri& b) noexcept
+inline bool operator!=(const uri& lhs, const uri& rhs) noexcept
 {
-    return a.view() != b.view();
+    return lhs.view() != rhs.view();
 }
 
 
 /// Writes a URI reference to an output stream.
-inline std::ostream& operator<<(std::ostream& stream, const uri& u)
+inline std::ostream& operator<<(std::ostream& stream, const uri& value)
 {
-    return stream << u.view();
+    return stream << value.view();
 }
 
 

@@ -10,17 +10,20 @@
 #define LIBCOSIM_OSP_CONFIG_PARSER_HPP
 
 #include <cosim/algorithm.hpp>
-#include <cosim/model_description.hpp>
+#include <cosim/fs_portability.hpp>
 #include <cosim/orchestration.hpp>
 #include <cosim/system_structure.hpp>
 #include <cosim/time.hpp>
+
+#include <optional>
+#include <variant>
 
 namespace cosim
 {
 
 
 /// The information contained in an OSP-IS system structure file.
-struct osp_config
+struct osp_config // NOLINT(bugprone-exception-escape): MSVC unordered-container moves may allocate.
 {
     /// The system structure
     cosim::system_structure system_structure;

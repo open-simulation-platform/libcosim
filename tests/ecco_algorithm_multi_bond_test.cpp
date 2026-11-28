@@ -14,8 +14,7 @@
 
 
 // A helper macro to test various assertions
-#define REQUIRE(test) \
-    if (!(test)) throw std::runtime_error("Requirement not satisfied: " #test)
+#include "test_require.hpp"
 
 int main()
 {

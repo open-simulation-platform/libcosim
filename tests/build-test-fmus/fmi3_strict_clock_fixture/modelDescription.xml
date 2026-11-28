@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fmiModelDescription
+  fmiVersion="3.0"
+  modelName="StrictClock"
+  description="Clock lifecycle and clocked data access fixture"
+  generationTool="libcosim tests"
+  instantiationToken="{73431829-2AB6-4D98-9AAA-32C23A4F2706}">
+  <CoSimulation
+    modelIdentifier="StrictClock"
+    hasEventMode="true"
+    canGetAndSetFMUState="true"
+    canSerializeFMUState="true"
+    canHandleVariableCommunicationStepSize="true"/>
+  <DefaultExperiment startTime="0" stopTime="10"/>
+  <ModelVariables>
+    <Clock name="periodic" valueReference="100" causality="input"
+      intervalVariability="constant" intervalDecimal="1"/>
+    <Clock name="triggered" valueReference="101" causality="input"
+      intervalVariability="triggered"/>
+    <Clock name="outputClock" valueReference="102" causality="output"
+      intervalVariability="triggered" clocks="100 101"/>
+    <Int32 name="input" valueReference="200" causality="input"
+      variability="discrete" start="0" clocks="101"/>
+    <Int32 name="output" valueReference="201" causality="output"
+      variability="discrete" clocks="102"/>
+    <Int32 name="snapshot" valueReference="202" causality="output"
+      variability="discrete" initial="calculated"/>
+    <Int32 name="updates" valueReference="203" causality="output"
+      variability="discrete" initial="calculated"/>
+    <Int32 name="periodicInput" valueReference="204" causality="input"
+      variability="discrete" start="0" clocks="100"/>
+    <Int32 name="periodicSnapshot" valueReference="205" causality="output"
+      variability="discrete" initial="calculated"/>
+    <UInt64 name="periodicArray" valueReference="206" causality="input"
+      variability="discrete" start="0 0" clocks="100">
+      <Dimension start="2"/>
+    </UInt64>
+    <UInt64 name="periodicArraySnapshot" valueReference="207" causality="output"
+      variability="discrete" initial="calculated">
+      <Dimension start="2"/>
+    </UInt64>
+  </ModelVariables>
+  <ModelStructure>
+    <Output valueReference="102" dependencies="100 101"/>
+    <Output valueReference="201" dependencies="100 101 200"/>
+    <Output valueReference="202" dependencies="100 101 200"/>
+    <Output valueReference="203" dependencies="100 101"/>
+    <Output valueReference="205" dependencies="100 204"/>
+    <Output valueReference="207" dependencies="100 206"/>
+  </ModelStructure>
+</fmiModelDescription>

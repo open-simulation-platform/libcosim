@@ -10,17 +10,18 @@
 #include <boost/property_tree/json_parser.hpp>
 
 #include <chrono>
+#include <cstddef>
 #include <exception>
 #include <iostream>
 #include <limits>
 #include <memory>
 #include <sstream>
 #include <stdexcept>
+#include <vector>
 
 
 // A helper macro to test various assertions
-#define REQUIRE(test) \
-    if (!(test)) throw std::runtime_error("Requirement not satisfied: " #test)
+#include "test_require.hpp"
 
 // Helper function to get observed values from multiple simulators.
 std::vector<double> get_reals(
@@ -44,6 +45,20 @@ int main()
     try {
         cosim::log::setup_simple_console_logging();
         cosim::log::set_global_output_level(cosim::log::debug);
+
+        // CBOR map keys are literal, and empty binary values retain their type.
+        {
+            cosim::serialization::node literalKeys;
+            cosim::serialization::node nested;
+            nested.push_back({"", cosim::serialization::node(std::vector<std::byte>{})});
+            literalKeys.push_back({"simulator.output", nested});
+
+            std::stringstream stream(std::ios::in | std::ios::out | std::ios::binary);
+            stream << cosim::serialization::format::cbor << literalKeys;
+            cosim::serialization::node decoded;
+            stream >> cosim::serialization::format::cbor >> decoded;
+            REQUIRE(decoded == literalKeys);
+        }
 
         // ================================================================
         // == Reference FMU test - Dahlquist (for byte vectors)

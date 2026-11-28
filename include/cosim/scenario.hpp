@@ -14,15 +14,13 @@
 #include <cosim/time.hpp>
 
 #include <functional>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <variant>
 #include <vector>
 
-namespace cosim
-{
-
-namespace scenario
+namespace cosim::scenario
 {
 
 /// The modification of the value of a variable with type `real`.
@@ -53,8 +51,15 @@ struct string_modifier
     std::function<std::string(std::string_view, duration)> f;
 };
 
+/// The modification of one complete scalar or array value.
+struct variable_modifier
+{
+    variable_type type = variable_type::real;
+    std::function<variable_value(const variable_value&, duration)> f;
+};
+
 /// A struct specifying a variable and the modification of its value.
-struct variable_action
+struct variable_action // NOLINT(cppcoreguidelines-pro-type-member-init): Preserve existing default-initialization behavior.
 {
     /// The simulator index.
     simulator_index simulator;
@@ -65,7 +70,8 @@ struct variable_action
         real_modifier,
         integer_modifier,
         boolean_modifier,
-        string_modifier>
+        string_modifier,
+        variable_modifier>
         modifier;
     /**
      * Flag which should be set to `true` if the variable is an *input* to the
@@ -93,8 +99,6 @@ struct scenario
     std::optional<time_point> end;
 };
 
-} // namespace scenario
-
-} // namespace cosim
+} // namespace cosim::scenario
 
 #endif // LIBCOSIM_SCENARIO_HPP

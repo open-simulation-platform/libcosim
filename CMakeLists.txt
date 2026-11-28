@@ -10,8 +10,8 @@ message("Current libcosim version: ${CMAKE_PROJECT_VERSION}\n")
 option(BUILD_SHARED_LIBS "Build shared libraries instead of static libraries" ON)
 option(LIBCOSIM_TREAT_WARNINGS_AS_ERRORS "Treat compiler warnings as errors" ON)
 option(LIBCOSIM_BUILD_TESTS "Build test suite" ON)
-option(LIBCOSIM_BUILD_APIDOC "Build API documentation (requires Doxygen)" ON)
-option(LIBCOSIM_BUILD_PRIVATE_APIDOC "Build private API documentation (only used if LIBCOSIM_BUILD_APIDOC=ON)" OFF)
+option(LIBCOSIM_ENABLE_SANITIZERS "Enable AddressSanitizer and UndefinedBehaviorSanitizer (Linux)" OFF)
+option(LIBCOSIM_BUILD_DOCS "Build all documentation (requires Doxygen and Sphinx)" OFF)
 option(LIBCOSIM_STANDALONE_INSTALLATION "Whether to build for a standalone installation (Linux only; sets a relative RPATH)" OFF)
 option(LIBCOSIM_WITH_PROXYFMU "Whether or not to build with proxy-fmu integration" OFF)
 option(LIBCOSIM_NO_FMI_LOGGING "Disable FMI logging during simulation" OFF)
@@ -23,6 +23,15 @@ option(LIBCOSIM_NO_FMI_LOGGING "Disable FMI logging during simulation" OFF)
 # Configure logging in the fmi callback function
 if(LIBCOSIM_NO_FMI_LOGGING)
     add_compile_definitions(LIBCOSIM_NO_FMI_LOGGING=1)
+endif()
+
+if(LIBCOSIM_ENABLE_SANITIZERS)
+    if(NOT CMAKE_SYSTEM_NAME STREQUAL "Linux"
+        OR NOT CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Clang)$")
+        message(FATAL_ERROR "LIBCOSIM_ENABLE_SANITIZERS requires GCC or Clang on Linux")
+    endif()
+    add_compile_options(-fsanitize=address,undefined -fno-sanitize-recover=all -fno-omit-frame-pointer)
+    add_link_options(-fsanitize=address,undefined)
 endif()
 
 # Our custom CMake scripts go in the cmake/ subdirectory.
@@ -132,44 +141,38 @@ add_subdirectory("src")
 if(LIBCOSIM_BUILD_TESTS)
     enable_testing()
     add_subdirectory("tests")
+    if(EXISTS "${CMAKE_SOURCE_DIR}/tests/build-test-fmus/cmake/ConfigureFixtureBuild.cmake")
+        include(tests/build-test-fmus/cmake/ConfigureFixtureBuild.cmake)
+    endif()
 endif()
 
 # ==============================================================================
 # API documentation
 # ==============================================================================
 
-if(LIBCOSIM_BUILD_APIDOC)
-    find_package(Doxygen REQUIRED)
-    set(DOXYGEN_PROJECT_NAME "libcosim")
-    set(DOXYGEN_PROJECT_BRIEF "C++ library for distributed co-simulation")
-    set(DOXYGEN_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/output/doc")
-    set(DOXYGEN_GENERATE_LATEX "NO")
-    set(DOXYGEN_RECURSIVE "YES")
-    set(DOXYGEN_SORT_BY_SCOPE_NAME "YES")
-    set(DOXYGEN_STRIP_FROM_INC_PATH "${CMAKE_SOURCE_DIR}/include")
-    set(DOXYGEN_STRIP_FROM_PATH "${CMAKE_SOURCE_DIR}/include")
-    set(DOXYGEN_TAGFILES "${CMAKE_SOURCE_DIR}/cmake/cppreference-doxygen-web.tag.xml=http://en.cppreference.com/w/")
-    set(DOXYGEN_JAVADOC_AUTOBRIEF "YES")
-    set(DOXYGEN_QT_AUTOBRIEF "YES")
-    set(DOXYGEN_MULTILINE_CPP_IS_BRIEF "YES")
-    set(DOXYGEN_EXCLUDE_PATTERNS "*.cpp" "*.c")
-    set(doxygenInputs "${CMAKE_SOURCE_DIR}/docs" "${CMAKE_SOURCE_DIR}/include")
-    if(LIBCOSIM_BUILD_PRIVATE_APIDOC)
-        list(APPEND doxygenInputs
-            "${CMAKE_SOURCE_DIR}/src/cpp"
-        )
-        list(APPEND DOXYGEN_STRIP_FROM_INC_PATH
-            "${CMAKE_SOURCE_DIR}/src/cpp"
-        )
-        list(APPEND DOXYGEN_STRIP_FROM_PATH "${CMAKE_SOURCE_DIR}")
+foreach(oldOption LIBCOSIM_BUILD_APIDOC LIBCOSIM_BUILD_PRIVATE_APIDOC LIBCOSIM_BUILD_SPHINX_DOC)
+    if(DEFINED ${oldOption})
+        message(WARNING "${oldOption} is no longer used; set LIBCOSIM_BUILD_DOCS=ON to build all documentation")
+        unset(${oldOption} CACHE)
+        unset(${oldOption})
     endif()
-    doxygen_add_docs(doc ${doxygenInputs})
+endforeach()
+
+if(LIBCOSIM_BUILD_DOCS)
+    include(cmake/Documentation.cmake)
+    install(DIRECTORY "${DOXYGEN_OUTPUT_DIRECTORY}/"
+        DESTINATION "${LIBCOSIM_DOC_INSTALL_DIR}/doxygen")
+    install(DIRECTORY "${sphinxOutput}/"
+        DESTINATION "${LIBCOSIM_DOC_INSTALL_DIR}/sphinx")
     add_custom_target(
         install-doc
         "${CMAKE_COMMAND}" "-E" "copy_directory"
             "${DOXYGEN_OUTPUT_DIRECTORY}"
             "${CMAKE_INSTALL_PREFIX}/${LIBCOSIM_DOC_INSTALL_DIR}/"
+        COMMAND "${CMAKE_COMMAND}" -E copy_directory
+            "${sphinxOutput}" "${CMAKE_INSTALL_PREFIX}/${LIBCOSIM_DOC_INSTALL_DIR}/sphinx"
         DEPENDS doc
+        VERBATIM
     )
 endif()
 

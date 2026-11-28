@@ -1,5 +1,6 @@
 *.swp
 build/
+!/tests/build-test-fmus/
 debug-build/
 release-build/
 
@@ -16,3 +17,7 @@ cmake-build-*/
 .clj-kondo
 
 CMakeUserPresets.json
+.venv/
+
+# Keep the documentation build instructions visible to Git.
+!/docs/README.md

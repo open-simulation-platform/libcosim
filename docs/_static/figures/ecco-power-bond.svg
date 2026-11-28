@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 430" role="img" aria-labelledby="title desc">
+  <title id="title">Two directed connections form a registered ECCO power bond</title>
+  <desc id="desc">Model A outputs force to Model B's input. Model B outputs velocity to Model A's input. ECCO registers the input and output on each model, forms each side's power from the product of its input and output, and compares their absolute difference. The example uses consistent signs and units.</desc>
+  <style>
+    .background { fill: #fff; } .box { fill: #eaf3fa; stroke: #315b77; stroke-width: 2; }
+    .bond { fill: #fff6e3; stroke: #9a6a18; stroke-width: 2; }
+    .arrow { fill: none; stroke: #315b77; stroke-width: 3; marker-end: url(#arrow); }
+    .heading { font: bold 21px sans-serif; fill: #142b3a; }
+    .label { font: bold 17px sans-serif; fill: #142b3a; }
+    .text { font: 15px sans-serif; fill: #243d4e; }
+  </style>
+  <defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#315b77"/></marker></defs>
+  <rect class="background" width="1000" height="430"/>
+  <text class="heading" x="30" y="35">Example power bond: force and velocity</text>
+  <text class="text" x="30" y="62">Two scalar Float64 connections exchange the conjugate quantities between model instances.</text>
+  <rect class="box" x="40" y="105" width="280" height="150" rx="8"/>
+  <text class="label" x="58" y="136">Model A</text>
+  <text class="text" x="58" y="172">output A: force (N)</text>
+  <text class="text" x="58" y="216">input A: velocity (m/s)</text>
+  <rect class="box" x="680" y="105" width="280" height="150" rx="8"/>
+  <text class="label" x="698" y="136">Model B</text>
+  <text class="text" x="698" y="172">input B: force (N)</text>
+  <text class="text" x="698" y="216">output B: velocity (m/s)</text>
+  <path class="arrow" d="M320 168 H678"/><path class="arrow" d="M680 212 H322"/>
+  <text class="text" x="395" y="153">output A → input B</text>
+  <text class="text" x="395" y="237">output B → input A</text>
+  <rect class="bond" x="100" y="285" width="800" height="95" rx="8"/>
+  <text class="label" x="120" y="316">Registered bond: (input A, output A, input B, output B)</text>
+  <text class="text" x="120" y="344">P A = input A × output A;  P B = input B × output B;  residual = |P A − P B|.</text>
+  <text class="text" x="30" y="412">Connect both directions separately; registering the bond supplies the four measurement references.</text>
+</svg>

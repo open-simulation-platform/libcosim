@@ -20,7 +20,7 @@
 #    pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif
 
-#include <fmilib.h>
+#include <fmilib.h> // IWYU pragma: export
 
 #ifdef _MSC_VER
 #    pragma warning(pop)

@@ -9,8 +9,7 @@
 #include <exception>
 #include <iostream>
 
-#define REQUIRE(test) \
-    if (!(test)) throw std::runtime_error("Requirement not satisfied: " #test)
+#include "test_require.hpp"
 
 
 void test(const cosim::filesystem::path& configPath)

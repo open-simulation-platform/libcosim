@@ -3,11 +3,21 @@
  *  License, v. 2.0. If a copy of the MPL was not distributed with this
  *  file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
-#include "cosim/log/logger.hpp"
 #include <cosim/error.hpp>
 #include <cosim/exception.hpp>
+#include <cosim/orchestration.hpp>
 #include <cosim/proxy/proxy_uri_sub_resolver.hpp>
 #include <cosim/proxy/remote_fmu.hpp>
+#include <cosim/uri.hpp>
+
+#include <proxyfmu/remote_info.hpp>
+
+#include <cassert>
+#include <filesystem>
+#include <memory>
+#include <string>
+#include <string_view>
+#include <utility>
 
 std::pair<std::string, int> parse_authority(std::string_view auth)
 {
@@ -22,7 +32,7 @@ std::pair<std::string, int> parse_authority(std::string_view auth)
 }
 
 std::shared_ptr<cosim::model> cosim::proxy::proxy_uri_sub_resolver::lookup_model(
-    const cosim::uri& baseUri,
+    const cosim::uri& baseUri, // NOLINT(bugprone-easily-swappable-parameters): Preserve the public resolver signature.
     const cosim::uri& modelUriReference)
 {
     const auto& mur = modelUriReference;
@@ -45,14 +55,17 @@ std::shared_ptr<cosim::model> cosim::proxy::proxy_uri_sub_resolver::lookup_model
 std::shared_ptr<cosim::model> cosim::proxy::proxy_uri_sub_resolver::lookup_model(const cosim::uri& modelUri)
 {
     assert(modelUri.scheme().has_value());
-    if (*modelUri.scheme() != "proxyfmu") return nullptr;
+    if (*modelUri.scheme() != "proxyfmu") { // NOLINT(bugprone-unchecked-optional-access): The assertion above establishes the existing precondition.
+        return nullptr;
+    }
     COSIM_INPUT_CHECK(modelUri.authority());
     COSIM_INPUT_CHECK(modelUri.query());
 
     const auto auth = parse_authority(*modelUri.authority());
     const auto query = *modelUri.query();
-    if (query.substr(0, 5) == "file=") {
-        const auto file = cosim::filesystem::path(std::string(query.substr(5)));
+    constexpr std::string_view filePrefix = "file=";
+    if (query.substr(0, filePrefix.size()) == filePrefix) {
+        const auto file = cosim::filesystem::path(std::string(query.substr(filePrefix.size())));
         if (!cosim::filesystem::exists(file)) {
             throw error(make_error_code(errc::bad_file), "No such file: " + file.string());
         }

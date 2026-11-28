@@ -11,6 +11,7 @@ set(publicHeaders
     "cosim/algorithm/fixed_step_algorithm.hpp"   
     "cosim/algorithm/simulator.hpp"
     "cosim/config.hpp"    
+    "cosim/event_iteration.hpp"
     "cosim/exception.hpp"
     "cosim/execution.hpp"
     "cosim/file_cache.hpp"    
@@ -18,6 +19,7 @@ set(publicHeaders
     "cosim/fmi/importer.hpp"
     "cosim/fmi/v1/fmu.hpp"
     "cosim/fmi/v2/fmu.hpp"
+    "cosim/fmi/v3/fmu.hpp"
     "cosim/fs_portability.hpp"
     "cosim/function/description.hpp"
     "cosim/function/function.hpp"
@@ -51,21 +53,38 @@ set(publicHeaders
     "cosim/uri.hpp"
 )
 set(privateHeaders
+    "cosim/algorithm/clock_router.hpp"
+    "cosim/algorithm/event_iteration_budget.hpp"
+    "cosim/algorithm/connection_validation.hpp"
+    "cosim/algorithm/event_router.hpp"
+    "cosim/algorithm/step_batch.hpp"
     "cosim/error.hpp"
+    "cosim/event_value.hpp"
+    "cosim/fmi/enumeration.hpp"
+    "cosim/fmi/value_validation.hpp"
     "cosim/fmi/fmilib.h"
     "cosim/fmi/glue.hpp"
+    "cosim/fmi/v3/fmu_internal.hpp"
     "cosim/fmi/windows.hpp"
     "cosim/observer/slave_value_provider.hpp"
+    "cosim/osp_clock.hpp"
+    "cosim/scalar_value_dispatch.hpp"
     "cosim/slave_simulator.hpp"
     "cosim/ssp/ssp_parser.hpp"
     "cosim/utility/concurrency.hpp"
+    "cosim/utility/enumeration.hpp"
+    "cosim/xml_clock.hpp"
     "cosim/utility/filesystem.hpp"
     "cosim/utility/thread_pool.hpp"
     "cosim/utility/utility.hpp"
     "cosim/utility/uuid.hpp"
     "cosim/utility/zip.hpp"
+    "cosim/xml_value.hpp"
 )
 set(sources    
+    "cosim/algorithm/clock_router.cpp"
+    "cosim/algorithm/clock_schedule.cpp"
+    "cosim/algorithm/clock_state.cpp"
     "cosim/algorithm/ecco_algorithm.cpp"
     "cosim/error.cpp"
     "cosim/exception.cpp"
@@ -73,10 +92,19 @@ set(sources
     "cosim/algorithm/fixed_step_algorithm.cpp"
     "cosim/file_cache.cpp"
     "cosim/fmi/glue.cpp"
+    "cosim/fmi/glue_v1.cpp"
+    "cosim/fmi/glue_v2.cpp"
+    "cosim/fmi/glue_v3.cpp"
     "cosim/fmi/importer.cpp"
     "cosim/fmi/v1/fmu.cpp"
     "cosim/fmi/v2/fmu.cpp"
+    "cosim/fmi/v3/fmu.cpp"
+    "cosim/fmi/v3/fmu_clock.cpp"
+    "cosim/fmi/v3/fmu_derivative.cpp"
+    "cosim/fmi/v3/fmu_state.cpp"
+    "cosim/fmi/v3/fmu_value.cpp"
     "cosim/fmi/windows.cpp"
+    "cosim/function/function.cpp"
     "cosim/function/linear_transformation.cpp"
     "cosim/function/utility.cpp"
     "cosim/function/vector_sum.cpp"
@@ -89,15 +117,18 @@ set(sources
     "cosim/observer/slave_value_provider.cpp"
     "cosim/observer/time_series_observer.cpp"
     "cosim/orchestration.cpp"
+    "cosim/osp_clock.cpp"
     "cosim/osp_config_parser.cpp"
     "cosim/scenario_parser.cpp"
     "cosim/serialization.cpp"
+    "cosim/slave.cpp"
     "cosim/slave_simulator.cpp"
     "cosim/ssp/ssp_loader.cpp"
     "cosim/ssp/ssp_parser.cpp"
     "cosim/system_structure.cpp"
     "cosim/timer.cpp"
     "cosim/uri.cpp"
+    "cosim/variable_access.cpp"
     "cosim/utility/concurrency.cpp"
     "cosim/utility/filesystem.cpp"
     "cosim/utility/uuid.cpp"
@@ -139,13 +170,15 @@ foreach(src IN LISTS generatedSources)
     list(APPEND generatedFiles "${tgt}")
 endforeach()
 
-function(make_includable input_file output_file)
+function(make_includable input_file output_file symbol)
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${input_file}")
     file(READ ${input_file} content)
-    set(content "const char* osp_xsd=R\"(${content})\";")
+    set(content "constexpr auto ${symbol}=R\"(${content})\";")
     file(WRITE ${output_file} "${content}")
 endfunction(make_includable)
 
-make_includable("${CMAKE_SOURCE_DIR}/data/xsd/OspSystemStructure.xsd" "${generatedSourcesDir}/osp_system_structure_schema.hpp")
+make_includable("${CMAKE_SOURCE_DIR}/data/xsd/OspSystemStructure.xsd" "${generatedSourcesDir}/osp_system_structure_schema.hpp" osp_xsd_01)
+make_includable("${CMAKE_SOURCE_DIR}/data/xsd/OspSystemStructure-0.2.0.xsd" "${generatedSourcesDir}/osp_system_structure_schema_020.hpp" osp_xsd_020)
 
 # ==============================================================================
 # Target definition

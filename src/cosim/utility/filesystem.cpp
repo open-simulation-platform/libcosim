@@ -7,13 +7,12 @@
 
 #include "cosim/utility/uuid.hpp"
 
+#include <filesystem>
 #include <system_error>
 #include <utility>
 
 
-namespace cosim
-{
-namespace utility
+namespace cosim::utility
 {
 
 
@@ -43,7 +42,7 @@ temp_dir& temp_dir::operator=(temp_dir&& other) noexcept
     return *this;
 }
 
-temp_dir::~temp_dir()
+temp_dir::~temp_dir() noexcept
 {
     delete_noexcept();
 }
@@ -53,7 +52,7 @@ const cosim::filesystem::path& temp_dir::path() const
     return path_;
 }
 
-void temp_dir::delete_noexcept() noexcept
+void temp_dir::delete_noexcept() noexcept // NOLINT(bugprone-exception-escape): Preserve the existing noexcept cleanup contract.
 {
     if (!path_.empty()) {
         std::error_code errorCode;
@@ -63,5 +62,4 @@ void temp_dir::delete_noexcept() noexcept
 }
 
 
-} // namespace utility
-} // namespace cosim
+} // namespace cosim::utility

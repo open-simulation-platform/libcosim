@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at https://mozilla.org/MPL/2.0/. -->
+<!-- libcosim-supported extension of the OSP System Structure schema. -->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified"
+           targetNamespace="http://opensimulationplatform.com/MSMI/OSPSystemStructure"
+           xmlns:osp="http://opensimulationplatform.com/MSMI/OSPSystemStructure"
+           version="0.2.0">
+    <xs:element name="OspSystemStructure">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="StartTime" minOccurs="0" maxOccurs="1" default="0.0" type="xs:double"/>
+                <xs:element name="EndTime" minOccurs="0" maxOccurs="1" type="xs:double"/>
+                <xs:element name="BaseStepSize" minOccurs="0" maxOccurs="1" type="xs:double"/>
+                <xs:element name="Algorithm" minOccurs="0" maxOccurs="1" default="fixedStep" type="xs:string">
+                    <xs:annotation>
+                        <xs:documentation>
+                            Optional co-simulation algorithm. If omitted, fixedStep is used.
+                        </xs:documentation>
+                    </xs:annotation>
+                </xs:element>
+                <xs:element name="Simulators" type="osp:simulators"/>
+                <xs:element name="Clocks" minOccurs="0">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:element name="Clock" type="osp:clock" maxOccurs="unbounded"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="Functions" type="osp:functions" minOccurs="0"/>
+                <xs:element name="Connections" type="osp:connections" minOccurs="0"/>
+                <xs:element name="EccoConfiguration" type="osp:eccoconfiguration" minOccurs="0" maxOccurs="1"/>
+            </xs:sequence>
+            <xs:attribute name="version" type="xs:normalizedString" use="required" fixed="0.2.0">
+                <xs:annotation>
+                    <xs:documentation>Version of CSE configuration format</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+        </xs:complexType>
+    </xs:element>
+    <xs:complexType name="clock">
+        <xs:attribute name="name" use="required" type="xs:NCName"/>
+        <xs:attribute name="intervalVariability" use="required">
+            <xs:simpleType>
+                <xs:restriction base="xs:token">
+                    <xs:enumeration value="constant"/>
+                    <xs:enumeration value="fixed"/>
+                    <xs:enumeration value="tunable"/>
+                    <xs:enumeration value="triggered"/>
+                </xs:restriction>
+            </xs:simpleType>
+        </xs:attribute>
+        <xs:attribute name="intervalDecimal" type="xs:double"/>
+        <xs:attribute name="shiftDecimal" type="xs:double"/>
+        <xs:attribute name="supportsFraction" type="xs:boolean"/>
+        <xs:attribute name="resolution" type="xs:unsignedLong"/>
+        <xs:attribute name="intervalCounter" type="xs:unsignedLong"/>
+        <xs:attribute name="shiftCounter" type="xs:unsignedLong"/>
+        <xs:attribute name="priority" type="xs:unsignedInt"/>
+        <xs:attribute name="canBeDeactivated" type="xs:boolean"/>
+    </xs:complexType>
+    <xs:complexType name="eccoconfiguration">
+        <xs:all>
+            <xs:element name="SafetyFactor" type="xs:double"/>
+            <xs:element name="StepSize" type="xs:double"/>
+            <xs:element name="MinimumStepSize" type="xs:double"/>
+            <xs:element name="MaximumStepSize" type="xs:double"/>
+            <xs:element name="MinimumChangeRate" type="xs:double"/>
+            <xs:element name="MaximumChangeRate" type="xs:double"/>
+            <xs:element name="ProportionalGain" type="xs:double"/>
+            <xs:element name="IntegralGain" type="xs:double"/>
+            <xs:element name="RelativeTolerance" type="xs:double"/>
+            <xs:element name="AbsoluteTolerance" type="xs:double"/>
+        </xs:all>
+    </xs:complexType>
+    <xs:complexType name="connections">
+        <xs:choice maxOccurs="unbounded">
+            <xs:element name="VariableConnection" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="Variable" type="osp:variableEndpoint" minOccurs="2" maxOccurs="2"/>
+                    </xs:sequence>
+                    <xs:attribute name="powerBond" use="optional" type="xs:string"/>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SignalConnection" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:all>
+                        <xs:element name="Variable" type="osp:variableEndpoint"/>
+                        <xs:element name="Signal" type="osp:signalEndpoint"/>
+                    </xs:all>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="VariableGroupConnection" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="VariableGroup" type="osp:variableEndpoint" minOccurs="2" maxOccurs="2"/>
+                    </xs:sequence>
+                    <xs:attribute name="powerBond" use="optional" type="xs:string"/>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="SignalGroupConnection" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:all>
+                        <xs:element name="SignalGroup" type="osp:signalEndpoint"/>
+                        <xs:element name="VariableGroup" type="osp:variableEndpoint"/>
+                    </xs:all>
+                </xs:complexType>
+            </xs:element>
+        </xs:choice>
+    </xs:complexType>
+    <xs:complexType name="variableEndpoint">
+        <xs:attribute name="simulator" use="required" type="xs:string"/>
+        <xs:attribute name="name" use="required" type="xs:string"/>
+        <xs:attribute name="causality" type="xs:string"/>
+    </xs:complexType>
+    <xs:complexType name="signalEndpoint">
+        <xs:attribute name="function" use="required" type="xs:string"/>
+        <xs:attribute name="name" use="required" type="xs:string"/>
+    </xs:complexType>
+    <xs:complexType name="numericValue">
+        <xs:attribute name="value" type="xs:string" use="required"/>
+    </xs:complexType>
+    <xs:complexType name="stringValue">
+        <xs:sequence>
+            <xs:element name="Value" minOccurs="0" maxOccurs="unbounded" type="osp:numericValue"/>
+        </xs:sequence>
+        <xs:attribute name="value" type="xs:string"/>
+    </xs:complexType>
+    <xs:complexType name="binaryElement">
+        <xs:attribute name="value" type="xs:hexBinary" use="required"/>
+    </xs:complexType>
+    <xs:complexType name="binaryValue">
+        <xs:sequence>
+            <xs:element name="Value" minOccurs="0" maxOccurs="unbounded" type="osp:binaryElement"/>
+        </xs:sequence>
+        <xs:attribute name="value" type="xs:hexBinary"/>
+    </xs:complexType>
+    <xs:complexType name="simulators">
+        <xs:sequence>
+            <xs:element name="Simulator" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="InitialValues" minOccurs="0">
+                            <xs:complexType>
+                                <xs:sequence>
+                                    <xs:element name="InitialValue" minOccurs="0" maxOccurs="unbounded">
+                                        <xs:complexType>
+                                            <xs:sequence>
+                                                <xs:choice>
+                                                    <xs:element name="Real" type="osp:numericValue"/>
+                                                    <xs:element name="Float64" type="osp:numericValue"/>
+                                                    <xs:element name="Float32" type="osp:numericValue"/>
+                                                    <xs:element name="Integer" type="osp:numericValue"/>
+                                                    <xs:element name="Int32" type="osp:numericValue"/>
+                                                    <xs:element name="Int8" type="osp:numericValue"/>
+                                                    <xs:element name="UInt8" type="osp:numericValue"/>
+                                                    <xs:element name="Int16" type="osp:numericValue"/>
+                                                    <xs:element name="UInt16" type="osp:numericValue"/>
+                                                    <xs:element name="UInt32" type="osp:numericValue"/>
+                                                    <xs:element name="Int64" type="osp:numericValue"/>
+                                                    <xs:element name="UInt64" type="osp:numericValue"/>
+                                                    <xs:element name="Boolean" type="osp:numericValue"/>
+                                                    <xs:element name="String" type="osp:stringValue"/>
+                                                    <xs:element name="Enumeration" type="osp:stringValue"/>
+                                                    <xs:element name="Binary" type="osp:binaryValue"/>
+                                                </xs:choice>
+                                                <xs:element name="Dimension" minOccurs="0" maxOccurs="unbounded">
+                                                    <xs:complexType>
+                                                        <xs:attribute name="size" type="xs:unsignedLong" use="required"/>
+                                                    </xs:complexType>
+                                                </xs:element>
+                                            </xs:sequence>
+                                            <xs:attribute name="variable" use="required"/>
+                                        </xs:complexType>
+                                    </xs:element>
+                                </xs:sequence>
+                            </xs:complexType>
+                        </xs:element>
+                    </xs:sequence>
+                    <xs:attribute name="name" type="xs:string" use="required"/>
+                    <xs:attribute name="source" type="xs:anyURI" use="required"/>
+                    <xs:attribute name="stepSize" type="xs:double"/>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="functions">
+        <xs:sequence>
+            <xs:element name="LinearTransformation" type="osp:linearTransformationFunction" minOccurs="0"
+                        maxOccurs="unbounded"/>
+            <xs:element name="Sum" type="osp:sumFunction" minOccurs="0" maxOccurs="unbounded"/>
+            <xs:element name="VectorSum" type="osp:vectorSumFunction" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="linearTransformationFunction">
+        <xs:attribute name="name" use="required" type="xs:string"/>
+        <xs:attribute name="factor" type="xs:double"/>
+        <xs:attribute name="offset" type="xs:double"/>
+    </xs:complexType>
+    <xs:complexType name="sumFunction">
+        <xs:attribute name="name" use="required" type="xs:string"/>
+        <xs:attribute name="inputCount" use="required" type="xs:positiveInteger"/>
+    </xs:complexType>
+    <xs:complexType name="vectorSumFunction">
+        <xs:attribute name="name" use="required" type="xs:string"/>
+        <xs:attribute name="inputCount" use="required" type="xs:positiveInteger"/>
+        <xs:attribute name="dimension" use="required" type="xs:positiveInteger"/>
+    </xs:complexType>
+
+
+</xs:schema>

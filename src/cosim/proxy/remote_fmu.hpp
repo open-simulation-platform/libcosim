@@ -9,20 +9,19 @@
 #ifndef COSIM_PROXY_REMOTE_FMU_HPP
 #define COSIM_PROXY_REMOTE_FMU_HPP
 
+#include <cosim/fs_portability.hpp>
 #include <cosim/model_description.hpp>
 #include <cosim/orchestration.hpp>
 #include <cosim/slave.hpp>
 
 #include <proxyfmu/fmi/fmu.hpp>
-#include <proxyfmu/fs_portability.hpp>
 #include <proxyfmu/remote_info.hpp>
 
 #include <memory>
+#include <optional>
+#include <string_view>
 
-namespace cosim
-{
-
-namespace proxy
+namespace cosim::proxy
 {
 
 class remote_fmu : public cosim::model
@@ -31,7 +30,7 @@ class remote_fmu : public cosim::model
 public:
     explicit remote_fmu(const cosim::filesystem::path& fmuPath, const std::optional<proxyfmu::remote_info>& remote = std::nullopt);
 
-    std::shared_ptr<const cosim::model_description> description() const noexcept override;
+    [[nodiscard]] std::shared_ptr<const cosim::model_description> description() const noexcept override;
 
     std::shared_ptr<cosim::slave> instantiate(std::string_view name) override;
 
@@ -40,8 +39,6 @@ private:
     std::shared_ptr<const cosim::model_description> modelDescription_;
 };
 
-} // namespace proxy
-
-} // namespace cosim
+} // namespace cosim::proxy
 
 #endif

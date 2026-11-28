@@ -11,8 +11,7 @@
 #include <stdexcept>
 #include <vector>
 
-#define REQUIRE(test) \
-    if (!(test)) throw std::runtime_error("Requirement not satisfied: " #test)
+#include "test_require.hpp"
 
 int main()
 {
@@ -36,6 +35,11 @@ int main()
                 [](double x) { return x + 1.234; },
                 [](int y) { return y + 2; }),
             "slave uno");
+        const auto arraySim = execution.add_slave(
+            std::make_unique<whole_value_mock_slave>(
+                cosim::variable_value(
+                    cosim::uint64_values{{1, 2}}, {2})),
+            "whole value slave");
 
         observer->start_observing(
             cosim::variable_id{simIndex, cosim::variable_type::real, mock_slave::real_in_reference});
@@ -69,16 +73,42 @@ int main()
         auto intAction2 = cosim::scenario::variable_action{simIndex, mock_slave::integer_out_reference, intModifier2, output};
         auto intEvent2 = cosim::scenario::event{cosim::to_time_point(0.8), intAction2};
 
+        const auto arrayOverride = cosim::variable_value(
+            cosim::uint64_values{{13, 14}}, {2});
+        const auto arrayModifier = cosim::scenario::variable_modifier{
+            cosim::variable_type::uint64,
+            [arrayOverride](
+                const cosim::variable_value&,
+                cosim::duration) { return arrayOverride; }};
+        const auto arrayAction = cosim::scenario::variable_action{
+            arraySim,
+            whole_value_mock_slave::input_reference,
+            arrayModifier,
+            input};
+        const auto arrayEvent = cosim::scenario::event{
+            cosim::to_time_point(0.4), arrayAction};
+
         auto events = std::vector<cosim::scenario::event>();
         events.push_back(realEvent1);
         events.push_back(realEvent2);
         events.push_back(realEvent3);
         events.push_back(intEvent1);
         events.push_back(intEvent2);
+        events.push_back(arrayEvent);
 
         auto end = cosim::to_time_point(1.0);
 
         auto scenario = cosim::scenario::scenario{events, end};
+
+        auto invalidScenario = scenario;
+        invalidScenario.events.front().action.simulator = simIndex + 1000;
+        bool invalidRejected = false;
+        try {
+            scenarioManager->load_scenario(invalidScenario, startTime);
+        } catch (const std::invalid_argument&) {
+            invalidRejected = true;
+        }
+        REQUIRE(invalidRejected);
 
         scenarioManager->load_scenario(scenario, startTime);
 

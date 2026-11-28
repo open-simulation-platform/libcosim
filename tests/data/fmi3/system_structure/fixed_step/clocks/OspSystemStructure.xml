@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OspSystemStructure
+        xmlns="http://opensimulationplatform.com/MSMI/OSPSystemStructure"
+        version="0.1">
+    <StartTime>0.0</StartTime>
+    <!--
+      The nominal 1.5 s step crosses the fixture's 1.0 s periodic Clock
+      boundary. The Clock router must shorten each step to exactly 1.0 s.
+    -->
+    <BaseStepSize>1.5</BaseStepSize>
+    <Algorithm>fixedStep</Algorithm>
+    <Simulators>
+        <Simulator name="source" source="../../fmus/ClockedCoSimulation.fmu"/>
+        <Simulator name="target" source="../../fmus/ClockedCoSimulation.fmu"/>
+    </Simulators>
+    <Connections>
+        <!-- Trigger the target's event partition from the source output Clock. -->
+        <VariableConnection>
+            <Variable simulator="source" name="outClock"/>
+            <Variable simulator="target" name="inClock2"/>
+        </VariableConnection>
+        <!-- Transfer the source's Clock-associated input-1 tick count on that event. -->
+        <VariableConnection>
+            <Variable simulator="source" name="inClock1Ticks"/>
+            <Variable simulator="target" name="input2"/>
+        </VariableConnection>
+    </Connections>
+</OspSystemStructure>

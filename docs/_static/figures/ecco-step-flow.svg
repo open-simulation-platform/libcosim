@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 470" role="img" aria-labelledby="title desc">
+  <title id="title">ECCO communication and adaptive step-size loop</title>
+  <desc id="desc">The algorithm plans a nominal communication step, limits it at known events or Clocks, steps participants, and evaluates registered power-bond residuals. On eligible steps a proportional-integral controller proposes a bounded next step. Event and Clock processing and value transfer prepare the next communication point. Boundary-limited steps retain the nominal step instead of updating the controller.</desc>
+  <style>
+    .background { fill: #fff; } .box { fill: #eaf3fa; stroke: #315b77; stroke-width: 2; }
+    .decision { fill: #fff6e3; stroke: #9a6a18; stroke-width: 2; }
+    .arrow { fill: none; stroke: #315b77; stroke-width: 3; marker-end: url(#arrow); }
+    .heading { font: bold 21px sans-serif; fill: #142b3a; }
+    .label { font: bold 17px sans-serif; fill: #142b3a; }
+    .text { font: 15px sans-serif; fill: #243d4e; }
+  </style>
+  <defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#315b77"/></marker></defs>
+  <rect class="background" width="1000" height="470"/>
+  <text class="heading" x="30" y="35">ECCO: one communication interval</text>
+  <rect class="box" x="30" y="75" width="200" height="100" rx="8"/>
+  <text class="label" x="45" y="105">Plan nominal step</text>
+  <text class="text" x="45" y="133">Initial or adapted size</text>
+  <text class="text" x="45" y="155">and pending remainder</text>
+  <rect class="decision" x="280" y="75" width="200" height="100" rx="8"/>
+  <text class="label" x="295" y="105">Limit at boundary</text>
+  <text class="text" x="295" y="133">Known events and</text>
+  <text class="text" x="295" y="155">scheduled Clocks</text>
+  <rect class="box" x="530" y="75" width="200" height="100" rx="8"/>
+  <text class="label" x="545" y="105">Step participants</text>
+  <text class="text" x="545" y="133">Honor actual end time,</text>
+  <text class="text" x="545" y="155">early return and stop</text>
+  <rect class="box" x="780" y="75" width="190" height="100" rx="8"/>
+  <text class="label" x="795" y="105">Measure bonds</text>
+  <text class="text" x="795" y="133">Compare powers at</text>
+  <text class="text" x="795" y="155">the actual endpoint</text>
+  <path class="arrow" d="M230 125 H278"/><path class="arrow" d="M480 125 H528"/><path class="arrow" d="M730 125 H778"/>
+  <rect class="decision" x="565" y="245" width="405" height="105" rx="8"/>
+  <text class="label" x="580" y="275">Eligible full step: update controller</text>
+  <text class="text" x="580" y="300">Normalize energy residuals; apply PI gains,</text>
+  <text class="text" x="580" y="323">change-rate and minimum/maximum bounds.</text>
+  <path class="arrow" d="M875 175 V243"/>
+  <rect class="box" x="30" y="245" width="405" height="105" rx="8"/>
+  <text class="label" x="45" y="275">Coordinate events and transfer outputs</text>
+  <text class="text" x="45" y="300">Process supported event/Clock work; deliver</text>
+  <text class="text" x="45" y="323">connected values for the next interval.</text>
+  <path class="arrow" d="M565 297 H437"/><path class="arrow" d="M130 245 V177"/>
+  <text class="text" x="30" y="395">After the initial step, nonzero steps sample residuals when participants are aligned.</text>
+  <text class="text" x="30" y="421">A boundary-limited step keeps the nominal size; an early/time-event interruption completes its remainder.</text>
+  <text class="text" x="30" y="447">No bonds or a zero error can leave the step unchanged. A failed step needs snapshot recovery or recreation.</text>
+</svg>

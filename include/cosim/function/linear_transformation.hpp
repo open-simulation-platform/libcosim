@@ -10,7 +10,12 @@
 #ifndef COSIM_FUNCTION_LINEAR_TRANSFORMATION_HPP
 #define COSIM_FUNCTION_LINEAR_TRANSFORMATION_HPP
 
+#include <cosim/function/description.hpp>
 #include <cosim/function/function.hpp>
+
+#include <memory>
+#include <string_view>
+#include <typeinfo> // IWYU pragma: keep
 
 
 namespace cosim
@@ -43,15 +48,19 @@ public:
     linear_transformation_function(double offset, double factor);
 
     // Overridden `function` methods
-    function_description description() const override;
+    function_description description() const override; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
     void set_real(const function_io_reference& reference, double value) override;
     void set_integer(const function_io_reference& reference, int value) override;
     void set_boolean(const function_io_reference& reference, bool value) override;
     void set_string(const function_io_reference& reference, std::string_view value) override;
-    double get_real(const function_io_reference& reference) const override;
-    int get_integer(const function_io_reference& reference) const override;
-    bool get_boolean(const function_io_reference& reference) const override;
-    std::string_view get_string(const function_io_reference& reference) const override;
+    double get_real(const function_io_reference& reference) const override; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
+    int get_integer(const function_io_reference& reference) const override; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
+    bool get_boolean(const function_io_reference& reference) const override; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
+    std::string_view get_string(const function_io_reference& reference) const override; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
+    bool supports_event_iteration() const noexcept override // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
+    {
+        return typeid(*this) == typeid(linear_transformation_function);
+    }
     void calculate() override;
 
 private:
@@ -91,14 +100,14 @@ class linear_transformation_function_type : public function_type
 {
 public:
     /// Parameter indexes, for convenience.
-    enum
+    enum // NOLINT(performance-enum-size,cppcoreguidelines-use-enum-class): Preserve the public enum type.
     {
         offset_parameter_index,
         factor_parameter_index,
     };
 
     // Overridden `function_type` methods
-    function_type_description description() const override;
+    function_type_description description() const override; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
 
     std::unique_ptr<function> instantiate(
         const function_parameter_value_map& parameters) override;

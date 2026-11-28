@@ -14,8 +14,7 @@
 
 
 // A helper macro to test various assertions
-#define REQUIRE(test) \
-    if (!(test)) throw std::runtime_error("Requirement not satisfied: " #test)
+#include "test_require.hpp"
 
 int main()
 {
@@ -41,6 +40,11 @@ int main()
                 [](bool b) { return !b; },
                 [](std::string_view s) { return std::string(s) + std::string("bar"); }),
             "slave");
+        const auto arrayValue = cosim::variable_value(
+            cosim::uint64_values{{7, 8}}, {2});
+        const auto arraySim = execution.add_slave(
+            std::make_unique<whole_value_mock_slave>(arrayValue),
+            "whole value slave");
 
         execution.step();
 
@@ -80,6 +84,11 @@ int main()
         observer->get_string(sim, gsl::make_span(&stringOutRef, 1), gsl::make_span(&stringOutValue, 1));
         REQUIRE(stringInValue == "");
         REQUIRE(stringOutValue == "bar");
+        REQUIRE(
+            observer->get_variable_value(
+                arraySim,
+                cosim::variable_type::uint64,
+                whole_value_mock_slave::output_reference) == arrayValue);
 
         auto manipulator = std::make_shared<cosim::override_manipulator>();
         execution.add_manipulator(manipulator);
@@ -88,6 +97,13 @@ int main()
         manipulator->override_integer_variable(sim, intInRef, 2);
         manipulator->override_boolean_variable(sim, boolInRef, true);
         manipulator->override_string_variable(sim, stringInRef, "foo");
+        const auto overrideValue = cosim::variable_value(
+            cosim::uint64_values{{9, 10}}, {2});
+        manipulator->override_variable(
+            arraySim,
+            cosim::variable_type::uint64,
+            whole_value_mock_slave::input_reference,
+            overrideValue);
 
         execution.step();
 
@@ -110,7 +126,16 @@ int main()
         observer->get_string(sim, gsl::make_span(&stringOutRef, 1), gsl::make_span(&stringOutValue, 1));
         REQUIRE(stringInValue == "foo");
         REQUIRE(stringOutValue == "foobar");
-
+        REQUIRE(
+            observer->get_variable_value(
+                arraySim,
+                cosim::variable_type::uint64,
+                whole_value_mock_slave::input_reference) == overrideValue);
+        manipulator->reset_variable(
+            arraySim,
+            cosim::variable_type::uint64,
+            whole_value_mock_slave::input_reference);
+        execution.step();
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;

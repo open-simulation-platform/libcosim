@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1180" role="img" aria-labelledby="title desc">
+  <title id="title">FMI 3 Co-Simulation execution flow and feature map</title>
+  <desc id="desc">The FMI 3 instance may configure structural parameters before initialization. After initialization it enters Step Mode directly or processes Event Mode first. Runtime reconfiguration of tunable structural parameters is entered from Step Mode. Supported events and clocks can require additional Event Mode transitions.</desc>
+  <style>
+    .bg { fill: #fff; } .box { fill: #eaf3fa; stroke: #315b77; stroke-width: 2; }
+    .event { fill: #fff6e3; stroke: #9a6a18; stroke-width: 2; }
+    .chip { fill: #f3f5f7; stroke: #5e6d79; stroke-width: 1.5; }
+    .line { fill: none; stroke: #315b77; stroke-width: 3; marker-end: url(#arrow); }
+    .heading { font: bold 20px sans-serif; fill: #142b3a; }
+    .subheading { font: bold 17px sans-serif; fill: #142b3a; }
+    .text { font: 15px sans-serif; fill: #243d4e; }
+    .small { font: 14px sans-serif; fill: #243d4e; }
+    a:hover rect, a:focus rect { stroke: #005fcc; stroke-width: 4; }
+  </style>
+  <defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#315b77"/></marker></defs>
+  <rect class="bg" width="1000" height="1180"/>
+  <text class="heading" x="30" y="34">FMI 3 Co-Simulation instance lifecycle</text>
+
+  <a href="../../fmi3/features/instantiation-and-lifecycle.html" target="_top"><rect class="box" x="30" y="80" width="260" height="95" rx="8"/><text class="subheading" x="45" y="110">Instantiated</text><text class="small" x="45" y="136">InstantiateCoSimulation</text><text class="small" x="45" y="157">negotiate Event Mode and early return</text></a>
+  <a href="../../fmi3/features/whole-arrays-and-structural-parameters.html" target="_top"><rect class="box" x="370" y="80" width="260" height="95" rx="8"/><text class="subheading" x="385" y="110">Configuration Mode</text><text class="small" x="385" y="136">set fixed or tunable</text><text class="small" x="385" y="157">structural parameters</text></a>
+  <a href="../../fmi3/features/instantiation-and-lifecycle.html" target="_top"><rect class="box" x="710" y="80" width="260" height="95" rx="8"/><text class="subheading" x="725" y="110">Initialization Mode</text><text class="small" x="725" y="136">EnterInitializationMode</text><text class="small" x="725" y="157">exchange initial values</text></a>
+  <path class="line" d="M290 112 H368"/><path class="line" d="M370 146 H292"/>
+  <text class="small" x="300" y="103">enter</text><text class="small" x="300" y="167">exit</text>
+  <path class="line" d="M160 80 V55 H840 V78"/>
+  <text class="small" x="470" y="50">setup</text>
+
+  <a href="../../fmi3/features/event-mode-and-input-events.html" target="_top"><rect class="event" x="30" y="260" width="420" height="130" rx="8"/><text class="subheading" x="45" y="290">Event Mode (when used)</text><text class="small" x="45" y="316">UpdateDiscreteStates: configured limit</text><text class="small" x="45" y="339">process active Clocks and input events</text><text class="small" x="45" y="362">honor termination and next-event time</text></a>
+  <a href="../../fmi3/features/stepping-and-status-handling.html" target="_top"><rect class="box" x="550" y="260" width="420" height="130" rx="8"/><text class="subheading" x="565" y="290">Step Mode</text><text class="small" x="565" y="316">DoStep; inspect status and actual end time</text><text class="small" x="565" y="339">early return and Intermediate Update</text><text class="small" x="565" y="362">are handled when available</text></a>
+  <path class="line" d="M840 175 V225 H240 V258"/><text class="small" x="360" y="217">ExitInitializationMode: Event Mode enabled</text>
+  <path class="line" d="M840 175 V258"/><text class="small" x="849" y="209">otherwise</text>
+  <path class="line" d="M450 305 H548"/><text class="small" x="460" y="295">enter step</text>
+  <path class="line" d="M550 355 H452"/><text class="small" x="456" y="379">event request</text>
+  <text class="small" x="30" y="423">Non-clocked initial events are iterated before stepping; clocked FMUs remain in initial Event Mode.</text>
+  <a href="../../fmi3/features/whole-arrays-and-structural-parameters.html" target="_top"><text class="small" x="30" y="447" text-decoration="underline">Step Mode only: enter Reconfiguration Mode to change tunable structural parameters.</text></a>
+  <text class="small" x="30" y="471">Model Exchange-only and Scheduled Execution-only FMUs are not supported.</text>
+
+  <text class="heading" x="30" y="520">Library layers and feature guides</text>
+  <a href="../../design/system-setup.html" target="_top"><rect class="chip" x="30" y="538" width="300" height="44" rx="6"/><text class="subheading" x="42" y="566">Application / setup</text></a>
+  <a href="../../design/execution.html" target="_top"><rect class="chip" x="350" y="538" width="300" height="44" rx="6"/><text class="subheading" x="362" y="566">Execution / algorithms</text></a>
+  <a href="../../design/models-and-fmi.html" target="_top"><rect class="chip" x="670" y="538" width="300" height="44" rx="6"/><text class="subheading" x="682" y="566">Adapter / FMI Library / FMU</text></a>
+
+  <a href="../../fmi3/features/system-structure-configuration.html" target="_top"><rect class="chip" x="30" y="596" width="300" height="42" rx="6"/><text class="text" x="42" y="623">OSP 0.2.0 / SSP 2.0 configuration</text></a>
+  <a href="../../fmi3/features/connections-and-functions.html" target="_top"><rect class="chip" x="30" y="646" width="300" height="42" rx="6"/><text class="text" x="42" y="673">Connections and functions</text></a>
+  <a href="../../fmi3/features/observers-modifiers-and-scenarios.html" target="_top"><rect class="chip" x="30" y="696" width="300" height="42" rx="6"/><text class="text" x="42" y="723">Observers / modifiers / scenarios</text></a>
+  <a href="../../fmi3/features/multirate-and-clock-sampling.html" target="_top"><rect class="chip" x="30" y="746" width="300" height="42" rx="6"/><text class="text" x="42" y="773">Multirate and Clock sampling</text></a>
+  <a href="../../fmi3/features/execution-algorithms-and-multirate-stepping.html" target="_top"><rect class="chip" x="350" y="596" width="300" height="42" rx="6"/><text class="text" x="362" y="623">Algorithms and multirate stepping</text></a>
+  <a href="../../fmi3/features/coupled-event-propagation.html" target="_top"><rect class="chip" x="350" y="646" width="300" height="42" rx="6"/><text class="text" x="362" y="673">Coupled event propagation</text></a>
+  <a href="../../fmi3/features/clock-and-data-routing.html" target="_top"><rect class="chip" x="350" y="696" width="300" height="42" rx="6"/><text class="text" x="362" y="723">Clock and data routing</text></a>
+  <a href="../../fmi3/features/fmu-state-and-execution-snapshots.html" target="_top"><rect class="chip" x="350" y="746" width="300" height="42" rx="6"/><text class="text" x="362" y="773">State and execution snapshots</text></a>
+  <a href="../../fmi3/features/logging.html" target="_top"><rect class="chip" x="350" y="796" width="300" height="42" rx="6"/><text class="text" x="362" y="823">FMU logging and categories</text></a>
+  <a href="../../fmi3/features/import-and-identity.html" target="_top"><rect class="chip" x="670" y="596" width="300" height="42" rx="6"/><text class="text" x="682" y="623">Import and identity</text></a>
+  <a href="../../fmi3/features/instantiation-and-lifecycle.html" target="_top"><rect class="chip" x="670" y="646" width="300" height="42" rx="6"/><text class="text" x="682" y="673">Instantiation and lifecycle</text></a>
+  <a href="../../fmi3/features/model-and-variable-metadata.html" target="_top"><rect class="chip" x="670" y="696" width="300" height="42" rx="6"/><text class="text" x="682" y="723">Model and variable metadata</text></a>
+  <a href="../../fmi3/features/model-structure-and-dependencies.html" target="_top"><rect class="chip" x="670" y="746" width="300" height="42" rx="6"/><text class="text" x="682" y="773">Model structure / dependencies</text></a>
+  <a href="../../fmi3/features/exact-scalar-values.html" target="_top"><rect class="chip" x="670" y="796" width="300" height="42" rx="6"/><text class="text" x="682" y="823">Exact scalar values</text></a>
+  <a href="../../fmi3/features/enumeration-values.html" target="_top"><rect class="chip" x="670" y="846" width="300" height="42" rx="6"/><text class="text" x="682" y="873">Enumeration values</text></a>
+  <a href="../../fmi3/features/whole-arrays-and-structural-parameters.html" target="_top"><rect class="chip" x="670" y="896" width="300" height="42" rx="6"/><text class="text" x="682" y="923">Arrays / structural parameters</text></a>
+  <a href="../../fmi3/features/derivatives.html" target="_top"><rect class="chip" x="670" y="946" width="300" height="42" rx="6"/><text class="text" x="682" y="973">Derivatives</text></a>
+  <a href="../../fmi3/features/intermediate-update.html" target="_top"><rect class="chip" x="670" y="996" width="300" height="42" rx="6"/><text class="text" x="682" y="1023">Intermediate Update</text></a>
+  <a href="../../fmi3/features/stepping-and-status-handling.html" target="_top"><rect class="chip" x="350" y="846" width="300" height="42" rx="6"/><text class="text" x="362" y="873">Stepping / status handling</text></a>
+  <a href="../../fmi3/features/coupled-event-propagation.html" target="_top"><rect class="chip" x="350" y="896" width="300" height="42" rx="6"/><text class="text" x="362" y="923">Event Mode / coupled propagation</text></a>
+  <a href="../../fmi3/features/clocked-co-simulation.html" target="_top"><rect class="chip" x="350" y="946" width="300" height="42" rx="6"/><text class="text" x="362" y="973">Clock access and scheduling</text></a>
+  <a href="../../fmi3/features/execution-event-boundaries.html" target="_top"><rect class="chip" x="350" y="996" width="300" height="42" rx="6"/><text class="text" x="362" y="1023">Execution event boundaries</text></a>
+  <text class="text" x="30" y="1080">Select a box for the linked guide. The execution coordinates the adapter and FMI instance;</text>
+  <text class="text" x="30" y="1106">the instance calls FMI Library, which calls the FMU. Results and callbacks flow back.</text>
+  <text class="text" x="30" y="1132">The algorithms guide includes mixed-event, rollback and common-grid scheduling timelines.</text>
+</svg>

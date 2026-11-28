@@ -5,11 +5,26 @@
  */
 #include "cosim/manipulator/scenario_manager.hpp"
 
-#include "cosim/algorithm.hpp"
+#include "cosim/execution.hpp"
 #include "cosim/log/logger.hpp"
+#include "cosim/manipulator/manipulator.hpp"
+#include "cosim/model_description.hpp"
 #include "cosim/scenario.hpp"
 #include "cosim/scenario_parser.hpp"
+#include "cosim/time.hpp"
 #include "cosim/utility/utility.hpp"
+
+#include <boost/log/sources/severity_feature.hpp>
+
+#include <filesystem>
+#include <map>
+#include <memory>
+#include <optional>
+#include <stdexcept>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <variant>
 
 
 namespace cosim
@@ -28,17 +43,22 @@ public:
     impl(impl&&) = delete;
     impl& operator=(impl&&) = delete;
 
-    void load_scenario(const scenario::scenario& s, time_point currentTime)
+    void load_scenario(const scenario::scenario& scenarioData, time_point currentTime)
     {
-        state = scenario_state{};
-        state.startTime = currentTime;
-        state.endTime = s.end;
-
-        for (const auto& event : s.events) {
-            const auto index = static_cast<int>(state.remainingEvents.size());
-            state.remainingEvents[index] = event;
+        for (const auto& event : scenarioData.events) {
+            find_simulator(event.action.simulator);
         }
-        state.running = true;
+        scenario_state next;
+        next.startTime = currentTime;
+        next.endTime = scenarioData.end;
+
+        for (const auto& event : scenarioData.events) {
+            const auto index = static_cast<int>(next.remainingEvents.size());
+            next.remainingEvents[index] = event;
+        }
+        next.running = true;
+        cleanup(state.executedEvents);
+        state = std::move(next);
 
         BOOST_LOG_SEV(log::logger(), log::info) << "Successfully loaded scenario";
     }
@@ -46,7 +66,7 @@ public:
     void load_scenario(const cosim::filesystem::path& scenarioFile, time_point currentTime)
     {
         BOOST_LOG_SEV(log::logger(), log::info) << "Loading scenario from " << scenarioFile;
-        auto scenario = parse_scenario(scenarioFile, simulators_);
+        const auto scenario = parse_scenario(scenarioFile, simulators_);
         load_scenario(scenario, currentTime);
     }
 
@@ -59,7 +79,7 @@ public:
 
         const auto relativeTime = currentTime - state.startTime.time_since_epoch();
 
-        bool timedOut = state.endTime ? relativeTime >= *state.endTime : true;
+        bool const timedOut = state.endTime ? relativeTime >= *state.endTime : true;
         if (state.remainingEvents.empty() && timedOut) {
             BOOST_LOG_SEV(log::logger(), log::info)
                 << "Scenario finished at relative time "
@@ -67,6 +87,7 @@ public:
                 << ", performing cleanup";
             state.running = false;
             cleanup(state.executedEvents);
+            state.executedEvents.clear();
             return;
         }
 
@@ -92,7 +113,7 @@ public:
         simulators_.erase(index);
     }
 
-    bool is_scenario_running()
+    [[nodiscard]] bool is_scenario_running() const
     {
         return state.running;
     }
@@ -108,6 +129,16 @@ public:
     }
 
 private:
+    manipulable* find_simulator(simulator_index index) const // NOLINT(modernize-use-nodiscard)
+    {
+        const auto found = simulators_.find(index);
+        if (found == simulators_.end() || (found->second == nullptr)) {
+            throw std::invalid_argument(
+                "Scenario references an unknown simulator: " + std::to_string(index));
+        }
+        return found->second;
+    }
+
     struct scenario_state
     {
         std::unordered_map<int, scenario::event> remainingEvents;
@@ -117,105 +148,131 @@ private:
         bool running = false;
     };
 
-    void execute_action(manipulable* sim, const scenario::variable_action& a)
+    static void execute_action(manipulable* sim, const scenario::variable_action& action)
     {
+        // Keep the modifier copies: std::function targets may have observable copy behavior.
+        // NOLINTBEGIN(performance-unnecessary-value-param)
         std::visit(
             visitor(
-                [=](scenario::real_modifier m) {
-                    if (a.is_input) {
-                        sim->expose_for_setting(variable_type::real, a.variable);
-                        sim->set_real_input_modifier(a.variable, m.f);
+                [=](scenario::real_modifier modifier) {
+                    if (action.is_input) {
+                        sim->expose_for_setting(variable_type::real, action.variable);
+                        sim->set_real_input_modifier(action.variable, modifier.f);
                     } else {
-                        sim->expose_for_getting(variable_type::real, a.variable);
-                        sim->set_real_output_modifier(a.variable, m.f);
+                        sim->expose_for_getting(variable_type::real, action.variable);
+                        sim->set_real_output_modifier(action.variable, modifier.f);
                     }
                 },
-                [=](scenario::integer_modifier m) {
-                    if (a.is_input) {
-                        sim->expose_for_setting(variable_type::integer, a.variable);
-                        sim->set_integer_input_modifier(a.variable, m.f);
+                [=](scenario::integer_modifier modifier) {
+                    if (action.is_input) {
+                        sim->expose_for_setting(variable_type::integer, action.variable);
+                        sim->set_integer_input_modifier(action.variable, modifier.f);
                     } else {
-                        sim->expose_for_getting(variable_type::integer, a.variable);
-                        sim->set_integer_output_modifier(a.variable, m.f);
+                        sim->expose_for_getting(variable_type::integer, action.variable);
+                        sim->set_integer_output_modifier(action.variable, modifier.f);
                     }
                 },
-                [=](scenario::boolean_modifier m) {
-                    if (a.is_input) {
-                        sim->expose_for_setting(variable_type::boolean, a.variable);
-                        sim->set_boolean_input_modifier(a.variable, m.f);
+                [=](scenario::boolean_modifier modifier) {
+                    if (action.is_input) {
+                        sim->expose_for_setting(variable_type::boolean, action.variable);
+                        sim->set_boolean_input_modifier(action.variable, modifier.f);
                     } else {
-                        sim->expose_for_getting(variable_type::boolean, a.variable);
-                        sim->set_boolean_output_modifier(a.variable, m.f);
+                        sim->expose_for_getting(variable_type::boolean, action.variable);
+                        sim->set_boolean_output_modifier(action.variable, modifier.f);
                     }
                 },
-                [=](scenario::string_modifier m) {
-                    if (a.is_input) {
-                        sim->expose_for_setting(variable_type::string, a.variable);
-                        sim->set_string_input_modifier(a.variable, m.f);
+                [=](scenario::string_modifier modifier) {
+                    if (action.is_input) {
+                        sim->expose_for_setting(variable_type::string, action.variable);
+                        sim->set_string_input_modifier(action.variable, modifier.f);
                     } else {
-                        sim->expose_for_getting(variable_type::string, a.variable);
-                        sim->set_string_output_modifier(a.variable, m.f);
+                        sim->expose_for_getting(variable_type::string, action.variable);
+                        sim->set_string_output_modifier(action.variable, modifier.f);
+                    }
+                },
+                [=](scenario::variable_modifier modifier) {
+                    if (action.is_input) {
+                        sim->expose_for_setting(modifier.type, action.variable);
+                        sim->set_variable_input_modifier(
+                            modifier.type, action.variable, modifier.f);
+                    } else {
+                        sim->expose_for_getting(modifier.type, action.variable);
+                        sim->set_variable_output_modifier(
+                            modifier.type, action.variable, modifier.f);
                     }
                 }),
-            a.modifier);
+            action.modifier);
+        // NOLINTEND(performance-unnecessary-value-param)
     }
 
-    bool maybe_run_event(time_point relativeTime, const scenario::event& e)
+    bool maybe_run_event(time_point relativeTime, const scenario::event& event)
     {
-        if (relativeTime >= e.time) {
+        if (relativeTime >= event.time) {
             BOOST_LOG_SEV(log::logger(), log::info)
-                << "Executing action for simulator " << e.action.simulator
-                << ", variable " << e.action.variable
+                << "Executing action for simulator " << event.action.simulator
+                << ", variable " << event.action.variable
                 << ", at relative time " << to_double_time_point(relativeTime);
-            execute_action(simulators_[e.action.simulator], e.action);
+            execute_action(find_simulator(event.action.simulator), event.action);
             return true;
         }
         return false;
     }
 
-    void cleanup_action(manipulable* sim, const scenario::variable_action& a)
+    static void cleanup_action(manipulable* sim, const scenario::variable_action& action)
     {
         BOOST_LOG_SEV(log::logger(), log::info)
-            << "Resetting variable for simulator " << a.simulator
-            << ", variable " << a.variable;
+            << "Resetting variable for simulator " << action.simulator
+            << ", variable " << action.variable;
+        // Keep the modifier copies: std::function targets may have observable copy behavior.
+        // NOLINTBEGIN(performance-unnecessary-value-param)
         std::visit(
             visitor(
                 [=](scenario::real_modifier /*m*/) {
-                    if (a.is_input) {
-                        sim->set_real_input_modifier(a.variable, nullptr);
+                    if (action.is_input) {
+                        sim->set_real_input_modifier(action.variable, nullptr);
                     } else {
-                        sim->set_real_output_modifier(a.variable, nullptr);
+                        sim->set_real_output_modifier(action.variable, nullptr);
                     }
                 },
                 [=](scenario::integer_modifier /*m*/) {
-                    if (a.is_input) {
-                        sim->set_integer_input_modifier(a.variable, nullptr);
+                    if (action.is_input) {
+                        sim->set_integer_input_modifier(action.variable, nullptr);
                     } else {
-                        sim->set_integer_output_modifier(a.variable, nullptr);
+                        sim->set_integer_output_modifier(action.variable, nullptr);
                     }
                 },
                 [=](scenario::boolean_modifier /*m*/) {
-                    if (a.is_input) {
-                        sim->set_boolean_input_modifier(a.variable, nullptr);
+                    if (action.is_input) {
+                        sim->set_boolean_input_modifier(action.variable, nullptr);
                     } else {
-                        sim->set_boolean_output_modifier(a.variable, nullptr);
+                        sim->set_boolean_output_modifier(action.variable, nullptr);
                     }
                 },
                 [=](scenario::string_modifier /*m*/) {
-                    if (a.is_input) {
-                        sim->set_string_input_modifier(a.variable, nullptr);
+                    if (action.is_input) {
+                        sim->set_string_input_modifier(action.variable, nullptr);
                     } else {
-                        sim->set_string_output_modifier(a.variable, nullptr);
+                        sim->set_string_output_modifier(action.variable, nullptr);
+                    }
+                },
+                [=](scenario::variable_modifier modifier) {
+                    if (action.is_input) {
+                        sim->set_variable_input_modifier(
+                            modifier.type, action.variable, nullptr);
+                    } else {
+                        sim->set_variable_output_modifier(
+                            modifier.type, action.variable, nullptr);
                     }
                 }),
-            a.modifier);
+            action.modifier);
+        // NOLINTEND(performance-unnecessary-value-param)
     }
 
     void cleanup(const std::unordered_map<int, scenario::event>& executedEvents)
     {
         for (const auto& entry : executedEvents) {
-            auto e = entry.second;
-            cleanup_action(simulators_[e.action.simulator], e.action);
+            const auto event = entry.second;
+            cleanup_action(find_simulator(event.action.simulator), event.action);
         }
     }
 
@@ -233,10 +290,10 @@ scenario_manager::scenario_manager()
 }
 
 void scenario_manager::load_scenario(
-    const scenario::scenario& s,
+    const scenario::scenario& scenarioData,
     time_point currentTime)
 {
-    pimpl_->load_scenario(s, currentTime);
+    pimpl_->load_scenario(scenarioData, currentTime);
 }
 
 void scenario_manager::load_scenario(
@@ -262,7 +319,7 @@ void scenario_manager::simulator_added(
 
 void scenario_manager::simulator_removed(
     simulator_index index,
-    time_point)
+    time_point /*unused*/)
 {
     pimpl_->simulator_removed(index);
 }

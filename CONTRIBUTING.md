@@ -91,6 +91,135 @@ and the source directories are organised as follows:
   * `tests/`:       Test suite for the library.
   * `test/data`:    Resources used by the test suite.
 
+Quality checks
+--------------
+On Linux, `-DLIBCOSIM_ENABLE_SANITIZERS=ON` enables ASan and UBSan for the
+local build. The [quality workflow](.github/workflows/ci-quality.yml) enables
+ProxyFMU and runs every C++ test suite under ASan and UBSan with leak detection
+enabled. CI uses [cpp-linter-action](https://github.com/cpp-linter/cpp-linter-action)
+to run clang-tidy 23 and clang-format 23.1.x on C++ sources and headers in
+`src/` and `include/`, not just changed files. CI installs these tools from the
+signed LLVM package repository and verifies the formatter version after the action.
+Both tools use the repository's
+`.clang-tidy` and `.clang-format` configurations. CI reads additional per-tool
+exclusions from `.clang-tidy-ignore` and `.clang-format-ignore`, one path or
+glob per line; clang-format also reads its ignore file when invoked locally.
+Clang-tidy warnings are treated as errors, and any clang-tidy or clang-format
+finding fails the quality job. Findings are also posted in a single updatable
+comment on same-repository pull requests. The workflow
+also runs on manual dispatch, but not on fork pull requests, which lack the
+Conan remote credentials.
+
+For a local check, install the Clang tools you intend to run. For clang-tidy,
+install Python 3, `run-clang-tidy`, and `clang-tidy` on `PATH`, and configure a
+build with `CMAKE_EXPORT_COMPILE_COMMANDS=ON`. Fix mode also needs
+`clang-apply-replacements` on `PATH`. On Windows, the script invokes an
+extensionless or `.py` `run-clang-tidy` through `python`, or through the
+`py -3` launcher if `python` is unavailable. Native executable and
+command-script wrappers are invoked directly.
+
+Run the same script with PowerShell 7 on Windows or Bash on Linux and macOS:
+
+```powershell
+pwsh .\clang-check.ps1
+```
+
+```sh
+bash ./clang-check.ps1
+```
+
+Use `-h` or `--help` to display the available options and path arguments.
+Pass `--format` to run only clang-format or `--tidy` to run only clang-tidy.
+Pass both, or neither, to run both tools. These options also limit which tools
+are run in fix mode. A compilation database is not needed for `--format` alone.
+
+The script looks for `compile_commands.json` in `build/Release` by default.
+If the database is elsewhere, specify its containing directory with
+`-BuildDirectory` in PowerShell or `--build-dir` in Bash. For example:
+
+```powershell
+pwsh .\clang-check.ps1 -BuildDirectory build\Release\build\Release
+```
+
+```sh
+bash ./clang-check.ps1 --build-dir build/Release/build/Release
+```
+
+The compilation database contains commands for configured source files, not
+separate commands for headers. Tests and optional integrations appear only
+when their build options and dependencies are enabled. `run-clang-tidy` checks
+only selected source files present in the database; it does not infer commands
+for other sources. It also checks selected headers included by those source
+files. In a separate pass, the script runs clang-tidy directly on each selected
+header, including for header-only selections. Clang-tidy infers a compilation
+command for each header, so findings can differ from checks through source
+files and can be duplicated. Headers belonging to optional integrations may
+require a compilation database built with those integrations enabled; for
+example, ProxyFMU headers require `LIBCOSIM_WITH_PROXYFMU=ON` and its
+dependencies. Check the `run-clang-tidy` output to confirm which translation
+units were analyzed; the runner can succeed even when no database entries
+match.
+
+By default, the script checks without modifying files and returns a nonzero
+exit code for tool failures and errors, including clang-tidy warnings promoted
+to errors by the repository configuration. The final summary counts emitted
+error, warning, and note diagnostics separately for each tool pass and marks
+failed passes. Errors and warnings whose reported paths are outside the
+checkout are marked `[external]` and counted in the summary; this is a
+path-based indication, not a determination of where the problem originated.
+These diagnostics still affect the exit code.
+Suppressed diagnostics are not counted, and counts in a fix pass may include
+findings subsequently fixed; check the final tidy pass for remaining findings.
+Clang-format fix mode does not report the number of files it changed.
+To apply available clang-tidy fixes and then
+format the selected files in place, pass `--fix`:
+
+```powershell
+pwsh .\clang-check.ps1 --fix
+```
+
+```sh
+bash ./clang-check.ps1 --fix
+```
+
+When clang-tidy is selected, fix mode uses `run-clang-tidy -fix` to collect
+and apply available source fixes, and runs `clang-tidy -fix` on selected
+headers; neither is the same as clang-tidy's `--fix-errors`.
+When both tools are selected, it runs clang-format even if clang-tidy fails.
+It then rechecks with clang-tidy without applying further fixes. Unresolved
+errors still cause a nonzero exit, and not every diagnostic can be fixed
+automatically. Fixes can affect files referenced by diagnostics, so review
+the changes, resolve remaining compiler errors, and rerun the check.
+
+Read-only clang-tidy checks use up to four workers by default, limited by the
+available CPU count. Specify a positive worker count with `-Jobs` in
+PowerShell or `--jobs` in Bash; use `1` for serial checks. More workers can
+consume substantial memory. Direct-header checks run serially. Both fix passes
+also run serially to avoid concurrent edits to shared headers.
+
+```powershell
+pwsh .\clang-check.ps1 -Jobs 2
+```
+
+```sh
+bash ./clang-check.ps1 --jobs 2
+```
+
+The compilation database must describe this checkout; its build generator must
+support exporting compile commands, such as Ninja. Clang-format reads its
+ignore file, while the local tidy check does not apply `.clang-tidy-ignore`;
+only CI applies it. Pass file or directory paths after the build
+option to check them recursively; without paths, it checks `src/` and `include/`.
+The script selects C/C++ sources and headers with extensions `.c`, `.cc`,
+`.cpp`, `.cxx`, `.h`, `.hh`, `.hpp`, and `.hxx`.
+For example, `bash ./clang-check.ps1 --build-dir build/Release/build/Release
+src/cosim/fmi/v3 include/cosim/fmi` checks just those directories.
+
+FMI Library 3.0.4 releases its FMI 3 instance-name allocation through
+`fmi3_import_free_instance`. After `fmi3Fatal`, libcosim first destroys the
+library's C API wrapper so that this cleanup cannot call the FMU, as required
+by FMI 3. The workflow runs the FMI 3 suites without leak suppressions.
+
 
 File names
 ----------
@@ -140,3 +269,22 @@ For classes, high-quality documentation should include:
   * Lifetime/ownership issues not expressible through the type system.
 
 [Doxygen]: http://www.doxygen.org
+
+Documentation build
+-------------------
+The user guide and FMI 3 feature reference are reStructuredText in
+`docs/`. API reference directives use Doxygen XML through Breathe. Install
+[uv](https://docs.astral.sh/uv/), create a virtual environment with
+`uv venv .venv` if needed, and install `docs/requirements.txt` with
+`uv pip install --python .venv -r docs/requirements.txt`. Enable
+`LIBCOSIM_BUILD_DOCS` to build the complete public and internal documentation
+with the normal CMake build, or build the `doc` target separately. The Sphinx
+build treats warnings as errors.
+Conan supplies Doxygen for documentation builds; direct CMake builds need it
+on `PATH`. See the README for Conan options and output paths.
+
+Keep the Design stack diagram, submodule pages, FMI 3 overview and feature
+reference aligned with the implementation and tests. Add a concrete public API
+example and its prerequisites to the relevant feature page when behavior
+changes; place important limitations beside the feature. Document public and
+internal declarations at their declarations and update cross-links as needed.

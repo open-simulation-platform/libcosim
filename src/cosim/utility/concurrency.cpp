@@ -6,20 +6,24 @@
 #include "cosim/utility/concurrency.hpp"
 
 #include <cassert>
+#include <filesystem>
+#include <memory>
+#include <mutex>
+#include <shared_mutex>
 #include <system_error>
+#include <utility>
 #include <vector>
 
 #ifdef _WIN32
-#    include <windows.h>
+#    include <windows.h> // IWYU pragma: keep
 #else
 #    include <cerrno>
 #    include <fcntl.h>
+#    include <unistd.h>
 #endif
 
 
-namespace cosim
-{
-namespace utility
+namespace cosim::utility
 {
 
 // =============================================================================
@@ -56,9 +60,13 @@ bool file_lock::try_lock()
 {
     // See note on locking order in lock() above.
     std::unique_lock<std::shared_mutex> mutexLock(fileMutex_->mutex, std::try_to_lock);
-    if (!mutexLock.owns_lock()) return false;
+    if (!mutexLock.owns_lock()) {
+        return false;
+    }
     std::unique_lock<boost_wrapper> fileLock(fileMutex_->file, std::try_to_lock);
-    if (!fileLock.owns_lock()) return false;
+    if (!fileLock.owns_lock()) {
+        return false;
+    }
     mutexLock_ = std::move(mutexLock);
     fileLock_ = std::move(fileLock);
     return true;
@@ -86,9 +94,13 @@ bool file_lock::try_lock_shared()
 {
     // See note on locking order in lock() above.
     std::shared_lock<std::shared_mutex> mutexLock(fileMutex_->mutex, std::try_to_lock);
-    if (!mutexLock.owns_lock()) return false;
+    if (!mutexLock.owns_lock()) {
+        return false;
+    }
     std::shared_lock<boost_wrapper> fileLock(fileMutex_->file, std::try_to_lock);
-    if (!fileLock.owns_lock()) return false;
+    if (!fileLock.owns_lock()) {
+        return false;
+    }
     mutexLock_ = std::move(mutexLock);
     fileLock_ = std::move(fileLock);
     return true;
@@ -106,23 +118,27 @@ file_lock::boost_wrapper::boost_wrapper(const cosim::filesystem::path& path)
 {
 #ifdef _WIN32
     // NOTE: The share mode flags must match those used by boost::interprocess.
-    const auto fileHandle = CreateFileW(
+    // The Windows SDK exposes these declarations through windows.h.
+    // NOLINTBEGIN(misc-include-cleaner)
+    auto* const fileHandle = CreateFileW(
         path.c_str(),
         GENERIC_WRITE,
         FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-        NULL,
+        nullptr,
         OPEN_ALWAYS,
         FILE_ATTRIBUTE_NORMAL,
-        NULL);
+        nullptr);
     if (fileHandle == INVALID_HANDLE_VALUE) {
         throw std::system_error(
-            GetLastError(),
+            static_cast<int>(GetLastError()),
             std::system_category(),
             "Failed to open or create lock file '" + path.string() + "'");
     }
     CloseHandle(fileHandle);
+    // NOLINTEND(misc-include-cleaner)
     fileLock_ = boost::interprocess::file_lock(path.string().c_str());
 #else
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg): POSIX open requires a mode when creating a file.
     const auto fileDescriptor = open(path.c_str(), O_CREAT | O_WRONLY, 0666);
     if (fileDescriptor == -1) {
         throw std::system_error(
@@ -164,7 +180,7 @@ file_lock::boost_wrapper::boost_wrapper(const cosim::filesystem::path& path)
 
 void file_lock::boost_wrapper::lock()
 {
-    std::lock_guard<std::mutex> countLock(shareCountMutex_);
+    std::scoped_lock const countLock(shareCountMutex_);
     assert(shareCount_ == 0);
     fileLock_.lock();
     shareCount_ = -1;
@@ -173,9 +189,11 @@ void file_lock::boost_wrapper::lock()
 
 bool file_lock::boost_wrapper::try_lock()
 {
-    std::lock_guard<std::mutex> countLock(shareCountMutex_);
+    std::scoped_lock const countLock(shareCountMutex_);
     assert(shareCount_ == 0);
-    if (!fileLock_.try_lock()) return false;
+    if (!fileLock_.try_lock()) {
+        return false;
+    }
     shareCount_ = -1;
     return true;
 }
@@ -183,7 +201,7 @@ bool file_lock::boost_wrapper::try_lock()
 
 void file_lock::boost_wrapper::unlock()
 {
-    std::lock_guard<std::mutex> countLock(shareCountMutex_);
+    std::scoped_lock const countLock(shareCountMutex_);
     assert(shareCount_ == -1);
     fileLock_.unlock();
     shareCount_ = 0;
@@ -192,7 +210,7 @@ void file_lock::boost_wrapper::unlock()
 
 void file_lock::boost_wrapper::lock_shared()
 {
-    std::lock_guard<std::mutex> countLock(shareCountMutex_);
+    std::scoped_lock const countLock(shareCountMutex_);
     assert(shareCount_ >= 0);
     if (shareCount_ == 0) {
         fileLock_.lock_sharable();
@@ -203,10 +221,10 @@ void file_lock::boost_wrapper::lock_shared()
 
 bool file_lock::boost_wrapper::try_lock_shared()
 {
-    std::lock_guard<std::mutex> countLock(shareCountMutex_);
+    std::scoped_lock const countLock(shareCountMutex_);
     assert(shareCount_ >= 0);
-    if (shareCount_ == 0) {
-        if (!fileLock_.try_lock_sharable()) return false;
+    if (shareCount_ == 0 && !fileLock_.try_lock_sharable()) {
+        return false;
     }
     ++shareCount_;
     return true;
@@ -215,9 +233,11 @@ bool file_lock::boost_wrapper::try_lock_shared()
 
 void file_lock::boost_wrapper::unlock_shared()
 {
-    std::lock_guard<std::mutex> countLock(shareCountMutex_);
+    std::scoped_lock const countLock(shareCountMutex_);
     assert(shareCount_ > 0);
-    if (shareCount_ == 1) fileLock_.unlock_sharable();
+    if (shareCount_ == 1) {
+        fileLock_.unlock_sharable();
+    }
     --shareCount_;
 }
 
@@ -243,13 +263,13 @@ std::shared_ptr<file_lock::file_mutex> file_lock::get_file_mutex(
     // associated with a mutex.  We do so by performing a linear search for
     // an element corresponding to the given path in `fileMutexes`
     // (cleaning up any expired elements along the way).
-    std::lock_guard<decltype(cacheMutex)> guard(cacheMutex);
+    std::scoped_lock const guard(cacheMutex);
     if (cosim::filesystem::exists(path)) {
         for (auto it = fileMutexCache.begin(); it != fileMutexCache.end();) {
-            if (auto fm = it->fileMutex.lock()) {
+            if (auto cachedMutex = it->fileMutex.lock()) {
                 if (cosim::filesystem::equivalent(path, it->path)) {
                     assert(!fileMutex);
-                    fileMutex = std::move(fm);
+                    fileMutex = std::move(cachedMutex);
                 }
                 ++it;
             } else {
@@ -268,5 +288,4 @@ std::shared_ptr<file_lock::file_mutex> file_lock::get_file_mutex(
 }
 
 
-} // namespace utility
-} // namespace cosim
+} // namespace cosim::utility

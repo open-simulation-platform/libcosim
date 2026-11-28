@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SystemStructureDescription xmlns="http://ssp-standard.org/SSP1/SystemStructureDescription"
+    xmlns:c="http://ssp-standard.org/SSP1/SystemStructureCommon"
+    name="Exact FMI types" version="2.0">
+    <System name="root">
+        <Elements>
+            <Component name="feedthrough" source="../../fmi3/Feedthrough.fmu">
+                <Connectors>
+                    <Connector name="Float64_continuous_input" kind="input"><c:Float64/></Connector>
+                    <Connector name="Float32_continuous_input" kind="input"><c:Float32/></Connector>
+                    <Connector name="Int8_input" kind="input"><c:Int8/></Connector>
+                    <Connector name="Int32_input" kind="input"><c:Int32/></Connector>
+                    <Connector name="UInt64_input" kind="input"><c:UInt64/></Connector>
+                    <Connector name="Binary_input" kind="input"><c:Binary/></Connector>
+                    <Connector name="Enumeration_input" kind="input"><c:Enumeration name="Option"/></Connector>
+                </Connectors>
+                <ParameterBindings>
+                    <ParameterBinding source="scalars.ssv"/>
+                </ParameterBindings>
+            </Component>
+            <Component name="arrays" source="../../fmi3/ArrayFeedthrough.fmu">
+                <Connectors>
+                    <Connector name="String_array" kind="input"><c:String/><c:Dimension size="2"/></Connector>
+                </Connectors>
+                <ParameterBindings>
+                    <ParameterBinding>
+                        <ParameterValues>
+                            <v:ParameterSet xmlns:v="http://ssp-standard.org/SSP1/SystemStructureParameterValues"
+                                version="2.0" name="arrays">
+                                <v:Parameters>
+                                    <v:Parameter name="String_array">
+                                        <v:String><v:Value value="  two words  "/><v:Value value=""/></v:String>
+                                        <c:Dimension size="2"/>
+                                    </v:Parameter>
+                                    <v:Parameter name="Binary_array">
+                                        <v:Binary><v:Value value="00ff"/><v:Value value=""/></v:Binary>
+                                        <c:Dimension size="2"/>
+                                    </v:Parameter>
+                                    <v:Parameter name="Enumeration_array">
+                                        <v:Enumeration><v:Value value="Option 2"/><v:Value value="Option 1"/></v:Enumeration>
+                                        <c:Dimension size="2"/>
+                                    </v:Parameter>
+                                </v:Parameters>
+                            </v:ParameterSet>
+                        </ParameterValues>
+                    </ParameterBinding>
+                </ParameterBindings>
+            </Component>
+        </Elements>
+    </System>
+    <Enumerations>
+        <c:Enumeration name="Option">
+            <c:Item name="Option 1" value="1"/>
+            <c:Item name="Option 2" value="2"/>
+        </c:Enumeration>
+    </Enumerations>
+</SystemStructureDescription>

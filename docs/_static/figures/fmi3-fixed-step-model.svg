@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 185" role="img" aria-labelledby="title desc">
+  <title id="title">Single-participant fixed-step example</title>
+  <desc id="desc">A fixed-step execution coordinates one factor-one FMI 3 participant. With a 0.1-second base interval, the participant has an event at 0.15 seconds. The arrows represent coordination, not a data connection.</desc>
+  <style>
+    .background { fill: #fff; } .box { fill: #eaf3fa; stroke: #315b77; stroke-width: 2; }
+    .event { fill: #fff6e3; stroke: #9a6a18; stroke-width: 2; }
+    .arrow { fill: none; stroke: #315b77; stroke-width: 3; marker-end: url(#arrow); }
+    .label { font: bold 18px sans-serif; fill: #142b3a; } .text { font: 16px sans-serif; fill: #243d4e; }
+  </style>
+  <defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 Z" fill="#315b77"/></marker></defs>
+  <rect class="background" width="1000" height="185"/>
+  <rect class="box" x="35" y="30" width="275" height="120" rx="8"/>
+  <text class="label" x="55" y="65">Fixed-step execution</text>
+  <text class="text" x="55" y="97">Base interval: 0.1 s</text>
+  <rect class="event" x="690" y="30" width="275" height="120" rx="8"/>
+  <text class="label" x="710" y="65">FMI 3 participant</text>
+  <text class="text" x="710" y="97">Factor 1; event at 0.15 s</text>
+  <path class="arrow" d="M310 70 H688"/>
+  <path class="arrow" d="M690 115 H312"/>
+  <text class="text" x="420" y="59">step requests</text>
+  <text class="text" x="415" y="141">event boundary</text>
+</svg>

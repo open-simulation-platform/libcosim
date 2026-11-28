@@ -28,10 +28,9 @@ interface and [Cosim Demo Application].
 
 ### Other programming languages
 
-Wrappers exist for other programming languages too:
+Separate wrappers exist for other programming languages too:
 
 * C++: [libcosimc]
-* Python: [libcosimpy]
 * Java/JVM: [cosim4j]
 
 Note that none of them have complete support for all libcosim features.
@@ -47,6 +46,7 @@ The tools needed to build libcosim are:
   * Build tool: [CMake] >= 3.19
   * Package manager (optional): [Conan] 2.x
   * API documentation generator (optional): [Doxygen]
+  * Full documentation (optional): [uv] and Doxygen
 
 In this guide, we will use Conan to download and configure libcosim's
 dependencies. We strongly recommend that you do too, even when you're unable
@@ -120,12 +120,37 @@ libcosim. Then, run
 
 where `<build-preset-name>` is the same as in the previous step.
 
+Tests consume prebuilt FMUs under `tests/data`. Normal test configuration,
+builds, and execution do not generate FMUs. If required fixtures are missing,
+build them separately and place them in the appropriate versioned directories;
+see [tests/build-test-fmus/README.md](tests/build-test-fmus/README.md).
+
 ### Step 5 (optional): Install libcosim
 
 Before you do this, you probably want to set the [`CMAKE_INSTALL_PREFIX`]
 variable to the desired install location first. Then, simply run:
 
     cmake --build --preset=<build-preset-name> --target=install
+
+### Build the documentation
+
+Install [uv], then run `uv venv .venv` if the environment does not exist and
+`uv pip install --python .venv -r docs/requirements.txt` from the repository
+root. Direct CMake builds also require Doxygen on `PATH`.
+Configure CMake with `-DLIBCOSIM_BUILD_DOCS=ON` to build the complete
+documentation, including internal API references, alongside the normal build.
+The option defaults to `OFF`. The `doc` target can also build the documentation
+separately. The guide is under the build directory's
+`output/sphinx/index.html`; Doxygen HTML is under `output/doc/html/index.html`.
+Build before installing so both generated trees are available.
+
+Alternatively, pass `-o "&:docs=True"` to `conan install` and `conan build`
+to build all documentation. Use the same option for both commands. Conan
+supplies Doxygen when documentation is enabled, and CMake finds the `uv`
+environment in `.venv` or on `PATH`. The former individual documentation
+options are no longer used.
+See [docs/README.md](docs/README.md) for platform-specific commands and
+installation details.
 
 
 [CI without Conan]: ./.github/workflows/ci-cmake.yml
@@ -139,8 +164,8 @@ variable to the desired install location first. Then, simply run:
 [Cosim Demo Application]: https://github.com/open-simulation-platform/cosim-demo-app
 [cosim4j]: https://github.com/open-simulation-platform/cosim4j
 [Doxygen]: http://www.doxygen.org
+[uv]: https://docs.astral.sh/uv/
 [libcosimc]: https://github.com/open-simulation-platform/libcosimc
-[libcosimpy]: https://github.com/open-simulation-platform/libcosimpy
 [`LICENSE`]: ./LICENSE
 [OSP]: https://opensimulationplatform.com/
 [proxy-fmu]: https://github.com/open-simulation-platform/proxy-fmu/

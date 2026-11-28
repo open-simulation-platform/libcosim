@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ParameterSet xmlns="http://ssp-standard.org/SSP1/SystemStructureParameterValues"
+    name="scalars" version="2.0">
+    <Parameters>
+        <Parameter name="Float64_continuous_input"><Float64 value="1.25"/></Parameter>
+        <Parameter name="Float32_continuous_input"><Float32 value="-2.5"/></Parameter>
+        <Parameter name="Int8_input"><Int8 value="-128"/></Parameter>
+        <Parameter name="UInt8_input"><UInt8 value="255"/></Parameter>
+        <Parameter name="Int16_input"><Int16 value="-32768"/></Parameter>
+        <Parameter name="UInt16_input"><UInt16 value="65535"/></Parameter>
+        <Parameter name="Int32_input"><Int32 value="-2147483648"/></Parameter>
+        <Parameter name="UInt32_input"><UInt32 value="4294967295"/></Parameter>
+        <Parameter name="Int64_input"><Int64 value="-9223372036854775808"/></Parameter>
+        <Parameter name="UInt64_input"><UInt64 value="18446744073709551615"/></Parameter>
+        <Parameter name="Boolean_input"><Boolean value="1"/></Parameter>
+        <Parameter name="String_input"><String value="  exact text  "/></Parameter>
+        <Parameter name="Binary_input"><Binary value="000AfeFF"/></Parameter>
+        <Parameter name="Enumeration_input"><Enumeration value="Option 2"/></Parameter>
+    </Parameters>
+</ParameterSet>

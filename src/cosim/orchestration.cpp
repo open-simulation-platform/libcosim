@@ -6,9 +6,20 @@
 #include "cosim/orchestration.hpp"
 
 #include "cosim/error.hpp"
+#include "cosim/file_cache.hpp"
 #include "cosim/fmi/fmu.hpp"
 #include "cosim/log/logger.hpp"
+#include "cosim/model_description.hpp"
+#include "cosim/slave.hpp"
+#include "cosim/uri.hpp"
 
+#include <boost/log/sources/severity_feature.hpp>
+
+#include <cassert>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <string_view>
 #include <utility>
 
 #ifdef HAS_PROXYFMU
@@ -41,9 +52,9 @@ model_uri_resolver& model_uri_resolver::operator=(model_uri_resolver&&) noexcept
 model_uri_resolver::~model_uri_resolver() noexcept = default;
 
 
-void model_uri_resolver::add_sub_resolver(std::shared_ptr<model_uri_sub_resolver> sr)
+void model_uri_resolver::add_sub_resolver(std::shared_ptr<model_uri_sub_resolver> resolver) // NOLINT(performance-unnecessary-value-param): Preserve the public by-value interface.
 {
-    subResolvers_.push_back(sr);
+    subResolvers_.push_back(resolver);
 }
 
 
@@ -53,8 +64,11 @@ std::shared_ptr<model> model_uri_resolver::lookup_model(
 {
     COSIM_INPUT_CHECK(baseUri.scheme().has_value() ||
         modelUriReference.scheme().has_value());
-    for (auto sr : subResolvers_) {
-        if (auto r = sr->lookup_model(baseUri, modelUriReference)) return r;
+    const auto subResolvers = subResolvers_;
+    for (const auto& resolver : subResolvers) {
+        if (auto model = resolver->lookup_model(baseUri, modelUriReference)) {
+            return model;
+        }
     }
     throw std::runtime_error(
         "No resolvers available to handle URI: " + std::string(modelUriReference.view()));
@@ -64,8 +78,11 @@ std::shared_ptr<model> model_uri_resolver::lookup_model(
 std::shared_ptr<model> model_uri_resolver::lookup_model(const uri& modelUri)
 {
     COSIM_INPUT_CHECK(modelUri.scheme().has_value());
-    for (auto sr : subResolvers_) {
-        if (auto r = sr->lookup_model(modelUri)) return r;
+    const auto subResolvers = subResolvers_;
+    for (const auto& resolver : subResolvers) {
+        if (auto model = resolver->lookup_model(modelUri)) {
+            return model;
+        }
     }
     throw std::runtime_error(
         "No resolvers available to handle URI: " + std::string(modelUri.view()));
@@ -76,29 +93,28 @@ std::shared_ptr<model> model_uri_resolver::lookup_model(const uri& modelUri)
 // class fmu_file_uri_sub_resolver
 // =============================================================================
 
-namespace
+fmu_backed_model::fmu_backed_model(std::shared_ptr<fmi::fmu> fmu)
+    : fmu_(std::move(fmu))
 {
-class fmu_model : public model
+    if (!fmu_) {
+        throw std::invalid_argument("FMU model requires a non-null FMU");
+    }
+}
+
+std::shared_ptr<const model_description> fmu_backed_model::description() const noexcept
 {
-public:
-    explicit fmu_model(std::shared_ptr<fmi::fmu> fmu)
-        : fmu_(std::move(fmu))
-    { }
+    return fmu_->model_description();
+}
 
-    std::shared_ptr<const model_description> description() const noexcept override
-    {
-        return fmu_->model_description();
-    }
+std::shared_ptr<slave> fmu_backed_model::instantiate(std::string_view name)
+{
+    return fmu_->instantiate_slave(name);
+}
 
-    std::shared_ptr<slave> instantiate(std::string_view name) override
-    {
-        return fmu_->instantiate_slave(name);
-    }
-
-private:
-    std::shared_ptr<fmi::fmu> fmu_;
-};
-} // namespace
+std::shared_ptr<fmi::fmu> fmu_backed_model::fmu() const noexcept
+{
+    return fmu_;
+}
 
 
 fmu_file_uri_sub_resolver::fmu_file_uri_sub_resolver()
@@ -117,7 +133,9 @@ fmu_file_uri_sub_resolver::fmu_file_uri_sub_resolver(
 std::shared_ptr<model> fmu_file_uri_sub_resolver::lookup_model(const uri& modelUri)
 {
     assert(modelUri.scheme().has_value());
-    if (*modelUri.scheme() != "file") return nullptr;
+    if (*modelUri.scheme() != "file") { // NOLINT(bugprone-unchecked-optional-access): A URI scheme is required by this resolver.
+        return nullptr;
+    }
 #ifndef _WIN32
     if (modelUri.authority().has_value() &&
         !(modelUri.authority()->empty() || *modelUri.authority() == "localhost")) {
@@ -130,9 +148,11 @@ std::shared_ptr<model> fmu_file_uri_sub_resolver::lookup_model(const uri& modelU
             << modelUri;
     }
     const auto path = file_uri_to_path(modelUri);
-    if (path.extension() != ".fmu") return nullptr;
-    auto fmu = importer_->import(path);
-    return std::make_shared<fmu_model>(fmu);
+    if (path.extension() != ".fmu") {
+        return nullptr;
+    }
+    const auto fmu = importer_->import(path);
+    return std::make_shared<fmu_backed_model>(fmu);
 }
 
 
@@ -141,7 +161,7 @@ std::shared_ptr<model> fmu_file_uri_sub_resolver::lookup_model(const uri& modelU
 // =============================================================================
 
 std::shared_ptr<model_uri_resolver> default_model_uri_resolver(
-    std::shared_ptr<file_cache> cache)
+    std::shared_ptr<file_cache> cache) // NOLINT(performance-unnecessary-value-param): Preserve the public by-value interface.
 {
     auto resolver = std::make_shared<model_uri_resolver>();
     if (cache) {

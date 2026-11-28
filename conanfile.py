@@ -30,17 +30,21 @@ class LibcosimConan(ConanFile):
         "fPIC": [True, False],
         "proxyfmu": [True, False],
         "no_fmi_logging": [True, False],
+        "docs": [True, False],
     }
     default_options = {
         "shared": True,
         "fPIC": True,
         "proxyfmu": False,
         "no_fmi_logging": False,
+        "docs": False,
     }
 
     # Dependencies/requirements
     def requirements(self):
         self.tool_requires("cmake/[>=4.0]")
+        if self.options.docs:
+            self.tool_requires("doxygen/1.18.0", options={"enable_search": False})
         self.requires("fmilibrary/[~3.0.4]")
         self.requires("libcbor/0.11.0")
         self.requires("libzip/[~1.11]")
@@ -86,7 +90,7 @@ class LibcosimConan(ConanFile):
 
         # Generate CMake toolchain file
         tc = CMakeToolchain(self)
-        tc.cache_variables["LIBCOSIM_BUILD_APIDOC"] = False
+        tc.cache_variables["LIBCOSIM_BUILD_DOCS"] = bool(self.options.docs)
         tc.cache_variables["LIBCOSIM_BUILD_TESTS"] = self._is_tests_enabled()
         tc.cache_variables["LIBCOSIM_NO_FMI_LOGGING"] = self.options.no_fmi_logging
         tc.cache_variables["LIBCOSIM_WITH_PROXYFMU"] = self.options.proxyfmu
@@ -96,7 +100,7 @@ class LibcosimConan(ConanFile):
     def build(self):
         cmake = CMake(self)
         cmake.configure()
-        cmake.build()
+        cmake.build(cli_args=["--parallel"])
         if self._is_tests_enabled():
             env = VirtualRunEnv(self).environment()
             env.define("CTEST_OUTPUT_ON_FAILURE", "ON")
@@ -127,4 +131,3 @@ class LibcosimConan(ConanFile):
             "true",
             "1",
         )
-

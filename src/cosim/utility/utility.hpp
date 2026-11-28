@@ -9,6 +9,7 @@
 #ifndef COSIM_UTILITY_UTILITY_HPP
 #define COSIM_UTILITY_UTILITY_HPP
 
+#include <ostream>
 #include <variant>
 
 namespace cosim
@@ -22,9 +23,9 @@ namespace cosim
  *  https://arne-mertz.de/2018/05/overload-build-a-variant-visitor-on-the-fly/
  */
 template<typename... Functors>
-struct visitor : Functors...
+struct visitor : Functors... // NOLINT(misc-multiple-inheritance): Overload the supplied visitor call operators.
 {
-    visitor(const Functors&... functors)
+    visitor(const Functors&... functors) // NOLINT(cppcoreguidelines-explicit-constructor,misc-explicit-constructor): Preserve implicit visitor construction.
         : Functors(functors)...
     {
     }
@@ -40,24 +41,24 @@ struct visitor : Functors...
 template<class T>
 struct streamer
 {
-    const T& val;
+    const T& val; // NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members): Stream the referenced value without copying it.
 };
 
 template<class T>
 streamer(T) -> streamer<T>;
 
 template<class T>
-std::ostream& operator<<(std::ostream& os, streamer<T> s)
+std::ostream& operator<<(std::ostream& output, streamer<T> value)
 {
-    os << s.val;
-    return os;
+    output << value.val;
+    return output;
 }
 
 template<class... Ts>
-std::ostream& operator<<(std::ostream& os, streamer<std::variant<Ts...>> sv)
+std::ostream& operator<<(std::ostream& output, streamer<std::variant<Ts...>> value)
 {
-    std::visit([&os](const auto& v) { os << streamer{v}; }, sv.val);
-    return os;
+    std::visit([&output](const auto& element) { output << streamer{element}; }, value.val);
+    return output;
 }
 
 } // namespace cosim

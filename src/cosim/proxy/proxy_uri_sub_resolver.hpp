@@ -10,11 +10,11 @@
 #define COSIM_PROXY_FILE_URI_SUB_RESOLVER_HPP
 
 #include <cosim/orchestration.hpp>
+#include <cosim/uri.hpp>
 
-namespace cosim
-{
+#include <memory>
 
-namespace proxy
+namespace cosim::proxy
 {
 
 /**
@@ -30,8 +30,6 @@ public:
     std::shared_ptr<model> lookup_model(const cosim::uri& uri) override;
 };
 
-} // namespace proxy
-
-} // namespace cosim
+} // namespace cosim::proxy
 
 #endif

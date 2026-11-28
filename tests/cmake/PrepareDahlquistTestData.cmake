@@ -5,7 +5,7 @@ function(prepare_dahlquist_test_data)
     endif()
 
     set(dahlquist_fmu_path
-        "${REFERENCE_FMUS_V2_BINARY_DIR}/fmus/Dahlquist.fmu")
+        "${TEST_FMI2_DIR}/Dahlquist.fmu")
     file(MAKE_DIRECTORY "${GEN_TEST_DATA_DIR}/msmi")
     file(RELATIVE_PATH DAHLQUIST_FMU_RELATIVE_PATH
         "${GEN_TEST_DATA_DIR}/msmi"

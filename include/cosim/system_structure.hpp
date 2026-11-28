@@ -9,20 +9,25 @@
 #ifndef COSIM_SYSTEM_STRUCTURE_HPP
 #define COSIM_SYSTEM_STRUCTURE_HPP
 
+#include "cosim/function/description.hpp"
 #include <cosim/function/function.hpp>
 #include <cosim/model_description.hpp>
 #include <cosim/orchestration.hpp>
 #include <cosim/time.hpp>
 
+#include <boost/container_hash/hash.hpp>
 #include <boost/functional/hash.hpp>
 #include <boost/range/adaptor/map.hpp>
 #include <boost/range/adaptor/transformed.hpp>
 
+#include <cstddef>
+#include <functional>
 #include <memory>
 #include <ostream>
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <utility>
 #include <variant>
 
 
@@ -40,7 +45,7 @@ struct full_variable_name
 {
     /// Default constructor
     full_variable_name() = default;
-    
+
     /// Constructor for simulator variables.
     full_variable_name(std::string simulatorName, std::string variableName)
         : entity_name(std::move(simulatorName))
@@ -98,7 +103,7 @@ struct full_variable_name
     int variable_instance = 0;
 
     /// Convenience function to check `variable_group_name` for emptiness.
-    bool is_simulator_variable() const noexcept
+    bool is_simulator_variable() const noexcept // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
     {
         return variable_group_name.empty();
     }
@@ -107,37 +112,37 @@ struct full_variable_name
 
 /// Equality operator for `full_variable_name`.
 inline bool operator==(
-    const full_variable_name& a, const full_variable_name& b) noexcept
+    const full_variable_name& lhs, const full_variable_name& rhs) noexcept
 {
-    return a.entity_name == b.entity_name &&
-        a.variable_group_name == b.variable_group_name &&
-        a.variable_group_instance == b.variable_group_instance &&
-        a.variable_name == b.variable_name &&
-        a.variable_instance == b.variable_instance;
+    return lhs.entity_name == rhs.entity_name &&
+        lhs.variable_group_name == rhs.variable_group_name &&
+        lhs.variable_group_instance == rhs.variable_group_instance &&
+        lhs.variable_name == rhs.variable_name &&
+        lhs.variable_instance == rhs.variable_instance;
 }
 
 /// Inequality operator for `full_variable_name`.
 inline bool operator!=(
-    const full_variable_name& a, const full_variable_name& b) noexcept
+    const full_variable_name& lhs, const full_variable_name& rhs) noexcept
 {
-    return !operator==(a, b);
+    return !operator==(lhs, rhs);
 }
 
 /// Writes a `full_variable_name` to an output stream.
-inline std::ostream& operator<<(std::ostream& s, const full_variable_name& v)
+inline std::ostream& operator<<(std::ostream& stream, const full_variable_name& value)
 {
-    s << v.entity_name << ':';
-    if (v.is_simulator_variable()) {
-        s << v.variable_name;
+    stream << value.entity_name << ':';
+    if (value.is_simulator_variable()) {
+        stream << value.variable_name;
     } else {
-        s << v.variable_group_name << '[' << v.variable_group_instance << "]:"
-          << v.variable_name << '[' << v.variable_instance << ']';
+        stream << value.variable_group_name << '[' << value.variable_group_instance << "]:"
+               << value.variable_name << '[' << value.variable_instance << ']';
     }
-    return s;
+    return stream;
 }
 
 /// Returns a string representation of a `full_variable_name`.
-std::string to_text(const full_variable_name& v);
+std::string to_text(const full_variable_name& variable);
 
 } // namespace cosim
 
@@ -146,15 +151,15 @@ namespace std
 template<>
 struct hash<cosim::full_variable_name>
 {
-    std::size_t operator()(const cosim::full_variable_name& v) const noexcept
+    std::size_t operator()(const cosim::full_variable_name& value) const noexcept
     {
-        std::size_t h = 0;
-        boost::hash_combine(h, v.entity_name);
-        boost::hash_combine(h, v.variable_group_name);
-        boost::hash_combine(h, v.variable_group_instance);
-        boost::hash_combine(h, v.variable_name);
-        boost::hash_combine(h, v.variable_instance);
-        return h;
+        std::size_t seed = 0;
+        boost::hash_combine(seed, value.entity_name);
+        boost::hash_combine(seed, value.variable_group_name);
+        boost::hash_combine(seed, value.variable_group_instance);
+        boost::hash_combine(seed, value.variable_name);
+        boost::hash_combine(seed, value.variable_instance);
+        return seed;
     }
 };
 } // namespace std
@@ -172,7 +177,7 @@ namespace cosim
  *  will result in an exception of type `cosim::error` with error code
  *  `cosim::errc::invalid_system_structure`.
  */
-class system_structure
+class system_structure // NOLINT(bugprone-exception-escape): MSVC unordered-container moves may allocate.
 {
 public:
     /**
@@ -216,7 +221,8 @@ public:
         full_variable_name target;
     };
 
-    /// Information about a powerbond connection. For use with the ecco algorithm only.
+    /// Information about a scalar Float64 power-bond connection. For use with
+    /// the ECCO algorithm only.
     struct power_bond
     {
         /// The input_a variable in the bond, according to the description of the ecco algorithm.
@@ -249,9 +255,9 @@ public:
     /**
      *  Adds an entity to the system.
      *
-     *  `e.name` must be unique in the context of the present system.
+     *  `entityInfo.name` must be unique in the context of the present system.
      */
-    void add_entity(const entity& e);
+    void add_entity(const entity& entityInfo);
 
     /// \overload
     void add_entity(
@@ -271,8 +277,18 @@ public:
         add_entity({std::string(name), type, {}, std::move(parameters)});
     }
 
-    power_bond_map get_power_bonds() const noexcept;
-    void add_power_bond(std::string name, power_bond pb);    
+    power_bond_map get_power_bonds() const noexcept; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
+
+    /**
+     * Adds an ECCO power bond.
+     *
+     * All endpoints must be scalar `Float64` simulator variables with the
+     * input/output causalities indicated by `power_bond`.
+     *
+     * \throws cosim::error with code `cosim::errc::invalid_system_structure`
+     *     if the name is empty or already used, or an endpoint is invalid.
+     */
+    void add_power_bond(std::string name, power_bond bond);
 
 
     /**
@@ -281,17 +297,17 @@ public:
      *  \returns
      *      A range of `entity` objects.
      */
-    entity_range entities() const noexcept;
+    entity_range entities() const noexcept; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
 
     /// Returns a pointer to the named entity if it exists, null otherwise.
-    const entity* find_entity(std::string_view name) const;
+    const entity* find_entity(std::string_view name) const; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
 
     /**
      *  Establishes a connection between two variables.
      *
      *  The same target variable may not be connected several times.
      */
-    void connect_variables(const connection& c);
+    void connect_variables(const connection& connectionInfo);
 
     /// \overload
     void connect_variables(
@@ -306,7 +322,7 @@ public:
      *  \returns
      *      A range of `connection` objects.
      */
-    connection_range connections() const noexcept;
+    connection_range connections() const noexcept; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
 
     /**
      *  Retrieves the description of a simulator variable, given its
@@ -315,8 +331,8 @@ public:
      *  This is a convenience function that provides fast variable lookup
      *  (O(1) on average).
      */
-    const variable_description& get_variable_description(
-        const full_variable_name& v) const;
+    const variable_description& get_variable_description( // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
+        const full_variable_name& variable) const;
 
     /**
      *  A description of a function variable, including group and variable
@@ -342,8 +358,8 @@ public:
      *  This is a convenience function that provides fast variable lookup
      *  (O(1) on average).
      */
-    const function_io_description& get_function_io_description(
-        const full_variable_name& v) const;
+    const function_io_description& get_function_io_description( // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
+        const full_variable_name& variable) const;
 
 private:
     // Entities, indexed by name.
@@ -362,7 +378,7 @@ private:
     std::unordered_map<std::string, model_info> modelCache_;
 
     // Cache for fast lookup of function info.
-    struct function_info
+    struct function_info // NOLINT(bugprone-exception-escape): MSVC unordered-container moves may allocate.
     {
         function_description description;
         std::unordered_map<
@@ -379,15 +395,15 @@ private:
 /**
  *  Converts an entity type to a model or function type.
  *
- *  This is a convenience function that simply checks whether `et` contains
+ *  This is a convenience function that simply checks whether `entityType` contains
  *  a `std::shared_ptr<T>`, and if so, returns it.
  *  Otherwise, it returns an empty (null) `std::shared_ptr<T>`.
  */
 template<typename T>
-std::shared_ptr<T> entity_type_to(system_structure::entity_type et) noexcept
+std::shared_ptr<T> entity_type_to(system_structure::entity_type entityType) noexcept
 {
-    const auto t = std::get_if<std::shared_ptr<T>>(&et);
-    return t ? *t : nullptr;
+    const auto type = std::get_if<std::shared_ptr<T>>(&entityType);
+    return type ? *type : nullptr;
 }
 
 
@@ -405,6 +421,13 @@ bool is_valid_variable_value(
     std::string* reason);
 
 
+/// Overload for validating a complete scalar or array value.
+bool is_valid_variable_value(
+    const variable_description& variable,
+    const variable_value& value,
+    std::string* reason);
+
+
 /**
  *  Checks whether a connection between two variables described by
  *  `source` and `target`, respectively, would be valid.
@@ -418,6 +441,22 @@ bool is_valid_connection(
     const variable_description& target,
     std::string* reason);
 
+
+/**
+ * Validates a simulator-to-simulator connection using both model descriptions.
+ *
+ * In addition to the variable-level checks, Enumeration connections require
+ * every numeric value allowed by the source variable to be accepted by the
+ * target variable.
+ */
+bool is_valid_connection(
+    const model_description& sourceModel,
+    const variable_description& source,
+    const model_description& targetModel,
+    const variable_description& target,
+    std::string* reason);
+
+
 /// Overload of `is_valid_connection()` for simulator-function connections.
 bool is_valid_connection(
     const variable_description& source,
@@ -430,6 +469,12 @@ bool is_valid_connection(
     const variable_description& target,
     std::string* reason);
 
+/// Overload of `is_valid_connection()` for function-function connections.
+bool is_valid_connection(
+    const function_io_description& source,
+    const function_io_description& target,
+    std::string* reason);
+
 
 /**
  *  A container that holds a set of variable values.
@@ -440,11 +485,12 @@ bool is_valid_connection(
  *  linked to a particular `system_structure` instance, and does not
  *  perform any validation of variable names or values.
  *
- *  Instead, the `add_variable_value()` function may be used as a
+ *  Values are owning, exact-type scalars or whole arrays.
+ *  The `add_variable_value()` function may be used as a
  *  convenient method for populating a `variable_value_map` with verified
  *  values.
  */
-using variable_value_map = std::unordered_map<full_variable_name, scalar_value>;
+using variable_value_map = std::unordered_map<full_variable_name, variable_value>;
 
 
 /**
@@ -455,9 +501,16 @@ using variable_value_map = std::unordered_map<full_variable_name, scalar_value>;
  *  for that variable, and then adds the variable-value pair to
  *  `variableValues`.
  *
- *  \throws `cosim::error` with code `cosim::errc::invalid_system_structure`
+ *  \throws cosim::error with code `cosim::errc::invalid_system_structure`
  *      if any of the above-mentioned checks fail.
  */
+void add_variable_value(
+    variable_value_map& variableValues,
+    const system_structure& systemStructure,
+    const full_variable_name& variable,
+    variable_value value);
+
+/// Scalar convenience overload.
 void add_variable_value(
     variable_value_map& variableValues,
     const system_structure& systemStructure,

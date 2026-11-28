@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 500" role="img" aria-labelledby="title desc">
+  <title id="title">Known events, simultaneous input events, and fixed communication steps</title>
+  <desc id="desc">A known event at 1.5 seconds caps a factor-three participant's request before stepping. When the source publishes its output after the first update, both FMUs stay in Event Mode and the target sees it at the next super-dense instant. A fixed-step peer first requested to advance 0.4 seconds rejects a later 0.3-second request.</desc>
+  <style>
+    .background { fill: #fff; } .line { stroke: #245c84; stroke-width: 6; }
+    .grid { stroke: #d3dce2; stroke-width: 1; stroke-dasharray: 4 5; }
+    .dot { fill: #245c84; } .event { fill: #a53e3e; }
+    .title { font: bold 20px sans-serif; fill: #142b3a; }
+    .label { font: 16px sans-serif; fill: #243d4e; }
+    .small { font: 14px sans-serif; fill: #243d4e; }
+  </style>
+  <rect class="background" width="1000" height="500"/>
+  <text class="title" x="30" y="34">Known event: cap before stepping, no restore</text>
+  <text class="small" x="30" y="60">Base 1 s; a factor-three Event Mode participant advertises an event at 1.5 s.</text>
+  <line class="grid" x1="250" y1="80" x2="250" y2="175"/><line class="grid" x1="550" y1="80" x2="550" y2="175"/>
+  <line class="grid" x1="850" y1="80" x2="850" y2="175"/>
+  <text class="small" x="246" y="77">0</text><text class="small" x="538" y="77">1.5</text><text class="small" x="842" y="77">3 s</text>
+  <text class="label" x="30" y="116">Slow requests</text>
+  <line class="line" x1="250" y1="110" x2="850" y2="110"/>
+  <circle class="dot" cx="250" cy="110" r="6"/><circle class="event" cx="550" cy="110" r="7"/><circle class="dot" cx="850" cy="110" r="6"/>
+  <text class="small" x="30" y="150">0 to 1.5, handle event, then 1.5 to 3. Execution advances 0, 1, 1.5, 2 s.</text>
+  <text class="small" x="30" y="171">A known event caps the request before any speculative overshoot.</text>
+
+  <text class="title" x="30" y="216">Simultaneous ordinary input events: same physical time</text>
+  <text class="small" x="30" y="244">Source A has input 2 and changes its output in UpdateDiscreteStates. Target B initially has input 1.</text>
+  <text class="label" x="30" y="278">Instant 0:</text><text class="label" x="180" y="278">A updates with 2; B updates with 1; stage A's output</text>
+  <text class="label" x="30" y="311">Instant 1:</text><text class="label" x="180" y="311">Apply A's output to B; A and B both update with 2</text>
+  <text class="small" x="30" y="343">B ends with output 2. Both FMUs stay in Event Mode across the two updates.</text>
+  <text class="small" x="30" y="364">Both updates occur at the same physical time.</text>
+
+  <text class="title" x="30" y="408">Fixed communication-step peer: shortened first request sets its size</text>
+  <text class="label" x="30" y="439">0 to 0.4 s succeeds  -&gt;  later 0.3 s request is rejected before the next peer step.</text>
+  <text class="small" x="30" y="470">After rejection, restore an earlier complete snapshot or recreate the execution.</text>
+</svg>

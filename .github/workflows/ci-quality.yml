@@ -1,0 +1,115 @@
+name: libcosim quality checks
+
+on: [pull_request, workflow_dispatch]
+
+jobs:
+  quality:
+    # Fork pull requests do not receive the Conan remote credentials.
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    # Match the Linux Release binaries published by ci-conan.yml, including
+    # the system C and C++ runtimes used by those packages.
+    container:
+      image: gcc:14
+    timeout-minutes: 180
+    defaults:
+      run:
+        shell: bash
+    permissions:
+      contents: read
+      pull-requests: write
+    env:
+      LIBCOSIM_RUN_TESTS_ON_CONAN_BUILD: 1
+      ASAN_SYMBOLIZER_PATH: /usr/bin/llvm-symbolizer-18
+      UBSAN_OPTIONS: print_stacktrace=1
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Install tooling
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            ca-certificates clang-18 curl gnupg libclang-rt-18-dev llvm-18 pipx
+          curl -fsSL https://apt.llvm.org/llvm-snapshot.gpg.key \
+            | gpg --batch --yes --dearmor -o /usr/share/keyrings/llvm-snapshot.gpg
+          . /etc/os-release
+          codename=$VERSION_CODENAME
+          echo "deb [signed-by=/usr/share/keyrings/llvm-snapshot.gpg] https://apt.llvm.org/$codename/ llvm-toolchain-$codename-23 main" \
+            > /etc/apt/sources.list.d/llvm-23.list
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            'clang-format-23=1:23.1.*' clang-tidy-23
+          apt-mark hold clang-format-23
+          clang-format-23 --version
+          pipx install conan
+          pipx install 'cmake>=4'
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: Install dependencies
+        env:
+          CONAN_LOGIN_USERNAME_OSP: ${{ secrets.osp_artifactory_usr }}
+          CONAN_PASSWORD_OSP: ${{ secrets.osp_artifactory_pwd }}
+        run: |
+          conan profile detect -f
+          conan remote add osp https://osp.jfrog.io/artifactory/api/conan/conan-local --force --index 0
+          conan install . --output-folder=build/Release --build=missing \
+            -s build_type=Release -o '&:proxyfmu=True' -o '*:shared=True'
+      - name: Build with ASan and UBSan
+        id: build
+        env:
+          CC: clang-18
+          CXX: clang++-18
+        run: |
+          cmake --preset conan-release \
+            -DCMAKE_CXX_FLAGS_RELEASE='-O1 -g1 -DNDEBUG' \
+            -DLIBCOSIM_ENABLE_SANITIZERS=ON \
+            -DLIBCOSIM_TREAT_WARNINGS_AS_ERRORS=OFF \
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          cmake --build --preset conan-release --parallel 2
+      - name: Run all configured tests with sanitizers
+        env:
+          ASAN_OPTIONS: detect_leaks=1
+        run: |
+          ctest --preset conan-release --output-on-failure --parallel 2 \
+            --no-tests=error
+      - name: Read lint exclusions
+        id: lint_exclusions
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: |
+          set -o pipefail
+          for tool in format tidy; do
+            patterns=$(sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' \
+              -e '/^#/d' -e '/^$/d' ".clang-${tool}-ignore" | paste -sd '|' -)
+            echo "${tool}=${patterns}" >> "$GITHUB_OUTPUT"
+          done
+      - name: Check C++ source and header files
+        id: linter
+        if: ${{ !cancelled() && steps.lint_exclusions.outcome == 'success' }}
+        uses: cpp-linter/cpp-linter-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          version: '23'
+          database: build/Release/build/Release
+          style: 'file'
+          tidy-checks: ''
+          thread-comments: ${{ github.event_name == 'pull_request' && 'update' || 'false' }}
+          extensions: cpp,h,hpp
+          files-changed-only: 'false'
+          lines-changed-only: 'false'
+          ignore: '*|!src|!include'
+          ignore-format: ${{ steps.lint_exclusions.outputs.format }}
+          ignore-tidy: ${{ steps.lint_exclusions.outputs.tidy }}
+          jobs: '4'
+      - name: Verify clang-format version
+        if: ${{ !cancelled() && steps.lint_exclusions.outcome == 'success' }}
+        run: |
+          version=$(clang-format-23 --version)
+          echo "$version"
+          if [[ ! "$version" =~ ^((Debian|Ubuntu)[[:space:]]+)?clang-format[[:space:]]+version[[:space:]]+23\.1\.[0-9]+([[:space:]]|$) ]]; then
+            echo "::error::Expected clang-format 23.1.x; the cpp-linter action selects only a major version."
+            exit 1
+          fi
+      - name: Fail on lint findings
+        if: ${{ steps.linter.outputs.checks-failed > 0 }}
+        run: exit 1

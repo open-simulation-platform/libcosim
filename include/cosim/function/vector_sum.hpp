@@ -10,10 +10,15 @@
 #ifndef COSIM_FUNCTION_VECTOR_SUM_HPP
 #define COSIM_FUNCTION_VECTOR_SUM_HPP
 
+#include <cosim/function/description.hpp>
 #include <cosim/function/function.hpp>
+#include <cosim/model_description.hpp>
 
-#include <stdexcept>
+#include <memory>
+#include <stdexcept> // IWYU pragma: keep
+#include <string_view>
 #include <type_traits>
+#include <typeinfo> // IWYU pragma: keep
 #include <variant>
 #include <vector>
 
@@ -33,6 +38,8 @@ function_type_description vector_sum_description(
  *  A vector sum function instance.
  *
  *  See `vector_sum_function_type` for a description of this function.
+ *  Inputs are summed element by element. The built-in implementation permits
+ *  repeated same-time evaluation during coupled event iteration.
  *
  *  \tparam T
  *      The vector value type, either `double` or `int`.
@@ -51,7 +58,7 @@ public:
      *  \param [in] dimension
      *      The dimension of the input and output vectors.
      */
-    vector_sum_function(int inputCount, int dimension)
+    vector_sum_function(int inputCount, int dimension) // NOLINT(bugprone-easily-swappable-parameters): Preserve the public constructor signature.
         : inputs_(inputCount, std::vector<T>(dimension))
         , output_(dimension)
     {
@@ -64,9 +71,9 @@ public:
     }
 
     // Overridden `function` methods.
-    function_description description() const override
+    function_description description() const override // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
     {
-        return detail::vector_sum_description(
+        return detail::vector_sum_description( // NOLINT(cppcoreguidelines-slicing): Return the public base description.
             static_cast<int>(inputs_.size()),
             std::is_integral_v<T> ? variable_type::integer : variable_type::real,
             static_cast<int>(inputs_.front().size()));
@@ -112,7 +119,7 @@ public:
         throw_bad_io_ref();
     }
 
-    double get_real([[maybe_unused]] const function_io_reference& reference) const override
+    double get_real([[maybe_unused]] const function_io_reference& reference) const override // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
     {
         if constexpr (std::is_same_v<T, double>) {
             if (reference.group == 0 && reference.io == 0) {
@@ -125,7 +132,7 @@ public:
         throw_bad_io_ref();
     }
 
-    int get_integer([[maybe_unused]] const function_io_reference& reference) const override
+    int get_integer([[maybe_unused]] const function_io_reference& reference) const override // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
     {
         if constexpr (std::is_same_v<T, int>) {
             if (reference.group == 0 && reference.io == 0) {
@@ -138,22 +145,30 @@ public:
         throw_bad_io_ref();
     }
 
-    bool get_boolean(const function_io_reference& /*reference*/) const override
+    bool get_boolean(const function_io_reference& /*reference*/) const override // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
     {
         throw_bad_io_ref();
     }
 
-    std::string_view get_string(const function_io_reference& /*reference*/) const override
+    std::string_view get_string(const function_io_reference& /*reference*/) const override // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
     {
         throw_bad_io_ref();
+    }
+
+    bool supports_event_iteration() const noexcept override // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
+    {
+        return typeid(*this) == typeid(vector_sum_function<T>);
     }
 
     void calculate() override
     {
-        output_.assign(inputs_[0].begin(), inputs_[0].end());
-        for (std::size_t i = 1; i < inputs_.size(); ++i) {
-            for (std::size_t j = 0; j < output_.size(); ++j) {
-                output_[j] += inputs_[i][j];
+        auto input = inputs_.begin();
+        output_.assign(input->begin(), input->end());
+        for (++input; input != inputs_.end(); ++input) {
+            auto output = output_.begin();
+            for (const auto& value : *input) {
+                *output += value;
+                ++output;
             }
         }
     }
@@ -211,7 +226,7 @@ class vector_sum_function_type : public function_type
 {
 public:
     /// Parameter indexes, for convenience.
-    enum
+    enum // NOLINT(performance-enum-size,cppcoreguidelines-use-enum-class): Preserve the public enum type.
     {
         inputCount_parameter_index,
         numericType_parameter_index,
@@ -219,7 +234,7 @@ public:
     };
 
     // Overridden `function_type` methods
-    function_type_description description() const override;
+    function_type_description description() const override; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
 
     std::unique_ptr<function> instantiate(
         const function_parameter_value_map& parameters) override;

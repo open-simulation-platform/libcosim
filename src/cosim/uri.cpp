@@ -7,15 +7,27 @@
 
 #include "cosim/error.hpp"
 
+#include <boost/algorithm/cxx11/all_of.hpp>
+
 #include <cassert>
 #include <cctype>
-#include <cstdint>
+#include <cstddef>
+#include <cstdint> // IWYU pragma: keep
+#include <filesystem>
 #include <iomanip>
+#include <ios>
+#include <optional>
 #include <sstream>
 #include <stdexcept>
+#include <string>
+#include <string_view>
+#include <utility>
 
 #ifdef _WIN32
+#    include <Windows.h> // IWYU pragma: keep
+#    include <array>
 #    include <shlwapi.h>
+#    include <system_error>
 #    include <wininet.h>
 #endif
 
@@ -30,17 +42,19 @@ namespace cosim
 namespace
 {
 
-bool is_scheme_char(char c) noexcept
+bool is_scheme_char(char character) noexcept
 {
-    return std::isalnum(static_cast<unsigned char>(c)) ||
-        c == '+' || c == '-' || c == '.';
+    return (std::isalnum(static_cast<unsigned char>(character)) != 0) ||
+        character == '+' || character == '-' || character == '.';
 }
 
 std::optional<std::string_view> consume_scheme(std::string_view& input)
 {
     std::size_t pos = 0;
-    while (pos < input.size() && is_scheme_char(input[pos])) ++pos;
-    if (pos == input.size() || input[pos] != ':') {
+    while (pos < input.size() && is_scheme_char(input.at(pos))) {
+        ++pos;
+    }
+    if (pos == input.size() || input.at(pos) != ':') {
         return std::nullopt;
     } else if (pos == 0) {
         throw std::invalid_argument("URI scheme is empty");
@@ -57,28 +71,30 @@ std::string_view consume_while(
     std::size_t start) noexcept
 {
     std::size_t pos = start;
-    while (pos < input.size() && is_valid_char(input[pos])) ++pos;
-    auto ret = input.substr(start, pos - start);
+    while (pos < input.size() && is_valid_char(input.at(pos))) {
+        ++pos;
+    }
+    const auto ret = input.substr(start, pos - start);
     input.remove_prefix(pos);
     return ret;
 }
 
-bool is_authority_char(char c) noexcept
+bool is_authority_char(char character) noexcept
 {
-    return c != '/' && c != '?' && c != '#';
+    return character != '/' && character != '?' && character != '#';
 }
 
 std::optional<std::string_view> consume_authority(std::string_view& input)
 {
-    if (input.size() < 2 || input[0] != '/' || input[1] != '/') {
+    if (input.size() < 2 || input.at(0) != '/' || input.at(1) != '/') {
         return std::nullopt;
     }
     return consume_while(is_authority_char, input, 2);
 }
 
-bool is_path_char(char c) noexcept
+bool is_path_char(char character) noexcept
 {
-    return c != '?' && c != '#';
+    return character != '?' && character != '#';
 }
 
 std::string_view consume_path(std::string_view& input)
@@ -86,14 +102,14 @@ std::string_view consume_path(std::string_view& input)
     return consume_while(is_path_char, input, 0);
 }
 
-bool is_query_char(char c) noexcept
+bool is_query_char(char character) noexcept
 {
-    return c != '#';
+    return character != '#';
 }
 
 std::optional<std::string_view> consume_query(std::string_view& input)
 {
-    if (input.empty() || input[0] != '?') {
+    if (input.empty() || input.front() != '?') {
         return std::nullopt;
     }
     return consume_while(is_query_char, input, 1);
@@ -112,10 +128,7 @@ std::optional<std::string_view> consume_fragment(std::string_view& input)
 
 bool all_chars_satisfy(bool (*is_valid_char)(char), std::string_view string)
 {
-    for (auto c : string) {
-        if (!is_valid_char(c)) return false;
-    }
-    return true;
+    return boost::algorithm::all_of(string, is_valid_char);
 }
 
 detail::subrange to_subrange(const std::string& str, std::string_view substr)
@@ -174,18 +187,22 @@ uri::uri() noexcept = default;
 }
 
 
-uri::uri(
+uri::uri( // NOLINT(readability-function-cognitive-complexity): Input-check macros contribute control flow while preserving diagnostics.
     std::optional<std::string_view> scheme,
     std::optional<std::string_view> authority,
     std::string_view path,
     std::optional<std::string_view> query,
     std::optional<std::string_view> fragment)
 {
+    // NOLINTNEXTLINE(readability-simplify-boolean-expr): Preserve input-check diagnostics.
     COSIM_INPUT_CHECK(!scheme ||
         (!scheme->empty() && all_chars_satisfy(is_scheme_char, *scheme)));
+    // NOLINTNEXTLINE(readability-simplify-boolean-expr): Preserve input-check diagnostics.
     COSIM_INPUT_CHECK(!authority || all_chars_satisfy(is_authority_char, *authority));
+    // NOLINTNEXTLINE(readability-simplify-boolean-expr): Preserve input-check diagnostics.
     COSIM_INPUT_CHECK(!authority || path.empty() || path.front() == '/');
     COSIM_INPUT_CHECK(all_chars_satisfy(is_path_char, path));
+    // NOLINTNEXTLINE(readability-simplify-boolean-expr): Preserve input-check diagnostics.
     COSIM_INPUT_CHECK(!query || all_chars_satisfy(is_query_char, path));
     data_.reserve(
         (scheme ? scheme->size() + 1 : 0) +
@@ -276,7 +293,7 @@ namespace
 // Canonical `merge` algorithm from RFC 3986 Sec. 5.2.3.
 std::string merge(
     bool baseHasAuthority,
-    std::string_view basePath,
+    std::string_view basePath, // NOLINT(bugprone-easily-swappable-parameters): RFC 3986 distinguishes the base and reference paths.
     std::string_view referencePath)
 {
     std::string result;
@@ -309,10 +326,16 @@ std::string_view remove_dot_segments(
     outputBuffer.clear();
 
     const auto removeLastOutputSegment = [&] {
-        if (outputBuffer.empty()) return;
+        if (outputBuffer.empty()) {
+            return;
+        }
         outputBuffer.pop_back();
-        while (!outputBuffer.empty() && outputBuffer.back() != '/') outputBuffer.pop_back();
-        if (!outputBuffer.empty()) outputBuffer.pop_back();
+        while (!outputBuffer.empty() && outputBuffer.back() != '/') {
+            outputBuffer.pop_back();
+        }
+        if (!outputBuffer.empty()) {
+            outputBuffer.pop_back();
+        }
     };
 
     while (!inputBuffer.empty()) {
@@ -333,10 +356,12 @@ std::string_view remove_dot_segments(
         } else if (inputBuffer == "." || inputBuffer == "..") {
             inputBuffer.clear();
         } else {
-            std::size_t i = 1;
-            while (i < inputBuffer.size() && inputBuffer[i] != '/') ++i;
-            outputBuffer.append(inputBuffer, 0, i);
-            inputBuffer.erase(0, i);
+            std::size_t segmentEnd = 1;
+            while (segmentEnd < inputBuffer.size() && inputBuffer.at(segmentEnd) != '/') {
+                ++segmentEnd;
+            }
+            outputBuffer.append(inputBuffer, 0, segmentEnd);
+            inputBuffer.erase(0, segmentEnd);
         }
     }
     return std::string_view(outputBuffer);
@@ -393,7 +418,7 @@ uri resolve_reference(const uri& base, const uri& reference)
     }
     fragment = reference.fragment();
 
-    return uri(scheme, authority, path, query, fragment);
+    return {scheme, authority, path, query, fragment};
 }
 
 
@@ -404,18 +429,19 @@ uri resolve_reference(const uri& base, const uri& reference)
 
 namespace
 {
-bool is_unreserved(char c) noexcept
+bool is_unreserved(char character) noexcept
 {
-    return ('A' <= c && c <= 'Z') || ('a' <= c && c <= 'z') ||
-        ('0' <= c && c <= '9') ||
-        c == '-' || c == '_' || c == '.' || c == '~';
+    return ('A' <= character && character <= 'Z') || ('a' <= character && character <= 'z') ||
+        ('0' <= character && character <= '9') ||
+        character == '-' || character == '_' || character == '.' || character == '~';
 }
 
-bool is_in_cstring(char c, const char* s)
+bool is_in_cstring(char character, const char* string)
 {
-    if (s == nullptr) return false;
-    while (*s != '\0' && *s != c) ++s;
-    return *s != '\0';
+    if (string == nullptr) {
+        return false;
+    }
+    return std::string_view(string).find(character) != std::string_view::npos;
 }
 } // namespace
 
@@ -424,14 +450,14 @@ std::string percent_encode(std::string_view string, const char* exceptions)
     std::ostringstream encoded;
     encoded.fill('0');
     encoded << std::hex << std::uppercase;
-    for (const char c : string) {
-        if (is_unreserved(c) || is_in_cstring(c, exceptions)) {
-            encoded << c;
+    for (const char character : string) {
+        if (is_unreserved(character) || is_in_cstring(character, exceptions)) {
+            encoded << character;
         } else {
             encoded
                 << '%'
                 << std::setw(2)
-                << static_cast<int>(static_cast<unsigned char>(c));
+                << static_cast<int>(static_cast<unsigned char>(character));
         }
     }
     return encoded.str();
@@ -442,12 +468,13 @@ namespace
 {
 int hex_to_int(char hex)
 {
+    constexpr int hex_letter_offset = 10;
     if (hex >= '0' && hex <= '9') {
         return hex - '0';
     } else if (hex >= 'A' && hex <= 'F') {
-        return hex + 10 - 'A';
+        return hex + hex_letter_offset - 'A';
     } else if (hex >= 'a' && hex <= 'f') {
-        return hex + 10 - 'a';
+        return hex + hex_letter_offset - 'a';
     } else {
         throw std::domain_error(std::string("Not a hexadecimal digit: ") + hex);
     }
@@ -458,15 +485,16 @@ std::string percent_decode(std::string_view encoded)
 {
     std::string decoded;
     while (!encoded.empty()) {
-        const auto i = encoded.find('%');
-        if (i > encoded.size() - 3) {
+        const auto escapePos = encoded.find('%');
+        if (escapePos == std::string_view::npos || encoded.size() - escapePos < 3) {
             decoded += encoded;
             encoded.remove_prefix(encoded.size());
         } else {
-            decoded += encoded.substr(0, i);
+            decoded += encoded.substr(0, escapePos);
             decoded += static_cast<char>(
-                (hex_to_int(encoded[i + 1]) << 4) | hex_to_int(encoded[i + 2]));
-            encoded.remove_prefix(i + 3);
+                (static_cast<unsigned int>(hex_to_int(encoded.at(escapePos + 1))) << 4U) |
+                static_cast<unsigned int>(hex_to_int(encoded.at(escapePos + 2))));
+            encoded.remove_prefix(escapePos + 3);
         }
     }
     return decoded;
@@ -480,13 +508,25 @@ uri percent_encode_uri(
     std::optional<std::string_view> query,
     std::optional<std::string_view> fragment)
 {
-    std::string s, a, p, q, f; // buffers to hold the encoded components
-    if (scheme) scheme = s = percent_encode(*scheme, "+");
-    if (authority) authority = a = percent_encode(*authority, "@:+");
-    path = p = percent_encode(path, "/+");
-    if (query) query = q = percent_encode(*query, "=&;/:+");
-    if (fragment) fragment = f = percent_encode(*fragment);
-    return uri(scheme, authority, path, query, fragment);
+    std::string encodedScheme;
+    std::string encodedAuthority;
+    std::string encodedPath;
+    std::string encodedQuery;
+    std::string encodedFragment;
+    if (scheme) {
+        scheme = encodedScheme = percent_encode(*scheme, "+");
+    }
+    if (authority) {
+        authority = encodedAuthority = percent_encode(*authority, "@:+");
+    }
+    path = encodedPath = percent_encode(path, "/+");
+    if (query) {
+        query = encodedQuery = percent_encode(*query, "=&;/:+");
+    }
+    if (fragment) {
+        fragment = encodedFragment = percent_encode(*fragment);
+    }
+    return {scheme, authority, path, query, fragment};
 }
 
 
@@ -497,28 +537,30 @@ uri path_to_file_uri(const cosim::filesystem::path& path)
 #ifdef _WIN32
     // Windows has some special rules for file URIs; better use the built-in
     // functions.
-    wchar_t buffer16[INTERNET_MAX_URL_LENGTH];
+    // NOLINTBEGIN(misc-include-cleaner)
+    std::array<wchar_t, INTERNET_MAX_URL_LENGTH> buffer16{};
     DWORD size16 = INTERNET_MAX_URL_LENGTH;
-    const auto rc = UrlCreateFromPathW(path.c_str(), buffer16, &size16, 0);
-    assert(rc != S_FALSE); // If `path` contains an URL, something is fishy.
-    if (rc != S_OK && rc != S_FALSE) {
-        throw std::system_error(rc, std::system_category());
+    const auto result = UrlCreateFromPathW(path.c_str(), buffer16.data(), &size16, 0);
+    assert(result != S_FALSE); // If `path` contains an URL, something is fishy.
+    if (result != S_OK && result != S_FALSE) {
+        throw std::system_error(result, std::system_category());
     }
 
-    char buffer8[2 * INTERNET_MAX_URL_LENGTH];
+    std::array<char, 2 * INTERNET_MAX_URL_LENGTH> buffer8{};
     const auto size8 = WideCharToMultiByte(
         CP_UTF8, WC_ERR_INVALID_CHARS,
-        buffer16, size16,
-        buffer8, sizeof buffer8,
-        NULL, NULL);
+        buffer16.data(), static_cast<int>(size16),
+        buffer8.data(), static_cast<int>(buffer8.size()),
+        nullptr, nullptr);
     if (size8 <= 0) {
-        throw std::system_error(GetLastError(), std::system_category());
+        throw std::system_error(static_cast<int>(GetLastError()), std::system_category());
     }
-    return uri(std::string(buffer8, size8));
+    return {std::string(buffer8.data(), size8)};
+    // NOLINTEND(misc-include-cleaner)
 
 #else
     if (path.empty()) {
-        return uri("file:");
+        return {"file:"};
     } else {
         return percent_encode_uri("file", std::string_view(), path.string());
     }
@@ -532,28 +574,30 @@ cosim::filesystem::path file_uri_to_path(const uri& fileUri)
 #ifdef _WIN32
     // Windows has some special rules for file URIs; better use the built-in
     // functions.
-    wchar_t urlBuffer[INTERNET_MAX_URL_LENGTH];
+    // NOLINTBEGIN(misc-include-cleaner)
+    std::array<wchar_t, INTERNET_MAX_URL_LENGTH + 1> urlBuffer{};
     const auto urlSize = MultiByteToWideChar(
         CP_UTF8, MB_ERR_INVALID_CHARS,
         fileUri.view().data(), static_cast<int>(fileUri.view().size()),
-        urlBuffer, INTERNET_MAX_URL_LENGTH);
+        urlBuffer.data(), INTERNET_MAX_URL_LENGTH);
     if (urlSize <= 0) {
-        throw std::system_error(GetLastError(), std::system_category());
+        throw std::system_error(static_cast<int>(GetLastError()), std::system_category());
     }
-    urlBuffer[urlSize] = '\0';
+    urlBuffer.at(static_cast<std::size_t>(urlSize)) = '\0';
 
-    wchar_t pathBuffer[MAX_PATH];
+    std::array<wchar_t, MAX_PATH> pathBuffer{};
     DWORD pathSize = MAX_PATH;
-    const auto rc = PathCreateFromUrlW(urlBuffer, pathBuffer, &pathSize, 0);
-    if (rc != S_OK) {
-        throw std::system_error(rc, std::system_category());
+    const auto result = PathCreateFromUrlW(urlBuffer.data(), pathBuffer.data(), &pathSize, 0);
+    if (result != S_OK) {
+        throw std::system_error(result, std::system_category());
     }
-    return cosim::filesystem::path(pathBuffer, pathBuffer + pathSize);
+    return {pathBuffer.begin(), pathBuffer.begin() + pathSize};
+    // NOLINTEND(misc-include-cleaner)
 
 #else
     COSIM_INPUT_CHECK(fileUri.authority() &&
         (fileUri.authority()->empty() || *fileUri.authority() == "localhost"));
-    return cosim::filesystem::path(percent_decode(fileUri.path()));
+    return {percent_decode(fileUri.path())};
 #endif
 }
 

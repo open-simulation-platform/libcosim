@@ -6,17 +6,22 @@
 #include "cosim/observer/last_value_observer.hpp"
 
 #include "cosim/error.hpp"
+#include "cosim/execution.hpp"
+#include "cosim/model_description.hpp"
+#include "cosim/observer/observer.hpp"
 #include "cosim/observer/slave_value_provider.hpp"
+#include "cosim/time.hpp"
 
-#include <map>
-#include <mutex>
+#include <gsl/span>
+
+#include <memory>
+#include <string>
 
 
 namespace cosim
 {
 
-last_value_observer::last_value_observer()
-{ }
+last_value_observer::last_value_observer() = default;
 
 void last_value_observer::simulator_added(simulator_index index, observable* simulator, time_point /*currentTime*/)
 {
@@ -68,6 +73,14 @@ void last_value_observer::state_restored(
     for (const auto& entry : valueProviders_) {
         entry.second->observe();
     }
+}
+
+variable_value last_value_observer::get_variable_value(
+    simulator_index sim,
+    variable_type type,
+    value_reference reference)
+{
+    return valueProviders_.at(sim)->get_variable_value(type, reference);
 }
 
 void last_value_observer::get_real(

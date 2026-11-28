@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OspSystemStructure xmlns="http://opensimulationplatform.com/MSMI/OSPSystemStructure" version="0.2.0">
+    <BaseStepSize>1.5</BaseStepSize>
+    <Simulators>
+        <Simulator name="target" source="../../StrictClock.fmu">
+            <InitialValues>
+                <InitialValue variable="periodicArray">
+                    <UInt64 value="42 18446744073709551615"/><Dimension size="2"/>
+                </InitialValue>
+            </InitialValues>
+        </Simulator>
+    </Simulators>
+    <Clocks>
+        <Clock name="driver" intervalVariability="constant" supportsFraction="true"
+            intervalCounter="2" resolution="4" shiftCounter="1"/>
+    </Clocks>
+    <Connections>
+        <VariableConnection>
+            <Variable simulator="driver" name="out"/>
+            <Variable simulator="target" name="triggered"/>
+        </VariableConnection>
+    </Connections>
+</OspSystemStructure>

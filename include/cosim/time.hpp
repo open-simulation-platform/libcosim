@@ -63,9 +63,9 @@ using time_point = detail::clock::time_point;
  *
  *  The conversion may be subject to round-off error and truncation.
  */
-constexpr duration to_duration(double d)
+constexpr duration to_duration(double value)
 {
-    return std::chrono::duration_cast<duration>(std::chrono::duration<double>(d));
+    return std::chrono::duration_cast<duration>(std::chrono::duration<double>(value));
 }
 
 
@@ -79,9 +79,9 @@ constexpr duration to_duration(double d)
  *
  *  in general does not hold.
  */
-constexpr time_point to_time_point(double t)
+constexpr time_point to_time_point(double value)
 {
-    return time_point(to_duration(t));
+    return time_point(to_duration(value));
 }
 
 
@@ -95,10 +95,10 @@ constexpr time_point to_time_point(double t)
  *
  *  in general does not hold.
  */
-constexpr double to_double_time_point(time_point t)
+constexpr double to_double_time_point(time_point value)
 {
     return std::chrono::duration_cast<std::chrono::duration<double>>(
-        t.time_since_epoch())
+        value.time_since_epoch())
         .count();
 }
 
@@ -121,9 +121,9 @@ constexpr double to_double_time_point(time_point t)
  *
  *  in general does not hold.
  */
-constexpr duration to_duration(double d, double startTime)
+constexpr duration to_duration(double value, double startTime)
 {
-    return to_time_point(startTime + d) - to_time_point(startTime);
+    return to_time_point(startTime + value) - to_time_point(startTime);
 }
 
 
@@ -145,9 +145,9 @@ constexpr duration to_duration(double d, double startTime)
  *
  *  in general does not hold.
  */
-constexpr double to_double_duration(duration d, time_point startTime)
+constexpr double to_double_duration(duration value, time_point startTime)
 {
-    return to_double_time_point(startTime + d) - to_double_time_point(startTime);
+    return to_double_time_point(startTime + value) - to_double_time_point(startTime);
 }
 
 

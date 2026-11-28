@@ -6,32 +6,63 @@
 #include "cosim/osp_config_parser.hpp"
 
 #include "osp_system_structure_schema.hpp"
+#include "osp_system_structure_schema_020.hpp"
 
-#include "cosim/algorithm.hpp"
+#include "cosim/algorithm/ecco_algorithm.hpp"
+#include "cosim/algorithm/fixed_step_algorithm.hpp"
+#include "cosim/exception.hpp"
+#include "cosim/function/description.hpp"
 #include "cosim/function/linear_transformation.hpp"
 #include "cosim/function/vector_sum.hpp"
 #include "cosim/log/logger.hpp"
+#include "cosim/model_description.hpp"
+#include "cosim/orchestration.hpp"
+#include "cosim/osp_clock.hpp"
+#include "cosim/system_structure.hpp"
+#include "cosim/time.hpp"
 #include "cosim/uri.hpp"
+#include "cosim/xml_clock.hpp"
+#include "cosim/xml_value.hpp"
 
+#include <boost/algorithm/cxx11/copy_if.hpp>
 #include <boost/lexical_cast.hpp>
-#include <xercesc/dom/DOM.hpp>
+#include <boost/log/sources/severity_feature.hpp>
+#include <boost/range/algorithm/find_if.hpp>
+#include <boost/range/algorithm/sort.hpp>
+#include <boost/range/algorithm/transform.hpp>
+#include <boost/range/algorithm/unique.hpp>
+#include <xercesc/dom/DOM.hpp> // IWYU pragma: keep
+#include <xercesc/dom/DOMElement.hpp>
+#include <xercesc/dom/DOMError.hpp>
+#include <xercesc/dom/DOMErrorHandler.hpp>
+#include <xercesc/dom/DOMImplementationRegistry.hpp>
+#include <xercesc/dom/DOMLSParser.hpp>
+#include <xercesc/dom/DOMLocator.hpp>
+#include <xercesc/dom/DOMNodeList.hpp>
 #include <xercesc/framework/MemBufInputSource.hpp>
 #include <xercesc/framework/Wrapper4InputSource.hpp>
-#include <xercesc/framework/XMLFormatter.hpp>
 #include <xercesc/util/PlatformUtils.hpp>
 #include <xercesc/util/XMLString.hpp>
 #include <xercesc/util/XMLUni.hpp>
+#include <xercesc/util/XercesDefs.hpp>
+#include <xercesc/validators/common/Grammar.hpp>
 
 #include <algorithm>
-#include <ios>
+#include <cassert>
+#include <cctype>
+#include <cmath>
+#include <cstddef>
+#include <cstdint>
+#include <filesystem>
 #include <iostream>
+#include <iterator>
 #include <memory>
 #include <optional>
 #include <set>
 #include <sstream>
 #include <stdexcept>
 #include <string>
-#include <typeinfo>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -41,47 +72,111 @@ namespace cosim
 
 namespace
 {
-std::shared_ptr<XMLCh> tc(const char* str)
+std::shared_ptr<XMLCh> tc(const char* str) // NOLINT(misc-include-cleaner)
 {
-    return std::shared_ptr<XMLCh>(
-        xercesc::XMLString::transcode(str),
-        [](XMLCh* ptr) { xercesc::XMLString::release(&ptr); });
+    return {xercesc::XMLString::transcode(str),
+        [](XMLCh* ptr) { xercesc::XMLString::release(&ptr); }};
 }
 std::shared_ptr<char> tc(const XMLCh* str)
 {
-    return std::shared_ptr<char>(
-        xercesc::XMLString::transcode(str),
-        [](char* ptr) { xercesc::XMLString::release(&ptr); });
+    return {xercesc::XMLString::transcode(str),
+        [](char* ptr) { xercesc::XMLString::release(&ptr); }};
 }
 
 class error_handler : public xercesc::DOMErrorHandler
 {
 public:
-    error_handler()
-        : failed_(false)
-    { }
+    [[nodiscard]] bool failed() const { return failed_; }
 
-    bool failed() const { return failed_; }
-
-    bool handleError(const xercesc::DOMError& e) override
+    bool handleError(const xercesc::DOMError& domError) override
     {
-        bool warn(e.getSeverity() == xercesc::DOMError::DOM_SEVERITY_WARNING);
+        bool const warn(domError.getSeverity() ==
+            xercesc::DOMError::DOM_SEVERITY_WARNING);
 
-        if (!warn)
+        if (!warn) {
             failed_ = true;
+        }
 
-        xercesc::DOMLocator* loc(e.getLocation());
+        xercesc::DOMLocator const* loc(domError.getLocation());
 
         BOOST_LOG_SEV(log::logger(), warn ? log::warning : log::error)
-            << tc(loc->getURI()).get() << ":"
-            << loc->getLineNumber() << ":" << loc->getColumnNumber() << " " << tc(e.getMessage()).get();
+            << tc(loc->getURI()).get() << ":" << loc->getLineNumber() << ":"
+            << loc->getColumnNumber() << " " << tc(domError.getMessage()).get();
 
         return true;
     }
 
 private:
-    bool failed_;
+    bool failed_ = false;
 };
+
+struct dom_parser_deleter
+{
+    void operator()(xercesc::DOMLSParser* parser) const noexcept
+    {
+        parser->release();
+    }
+};
+
+using dom_parser_ptr =
+    std::unique_ptr<xercesc::DOMLSParser, dom_parser_deleter>;
+
+constexpr auto osp_namespace =
+    "http://opensimulationplatform.com/MSMI/OSPSystemStructure";
+
+auto osp_elements(const xercesc::DOMElement* parent, const char* localName)
+{
+    return parent->getElementsByTagNameNS(tc(osp_namespace).get(),
+        tc(localName).get());
+}
+
+xercesc::DOMElement* tagged_element(const xercesc::DOMNodeList* elements, std::size_t index)
+{
+    // getElementsByTagName and getElementsByTagNameNS return only elements.
+    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast)
+    return static_cast<xercesc::DOMElement*>(elements->item(index));
+}
+
+dom_parser_ptr make_dom_parser(error_handler& errors)
+{
+    auto* const domImpl =
+        xercesc::DOMImplementationRegistry::getDOMImplementation(tc("LS").get());
+    dom_parser_ptr parser(
+        static_cast<xercesc::DOMImplementationLS*>(domImpl)->createLSParser(
+            xercesc::DOMImplementationLS::MODE_SYNCHRONOUS,
+            tc("http://www.w3.org/2001/XMLSchema").get()));
+
+    auto& config = *parser->getDomConfig();
+    config.setParameter(static_cast<const XMLCh*>(xercesc::XMLUni::fgDOMErrorHandler), &errors);
+    config.setParameter(static_cast<const XMLCh*>(xercesc::XMLUni::fgDOMNamespaces), true);
+    config.setParameter(static_cast<const XMLCh*>(xercesc::XMLUni::fgXercesLoadExternalDTD), false);
+    return parser;
+}
+
+dom_parser_ptr make_schema_validating_parser(std::string_view schema,
+    error_handler& errors)
+{
+    auto parser = make_dom_parser(errors);
+    // Xerces consumes the schema as a byte buffer.
+    xercesc::MemBufInputSource source(
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
+        reinterpret_cast<const XMLByte*>(schema.data()), schema.size(),
+        osp_namespace);
+    xercesc::Wrapper4InputSource input(&source, false);
+    parser->loadGrammar(&input, xercesc::Grammar::SchemaGrammarType, true);
+
+    auto& config = *parser->getDomConfig();
+    config.setParameter(static_cast<const XMLCh*>(xercesc::XMLUni::fgXercesUseCachedGrammarInParse), true);
+    config.setParameter(static_cast<const XMLCh*>(xercesc::XMLUni::fgDOMComments), false);
+    config.setParameter(static_cast<const XMLCh*>(xercesc::XMLUni::fgDOMDatatypeNormalization), true);
+    config.setParameter(static_cast<const XMLCh*>(xercesc::XMLUni::fgDOMEntities), false);
+    config.setParameter(static_cast<const XMLCh*>(xercesc::XMLUni::fgDOMElementContentWhitespace), false);
+    config.setParameter(static_cast<const XMLCh*>(xercesc::XMLUni::fgDOMValidate), true);
+    config.setParameter(static_cast<const XMLCh*>(xercesc::XMLUni::fgXercesSchema), true);
+    config.setParameter(static_cast<const XMLCh*>(xercesc::XMLUni::fgXercesSchemaFullChecking), true);
+    config.setParameter(static_cast<const XMLCh*>(xercesc::XMLUni::fgXercesLoadSchema), false);
+    return parser;
+}
 
 // The following class was copied from Microsoft Guidelines Support Library
 // https://github.com/microsoft/GSL
@@ -90,8 +185,8 @@ template<class F>
 class final_action
 {
 public:
-    explicit final_action(F f) noexcept
-        : f_(std::move(f))
+    explicit final_action(F action) noexcept
+        : f_(std::move(action))
     { }
 
     final_action(final_action&& other) noexcept
@@ -105,7 +200,9 @@ public:
 
     ~final_action() noexcept
     {
-        if (invoke_) f_();
+        if (invoke_) {
+            f_();
+        }
     }
 
 private:
@@ -117,21 +214,24 @@ class osp_config_parser
 {
 
 public:
-    osp_config_parser(
-        const cosim::filesystem::path& configPath);
+    explicit osp_config_parser(const cosim::filesystem::path& configPath);
+    osp_config_parser(const osp_config_parser&) = delete;
+    osp_config_parser& operator=(const osp_config_parser&) = delete;
+    osp_config_parser(osp_config_parser&&) = delete;
+    osp_config_parser& operator=(osp_config_parser&&) = delete;
     ~osp_config_parser() noexcept;
 
     struct SimulationInformation
     {
         std::string description;
-        std::string algorithm;
+        std::string algorithm = "fixedStep";
         double stepSize = 0.1;
         double startTime = 0.0;
         std::optional<double> endTime;
         std::optional<cosim::ecco_algorithm_params> eccoConfiguration;
     };
 
-    const SimulationInformation& get_simulation_information() const;
+    [[nodiscard]] const SimulationInformation& get_simulation_information() const;
 
     struct SystemDescription
     {
@@ -144,8 +244,7 @@ public:
     struct InitialValue
     {
         std::string name;
-        cosim::variable_type type;
-        scalar_value value;
+        variable_value value;
     };
 
     struct Simulator
@@ -156,13 +255,15 @@ public:
         std::vector<InitialValue> initialValues;
     };
 
-    const std::vector<Simulator>& get_elements() const;
+    [[nodiscard]] const std::vector<Simulator>& get_elements() const;
+
+    [[nodiscard]] const auto& get_clocks() const noexcept { return clocks_; }
 
     struct Signal
     {
         std::string name;
-        cosim::variable_type type;
-        cosim::variable_causality causality;
+        cosim::variable_type type{};
+        cosim::variable_causality causality{};
     };
 
     struct SignalGroup
@@ -174,8 +275,8 @@ public:
     struct LinearTransformationFunction
     {
         std::string name;
-        double factor;
-        double offset;
+        double factor{};
+        double offset{};
         Signal in;
         Signal out;
     };
@@ -183,7 +284,7 @@ public:
     struct SumFunction
     {
         std::string name;
-        int inputCount;
+        int inputCount{};
         std::vector<Signal> ins;
         Signal out;
     };
@@ -191,24 +292,28 @@ public:
     struct VectorSumFunction
     {
         std::string name;
-        int inputCount;
-        int dimension;
+        int inputCount{};
+        int dimension{};
         std::vector<Signal> ins;
         std::vector<Signal> outs;
         std::vector<SignalGroup> inGroups;
         SignalGroup outGroup;
     };
 
-    [[nodiscard]] const std::unordered_map<std::string, LinearTransformationFunction>&
+    [[nodiscard]] const std::unordered_map<std::string,
+        LinearTransformationFunction>&
     get_linear_transformation_functions() const;
-    [[nodiscard]] const std::unordered_map<std::string, SumFunction>& get_sum_functions() const;
-    [[nodiscard]] const std::unordered_map<std::string, VectorSumFunction>& get_vector_sum_functions() const;
+    [[nodiscard]] const std::unordered_map<std::string, SumFunction>&
+    get_sum_functions() const;
+    [[nodiscard]] const std::unordered_map<std::string, VectorSumFunction>&
+    get_vector_sum_functions() const;
 
     struct VariableEndpoint
     {
-        std::string simulator{};
-        std::string name{};
-        std::optional<std::string> causality{};
+        std::string simulator;
+        std::string name;
+        std::optional<std::string>
+            causality{}; // NOLINT(readability-redundant-member-init)
     };
 
     struct SignalEndpoint
@@ -242,17 +347,35 @@ public:
         PowerBondConnection connB;
     };
 
-    [[nodiscard]] const std::vector<VariableConnection>& get_variable_connections() const;
-    [[nodiscard]] const std::vector<SignalConnection>& get_signal_connections() const;
-    [[nodiscard]] const std::vector<VariableConnection>& get_variable_group_connections() const;
-    [[nodiscard]] const std::vector<SignalConnection>& get_signal_group_connections() const;
-    [[nodiscard]] const std::vector<PowerBondConnection>& get_power_bond_connections() const;
+    [[nodiscard]] const std::vector<VariableConnection>&
+    get_variable_connections() const;
+    [[nodiscard]] const std::vector<SignalConnection>&
+    get_signal_connections() const;
+    [[nodiscard]] const std::vector<VariableConnection>&
+    get_variable_group_connections() const;
+    [[nodiscard]] const std::vector<SignalConnection>&
+    get_signal_group_connections() const;
+    [[nodiscard]] const std::vector<PowerBondConnection>&
+    get_power_bond_connections() const;
 
 private:
+    void read_simulators(const xercesc::DOMElement* root, bool exactTypes);
+    static std::vector<InitialValue> read_initial_values(
+        const xercesc::DOMElement* simulator, const std::string& name, bool exactTypes);
+    static void read_initial_value(
+        const xercesc::DOMElement* element, const std::string& name, bool exactTypes,
+        std::vector<InitialValue>& initialValues);
+    void read_clocks(const xercesc::DOMElement* root);
+    void read_functions(const xercesc::DOMElement* root);
+    void read_simulation_information(const xercesc::DOMElement* root);
+    void read_connections(const xercesc::DOMElement* root);
+
     SystemDescription systemDescription_;
     SimulationInformation simulationInformation_;
     std::vector<Simulator> simulators_;
-    std::unordered_map<std::string, LinearTransformationFunction> linearTransformationFunctions_;
+    std::vector<std::pair<std::string, clock_description>> clocks_;
+    std::unordered_map<std::string, LinearTransformationFunction>
+        linearTransformationFunctions_;
     std::unordered_map<std::string, SumFunction> sumFunctions_;
     std::unordered_map<std::string, VectorSumFunction> vectorSumFunctions_;
     std::vector<VariableConnection> variableConnections_;
@@ -261,17 +384,16 @@ private:
     std::vector<SignalConnection> signalGroupConnections_;
     std::vector<PowerBondConnection> powerBondConnections_;
     std::vector<PowerBond> powerBonds_;
-    static variable_type parse_variable_type(const std::string&);
-    static bool parse_boolean_value(const std::string& s);
 };
 
 namespace
 {
 
 template<typename T>
-T attribute_or(xercesc::DOMElement* el, const char* attributeName, T defaultValue)
+T attribute_or(xercesc::DOMElement* element, const char* attributeName,
+    T defaultValue)
 {
-    auto node = tc(el->getAttribute(tc(attributeName).get()));
+    auto const node = tc(element->getAttribute(tc(attributeName).get()));
     if (*node) {
         return boost::lexical_cast<T>(node);
     } else {
@@ -281,332 +403,584 @@ T attribute_or(xercesc::DOMElement* el, const char* attributeName, T defaultValu
 
 } // namespace
 
-[[maybe_unused]] std::ostream& operator<<(std::ostream& o, const osp_config_parser::VariableEndpoint& var)
+[[maybe_unused]] std::ostream&
+operator<<(std::ostream& output,
+    const osp_config_parser::VariableEndpoint& var)
 {
     const auto causality = var.causality.has_value() ? var.causality.value() : "";
-    return o << var.simulator << ", " << var.name << ", " << causality << std::endl;
+    return output << var.simulator << ", " << var.name << ", " << causality
+                  // NOLINTNEXTLINE(performance-avoid-endl): Preserve the stream flush.
+                  << std::endl;
 }
 
-[[maybe_unused]] std::ostream& operator<<(std::ostream& o, const osp_config_parser::VariableConnection& var)
+[[maybe_unused]] std::ostream&
+operator<<(std::ostream& output,
+    const osp_config_parser::VariableConnection& var)
 {
-    return o << "Variable connection [simulator, variable name, ecco]:" << std::endl
-             << var.variableA << var.variableB;
+    return output << "Variable connection [simulator, variable name, ecco]:"
+                  // NOLINTNEXTLINE(performance-avoid-endl): Preserve the stream flush.
+                  << std::endl
+                  << var.variableA << var.variableB;
 }
 
-[[maybe_unused]] std::ostream& operator<<(std::ostream& o, const osp_config_parser::PowerBondConnection& pb)
+[[maybe_unused]] std::ostream&
+operator<<(std::ostream& output,
+    const osp_config_parser::PowerBondConnection& bond)
 {
-    return o << "Powerbond " << pb.name << " has the connection" << std::endl
-             << pb.connection;
+    return output << "Powerbond " << bond.name << " has the connection"
+                  // NOLINTNEXTLINE(performance-avoid-endl): Preserve the stream flush.
+                  << std::endl
+                  << bond.connection;
+}
+
+clock_description parse_osp_clock(const xercesc::DOMElement& element)
+{
+    const auto get = [&](const char* name) -> std::optional<std::string> {
+        const auto key = tc(name);
+        if (!element.hasAttribute(key.get())) {
+            return std::nullopt;
+        }
+        return tc(element.getAttribute(key.get())).get();
+    };
+    using detail::xml_clock_attribute;
+    using V = clock_interval_variability;
+    clock_description schedule;
+    schedule.interval_variability =
+        // NOLINTNEXTLINE(bugprone-unchecked-optional-access): Missing required attributes retain value()'s exception.
+        xml_clock_attribute<V>(get, "intervalVariability").value();
+    schedule.interval_decimal =
+        xml_clock_attribute<double>(get, "intervalDecimal");
+    schedule.shift_decimal = xml_clock_attribute<double>(get, "shiftDecimal");
+    schedule.interval_counter =
+        xml_clock_attribute<std::uint64_t>(get, "intervalCounter");
+    schedule.shift_counter =
+        xml_clock_attribute<std::uint64_t>(get, "shiftCounter");
+    schedule.resolution = xml_clock_attribute<std::uint64_t>(get, "resolution");
+    schedule.priority = xml_clock_attribute<std::uint32_t>(get, "priority");
+    schedule.supports_fraction =
+        xml_clock_attribute<bool>(get, "supportsFraction").value_or(false);
+    schedule.can_be_deactivated =
+        xml_clock_attribute<bool>(get, "canBeDeactivated").value_or(false);
+    const bool decimal = schedule.interval_decimal || schedule.shift_decimal;
+    const bool fractional = schedule.interval_counter || schedule.shift_counter ||
+        schedule.resolution;
+
+    switch (schedule.interval_variability) {
+        case V::triggered:
+            if (decimal || fractional || schedule.supports_fraction) {
+                throw std::invalid_argument(
+                    "A triggered Clock cannot declare an interval or shift");
+            }
+            return schedule;
+        case V::constant:
+        case V::fixed:
+        case V::tunable:
+            break;
+        default:
+            throw std::invalid_argument(
+                "changing and countdown require an FMU-provided runtime interval");
+    }
+
+    if (schedule.supports_fraction) {
+        if (decimal || !schedule.interval_counter || !schedule.resolution ||
+            *schedule.interval_counter == 0 || *schedule.resolution == 0) {
+            throw std::invalid_argument(
+                "A fractional Clock requires positive intervalCounter and "
+                "resolution, with optional shiftCounter only");
+        }
+        constexpr auto ticksPerSecond =
+            static_cast<std::uint64_t>(duration::period::den);
+        const auto resolution = *schedule.resolution;
+        // Use the exact ratio for the lower bound without multiplying two counters.
+        const auto minCounter =
+            (resolution / ticksPerSecond) +
+            static_cast<unsigned long long>(resolution % ticksPerSecond != 0);
+        if (*schedule.interval_counter < minCounter) {
+            throw std::invalid_argument(
+                "Clock interval must be finite and at least one simulation tick");
+        }
+        // Keep the decimal projection for consumers of the common Clock metadata.
+        schedule.interval_decimal =
+            static_cast<double>(*schedule.interval_counter) /
+            static_cast<double>(resolution);
+    } else if (fractional || !schedule.interval_decimal) {
+        throw std::invalid_argument("A decimal Clock requires intervalDecimal; "
+                                    "fractional fields require supportsFraction");
+    } else if (!std::isfinite(*schedule.interval_decimal) ||
+        *schedule.interval_decimal < 1.0 / duration::period::den) {
+        throw std::invalid_argument(
+            "Clock interval must be finite and at least one simulation tick");
+    }
+    if (schedule.shift_decimal && (!std::isfinite(*schedule.shift_decimal) || *schedule.shift_decimal < 0)) {
+        throw std::invalid_argument("Clock shift must be finite and nonnegative");
+    }
+    return schedule;
 }
 
 osp_config_parser::osp_config_parser(
     const cosim::filesystem::path& configPath)
 {
-    // Root node
     xercesc::XMLPlatformUtils::Initialize();
-    const auto xerces_cleanup = final_action([]() {
-        xercesc::XMLPlatformUtils::Terminate();
-    });
-
-    const auto domImpl = xercesc::DOMImplementationRegistry::getDOMImplementation(tc("LS").get());
-    const auto parser = static_cast<xercesc::DOMImplementationLS*>(domImpl)->createLSParser(
-        xercesc::DOMImplementationLS::MODE_SYNCHRONOUS,
-        tc("http://www.w3.org/2001/XMLSchema").get());
-    // Releases the parser and the document it owns. Declared after
-    // xerces_cleanup, so it runs before XMLPlatformUtils::Terminate().
-    const auto parser_cleanup = final_action([parser]() {
-        parser->release();
-    });
+    const auto xerces_cleanup =
+        final_action([] { xercesc::XMLPlatformUtils::Terminate(); });
 
     error_handler errorHandler;
+    const auto version = [&] {
+        const auto unvalidated = make_dom_parser(errorHandler);
+        auto const* const doc = unvalidated->parseURI(configPath.string().c_str());
+        auto const* const root = doc ? doc->getDocumentElement() : nullptr;
+        if (errorHandler.failed() || !root || !root->getNamespaceURI() ||
+            std::string_view(tc(root->getNamespaceURI()).get()) != osp_namespace ||
+            std::string_view(tc(root->getLocalName()).get()) !=
+                "OspSystemStructure") {
+            throw std::runtime_error("Validation of " + configPath.string() +
+                " failed: invalid OspSystemStructure root.");
+        }
+        return std::string(tc(root->getAttribute(tc("version").get())).get());
+    }();
+    if (version != "0.1" && version != "0.2.0") {
+        throw std::runtime_error(
+            "Validation of " + configPath.string() + " failed: " +
+            (version.empty()
+                    ? "missing OspSystemStructure version."
+                    : "unsupported OspSystemStructure version: " + version));
+    }
+    const bool exactTypes = version == "0.2.0";
+    const auto parser = make_schema_validating_parser(
+        exactTypes ? osp_xsd_020 : osp_xsd_01, errorHandler);
+    auto const* const doc = parser->parseURI(configPath.string().c_str());
 
-    std::string xsd_str = osp_xsd;
-
-    xercesc::MemBufInputSource mis(
-        reinterpret_cast<const XMLByte*>(xsd_str.c_str()),
-        xsd_str.size(),
-        "http://opensimulationplatform.com/MSMI/OSPSystemStructure");
-    xercesc::Wrapper4InputSource wmis(&mis, false);
-
-    parser->loadGrammar(&wmis, xercesc::Grammar::SchemaGrammarType, true);
-
-    parser->getDomConfig()->setParameter(xercesc::XMLUni::fgDOMErrorHandler, &errorHandler);
-    parser->getDomConfig()->setParameter(xercesc::XMLUni::fgXercesUseCachedGrammarInParse, true);
-    parser->getDomConfig()->setParameter(xercesc::XMLUni::fgDOMComments, false);
-    parser->getDomConfig()->setParameter(xercesc::XMLUni::fgDOMDatatypeNormalization, true);
-    parser->getDomConfig()->setParameter(xercesc::XMLUni::fgDOMEntities, false);
-    parser->getDomConfig()->setParameter(xercesc::XMLUni::fgDOMNamespaces, true);
-    parser->getDomConfig()->setParameter(xercesc::XMLUni::fgDOMElementContentWhitespace, false);
-    parser->getDomConfig()->setParameter(xercesc::XMLUni::fgDOMValidate, true);
-    parser->getDomConfig()->setParameter(xercesc::XMLUni::fgXercesSchema, true);
-    parser->getDomConfig()->setParameter(xercesc::XMLUni::fgXercesSchemaFullChecking, true);
-    parser->getDomConfig()->setParameter(xercesc::XMLUni::fgXercesLoadSchema, false);
-
-    const auto doc = parser->parseURI(configPath.string().c_str());
-
-    if (errorHandler.failed()) {
+    if (errorHandler.failed() || (doc == nullptr)) {
         std::ostringstream oss;
         oss << "Validation of " << configPath.string() << " failed.";
         BOOST_LOG_SEV(log::logger(), log::error) << oss.str();
         throw std::runtime_error(oss.str());
     }
 
-    const auto rootElement = doc->getDocumentElement();
+    auto const* const rootElement = doc->getDocumentElement();
 
-    const auto simulators = static_cast<xercesc::DOMElement*>(rootElement->getElementsByTagName(tc("Simulators").get())->item(0));
-    for (auto element = simulators->getFirstElementChild(); element != nullptr; element = element->getNextElementSibling()) {
-        std::string name = tc(element->getAttribute(tc("name").get())).get();
-        std::string source = tc(element->getAttribute(tc("source").get())).get();
+    read_simulators(rootElement, exactTypes);
+    read_clocks(rootElement);
+    read_functions(rootElement);
+    read_simulation_information(rootElement);
+    read_connections(rootElement);
+}
+
+void osp_config_parser::read_simulators(const xercesc::DOMElement* rootElement, bool exactTypes)
+{
+    auto const* const simulators = tagged_element(osp_elements(rootElement, "Simulators"), 0);
+    for (auto const* element = simulators->getFirstElementChild();
+        element != nullptr; element = element->getNextElementSibling()) {
+        std::string const name = tc(element->getAttribute(tc("name").get())).get();
+        std::string const source =
+            tc(element->getAttribute(tc("source").get())).get();
 
         std::optional<double> stepSize = std::nullopt;
-        auto stepSizeNode = tc(element->getAttribute(tc("stepSize").get()));
-        if (*stepSizeNode) {
+        auto const stepSizeNode = tc(element->getAttribute(tc("stepSize").get()));
+        if ((*stepSizeNode) != 0) {
             stepSize = boost::lexical_cast<double>(stepSizeNode);
         }
 
-        std::vector<InitialValue> initialValues;
-        const auto initValsElement = static_cast<xercesc::DOMElement*>(element->getElementsByTagName(tc("InitialValues").get())->item(0));
-        if (initValsElement) {
-            for (auto initValElement = initValsElement->getFirstElementChild(); initValElement != nullptr; initValElement = initValElement->getNextElementSibling()) {
-                std::string varName = tc(initValElement->getAttribute(tc("variable").get())).get();
-                variable_type varType = parse_variable_type(std::string(tc(initValElement->getFirstElementChild()->getNodeName()).get()));
-                std::string varValue = tc(initValElement->getFirstElementChild()->getAttribute(tc("value").get())).get();
-                switch (varType) {
-                    case variable_type::real:
-                        initialValues.push_back({varName, varType, boost::lexical_cast<double>(varValue)});
-                        break;
-                    case variable_type::integer:
-                        initialValues.push_back({varName, varType, boost::lexical_cast<int>(varValue)});
-                        break;
-                    case variable_type::boolean:
-                        initialValues.push_back({varName, varType, parse_boolean_value(varValue)});
-                        break;
-                    case variable_type::string:
-                        initialValues.push_back({varName, varType, varValue});
-                        break;
-                    case variable_type::enumeration:
-                        initialValues.push_back({varName, varType, boost::lexical_cast<int>(varValue)});
-                        break;
-                }
-            }
-        }
+        const auto initialValues = read_initial_values(element, name, exactTypes);
         simulators_.push_back({name, source, stepSize, initialValues});
     }
+}
 
-    const auto functionsElement = static_cast<xercesc::DOMElement*>(rootElement->getElementsByTagName(tc("Functions").get())->item(0));
-    if (functionsElement != nullptr) {
-        for (auto functionElement = functionsElement->getFirstElementChild(); functionElement != nullptr; functionElement = functionElement->getNextElementSibling()) {
+std::vector<osp_config_parser::InitialValue> osp_config_parser::read_initial_values(
+    const xercesc::DOMElement* simulator, const std::string& name, bool exactTypes)
+{
+    std::vector<InitialValue> initialValues;
+    auto const* const initValsElement = tagged_element(osp_elements(simulator, "InitialValues"), 0);
+    if (initValsElement != nullptr) {
+        for (auto const* initValElement = initValsElement->getFirstElementChild();
+            initValElement != nullptr;
+            initValElement = initValElement->getNextElementSibling()) {
+            read_initial_value(initValElement, name, exactTypes, initialValues);
+        }
+    }
+    return initialValues;
+}
 
-
-            const auto functionNodeName = std::string(tc(functionElement->getNodeName()).get());
-            const auto functionName = std::string(tc(functionElement->getAttribute(tc("name").get())).get());
-            if ("LinearTransformation" == functionNodeName) {
-                LinearTransformationFunction function;
-                function.name = functionName;
-
-                function.factor = attribute_or<double>(functionElement, "factor", 1.0);
-                function.offset = attribute_or<double>(functionElement, "offset", 0.0);
-
-                function.in = {"in", variable_type::real, variable_causality::input};
-                function.out = {"out", variable_type::real, variable_causality::output};
-
-                linearTransformationFunctions_[functionName] = function;
-
-            } else if ("Sum" == functionNodeName) {
-                SumFunction function;
-                function.name = functionName;
-
-                int inputCount = boost::lexical_cast<int>(tc(functionElement->getAttribute(tc("inputCount").get())));
-                function.inputCount = inputCount;
-
-                for (int i = 0; i < inputCount; i++) {
-                    const std::string sigName = "in[" + std::to_string(i) + "]";
-                    function.ins.push_back({sigName, variable_type::real, variable_causality::input});
+void osp_config_parser::read_initial_value(
+    const xercesc::DOMElement* initValElement, const std::string& name, bool exactTypes,
+    std::vector<InitialValue>& initialValues)
+{
+    const std::string varName =
+        tc(initValElement->getAttribute(tc("variable").get())).get();
+    auto const* const typeElement = initValElement->getFirstElementChild();
+    const auto typeName = tc(typeElement->getLocalName());
+    const auto parsedType = detail::xml_variable_type(typeName.get());
+    if (!parsedType) {
+        std::ostringstream message;
+        message << "Invalid OSP initial value for '" << name << '.' << varName
+                << "': unsupported type " << typeName.get();
+        throw std::runtime_error(message.str());
+    }
+    const auto type = *parsedType;
+    const auto valueAttribute = tc("value");
+    const auto text = tc(typeElement->getAttribute(valueAttribute.get()));
+    try {
+        if (!exactTypes) {
+            const auto scalar = [&] {
+                if (type == variable_type::real) {
+                    return scalar_value{boost::lexical_cast<double>(text.get())};
                 }
-                function.out = {"out", variable_type::real, variable_causality::output};
-
-                sumFunctions_[functionName] = function;
-
-            } else if ("VectorSum" == functionNodeName) {
-                VectorSumFunction function;
-                function.name = functionName;
-
-                int inputCount = boost::lexical_cast<int>(tc(functionElement->getAttribute(tc("inputCount").get())));
-                function.inputCount = inputCount;
-                int dimension = boost::lexical_cast<int>(tc(functionElement->getAttribute(tc("dimension").get())));
-                function.dimension = dimension;
-
-                for (int i = 0; i < inputCount; i++) {
-                    const std::string sgName = "in[" + std::to_string(i) + "]";
-                    SignalGroup sg;
-                    sg.name = sgName;
-                    for (int j = 0; j < dimension; j++) {
-                        const std::string sigName = sgName + "[" + std::to_string(j) + "]";
-                        function.ins.push_back({sigName, variable_type::real, variable_causality::input});
-                        sg.signals.emplace_back(sigName);
-                    }
-                    function.inGroups.push_back(std::move(sg));
+                if (type == variable_type::integer) {
+                    return scalar_value{boost::lexical_cast<int>(text.get())};
                 }
-                SignalGroup sg;
-                sg.name = "out";
-                for (int j = 0; j < dimension; j++) {
-                    const std::string sigName = "out[" + std::to_string(j) + "]";
-                    function.outs.push_back({sigName, variable_type::real, variable_causality::output});
-                    sg.signals.emplace_back(sigName);
-                }
-                function.outGroup = sg;
+                return detail::parse_xml_scalar_value(type, text.get());
+            }();
+            initialValues.push_back({varName, variable_value(scalar)});
+            return;
+        }
+        std::vector<std::uint64_t> shape;
+        for (auto const* dim = typeElement->getNextElementSibling();
+            dim != nullptr; dim = dim->getNextElementSibling()) {
+            shape.push_back(detail::parse_xml_integer<std::uint64_t>(
+                tc(dim->getAttribute(tc("size").get())).get()));
+        }
+        std::vector<std::shared_ptr<char>> values;
+        std::vector<std::string_view> items;
+        for (auto const* item = typeElement->getFirstElementChild();
+            item != nullptr; item = item->getNextElementSibling()) {
+            values.push_back(tc(item->getAttribute(valueAttribute.get())));
+            items.emplace_back(values.back().get());
+        }
+        const auto attribute =
+            typeElement->hasAttribute(valueAttribute.get())
+            ? std::optional<std::string_view>(text.get())
+            : std::nullopt;
+        initialValues.push_back({
+            varName,
+            detail::parse_xml_value(type, attribute, std::move(items),
+                std::move(shape)),
+        });
+    } catch (const std::logic_error& e) {
+        std::ostringstream message;
+        message << "Invalid OSP initial value for '" << name << '.' << varName
+                << "': " << e.what();
+        throw std::runtime_error(message.str());
+    } catch (const std::overflow_error& e) {
+        std::ostringstream message;
+        message << "Invalid OSP initial value for '" << name << '.' << varName
+                << "': " << e.what();
+        throw std::runtime_error(message.str());
+    }
+}
 
-                vectorSumFunctions_[functionName] = function;
-
-            } else {
-                std::ostringstream oss;
-                oss << "Found unknown function type " << functionNodeName << " with name " << functionName;
-                throw std::runtime_error(oss.str());
+void osp_config_parser::read_clocks(const xercesc::DOMElement* rootElement)
+{
+    if (auto const* const clocks = tagged_element(osp_elements(rootElement, "Clocks"), 0)) {
+        for (auto const* clock = clocks->getFirstElementChild(); clock != nullptr;
+            clock = clock->getNextElementSibling()) {
+            const std::string name = tc(clock->getAttribute(tc("name").get())).get();
+            try {
+                clocks_.emplace_back(name, parse_osp_clock(*clock));
+            } catch (const std::logic_error& e) {
+                throw std::runtime_error("Invalid OSP Clock '" + name +
+                    "': " + e.what());
             }
         }
     }
+}
 
-    auto descNodes = rootElement->getElementsByTagName(tc("Description").get());
+void osp_config_parser::read_functions(const xercesc::DOMElement* rootElement)
+{
+    auto const* const functionsElement = tagged_element(osp_elements(rootElement, "Functions"), 0);
+    if (functionsElement == nullptr) {
+        return;
+    }
+    for (auto* functionElement = functionsElement->getFirstElementChild();
+        functionElement != nullptr;
+        functionElement = functionElement->getNextElementSibling()) {
+
+        const auto functionNodeName =
+            std::string(tc(functionElement->getLocalName()).get());
+        const auto functionName = std::string(
+            tc(functionElement->getAttribute(tc("name").get())).get());
+        if ("LinearTransformation" == functionNodeName) {
+            LinearTransformationFunction function;
+            function.name = functionName;
+
+            function.factor = attribute_or<double>(functionElement, "factor", 1.0);
+            function.offset = attribute_or<double>(functionElement, "offset", 0.0);
+
+            function.in = {"in", variable_type::real, variable_causality::input};
+            function.out = {"out", variable_type::real, variable_causality::output};
+
+            linearTransformationFunctions_[functionName] = function;
+
+        } else if ("Sum" == functionNodeName) {
+            SumFunction function;
+            function.name = functionName;
+
+            int const inputCount = boost::lexical_cast<int>(
+                tc(functionElement->getAttribute(tc("inputCount").get())));
+            function.inputCount = inputCount;
+
+            for (int i = 0; i < inputCount; i++) {
+                const std::string sigName = "in[" + std::to_string(i) + "]";
+                function.ins.push_back(
+                    {sigName, variable_type::real, variable_causality::input});
+            }
+            function.out = {"out", variable_type::real, variable_causality::output};
+
+            sumFunctions_[functionName] = function;
+
+        } else if ("VectorSum" == functionNodeName) {
+            VectorSumFunction function;
+            function.name = functionName;
+
+            int const inputCount = boost::lexical_cast<int>(
+                tc(functionElement->getAttribute(tc("inputCount").get())));
+            function.inputCount = inputCount;
+            int const dimension = boost::lexical_cast<int>(
+                tc(functionElement->getAttribute(tc("dimension").get())));
+            function.dimension = dimension;
+
+            for (int i = 0; i < inputCount; i++) {
+                const std::string sgName = "in[" + std::to_string(i) + "]";
+                SignalGroup group;
+                group.name = sgName;
+                for (int j = 0; j < dimension; j++) {
+                    const std::string sigName = sgName + "[" + std::to_string(j) + "]";
+                    function.ins.push_back(
+                        {sigName, variable_type::real, variable_causality::input});
+                    group.signals.emplace_back(sigName);
+                }
+                function.inGroups.push_back(std::move(group));
+            }
+            SignalGroup group;
+            group.name = "out";
+            for (int j = 0; j < dimension; j++) {
+                const std::string sigName = "out[" + std::to_string(j) + "]";
+                function.outs.push_back(
+                    {sigName, variable_type::real, variable_causality::output});
+                group.signals.emplace_back(sigName);
+            }
+            function.outGroup = group;
+
+            vectorSumFunctions_[functionName] = function;
+
+        } else {
+            std::ostringstream oss;
+            oss << "Found unknown function type " << functionNodeName
+                << " with name " << functionName;
+            throw std::runtime_error(oss.str());
+        }
+    }
+}
+
+void osp_config_parser::read_simulation_information(const xercesc::DOMElement* rootElement)
+{
+    auto const* descNodes = osp_elements(rootElement, "Description");
     if (descNodes->getLength() > 0) {
-        simulationInformation_.description = tc(descNodes->item(0)->getTextContent()).get();
+        simulationInformation_.description =
+            tc(descNodes->item(0)->getTextContent()).get();
     }
 
-    auto ssNodes = rootElement->getElementsByTagName(tc("BaseStepSize").get());
+    auto const* ssNodes = osp_elements(rootElement, "BaseStepSize");
     if (ssNodes->getLength() > 0) {
-        simulationInformation_.stepSize = boost::lexical_cast<double>(tc(ssNodes->item(0)->getTextContent()));
+        simulationInformation_.stepSize =
+            boost::lexical_cast<double>(tc(ssNodes->item(0)->getTextContent()));
     }
 
-    auto stNodes = rootElement->getElementsByTagName(tc("StartTime").get());
+    auto const* stNodes = osp_elements(rootElement, "StartTime");
     if (stNodes->getLength() > 0) {
-        simulationInformation_.startTime = boost::lexical_cast<double>(tc(stNodes->item(0)->getTextContent()).get());
+        simulationInformation_.startTime = boost::lexical_cast<double>(
+            tc(stNodes->item(0)->getTextContent()).get());
     }
 
-    auto etNodes = rootElement->getElementsByTagName(tc("EndTime").get());
+    auto const* etNodes = osp_elements(rootElement, "EndTime");
     if (etNodes->getLength() > 0) {
-        simulationInformation_.endTime = boost::lexical_cast<double>(tc(etNodes->item(0)->getTextContent()).get());
+        simulationInformation_.endTime = boost::lexical_cast<double>(
+            tc(etNodes->item(0)->getTextContent()).get());
     }
 
-    auto saNodes = rootElement->getElementsByTagName(tc("Algorithm").get());
+    auto const* saNodes = osp_elements(rootElement, "Algorithm");
     if (saNodes->getLength() > 0) {
-        simulationInformation_.algorithm = std::string(tc(saNodes->item(0)->getTextContent()).get());
+        simulationInformation_.algorithm =
+            std::string(tc(saNodes->item(0)->getTextContent()).get());
     }
 
-    auto eccoConfigurationElement = static_cast<xercesc::DOMElement*>(rootElement->getElementsByTagName(tc("EccoConfiguration").get())->item(0));
-    if (eccoConfigurationElement) {
-        const auto safetyFactor = eccoConfigurationElement->getElementsByTagName(tc("SafetyFactor").get())->item(0)->getTextContent();
-        const auto stepSize = eccoConfigurationElement->getElementsByTagName(tc("StepSize").get())->item(0)->getTextContent();
-        const auto minimumStepSize = eccoConfigurationElement->getElementsByTagName(tc("MinimumStepSize").get())->item(0)->getTextContent();
-        const auto maximumStepSize = eccoConfigurationElement->getElementsByTagName(tc("MaximumStepSize").get())->item(0)->getTextContent();
-        const auto minimumChangeRate = eccoConfigurationElement->getElementsByTagName(tc("MinimumChangeRate").get())->item(0)->getTextContent();
-        const auto maximumChangeRate = eccoConfigurationElement->getElementsByTagName(tc("MaximumChangeRate").get())->item(0)->getTextContent();
-        const auto proportionalGain = eccoConfigurationElement->getElementsByTagName(tc("ProportionalGain").get())->item(0)->getTextContent();
-        const auto integralGain = eccoConfigurationElement->getElementsByTagName(tc("IntegralGain").get())->item(0)->getTextContent();
-        const auto relativeTolerance = eccoConfigurationElement->getElementsByTagName(tc("RelativeTolerance").get())->item(0)->getTextContent();
-        const auto absoluteTolerance = eccoConfigurationElement->getElementsByTagName(tc("AbsoluteTolerance").get())->item(0)->getTextContent();
+    auto const* eccoConfigurationElement = tagged_element(osp_elements(rootElement, "EccoConfiguration"), 0);
+    if (eccoConfigurationElement != nullptr) {
+        const auto* const safetyFactor =
+            osp_elements(eccoConfigurationElement, "SafetyFactor")
+                ->item(0)
+                ->getTextContent();
+        const auto* const stepSize =
+            osp_elements(eccoConfigurationElement, "StepSize")
+                ->item(0)
+                ->getTextContent();
+        const auto* const minimumStepSize =
+            osp_elements(eccoConfigurationElement, "MinimumStepSize")
+                ->item(0)
+                ->getTextContent();
+        const auto* const maximumStepSize =
+            osp_elements(eccoConfigurationElement, "MaximumStepSize")
+                ->item(0)
+                ->getTextContent();
+        const auto* const minimumChangeRate =
+            osp_elements(eccoConfigurationElement, "MinimumChangeRate")
+                ->item(0)
+                ->getTextContent();
+        const auto* const maximumChangeRate =
+            osp_elements(eccoConfigurationElement, "MaximumChangeRate")
+                ->item(0)
+                ->getTextContent();
+        const auto* const proportionalGain =
+            osp_elements(eccoConfigurationElement, "ProportionalGain")
+                ->item(0)
+                ->getTextContent();
+        const auto* const integralGain =
+            osp_elements(eccoConfigurationElement, "IntegralGain")
+                ->item(0)
+                ->getTextContent();
+        const auto* const relativeTolerance =
+            osp_elements(eccoConfigurationElement, "RelativeTolerance")
+                ->item(0)
+                ->getTextContent();
+        const auto* const absoluteTolerance =
+            osp_elements(eccoConfigurationElement, "AbsoluteTolerance")
+                ->item(0)
+                ->getTextContent();
 
         cosim::ecco_algorithm_params eccoConfig{};
 
         eccoConfig.safety_factor = boost::lexical_cast<double>(tc(safetyFactor));
-        eccoConfig.step_size = cosim::to_duration(boost::lexical_cast<double>(tc(stepSize)));
-        eccoConfig.min_step_size = cosim::to_duration(boost::lexical_cast<double>(tc(minimumStepSize)));
-        eccoConfig.max_step_size = cosim::to_duration(boost::lexical_cast<double>(tc(maximumStepSize)));
-        eccoConfig.min_change_rate = boost::lexical_cast<double>(tc(minimumChangeRate));
-        eccoConfig.max_change_rate = boost::lexical_cast<double>(tc(maximumChangeRate));
+        eccoConfig.step_size =
+            cosim::to_duration(boost::lexical_cast<double>(tc(stepSize)));
+        eccoConfig.min_step_size =
+            cosim::to_duration(boost::lexical_cast<double>(tc(minimumStepSize)));
+        eccoConfig.max_step_size =
+            cosim::to_duration(boost::lexical_cast<double>(tc(maximumStepSize)));
+        eccoConfig.min_change_rate =
+            boost::lexical_cast<double>(tc(minimumChangeRate));
+        eccoConfig.max_change_rate =
+            boost::lexical_cast<double>(tc(maximumChangeRate));
         eccoConfig.p_gain = boost::lexical_cast<double>(tc(proportionalGain));
         eccoConfig.i_gain = boost::lexical_cast<double>(tc(integralGain));
-        eccoConfig.rel_tolerance = boost::lexical_cast<double>(tc(relativeTolerance));
-        eccoConfig.abs_tolerance = boost::lexical_cast<double>(tc(absoluteTolerance));
+        eccoConfig.rel_tolerance =
+            boost::lexical_cast<double>(tc(relativeTolerance));
+        eccoConfig.abs_tolerance =
+            boost::lexical_cast<double>(tc(absoluteTolerance));
 
         simulationInformation_.eccoConfiguration = eccoConfig;
     }
+}
 
-    auto connectionsElement = static_cast<xercesc::DOMElement*>(rootElement->getElementsByTagName(tc("Connections").get())->item(0));
-    if (connectionsElement) {
-        auto variableConnectionsElement = connectionsElement->getElementsByTagName(tc("VariableConnection").get());
+void osp_config_parser::read_connections(const xercesc::DOMElement* rootElement)
+{
+    auto const* connectionsElement = tagged_element(osp_elements(rootElement, "Connections"), 0);
+    if (connectionsElement != nullptr) {
+        auto const* variableConnectionsElement =
+            osp_elements(connectionsElement, "VariableConnection");
         for (size_t i = 0; i < variableConnectionsElement->getLength(); i++) {
-            auto connectionElement = static_cast<xercesc::DOMElement*>(variableConnectionsElement->item(i));
+            auto const* connectionElement = tagged_element(variableConnectionsElement, i);
 
-            auto a = static_cast<xercesc::DOMElement*>(connectionElement->getElementsByTagName(tc("Variable").get())->item(0));
-            auto b = static_cast<xercesc::DOMElement*>(connectionElement->getElementsByTagName(tc("Variable").get())->item(1));
+            auto const* first = tagged_element(osp_elements(connectionElement, "Variable"), 0);
+            auto const* second = tagged_element(osp_elements(connectionElement, "Variable"), 1);
 
-            std::string simulatorA = tc(a->getAttribute(tc("simulator").get())).get();
-            std::string nameA = tc(a->getAttribute(tc("name").get())).get();
-            std::string varA = tc(a->getAttribute(tc("causality").get())).get();
-            VariableEndpoint veA = {simulatorA, nameA, varA};
+            std::string const simulatorA =
+                tc(first->getAttribute(tc("simulator").get())).get();
+            std::string const nameA = tc(first->getAttribute(tc("name").get())).get();
+            std::string varA = tc(first->getAttribute(tc("causality").get())).get();
+            VariableEndpoint const veA = {simulatorA, nameA, varA};
 
-            std::string simulatorB = tc(b->getAttribute(tc("simulator").get())).get();
-            std::string nameB = tc(b->getAttribute(tc("name").get())).get();
-            std::string varB = tc(b->getAttribute(tc("causality").get())).get();
-            VariableEndpoint veB = {simulatorB, nameB, varB};
+            std::string const simulatorB =
+                tc(second->getAttribute(tc("simulator").get())).get();
+            std::string const nameB =
+                tc(second->getAttribute(tc("name").get())).get();
+            std::string varB = tc(second->getAttribute(tc("causality").get())).get();
+            VariableEndpoint const veB = {simulatorB, nameB, varB};
 
-            VariableConnection vc = {veA, veB};
+            VariableConnection const connection = {veA, veB};
 
-            auto isPowerbond = connectionElement->hasAttribute(tc("powerBond").get());
+            auto const isPowerbond =
+                connectionElement->hasAttribute(tc("powerBond").get());
             if (isPowerbond) {
-                std::string powerbondName = tc(connectionElement->getAttribute(tc("powerBond").get())).get();
-                PowerBondConnection pbc = {powerbondName, vc};
+                std::string const powerbondName =
+                    tc(connectionElement->getAttribute(tc("powerBond").get())).get();
+                PowerBondConnection const pbc = {powerbondName, connection};
                 powerBondConnections_.emplace_back(pbc);
             }
 
-            variableConnections_.push_back(vc);
+            variableConnections_.push_back(connection);
         }
 
-        auto signalConnectionsElement = connectionsElement->getElementsByTagName(tc("SignalConnection").get());
+        auto const* signalConnectionsElement =
+            osp_elements(connectionsElement, "SignalConnection");
         for (size_t i = 0; i < signalConnectionsElement->getLength(); i++) {
-            auto connectionElement = static_cast<xercesc::DOMElement*>(signalConnectionsElement->item(i));
-            auto signalElement = static_cast<xercesc::DOMElement*>(connectionElement->getElementsByTagName(tc("Signal").get())->item(0));
-            auto variableElement = static_cast<xercesc::DOMElement*>(connectionElement->getElementsByTagName(tc("Variable").get())->item(0));
+            auto const* connectionElement = tagged_element(signalConnectionsElement, i);
+            auto const* signalElement = tagged_element(osp_elements(connectionElement, "Signal"), 0);
+            auto const* variableElement = tagged_element(osp_elements(connectionElement, "Variable"), 0);
 
-            std::string function = tc(signalElement->getAttribute(tc("function").get())).get();
-            std::string sigName = tc(signalElement->getAttribute(tc("name").get())).get();
-            SignalEndpoint signal = {function, sigName};
+            std::string const function =
+                tc(signalElement->getAttribute(tc("function").get())).get();
+            std::string const sigName =
+                tc(signalElement->getAttribute(tc("name").get())).get();
+            SignalEndpoint const signal = {function, sigName};
 
-            std::string simulator = tc(variableElement->getAttribute(tc("simulator").get())).get();
-            std::string varName = tc(variableElement->getAttribute(tc("name").get())).get();
-            VariableEndpoint variable = {simulator, varName};
+            std::string const simulator =
+                tc(variableElement->getAttribute(tc("simulator").get())).get();
+            std::string const varName =
+                tc(variableElement->getAttribute(tc("name").get())).get();
+            VariableEndpoint const variable = {simulator, varName};
 
             signalConnections_.push_back({signal, variable});
         }
 
-        auto variableGroupConnectionsElement = connectionsElement->getElementsByTagName(tc("VariableGroupConnection").get());
+        auto const* variableGroupConnectionsElement =
+            osp_elements(connectionsElement, "VariableGroupConnection");
         for (size_t i = 0; i < variableGroupConnectionsElement->getLength(); i++) {
-            auto connectionElement = static_cast<xercesc::DOMElement*>(variableGroupConnectionsElement->item(i));
-            auto a = static_cast<xercesc::DOMElement*>(connectionElement->getElementsByTagName(tc("VariableGroup").get())->item(0));
-            auto b = static_cast<xercesc::DOMElement*>(connectionElement->getElementsByTagName(tc("VariableGroup").get())->item(1));
+            auto const* connectionElement = tagged_element(variableGroupConnectionsElement, i);
+            auto const* first = tagged_element(osp_elements(connectionElement, "VariableGroup"), 0);
+            auto const* second = tagged_element(osp_elements(connectionElement, "VariableGroup"), 1);
 
-            std::string simulatorA = tc(a->getAttribute(tc("simulator").get())).get();
-            std::string nameA = tc(a->getAttribute(tc("name").get())).get();
-            VariableEndpoint veA = {simulatorA, nameA};
+            std::string const simulatorA =
+                tc(first->getAttribute(tc("simulator").get())).get();
+            std::string const nameA = tc(first->getAttribute(tc("name").get())).get();
+            VariableEndpoint const veA = {simulatorA, nameA};
 
-            std::string simulatorB = tc(b->getAttribute(tc("simulator").get())).get();
-            std::string nameB = tc(b->getAttribute(tc("name").get())).get();
-            VariableEndpoint veB = {simulatorB, nameB};
+            std::string const simulatorB =
+                tc(second->getAttribute(tc("simulator").get())).get();
+            std::string const nameB =
+                tc(second->getAttribute(tc("name").get())).get();
+            VariableEndpoint const veB = {simulatorB, nameB};
 
-            VariableConnection vc = {veA, veB};
+            VariableConnection const connection = {veA, veB};
 
-            auto isPowerbond = connectionElement->hasAttribute(tc("powerBond").get());
+            auto const isPowerbond =
+                connectionElement->hasAttribute(tc("powerBond").get());
             if (isPowerbond) {
-                std::string powerbondName = tc(connectionElement->getAttribute(tc("powerBond").get())).get();
-                PowerBondConnection pbc = {powerbondName, vc};
+                std::string const powerbondName =
+                    tc(connectionElement->getAttribute(tc("powerBond").get())).get();
+                PowerBondConnection const pbc = {powerbondName, connection};
                 powerBondConnections_.emplace_back(pbc);
             }
 
             variableGroupConnections_.push_back({veA, veB});
         }
 
-        auto signalGroupConnectionsElement = connectionsElement->getElementsByTagName(tc("SignalGroupConnection").get());
+        auto const* signalGroupConnectionsElement =
+            osp_elements(connectionsElement, "SignalGroupConnection");
         for (size_t i = 0; i < signalGroupConnectionsElement->getLength(); i++) {
-            auto connectionElement = static_cast<xercesc::DOMElement*>(signalGroupConnectionsElement->item(i));
-            auto signalElement = static_cast<xercesc::DOMElement*>(connectionElement->getElementsByTagName(tc("SignalGroup").get())->item(0));
-            auto variableElement = static_cast<xercesc::DOMElement*>(connectionElement->getElementsByTagName(tc("VariableGroup").get())->item(0));
+            auto const* connectionElement = tagged_element(signalGroupConnectionsElement, i);
+            auto const* signalElement = tagged_element(osp_elements(connectionElement, "SignalGroup"), 0);
+            auto const* variableElement = tagged_element(osp_elements(connectionElement, "VariableGroup"), 0);
 
-            std::string function = tc(signalElement->getAttribute(tc("function").get())).get();
-            std::string sigName = tc(signalElement->getAttribute(tc("name").get())).get();
-            SignalEndpoint signal = {function, sigName};
+            std::string const function =
+                tc(signalElement->getAttribute(tc("function").get())).get();
+            std::string const sigName =
+                tc(signalElement->getAttribute(tc("name").get())).get();
+            SignalEndpoint const signal = {function, sigName};
 
-            std::string simulator = tc(variableElement->getAttribute(tc("simulator").get())).get();
-            std::string varName = tc(variableElement->getAttribute(tc("name").get())).get();
-            VariableEndpoint variable = {simulator, varName};
+            std::string const simulator =
+                tc(variableElement->getAttribute(tc("simulator").get())).get();
+            std::string const varName =
+                tc(variableElement->getAttribute(tc("name").get())).get();
+            VariableEndpoint const variable = {simulator, varName};
 
             signalGroupConnections_.push_back({signal, variable});
         }
@@ -615,17 +989,20 @@ osp_config_parser::osp_config_parser(
 
 osp_config_parser::~osp_config_parser() noexcept = default;
 
-const osp_config_parser::SimulationInformation& osp_config_parser::get_simulation_information() const
+const osp_config_parser::SimulationInformation&
+osp_config_parser::get_simulation_information() const
 {
     return simulationInformation_;
 }
 
-const std::vector<osp_config_parser::Simulator>& osp_config_parser::get_elements() const
+const std::vector<osp_config_parser::Simulator>&
+osp_config_parser::get_elements() const
 {
     return simulators_;
 }
 
-const std::unordered_map<std::string, osp_config_parser::LinearTransformationFunction>&
+const std::unordered_map<std::string,
+    osp_config_parser::LinearTransformationFunction>&
 osp_config_parser::get_linear_transformation_functions() const
 {
     return linearTransformationFunctions_;
@@ -643,66 +1020,34 @@ osp_config_parser::get_vector_sum_functions() const
     return vectorSumFunctions_;
 }
 
-const std::vector<osp_config_parser::VariableConnection>& osp_config_parser::get_variable_connections() const
+const std::vector<osp_config_parser::VariableConnection>&
+osp_config_parser::get_variable_connections() const
 {
     return variableConnections_;
 }
 
-const std::vector<osp_config_parser::SignalConnection>& osp_config_parser::get_signal_connections() const
+const std::vector<osp_config_parser::SignalConnection>&
+osp_config_parser::get_signal_connections() const
 {
     return signalConnections_;
 }
 
-const std::vector<osp_config_parser::VariableConnection>& osp_config_parser::get_variable_group_connections() const
+const std::vector<osp_config_parser::VariableConnection>&
+osp_config_parser::get_variable_group_connections() const
 {
     return variableGroupConnections_;
 }
 
-const std::vector<osp_config_parser::SignalConnection>& osp_config_parser::get_signal_group_connections() const
+const std::vector<osp_config_parser::SignalConnection>&
+osp_config_parser::get_signal_group_connections() const
 {
     return signalGroupConnections_;
 }
 
-const std::vector<osp_config_parser::PowerBondConnection>& osp_config_parser::get_power_bond_connections() const
+const std::vector<osp_config_parser::PowerBondConnection>&
+osp_config_parser::get_power_bond_connections() const
 {
     return powerBondConnections_;
-}
-
-variable_type osp_config_parser::parse_variable_type(const std::string& str)
-{
-    if ("Real" == str) {
-        return cosim::variable_type::real;
-    }
-    if ("Integer" == str) {
-        return cosim::variable_type::integer;
-    }
-    if ("Boolean" == str) {
-        return cosim::variable_type::boolean;
-    }
-    if ("String" == str) {
-        return cosim::variable_type::string;
-    }
-    if ("Enumeration" == str) {
-        return cosim::variable_type::enumeration;
-    }
-    throw std::runtime_error("Failed to parse variable type: " + str);
-}
-
-bool osp_config_parser::parse_boolean_value(const std::string& s)
-{
-    bool bool_value;
-    std::istringstream iss(s);
-    iss >> bool_value;
-
-    if (iss.fail()) {
-        iss.clear();
-        iss >> std::boolalpha >> bool_value;
-        if (iss.fail()) {
-            throw std::runtime_error("Value: '" + s + "' is not convertable to bool");
-        }
-    }
-
-    return bool_value;
 }
 
 struct variable_group_description
@@ -715,22 +1060,23 @@ struct variable_group_description
 
 struct extended_model_description
 {
-    explicit extended_model_description(const cosim::filesystem::path& ospModelDescription)
+    explicit extended_model_description(
+        const cosim::filesystem::path& ospModelDescription)
     {
         xercesc::XMLPlatformUtils::Initialize();
-        const auto xerces_cleanup = final_action([]() {
-            xercesc::XMLPlatformUtils::Terminate();
-        });
+        const auto xerces_cleanup =
+            final_action([] { xercesc::XMLPlatformUtils::Terminate(); });
 
-        const auto domImpl = xercesc::DOMImplementationRegistry::getDOMImplementation(tc("LS").get());
-        const auto parser = static_cast<xercesc::DOMImplementationLS*>(domImpl)->createLSParser(xercesc::DOMImplementationLS::MODE_SYNCHRONOUS, tc("http://www.w3.org/2001/XMLSchema").get());
-        // Releases the parser and the document it owns. Declared after
-        // xerces_cleanup, so it runs before XMLPlatformUtils::Terminate().
-        const auto parser_cleanup = final_action([parser]() {
-            parser->release();
-        });
+        auto* const domImpl =
+            xercesc::DOMImplementationRegistry::getDOMImplementation(
+                tc("LS").get());
+        const dom_parser_ptr parser(
+            static_cast<xercesc::DOMImplementationLS*>(domImpl)->createLSParser(
+                xercesc::DOMImplementationLS::MODE_SYNCHRONOUS,
+                tc("http://www.w3.org/2001/XMLSchema").get()));
 
-        const auto doc = parser->parseURI(ospModelDescription.string().c_str());
+        auto const* const doc =
+            parser->parseURI(ospModelDescription.string().c_str());
 
         if (doc == nullptr) {
             std::ostringstream oss;
@@ -739,30 +1085,45 @@ struct extended_model_description
             throw std::runtime_error(oss.str());
         }
 
-        const auto rootElement = doc->getDocumentElement();
+        auto const* const rootElement = doc->getDocumentElement();
 
-        const auto variableGroupsElement = static_cast<xercesc::DOMElement*>(rootElement->getElementsByTagName(tc("VariableGroups").get())->item(0));
+        auto const* const variableGroupsElement =
+            tagged_element(rootElement->getElementsByTagName(tc("VariableGroups").get()), 0);
 
-        for (auto variableGroupElement = variableGroupsElement->getFirstElementChild(); variableGroupElement != nullptr; variableGroupElement = variableGroupElement->getNextElementSibling()) {
-            variable_group_description vgd = create_variable_group_description(variableGroupElement);
+        for (auto* variableGroupElement =
+                 variableGroupsElement->getFirstElementChild();
+            variableGroupElement != nullptr;
+            variableGroupElement = variableGroupElement->getNextElementSibling()) {
+            variable_group_description vgd =
+                create_variable_group_description(variableGroupElement);
             variableGroups[vgd.name] = std::move(vgd);
         }
     }
 
-    static variable_group_description create_variable_group_description(xercesc::DOMElement* variableGroupElement)
+    static variable_group_description
+    create_variable_group_description(xercesc::DOMElement* variableGroupElement)
     {
         variable_group_description variableGroupDescription;
 
-        variableGroupDescription.name = tc(variableGroupElement->getAttribute(tc("name").get())).get();
-        variableGroupDescription.type = tc(variableGroupElement->getTagName()).get();
+        variableGroupDescription.name =
+            tc(variableGroupElement->getAttribute(tc("name").get())).get();
+        variableGroupDescription.type =
+            tc(variableGroupElement->getTagName()).get();
 
-        for (auto variableGroupChildElement = variableGroupElement->getFirstElementChild(); variableGroupChildElement != nullptr; variableGroupChildElement = variableGroupChildElement->getNextElementSibling()) {
-            std::string tagName(tc(variableGroupChildElement->getTagName()).get());
+        for (auto* variableGroupChildElement =
+                 variableGroupElement->getFirstElementChild();
+            variableGroupChildElement != nullptr;
+            variableGroupChildElement =
+                variableGroupChildElement->getNextElementSibling()) {
+            const std::string tagName(
+                tc(variableGroupChildElement->getTagName()).get());
             if (tagName == "Variable") {
-                std::string variableName = tc(variableGroupChildElement->getAttribute(tc("ref").get())).get();
+                std::string variableName =
+                    tc(variableGroupChildElement->getAttribute(tc("ref").get())).get();
                 variableGroupDescription.variables.push_back(std::move(variableName));
             } else {
-                variableGroupDescription.variable_group_descriptions.push_back(create_variable_group_description(variableGroupChildElement));
+                variableGroupDescription.variable_group_descriptions.push_back(
+                    create_variable_group_description(variableGroupChildElement));
             }
         }
 
@@ -777,38 +1138,42 @@ namespace
 
 osp_config_parser::SignalConnection find_signal_connection(
     const std::vector<osp_config_parser::SignalConnection>& signalConnections,
-    const std::string& functionName,
-    const std::string& signalName)
+    const std::string& functionName, const std::string& signalName)
 {
-    auto it = std::find_if(
-        signalConnections.begin(),
-        signalConnections.end(),
-        [&](const auto& conn) { return functionName == conn.signal.function && signalName == conn.signal.name; });
-    if (it == signalConnections.end()) {
+    auto const found =
+        boost::range::find_if(signalConnections, [&](const auto& conn) {
+            return functionName == conn.signal.function &&
+                signalName == conn.signal.name;
+        });
+    if (found == signalConnections.end()) {
         std::ostringstream oss;
-        oss << "Missing expected connection to " << functionName << ":" << signalName;
+        oss << "Missing expected connection to " << functionName << ":"
+            << signalName;
         throw std::runtime_error(oss.str());
     }
-    return *it;
+    return *found;
 }
 
 } // namespace
 
 constexpr uint64_t str_hash(std::string_view str)
 {
+    constexpr uint64_t hash_multiplier = 131;
     uint64_t hash = 0;
-    for (char c : str) {
-        hash = (hash * 131) + c;
+    for (const char character : str) {
+        hash = (hash * hash_multiplier) + character;
     }
     return hash;
 }
 
-constexpr uint64_t operator"" _hash(const char* str, size_t len)
+constexpr uint64_t operator""_hash(const char* str, size_t len)
 {
     return str_hash(std::string_view(str, len));
 }
 
-void add_power_bonds(const std::vector<osp_config_parser::PowerBondConnection>& pbConnections, system_structure& systemStructure)
+void add_power_bonds(
+    const std::vector<osp_config_parser::PowerBondConnection>& pbConnections,
+    system_structure& systemStructure)
 {
     std::vector<std::string> powerBondNames;
     std::set<std::string> uniquePowerBondNames;
@@ -819,51 +1184,81 @@ void add_power_bonds(const std::vector<osp_config_parser::PowerBondConnection>& 
 
     for (const auto& pbName : uniquePowerBondNames) {
         std::vector<osp_config_parser::PowerBondConnection> aPowerBond;
-        std::copy_if(pbConnections.begin(), pbConnections.end(), std::back_inserter(aPowerBond), [pbName](osp_config_parser::PowerBondConnection conn) {
-            return pbName == conn.name;
-        });
+        boost::algorithm::copy_if(
+            pbConnections, std::back_inserter(aPowerBond),
+            [pbName](const osp_config_parser::PowerBondConnection& connection) {
+                return pbName == connection.name;
+            });
 
         if (aPowerBond.size() != 2) {
             std::ostringstream oss;
-            oss << "The powerbond " << pbName << " does not have 2 connections! Number of connections found was " << aPowerBond.size();
+            oss << "The powerbond " << pbName
+                << " does not have 2 connections! Number of connections found was "
+                << aPowerBond.size();
             throw std::runtime_error(oss.str());
         }
 
-        const auto& connectionA = aPowerBond[0];
-        const auto& connectionB = aPowerBond[1];
+        const auto& connectionA = aPowerBond.at(0);
+        const auto& connectionB = aPowerBond.at(1);
 
         assert(connectionA.name == connectionB.name);
 
-        auto variableA = cosim::full_variable_name{connectionA.connection.variableA.simulator, connectionA.connection.variableA.name};
-        auto variableB = cosim::full_variable_name{connectionA.connection.variableB.simulator, connectionA.connection.variableB.name};
-        auto variableC = cosim::full_variable_name{connectionB.connection.variableA.simulator, connectionB.connection.variableA.name};
-        auto variableD = cosim::full_variable_name{connectionB.connection.variableB.simulator, connectionB.connection.variableB.name};
+        const auto variableA =
+            cosim::full_variable_name{connectionA.connection.variableA.simulator,
+                connectionA.connection.variableA.name};
+        const auto variableB =
+            cosim::full_variable_name{connectionA.connection.variableB.simulator,
+                connectionA.connection.variableB.name};
+        const auto variableC =
+            cosim::full_variable_name{connectionB.connection.variableA.simulator,
+                connectionB.connection.variableA.name};
+        const auto variableD =
+            cosim::full_variable_name{connectionB.connection.variableB.simulator,
+                connectionB.connection.variableB.name};
 
-        auto connAVariables = std::vector<osp_config_parser::VariableEndpoint>{connectionA.connection.variableA, connectionA.connection.variableB};
-        auto connBVariables = std::vector<osp_config_parser::VariableEndpoint>{connectionB.connection.variableA, connectionB.connection.variableB};
+        auto connAVariables = std::vector<osp_config_parser::VariableEndpoint>{
+            connectionA.connection.variableA,
+            connectionA.connection.variableB,
+        };
+        auto connBVariables = std::vector<osp_config_parser::VariableEndpoint>{
+            connectionB.connection.variableA,
+            connectionB.connection.variableB,
+        };
 
-        auto varA = connectionA.connection.variableA.causality;
-        auto varB = connectionA.connection.variableB.causality;
-        auto varC = connectionB.connection.variableA.causality;
-        auto varD = connectionB.connection.variableB.causality;
+        const auto varA = connectionA.connection.variableA.causality;
+        const auto varB = connectionA.connection.variableB.causality;
+        const auto varC = connectionB.connection.variableA.causality;
+        const auto varD = connectionB.connection.variableB.causality;
 
-        if ((varA.has_value() && !varB.has_value()) || (!varA.has_value() && varB.has_value())) {
+        if ((varA.has_value() && !varB.has_value()) ||
+            (!varA.has_value() && varB.has_value())) {
             std::ostringstream oss;
-            oss << "Missing causality for powerbond connection " << connectionA.connection.variableA.name << " <-> " << connectionA.connection.variableB.name << ". Both variables in a powerbond must have an input and output causality specified as attribute.";
+            oss << "Missing causality for powerbond connection "
+                << connectionA.connection.variableA.name << " <-> "
+                << connectionA.connection.variableB.name
+                << ". Both variables in a powerbond must have an input and output "
+                   "causality specified as attribute.";
             throw std::runtime_error(oss.str());
         }
 
-        if ((varC.has_value() && !varD.has_value()) || (!varC.has_value() && varD.has_value())) {
+        if ((varC.has_value() && !varD.has_value()) ||
+            (!varC.has_value() && varD.has_value())) {
             std::ostringstream oss;
-            oss << "Missing causality for powerbond connection " << connectionB.connection.variableA.name << " <-> " << connectionB.connection.variableB.name << ". Both variables in a powerbond must have an input and output causality specified as attribute.";
+            oss << "Missing causality for powerbond connection "
+                << connectionB.connection.variableA.name << " <-> "
+                << connectionB.connection.variableB.name
+                << ". Both variables in a powerbond must have an input and output "
+                   "causality specified as attribute.";
             throw std::runtime_error(oss.str());
         }
 
         auto powerbond = cosim::system_structure::power_bond{};
 
         for (auto& var : connAVariables) {
-            auto variable = cosim::full_variable_name{var.simulator, var.name};
-            switch (str_hash(var.causality.value())) {
+            const auto variable = cosim::full_variable_name{var.simulator, var.name};
+            // NOLINTNEXTLINE(bugprone-unchecked-optional-access): Preserve value()'s exception when both causalities are absent.
+            const auto& causality = var.causality.value();
+            switch (str_hash(causality)) {
                 case "input"_hash:
                     powerbond.input_a = variable;
                     break;
@@ -872,15 +1267,18 @@ void add_power_bonds(const std::vector<osp_config_parser::PowerBondConnection>& 
                     break;
                 default:
                     std::ostringstream oss;
-                    oss << "Invalid causality value for variable " << var.name << ": " << var.causality.value() << ". Accepted values are input, output.";
+                    oss << "Invalid causality value for variable " << var.name << ": "
+                        << causality << ". Accepted values are input, output.";
                     throw std::runtime_error(oss.str());
                     break;
             }
         }
 
         for (auto& var : connBVariables) {
-            auto variable = cosim::full_variable_name{var.simulator, var.name};
-            switch (str_hash(var.causality.value())) {
+            const auto variable = cosim::full_variable_name{var.simulator, var.name};
+            // NOLINTNEXTLINE(bugprone-unchecked-optional-access): Preserve value()'s exception when both causalities are absent.
+            const auto& causality = var.causality.value();
+            switch (str_hash(causality)) {
                 case "input"_hash:
                     powerbond.input_b = variable;
                     break;
@@ -889,7 +1287,8 @@ void add_power_bonds(const std::vector<osp_config_parser::PowerBondConnection>& 
                     break;
                 default:
                     std::ostringstream oss;
-                    oss << "Invalid causality value for variable " << var.name << ": " << var.causality.value() << ". Accepted values are input, output.";
+                    oss << "Invalid causality value for variable " << var.name << ": "
+                        << causality << ". Accepted values are input, output.";
                     throw std::runtime_error(oss.str());
                     break;
             }
@@ -899,30 +1298,35 @@ void add_power_bonds(const std::vector<osp_config_parser::PowerBondConnection>& 
     }
 
     // Check that the number of unique power bond names is equal to the number of
-    // power bonds. This must be verified after all bonds have been added; checking
-    // inside the loop would compare a partial count against the full unique-name
-    // count and spuriously throw when more than one bond is configured.
-    std::sort(powerBondNames.begin(), powerBondNames.end());
-    auto uniqueCount = static_cast<int>(std::unique(powerBondNames.begin(), powerBondNames.end()) - powerBondNames.begin());
-    auto numPowerBonds = static_cast<int>(systemStructure.get_power_bonds().size());
+    // power bonds. This must be verified after all bonds have been added;
+    // checking inside the loop would compare a partial count against the full
+    // unique-name count and spuriously throw when more than one bond is
+    // configured.
+    boost::range::sort(powerBondNames);
+    auto const uniqueCount = static_cast<int>(
+        boost::range::unique(powerBondNames).end() - powerBondNames.begin());
+    auto const numPowerBonds =
+        static_cast<int>(systemStructure.get_power_bonds().size());
 
     if (uniqueCount != numPowerBonds) {
         std::ostringstream oss;
-        oss << "The number of powerbonds (" << numPowerBonds << ") is not equal to the number of unique power bond names (" << uniqueCount << ") found in the configured system. Power bond names must be unique pr. bond, that is found on only and exactly the two VariableConnections that form the bond.";
+        oss << "The number of powerbonds (" << numPowerBonds
+            << ") is not equal to the number of unique power bond names ("
+            << uniqueCount
+            << ") found in the configured system. Power bond names must be unique "
+               "pr. bond, that is found on only and exactly the two "
+               "VariableConnections that form the bond.";
         throw std::runtime_error(oss.str());
     }
 }
 
-void connect_variables(
-    const std::vector<osp_config_parser::VariableConnection>& variableConnections,
+void connect_variables(const std::vector<osp_config_parser::VariableConnection>& variableConnections,
     system_structure& systemStructure)
 {
     for (const auto& connection : variableConnections) {
-        const auto variableA = full_variable_name(
-            connection.variableA.simulator,
+        const auto variableA = full_variable_name(connection.variableA.simulator,
             connection.variableA.name);
-        const auto variableB = full_variable_name(
-            connection.variableB.simulator,
+        const auto variableB = full_variable_name(connection.variableB.simulator,
             connection.variableB.name);
 
         const auto causalityA =
@@ -937,11 +1341,11 @@ void connect_variables(
     }
 }
 
-extended_model_description get_emd(
-    const std::unordered_map<std::string, extended_model_description>& emds,
+extended_model_description
+get_emd(const std::unordered_map<std::string, extended_model_description>& emds,
     const std::string& element)
 {
-    auto emdIt = emds.find(element);
+    auto const emdIt = emds.find(element);
     if (emdIt == emds.end()) {
         std::ostringstream oss;
         oss << "Cannot find extended model description for " << element;
@@ -955,16 +1359,20 @@ std::vector<std::string> get_variable_group_variables(
     const osp_config_parser::VariableEndpoint& endpoint)
 {
     std::vector<std::string> groupVariables;
-    auto groupIt = descriptions.find(endpoint.name);
+    auto const groupIt = descriptions.find(endpoint.name);
     if (groupIt == descriptions.end()) {
         for (const auto& description : descriptions) {
-            if (description.second.variable_group_descriptions.size() != 0) {
-                std::unordered_map<std::string, variable_group_description> nestedDescriptions;
-                for (const auto& variableGroupDescr : description.second.variable_group_descriptions) {
-                    nestedDescriptions.insert({variableGroupDescr.name, variableGroupDescr});
+            if (!description.second.variable_group_descriptions.empty()) {
+                std::unordered_map<std::string, variable_group_description>
+                    nestedDescriptions;
+                for (const auto& variableGroupDescr :
+                    description.second.variable_group_descriptions) {
+                    nestedDescriptions.insert(
+                        {variableGroupDescr.name, variableGroupDescr});
                 }
-                groupVariables = get_variable_group_variables(nestedDescriptions, endpoint);
-                if (groupVariables.size() > 0) {
+                groupVariables =
+                    get_variable_group_variables(nestedDescriptions, endpoint);
+                if (!groupVariables.empty()) {
                     break;
                 }
             }
@@ -979,13 +1387,12 @@ std::vector<cosim::variable_group_description> get_variable_groups(
     const std::unordered_map<std::string, variable_group_description>& descriptions,
     const std::string& connector)
 {
-    auto groupIt = descriptions.find(connector);
+    auto const groupIt = descriptions.find(connector);
     if (groupIt == descriptions.end()) {
         return {};
     }
     return groupIt->second.variable_group_descriptions;
 }
-
 
 void connect_variable_groups(
     const std::vector<osp_config_parser::VariableConnection>& variableGroupConnections,
@@ -996,48 +1403,57 @@ void connect_variable_groups(
     for (const auto& connection : variableGroupConnections) {
         const auto& emdA = get_emd(emds, connection.variableA.simulator);
         const auto& emdB = get_emd(emds, connection.variableB.simulator);
-        const auto& variablesA = get_variable_group_variables(emdA.variableGroups, connection.variableA);
-        const auto& variablesB = get_variable_group_variables(emdB.variableGroups, connection.variableB);
-        const auto& variableGroupsA = get_variable_groups(emdA.variableGroups, connection.variableA.name);
-        const auto& variableGroupsB = get_variable_groups(emdB.variableGroups, connection.variableB.name);
+        const auto& variablesA =
+            get_variable_group_variables(emdA.variableGroups, connection.variableA);
+        const auto& variablesB =
+            get_variable_group_variables(emdB.variableGroups, connection.variableB);
+        const auto& variableGroupsA =
+            get_variable_groups(emdA.variableGroups, connection.variableA.name);
+        const auto& variableGroupsB =
+            get_variable_groups(emdB.variableGroups, connection.variableB.name);
 
         if (variableGroupsA.size() != variableGroupsB.size()) {
             std::ostringstream oss;
             oss << "Cannot create connection between variable groups. Variable group "
                 << connection.variableA.simulator << ":" << connection.variableA.name
-                << " has different size [" << variableGroupsA.size() << "] than variable group "
-                << connection.variableB.simulator << ":" << connection.variableB.name
-                << " size [" << variableGroupsB.size() << "]";
+                << " has different size [" << variableGroupsA.size()
+                << "] than variable group " << connection.variableB.simulator << ":"
+                << connection.variableB.name << " size [" << variableGroupsB.size()
+                << "]";
             throw std::runtime_error(oss.str());
         }
 
-        std::vector<osp_config_parser::VariableConnection> nestedVariableGroupConnections;
+        std::vector<osp_config_parser::VariableConnection>
+            nestedVariableGroupConnections;
+        nestedVariableGroupConnections.reserve(variableGroupsA.size());
         // clang-format off
         for (std::size_t i = 0; i < variableGroupsA.size(); ++i) {
             nestedVariableGroupConnections.push_back({
                 {connection.variableA.simulator, variableGroupsA.at(i).name},
-                {connection.variableB.simulator, variableGroupsB.at(i).name}});
+                {connection.variableB.simulator, variableGroupsB.at(i).name},});
         }
         // clang-format on
-        connect_variable_groups(nestedVariableGroupConnections, systemStructure, emds);
+        connect_variable_groups(nestedVariableGroupConnections, systemStructure,
+            emds);
 
         if (variablesA.size() != variablesB.size()) {
             std::ostringstream oss;
             oss << "Cannot create connection between variable groups. Variable group "
                 << connection.variableA.simulator << ":" << connection.variableA.name
-                << " has different size [" << variablesA.size() << "] than variable group "
-                << connection.variableB.simulator << ":" << connection.variableB.name
-                << " size [" << variablesB.size() << "]";
+                << " has different size [" << variablesA.size()
+                << "] than variable group " << connection.variableB.simulator << ":"
+                << connection.variableB.name << " size [" << variablesB.size() << "]";
             throw std::runtime_error(oss.str());
         }
 
         std::vector<osp_config_parser::VariableConnection> variableConnections;
+        variableConnections.reserve(variablesA.size());
 
         // clang-format off
         for (std::size_t i = 0; i < variablesA.size(); ++i) {
             variableConnections.push_back({
                 {connection.variableA.simulator, variablesA.at(i)},
-                {connection.variableB.simulator, variablesB.at(i)}});
+                {connection.variableB.simulator, variablesB.at(i)},});
         }
         // clang-format on
 
@@ -1046,21 +1462,27 @@ void connect_variable_groups(
 }
 
 void connect_linear_transformation_functions(
-    const std::unordered_map<std::string, osp_config_parser::LinearTransformationFunction>& functions,
+    const std::unordered_map<std::string,
+        osp_config_parser::LinearTransformationFunction>& functions,
     const std::vector<osp_config_parser::SignalConnection>& signalConnections,
     system_structure& systemStructure)
 {
     for (const auto& [functionName, function] : functions) {
         function_parameter_value_map functionParams;
-        functionParams[linear_transformation_function_type::offset_parameter_index] = function.offset;
-        functionParams[linear_transformation_function_type::factor_parameter_index] = function.factor;
+        functionParams
+            [linear_transformation_function_type::offset_parameter_index] =
+                function.offset;
+        functionParams
+            [linear_transformation_function_type::factor_parameter_index] =
+                function.factor;
         systemStructure.add_entity(
-            functionName,
-            std::make_shared<linear_transformation_function_type>(),
+            functionName, std::make_shared<linear_transformation_function_type>(),
             functionParams);
 
-        const auto inConn = find_signal_connection(signalConnections, functionName, function.in.name);
-        const auto outConn = find_signal_connection(signalConnections, functionName, function.out.name);
+        const auto inConn = find_signal_connection(signalConnections, functionName,
+            function.in.name);
+        const auto outConn = find_signal_connection(signalConnections, functionName,
+            function.out.name);
         systemStructure.connect_variables(
             full_variable_name(inConn.variable.simulator, inConn.variable.name),
             full_variable_name(functionName, "in", ""));
@@ -1077,19 +1499,21 @@ void connect_sum_functions(
 {
     for (const auto& [functionName, function] : functions) {
         function_parameter_value_map functionParams;
-        functionParams[vector_sum_function_type::inputCount_parameter_index] = function.inputCount;
-        systemStructure.add_entity(
-            functionName,
+        functionParams[vector_sum_function_type::inputCount_parameter_index] =
+            function.inputCount;
+        systemStructure.add_entity(functionName,
             std::make_shared<vector_sum_function_type>(),
             functionParams);
 
         for (int i = 0; i < function.inputCount; i++) {
-            const auto inConn = find_signal_connection(signalConnections, functionName, function.ins.at(i).name);
+            const auto inConn = find_signal_connection(
+                signalConnections, functionName, function.ins.at(i).name);
             systemStructure.connect_variables(
                 full_variable_name(inConn.variable.simulator, inConn.variable.name),
                 full_variable_name(functionName, "in", i, "", 0));
         }
-        const auto outConn = find_signal_connection(signalConnections, functionName, function.out.name);
+        const auto outConn = find_signal_connection(signalConnections, functionName,
+            function.out.name);
         systemStructure.connect_variables(
             full_variable_name(functionName, "out", ""),
             full_variable_name(outConn.variable.simulator, outConn.variable.name));
@@ -1104,10 +1528,11 @@ void connect_vector_sum_functions(
 {
     for (const auto& [functionName, function] : functions) {
         function_parameter_value_map functionParams;
-        functionParams[vector_sum_function_type::inputCount_parameter_index] = function.inputCount;
-        functionParams[vector_sum_function_type::dimension_parameter_index] = function.dimension;
-        systemStructure.add_entity(
-            functionName,
+        functionParams[vector_sum_function_type::inputCount_parameter_index] =
+            function.inputCount;
+        functionParams[vector_sum_function_type::dimension_parameter_index] =
+            function.dimension;
+        systemStructure.add_entity(functionName,
             std::make_shared<vector_sum_function_type>(),
             functionParams);
 
@@ -1115,7 +1540,8 @@ void connect_vector_sum_functions(
             const auto inGroupConn = find_signal_connection(
                 signalGroupConnections, functionName, function.inGroups.at(i).name);
             const auto& inEmd = emds.at(inGroupConn.variable.simulator);
-            const auto& inVariableGroup = inEmd.variableGroups.at(inGroupConn.variable.name);
+            const auto& inVariableGroup =
+                inEmd.variableGroups.at(inGroupConn.variable.name);
 
             for (int j = 0; j < function.dimension; ++j) {
                 const auto& inVariableName = inVariableGroup.variables.at(j);
@@ -1128,7 +1554,8 @@ void connect_vector_sum_functions(
         const auto outGroupConn = find_signal_connection(
             signalGroupConnections, functionName, function.outGroup.name);
         const auto& outEmd = emds.at(outGroupConn.variable.simulator);
-        const auto& outVariableGroup = outEmd.variableGroups.at(outGroupConn.variable.name);
+        const auto& outVariableGroup =
+            outEmd.variableGroups.at(outGroupConn.variable.name);
         for (int j = 0; j < function.dimension; ++j) {
             const auto& outVariableName = outVariableGroup.variables.at(j);
             systemStructure.connect_variables(
@@ -1138,24 +1565,101 @@ void connect_vector_sum_functions(
     }
 }
 
-cosim::filesystem::path file_query_uri_to_path(
-    const cosim::uri& baseParentUri,
+cosim::filesystem::path file_query_uri_to_path(const cosim::filesystem::path& baseParentPath,
     const cosim::uri& queryUri)
 {
+    const auto baseParentUri = cosim::path_to_file_uri(baseParentPath);
+    constexpr std::string_view file_parameter_prefix = "file=";
     const auto query = queryUri.query();
-    if (query && query->find("file=") < query->size()) {
+    if (query && query->find(file_parameter_prefix) < query->size()) {
         if (query->find("file=file:///") < query->size()) {
-            return file_uri_to_path(std::string(query->substr(5)));
+            return file_uri_to_path(
+                std::string(query->substr(file_parameter_prefix.size())));
         }
-        return file_uri_to_path(std::string(baseParentUri.view()) + "/" + std::string(query->substr(5)));
+        return file_uri_to_path(
+            std::string(baseParentUri.view()) + "/" +
+            std::string(query->substr(file_parameter_prefix.size())));
     }
     return file_uri_to_path(baseParentUri);
 }
 
+void configure_osp_algorithm(const osp_config_parser::SimulationInformation& simInfo, osp_config& config)
+{
+    auto algorithm = simInfo.algorithm;
+    boost::range::transform(
+        algorithm, algorithm.begin(),
+        [](unsigned char character) { return std::tolower(character); });
+
+    if (algorithm == "ecco") {
+        if (simInfo.eccoConfiguration.has_value()) {
+            BOOST_LOG_SEV(log::logger(), log::info) << "Configuring algorithm: ecco";
+            config.algorithm_configuration = simInfo.eccoConfiguration.value();
+        } else {
+            throw std::runtime_error(
+                "No configuration parameters found for ecco algorithm.");
+        }
+    } else if (algorithm == "fixedstep") {
+        BOOST_LOG_SEV(log::logger(), log::info)
+            << "Configuring algorithm: fixedStep";
+        config.algorithm_configuration =
+            cosim::fixed_step_algorithm_params{to_duration(simInfo.stepSize)};
+    } else {
+        throw std::runtime_error(
+            "Invalid algorithm choice. Allowed values are fixedStep, ecco.");
+    }
+}
+
+void add_osp_simulators(const std::vector<osp_config_parser::Simulator>& simulators,
+    model_uri_resolver& resolver, const cosim::uri& baseURI,
+    const cosim::filesystem::path& configFile, osp_config& config,
+    std::unordered_map<std::string, extended_model_description>& emds)
+{
+    for (const auto& simulator : simulators) {
+        const auto model = resolver.lookup_model(baseURI, simulator.source);
+        config.system_structure.add_entity(simulator.name, model,
+            simulator.stepSize
+                ? to_duration(*simulator.stepSize)
+                : duration::zero());
+
+        for (const auto& initial : simulator.initialValues) {
+            add_variable_value(config.initial_values, config.system_structure,
+                full_variable_name(simulator.name, initial.name),
+                initial.value);
+        }
+
+        const auto description = model->description();
+        if (!description) {
+            throw error(make_error_code(errc::invalid_system_structure),
+                "Model description is unavailable for simulator " +
+                    simulator.name);
+        }
+        const std::string msmiFileName =
+            description->name + "_OspModelDescription.xml";
+        const auto modelUri = resolve_reference(baseURI, simulator.source);
+        cosim::filesystem::path msmiFilePath;
+
+        msmiFilePath =
+            (modelUri.scheme() == "file")
+            ? file_uri_to_path(modelUri).remove_filename() / msmiFileName
+            : file_query_uri_to_path(
+                  cosim::file_uri_to_path(baseURI).parent_path(),
+                  modelUri)
+                    .remove_filename() /
+                msmiFileName;
+        if (cosim::filesystem::exists(msmiFilePath)) {
+            emds.emplace(simulator.name, msmiFilePath);
+        } else {
+            msmiFilePath = configFile.parent_path() / msmiFileName;
+            if (cosim::filesystem::exists(msmiFilePath)) {
+                emds.emplace(simulator.name, msmiFilePath);
+            }
+        }
+    }
+}
+
 } // namespace
 
-osp_config load_osp_config(
-    const cosim::filesystem::path& configPath,
+osp_config load_osp_config(const cosim::filesystem::path& configPath,
     model_uri_resolver& resolver)
 {
     const auto absolutePath = cosim::filesystem::absolute(configPath);
@@ -1169,14 +1673,18 @@ osp_config load_osp_config(
 
     if (simInfo.stepSize <= 0.0) {
         std::ostringstream oss;
-        oss << "Configured base step size [" << simInfo.stepSize << "] must be nonzero and positive";
+        oss << "Configured base step size [" << simInfo.stepSize
+            << "] must be nonzero and positive";
         BOOST_LOG_SEV(log::logger(), log::error) << oss.str();
         throw std::runtime_error(oss.str());
     }
 
-    if (simInfo.endTime.has_value() && simInfo.startTime > simInfo.endTime.value()) {
+    if (simInfo.endTime.has_value() &&
+        simInfo.startTime > simInfo.endTime.value()) {
         std::ostringstream oss;
-        oss << "Configured start time [" << simInfo.startTime << "] is larger than configured end time [" << simInfo.endTime.value() << "]";
+        oss << "Configured start time [" << simInfo.startTime
+            << "] is larger than configured end time [" << simInfo.endTime.value()
+            << "]";
         BOOST_LOG_SEV(log::logger(), log::error) << oss.str();
         throw std::runtime_error(oss.str());
     }
@@ -1187,64 +1695,27 @@ osp_config load_osp_config(
         config.end_time = to_time_point(simInfo.endTime.value());
     }
 
-    auto algorithm = simInfo.algorithm;
-    std::transform(algorithm.begin(), algorithm.end(), algorithm.begin(),
-        [](unsigned char c) { return std::tolower(c); });
-
-    if (algorithm == "ecco") {
-        if (simInfo.eccoConfiguration.has_value()) {
-            BOOST_LOG_SEV(log::logger(), log::info) << "Configuring algorithm: ecco";
-            config.algorithm_configuration = simInfo.eccoConfiguration.value();
-        } else {
-            throw std::runtime_error("No configuration parameters found for ecco algorithm.");
-        }
-    } else if (algorithm == "fixedstep") {
-        BOOST_LOG_SEV(log::logger(), log::info) << "Configuring algorithm: fixedStep";
-        config.algorithm_configuration = cosim::fixed_step_algorithm_params{to_duration(simInfo.stepSize)};
-    } else {
-        throw std::runtime_error("Invalid algorithm choice. Allowed values are fixedStep, ecco.");
-    }
-
-    auto simulators = parser.get_elements();
-
+    configure_osp_algorithm(simInfo, config);
+    const auto& simulators = parser.get_elements();
     std::unordered_map<std::string, extended_model_description> emds;
-    for (const auto& simulator : simulators) {
-        auto model = resolver.lookup_model(baseURI, simulator.source);
-        config.system_structure.add_entity(
-            simulator.name,
-            model,
-            simulator.stepSize ? to_duration(*simulator.stepSize) : duration::zero());
+    add_osp_simulators(simulators, resolver, baseURI, configFile, config, emds);
 
-        for (const auto& p : simulator.initialValues) {
-            add_variable_value(
-                config.initial_values,
-                config.system_structure,
-                full_variable_name(simulator.name, p.name),
-                p.value);
-        }
-
-        std::string msmiFileName = model->description()->name + "_OspModelDescription.xml";
-        const auto modelUri = resolve_reference(baseURI, simulator.source);
-        cosim::filesystem::path msmiFilePath;
-
-        msmiFilePath = (modelUri.scheme() == "file")
-            ? file_uri_to_path(modelUri).remove_filename() / msmiFileName
-            : file_query_uri_to_path(cosim::path_to_file_uri(cosim::file_uri_to_path(baseURI).parent_path()), modelUri).remove_filename() / msmiFileName;
-        if (cosim::filesystem::exists(msmiFilePath)) {
-            emds.emplace(simulator.name, msmiFilePath);
-        } else {
-            msmiFilePath = configFile.parent_path() / msmiFileName;
-            if (cosim::filesystem::exists(msmiFilePath)) {
-                emds.emplace(simulator.name, msmiFilePath);
-            }
-        }
+    for (const auto& [name, schedule] : parser.get_clocks()) {
+        config.system_structure.add_entity(name,
+            detail::make_osp_clock_model(schedule));
     }
-
     connect_variables(parser.get_variable_connections(), config.system_structure);
-    connect_variable_groups(parser.get_variable_group_connections(), config.system_structure, emds);
-    connect_linear_transformation_functions(parser.get_linear_transformation_functions(), parser.get_signal_connections(), config.system_structure);
-    connect_sum_functions(parser.get_sum_functions(), parser.get_signal_connections(), config.system_structure);
-    connect_vector_sum_functions(parser.get_vector_sum_functions(), parser.get_signal_group_connections(), config.system_structure, emds);
+    connect_variable_groups(parser.get_variable_group_connections(),
+        config.system_structure, emds);
+    connect_linear_transformation_functions(
+        parser.get_linear_transformation_functions(),
+        parser.get_signal_connections(), config.system_structure);
+    connect_sum_functions(parser.get_sum_functions(),
+        parser.get_signal_connections(),
+        config.system_structure);
+    connect_vector_sum_functions(parser.get_vector_sum_functions(),
+        parser.get_signal_group_connections(),
+        config.system_structure, emds);
     add_power_bonds(parser.get_power_bond_connections(), config.system_structure);
 
     return config;

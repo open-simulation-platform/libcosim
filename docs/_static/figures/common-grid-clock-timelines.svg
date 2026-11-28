@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 520" role="img" aria-labelledby="title desc">
+  <title id="title">Common-grid transfers and held Clock input values</title>
+  <desc id="desc">For ordinary connections with a one-second base step and factors two and three, participants step on their own grids and transfer on the common six-second grid. In a separate Clock example, an ordinary source with a half-second base step and factor four advances to two seconds while the target Clock ticks at one and two seconds. At one the target uses its held value zero; at two it may use the current value twenty.</desc>
+  <style>
+    .background { fill: #fff; } .line { stroke: #245c84; stroke-width: 6; }
+    .grid { stroke: #d3dce2; stroke-width: 1; stroke-dasharray: 4 5; }
+    .tick { fill: #245c84; } .sample { fill: #a53e3e; }
+    .title { font: bold 20px sans-serif; fill: #142b3a; }
+    .label { font: 16px sans-serif; fill: #243d4e; }
+    .small { font: 14px sans-serif; fill: #243d4e; }
+  </style>
+  <rect class="background" width="1000" height="520"/>
+  <text class="title" x="30" y="34">Ordinary connection: base 1 s, factors 2 and 3</text>
+  <text class="small" x="30" y="60">Blue dots: participant step boundaries; red dots: common-grid samples.</text>
+  <line class="grid" x1="250" y1="83" x2="250" y2="230"/><line class="grid" x1="650" y1="83" x2="650" y2="230"/>
+  <text class="small" x="246" y="80">0</text><text class="small" x="377" y="80">2</text>
+  <text class="small" x="510" y="80">4</text><text class="small" x="646" y="80">6</text><text class="small" x="780" y="80">8 s</text>
+  <text class="label" x="30" y="120">Factor 2 source</text>
+  <line class="line" x1="250" y1="115" x2="850" y2="115"/>
+  <circle class="tick" cx="250" cy="115" r="6"/><circle class="tick" cx="383" cy="115" r="6"/>
+  <circle class="tick" cx="517" cy="115" r="6"/><circle class="sample" cx="650" cy="115" r="7"/>
+  <circle class="tick" cx="783" cy="115" r="6"/>
+  <text class="label" x="30" y="165">Factor 3 target</text>
+  <line class="line" x1="250" y1="160" x2="850" y2="160"/>
+  <circle class="tick" cx="250" cy="160" r="6"/><circle class="tick" cx="450" cy="160" r="6"/>
+  <circle class="sample" cx="650" cy="160" r="7"/><circle class="tick" cx="850" cy="160" r="6"/>
+  <text class="small" x="30" y="208">The target starts its 0 and 3 s steps with 0; at 6 s it starts with the newly sampled value 6.</text>
+  <text class="small" x="30" y="229">Common transfer grid: LCM(2, 3) = 6 base steps. Event staging is a separate path.</text>
+
+  <text class="title" x="30" y="280">Clock sampling: base 0.5 s, ordinary source factor 4</text>
+  <line class="grid" x1="250" y1="298" x2="250" y2="420"/><line class="grid" x1="550" y1="298" x2="550" y2="420"/>
+  <line class="grid" x1="850" y1="298" x2="850" y2="420"/>
+  <text class="small" x="246" y="295">0</text><text class="small" x="546" y="295">1</text><text class="small" x="842" y="295">2 s</text>
+  <text class="label" x="30" y="339">Ordinary source</text>
+  <line class="line" x1="250" y1="334" x2="850" y2="334"/>
+  <circle class="tick" cx="250" cy="334" r="6"/><circle class="tick" cx="850" cy="334" r="6"/>
+  <text class="label" x="30" y="384">Target Clock</text>
+  <line class="line" x1="250" y1="379" x2="850" y2="379"/>
+  <circle class="tick" cx="250" cy="379" r="6"/><circle class="sample" cx="550" cy="379" r="7"/>
+  <circle class="sample" cx="850" cy="379" r="7"/>
+  <text class="small" x="455" y="408">1 s: held 0</text><text class="small" x="710" y="408">2 s: current 20</text>
+  <text class="small" x="30" y="447">At 1 s the source is ahead: warn and use the last valid staged value, not its future output.</text>
+  <text class="small" x="30" y="472">This applies to both direct and function-mediated source paths.</text>
+  <text class="small" x="30" y="493">Clock-capable participants must be at the Clock time.</text>
+</svg>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OspSystemStructure
+        xmlns="http://opensimulationplatform.com/MSMI/OSPSystemStructure"
+        version="0.1">
+    <StartTime>0.0</StartTime>
+    <BaseStepSize>0.1</BaseStepSize>
+    <Algorithm>fixedStep</Algorithm>
+    <Simulators>
+        <Simulator name="fmi2" source="../../fmus/vector.fmu"/>
+        <Simulator name="fmi3" source="../../fmus/Feedthrough.fmu"/>
+    </Simulators>
+    <Connections>
+        <VariableConnection>
+            <Variable simulator="fmi2" name="output[0]"/>
+            <Variable simulator="fmi3" name="Float64_discrete_input"/>
+        </VariableConnection>
+        <VariableConnection>
+            <Variable simulator="fmi3" name="Float64_continuous_output"/>
+            <Variable simulator="fmi2" name="input[1]"/>
+        </VariableConnection>
+    </Connections>
+</OspSystemStructure>

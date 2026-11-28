@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 340" role="img" aria-labelledby="title desc">
+  <title id="title">Fixed-step coordination at an FMI 3 event boundary</title>
+  <desc id="desc">For a base communication interval of 0.1 seconds, an FMI 3 event at 0.15 seconds shortens the request from 0.1 to 0.2. The algorithm handles the event and completes the remaining 0.05 seconds to 0.2. The affected participant must accept changed communication step sizes.</desc>
+  <style>
+    .background { fill: #fff; } .line { stroke: #245c84; stroke-width: 6; }
+    .grid { stroke: #d3dce2; stroke-width: 2; stroke-dasharray: 4 5; }
+    .point { fill: #245c84; } .event { fill: #a53e3e; }
+    .heading { font: bold 21px sans-serif; fill: #142b3a; }
+    .label { font: 16px sans-serif; fill: #243d4e; }
+    .small { font: 15px sans-serif; fill: #243d4e; }
+  </style>
+  <rect class="background" width="1000" height="340"/>
+  <text class="heading" x="30" y="35">Fixed-step: an FMI 3 event interrupts the base grid</text>
+  <text class="small" x="30" y="62">Example: factor-one participant, base interval 0.1 s, event at 0.15 s.</text>
+  <line class="grid" x1="140" y1="90" x2="140" y2="230"/><line class="grid" x1="410" y1="90" x2="410" y2="230"/>
+  <line class="grid" x1="545" y1="90" x2="545" y2="230"/><line class="grid" x1="680" y1="90" x2="680" y2="230"/>
+  <text class="small" x="124" y="85">0 s</text><text class="small" x="390" y="85">0.1</text>
+  <text class="small" x="523" y="85">0.15</text><text class="small" x="661" y="85">0.2</text>
+  <line class="line" x1="140" y1="145" x2="680" y2="145"/>
+  <circle class="point" cx="140" cy="145" r="7"/><circle class="point" cx="410" cy="145" r="7"/>
+  <circle class="event" cx="545" cy="145" r="8"/><circle class="point" cx="680" cy="145" r="7"/>
+  <text class="label" x="205" y="178">0.1 s step</text><text class="label" x="421" y="202">0.05 s</text>
+  <text class="label" x="559" y="202">0.05 s remainder</text>
+  <text class="small" x="460" y="235">Event handling at 0.15 s</text>
+  <text class="small" x="30" y="281">After the event, the interrupted interval is completed before nominal steps resume.</text>
+  <text class="small" x="30" y="307">The affected FMU must accept changed communication-step sizes; decimation adds separate grid rules.</text>
+</svg>

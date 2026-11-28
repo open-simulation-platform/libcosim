@@ -12,6 +12,7 @@
 
 #include <cosim/model_description.hpp>
 
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <unordered_map>
@@ -24,7 +25,7 @@ namespace cosim
 
 
 /// Function parameter types
-enum class function_parameter_type
+enum class function_parameter_type // NOLINT(performance-enum-size): Preserve the public ABI.
 {
     /// A real number
     real,
@@ -33,7 +34,7 @@ enum class function_parameter_type
     integer,
 
     /// A variable type
-    type
+    type,
 };
 
 
@@ -122,6 +123,14 @@ struct function_parameter_placeholder
     int parameter_index;
 };
 
+/**
+ *  A concrete or parameterized function I/O dimension.
+ *
+ *  Function instance descriptions must contain concrete sizes only.
+ */
+using function_io_dimension =
+    std::variant<std::uint64_t, function_parameter_placeholder>;
+
 
 /// A description of one of a function's input or output variables.
 struct function_io_description
@@ -167,6 +176,15 @@ struct function_io_description
      *  be to support vector variables with user-defined dimensions.
      */
     std::variant<int, function_parameter_placeholder> count;
+
+    /**
+     *  The dimensions of each variable instance.
+     *
+     *  An empty list denotes a scalar. The existing `count` field remains the
+     *  number of distinct repeated variables and is not an array dimension.
+     *  Function instance descriptions must contain concrete sizes only.
+     */
+    std::vector<function_io_dimension> dimensions;
 };
 
 
@@ -309,22 +327,22 @@ struct function_io_reference
 
 /// Equality operator for `function_io_reference`.
 inline bool operator==(
-    const function_io_reference& a,
-    const function_io_reference& b) noexcept
+    const function_io_reference& lhs,
+    const function_io_reference& rhs) noexcept
 {
-    return a.group == b.group &&
-        a.group_instance == b.group_instance &&
-        a.io == b.io &&
-        a.io_instance == b.io_instance;
+    return lhs.group == rhs.group &&
+        lhs.group_instance == rhs.group_instance &&
+        lhs.io == rhs.io &&
+        lhs.io_instance == rhs.io_instance;
 }
 
 
 /// Inequality operator for `function_io_reference`.
 inline bool operator!=(
-    const function_io_reference& a,
-    const function_io_reference& b) noexcept
+    const function_io_reference& lhs,
+    const function_io_reference& rhs) noexcept
 {
-    return !operator==(a, b);
+    return !operator==(lhs, rhs);
 }
 
 

@@ -14,15 +14,13 @@
 #define COSIM_LOG_LOGGER_HPP
 
 #include <boost/log/expressions/keyword.hpp>
-#include <boost/log/sources/record_ostream.hpp> // for convenience
-#include <boost/log/sources/severity_feature.hpp> // for convenience
+#include <boost/log/sources/record_ostream.hpp> // IWYU pragma: export
+#include <boost/log/sources/severity_feature.hpp> // IWYU pragma: export
 #include <boost/log/sources/severity_logger.hpp>
 #include <boost/log/trivial.hpp>
 
 
-namespace cosim
-{
-namespace log
+namespace cosim::log
 {
 
 
@@ -35,7 +33,7 @@ namespace log
  *  treated and used as if it were a separate `enum` whose enumerators are
  *  `trace`, `debug`, `info`, `warning`, `error`, and `fatal`.
  */
-using severity_level = boost::log::trivial::severity_level;
+using boost::log::trivial::severity_level;
 
 constexpr severity_level trace = boost::log::trivial::trace;
 constexpr severity_level debug = boost::log::trivial::debug;
@@ -51,7 +49,7 @@ constexpr severity_level fatal = boost::log::trivial::fatal;
  *  This keyword should be used when referring to the "Severity" attribute
  *  in filters and formatters.
  */
-const auto severity = boost::log::trivial::severity;
+const auto severity = boost::log::trivial::severity; // NOLINT(misc-include-cleaner): Provided by Boost's public trivial.hpp.
 
 
 /// The logger type used by this library, a thread-safe severity logger.
@@ -62,6 +60,5 @@ using logger_type = boost::log::sources::severity_logger_mt<severity_level>;
 logger_type& logger();
 
 
-} // namespace log
-} // namespace cosim
+} // namespace cosim::log
 #endif // header guard

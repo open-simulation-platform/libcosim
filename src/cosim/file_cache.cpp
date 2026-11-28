@@ -5,14 +5,18 @@
  */
 #include "cosim/file_cache.hpp"
 
-#include "cosim/log/logger.hpp"
 #include "cosim/uri.hpp"
 #include "cosim/utility/concurrency.hpp"
 #include "cosim/utility/filesystem.hpp"
 
+#include <filesystem>
+#include <memory>
 #include <stdexcept>
 #include <string>
+#include <string_view>
+#include <system_error>
 #include <unordered_map>
+#include <utility>
 
 
 namespace cosim
@@ -48,15 +52,15 @@ class temporary_file_cache_directory
 public:
     temporary_file_cache_directory(
         std::shared_ptr<utility::temp_dir> cache,
-        const cosim::filesystem::path& path,
+        cosim::filesystem::path path,
         std::shared_ptr<dummy> ownership)
-        : cache_(cache)
-        , path_(path)
-        , ownership_(ownership)
+        : cache_(std::move(cache))
+        , path_(std::move(path))
+        , ownership_(std::move(ownership))
     {
     }
 
-    cosim::filesystem::path path() const override
+    [[nodiscard]] cosim::filesystem::path path() const override
     {
         return path_;
     }
@@ -87,7 +91,7 @@ public:
         const auto path = root_->path() / percent_encode(key);
         cosim::filesystem::create_directories(path);
 
-        auto ownership = std::make_shared<dummy>();
+        const auto ownership = std::make_shared<dummy>();
         owns.rw = ownership;
         return std::make_unique<temporary_file_cache_directory>(root_, path, ownership);
     }
@@ -101,8 +105,11 @@ public:
         }
         const auto path = root_->path() / percent_encode(key);
 
-        auto ownership = std::make_shared<dummy>();
-        owns.ro = ownership;
+        auto ownership = owns.ro.lock();
+        if (!ownership) {
+            ownership = std::make_shared<dummy>();
+            owns.ro = ownership;
+        }
         return std::make_unique<temporary_file_cache_directory>(root_, path, ownership);
     }
 
@@ -115,15 +122,15 @@ private:
 
     subdirectory_ownership& get_ownership(const std::string& key, bool create)
     {
-        auto it = ownerships_.find(key);
-        if (it == ownerships_.end()) {
+        auto entry = ownerships_.find(key);
+        if (entry == ownerships_.end()) {
             if (create) {
-                it = ownerships_.emplace(key, subdirectory_ownership{}).first;
+                entry = ownerships_.emplace(key, subdirectory_ownership{}).first;
             } else {
                 throw std::logic_error("Invalid cache subdirectory key: " + key);
             }
         }
-        return it->second;
+        return entry->second;
     }
 
     std::shared_ptr<utility::temp_dir> root_;
@@ -164,14 +171,14 @@ class persistent_file_cache_directory
 {
 public:
     persistent_file_cache_directory(
-        const cosim::filesystem::path& path,
+        cosim::filesystem::path path,
         utility::file_lock lock)
-        : path_(path)
+        : path_(std::move(path))
         , lock_(std::move(lock))
     {
     }
 
-    cosim::filesystem::path path() const override
+    [[nodiscard]] cosim::filesystem::path path() const override
     {
         return path_;
     }
@@ -185,15 +192,15 @@ private:
 class persistent_file_cache::impl
 {
 public:
-    explicit impl(const cosim::filesystem::path& root)
-        : root_(root)
+    explicit impl(cosim::filesystem::path root)
+        : root_(std::move(root))
     {
         cosim::filesystem::create_directories(root_);
     }
 
     std::unique_ptr<directory_rw> get_directory_rw(std::string_view key)
     {
-        auto rootLock = utility::file_lock(
+        const auto rootLock = utility::file_lock(
             root_lock_file_path(),
             utility::file_lock_initial_state::locked);
 
@@ -208,7 +215,7 @@ public:
 
     std::unique_ptr<directory_ro> get_directory_ro(std::string_view key)
     {
-        auto rootLock = utility::file_lock(
+        const auto rootLock = utility::file_lock(
             root_lock_file_path(),
             utility::file_lock_initial_state::locked_shared);
 
@@ -227,13 +234,13 @@ public:
 
     void cleanup()
     {
-        auto rootLock = utility::file_lock(
+        const auto rootLock = utility::file_lock(
             root_lock_file_path(),
             utility::file_lock_initial_state::locked);
 
         for (auto it = cosim::filesystem::directory_iterator(root_);
-             it != cosim::filesystem::directory_iterator();
-             ++it) {
+            it != cosim::filesystem::directory_iterator();
+            ++it) {
             if (cosim::filesystem::is_directory(*it) &&
                 it->path().extension() == ".data") {
 
@@ -243,7 +250,9 @@ public:
                 auto subdirLock = utility::file_lock(
                     subdirLockFilePath,
                     utility::file_lock_initial_state::not_locked);
-                if (!subdirLock.try_lock()) continue;
+                if (!subdirLock.try_lock()) {
+                    continue;
+                }
 
                 std::error_code ignoredError;
                 cosim::filesystem::remove_all(*it, ignoredError);
@@ -256,7 +265,9 @@ public:
                 auto subdirLock = utility::file_lock(
                     it->path(),
                     utility::file_lock_initial_state::not_locked);
-                if (!subdirLock.try_lock()) continue;
+                if (!subdirLock.try_lock()) {
+                    continue;
+                }
 
                 auto subdirPath = it->path();
                 subdirPath.replace_extension(".data");
@@ -269,25 +280,25 @@ public:
     }
 
 private:
-    cosim::filesystem::path root_lock_file_path() const
+    [[nodiscard]] cosim::filesystem::path root_lock_file_path() const
     {
         return root_ / "lock";
     }
 
-    cosim::filesystem::path subdir_path(std::string_view key) const
+    [[nodiscard]] cosim::filesystem::path subdir_path(std::string_view key) const
     {
-        auto p = root_;
-        p /= percent_encode(key);
-        p += ".data";
-        return p;
+        auto path = root_;
+        path /= percent_encode(key);
+        path += ".data";
+        return path;
     }
 
-    cosim::filesystem::path subdir_lock_file_path(std::string_view key) const
+    [[nodiscard]] cosim::filesystem::path subdir_lock_file_path(std::string_view key) const
     {
-        auto p = root_;
-        p /= percent_encode(key);
-        p += ".lock";
-        return p;
+        auto path = root_;
+        path /= percent_encode(key);
+        path += ".lock";
+        return path;
     }
 
     cosim::filesystem::path root_;

@@ -26,16 +26,39 @@ namespace cosim
 
 
 /// A model, i.e., a blueprint from which slaves can be instantiated.
-class model
+class model // NOLINT(cppcoreguidelines-special-member-functions): Preserve existing interface copy and move behavior.
 {
 public:
     virtual ~model() noexcept = default;
 
     /// Returns a description of this model.
-    virtual std::shared_ptr<const model_description> description() const noexcept = 0;
+    virtual std::shared_ptr<const model_description> description() const noexcept = 0; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
 
-    /// Instantiates a slave.
+    /// Instantiates a named slave; the returned shared pointer owns the instance.
     virtual std::shared_ptr<slave> instantiate(std::string_view name) = 0;
+};
+
+/**
+ * A model backed by an imported FMU.
+ *
+ * This adapter lets an instantiation hook access the FMU before creating a
+ * slave, without exposing FMI Library handles. The FMU remains owned by the
+ * model and by any instances created from it.
+ */
+class fmu_backed_model : public model
+{
+public:
+    /// Constructs an adapter for a non-null imported FMU.
+    explicit fmu_backed_model(std::shared_ptr<fmi::fmu> fmu);
+
+    std::shared_ptr<const model_description> description() const noexcept override; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
+    std::shared_ptr<slave> instantiate(std::string_view name) override;
+
+    /// Returns the imported FMU.
+    std::shared_ptr<fmi::fmu> fmu() const noexcept; // NOLINT(modernize-use-nodiscard): Preserve public source compatibility.
+
+private:
+    std::shared_ptr<fmi::fmu> fmu_;
 };
 
 
@@ -50,7 +73,7 @@ public:
  *  Client code will normally not use this directly to resolve URIs, but rather
  *  as one of many sub-resolvers in a `model_uri_resolver`.
  */
-class model_uri_sub_resolver
+class model_uri_sub_resolver // NOLINT(cppcoreguidelines-special-member-functions): Preserve existing interface copy and move behavior.
 {
 public:
     virtual ~model_uri_sub_resolver() noexcept = default;
@@ -103,6 +126,9 @@ public:
  *
  *  A custom URI resolver can be created by starting with a default-constructed
  *  object and adding scheme-specific resolvers using `add_sub_resolver()`.
+ *  A lookup uses the sub-resolvers present when it starts; a sub-resolver
+ *  added during a callback is considered by later lookups. Concurrent access
+ *  still requires external synchronization.
  */
 class model_uri_resolver
 {
@@ -119,7 +145,7 @@ public:
     ~model_uri_resolver() noexcept;
 
     /// Adds a sub-resolver.
-    void add_sub_resolver(std::shared_ptr<model_uri_sub_resolver> sr);
+    void add_sub_resolver(std::shared_ptr<model_uri_sub_resolver> resolver);
 
     /**
      *  Tries to resolve a model URI reference relative to some base URI.

@@ -11,9 +11,9 @@
 #ifndef COSIM_OBSERVER_HPP
 #define COSIM_OBSERVER_HPP
 
-#include <cosim/observer/file_observer.hpp>
-#include <cosim/observer/last_value_observer.hpp>
-#include <cosim/observer/observer.hpp>
-#include <cosim/observer/time_series_observer.hpp>
+#include <cosim/observer/file_observer.hpp> // IWYU pragma: export
+#include <cosim/observer/last_value_observer.hpp> // IWYU pragma: export
+#include <cosim/observer/observer.hpp> // IWYU pragma: export
+#include <cosim/observer/time_series_observer.hpp> // IWYU pragma: export
 
 #endif // header guard
